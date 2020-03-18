@@ -1,0 +1,99 @@
+<mappings>
+<mapping>
+  <source type="longblob" />
+  <target type="blob" />
+</mapping>
+<mapping>
+  <source type="text" />
+  <target type="clob" />
+</mapping>
+<mapping>
+  <source type="char" />
+  <target type="char" />
+  <special sourceMaxLength="36" type="raw" targetMaxLength="16"></special>
+</mapping>
+<mapping>
+  <source type="date" />
+  <target type="date" />
+</mapping>
+<mapping>
+  <source type="time(6)" />
+  <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="tinyint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="smallint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="int" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="float" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="decimal" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="datetime" />
+  <target type="date" />
+</mapping>
+<mapping>
+  <source type="double" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="ntext" />
+  <target type="nclob" />
+</mapping>
+<mapping>
+  <source type="tinyint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="decimal" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="numeric" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="bigint" />
+  <target type="long" />
+</mapping>
+<mapping>
+  <source type="varbinary" />
+  <target type="varbinary" />
+</mapping>
+<mapping>
+  <source type="varchar" />
+  <target type="varchar" />  
+</mapping>
+<mapping>
+  <source type="binary" />
+  <target type="raw" />
+</mapping>
+<mapping>
+  <source type="char" />
+  <target type="char" />
+</mapping>
+<mapping>
+  <source type="timestamp" />
+  <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="text" />
+  <target type="text" />
+</mapping>
+<mapping>
+  <source type="longtext" />
+  <target type="clob" />  
+</mapping>
+</mappings>

@@ -1,0 +1,120 @@
+<mappings>
+<mapping>
+  <source type="image" />
+  <target type="blob" />
+</mapping>
+<mapping>
+  <source type="text" />
+  <target type="clob" />
+</mapping>
+<mapping>
+  <source type="uniqueidentifier" />
+  <target type="raw" length="16" />
+</mapping>
+<mapping>
+  <source type="date" />
+  <target type="date" />
+</mapping>
+<mapping>
+  <source type="time" />
+  <target type="interval day to second(6)" />
+</mapping>
+<mapping>
+  <source type="datetime2" />
+  <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="datetimeoffset" />
+  <target type="timestamp(7) with time zone" />
+</mapping>
+<mapping>
+  <source type="tinyint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="smallint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="int" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="smalldatetime" />
+  <target type="timestamp(9)" />
+</mapping>
+<mapping>
+  <source type="real" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="money" />
+  <target type="number" precision="16" scale="4"/>
+</mapping>
+<mapping>
+  <source type="datetime" />
+  <target type="date" />
+</mapping>
+<mapping>
+  <source type="float" />
+  <target type="binary_double" />
+</mapping>
+<mapping>
+  <source type="ntext" />
+  <target type="clob" />
+</mapping>
+<mapping>
+  <source type="bit" />
+  <target type="char"  length="1"/>
+</mapping>
+<mapping>
+  <source type="decimal" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="numeric" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="smallmoney" />
+  <target type="number" precision="16" scale="4"/>
+</mapping>
+<mapping>
+  <source type="bigint" />
+  <target type="number" />
+</mapping>
+<mapping>
+  <source type="varbinary" />
+  <target type="blob" />
+</mapping>
+<mapping>
+  <source type="varchar" />
+  <target type="varchar2" />
+  <special sourceMaxLength="-1" type="clob"></special>  
+</mapping>
+<mapping>
+  <source type="binary" />
+  <target type="raw" />
+</mapping>
+<mapping>
+  <source type="char" />
+  <target type="char" />
+</mapping>
+<mapping>
+  <source type="timestamp" />
+  <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="nvarchar" />
+  <target type="nvarchar2" />
+  <special sourceMaxLength="-1" type="clob"></special>  
+</mapping>
+<mapping>
+  <source type="nchar" />
+  <target type="nchar" /> 
+</mapping>
+<mapping>
+  <source type="xml" />
+  <target type="clob" />
+</mapping>
+</mappings>

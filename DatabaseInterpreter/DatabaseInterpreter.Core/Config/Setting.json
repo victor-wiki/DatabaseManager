@@ -1,0 +1,6 @@
+﻿{
+  "CommandTimeout": 600,
+  "DataBatchSize": 500,
+  "MySqlCharset": "utf8mb4",
+  "MySqlCharsetCollation": "utf8mb4_bin"
+}

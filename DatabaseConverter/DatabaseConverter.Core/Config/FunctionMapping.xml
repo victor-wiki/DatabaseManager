@@ -1,0 +1,32 @@
+<mappings>
+  <mapping>
+    <SqlServer>getdate()</SqlServer>
+    <MySql>CURRENT_TIMESTAMP</MySql>
+    <Oracle>SYSDATE</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>newid()</SqlServer>
+    <MySql></MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>newsequentialid()</SqlServer>
+    <MySql></MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>LEN</SqlServer>
+    <MySql>LENGTH</MySql>
+    <Oracle>LENGTH</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>SUBSTRING</SqlServer>
+    <MySql>SUBSTR,SUBSTRING</MySql>
+    <Oracle>SUBSTR</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>CHARINDEX</SqlServer>
+    <MySql>INSTR,LOCATE,POSITION</MySql>
+    <Oracle>INSTR</Oracle>
+  </mapping>  
+</mappings>

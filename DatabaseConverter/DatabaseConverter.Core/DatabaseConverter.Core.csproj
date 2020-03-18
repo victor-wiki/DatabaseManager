@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Config\DataTypeMapping\MySql2Oracle.xml" />
+    <None Remove="Config\DataTypeMapping\MySql2SqlServer.xml" />
+    <None Remove="Config\DataTypeMapping\Oracle2MySql.xml" />
+    <None Remove="Config\DataTypeMapping\Oracle2SqlServer.xml" />
+    <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
+    <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
+    <None Remove="Config\FunctionMapping.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\DataTypeMapping\MySql2Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeMapping\MySql2SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeMapping\Oracle2MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeMapping\Oracle2SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeMapping\SqlServer2MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\FunctionMapping.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PoorMansTSqlFormatterRedux" Version="1.0.3" />
+    <PackageReference Include="TSQL.Parser" Version="1.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
+  </ItemGroup>
+
+</Project>

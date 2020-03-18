@@ -1,0 +1,103 @@
+<mappings>
+<mapping>
+  <source type="longblob" />
+  <target type="image" />
+</mapping>
+<mapping>
+  <source type="text" />
+  <target type="text" />
+</mapping>
+<mapping>
+  <source type="char" />
+  <target type="char" />
+  <special sourceMaxLength="36" type="uniqueidentifier"></special>
+</mapping>
+<mapping>
+  <source type="date" />
+  <target type="date" />
+</mapping>
+<mapping>
+  <source type="time(6)" />
+  <target type="time" />
+</mapping>
+<mapping>
+  <source type="datetime" />
+  <target type="datetime" />
+</mapping>
+<mapping>
+  <source type="tinyint" />
+  <target type="tinyint" />
+</mapping>
+<mapping>
+  <source type="smallint" />
+  <target type="smallint" />
+</mapping>
+<mapping>
+  <source type="int" />
+  <target type="int" />
+</mapping>
+<mapping>
+  <source type="float" />
+  <target type="float" />
+</mapping>
+<mapping>
+  <source type="decimal" />
+  <target type="decimal" />
+</mapping>
+<mapping>
+  <source type="datetime" />
+  <target type="datetime" />
+</mapping>
+<mapping>
+  <source type="double" />
+  <target type="float" />
+</mapping>
+<mapping>
+  <source type="ntext" />
+  <target type="longtext" />
+</mapping>
+<mapping>
+  <source type="tinyint" />
+  <target type="tinyint" />
+</mapping>
+<mapping>
+  <source type="decimal" />
+  <target type="decimal" />
+</mapping>
+<mapping>
+  <source type="numeric" />
+  <target type="decimal" />
+</mapping>
+<mapping>
+  <source type="bigint" />
+  <target type="bigint" />
+</mapping>
+<mapping>
+  <source type="varbinary" />
+  <target type="varbinary" />
+</mapping>
+<mapping>
+  <source type="varchar" />
+  <target type="varchar" />  
+</mapping>
+<mapping>
+  <source type="binary" />
+  <target type="binary" />
+</mapping>
+<mapping>
+  <source type="char" />
+  <target type="char" />
+</mapping>
+<mapping>
+  <source type="timestamp" />
+  <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="text" />
+  <target type="text" />
+</mapping>
+<mapping>
+  <source type="longtext" />
+  <target type="text" />  
+</mapping>
+</mappings>
