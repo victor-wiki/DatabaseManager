@@ -151,10 +151,14 @@ namespace DatabaseManager
 
             DatabaseType sourceDbType = this.useConnector ? this.dbConnectionProfile.DatabaseType : this.databaseType;
 
-            int dataBatchSize = SettingManager.Setting.DataBatchSize;
-            DbInterpreterOption scriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToFile, DataBatchSize = dataBatchSize };
+            DbInterpreterOption option = new DbInterpreterOption()
+            {
+                ScriptOutputMode = GenerateScriptOutputMode.WriteToFile,
+                SortTablesByKeyReference = true,
+                GetTableAllObjects = true
+            };
 
-            this.SetGenerateScriptOption(scriptOption);
+            this.SetGenerateScriptOption(option);
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
 
@@ -164,7 +168,7 @@ namespace DatabaseManager
                 return;
             }
 
-            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.connectionInfo, scriptOption);
+            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.connectionInfo, option);
 
             SelectionInfo selectionInfo = new SelectionInfo()
             {

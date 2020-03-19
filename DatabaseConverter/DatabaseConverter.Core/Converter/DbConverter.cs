@@ -107,18 +107,10 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
+            SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);          
 
-            if (!string.IsNullOrEmpty(this.Target.DbOwner))
-            {
-                SchemaInfoHelper.TransformOwner(targetSchemaInfo, this.Target.DbOwner);
-            }
-
-            ColumnTranslator columnTranslator = new ColumnTranslator(targetSchemaInfo.TableColumns, this.Source.DbInterpreter.DatabaseType, this.Target.DbInterpreter.DatabaseType);
-            targetSchemaInfo.TableColumns = columnTranslator.Translate();
-
-            ViewTranslator viewTranslator = new ViewTranslator(targetSchemaInfo.Views, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner);
-            targetSchemaInfo.Views = viewTranslator.Translate();
+            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner);
+            translateEngine.Translate();
 
             if (this.Option.EnsurePrimaryKeyNameUnique)
             {
@@ -131,7 +123,7 @@ namespace DatabaseConverter.Core
             }
 
             DbInterpreter targetInterpreter = this.Target.DbInterpreter;
-            bool generateIdentity = targetInterpreter.Option.GenerateIdentity;
+            bool generateIdentity = targetInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity;
 
             if (generateIdentity)
             {
@@ -234,13 +226,13 @@ namespace DatabaseConverter.Core
                     }
 
                     if (this.Option.PickupTable)
-                    {                      
+                    {
                         dataErrorProfile = DataTransferErrorProfileManager.GetProfile(sourceInterpreter.ConnectionInfo, targetInterpreter.ConnectionInfo);
 
                         if (dataErrorProfile != null)
                         {
-                            sourceSchemaInfo.PickupTable  = new Table() { Owner = schemaInfo.Tables.FirstOrDefault()?.Owner, Name = dataErrorProfile.SourceTableName };
-                        }                        
+                            sourceSchemaInfo.PickupTable = new Table() { Owner = schemaInfo.Tables.FirstOrDefault()?.Owner, Name = dataErrorProfile.SourceTableName };
+                        }
                     }
 
                     if (sourceInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
@@ -291,7 +283,7 @@ namespace DatabaseConverter.Core
                                         else
                                         {
                                             await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, paramters, this.transaction));
-                                        }                                      
+                                        }
 
                                         targetInterpreter.FeedbackInfo($"Table \"{table.Name}\":{data.Count} records transferred.");
                                     }
@@ -349,7 +341,7 @@ namespace DatabaseConverter.Core
                 if (this.transaction != null && !this.cancelRequested)
                 {
                     this.transaction.Commit();
-                }               
+                }
 
                 this.isBusy = false;
             }
@@ -362,7 +354,7 @@ namespace DatabaseConverter.Core
 
         private void Rollback()
         {
-            if (this.transaction != null)
+            if (this.transaction != null && this.transaction.Connection != null)
             {
                 this.transaction.Rollback();
             }

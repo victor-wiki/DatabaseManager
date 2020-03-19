@@ -14,6 +14,7 @@ namespace DatabaseInterpreter.Core
     public class OracleInterpreter : DbInterpreter
     {
         #region Field & Property
+        private string dbOwner;
         public const string SEMICOLON_FUNC = "CHR(59)";
         public const string CONNECT_CHAR = "||";
         public override string UnicodeInsertChar => "";
@@ -28,6 +29,7 @@ namespace DatabaseInterpreter.Core
         #region Constructor
         public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption options) : base(connectionInfo, options)
         {
+            this.dbOwner = connectionInfo.UserId;
             this.dbConnector = this.GetDbConnector();           
         }
         #endregion
@@ -48,13 +50,13 @@ namespace DatabaseInterpreter.Core
             return (await this.GetScalarAsync(this.dbConnector.CreateConnection(), sql))?.ToString();
         }
 
-        private string GetOwner()
+        private string GetDbOwner()
         {
-            if (this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.ConnectionInfo.UserId) || this.ConnectionInfo.UserId == "/"))
+            if (this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbOwner) || this.dbOwner == "/"))
             {
                 try
                 {
-                    return this.ConnectionInfo.UserId = this.GetCurrentUserName().Result;                    
+                    return this.dbOwner = this.GetCurrentUserName().Result;
                 }
                 catch (Exception ex)
                 {
@@ -62,7 +64,7 @@ namespace DatabaseInterpreter.Core
                 }
             }
 
-            return this.ConnectionInfo.UserId;
+            return this.dbOwner;
         }
 
         public override Task<List<Database>> GetDatabasesAsync()
@@ -75,7 +77,7 @@ namespace DatabaseInterpreter.Core
                 notShowBuiltinDatabaseCondition = string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"AND TABLESPACE_NAME NOT IN({strBuiltinDatabase}) AND CONTENTS <>'UNDO'";
             }
 
-            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetOwner()}')) {notShowBuiltinDatabaseCondition}";
+            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbOwner()}')) {notShowBuiltinDatabaseCondition}";
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
@@ -111,7 +113,7 @@ namespace DatabaseInterpreter.Core
 
             string sql = "";
 
-            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetOwner()}')";
+            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbOwner()}')";
             string nameCondition = "";
 
             if (objectNames != null && objectNames.Any())
@@ -185,7 +187,7 @@ namespace DatabaseInterpreter.Core
                      ";
             }
 
-            sql += $" WHERE UPPER(OWNER)=UPPER('{this.GetOwner()}')" + tablespaceCondition;
+            sql += $" WHERE UPPER(OWNER)=UPPER('{this.GetDbOwner()}')" + tablespaceCondition;
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -217,7 +219,7 @@ namespace DatabaseInterpreter.Core
                  DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", DATA_DEFAULT AS ""DefaultValue"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" , '' AS ""TypeOwner""
                  FROM ALL_TAB_COLUMNS C
                  LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
-                 WHERE UPPER(OWNER)=UPPER('{this.GetOwner()}')";
+                 WHERE UPPER(OWNER)=UPPER('{this.GetDbOwner()}')";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -245,7 +247,7 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT UC.OWNER AS ""Owner"", UC.TABLE_NAME AS ""TableName"",UC.CONSTRAINT_NAME AS ""Name"",UCC.COLUMN_NAME AS ""ColumnName"", UCC.POSITION AS ""Order"", 0 AS ""IsDesc""
                         FROM USER_CONSTRAINTS UC
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME  
-                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetOwner()}')";
+                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetDbOwner()}')";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -276,7 +278,7 @@ namespace DatabaseInterpreter.Core
                         FROM USER_CONSTRAINTS UC                       
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME                       
                         JOIN USER_CONS_COLUMNS RUCC ON UC.OWNER=RUCC.OWNER AND UC.R_CONSTRAINT_NAME=RUCC.CONSTRAINT_NAME AND UCC.POSITION=RUCC.POSITION
-                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetOwner()}')";
+                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetDbOwner()}')";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -306,13 +308,76 @@ namespace DatabaseInterpreter.Core
                 FROM user_indexes ui
                 JOIN user_ind_columns uic ON ui.index_name = uic.index_name AND ui.table_name = uic.table_name
                 LEFT JOIN user_constraints uc ON ui.table_name = uc.table_name AND ui.table_owner = uc.owner AND ui.index_name = uc.constraint_name AND uc.constraint_type = 'P'
-                WHERE uc.constraint_name IS NULL AND UPPER(UC.owner)=UPPER('{this.GetOwner()}')";
+                WHERE uc.constraint_name IS NULL AND UPPER(UC.owner)=UPPER('{this.GetDbOwner()}')";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
                 sql += $" AND UC.TABLE_NAME IN ({ strTableNames })";
             }
+
+            return sql;
+        }
+        #endregion
+
+        #region Table Trigger      
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(params string[] triggerNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(triggerNames));
+        }
+
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] triggerNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(triggerNames));
+        }
+
+        private string GetSqlForTableTriggers(params string[] tableNames)
+        {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+
+            string sql = $@"SELECT TRIGGER_NAME AS ""Name"",TABLE_OWNER AS ""Owner"", TABLE_NAME AS ""TableName"", 
+                         { (isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
+                        FROM USER_TRIGGERS
+                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetDbOwner()}')
+                        ";
+
+            if (tableNames != null && tableNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(tableNames);
+                sql += $" AND TABLE_NAME IN ({ strNames })";
+            }
+
+            sql += " ORDER BY TRIGGER_NAME";
+
+            return sql;
+        }
+        #endregion
+
+        #region Table Constraint
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(tableNames));
+        }
+
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(tableNames));
+        }
+
+        private string GetSqlForTableConstraints(params string[] tableNames)
+        {
+            string sql = $@"SELECT OWNER AS ""Owner"", CONSTRAINT_NAME AS ""Name"", TABLE_NAME AS ""TableName"", SEARCH_CONDITION_VC AS ""Definition""
+                         FROM ALL_CONSTRAINTS C
+                         WHERE CONSTRAINT_TYPE = 'C' AND GENERATED = 'USER NAME'
+                         ";
+
+            if (tableNames != null && tableNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(tableNames);
+                sql += $" AND TABLE_NAME IN ({ strNames })";
+            }
+
+            sql += " ORDER BY CONSTRAINT_NAME";
 
             return sql;
         }
@@ -335,7 +400,7 @@ namespace DatabaseInterpreter.Core
 
             string sql = $@"SELECT V.OWNER AS ""Owner"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : "TEXT_VC")} AS ""Definition"" 
                         FROM ALL_VIEWS V
-                        WHERE UPPER(OWNER) = UPPER('{this.GetOwner()}')";
+                        WHERE UPPER(OWNER) = UPPER('{this.GetDbOwner()}')";
 
             if (viewNames != null && viewNames.Any())
             {
@@ -348,40 +413,7 @@ namespace DatabaseInterpreter.Core
             return sql;
         }
 
-        #endregion
-
-        #region Trigger      
-        public override Task<List<Trigger>> GetTriggersAsync(params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(this.GetSqlForTriggers(triggerNames));
-        }
-
-        public override Task<List<Trigger>> GetTriggersAsync(DbConnection dbConnection, params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(dbConnection, this.GetSqlForTriggers(triggerNames));
-        }
-
-        private string GetSqlForTriggers(params string[] triggerNames)
-        {
-            bool isSimpleMode = this.IsObjectFectchSimpleMode();
-
-            string sql = $@"SELECT TRIGGER_NAME AS ""Name"",TABLE_OWNER AS ""Owner"", TABLE_NAME AS ""TableName"", 
-                         { (isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
-                        FROM USER_TRIGGERS
-                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetOwner()}')
-                        ";
-
-            if (triggerNames != null && triggerNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(triggerNames);
-                sql += $" AND TRIGGER_NAME IN ({ strNames })";
-            }
-
-            sql += " ORDER BY TRIGGER_NAME";
-
-            return sql;
-        }
-        #endregion
+        #endregion        
 
         #region Procedure     
 
@@ -442,17 +474,17 @@ TABLESPACE
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine($"COMMENT ON TABLE {this.GetOwner()}.{GetQuotedString(tableName)} IS '{ValueHelper.TransferSingleQuotation(table.Comment)}'" + this.ScriptsSplitString);
+                    sb.AppendLine($"COMMENT ON TABLE {this.GetDbOwner()}.{GetQuotedString(tableName)} IS '{ValueHelper.TransferSingleQuotation(table.Comment)}'" + this.ScriptsSplitString);
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine($"COMMENT ON COLUMN {this.GetOwner()}.{GetQuotedString(tableName)}.{GetQuotedString(column.Name)} IS '{ValueHelper.TransferSingleQuotation(column.Comment)}'" + this.ScriptsSplitString);
+                    sb.AppendLine($"COMMENT ON COLUMN {this.GetDbOwner()}.{GetQuotedString(tableName)}.{GetQuotedString(column.Name)} IS '{ValueHelper.TransferSingleQuotation(column.Comment)}'" + this.ScriptsSplitString);
                 }
                 #endregion
 
                 #region Primary Key
-                if (this.Option.GenerateKey && primaryKeys.Count() > 0)
+                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
                 {
                     string primaryKey =
 $@"
@@ -469,7 +501,7 @@ TABLESPACE
                 #endregion
 
                 #region Foreign Key
-                if (this.Option.GenerateKey)
+                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey)
                 {
                     IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
                     if (foreignKeys.Count() > 0)
@@ -503,7 +535,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 #endregion
 
                 #region Index
-                if (this.Option.GenerateIndex)
+                if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
                     IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
                     if (indices.Count() > 0)
@@ -547,6 +579,19 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 //}
                 //#endregion
 
+                #region Constraint
+                if (this.Option.TableScriptsGenerateOption.GenerateConstraint)
+                {
+                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
+
+                    foreach (TableConstraint constraint in constraints)
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
+                    }
+                }
+                #endregion
+
                 this.FeedbackInfo(OperationState.End, table);
             }
             #endregion
@@ -556,7 +601,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<Trigger>(schemaInfo.Triggers));
+            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
@@ -626,14 +671,14 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
         #region Generate Data Script
         public override long GetTableRecordCount(DbConnection connection, Table table)
         {
-            string sql = $@"SELECT COUNT(1) FROM {this.GetOwner()}.{ this.GetQuotedString(table.Name)}";
+            string sql = $@"SELECT COUNT(1) FROM {this.GetDbOwner()}.{ this.GetQuotedString(table.Name)}";
 
             return base.GetTableRecordCount(connection, sql);
         }
 
         public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table)
         {
-            string sql = $@"SELECT COUNT(1) FROM {this.GetOwner()}.{ this.GetQuotedString(table.Name)}";
+            string sql = $@"SELECT COUNT(1) FROM {this.GetDbOwner()}.{ this.GetQuotedString(table.Name)}";
 
             return base.GetTableRecordCountAsync(connection, sql);
         }

@@ -7,15 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Core", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Demo", "DatabaseInterpreter\DatabaseInterpreter.Demo\DatabaseInterpreter.Demo.csproj", "{8C25AFA8-790F-499C-8166-0A52F795FB44}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01.DatabaseInterpreter", "01.DatabaseInterpreter", "{761072AA-C461-4482-A5CF-B4A345C7F614}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01. DatabaseInterpreter", "01. DatabaseInterpreter", "{761072AA-C461-4482-A5CF-B4A345C7F614}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Test", "DatabaseInterpreter\DatabaseInterpreter.Test\DatabaseInterpreter.Test.csproj", "{92D9F8BC-9385-4F0F-B4BF-73770E98605B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Utility", "DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj", "{29AABB44-3BE6-4A35-9F21-6B2BFEB7023E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02.DatabaseConverter", "02.DatabaseConverter", "{84B1F7AC-FCAC-4522-AC86-306FB83F8F50}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "02. DatabaseConverter", "02. DatabaseConverter", "{84B1F7AC-FCAC-4522-AC86-306FB83F8F50}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03.DatabaseManager", "03.DatabaseManager", "{F1D2AB01-8D46-4491-A941-36A78817B47A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03. DatabaseManager", "03. DatabaseManager", "{F1D2AB01-8D46-4491-A941-36A78817B47A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseManager.Win", "DatabaseManager\DatabaseManager.Win\DatabaseManager.Win.csproj", "{E82C00C4-5E66-48F6-9979-2799F63C1209}"
 EndProject

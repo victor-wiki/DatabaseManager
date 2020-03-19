@@ -28,8 +28,8 @@ namespace DatabaseConverter.Demo
 
             int dataBatchSize = 500;
 
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString, DataBatchSize = dataBatchSize };
-            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToFile | GenerateScriptOutputMode.WriteToString), DataBatchSize = dataBatchSize };
+            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
+            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToFile | GenerateScriptOutputMode.WriteToString)};
 
             this.sourceInterpreter.Option = sourceScriptOption;
             this.targetInterpreter.Option = targetScriptOption;

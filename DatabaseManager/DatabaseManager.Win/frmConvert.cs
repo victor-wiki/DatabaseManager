@@ -58,7 +58,6 @@ namespace DatabaseManager
                 this.sourceDbProfile.Visible = false;
                 this.btnConnect.Visible = false;
                 this.targetDbProfile.Width += this.btnConnect.Width;
-                //this.btnConnect.Width = 0;
                 this.targetDbProfile.Top -= increaseHeight;
                 this.tvDbObjects.Top -= increaseHeight;
                 this.gbOption.Top -= increaseHeight;
@@ -210,10 +209,9 @@ namespace DatabaseManager
 
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
-
-            int dataBatchSize = SettingManager.Setting.DataBatchSize;
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, DataBatchSize = dataBatchSize };
-            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToString), DataBatchSize = dataBatchSize };
+           
+            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, SortTablesByKeyReference = true, GetTableAllObjects = true };
+            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToString) };
 
             this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);
 
@@ -227,7 +225,7 @@ namespace DatabaseManager
                 targetScriptOption.ScriptOutputMode = targetScriptOption.ScriptOutputMode | GenerateScriptOutputMode.WriteToFile;
             }
 
-            targetScriptOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
+            targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
             if (scriptMode == GenerateScriptMode.None)

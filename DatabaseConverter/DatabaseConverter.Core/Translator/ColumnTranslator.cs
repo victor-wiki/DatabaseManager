@@ -1,63 +1,36 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
-using DatabaseConverter.Model;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class ColumnTranslator
+    public class ColumnTranslator: DbObjectTranslator
     {
         private List<TableColumn> columns;
         private DatabaseType sourceDbType;
         private DatabaseType targetDbType;
 
-        public ColumnTranslator(List<TableColumn> columns, DatabaseType sourceDbType, DatabaseType targetDbType)
+        public ColumnTranslator(DbInterpreter sourceInterpreter,DbInterpreter targetInterpreter, List<TableColumn> columns):base(sourceInterpreter, targetInterpreter)
         {
             this.columns = columns;
-            this.sourceDbType = sourceDbType;
-            this.targetDbType = targetDbType;
-        }
+            this.sourceDbType = sourceInterpreter.DatabaseType;
+            this.targetDbType = targetInterpreter.DatabaseType;
+        }       
 
-        public List<TableColumn> Translate()
+        public override void Translate()
         {
             if (this.sourceDbType == this.targetDbType)
             {
-                return this.columns;
-            }
-
-            string configRootFolder = Path.Combine(PathHelper.GetAssemblyFolder(), "Config");
-            string dataTypeMappingFilePath = Path.Combine(configRootFolder, $"DataTypeMapping/{this.sourceDbType.ToString()}2{this.targetDbType.ToString()}.xml");
-            string functionMappingFilePath = Path.Combine(configRootFolder, "FunctionMapping.xml");
-
-            #region DataType Mapping
-            XDocument dataTypeMappingDoc = XDocument.Load(dataTypeMappingFilePath);
-
-            List<DataTypeMapping> dataTypeMappings = dataTypeMappingDoc.Root.Elements("mapping").Select(item =>
-             new DataTypeMapping()
-             {
-                 Source = new DataTypeMappingSource(item),
-                 Tareget = new DataTypeMappingTarget(item),
-                 Specials = item.Elements("special")?.Select(t => new DataTypeMappingSpecial(t)).ToList()
-             })
-             .ToList();
-            #endregion
-
-            #region Function Mapping
-            XDocument functionMappingDoc = XDocument.Load(functionMappingFilePath);
-            List<IEnumerable<FunctionMapping>> functionMappings = functionMappingDoc.Root.Elements("mapping").Select(item =>
-            item.Elements().Select(t => new FunctionMapping() { DbType = t.Name.ToString(), Function = t.Value }))
-            .ToList();
-            #endregion
+                return;
+            }              
 
             foreach (TableColumn column in this.columns)
             {
                 string sourceDataType = this.GetTrimedDataType(column);
                 column.DataType = sourceDataType;
-                DataTypeMapping dataTypeMapping = dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());
+                DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());
                 if (dataTypeMapping != null)
                 {
                     column.DataType = dataTypeMapping.Tareget.Type;
@@ -134,16 +107,14 @@ namespace DatabaseConverter.Core
                 if (!string.IsNullOrEmpty(column.DefaultValue))
                 {
                     string defaultValue = this.GetTrimedDefaultValue(column.DefaultValue);
-                    IEnumerable<FunctionMapping> funcMappings = functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m=> m.Trim().ToLower() == defaultValue.Trim().ToLower())));
+                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m=> m.Trim().ToLower() == defaultValue.Trim().ToLower())));
                     if (funcMappings != null)
                     {
                         defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
                     }
                     column.DefaultValue = defaultValue;
                 }
-            }
-
-            return columns;
+            }           
         }
 
         private string GetTrimedDataType(TableColumn column)

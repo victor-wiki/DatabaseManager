@@ -70,7 +70,7 @@ namespace DatabaseManager.Controls
         private void SetMenuItemVisible(TreeNode node)
         {
             this.tsmiRefresh.Visible = node.Level <= 2 && node.Nodes.Count > 0 && !this.IsOnlyHasFakeChild(node);
-            this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level==4 && node.Tag is Trigger);
+            this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
             this.tsmiConvert.Visible = node.Level == 0;
         }
 
@@ -106,7 +106,7 @@ namespace DatabaseManager.Controls
             return dbInterpreter;
         }
 
-        private async Task AddDatabaseNodes(TreeNode parentNode, string database, DatabaseObjectType databaseObjectType = DatabaseObjectType.None, bool createFolderNode = true)
+        private async Task AddDbObjectNodes(TreeNode parentNode, string database, DatabaseObjectType databaseObjectType = DatabaseObjectType.None, bool createFolderNode = true)
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
 
@@ -148,74 +148,98 @@ namespace DatabaseManager.Controls
             return node.Nodes;
         }
 
-        private async Task AddTableObjectNodes(TreeNode tableNode, Table table)
+        private void AddTableFakeNodes(TreeNode tableNode, Table table)
         {
-            string database = this.GetDatabaseNode(tableNode).Name;
-            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Columns", "Columns", true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Triggers", "Triggers", true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Indexes", "Indexes", true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Keys", "Keys", true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Constraints", "Constraints", true));
 
-            DatabaseObjectType databaseObjectType = DatabaseObjectType.Trigger | DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey | DatabaseObjectType.TableIndex;
+            tableNode.Expand();
+        }
+
+        private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
+        {
+            string nodeName = treeNode.Name;
+            string database = this.GetDatabaseNode(treeNode).Name;
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SelectionInfo() { TableNames = new string[] { table.Name } }, databaseObjectType);
 
             #region Columns           
-            TreeNode columnRootNode = DbObjectsTreeHelper.CreateFolderNode("Columns", "Columns");
-
-            foreach (TableColumn column in schemaInfo.TableColumns)
+            if (nodeName == "Columns")
             {
-                string text = this.GetColumnText(dbInterpreter, table, column);
-                bool isPrimaryKey = schemaInfo.TablePrimaryKeys.Any(item => item.ColumnName == column.Name);
-                bool isForeignKey = schemaInfo.TableForeignKeys.Any(item => item.ColumnName == column.Name);
-                string imageKeyName = isPrimaryKey ? nameof(TablePrimaryKey) : (isForeignKey ? nameof(TableForeignKey) : nameof(TableColumn));
-
-                TreeNode node = DbObjectsTreeHelper.CreateTreeNode(column.Name, text, imageKeyName);
-
-                columnRootNode.Nodes.Add(node);
-            }
-
-            tableNode.Nodes.Add(columnRootNode);
-            #endregion           
-
-            tableNode.AddDbObjectFolderNode(schemaInfo.Triggers);
-
-            #region Indexes
-            if (schemaInfo.TableIndexes.Any())
-            {
-                TreeNode indexRootNode = DbObjectsTreeHelper.CreateFolderNode("Indexes", "Indexes");
-
-                foreach (TableIndex index in schemaInfo.TableIndexes)
+                foreach (TableColumn column in schemaInfo.TableColumns)
                 {
-                    bool isPrimaryKey = schemaInfo.TablePrimaryKeys.Any(item => item.ColumnName == index.ColumnName);
-                    string text = $"{index.Name}{(index.IsUnique ? "(Unique)" : "")}";
-                    string imageKeyName = isPrimaryKey ? nameof(TablePrimaryKey) : nameof(TableIndex);
+                    string text = this.GetColumnText(dbInterpreter, table, column);
+                    bool isPrimaryKey = schemaInfo.TablePrimaryKeys.Any(item => item.ColumnName == column.Name);
+                    bool isForeignKey = schemaInfo.TableForeignKeys.Any(item => item.ColumnName == column.Name);
+                    string imageKeyName = isPrimaryKey ? nameof(TablePrimaryKey) : (isForeignKey ? nameof(TableForeignKey) : nameof(TableColumn));
 
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(index.Name, text, imageKeyName);
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(column.Name, text, imageKeyName);
 
-                    indexRootNode.Nodes.Add(node);
+                    treeNode.Nodes.Add(node);
                 }
-
-                tableNode.Nodes.Add(indexRootNode);
             }
             #endregion
 
-            if (schemaInfo.TablePrimaryKeys.Any() || schemaInfo.TablePrimaryKeys.Any())
+            if (nodeName == "Triggers")
             {
-                TreeNode keyRootNode = DbObjectsTreeHelper.CreateFolderNode("Keys", "Keys");
-                foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
-                {
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                    keyRootNode.Nodes.Add(node);
-                }
-
-                foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
-                {
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                    keyRootNode.Nodes.Add(node);
-                }
-
-                tableNode.Nodes.Add(keyRootNode);
+                treeNode.AddDbObjectNodes(schemaInfo.TableTriggers);
             }
 
-            tableNode.Expand();
+            #region Indexes
+            if (nodeName == "Indexes" && schemaInfo.TableIndexes.Any())
+            {
+                ILookup<string, TableIndex> indexLookup = schemaInfo.TableIndexes.ToLookup(item => item.Name);
+
+                foreach (var kp in indexLookup)
+                {
+                    string indexName = kp.Key;
+                    bool isUnique = kp.Any(item => item.IsUnique);
+                    string strColumns = string.Join(",", kp.Select(item => item.ColumnName));
+                    string content = isUnique ? $"(Unique, {strColumns})" : $"({strColumns})";
+
+                    string text = $"{indexName}{content}";
+                    string imageKeyName = nameof(TableIndex);
+
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(indexName, text, imageKeyName);
+
+                    treeNode.Nodes.Add(node);
+                }
+            }
+            #endregion
+            if (nodeName == "Keys")
+            {
+                if (schemaInfo.TablePrimaryKeys.Any() || schemaInfo.TablePrimaryKeys.Any())
+                {
+                    foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
+                    {
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                        treeNode.Nodes.Add(node);
+                    }
+
+                    foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
+                    {
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                        treeNode.Nodes.Add(node);
+                    }
+                }
+            }
+
+            #region Constraints
+            if (nodeName == "Constraints" && schemaInfo.TableConstraints.Any())
+            {
+                foreach (TableConstraint constraint in schemaInfo.TableConstraints)
+                {
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(constraint);
+                    treeNode.Nodes.Add(node);
+                }
+            }
+            #endregion
+
+            treeNode.Expand();
         }
 
         private string GetColumnText(DbInterpreter dbInterpreter, Table table, TableColumn column)
@@ -246,23 +270,51 @@ namespace DatabaseManager.Controls
             if (tag is Database)
             {
                 Database database = tag as Database;
-                await this.AddDatabaseNodes(node, database.Name, DbObjectsTreeHelper.DefaultObjectType | DatabaseObjectType.Function | DatabaseObjectType.Procedure);
+                await this.AddDbObjectNodes(node, database.Name, DbObjectsTreeHelper.DefaultObjectType | DatabaseObjectType.Function | DatabaseObjectType.Procedure);
             }
             else if (tag is Table)
             {
                 Table table = tag as Table;
-                await this.AddTableObjectNodes(node, table);
+                this.AddTableFakeNodes(node, table);
             }
             else if (tag == null)
             {
-                string databaseName = this.GetDatabaseNode(node).Name;
                 string name = node.Name;
 
-                DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
+                TreeNode parentNode = node.Parent;
 
-                if (databaseObjectType != DatabaseObjectType.None)
+                if (parentNode.Tag is Database)
                 {
-                    await this.AddDatabaseNodes(node, databaseName, databaseObjectType, false);
+                    string databaseName = parentNode.Name;
+                    DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
+                    if (databaseObjectType != DatabaseObjectType.None)
+                    {
+                        await this.AddDbObjectNodes(node, databaseName, databaseObjectType, false);
+                    }
+                }
+                else if (parentNode.Tag is Table)
+                {
+                    DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
+                    switch (name)
+                    {
+                        case "Columns":
+                            databaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
+                            break;
+                        case "Triggers":
+                            databaseObjectType = DatabaseObjectType.TableTrigger;
+                            break;
+                        case "Indexes":
+                            databaseObjectType = DatabaseObjectType.TableIndex;
+                            break;
+                        case "Keys":
+                            databaseObjectType = DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
+                            break;
+                        case "Constraints":
+                            databaseObjectType = DatabaseObjectType.TableConstraint;
+                            break;
+                    }
+
+                    await this.AddTableObjectNodes(node, parentNode.Tag as Table, databaseObjectType);
                 }
             }
         }
@@ -324,18 +376,23 @@ namespace DatabaseManager.Controls
         {
             string typeName = obj.GetType().Name;
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
+            
+            if(obj is Table)
+            {
+                dbInterpreter.Option.GetTableAllObjects = true;
+            }
 
             SelectionInfo selectionInfo = new SelectionInfo();
             selectionInfo.GetType().GetProperty($"{typeName}Names").SetValue(selectionInfo, new string[] { obj.Name });
 
-            DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);          
+            DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(selectionInfo, databaseObjectType);
             string script = dbInterpreter.GenerateSchemaScripts(schemaInfo);
 
             if (this.OnShowContent != null)
             {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, Content= script, ConnectionInfo = dbInterpreter.ConnectionInfo });
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
             }
         }
 

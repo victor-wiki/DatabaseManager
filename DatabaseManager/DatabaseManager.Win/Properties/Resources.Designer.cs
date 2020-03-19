@@ -273,6 +273,16 @@ namespace DatabaseManager.Properties {
         /// <summary>
         ///   查找 System.Drawing.Bitmap 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Bitmap tree_TableConstraint {
+            get {
+                object obj = ResourceManager.GetObject("tree_TableConstraint", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Bitmap tree_TableForeignKey {
             get {
                 object obj = ResourceManager.GetObject("tree_TableForeignKey", resourceCulture);
@@ -303,9 +313,9 @@ namespace DatabaseManager.Properties {
         /// <summary>
         ///   查找 System.Drawing.Bitmap 类型的本地化资源。
         /// </summary>
-        internal static System.Drawing.Bitmap tree_Trigger {
+        internal static System.Drawing.Bitmap tree_TableTrigger {
             get {
-                object obj = ResourceManager.GetObject("tree_Trigger", resourceCulture);
+                object obj = ResourceManager.GetObject("tree_TableTrigger", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

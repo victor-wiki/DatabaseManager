@@ -69,6 +69,7 @@
             // btnSaveMessage
             // 
             this.btnSaveMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSaveMessage.Image = global::DatabaseManager.Properties.Resources.Save;
             this.btnSaveMessage.Location = new System.Drawing.Point(738, 42);
             this.btnSaveMessage.Name = "btnSaveMessage";
             this.btnSaveMessage.Size = new System.Drawing.Size(27, 23);
@@ -80,6 +81,7 @@
             // btnCopyMessage
             // 
             this.btnCopyMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCopyMessage.Image = global::DatabaseManager.Properties.Resources.Copy;
             this.btnCopyMessage.Location = new System.Drawing.Point(739, 13);
             this.btnCopyMessage.Name = "btnCopyMessage";
             this.btnCopyMessage.Size = new System.Drawing.Size(27, 23);
@@ -98,7 +100,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 79);
+            this.txtMessage.Size = new System.Drawing.Size(731, 80);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             // 

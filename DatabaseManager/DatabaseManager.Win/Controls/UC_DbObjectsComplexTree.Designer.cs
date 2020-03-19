@@ -67,9 +67,10 @@
             this.imageList1.Images.SetKeyName(6, "tree_Function.png");
             this.imageList1.Images.SetKeyName(7, "tree_TableIndex.png");
             this.imageList1.Images.SetKeyName(8, "tree_TableColumn.png");
-            this.imageList1.Images.SetKeyName(9, "tree_Trigger.png");
-            this.imageList1.Images.SetKeyName(10, "tree_TablePrimaryKey.png");
-            this.imageList1.Images.SetKeyName(11, "tree_Table.png");
+            this.imageList1.Images.SetKeyName(9, "tree_TablePrimaryKey.png");
+            this.imageList1.Images.SetKeyName(10, "tree_Table.png");
+            this.imageList1.Images.SetKeyName(11, "tree_TableConstraint.png");
+            this.imageList1.Images.SetKeyName(12, "tree_TableTrigger.png");
             // 
             // contextMenuStrip1
             // 
@@ -78,26 +79,26 @@
             this.tsmiGenerateScripts,
             this.tsmiConvert});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 92);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(172, 70);
             // 
             // tsmiRefresh
             // 
             this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(186, 22);
+            this.tsmiRefresh.Size = new System.Drawing.Size(171, 22);
             this.tsmiRefresh.Text = "Refresh";
             this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
             // 
             // tsmiGenerateScripts
             // 
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
-            this.tsmiGenerateScripts.Size = new System.Drawing.Size(186, 22);
+            this.tsmiGenerateScripts.Size = new System.Drawing.Size(171, 22);
             this.tsmiGenerateScripts.Text = "Generate scripts";
             this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
             // 
             // tsmiConvert
             // 
             this.tsmiConvert.Name = "tsmiConvert";
-            this.tsmiConvert.Size = new System.Drawing.Size(180, 22);
+            this.tsmiConvert.Size = new System.Drawing.Size(171, 22);
             this.tsmiConvert.Text = "Convert";
             this.tsmiConvert.Click += new System.EventHandler(this.tsmiConvert_Click);
             // 

@@ -4,24 +4,32 @@ namespace DatabaseInterpreter.Model
 {
     public class DbInterpreterOption
     {
-        public bool SortTablesByKeyReference { get; set; } = true;
-        public bool GenerateKey { get; set; } = true;
-        public bool GenerateIndex { get; set; } = true;
-        public bool GenerateDefaultValue { get; set; } = true;
-        public bool GenerateComment { get; set; } = true;
-        public bool GenerateIdentity { get; set; } = false;
+        public bool SortTablesByKeyReference { get; set; } = false;       
         public bool InsertIdentityValue { get; set; } = true;
         public int? DataGenerateThreshold { get; set; } = 10000000;
-        public int InQueryItemLimitCount { get; set; } = 2000;
-        public GenerateScriptMode ScriptMode { get; set; }
-        public GenerateScriptOutputMode ScriptOutputMode { get; set; }
-        public string ScriptOutputFolder { get; set; } = "output";
-        public int DataBatchSize { get; set; } = 500;
+        public int InQueryItemLimitCount { get; set; } = 2000;       
         public bool RemoveEmoji { get; set; }
         public bool TreatBytesAsNullForScript { get; set; }
         public bool TreatBytesAsNullForData { get; set; }
         public bool GetAllObjectsIfNotSpecified { get; set; }
         public DatabaseObjectFetchMode ObjectFetchMode = DatabaseObjectFetchMode.Details;
+        public GenerateScriptMode ScriptMode { get; set; }
+        public GenerateScriptOutputMode ScriptOutputMode { get; set; }
+        public string ScriptOutputFolder { get; set; } = "output";
+        public bool GetTableAllObjects { get; set; }
+        public TableScriptsGenerateOption TableScriptsGenerateOption = new TableScriptsGenerateOption();
+    }
+
+    public class TableScriptsGenerateOption
+    {
+        public bool GenerateIdentity { get; set; } = false;
+        public bool GeneratePrimaryKey { get; set; } = true;
+        public bool GenerateForeignKey { get; set; } = true;
+        public bool GenerateIndex { get; set; } = true;
+        public bool GenerateDefaultValue { get; set; } = true;
+        public bool GenerateComment { get; set; } = true;
+        public bool GenerateTrigger { get; set; } = true;
+        public bool GenerateConstraint { get; set; } = true;           
     }
 
     [Flags]
@@ -52,13 +60,14 @@ namespace DatabaseInterpreter.Model
         None = 0,
         Table = 2,
         View = 4,
-        UserDefinedTypes = 8,
+        UserDefinedType = 8,
         Function = 16,        
         Procedure = 32,
-        Trigger = 64,
-        TableColumn = 128,
+        TableColumn = 64,
+        TableTrigger = 128,       
         TablePrimaryKey = 256,
         TableForeignKey = 512,
-        TableIndex = 1024
+        TableIndex = 1024,
+        TableConstraint = 2048
     }
 }

@@ -205,12 +205,14 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTablePrimaryKeys(params string[] tableNames)
         {
+            //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
+
             string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                             K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
-                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
+                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
                         WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
-                        AND C.`CONSTRAINT_SCHEMA` ='{this.ConnectionInfo.Database}'";
+                        AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -240,10 +242,10 @@ namespace DatabaseInterpreter.Core
                         CASE RC.UPDATE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS `UpdateCascade`, 
                         CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
-                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
+                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
                         JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC ON RC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND RC.CONSTRAINT_NAME=C.CONSTRAINT_NAME AND C.TABLE_NAME=RC.TABLE_NAME                        
                         WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
-                        AND C.`CONSTRAINT_SCHEMA` ='{this.ConnectionInfo.Database}'";
+                        AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -289,6 +291,58 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
+        #region Table Trigger  
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(tableNames));
+        }
+
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(tableNames));
+        }
+
+        private string GetSqlForTableTriggers(params string[] tableNames)
+        {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', TRIGGER_NAME, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
+
+            string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
+                         {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
+                        FROM INFORMATION_SCHEMA.`TRIGGERS`
+                        WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'
+                        ";
+
+            if (tableNames != null && tableNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(tableNames);
+                sql += $" AND EVENT_OBJECT_TABLE IN ({ strNames })";
+            }
+
+            sql += " ORDER BY TRIGGER_NAME";
+
+            return sql;
+        }
+        #endregion
+
+        #region Table Constraint
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(tableNames));
+        }
+
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(tableNames));
+        }
+
+        private string GetSqlForTableConstraints(params string[] tableNames)
+        {
+            return string.Empty;
+        }
+        #endregion
+
         #region View   
         public override Task<List<View>> GetViewsAsync(params string[] viewNames)
         {
@@ -304,7 +358,9 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : "VIEW_DEFINITION")} AS `Definition` 
+            string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS','{Environment.NewLine}',VIEW_DEFINITION)";
+
+            string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : createViewClause)} AS `Definition` 
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
@@ -319,42 +375,7 @@ namespace DatabaseInterpreter.Core
             return sql;
         }
 
-        #endregion
-
-        #region Trigger  
-        public override Task<List<Trigger>> GetTriggersAsync(params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(this.GetSqlForTriggers(triggerNames));
-        }
-
-        public override Task<List<Trigger>> GetTriggersAsync(DbConnection dbConnection, params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(dbConnection, this.GetSqlForTriggers(triggerNames));
-        }
-
-        private string GetSqlForTriggers(params string[] triggerNames)
-        {
-            bool isSimpleMode = this.IsObjectFectchSimpleMode();
-
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', TRIGGER_NAME, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
-
-            string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
-                         {(isSimpleMode ? "''" : definitionClause )} AS `Definition`
-                        FROM INFORMATION_SCHEMA.`TRIGGERS`
-                        WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'
-                        ";
-
-            if (triggerNames != null && triggerNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(triggerNames);
-                sql += $" AND TRIGGER_NAME IN ({ strNames })";
-            }
-
-            sql += " ORDER BY TRIGGER_NAME";
-
-            return sql;
-        }
-        #endregion
+        #endregion      
 
         #region Procedure    
         public override Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames)
@@ -547,7 +568,7 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.TableName == tableName);
 
                 #region Primary Key
-                if (this.Option.GenerateKey && primaryKeys.Count() > 0)
+                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
                 {
                     //string primaryKeyName = primaryKeys.First().KeyName;
                     //if(primaryKeyName=="PRIMARY")
@@ -565,7 +586,7 @@ $@"
 
                 List<string> foreignKeysLines = new List<string>();
                 #region Foreign Key
-                if (this.Option.GenerateKey)
+                if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
                 {
                     IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
                     if (foreignKeys.Count() > 0)
@@ -620,7 +641,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                 #endregion               
 
                 #region Index
-                if (this.Option.GenerateIndex)
+                if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
                     IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
                     if (indices.Count() > 0)
@@ -682,7 +703,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<Trigger>(schemaInfo.Triggers));
+            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
@@ -695,7 +716,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
             }
 
             return sb.ToString();
-        }        
+        }
 
         public override string ParseColumn(Table table, TableColumn column)
         {
@@ -722,7 +743,12 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                 }
             }
 
-            return $@"{this.GetQuotedString(column.Name)} {dataType} {(column.IsRequired ? "NOT NULL" : "NULL")} {(this.Option.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "")} {(string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column))} {(!string.IsNullOrEmpty(column.Comment) ? $"comment '{ValueHelper.TransferSingleQuotation(column.Comment)}'" : "")}";
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
+            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
+            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{ValueHelper.TransferSingleQuotation(column.Comment)}'" : "");
+
+            return $@"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause} {defaultValueClause} {commentClause}";
         }
 
         private bool IsNoLengthDataType(string dataType)

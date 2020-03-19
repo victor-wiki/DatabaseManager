@@ -1,6 +1,6 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class Trigger : ScriptDbObject
+    public class TableTrigger : ScriptDbObject
     {
         public string TableName { get; set; }       
     }

@@ -29,8 +29,7 @@ namespace DatabaseInterpreter.Demo
             SelectionInfo selectionInfo = new SelectionInfo()
             {
                 TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray(),
-                ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray(),
-                TriggerNames = schemaInfo.Triggers.Select(item => item.Name).ToArray()
+                ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray()               
             };
 
             return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(selectionInfo));

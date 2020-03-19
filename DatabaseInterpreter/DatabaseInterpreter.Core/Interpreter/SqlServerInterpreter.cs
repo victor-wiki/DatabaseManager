@@ -34,7 +34,7 @@ namespace DatabaseInterpreter.Core
         public override DbConnector GetDbConnector()
         {
             return new DbConnector(new SqlServerProvider(), new SqlServerConnectionBuilder(), this.ConnectionInfo);
-        }        
+        }
         #endregion
 
         #region Schema Information
@@ -300,6 +300,67 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
+        #region Table Trigger       
+
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(tableNames));
+        }
+
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(tableNames));
+        }
+
+        private string GetSqlForTableTriggers(params string[] tableNames)
+        {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+
+            string sql = $@"SELECT t.name AS [Name], OBJECT_SCHEMA_NAME(t.object_id) AS [Owner],object_name(t.parent_id) AS [TableName], 
+                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(t.object_id)")} AS [Definition]
+                            FROM sys.triggers t
+                            WHERE 1=1";
+
+            if (tableNames != null && tableNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(tableNames);
+                sql += $" AND object_name(t.parent_id) IN ({ strNames })";
+            }
+
+            sql += " ORDER BY t.name";
+
+            return sql;
+        }
+        #endregion
+
+        #region Table Constraint
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(tableNames));
+        }
+
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames)
+        {
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(tableNames));
+        }
+
+        private string GetSqlForTableConstraints(params string[] tableNames)
+        {
+            string sql = @"select  schema_name(st.schema_id) AS [Owner], st.name as [TableName], col.name as [ColumnName], chk.name as [Name], chk.definition as [Definition]
+                         from sys.check_constraints chk
+                         inner join sys.columns col on chk.parent_object_id = col.object_id and col.column_id = chk.parent_column_id
+                         inner join sys.tables st on chk.parent_object_id = st.object_id";
+
+            if (tableNames != null && tableNames.Count() > 0)
+            {
+                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                sql += $" AND st.name IN ({ strTableNames })";
+            }
+
+            return sql;
+        }
+        #endregion
+
         #region View       
 
         public override Task<List<View>> GetViewsAsync(params string[] viewNames)
@@ -330,45 +391,12 @@ namespace DatabaseInterpreter.Core
 
             return sql;
         }
-        #endregion
-
-        #region Trigger       
-
-        public override Task<List<Trigger>> GetTriggersAsync(params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(this.GetSqlForTriggers(triggerNames));
-        }
-
-        public override Task<List<Trigger>> GetTriggersAsync(DbConnection dbConnection, params string[] triggerNames)
-        {
-            return base.GetDbObjectsAsync<Trigger>(dbConnection, this.GetSqlForTriggers(triggerNames));
-        }
-
-        private string GetSqlForTriggers(params string[] triggerNames)
-        {
-            bool isSimpleMode = this.IsObjectFectchSimpleMode();
-
-            string sql = $@"SELECT t.name AS [Name], OBJECT_SCHEMA_NAME(t.object_id) AS [Owner],object_name(t.parent_id) AS [TableName], 
-                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(t.object_id)")} AS [Definition]
-                            FROM sys.triggers t
-                            WHERE 1=1";
-
-            if (triggerNames != null && triggerNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(triggerNames);
-                sql += $" AND t.name IN ({ strNames })";
-            }
-
-            sql += " ORDER BY t.name";
-
-            return sql;
-        }
-        #endregion
+        #endregion       
 
         #region Procedure       
 
         public override Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames)
-        {           
+        {
             return base.GetDbObjectsAsync<Procedure>(this.GetSqlForProcedures(procedureNames));
         }
 
@@ -426,10 +454,10 @@ namespace DatabaseInterpreter.Core
 
             bulkCopy.DestinationTableName = this.GetQuotedString(destinationTableName);
             bulkCopy.BulkCopyTimeout = bulkCopyTimeout.HasValue ? bulkCopyTimeout.Value : SettingManager.Setting.CommandTimeout;
-            bulkCopy.BatchSize = batchSize.HasValue ? batchSize.Value : SettingManager.Setting.DataBatchSize;
+            bulkCopy.BatchSize = batchSize.HasValue ? batchSize.Value : this.DataBatchSize;
 
             return bulkCopy;
-        }     
+        }
         #endregion
 
         #region Generate Schema Script   
@@ -453,7 +481,7 @@ namespace DatabaseInterpreter.Core
                 sb.Append(this.ScriptsSplitString);
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
-            }           
+            }
 
             #endregion
 
@@ -477,7 +505,7 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName);
 
                 #region Primary Key
-                if (this.Option.GenerateKey && primaryKeys.Count() > 0)
+                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
                 {
                     primaryKey =
 $@"
@@ -498,8 +526,8 @@ SET QUOTED_IDENTIFIER ON
 
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}
-) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + this.ScriptsSplitString); 
-                #endregion               
+) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + this.ScriptsSplitString);
+                #endregion
 
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
@@ -514,7 +542,7 @@ CREATE TABLE {quotedTableName}(
                 #endregion               
 
                 #region Foreign Key
-                if (this.Option.GenerateKey)
+                if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
                 {
                     IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName);
                     if (foreignKeys.Count() > 0)
@@ -553,7 +581,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 #endregion
 
                 #region Index
-                if (this.Option.GenerateIndex)
+                if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
                     IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
                     if (indices.Count() > 0)
@@ -583,12 +611,24 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 #endregion
 
                 #region Default Value
-                if (this.Option.GenerateDefaultValue)
+                if (this.Option.TableScriptsGenerateOption.GenerateDefaultValue)
                 {
                     IEnumerable<TableColumn> defaultValueColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
                     foreach (TableColumn column in defaultValueColumns)
                     {
                         sb.AppendLine($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($" DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};");
+                    }
+                }
+                #endregion
+
+                #region Constraint
+                if (this.Option.TableScriptsGenerateOption.GenerateConstraint)
+                {
+                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName); 
+
+                    foreach (TableConstraint constraint in constraints)
+                    {
+                        sb.AppendLine($"ALTER TABLE {quotedTableName}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition});");
                     }
                 }
                 #endregion
@@ -600,13 +640,12 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
             #endregion
 
-
             #region View           
             sb.Append(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<Trigger>(schemaInfo.Triggers));
+            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
@@ -635,7 +674,10 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 dataLength = $"({dataLength})";
             }
 
-            return $@"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.DataType)} {dataLength} {(this.Option.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "")} {(column.IsRequired ? "NOT NULL" : "NULL")}";
+            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
+            string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+
+            return $@"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.DataType)} {dataLength} {identityClause} {requireClause}";
         }
 
         private string GetColumnDataLength(TableColumn column)

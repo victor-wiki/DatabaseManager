@@ -13,8 +13,8 @@ namespace DatabaseManager.Helper
     public static class DbObjectsTreeHelper
     {
         public static readonly string FakeNodeName = "_FakeNode_";
-        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedTypes | DatabaseObjectType.Table | DatabaseObjectType.View;
-        
+        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedType | DatabaseObjectType.Table | DatabaseObjectType.View;
+
         public static string GetFolderNameByDbObjectType(DatabaseObjectType databaseObjectType)
         {
             return ManagerUtil.GetPluralString(databaseObjectType.ToString());
@@ -38,7 +38,7 @@ namespace DatabaseManager.Helper
         public static string GetImageKey(string name)
         {
             return $"tree_{name}.png";
-        }        
+        }
 
         public static TreeNode CreateTreeNode(string name, string text, string imageKeyName)
         {
@@ -49,10 +49,17 @@ namespace DatabaseManager.Helper
             return node;
         }
 
-        public static TreeNode CreateFolderNode(string name, string text)
+        public static TreeNode CreateFolderNode(string name, string text, bool createFakeNode = false)
         {
-            return CreateTreeNode(name, text, "Folder");
-        }       
+            TreeNode node = CreateTreeNode(name, text, "Folder");
+
+            if(createFakeNode)
+            {
+                node.Nodes.Add(CreateFakeNode());
+            }
+
+            return node;
+        }
 
         public static TreeNode CreateFakeNode()
         {
@@ -133,7 +140,7 @@ namespace DatabaseManager.Helper
 
                 yield return node;
             }
-        } 
+        }
         #endregion
     }
 }

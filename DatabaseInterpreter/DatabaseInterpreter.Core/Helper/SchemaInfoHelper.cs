@@ -11,38 +11,7 @@ namespace DatabaseInterpreter.Core
         {
             SchemaInfo cloneSchemaInfo =(SchemaInfo) JsonConvert.DeserializeObject(JsonConvert.SerializeObject(schemaInfo), typeof(SchemaInfo));           
             return cloneSchemaInfo;
-        }
-        public static void TransformOwner(SchemaInfo schemaInfo, string owner)
-        {
-            schemaInfo.UserDefinedTypes.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.Tables.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.TableColumns.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.TablePrimaryKeys.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.TableForeignKeys.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.TableIndexes.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-            schemaInfo.Views.ForEach(item =>
-            {
-                item.Owner = owner;
-            });
-        }
+        }        
 
         public static void EnsurePrimaryKeyNameUnique(SchemaInfo schemaInfo)
         {

@@ -334,7 +334,7 @@
     <None Include="Resources\tree_TableColumn.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\tree_Trigger.png" />
+    <None Include="Resources\tree_TableTrigger.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\tree_TablePrimaryKey.png" />
@@ -347,6 +347,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\TabClose .png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\tree_TableConstraint.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

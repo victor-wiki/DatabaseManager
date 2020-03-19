@@ -23,6 +23,7 @@ namespace DatabaseInterpreter.Core
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsSplitString => ";";
         public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
+        public int DataBatchSize => SettingManager.Setting.DataBatchSize;
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
@@ -196,15 +197,21 @@ namespace DatabaseInterpreter.Core
 
         #endregion
 
+        #region Table Trigger        
+        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames);
+        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames);
+        #endregion
+
+        #region Table Constraint
+        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames);
+        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames);
+
+        #endregion
+
         #region View        
         public abstract Task<List<View>> GetViewsAsync(params string[] viewNames);
         public abstract Task<List<View>> GetViewsAsync(DbConnection dbConnection, params string[] viewNames);
-        #endregion
-
-        #region Trigger        
-        public abstract Task<List<Trigger>> GetTriggersAsync(params string[] triggerNames);
-        public abstract Task<List<Trigger>> GetTriggersAsync(DbConnection dbConnection, params string[] triggerNames);
-        #endregion
+        #endregion     
 
         #region Procedure        
         public abstract Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames);
@@ -218,7 +225,7 @@ namespace DatabaseInterpreter.Core
 
             using (DbConnection connection = this.dbConnector.CreateConnection())
             {
-                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedTypes, selectionInfo.UserDefinedTypeNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, selectionInfo.UserDefinedTypeNames, dbObjectType))
                 {
                     schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, selectionInfo.UserDefinedTypeNames);
                 }
@@ -230,57 +237,69 @@ namespace DatabaseInterpreter.Core
 
                 if (this.NeedFetchObjects(DatabaseObjectType.Table, selectionInfo.TableNames, dbObjectType))
                 {
-                    schemaInfo.Tables = await this.GetTablesAsync(connection, selectionInfo.TableNames);
-
-                    if (!this.IsObjectFectchSimpleMode())
-                    {
-                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, selectionInfo.TableNames);
-
-                        if (this.Option.GenerateKey)
-                        {
-                            schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, selectionInfo.TableNames);
-                            schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, selectionInfo.TableNames);
-                        }
-
-                        if (this.Option.GenerateIndex)
-                        {
-                            schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, selectionInfo.TableNames);
-                        }
-
-                        if (this.Option.SortTablesByKeyReference && this.Option.GenerateKey && schemaInfo.Tables.Count > 1)
-                        {
-                            string[] tableNames = schemaInfo.Tables.Select(item => item.Name).ToArray();
-
-                            List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, schemaInfo.TableForeignKeys);
-
-                            int i = 1;
-                            foreach (string tableName in sortedTableNames)
-                            {
-                                Table table = schemaInfo.Tables.FirstOrDefault(item => item.Name == tableName);
-                                if (table != null)
-                                {
-                                    table.Order = i++;
-                                }
-                            }
-
-                            schemaInfo.Tables = schemaInfo.Tables.OrderBy(item => item.Order).ToList();
-                        }
-                    }
+                    schemaInfo.Tables = await this.GetTablesAsync(connection, selectionInfo.TableNames);                   
                 }
 
                 if (this.NeedFetchObjects(DatabaseObjectType.View, selectionInfo.ViewNames, dbObjectType))
                 {
                     schemaInfo.Views = ViewHelper.ResortViews(await this.GetViewsAsync(connection, selectionInfo.ViewNames));
-                }
-
-                if (this.NeedFetchObjects(DatabaseObjectType.Trigger, selectionInfo.TriggerNames, dbObjectType))
-                {
-                    schemaInfo.Triggers = await this.GetTriggersAsync(connection, selectionInfo.TriggerNames);
-                }
+                }               
 
                 if (this.NeedFetchObjects(DatabaseObjectType.Procedure, selectionInfo.ProcedureNames, dbObjectType))
                 {
                     schemaInfo.Procedures = await this.GetProceduresAsync(connection, selectionInfo.ProcedureNames);
+                }
+
+                if (!this.IsObjectFectchSimpleMode())
+                {
+                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableColumn, null, dbObjectType))
+                    {
+                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TablePrimaryKey, null, dbObjectType))
+                    {
+                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.GetTableAllObjects || this.Option.SortTablesByKeyReference || this.NeedFetchObjects(DatabaseObjectType.TableForeignKey, null, dbObjectType))
+                    {
+                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableIndex, null, dbObjectType))
+                    {
+                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableConstraint, null, dbObjectType))
+                    {
+                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableTrigger, null, dbObjectType))
+                    {
+                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, selectionInfo.TableNames);
+                    }
+
+                    if (this.Option.SortTablesByKeyReference && schemaInfo.Tables.Count > 1)
+                    {
+                        string[] tableNames = schemaInfo.Tables.Select(item => item.Name).ToArray();
+
+                        List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, schemaInfo.TableForeignKeys);
+
+                        int i = 1;
+                        foreach (string tableName in sortedTableNames)
+                        {
+                            Table table = schemaInfo.Tables.FirstOrDefault(item => item.Name == tableName);
+                            if (table != null)
+                            {
+                                table.Order = i++;
+                            }
+                        }
+
+                        schemaInfo.Tables = schemaInfo.Tables.OrderBy(item => item.Order).ToList();
+                    }
                 }
             }
 
@@ -497,7 +516,7 @@ namespace DatabaseInterpreter.Core
                         continue;
                     }
 
-                    int pageSize = this.Option.DataBatchSize;
+                    int pageSize = this.DataBatchSize;
 
                     this.FeedbackInfo($"{strTableCount}Table \"{table.Name}\":record count is {total}.");
 
@@ -546,7 +565,7 @@ namespace DatabaseInterpreter.Core
         {
             string quotedTableName = this.GetQuotedObjectName(table);
 
-            int pageSize = this.Option.DataBatchSize;
+            int pageSize = this.DataBatchSize;
 
             long total = Convert.ToInt64(await this.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
 
@@ -660,7 +679,7 @@ namespace DatabaseInterpreter.Core
             bool appendFile = this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile);
 
             List<string> excludeColumnNames = new List<string>();
-            if (this.Option.GenerateIdentity && !this.Option.InsertIdentityValue)
+            if (this.Option.TableScriptsGenerateOption.GenerateIdentity && !this.Option.InsertIdentityValue)
             {
                 excludeColumnNames = columns.Where(item => item.IsIdentity).Select(item => item.Name).ToList();
             }
