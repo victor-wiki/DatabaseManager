@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DatabaseInterpreter.Model
+﻿namespace DatabaseInterpreter.Model
 {
-    public class TableConstraint: DatabaseObject
-    {
-        public string TableName { get; set; }
+    public class TableConstraint: TableChild
+    {        
         public string Definition { get; set; }
     }
 }

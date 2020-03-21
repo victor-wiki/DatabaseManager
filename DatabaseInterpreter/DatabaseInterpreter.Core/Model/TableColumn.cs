@@ -1,8 +1,7 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class TableColumn: DatabaseObject
-    {       
-        public string TableName { get; set; }       
+    public class TableColumn: TableChild
+    {            
         public string DataType { get; set; }
         public bool IsRequired => !IsNullable;
         public bool IsNullable { get; set; }

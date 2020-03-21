@@ -112,7 +112,7 @@ namespace DatabaseInterpreter.Core
                 string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
 
                 sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
-                        CONVERT(CONCAT('CREATE PROCEDURE `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
+                        CONVERT(CONCAT('CREATE {type} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
                         FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'
                         ";
             }
@@ -552,15 +552,28 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
+            if(dbObjet is TablePrimaryKey)
+            {
+                TablePrimaryKey primaryKey = dbObjet as TablePrimaryKey;
+
+                sql = $"ALTER TABLE {this.GetQuotedString(primaryKey.Owner)}.{this.GetQuotedString(primaryKey.TableName)} DROP PRIMARY KEY;";
+            }
             if (dbObjet is TableForeignKey)
             {
-                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+                TableForeignKey foreignKey = dbObjet as TableForeignKey;
 
-                sql = $"ALTER TABLE {this.GetQuotedString(tableForeignKey.Owner)}.{this.GetQuotedString(tableForeignKey.TableName)} DROP FOREIGN KEY {this.GetQuotedString(tableForeignKey.Name)};";
+                sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreignKey.TableName)} DROP FOREIGN KEY {this.GetQuotedString(foreignKey.Name)};";
+            }
+            else if (dbObjet is TableIndex)
+            {
+                TableIndex index = dbObjet as TableIndex;
+
+                sql = $"ALTER TABLE {index.Owner}.{this.GetQuotedString(index.TableName)} DROP INDEX {this.GetQuotedString(index.Name)};";
             }
             else
             {
-                sql = $"DROP {typeof(T).Name} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+                string typeName = dbObjet.GetType().Name;
+                sql = $"DROP { typeName } IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);

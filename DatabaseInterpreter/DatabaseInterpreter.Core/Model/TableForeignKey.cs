@@ -1,9 +1,7 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class TableForeignKey: DatabaseObject
-    {      
-        public string TableName { get; set; }       
-        public string ColumnName { get; set; }
+    public class TableForeignKey: TableKey
+    {             
         public string ReferencedTableName { get; set; }
         public string ReferencedColumnName { get; set; }
         public bool UpdateCascade { get; set; }

@@ -480,15 +480,20 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
-            if (dbObjet is TableForeignKey)
+            if (dbObjet is TableKey || dbObjet is TableConstraint)
             {
-                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+                TableChild dbObj = dbObjet as TableChild;
 
-                sql = $"ALTER TABLE {this.GetQuotedString(tableForeignKey.Owner)}.{this.GetQuotedString(tableForeignKey.TableName)} DROP CONSTRAINT {this.GetQuotedString(tableForeignKey.Name)};";
+                sql = $"ALTER TABLE {this.GetQuotedString(dbObj.Owner)}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)}";
+            }
+            else if(dbObjet is TableIndex)
+            {
+                sql = $"DROP INDEX {this.GetQuotedObjectName(dbObjet)}";
             }
             else
             {
-                sql = $"DROP {typeof(T).Name} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+                string typeName = dbObjet.GetType().Name;
+                sql = $"DROP { typeName } {this.GetQuotedObjectName(dbObjet)}";
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);

@@ -38,6 +38,7 @@
             this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -55,6 +56,7 @@
             this.tvDbObjects.TabIndex = 20;
             this.tvDbObjects.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.tvDbObjects_BeforeExpand);
             this.tvDbObjects.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvDbObjects_NodeMouseClick);
+            this.tvDbObjects.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tvDbObjects_KeyDown);
             // 
             // imageList1
             // 
@@ -81,9 +83,10 @@
             this.tsmiGenerateScripts,
             this.tsmiRefresh,
             this.tsmiClearData,
-            this.tsmiEmptyDatabase});
+            this.tsmiEmptyDatabase,
+            this.tsmiDelete});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 136);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 158);
             // 
             // tsmiConvert
             // 
@@ -120,6 +123,13 @@
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
+            // tsmiDelete
+            // 
+            this.tsmiDelete.Name = "tsmiDelete";
+            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDelete.Text = "Delete";
+            this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
+            // 
             // UC_DbObjectsComplexTree
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -142,5 +152,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiConvert;
         private System.Windows.Forms.ToolStripMenuItem tsmiClearData;
         private System.Windows.Forms.ToolStripMenuItem tsmiEmptyDatabase;
+        private System.Windows.Forms.ToolStripMenuItem tsmiDelete;
     }
 }

@@ -67,12 +67,24 @@ namespace DatabaseManager.Controls
             }
         }
 
+        private bool CanRefresh(TreeNode node)
+        {
+            return (node.Level <= 3) && node.Nodes.Count > 0 && !this.IsOnlyHasFakeChild(node);
+        }
+
+        private bool CanDelete(TreeNode node)
+        {
+            return node.Level == 2 || (node.Level == 4 && !(node.Tag is TableColumn));
+        }
+
         private void SetMenuItemVisible(TreeNode node)
         {
-            this.tsmiRefresh.Visible = node.Level <= 2 && node.Nodes.Count > 0 && !this.IsOnlyHasFakeChild(node);
+            this.tsmiRefresh.Visible = this.CanRefresh(node);
             this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
             this.tsmiConvert.Visible = node.Level == 0;
             this.tsmiClearData.Visible = node.Level == 0;
+            this.tsmiEmptyDatabase.Visible = node.Level == 0;
+            this.tsmiDelete.Visible = this.CanDelete(node);
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -179,6 +191,7 @@ namespace DatabaseManager.Controls
                     string imageKeyName = isPrimaryKey ? nameof(TablePrimaryKey) : (isForeignKey ? nameof(TableForeignKey) : nameof(TableColumn));
 
                     TreeNode node = DbObjectsTreeHelper.CreateTreeNode(column.Name, text, imageKeyName);
+                    node.Tag = column;
 
                     treeNode.Nodes.Add(node);
                 }
@@ -206,6 +219,7 @@ namespace DatabaseManager.Controls
                     string imageKeyName = nameof(TableIndex);
 
                     TreeNode node = DbObjectsTreeHelper.CreateTreeNode(indexName, text, imageKeyName);
+                    node.Tag = kp.First();
 
                     treeNode.Nodes.Add(node);
                 }
@@ -322,12 +336,22 @@ namespace DatabaseManager.Controls
 
         private async void tsmiRefresh_Click(object sender, EventArgs e)
         {
+            await this.RefreshNode();
+        }
+
+        private async Task RefreshNode()
+        {
             if (!this.IsValidSelectedNode())
             {
                 return;
             }
 
-            await this.LoadChildNodes(this.GetSelectedNode());
+            TreeNode node = this.GetSelectedNode();
+
+            if (this.CanRefresh(node))
+            {
+                await this.LoadChildNodes(node);
+            }
         }
 
         private bool IsValidSelectedNode()
@@ -386,7 +410,7 @@ namespace DatabaseManager.Controls
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
-            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { obj.Name });           
+            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { obj.Name });
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             string script = dbInterpreter.GenerateSchemaScripts(schemaInfo);
@@ -469,14 +493,14 @@ namespace DatabaseManager.Controls
                     TreeNode node = this.GetSelectedNode();
 
                     await this.EmptyDatabase(node.Name, selector.DatabaseObjectType);
-                }                
+                }
             }
         }
 
         private async Task EmptyDatabase(string database, DatabaseObjectType databaseObjectType)
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
-            dbInterpreter.OnFeedback += this.Feedback;           
+            dbInterpreter.OnFeedback += this.Feedback;
 
             await dbInterpreter.EmptyDatabaseAsync(databaseObjectType);
 
@@ -484,6 +508,57 @@ namespace DatabaseManager.Controls
             {
                 MessageBox.Show("Seleted database objects have been deleted.");
             }
+        }
+
+        private async void tvDbObjects_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F5)
+            {
+                await this.RefreshNode();
+            }
+            else if (e.KeyCode == Keys.Delete)
+            {
+                this.DeleteNode();
+            }
+        }
+
+        private void DeleteNode()
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            if (this.CanDelete(node))
+            {
+                if (MessageBox.Show("Are you sure to delete this object?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    this.DropDbObject(node);
+                }
+            }
+        }
+
+        private async void DropDbObject(TreeNode node)
+        {
+            string database = this.GetDatabaseNode(node).Name;
+            DatabaseObject dbObject = node.Tag as DatabaseObject;
+
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            dbInterpreter.OnFeedback += this.Feedback;
+
+            await dbInterpreter.Drop(dbObject);
+
+            if (!dbInterpreter.HasError)
+            {
+                node.Parent.Nodes.Remove(node);
+            }
+        }
+
+        private void tsmiDelete_Click(object sender, EventArgs e)
+        {
+            this.DeleteNode();
         }
     }
 }

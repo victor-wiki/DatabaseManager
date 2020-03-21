@@ -467,6 +467,11 @@ namespace DatabaseInterpreter.Core
             }
         }
 
+        public async Task Drop<T>(T dbObjet) where T : DatabaseObject
+        {
+            await this.Drop<T>(this.dbConnector.CreateConnection(), dbObjet);
+        }
+
         public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
 
         public virtual async Task EmptyDatabaseAsync(DatabaseObjectType databaseObjectType)

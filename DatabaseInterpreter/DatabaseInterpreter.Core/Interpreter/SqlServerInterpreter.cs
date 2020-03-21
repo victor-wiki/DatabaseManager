@@ -471,15 +471,21 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
-            if(dbObjet is TableForeignKey)
+            if(dbObjet is TableKey || dbObjet is TableConstraint)
             {
-                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+                TableChild dbObj = dbObjet as TableChild;
 
-                sql = $"ALTER TABLE {tableForeignKey.Owner}.{this.GetQuotedString(tableForeignKey.TableName)} DROP CONSTRAINT {this.GetQuotedString(tableForeignKey.Name)};";
+                sql = $"ALTER TABLE {dbObj.Owner}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)};";
+            }
+            else if(dbObjet is TableIndex)
+            {
+                TableIndex index = dbObjet as TableIndex;
+
+                sql = $"DROP INDEX {this.GetQuotedString(index.Name)} ON {index.Owner}.{this.GetQuotedString(index.TableName)};";
             }
             else
             {
-                string typeName = typeof(T) == typeof(UserDefinedType) ? "TYPE" : typeof(T).Name;
+                string typeName = dbObjet.GetType() == typeof(UserDefinedType) ? "TYPE" : dbObjet.GetType().Name;
 
                 sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
             }        
