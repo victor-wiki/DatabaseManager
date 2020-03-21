@@ -541,6 +541,30 @@ namespace DatabaseInterpreter.Core
             return loader;
         }
 
+        public override async Task SetConstrainsEnabled(bool enabled)
+        {
+            string sql = $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";           
+
+            await this.ExecuteNonQueryAsync(sql);        
+        }
+
+        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
+        {
+            string sql = "";
+
+            if (dbObjet is TableForeignKey)
+            {
+                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+
+                sql = $"ALTER TABLE {this.GetQuotedString(tableForeignKey.Owner)}.{this.GetQuotedString(tableForeignKey.TableName)} DROP FOREIGN KEY {this.GetQuotedString(tableForeignKey.Name)};";
+            }
+            else
+            {
+                sql = $"DROP {typeof(T).Name} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+            }
+
+            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
+        }
         #endregion
 
         #region Generate Schema Scripts 

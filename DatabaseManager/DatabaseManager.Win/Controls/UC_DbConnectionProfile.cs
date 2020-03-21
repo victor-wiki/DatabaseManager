@@ -35,6 +35,8 @@ namespace DatabaseManager.Controls
             }
         }
 
+        public int ClientHeight => this.btnAddDbProfile.Height;
+
         public DatabaseType DatabaseType
         {
             get { return ManagerUtil.GetDatabaseType(this.cboDbType.Text); }

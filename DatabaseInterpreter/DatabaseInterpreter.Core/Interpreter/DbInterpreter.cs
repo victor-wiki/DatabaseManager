@@ -13,6 +13,8 @@ using DatabaseInterpreter.Utility;
 
 namespace DatabaseInterpreter.Core
 {
+    public delegate void FeedbackHandler(FeedbackInfo feedbackInfo);
+
     public abstract class DbInterpreter
     {
         #region Field & Property       
@@ -37,6 +39,8 @@ namespace DatabaseInterpreter.Core
 
         public delegate Task DataReadHandler(Table table, List<TableColumn> columns, List<Dictionary<string, object>> data, DataTable dataTable);
         public event DataReadHandler OnDataRead;
+
+        public FeedbackHandler OnFeedback;
 
         #endregion
 
@@ -132,9 +136,16 @@ namespace DatabaseInterpreter.Core
 
         public void Feedback(FeedbackInfoType infoType, string message)
         {
+            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
+
             if (this.m_Observer != null)
             {
-                FeedbackHelper.Feedback(this.m_Observer, new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) });
+                FeedbackHelper.Feedback(this.m_Observer, info);
+            }
+
+            if (this.OnFeedback != null)
+            {
+                this.OnFeedback(info);
             }
         }
 
@@ -219,96 +230,105 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region SchemaInfo
-        public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SelectionInfo selectionInfo, DatabaseObjectType dbObjectType = DatabaseObjectType.None)
+        public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter)
         {
+            if (filter == null)
+            {
+                filter = new SchemaInfoFilter();
+            }
+
+            DatabaseObjectType dbObjectType = filter.DatabaseObjectType;
+
             SchemaInfo schemaInfo = new SchemaInfo();
 
             using (DbConnection connection = this.dbConnector.CreateConnection())
             {
-                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, selectionInfo.UserDefinedTypeNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, dbObjectType, filter.Strict))
                 {
-                    schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, selectionInfo.UserDefinedTypeNames);
+                    schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter.UserDefinedTypeNames);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Function, selectionInfo.FunctionNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, dbObjectType, filter.Strict))
                 {
-                    schemaInfo.Functions = await this.GetFunctionsAsync(connection, selectionInfo.FunctionNames);
+                    schemaInfo.Functions = await this.GetFunctionsAsync(connection, filter.FunctionNames);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Table, selectionInfo.TableNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.Table, filter.TableNames, dbObjectType, filter.Strict))
                 {
-                    schemaInfo.Tables = await this.GetTablesAsync(connection, selectionInfo.TableNames);                   
+                    schemaInfo.Tables = await this.GetTablesAsync(connection, filter.TableNames);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.View, selectionInfo.ViewNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.View, filter.ViewNames, dbObjectType, filter.Strict))
                 {
-                    schemaInfo.Views = ViewHelper.ResortViews(await this.GetViewsAsync(connection, selectionInfo.ViewNames));
-                }               
+                    schemaInfo.Views = await this.GetViewsAsync(connection, filter.ViewNames);
+                }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Procedure, selectionInfo.ProcedureNames, dbObjectType))
+                if (this.NeedFetchObjects(DatabaseObjectType.Procedure, filter.ProcedureNames, dbObjectType, filter.Strict))
                 {
-                    schemaInfo.Procedures = await this.GetProceduresAsync(connection, selectionInfo.ProcedureNames);
+                    schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter.ProcedureNames);
                 }
 
                 if (!this.IsObjectFectchSimpleMode())
                 {
                     if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableColumn, null, dbObjectType))
                     {
-                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, selectionInfo.TableNames);
+                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter.TableNames);
                     }
 
                     if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TablePrimaryKey, null, dbObjectType))
                     {
-                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, selectionInfo.TableNames);
+                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter.TableNames);
                     }
 
-                    if (this.Option.GetTableAllObjects || this.Option.SortTablesByKeyReference || this.NeedFetchObjects(DatabaseObjectType.TableForeignKey, null, dbObjectType))
+                    if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableForeignKey, null, dbObjectType))
                     {
-                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, selectionInfo.TableNames);
+                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter.TableNames);
                     }
 
                     if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableIndex, null, dbObjectType))
                     {
-                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, selectionInfo.TableNames);
+                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter.TableNames);
                     }
 
                     if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableConstraint, null, dbObjectType))
                     {
-                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, selectionInfo.TableNames);
+                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter.TableNames);
                     }
 
                     if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableTrigger, null, dbObjectType))
                     {
-                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, selectionInfo.TableNames);
-                    }
-
-                    if (this.Option.SortTablesByKeyReference && schemaInfo.Tables.Count > 1)
-                    {
-                        string[] tableNames = schemaInfo.Tables.Select(item => item.Name).ToArray();
-
-                        List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, schemaInfo.TableForeignKeys);
-
-                        int i = 1;
-                        foreach (string tableName in sortedTableNames)
-                        {
-                            Table table = schemaInfo.Tables.FirstOrDefault(item => item.Name == tableName);
-                            if (table != null)
-                            {
-                                table.Order = i++;
-                            }
-                        }
-
-                        schemaInfo.Tables = schemaInfo.Tables.OrderBy(item => item.Order).ToList();
+                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter.TableNames);
                     }
                 }
+            }
+
+            if (this.Option.SortObjectsByReference)
+            {
+                if (schemaInfo.Tables.Count > 1)
+                {
+                    schemaInfo.Tables = TableReferenceHelper.ResortTables(schemaInfo.Tables, schemaInfo.TableForeignKeys);
+                }
+
+                DbObjectHelper.Resort(schemaInfo.Views);
+                DbObjectHelper.Resort(schemaInfo.Functions);
+                DbObjectHelper.Resort(schemaInfo.Procedures);
             }
 
             return schemaInfo;
         }
 
-        private bool NeedFetchObjects(DatabaseObjectType currentObjectType, string[] names, DatabaseObjectType fetchDbObjectType)
+        private bool NeedFetchObjects(DatabaseObjectType currentObjectType, string[] names, DatabaseObjectType fetchDbObjectType, bool strict = false)
         {
-            return (names != null && names.Any()) || this.Option.GetAllObjectsIfNotSpecified || fetchDbObjectType.HasFlag(currentObjectType);
+            bool hasName = names != null && names.Any();
+
+            if (strict)
+            {
+                return this.Option.GetAllObjectsIfNotSpecified || (hasName && fetchDbObjectType.HasFlag(currentObjectType));
+            }
+            else
+            {
+                return hasName || this.Option.GetAllObjectsIfNotSpecified || fetchDbObjectType.HasFlag(currentObjectType);
+            }
         }
         #endregion
         #endregion
@@ -327,9 +347,9 @@ namespace DatabaseInterpreter.Core
             return this.InternalExecuteNonQuery(this.dbConnector.CreateConnection(), commandInfo, true);
         }
 
-        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql)
+        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = true)
         {
-            return this.InternalExecuteNonQuery(dbConnection, new CommandInfo() { CommandText = sql });
+            return this.InternalExecuteNonQuery(dbConnection, new CommandInfo() { CommandText = sql }, disposeConnection);
         }
 
         public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, CommandInfo commandInfo)
@@ -346,7 +366,7 @@ namespace DatabaseInterpreter.Core
 
             CommandDefinition command = new CommandDefinition
             (
-                commandInfo.CommandText,
+                commandInfo.CommandText.Trim(),
                 commandInfo.Parameters,
                 commandInfo.Transaction,
                 SettingManager.Setting.CommandTimeout,
@@ -396,6 +416,16 @@ namespace DatabaseInterpreter.Core
             return await dbConnection.ExecuteScalarAsync(sql);
         }
 
+        protected async Task<DbDataReader> GetDataReaderAsync(string sql)
+        {
+            return await this.dbConnector.CreateConnection().ExecuteReaderAsync(sql);
+        }
+
+        protected async Task<DbDataReader> GetDataReaderAsync(DbConnection dbConnection, string sql)
+        {
+            return await dbConnection.ExecuteReaderAsync(sql);
+        }
+
         protected async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql)
         {
             var reader = await dbConnection.ExecuteReaderAsync(sql);
@@ -406,12 +436,100 @@ namespace DatabaseInterpreter.Core
             return table;
         }
 
+        public abstract Task SetConstrainsEnabled(bool enabled);
+
+        public virtual async Task ClearDataAsync(List<Table> tables = null)
+        {
+            if (tables == null)
+            {
+                tables = await this.GetTablesAsync();
+            }
+
+            try
+            {
+                await this.SetConstrainsEnabled(false);
+
+                using (DbConnection dbConnection = this.dbConnector.CreateConnection())
+                {
+                    foreach (Table table in tables)
+                    {
+                        await this.ExecuteNonQueryAsync(dbConnection, $"DELETE FROM {this.GetQuotedObjectName(table)}", false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+            }
+            finally
+            {
+                await this.SetConstrainsEnabled(true);
+            }
+        }
+
+        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
+
+        public virtual async Task EmptyDatabaseAsync(DatabaseObjectType databaseObjectType)
+        {
+            bool sortObjectsByReference = this.Option.SortObjectsByReference;
+            DatabaseObjectFetchMode fetchMode = this.Option.ObjectFetchMode;
+
+            this.Option.SortObjectsByReference = true;
+            this.Option.ObjectFetchMode = DatabaseObjectFetchMode.Details;
+
+            SchemaInfo schemaInfo = await this.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
+
+            try
+            {
+                using (DbConnection connection = this.dbConnector.CreateConnection())
+                {
+                    foreach (Procedure procedure in schemaInfo.Procedures)
+                    {
+                        await this.Drop(connection, procedure);
+                    }
+
+                    foreach (View view in schemaInfo.Views)
+                    {
+                        await this.Drop(connection, view);
+                    }
+
+                    foreach(TableForeignKey tableForeignKey in schemaInfo.TableForeignKeys)
+                    {
+                        await this.Drop(connection, tableForeignKey);
+                    }
+
+                    foreach (Table table in schemaInfo.Tables)
+                    {
+                        await this.Drop(connection, table);
+                    }
+
+                    foreach (Function function in schemaInfo.Functions)
+                    {
+                        await this.Drop(connection, function);
+                    }
+
+                    foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
+                    {
+                        await this.Drop(connection, userDefinedType);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+            }
+            finally
+            {
+                this.Option.SortObjectsByReference = sortObjectsByReference;
+                this.Option.ObjectFetchMode = fetchMode;
+            }
+        }
         #endregion
 
         #region Generate Scripts     
 
         public abstract string GenerateSchemaScripts(SchemaInfo schemaInfo);
-        public abstract string ParseColumn(Table table, TableColumn column);      
+        public abstract string ParseColumn(Table table, TableColumn column);
 
         protected virtual string GenerateScriptDbObjectScripts<T>(List<T> dbObjects)
             where T : ScriptDbObject
@@ -426,7 +544,7 @@ namespace DatabaseInterpreter.Core
 
                 sb.Append(dbObject.Definition.Trim());
 
-                if(!hasNewLine)
+                if (!hasNewLine)
                 {
                     sb.AppendLine(this.ScriptsSplitString);
                 }
@@ -435,7 +553,7 @@ namespace DatabaseInterpreter.Core
                     sb.AppendLine();
                     sb.Append(this.ScriptsSplitString);
                 }
-               
+
                 sb.AppendLine();
 
                 this.FeedbackInfo(OperationState.End, dbObject);
@@ -971,7 +1089,7 @@ namespace DatabaseInterpreter.Core
         protected virtual string GetColumnDefaultValue(TableColumn column)
         {
             bool isChar = DataTypeHelper.IsCharType(column.DataType);
-            if (isChar && !column.DefaultValue.StartsWith("'"))
+            if (isChar && !column.DefaultValue.Trim('(', ')').StartsWith("'"))
             {
                 return $"'{column.DefaultValue}'";
             }

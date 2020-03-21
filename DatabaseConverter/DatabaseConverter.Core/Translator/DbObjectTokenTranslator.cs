@@ -8,7 +8,7 @@ using TSQL.Tokens;
 
 namespace DatabaseConverter.Core
 {
-    public class DbObjectTokenTranslator: DbObjectTranslator
+    public class DbObjectTokenTranslator : DbObjectTranslator
     {
         private List<string> dataTypes = new List<string>();
 
@@ -16,7 +16,7 @@ namespace DatabaseConverter.Core
 
         public override void Translate()
         {
-           
+
         }
 
         public string ParseDefinition(string definition)
@@ -30,16 +30,16 @@ namespace DatabaseConverter.Core
 
             this.sourceOwnerName = DbInterpreterHelper.GetOwnerName(sourceDbInterpreter);
 
-            bool ignore = false;
+            int ignoreCount = 0;
 
             TSQLTokenType previousType = TSQLTokenType.Whitespace;
             string previousText = "";
 
             for (int i = 0; i < tokens.Count; i++)
             {
-                if (ignore)
+                if (ignoreCount > 0)
                 {
-                    ignore = false;
+                    ignoreCount--;
                     continue;
                 }
 
@@ -65,11 +65,21 @@ namespace DatabaseConverter.Core
                             text.Trim('"') == sourceOwnerName && i + 1 < tokens.Count && tokens[i + 1].Text == "."
                             )
                         {
-                            ignore = true;
+                            ignoreCount++;
                             continue;
                         }
                         else if (nextToken != null && nextToken.Text.Trim() == "(") //function handle
                         {
+                            string textWithBrackets = text.ToLower() + "()";
+
+                            bool useBrackets = false;
+
+                            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
+                            {
+                                useBrackets = true;
+                                text = textWithBrackets;
+                            }
+
                             IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
                             if (funcMappings != null)
                             {
@@ -79,6 +89,11 @@ namespace DatabaseConverter.Core
                                 {
                                     sb.Append(targetFunction);
                                 }
+
+                                if (useBrackets)
+                                {
+                                    ignoreCount += 2;
+                                }
                             }
                             else
                             {
@@ -87,7 +102,7 @@ namespace DatabaseConverter.Core
                         }
                         else
                         {
-                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim(new char[] { sourceDbInterpreter.QuotationLeftChar, sourceDbInterpreter.QuotationRightChar })}{targetDbInterpreter.QuotationRightChar}");
+                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim(new char[] { '"', sourceDbInterpreter.QuotationLeftChar, sourceDbInterpreter.QuotationRightChar })}{targetDbInterpreter.QuotationRightChar}");
                         }
                         break;
                     case TSQLTokenType.StringLiteral:

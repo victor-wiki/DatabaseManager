@@ -38,7 +38,7 @@
             this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
             this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
-            this.btnConnect = new System.Windows.Forms.Button();
+            this.btnFetch = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
             this.gbOption = new System.Windows.Forms.GroupBox();
@@ -100,7 +100,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 80);
+            this.txtMessage.Size = new System.Drawing.Size(731, 82);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             // 
@@ -118,7 +118,7 @@
             this.splitContainer1.Panel1.Controls.Add(this.tvDbObjects);
             this.splitContainer1.Panel1.Controls.Add(this.targetDbProfile);
             this.splitContainer1.Panel1.Controls.Add(this.sourceDbProfile);
-            this.splitContainer1.Panel1.Controls.Add(this.btnConnect);
+            this.splitContainer1.Panel1.Controls.Add(this.btnFetch);
             this.splitContainer1.Panel1.Controls.Add(this.btnCancel);
             this.splitContainer1.Panel1.Controls.Add(this.btnExecute);
             this.splitContainer1.Panel1.Controls.Add(this.gbOption);
@@ -166,17 +166,17 @@
             this.sourceDbProfile.Title = "Source:";
             this.sourceDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.sourceDbProfile_OnSelectedChanged);
             // 
-            // btnConnect
+            // btnFetch
             // 
-            this.btnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnConnect.Font = new System.Drawing.Font("宋体", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btnConnect.Location = new System.Drawing.Point(690, 1);
-            this.btnConnect.Name = "btnConnect";
-            this.btnConnect.Size = new System.Drawing.Size(71, 50);
-            this.btnConnect.TabIndex = 35;
-            this.btnConnect.Text = "Connect";
-            this.btnConnect.UseVisualStyleBackColor = true;
-            this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
+            this.btnFetch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnFetch.Font = new System.Drawing.Font("宋体", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnFetch.Location = new System.Drawing.Point(690, 2);
+            this.btnFetch.Name = "btnFetch";
+            this.btnFetch.Size = new System.Drawing.Size(71, 50);
+            this.btnFetch.TabIndex = 35;
+            this.btnFetch.Text = "Fetch";
+            this.btnFetch.UseVisualStyleBackColor = true;
+            this.btnFetch.Click += new System.EventHandler(this.btnFetch_Click);
             // 
             // btnCancel
             // 
@@ -408,7 +408,7 @@
         private System.Windows.Forms.Button btnCopyMessage;
         private System.Windows.Forms.SaveFileDialog dlgSaveLog;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.Button btnConnect;
+        private System.Windows.Forms.Button btnFetch;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnExecute;
         private System.Windows.Forms.GroupBox gbOption;

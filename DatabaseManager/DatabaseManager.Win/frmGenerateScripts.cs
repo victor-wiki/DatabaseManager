@@ -111,7 +111,7 @@ namespace DatabaseManager
 
             try
             {
-                await this.tvDbObjects.LoadTree(dbType, this.connectionInfo);
+                await this.tvDbObjects.LoadTree(dbType, this.connectionInfo, true);
             }
             catch (Exception ex)
             {
@@ -154,7 +154,7 @@ namespace DatabaseManager
             DbInterpreterOption option = new DbInterpreterOption()
             {
                 ScriptOutputMode = GenerateScriptOutputMode.WriteToFile,
-                SortTablesByKeyReference = true,
+                SortObjectsByReference = true,
                 GetTableAllObjects = true
             };
 
@@ -170,7 +170,7 @@ namespace DatabaseManager
 
             this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.connectionInfo, option);
 
-            SelectionInfo selectionInfo = new SelectionInfo()
+            SchemaInfoFilter filter = new SchemaInfoFilter()
             {
                 UserDefinedTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).ToArray(),
                 TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray(),
@@ -179,7 +179,7 @@ namespace DatabaseManager
 
             try
             {
-                schemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(selectionInfo);
+                schemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(filter);
 
                 this.dbInterpreter.Subscribe(this);
 

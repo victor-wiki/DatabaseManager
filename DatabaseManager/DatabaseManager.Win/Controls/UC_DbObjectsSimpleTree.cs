@@ -22,18 +22,31 @@ namespace DatabaseManager.Controls
             TreeView.CheckForIllegalCrossThreadCalls = false;
         }
 
-        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo)
+        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, bool loadAllObjects =false )
         {
             this.tvDbObjects.Nodes.Clear();
 
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
+            DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SelectionInfo(), DbObjectsTreeHelper.DefaultObjectType);
+            if(loadAllObjects)
+            {
+                option.GetAllObjectsIfNotSpecified = true;
+            }
+            else
+            {
+                databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
+            }
+
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);          
+
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() {  DatabaseObjectType = databaseObjectType });
 
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
+            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
+            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures);
 
             if (this.tvDbObjects.Nodes.Count == 1)
             {
@@ -77,11 +90,32 @@ namespace DatabaseManager.Controls
                             case nameof(DatabaseInterpreter.Model.View):
                                 schemaInfo.Views.Add(item.Tag as DatabaseInterpreter.Model.View);
                                 break;
+                            case nameof(Function):
+                                schemaInfo.Functions.Add(item.Tag as Function);
+                                break;
+                            case nameof(Procedure):
+                                schemaInfo.Procedures.Add(item.Tag as Procedure);
+                                break;
                         }
                     }
                 }
             }
             return schemaInfo;
+        }
+
+        public bool HasDbObjectNodeSelected()
+        {
+            foreach (TreeNode node in this.tvDbObjects.Nodes)
+            {
+                foreach (TreeNode child in node.Nodes)
+                {
+                    if(child.Checked)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

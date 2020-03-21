@@ -163,7 +163,7 @@ namespace DatabaseManager.Controls
                 MessageBox.Show("Error:" + message);
 
                 if (!this.SetConnectionInfo(profileInfo))
-                {
+                {                    
                     return;
                 }
                 else
@@ -185,9 +185,12 @@ namespace DatabaseManager.Controls
             if (dialogResult == DialogResult.OK)
             {
                 AccountProfileInfo profileInfo = frmAccountInfo.AccountProfileInfo;
-                ObjectHelper.CopyProperties(profileInfo, (this.cboAccount.SelectedItem as AccountProfileInfo));
-                // (this.cboAccount.SelectedItem as AccountProfileInfo).Password = profileInfo.Password;
+                ObjectHelper.CopyProperties(profileInfo, (this.cboAccount.SelectedItem as AccountProfileInfo));                
                 return true;
+            }
+            else
+            {
+                this.btnConnect.Enabled = true;
             }
             return false;
         }

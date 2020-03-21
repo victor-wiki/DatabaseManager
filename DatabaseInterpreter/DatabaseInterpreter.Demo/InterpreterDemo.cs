@@ -17,22 +17,22 @@ namespace DatabaseInterpreter.Demo
         }
 
         #region SchemaInfo
-        public async Task<SchemaInfo> GetSchemaInfoAsync(SelectionInfo selectionInfo)
+        public async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter)
         {
-            return await this.interpreter.GetSchemaInfoAsync(selectionInfo);
+            return await this.interpreter.GetSchemaInfoAsync(filter);
         } 
         #endregion
 
         #region Schema Scripts
         public async Task<string> GenerateSchemaScriptsAsync(SchemaInfo schemaInfo)
         {
-            SelectionInfo selectionInfo = new SelectionInfo()
+            SchemaInfoFilter filter = new SchemaInfoFilter()
             {
                 TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray(),
                 ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray()               
             };
 
-            return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(selectionInfo));
+            return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(filter));
         }
         #endregion
 

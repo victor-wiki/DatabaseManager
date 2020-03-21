@@ -23,8 +23,11 @@ namespace DatabaseConverter.Core
 
         public DbObjectTranslator LoadMappings()
         {
-            this.functionMappings = FunctionMappingManager.GetFunctionMappings();
-            this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
+            if(this.sourceDbInterpreter.DatabaseType != this.targetDbInterpreter.DatabaseType)
+            {
+                this.functionMappings = FunctionMappingManager.GetFunctionMappings();
+                this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
+            }          
 
             return this;
         }

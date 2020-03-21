@@ -4,7 +4,7 @@ namespace DatabaseInterpreter.Model
 {
     public class DbInterpreterOption
     {
-        public bool SortTablesByKeyReference { get; set; } = false;       
+        public bool SortObjectsByReference{ get; set; } = false;       
         public bool InsertIdentityValue { get; set; } = true;
         public int? DataGenerateThreshold { get; set; } = 10000000;
         public int InQueryItemLimitCount { get; set; } = 2000;       

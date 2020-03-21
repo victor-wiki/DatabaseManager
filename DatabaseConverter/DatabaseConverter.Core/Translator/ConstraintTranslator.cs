@@ -20,10 +20,21 @@ namespace DatabaseConverter.Core
                 return;
             }
 
+            this.LoadMappings();
+
+            List<TableConstraint> invalidConstraints = new List<TableConstraint>();
+
             foreach (TableConstraint constraint in this.constraints)
-            {
-                constraint.Definition = this.ParseDefinition(constraint.Definition);
+            {               
+                constraint.Definition = this.ParseDefinition(constraint.Definition);               
+
+                if (this.targetDbInterpreter.DatabaseType == DatabaseType.Oracle && constraint.Definition.Contains("SYSDATE"))
+                {
+                    invalidConstraints.Add(constraint);
+                }               
             }
+
+            this.constraints.RemoveAll(item => invalidConstraints.Contains(item));
         }
     }
 }

@@ -56,24 +56,21 @@ namespace DatabaseManager
             {
                 int increaseHeight = this.sourceDbProfile.Height;
                 this.sourceDbProfile.Visible = false;
-                this.btnConnect.Visible = false;
-                this.targetDbProfile.Width += this.btnConnect.Width;
+                this.btnFetch.Height = this.targetDbProfile.ClientHeight;                
                 this.targetDbProfile.Top -= increaseHeight;
                 this.tvDbObjects.Top -= increaseHeight;
                 this.gbOption.Top -= increaseHeight;
                 this.tvDbObjects.Height += increaseHeight;
-                this.gbOption.Height += increaseHeight;
-
-                this.Connect();
+                this.gbOption.Height += increaseHeight;               
             }
         }
 
-        private void btnConnect_Click(object sender, EventArgs e)
+        private void btnFetch_Click(object sender, EventArgs e)
         {
-            this.Invoke(new Action(this.Connect));
+            this.Invoke(new Action(this.Fetch));
         }
 
-        private async void Connect()
+        private async void Fetch()
         {
             DatabaseType dbType;
 
@@ -105,11 +102,11 @@ namespace DatabaseManager
                 dbType = this.sourceDatabaseType;
             }
 
-            this.btnConnect.Text = "...";
+            this.btnFetch.Text = "...";
 
             try
             {
-                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo);
+                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, dbType == this.targetDbProfile.DatabaseType);
                 this.btnExecute.Enabled = true;
             }
             catch (Exception ex)
@@ -123,16 +120,13 @@ namespace DatabaseManager
                 MessageBox.Show("Error:" + message);
             }
 
-            this.btnConnect.Text = "Connect";
+            this.btnFetch.Text = "Fetch";
         }
 
         private async void btnExecute_Click(object sender, EventArgs e)
         {
             this.txtMessage.ForeColor = Color.Black;
-            this.txtMessage.Text = "";
-
-            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
-            LogHelper.EnableDebug = true;
+            this.txtMessage.Text = "";         
 
             this.hasError = false;
 
@@ -141,7 +135,7 @@ namespace DatabaseManager
 
         private bool ValidateSource(SchemaInfo schemaInfo)
         {
-            if (schemaInfo.UserDefinedTypes.Count == 0 && schemaInfo.Tables.Count == 0 && schemaInfo.Views.Count == 0)
+            if (!this.tvDbObjects.HasDbObjectNodeSelected())
             {
                 MessageBox.Show("Please select objects from tree.");
                 return false;
@@ -210,7 +204,7 @@ namespace DatabaseManager
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
            
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, SortTablesByKeyReference = true, GetTableAllObjects = true };
+            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, SortObjectsByReference = true, GetTableAllObjects = true };
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToString) };
 
             this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);

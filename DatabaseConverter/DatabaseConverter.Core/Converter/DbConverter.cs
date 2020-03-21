@@ -76,34 +76,52 @@ namespace DatabaseConverter.Core
             DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
 
             sourceInterpreter.Option.TreatBytesAsNullForScript = true;
+            sourceInterpreter.Option.GetTableAllObjects = false;
 
-            SelectionInfo selectionInfo = new SelectionInfo();
+            DatabaseObjectType databaseObjectType =   
+                DatabaseObjectType.UserDefinedType |
+                DatabaseObjectType.Table |
+                DatabaseObjectType.View |
+                DatabaseObjectType.Function |
+                DatabaseObjectType.Procedure |
+                DatabaseObjectType.TableColumn |
+                DatabaseObjectType.TablePrimaryKey |
+                DatabaseObjectType.TableForeignKey |
+                DatabaseObjectType.TableIndex |
+                DatabaseObjectType.TableConstraint;
+
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
 
             if (schemaInfo != null)
             {
-                selectionInfo.UserDefinedTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).ToArray();
-                selectionInfo.TableNames = schemaInfo.Tables.Select(t => t.Name).ToArray();
-                selectionInfo.ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray();
+                filter.UserDefinedTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).ToArray();
+                filter.TableNames = schemaInfo.Tables.Select(t => t.Name).ToArray();
+                filter.ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray();
+                filter.FunctionNames = schemaInfo.Functions.Select(item => item.Name).ToArray();
+                filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
             }
 
-            SchemaInfo sourceSchemaInfo = await sourceInterpreter.GetSchemaInfoAsync(selectionInfo);
+            SchemaInfo sourceSchemaInfo = await sourceInterpreter.GetSchemaInfoAsync(filter);
 
             #region Set data type by user define type          
 
-            List<UserDefinedType> utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
-
-            if (utypes != null && utypes.Count > 0)
+            if(sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
             {
-                foreach (TableColumn column in sourceSchemaInfo.TableColumns)
+                List<UserDefinedType> utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
+
+                if (utypes != null && utypes.Count > 0)
                 {
-                    UserDefinedType utype = utypes.FirstOrDefault(item => item.Name == column.DataType);
-                    if (utype != null)
+                    foreach (TableColumn column in sourceSchemaInfo.TableColumns)
                     {
-                        column.DataType = utype.Type;
-                        column.MaxLength = utype.MaxLength;
+                        UserDefinedType utype = utypes.FirstOrDefault(item => item.Name == column.DataType);
+                        if (utype != null)
+                        {
+                            column.DataType = utype.Type;
+                            column.MaxLength = utype.MaxLength;
+                        }
                     }
                 }
-            }
+            }           
 
             #endregion
 

@@ -24,7 +24,9 @@ namespace DatabaseConverter.Core
             if (this.sourceDbType == this.targetDbType)
             {
                 return;
-            }              
+            }
+
+            this.LoadMappings();
 
             foreach (TableColumn column in this.columns)
             {

@@ -33,9 +33,11 @@
             this.tvDbObjects = new System.Windows.Forms.TreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -75,32 +77,48 @@
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiRefresh,
+            this.tsmiConvert,
             this.tsmiGenerateScripts,
-            this.tsmiConvert});
+            this.tsmiRefresh,
+            this.tsmiClearData,
+            this.tsmiEmptyDatabase});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(172, 70);
-            // 
-            // tsmiRefresh
-            // 
-            this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(171, 22);
-            this.tsmiRefresh.Text = "Refresh";
-            this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
-            // 
-            // tsmiGenerateScripts
-            // 
-            this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
-            this.tsmiGenerateScripts.Size = new System.Drawing.Size(171, 22);
-            this.tsmiGenerateScripts.Text = "Generate scripts";
-            this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 136);
             // 
             // tsmiConvert
             // 
             this.tsmiConvert.Name = "tsmiConvert";
-            this.tsmiConvert.Size = new System.Drawing.Size(171, 22);
+            this.tsmiConvert.Size = new System.Drawing.Size(180, 22);
             this.tsmiConvert.Text = "Convert";
             this.tsmiConvert.Click += new System.EventHandler(this.tsmiConvert_Click);
+            // 
+            // tsmiGenerateScripts
+            // 
+            this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
+            this.tsmiGenerateScripts.Size = new System.Drawing.Size(180, 22);
+            this.tsmiGenerateScripts.Text = "Generate scripts";
+            this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
+            // 
+            // tsmiRefresh
+            // 
+            this.tsmiRefresh.Name = "tsmiRefresh";
+            this.tsmiRefresh.Size = new System.Drawing.Size(180, 22);
+            this.tsmiRefresh.Text = "Refresh";
+            this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
+            // 
+            // tsmiClearData
+            // 
+            this.tsmiClearData.Name = "tsmiClearData";
+            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
+            this.tsmiClearData.Text = "Clear data";
+            this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
+            // 
+            // tsmiEmptyDatabase
+            // 
+            this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
+            this.tsmiEmptyDatabase.Text = "Empty";
+            this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -122,5 +140,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiGenerateScripts;
         private System.Windows.Forms.ToolStripMenuItem tsmiRefresh;
         private System.Windows.Forms.ToolStripMenuItem tsmiConvert;
+        private System.Windows.Forms.ToolStripMenuItem tsmiClearData;
+        private System.Windows.Forms.ToolStripMenuItem tsmiEmptyDatabase;
     }
 }

@@ -25,7 +25,9 @@ namespace DatabaseConverter.Core
             if (sourceDbInterpreter.DatabaseType == targetDbInterpreter.DatabaseType)
             {
                 return;
-            }                      
+            }
+
+            this.LoadMappings();
 
             if (string.IsNullOrEmpty(targetOwnerName))
             {
@@ -57,7 +59,7 @@ namespace DatabaseConverter.Core
                                .Replace("!=", "<>");
 
 
-                    definition = this.ParseDefinition(definition);
+                    definition = this.ProcessDefinition(definition);
 
                     string createAsClause = $"CREATE VIEW {targetOwnerName}.{viewNameWithQuotation} AS ";
 
@@ -88,7 +90,7 @@ namespace DatabaseConverter.Core
             }           
         }
 
-        private string ParseDefinition(string definition)
+        private string ProcessDefinition(string definition)
         {
             var tokens = this.GetTokens(definition);
             bool changed = false;

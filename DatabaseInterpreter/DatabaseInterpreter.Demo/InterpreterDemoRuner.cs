@@ -7,9 +7,9 @@ namespace DatabaseInterpreter.Demo
 {
     public class InterpreterDemoRuner
     {
-        public static async Task Run(InterpreterDemo demo, SelectionInfo selectionInfo)
+        public static async Task Run(InterpreterDemo demo, SchemaInfoFilter filter)
         {
-            SchemaInfo schemaInfo = await demo.GetSchemaInfoAsync(selectionInfo);
+            SchemaInfo schemaInfo = await demo.GetSchemaInfoAsync(filter);
 
             OutputHelper.Output(FormatName(demo, "GetSchemaInfoAsync"), schemaInfo, true);
 

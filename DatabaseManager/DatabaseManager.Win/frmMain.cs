@@ -1,4 +1,6 @@
-﻿using DatabaseManager.Model;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,6 +23,9 @@ namespace DatabaseManager
         private void frmMain_Load(object sender, EventArgs e)
         {
             this.InitControls();
+
+            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
+            LogHelper.EnableDebug = true;
         }
 
         private void InitControls()

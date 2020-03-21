@@ -30,7 +30,7 @@ namespace DatabaseInterpreter.Core
         public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption options) : base(connectionInfo, options)
         {
             this.dbOwner = connectionInfo.UserId;
-            this.dbConnector = this.GetDbConnector();           
+            this.dbConnector = this.GetDbConnector();
         }
         #endregion
 
@@ -433,6 +433,65 @@ namespace DatabaseInterpreter.Core
         public override Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, string destinationTableName = null, int? bulkCopyTimeout = null, int? batchSize = null)
         {
             throw new NotImplementedException();
+        }
+
+        public override async Task SetConstrainsEnabled(bool enabled)
+        {
+            List<string> sqls = new List<string>() { this.GetSqlForEnableConstraints(enabled), this.GetSqlForEnableTrigger(enabled) };
+            List<string> cmds = new List<string>();
+
+            using (DbConnection connection = this.dbConnector.CreateConnection())
+            {
+                foreach (string sql in sqls)
+                {
+                    DbDataReader reader = await this.GetDataReaderAsync(connection, sql);
+
+                    while (reader.Read())
+                    {
+                        string cmd = reader[0].ToString();
+                        cmds.Add(cmd);
+                    }
+                }
+
+                foreach (string cmd in cmds)
+                {
+                    await this.ExecuteNonQueryAsync(connection, cmd, false);
+                }
+            }
+        }
+
+        private string GetSqlForEnableConstraints(bool enabled)
+        {
+            return $@"SELECT 'ALTER TABLE ""'|| T.TABLE_NAME ||'"" {(enabled ? "ENABLE" : "DISABLE")} CONSTRAINT ""'||T.CONSTRAINT_NAME || '""' AS ""SQL""  
+                            FROM USER_CONSTRAINTS T 
+                            WHERE T.CONSTRAINT_TYPE = 'R'
+                            AND UPPER(OWNER)= UPPER('{this.GetDbOwner()}')
+                           ";
+        }
+
+        private string GetSqlForEnableTrigger(bool enabled)
+        {
+            return $@"SELECT 'ALTER TRIGGER ""'|| TRIGGER_NAME || '"" {(enabled ? "ENABLE" : "DISABLE")} '
+                         FROM USER_TRIGGERS
+                         WHERE UPPER(TABLE_OWNER)= UPPER('{this.GetDbOwner()}')";
+        }
+
+        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
+        {
+            string sql = "";
+
+            if (dbObjet is TableForeignKey)
+            {
+                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+
+                sql = $"ALTER TABLE {this.GetQuotedString(tableForeignKey.Owner)}.{this.GetQuotedString(tableForeignKey.TableName)} DROP CONSTRAINT {this.GetQuotedString(tableForeignKey.Name)};";
+            }
+            else
+            {
+                sql = $"DROP {typeof(T).Name} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+            }
+
+            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
         }
         #endregion
 

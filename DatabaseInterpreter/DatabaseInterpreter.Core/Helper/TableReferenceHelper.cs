@@ -115,5 +115,24 @@ namespace  DatabaseInterpreter.Core
         {
             return tableForeignKeys.Any(item => item.TableName == tableName && item.TableName == item.ReferencedTableName);
         }
+
+        public static List<Table> ResortTables(List<Table> tables, List<TableForeignKey> foreignKeys)
+        {
+            string[] tableNames = tables.Select(item => item.Name).ToArray();
+
+            List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, foreignKeys);
+
+            int i = 1;
+            foreach (string tableName in sortedTableNames)
+            {
+                Table table = tables.FirstOrDefault(item => item.Name == tableName);
+                if (table != null)
+                {
+                    table.Order = i++;
+                }
+            }
+
+            return tables.OrderBy(item => item.Order).ToList(); 
+        }
     }
 }

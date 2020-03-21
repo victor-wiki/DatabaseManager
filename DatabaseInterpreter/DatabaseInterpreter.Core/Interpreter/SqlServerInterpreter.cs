@@ -458,6 +458,34 @@ namespace DatabaseInterpreter.Core
 
             return bulkCopy;
         }
+
+        public override Task SetConstrainsEnabled(bool enabled)
+        {
+            string sql = $@"EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
+                          EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';";
+
+            return this.ExecuteNonQueryAsync(sql);
+        }
+
+        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
+        {
+            string sql = "";
+
+            if(dbObjet is TableForeignKey)
+            {
+                TableForeignKey tableForeignKey = dbObjet as TableForeignKey;
+
+                sql = $"ALTER TABLE {tableForeignKey.Owner}.{this.GetQuotedString(tableForeignKey.TableName)} DROP CONSTRAINT {this.GetQuotedString(tableForeignKey.Name)};";
+            }
+            else
+            {
+                string typeName = typeof(T) == typeof(UserDefinedType) ? "TYPE" : typeof(T).Name;
+
+                sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+            }        
+
+            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
+        }
         #endregion
 
         #region Generate Schema Script   
@@ -624,7 +652,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 #region Constraint
                 if (this.Option.TableScriptsGenerateOption.GenerateConstraint)
                 {
-                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName); 
+                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
 
                     foreach (TableConstraint constraint in constraints)
                     {

@@ -32,7 +32,7 @@ namespace DatabaseInterpreter.Test
 
         static async void RunDemo()
         {
-            await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), new SelectionInfo() { });
+            await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), new SchemaInfoFilter() { });
             //await InterpreterDemoRuner.Run(new InterpreterDemo(mySqlInterpreter), new SelectionInfo() { });
             //await InterpreterDemoRuner.Run(new InterpreterDemo(oracleInterpreter), new SelectionInfo() { });
 

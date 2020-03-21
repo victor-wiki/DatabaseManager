@@ -158,6 +158,12 @@
     <Compile Include="frmConvert.designer.cs">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmDatabaseObjectTypeSelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDatabaseObjectTypeSelector.Designer.cs">
+      <DependentUpon>frmDatabaseObjectTypeSelector.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmDbConnect.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -209,6 +215,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDatabaseObjectTypeSelector.resx">
+      <DependentUpon>frmDatabaseObjectTypeSelector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDbConnect.resx">
       <DependentUpon>frmDbConnect.cs</DependentUpon>

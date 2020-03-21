@@ -26,14 +26,14 @@ namespace DatabaseConverter.Core
         {
             this.TranslateOwner();
 
-            DbObjectTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
-            columnTranslator.LoadMappings().Translate();
+            ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
+            columnTranslator.Translate();
 
-            DbObjectTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner);
-            viewTranslator.LoadMappings().Translate();
+            ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner);
+            viewTranslator.Translate();
 
-            DbObjectTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints);
-            constraintTranslator.LoadMappings().Translate();
+            ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints);
+            constraintTranslator.Translate();
         }
 
         private void TranslateOwner()

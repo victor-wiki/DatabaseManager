@@ -72,6 +72,7 @@ namespace DatabaseManager.Controls
             this.tsmiRefresh.Visible = node.Level <= 2 && node.Nodes.Count > 0 && !this.IsOnlyHasFakeChild(node);
             this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
             this.tsmiConvert.Visible = node.Level == 0;
+            this.tsmiClearData.Visible = node.Level == 0;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -110,7 +111,7 @@ namespace DatabaseManager.Controls
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SelectionInfo(), databaseObjectType);
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
 
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Table, schemaInfo.Tables, createFolderNode, true);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
@@ -165,7 +166,7 @@ namespace DatabaseManager.Controls
             string database = this.GetDatabaseNode(treeNode).Name;
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SelectionInfo() { TableNames = new string[] { table.Name } }, databaseObjectType);
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } });
 
             #region Columns           
             if (nodeName == "Columns")
@@ -376,18 +377,18 @@ namespace DatabaseManager.Controls
         {
             string typeName = obj.GetType().Name;
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
-            
-            if(obj is Table)
+
+            if (obj is Table)
             {
                 dbInterpreter.Option.GetTableAllObjects = true;
             }
 
-            SelectionInfo selectionInfo = new SelectionInfo();
-            selectionInfo.GetType().GetProperty($"{typeName}Names").SetValue(selectionInfo, new string[] { obj.Name });
-
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(selectionInfo, databaseObjectType);
+            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
+            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { obj.Name });           
+
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             string script = dbInterpreter.GenerateSchemaScripts(schemaInfo);
 
             if (this.OnShowContent != null)
@@ -414,6 +415,75 @@ namespace DatabaseManager.Controls
 
             frmConvert frmConvert = new frmConvert(this.databaseType, this.GetConnectionInfo(database.Name));
             frmConvert.ShowDialog();
+        }
+
+        private async void tsmiClearData_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            if (MessageBox.Show("Are you sure to clear all data of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                TreeNode node = this.GetSelectedNode();
+
+                await this.ClearData(node.Name);
+            }
+        }
+
+        private async Task ClearData(string database)
+        {
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            dbInterpreter.OnFeedback += this.Feedback;
+
+            await dbInterpreter.ClearDataAsync();
+
+            if (!dbInterpreter.HasError)
+            {
+                MessageBox.Show("Data has been cleared.");
+            }
+        }
+
+        private void Feedback(FeedbackInfo info)
+        {
+            if (info.InfoType != FeedbackInfoType.Info)
+            {
+                MessageBox.Show(info.Message);
+            }
+        }
+
+        private async void tsmiEmptyDatabase_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            if (MessageBox.Show("Are you sure to delelte all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                frmDatabaseObjectTypeSelector selector = new frmDatabaseObjectTypeSelector();
+
+                if (selector.ShowDialog() == DialogResult.OK)
+                {
+                    TreeNode node = this.GetSelectedNode();
+
+                    await this.EmptyDatabase(node.Name, selector.DatabaseObjectType);
+                }                
+            }
+        }
+
+        private async Task EmptyDatabase(string database, DatabaseObjectType databaseObjectType)
+        {
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            dbInterpreter.OnFeedback += this.Feedback;           
+
+            await dbInterpreter.EmptyDatabaseAsync(databaseObjectType);
+
+            if (!dbInterpreter.HasError)
+            {
+                MessageBox.Show("Seleted database objects have been deleted.");
+            }
         }
     }
 }
