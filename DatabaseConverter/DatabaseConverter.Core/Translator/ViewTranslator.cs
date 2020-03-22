@@ -118,8 +118,8 @@ namespace DatabaseConverter.Core
                     {
                         string[] lines = formattedDefinition.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-                        Regex joinRegex = new Regex("\\b(join)\\b", RegexOptions.IgnoreCase);
-                        Regex onRegex = new Regex("\\b(on)\\b", RegexOptions.IgnoreCase);
+                        Regex joinRegex = new Regex(@"\b(join)\b", RegexOptions.IgnoreCase);
+                        Regex onRegex = new Regex(@"\b(on)\b", RegexOptions.IgnoreCase);
                         Regex wordRegex = new Regex("([a-zA-Z(]+)", RegexOptions.IgnoreCase);
 
                         sb = new StringBuilder();

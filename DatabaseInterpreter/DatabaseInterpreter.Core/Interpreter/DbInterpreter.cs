@@ -21,7 +21,7 @@ namespace DatabaseInterpreter.Core
         private IObserver<FeedbackInfo> m_Observer;
         protected DbConnector dbConnector;
         protected bool hasError = false;
-        public const string RowNumberColumnName = "ROWNUMBER";
+        public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsSplitString => ";";
         public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
@@ -54,6 +54,12 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Common Method    
+
+        public DbConnection CreateConnection()
+        {
+            return this.dbConnector.CreateConnection();
+        }
+
         public string GetObjectDisplayName(DatabaseObject obj, bool useQuotedString = false)
         {
             if (this.GetType().Name == nameof(SqlServerInterpreter))
@@ -92,7 +98,7 @@ namespace DatabaseInterpreter.Core
         {
             if (!string.IsNullOrEmpty(sql))
             {
-                using (DbConnection dbConnection = this.dbConnector.CreateConnection())
+                using (DbConnection dbConnection = this.CreateConnection())
                 {
                     return await this.GetDbObjectsAsync<T>(dbConnection, sql);
                 }
@@ -241,7 +247,7 @@ namespace DatabaseInterpreter.Core
 
             SchemaInfo schemaInfo = new SchemaInfo();
 
-            using (DbConnection connection = this.dbConnector.CreateConnection())
+            using (DbConnection connection = this.CreateConnection())
             {
                 if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, dbObjectType, filter.Strict))
                 {
@@ -339,12 +345,12 @@ namespace DatabaseInterpreter.Core
 
         public Task<int> ExecuteNonQueryAsync(string sql)
         {
-            return this.InternalExecuteNonQuery(this.dbConnector.CreateConnection(), new CommandInfo() { CommandText = sql });
+            return this.InternalExecuteNonQuery(this.CreateConnection(), new CommandInfo() { CommandText = sql });
         }
 
         public Task<int> ExecuteNonQueryAsync(CommandInfo commandInfo)
         {
-            return this.InternalExecuteNonQuery(this.dbConnector.CreateConnection(), commandInfo, true);
+            return this.InternalExecuteNonQuery(this.CreateConnection(), commandInfo, true);
         }
 
         public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = true)
@@ -418,7 +424,7 @@ namespace DatabaseInterpreter.Core
 
         protected async Task<DbDataReader> GetDataReaderAsync(string sql)
         {
-            return await this.dbConnector.CreateConnection().ExecuteReaderAsync(sql);
+            return await this.CreateConnection().ExecuteReaderAsync(sql);
         }
 
         protected async Task<DbDataReader> GetDataReaderAsync(DbConnection dbConnection, string sql)
@@ -449,7 +455,7 @@ namespace DatabaseInterpreter.Core
             {
                 await this.SetConstrainsEnabled(false);
 
-                using (DbConnection dbConnection = this.dbConnector.CreateConnection())
+                using (DbConnection dbConnection = this.CreateConnection())
                 {
                     foreach (Table table in tables)
                     {
@@ -469,7 +475,7 @@ namespace DatabaseInterpreter.Core
 
         public async Task Drop<T>(T dbObjet) where T : DatabaseObject
         {
-            await this.Drop<T>(this.dbConnector.CreateConnection(), dbObjet);
+            await this.Drop<T>(this.CreateConnection(), dbObjet);
         }
 
         public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
@@ -486,7 +492,7 @@ namespace DatabaseInterpreter.Core
 
             try
             {
-                using (DbConnection connection = this.dbConnector.CreateConnection())
+                using (DbConnection connection = this.CreateConnection())
                 {
                     foreach (Procedure procedure in schemaInfo.Procedures)
                     {
@@ -498,7 +504,7 @@ namespace DatabaseInterpreter.Core
                         await this.Drop(connection, view);
                     }
 
-                    foreach(TableForeignKey tableForeignKey in schemaInfo.TableForeignKeys)
+                    foreach (TableForeignKey tableForeignKey in schemaInfo.TableForeignKeys)
                     {
                         await this.Drop(connection, tableForeignKey);
                     }
@@ -567,12 +573,7 @@ namespace DatabaseInterpreter.Core
             return sb.ToString();
         }
 
-        public abstract long GetTableRecordCount(DbConnection connection, Table table);
         public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table);
-        protected long GetTableRecordCount(DbConnection connection, string sql)
-        {
-            return connection.ExecuteScalar<long>(sql);
-        }
 
         protected async Task<long> GetTableRecordCountAsync(DbConnection connection, string sql)
         {
@@ -604,7 +605,7 @@ namespace DatabaseInterpreter.Core
             }
 
             i = 0;
-            using (DbConnection connection = this.dbConnector.CreateConnection())
+            using (DbConnection connection = this.CreateConnection())
             {
                 int tableCount = schemaInfo.Tables.Count - (pickupIndex == -1 ? 0 : pickupIndex + 1);
                 int count = 0;
@@ -726,9 +727,6 @@ namespace DatabaseInterpreter.Core
 
         private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, string whereClause = "")
         {
-            string quotedTableName = this.GetQuotedObjectName(table);
-            string columnNames = this.GetQuotedColumnNames(columns);
-
             var dictPagedData = new Dictionary<long, List<Dictionary<string, object>>>();
 
             long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -740,9 +738,7 @@ namespace DatabaseInterpreter.Core
                     break;
                 }
 
-                string pagedSql = this.GetPagedSql(quotedTableName, columnNames, primaryKeyColumns, whereClause, pageNumber, pageSize);
-
-                var dataTable = await this.GetDataTableAsync(connection, pagedSql);
+                DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
 
                 List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
                 foreach (DataRow row in dataTable.Rows)
@@ -787,7 +783,36 @@ namespace DatabaseInterpreter.Core
             return dictPagedData;
         }
 
-        protected abstract string GetPagedSql(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize);
+        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, long pageNumber, string whereClause = "")
+        {
+            string quotedTableName = this.GetQuotedObjectName(table);
+            string columnNames = this.GetQuotedColumnNames(columns);
+
+            string pagedSql = this.GetSqlForPagination(quotedTableName, columnNames, primaryKeyColumns, whereClause, pageNumber, pageSize);
+
+            return await this.GetDataTableAsync(connection, pagedSql);
+        }
+
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string primaryKeyColumns, int pageSize, long pageNumber, string whereClause = "")
+        {
+            using (DbConnection connection = this.CreateConnection())
+            {
+                long total = await this.GetTableRecordCountAsync(connection, table);
+
+                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new string[] { table.Name });
+
+                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
+
+                if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
+                {
+                    dt.Columns.Remove(RowNumberColumnName);
+                }
+
+                return (total, dt);
+            }
+        }
+
+        protected abstract string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize);
 
         protected virtual object GetInsertValue(TableColumn column, object value)
         {

@@ -155,7 +155,7 @@ namespace DatabaseConverter.Core
 
             DataTransferErrorProfile dataErrorProfile = null;
 
-            using (DbConnection dbConnection = targetInterpreter.GetDbConnector().CreateConnection())
+            using (DbConnection dbConnection = targetInterpreter.CreateConnection())
             {
                 this.isBusy = true;
 

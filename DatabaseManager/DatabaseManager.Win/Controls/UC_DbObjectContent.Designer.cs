@@ -35,7 +35,7 @@
             this.tsmiCloseOthers = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCloseAll = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSaveScript = new System.Windows.Forms.ToolStripMenuItem();
-            this.dlgSaveScripts = new System.Windows.Forms.SaveFileDialog();
+            this.dlgSave = new System.Windows.Forms.SaveFileDialog();
             this.scriptContentMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -61,39 +61,39 @@
             this.tsmiCloseAll,
             this.tsmiSaveScript});
             this.scriptContentMenu.Name = "scriptContentMenu";
-            this.scriptContentMenu.Size = new System.Drawing.Size(181, 114);
+            this.scriptContentMenu.Size = new System.Drawing.Size(150, 92);
             // 
             // tsmiClose
             // 
             this.tsmiClose.Name = "tsmiClose";
-            this.tsmiClose.Size = new System.Drawing.Size(180, 22);
+            this.tsmiClose.Size = new System.Drawing.Size(149, 22);
             this.tsmiClose.Text = "Close";
             this.tsmiClose.Click += new System.EventHandler(this.tsmiClose_Click);
             // 
             // tsmiCloseOthers
             // 
             this.tsmiCloseOthers.Name = "tsmiCloseOthers";
-            this.tsmiCloseOthers.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCloseOthers.Size = new System.Drawing.Size(149, 22);
             this.tsmiCloseOthers.Text = "Close others";
             this.tsmiCloseOthers.Click += new System.EventHandler(this.tsmiCloseOthers_Click);
             // 
             // tsmiCloseAll
             // 
             this.tsmiCloseAll.Name = "tsmiCloseAll";
-            this.tsmiCloseAll.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCloseAll.Size = new System.Drawing.Size(149, 22);
             this.tsmiCloseAll.Text = "Close all";
             this.tsmiCloseAll.Click += new System.EventHandler(this.tsmiCloseAll_Click);
             // 
             // tsmiSaveScript
             // 
             this.tsmiSaveScript.Name = "tsmiSaveScript";
-            this.tsmiSaveScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSaveScript.Size = new System.Drawing.Size(149, 22);
             this.tsmiSaveScript.Text = "Save";
-            this.tsmiSaveScript.Click += new System.EventHandler(this.tsmiSaveScript_Click);
+            this.tsmiSaveScript.Click += new System.EventHandler(this.tsmiSave_Click);
             // 
-            // dlgSaveScripts
+            // dlgSave
             // 
-            this.dlgSaveScripts.Filter = "sql file|*.sql|txt file|*.txt";
+            this.dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
             // 
             // UC_DbObjectContent
             // 
@@ -116,6 +116,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCloseOthers;
         private System.Windows.Forms.ToolStripMenuItem tsmiCloseAll;
         private System.Windows.Forms.ToolStripMenuItem tsmiSaveScript;
-        private System.Windows.Forms.SaveFileDialog dlgSaveScripts;
+        private System.Windows.Forms.SaveFileDialog dlgSave;
     }
 }

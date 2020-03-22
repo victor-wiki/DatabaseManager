@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DatabaseManager.Properties;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -20,23 +17,19 @@ namespace DatabaseManager.Controls
         public UC_DbObjectContent()
         {
             InitializeComponent();
+
+            FormEventCenter.OnSave += this.Save;
         }
 
-        public void ShowContent(DatabaseObjectDisplayInfo content)
+        public void ShowContent(DatabaseObjectDisplayInfo info)
         {
-            TabPage page = this.FindTabPage(content);
+            TabPage page = this.FindTabPage(info);
 
-            string title = $" {content.Name}  ";
+            string title = $" {info.Name}  ";
+
             if (page == null)
             {
                 page = new TabPage(title);
-                page.Tag = content;
-
-                RichTextBox textbox = new RichTextBox();
-                textbox.Dock = DockStyle.Fill;
-                textbox.Text = content.Content;
-
-                page.Controls.Add(textbox);
 
                 this.tabControl1.TabPages.Insert(0, page);
 
@@ -44,32 +37,75 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.GetRichTextBox(page).Text = title;
                 this.tabControl1.SelectedTab = page;
             }
 
+            page.Tag = info;
             page.BackColor = Color.Transparent;
+
+            this.SetTabPageContent(info, page);
         }
 
-        private RichTextBox GetRichTextBox(TabPage tabPage)
+        private void SetTabPageContent(DatabaseObjectDisplayInfo info, TabPage tabPage)
+        {
+            if (info.DisplayType == DatabaseObjectDisplayType.Script)
+            {
+                UC_RichTextBox ucRichTextBox = this.GetUcControl<UC_RichTextBox>(tabPage);
+
+                if (ucRichTextBox == null)
+                {
+                    ucRichTextBox = this.AddControlToTabPage<UC_RichTextBox>(tabPage);
+                }
+
+                ucRichTextBox.Show(info);
+
+                if (!string.IsNullOrEmpty(ucRichTextBox.TextBox.Text))
+                {
+                    RichTextBoxHelper.HighlightingKeywords(ucRichTextBox.TextBox, info.DatabaseType);
+                }
+            }
+            else if (info.DisplayType == DatabaseObjectDisplayType.Data)
+            {
+                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);
+
+                if (dataViewer == null)
+                {
+                    dataViewer = this.AddControlToTabPage<UC_DataViewer>(tabPage);
+                }
+
+                dataViewer.Show(info);
+            }
+        }
+
+        private T AddControlToTabPage<T>(TabPage tabPage) where T : UserControl
+        {
+            T control = (T)Activator.CreateInstance(typeof(T));
+            control.Dock = DockStyle.Fill;
+            tabPage.Controls.Add(control);
+
+            return control;
+        }
+
+        private T GetUcControl<T>(TabPage tabPage) where T : UserControl
         {
             foreach (Control control in tabPage.Controls)
             {
-                if (control is RichTextBox)
+                if (control is T)
                 {
-                    return control as RichTextBox;
+                    return control as T;
                 }
             }
+
             return null;
         }
 
-        public TabPage FindTabPage(DatabaseObjectDisplayInfo content)
+        public TabPage FindTabPage(DatabaseObjectDisplayInfo displayInfo)
         {
             foreach (TabPage page in this.tabControl1.TabPages)
             {
                 DatabaseObjectDisplayInfo data = page.Tag as DatabaseObjectDisplayInfo;
 
-                if (page.Text == content.Name && content.DatabaseType == data.DatabaseType && content.DisplayType == data.DisplayType)
+                if (data.Name == displayInfo.Name && displayInfo.DatabaseType == data.DatabaseType && displayInfo.DisplayType == data.DisplayType)
                 {
                     return page;
                 }
@@ -77,7 +113,6 @@ namespace DatabaseManager.Controls
 
             return null;
         }
-
 
         private void tabControl1_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -206,22 +241,66 @@ namespace DatabaseManager.Controls
             this.dictCloseButtonRectangle.Clear();
         }
 
-        private void tsmiSaveScript_Click(object sender, EventArgs e)
+        private void tsmiSave_Click(object sender, EventArgs e)
         {
-            if (this.dlgSaveScripts == null)
-            {
-                this.dlgSaveScripts = new SaveFileDialog();
-            }
+            this.Save();
+        }
 
+        private void Save()
+        {
             TabPage tabPage = this.tabControl1.SelectedTab;
 
-            this.dlgSaveScripts.FileName = tabPage.Text.Trim();
+            if (tabPage == null)
+            {
+                return;
+            }
 
-            DialogResult result = this.dlgSaveScripts.ShowDialog();
+            DatabaseObjectDisplayInfo displayInfo = tabPage.Tag as DatabaseObjectDisplayInfo;
+
+            if (displayInfo == null)
+            {
+                return;
+            }
+
+            if (this.dlgSave == null)
+            {
+                this.dlgSave = new SaveFileDialog();
+            }
+
+            this.dlgSave.FileName = tabPage.Text.Trim();
+
+            if (displayInfo.DisplayType == DatabaseObjectDisplayType.Script)
+            {
+                this.dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
+            }
+            else if (displayInfo.DisplayType == DatabaseObjectDisplayType.Data)
+            {
+                this.dlgSave.Filter = "csv file|*.csv|txt file|*.txt";
+            }
+
+            DialogResult result = this.dlgSave.ShowDialog();
             if (result == DialogResult.OK)
             {
-                File.WriteAllText(this.dlgSaveScripts.FileName, this.GetRichTextBox(tabPage).Text);
+                IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
+
+                if (control != null)
+                {
+                    control.Save(this.dlgSave.FileName);
+                }
             }
         }
+
+        private IDbObjContentDisplayer GetUcControlInterface(TabPage tabPage)
+        {
+            foreach (Control control in tabPage.Controls)
+            {
+                if (control is IDbObjContentDisplayer)
+                {
+                    return control as IDbObjContentDisplayer;
+                }
+            }
+
+            return null;
+        }       
     }
 }

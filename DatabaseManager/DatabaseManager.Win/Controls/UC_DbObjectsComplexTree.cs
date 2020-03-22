@@ -85,6 +85,7 @@ namespace DatabaseManager.Controls
             this.tsmiClearData.Visible = node.Level == 0;
             this.tsmiEmptyDatabase.Visible = node.Level == 0;
             this.tsmiDelete.Visible = this.CanDelete(node);
+            this.tsmiViewData.Visible = node.Tag is Table;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -417,7 +418,7 @@ namespace DatabaseManager.Controls
 
             if (this.OnShowContent != null)
             {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, DatabaseObject = obj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
             }
         }
 
@@ -559,6 +560,29 @@ namespace DatabaseManager.Controls
         private void tsmiDelete_Click(object sender, EventArgs e)
         {
             this.DeleteNode();
+        }
+
+        private void tsmiViewData_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            this.ViewData(node);
+        }
+
+        private void ViewData(TreeNode node)
+        {
+            string database = this.GetDatabaseNode(node).Name;
+            Table table = node.Tag as Table;            
+
+            if (this.OnShowContent != null)
+            {
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType= DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
+            }
         }
     }
 }

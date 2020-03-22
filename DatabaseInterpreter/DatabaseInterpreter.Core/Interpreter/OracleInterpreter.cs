@@ -47,7 +47,7 @@ namespace DatabaseInterpreter.Core
         public async Task<string> GetCurrentUserName()
         {
             string sql = "SELECT sys_context('USERENV', 'CURRENT_USER') FROM dual";
-            return (await this.GetScalarAsync(this.dbConnector.CreateConnection(), sql))?.ToString();
+            return (await this.GetScalarAsync(this.CreateConnection(), sql))?.ToString();
         }
 
         private string GetDbOwner()
@@ -440,7 +440,7 @@ namespace DatabaseInterpreter.Core
             List<string> sqls = new List<string>() { this.GetSqlForEnableConstraints(enabled), this.GetSqlForEnableTrigger(enabled) };
             List<string> cmds = new List<string>();
 
-            using (DbConnection connection = this.dbConnector.CreateConnection())
+            using (DbConnection connection = this.CreateConnection())
             {
                 foreach (string sql in sqls)
                 {
@@ -630,18 +630,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                         }
                     }
                 }
-                #endregion
-
-                //#region Default Value
-                //if (options.GenerateDefaultValue)
-                //{
-                //    IEnumerable<TableColumn> defaultValueColumns = columns.Where(item => item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
-                //    foreach (TableColumn column in defaultValueColumns)
-                //    {
-                //        sb.AppendLine($"ALTER TABLE \"{tableName}\" MODIFY \"{column.ColumnName}\" DEFAULT {column.DefaultValue};");
-                //    }
-                //}
-                //#endregion
+                #endregion               
 
                 #region Constraint
                 if (this.Option.TableScriptsGenerateOption.GenerateConstraint)
@@ -720,7 +709,10 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 }
             }
 
-            return $@"{ this.GetQuotedString(column.Name)} {dataType} {(string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column))} {(column.IsRequired ? "NOT NULL" : "NULL")}";
+            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+
+            return $@"{ this.GetQuotedString(column.Name)} {dataType} {defaultValueClause} {requiredClause}";
         }
 
         private bool IsNoLengthDataType(string dataType)
@@ -732,13 +724,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
 
         #endregion
 
-        #region Generate Data Script
-        public override long GetTableRecordCount(DbConnection connection, Table table)
-        {
-            string sql = $@"SELECT COUNT(1) FROM {this.GetDbOwner()}.{ this.GetQuotedString(table.Name)}";
-
-            return base.GetTableRecordCount(connection, sql);
-        }
+        #region Generate Data Script       
 
         public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table)
         {
@@ -767,19 +753,19 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             return (isAllEnd ? $"{Environment.NewLine}SELECT 1 FROM DUAL;" : "");
         }
 
-        protected override string GetPagedSql(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
             string pagedSql = $@"with PagedRecords as
 								(
-									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0 FROM DUAL)) AS ROWNUMBER
+									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0 FROM DUAL)) AS {RowNumberColumnName}
 									FROM {tableName}
                                     {whereClause}
 								)
 								SELECT *
 								FROM PagedRecords
-								WHERE ROWNUMBER BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+								WHERE {RowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
 
             return pagedSql;
         }

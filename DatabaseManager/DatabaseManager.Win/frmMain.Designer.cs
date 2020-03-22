@@ -137,6 +137,7 @@
             // 
             // ucContent
             // 
+            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
             this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucContent.Location = new System.Drawing.Point(0, 0);
             this.ucContent.Name = "ucContent";
@@ -154,11 +155,13 @@
             this.Controls.Add(this.btnGenerateScripts);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.Name = "frmMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Database manager";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmMain_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmMain_KeyDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.splitContainer1.Panel1.ResumeLayout(false);

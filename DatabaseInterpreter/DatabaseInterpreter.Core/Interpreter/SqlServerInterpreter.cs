@@ -798,33 +798,26 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
 
             return base.GetTableRecordCountAsync(connection, sql);
-        }
-
-        public override long GetTableRecordCount(DbConnection connection, Table table)
-        {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
-
-            return base.GetTableRecordCount(connection, sql);
-        }
+        }        
 
         public override Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
         {
             return base.GenerateDataScriptsAsync(schemaInfo);
         }
 
-        protected override string GetPagedSql(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
             string pagedSql = $@"with PagedRecords as
 								(
-									SELECT TOP 100 PERCENT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS ROWNUMBER
+									SELECT TOP 100 PERCENT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS {RowNumberColumnName}
 									FROM {tableName}
                                     {whereClause}
 								)
 								SELECT *
 								FROM PagedRecords
-								WHERE ROWNUMBER BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+								WHERE {RowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
 
             return pagedSql;
         }

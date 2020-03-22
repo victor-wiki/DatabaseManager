@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
@@ -13,11 +14,13 @@ using System.Windows.Forms;
 
 namespace DatabaseManager
 {
+
+
     public partial class frmMain : Form
     {
         public frmMain()
         {
-            InitializeComponent();            
+            InitializeComponent();
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -55,6 +58,17 @@ namespace DatabaseManager
         {
             frmConvert frmConvert = new frmConvert();
             frmConvert.ShowDialog();
+        }
+
+        private void frmMain_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.S)
+            {
+                if (FormEventCenter.OnSave != null)
+                {
+                    FormEventCenter.OnSave();
+                }
+            }
         }
     }
 }

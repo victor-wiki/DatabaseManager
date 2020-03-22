@@ -39,6 +39,7 @@
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -79,14 +80,15 @@
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiRefresh,
+            this.tsmiViewData,
             this.tsmiConvert,
             this.tsmiGenerateScripts,
-            this.tsmiRefresh,
             this.tsmiClearData,
             this.tsmiEmptyDatabase,
             this.tsmiDelete});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 158);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 180);
             // 
             // tsmiConvert
             // 
@@ -130,6 +132,13 @@
             this.tsmiDelete.Text = "Delete";
             this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
             // 
+            // tsmiViewData
+            // 
+            this.tsmiViewData.Name = "tsmiViewData";
+            this.tsmiViewData.Size = new System.Drawing.Size(180, 22);
+            this.tsmiViewData.Text = "View data";
+            this.tsmiViewData.Click += new System.EventHandler(this.tsmiViewData_Click);
+            // 
             // UC_DbObjectsComplexTree
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -153,5 +162,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiClearData;
         private System.Windows.Forms.ToolStripMenuItem tsmiEmptyDatabase;
         private System.Windows.Forms.ToolStripMenuItem tsmiDelete;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViewData;
     }
 }

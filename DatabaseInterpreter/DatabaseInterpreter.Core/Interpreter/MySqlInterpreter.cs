@@ -606,12 +606,7 @@ namespace DatabaseInterpreter.Core
 
                 #region Primary Key
                 if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    //string primaryKeyName = primaryKeys.First().KeyName;
-                    //if(primaryKeyName=="PRIMARY")
-                    //{
-                    //    primaryKeyName = "PK_" + tableName ;
-                    //}
+                {                  
                     primaryKey =
 $@"
 ,PRIMARY KEY
@@ -680,14 +675,14 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                 #region Index
                 if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
-                    IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
-                    if (indices.Count() > 0)
+                    IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+                    if (indexes.Count() > 0)
                     {
                         sb.AppendLine();
 
                         List<string> indexColumns = new List<string>();
 
-                        ILookup<string, TableIndex> indexLookup = indices.ToLookup(item => item.Name);
+                        ILookup<string, TableIndex> indexLookup = indexes.ToLookup(item => item.Name);
                         IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
                         foreach (string indexName in indexNames)
                         {
@@ -715,18 +710,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                         }
                     }
                 }
-                #endregion
-
-                //#region Default Value
-                //if (options.GenerateDefaultValue)
-                //{
-                //    IEnumerable<TableColumn> defaultValueColumns = columns.Where(item => item.Owner== table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
-                //    foreach (TableColumn column in defaultValueColumns)
-                //    {
-                //        sb.AppendLine($"ALTER TABLE {quotedTableName} ALTER COLUMN {this.GetQuotedString(column.ColumnName)} SET DEFAULT {column.DefaultValue};");
-                //    }
-                //}
-                //#endregion
+                #endregion              
 
                 sb.AppendLine();
 
@@ -797,13 +781,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
 
         #endregion
 
-        #region Generate Data Script
-        public override long GetTableRecordCount(DbConnection connection, Table table)
-        {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
-
-            return base.GetTableRecordCount(connection, sql);
-        }
+        #region Generate Data Script       
 
         public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table)
         {
@@ -817,7 +795,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
             return base.GenerateDataScriptsAsync(schemaInfo);
         }
 
-        protected override string GetPagedSql(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 

@@ -331,7 +331,7 @@ namespace DatabaseManager
 
         private void AppendMessage(string message, bool isError = false)
         {
-            UiHelper.AppendMessage(this.txtMessage, message, isError);
+            RichTextBoxHelper.AppendMessage(this.txtMessage, message, isError);
         }
 
         private bool ConfirmCancel()

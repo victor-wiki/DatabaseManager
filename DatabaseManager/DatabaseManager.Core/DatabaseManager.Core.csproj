@@ -5,6 +5,25 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Keyword\MySql.txt" />
+    <None Remove="Keyword\Oracle.txt" />
+    <None Remove="Keyword\SqlServer.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Keyword\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Keyword\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Keyword\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="15.0.2" />
     <PackageReference Include="Humanizer.Core" Version="2.7.9" />
   </ItemGroup>
 

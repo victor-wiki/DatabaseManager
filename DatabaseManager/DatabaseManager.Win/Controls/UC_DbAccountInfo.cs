@@ -110,7 +110,7 @@ namespace DatabaseManager.Controls
 
             try
             {
-                using (DbConnection dbConnection = dbInterpreter.GetDbConnector().CreateConnection())
+                using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
                     dbConnection.Open();
 

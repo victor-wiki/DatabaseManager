@@ -5,7 +5,8 @@ namespace DatabaseManager.Model
     public class DatabaseObjectDisplayInfo
     {
         public string Name { get; set; }
-        public DatabaseObjectDisplayType DisplayType { get; set; } = DatabaseObjectDisplayType.Scripts;
+        public DatabaseObject DatabaseObject { get; set; }
+        public DatabaseObjectDisplayType DisplayType { get; set; } = DatabaseObjectDisplayType.Script;
         public DatabaseType DatabaseType { get; set; }
         public string Content { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
@@ -13,7 +14,7 @@ namespace DatabaseManager.Model
 
     public enum DatabaseObjectDisplayType
     {
-        Scripts = 0,
+        Script = 0,
         Data = 1,
         Schema =2
     }
