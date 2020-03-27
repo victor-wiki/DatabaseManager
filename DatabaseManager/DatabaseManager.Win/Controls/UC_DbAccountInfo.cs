@@ -161,11 +161,8 @@ namespace DatabaseManager.Controls
             this.txtPassword.Enabled = !isWindowsAuth;
             this.chkRememberPassword.Enabled = !isWindowsAuth;
 
-            if (!isWindowsAuth)
-            {
-                this.txtUserId.Text = this.txtPassword.Text = "";
-                this.chkRememberPassword.Checked = false;
-            }
+            this.chkRememberPassword.Checked = false;
+            this.txtUserId.Text = this.txtPassword.Text = "";
         }
 
         public void FocusPasswordTextbox()

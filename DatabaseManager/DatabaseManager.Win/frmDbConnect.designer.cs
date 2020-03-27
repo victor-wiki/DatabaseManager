@@ -33,13 +33,16 @@
             this.cboDatabase = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.txtProfileName = new System.Windows.Forms.TextBox();
-            this.ucDbAccountInfo = new DatabaseManager.Controls.UC_DbAccountInfo();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.label2 = new System.Windows.Forms.Label();
+            this.rbInput = new System.Windows.Forms.RadioButton();
+            this.rbChoose = new System.Windows.Forms.RadioButton();
+            this.ucDbAccountInfo = new DatabaseManager.Controls.UC_DbAccountInfo();
             this.SuspendLayout();
             // 
             // btnConfirm
             // 
-            this.btnConfirm.Location = new System.Drawing.Point(123, 251);
+            this.btnConfirm.Location = new System.Drawing.Point(123, 273);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(75, 23);
             this.btnConfirm.TabIndex = 9;
@@ -63,11 +66,12 @@
             this.cboDatabase.Name = "cboDatabase";
             this.cboDatabase.Size = new System.Drawing.Size(166, 20);
             this.cboDatabase.TabIndex = 7;
+            this.cboDatabase.SelectedIndexChanged += new System.EventHandler(this.cboDatabase_SelectedIndexChanged);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 13);
+            this.label1.Location = new System.Drawing.Point(15, 238);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(83, 12);
             this.label1.TabIndex = 16;
@@ -75,10 +79,52 @@
             // 
             // txtProfileName
             // 
-            this.txtProfileName.Location = new System.Drawing.Point(123, 10);
+            this.txtProfileName.Location = new System.Drawing.Point(122, 235);
             this.txtProfileName.Name = "txtProfileName";
             this.txtProfileName.Size = new System.Drawing.Size(166, 21);
             this.txtProfileName.TabIndex = 0;
+            // 
+            // btnCancel
+            // 
+            this.btnCancel.Location = new System.Drawing.Point(214, 273);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.TabIndex = 17;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = true;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(16, 16);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 12);
+            this.label2.TabIndex = 19;
+            this.label2.Text = "Mode:";
+            // 
+            // rbInput
+            // 
+            this.rbInput.AutoSize = true;
+            this.rbInput.Checked = true;
+            this.rbInput.Location = new System.Drawing.Point(122, 15);
+            this.rbInput.Name = "rbInput";
+            this.rbInput.Size = new System.Drawing.Size(53, 16);
+            this.rbInput.TabIndex = 20;
+            this.rbInput.TabStop = true;
+            this.rbInput.Text = "Input";
+            this.rbInput.UseVisualStyleBackColor = true;
+            // 
+            // rbChoose
+            // 
+            this.rbChoose.AutoSize = true;
+            this.rbChoose.Location = new System.Drawing.Point(227, 15);
+            this.rbChoose.Name = "rbChoose";
+            this.rbChoose.Size = new System.Drawing.Size(59, 16);
+            this.rbChoose.TabIndex = 21;
+            this.rbChoose.Text = "Choose";
+            this.rbChoose.UseVisualStyleBackColor = true;
+            this.rbChoose.CheckedChanged += new System.EventHandler(this.rbChoose_CheckedChanged);
             // 
             // ucDbAccountInfo
             // 
@@ -88,21 +134,14 @@
             this.ucDbAccountInfo.Size = new System.Drawing.Size(373, 162);
             this.ucDbAccountInfo.TabIndex = 1;
             // 
-            // btnCancel
-            // 
-            this.btnCancel.Location = new System.Drawing.Point(214, 251);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
-            this.btnCancel.TabIndex = 17;
-            this.btnCancel.Text = "Cancel";
-            this.btnCancel.UseVisualStyleBackColor = true;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
             // frmDbConnect
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(390, 286);
+            this.ClientSize = new System.Drawing.Size(390, 307);
+            this.Controls.Add(this.rbChoose);
+            this.Controls.Add(this.rbInput);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.ucDbAccountInfo);
             this.Controls.Add(this.txtProfileName);
@@ -130,5 +169,8 @@
         private System.Windows.Forms.TextBox txtProfileName;
         private Controls.UC_DbAccountInfo ucDbAccountInfo;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.RadioButton rbInput;
+        private System.Windows.Forms.RadioButton rbChoose;
     }
 }

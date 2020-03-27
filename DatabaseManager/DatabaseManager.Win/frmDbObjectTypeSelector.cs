@@ -12,17 +12,17 @@ using System.Windows.Forms;
 
 namespace DatabaseManager
 {
-    public partial class frmDatabaseObjectTypeSelector : Form
+    public partial class frmDbObjectTypeSelector : Form
     {
         private bool isChecking = false;
         public DatabaseObjectType DatabaseObjectType { get; private set; }
 
-        public frmDatabaseObjectTypeSelector()
+        public frmDbObjectTypeSelector()
         {
             InitializeComponent();
         }
 
-        private void frmDatabaseObjectTypeSelector_Load(object sender, EventArgs e)
+        private void frmDbObjectTypeSelector_Load(object sender, EventArgs e)
         {
             this.InitControls();
 

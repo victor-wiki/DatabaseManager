@@ -195,17 +195,23 @@
     <Compile Include="frmConvert.designer.cs">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </Compile>
-    <Compile Include="frmDatabaseObjectTypeSelector.cs">
+    <Compile Include="frmDbObjectTypeSelector.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmDatabaseObjectTypeSelector.Designer.cs">
-      <DependentUpon>frmDatabaseObjectTypeSelector.cs</DependentUpon>
+    <Compile Include="frmDbObjectTypeSelector.Designer.cs">
+      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
     </Compile>
     <Compile Include="frmDbConnect.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="frmDbConnect.designer.cs">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmDbConnectionManage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDbConnectionManage.Designer.cs">
+      <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </Compile>
     <Compile Include="frmGenerateScripts.cs">
       <SubType>Form</SubType>
@@ -264,11 +270,14 @@
     <EmbeddedResource Include="frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmDatabaseObjectTypeSelector.resx">
-      <DependentUpon>frmDatabaseObjectTypeSelector.cs</DependentUpon>
+    <EmbeddedResource Include="frmDbObjectTypeSelector.resx">
+      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDbConnect.resx">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDbConnectionManage.resx">
+      <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmGenerateScripts.resx">
       <DependentUpon>frmGenerateScripts.cs</DependentUpon>
@@ -425,6 +434,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Loading.gif" />
+    <None Include="Resources\Profile.png" />
     <Content Include="SqlServerTypes\readme.htm" />
     <Content Include="SqlServerTypes\x64\msvcr120.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

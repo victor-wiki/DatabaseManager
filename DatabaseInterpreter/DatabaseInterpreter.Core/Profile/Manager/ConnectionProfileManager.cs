@@ -87,7 +87,7 @@ namespace DatabaseInterpreter.Profile
             return profileName;
         }
 
-        public static IEnumerable<ConnectionProfileInfo> GetProfiles(string dbType)
+        public static IEnumerable<ConnectionProfileInfo> GetProfiles(string dbType, bool isSampleMode = false)
         {
             IEnumerable<ConnectionProfileInfo> profiles = Enumerable.Empty<ConnectionProfileInfo>();
 
@@ -96,17 +96,20 @@ namespace DatabaseInterpreter.Profile
             if (File.Exists(filePath))
             {
                 profiles = ((IEnumerable<ConnectionProfileInfo>)JsonConvert.DeserializeObject(File.ReadAllText(ProfilePath), typeof(IEnumerable<ConnectionProfileInfo>)))
-                    .Where(item => item.DatabaseType == dbType.ToString());
+                    .Where(item => (item.DatabaseType == dbType || string.IsNullOrEmpty(dbType)));
 
-                var accountProfiles = AccountProfileManager.GetProfiles(dbType);
-                foreach (var profile in profiles)
+                if (!isSampleMode )
                 {
-                    AccountProfileInfo accountProfile = accountProfiles.FirstOrDefault(item => item.Id == profile.AccountProfileId);
-
-                    if (accountProfile != null)
+                    var accountProfiles = AccountProfileManager.GetProfiles(dbType);
+                    foreach (var profile in profiles)
                     {
-                        profile.ConnectionInfo = GetConnectionInfo(accountProfile);
-                        profile.ConnectionInfo.Database = profile.Database;
+                        AccountProfileInfo accountProfile = accountProfiles.FirstOrDefault(item => item.Id == profile.AccountProfileId);
+
+                        if (accountProfile != null)
+                        {
+                            profile.ConnectionInfo = GetConnectionInfo(accountProfile);
+                            profile.ConnectionInfo.Database = profile.Database;
+                        }
                     }
                 }
             }
@@ -148,7 +151,7 @@ namespace DatabaseInterpreter.Profile
         {
             ConnectionInfo connectionInfo = new ConnectionInfo();
 
-            ObjectHelper.CopyProperties(accountProfile, connectionInfo);           
+            ObjectHelper.CopyProperties(accountProfile, connectionInfo);
 
             return connectionInfo;
         }

@@ -91,5 +91,11 @@ namespace DatabaseManager
         {
             throw new NotImplementedException();
         }
+
+        private void tsmiDbConnection_Click(object sender, EventArgs e)
+        {
+            frmDbConnectionManage frmDbConnectionManage = new frmDbConnectionManage();
+            frmDbConnectionManage.ShowDialog();
+        }
     }
 }

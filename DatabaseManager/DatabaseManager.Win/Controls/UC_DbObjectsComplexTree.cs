@@ -527,7 +527,7 @@ namespace DatabaseManager.Controls
 
             if (MessageBox.Show("Are you sure to delelte all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                frmDatabaseObjectTypeSelector selector = new frmDatabaseObjectTypeSelector();
+                frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector();
 
                 if (selector.ShowDialog() == DialogResult.OK)
                 {

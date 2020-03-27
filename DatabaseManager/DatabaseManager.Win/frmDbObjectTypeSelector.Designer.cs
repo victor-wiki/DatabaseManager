@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmDatabaseObjectTypeSelector
+    partial class frmDbObjectTypeSelector
     {
         /// <summary>
         /// Required designer variable.
@@ -91,7 +91,7 @@
             this.Name = "frmDatabaseObjectTypeSelector";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Select databaes objects";
-            this.Load += new System.EventHandler(this.frmDatabaseObjectTypeSelector_Load);
+            this.Load += new System.EventHandler(this.frmDbObjectTypeSelector_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -47,7 +47,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private async void Feedback(FeedbackInfo info)
+        private void Feedback(FeedbackInfo info)
         {
             if(this.OnFeedback!=null)
             {

@@ -16,7 +16,7 @@ namespace DatabaseInterpreter.Profile
         {
             AccountProfileInfo cloneInfo = ObjectHelper.CloneObject<AccountProfileInfo>(info);
 
-            if (!rememberPassword)
+            if (!rememberPassword || info.IntegratedSecurity)
             {
                 cloneInfo.Password = "";
             }
@@ -64,7 +64,7 @@ namespace DatabaseInterpreter.Profile
             if (File.Exists(ProfilePath))
             {
                 profiles = ((IEnumerable<AccountProfileInfo>)JsonConvert.DeserializeObject(File.ReadAllText(ProfilePath), typeof(IEnumerable<AccountProfileInfo>)))
-                            .Where(item => item.DatabaseType == dbType);
+                            .Where(item => (item.DatabaseType == dbType || string.IsNullOrEmpty(dbType) ));
 
                 foreach(var profile in profiles)
                 {
@@ -78,7 +78,7 @@ namespace DatabaseInterpreter.Profile
             return profiles;
         }
 
-        public void Delete(Guid id)
+        public static void Delete(IEnumerable<Guid> ids)
         {
             List<AccountProfileInfo> profiles = new List<AccountProfileInfo>();
 
@@ -87,15 +87,15 @@ namespace DatabaseInterpreter.Profile
                 profiles = (List<AccountProfileInfo>)JsonConvert.DeserializeObject(File.ReadAllText(ProfilePath), typeof(List<AccountProfileInfo>));
             }
 
-            AccountProfileInfo oldProfile = profiles.FirstOrDefault(item => item.Id == id);
+            var oldProfiles = profiles.Where(item => ids.Contains(item.Id));
 
-            if (oldProfile != null)
+            if (oldProfiles != null && oldProfiles.Count()>0 )
             {
-                profiles.Remove(oldProfile);
+                profiles.RemoveAll(item=> oldProfiles.Any(t=>item.Id == t.Id));
 
-                var connectionProfiles = ConnectionProfileManager.GetProfiles(oldProfile.DatabaseType).ToList();
+                var connectionProfiles = ConnectionProfileManager.GetProfiles(null, true).ToList();
 
-                connectionProfiles.RemoveAll(item => item.AccountProfileId == id);
+                connectionProfiles.RemoveAll(item => ids.Contains(item.AccountProfileId));
 
                 File.WriteAllText(ConnectionProfileManager.ProfilePath, JsonConvert.SerializeObject(connectionProfiles, Formatting.Indented));
             }          

@@ -25,7 +25,7 @@ namespace DatabaseManager
         {
             InitializeComponent();
             this.isAdd = true;
-            this.DatabaseType = dbType;           
+            this.DatabaseType = dbType;
         }
 
         public frmDbConnect(DatabaseType dbType, string profileName, bool requriePassword = false)
@@ -35,7 +35,7 @@ namespace DatabaseManager
             this.isAdd = false;
             this.requriePassword = requriePassword;
             this.DatabaseType = dbType;
-            this.ProflieName = profileName;           
+            this.ProflieName = profileName;
         }
 
         private void frmDbConnect_Load(object sender, EventArgs e)
@@ -47,7 +47,7 @@ namespace DatabaseManager
         {
             this.ucDbAccountInfo.OnTestConnect += this.TestConnect;
             this.ucDbAccountInfo.DatabaseType = this.DatabaseType;
-            this.ucDbAccountInfo.InitControls();            
+            this.ucDbAccountInfo.InitControls();
 
             if (string.IsNullOrEmpty(this.ProflieName))
             {
@@ -58,15 +58,15 @@ namespace DatabaseManager
                 this.txtProfileName.Text = this.ProflieName.ToString();
                 this.LoadProfile();
             }
-        }       
+        }
 
         private void LoadProfile()
         {
             ConnectionInfo connectionInfo = ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);
 
             this.ucDbAccountInfo.LoadData(connectionInfo);
-           
-            this.cboDatabase.Text = connectionInfo.Database;           
+
+            this.cboDatabase.Text = connectionInfo.Database;
         }
 
         private async void TestConnect()
@@ -104,12 +104,12 @@ namespace DatabaseManager
 
         private void btnConfirm_Click(object sender, EventArgs e)
         {
-            if(!this.ucDbAccountInfo.ValidateInfo())
+            if (!this.ucDbAccountInfo.ValidateInfo())
             {
                 return;
             }
 
-            if(string.IsNullOrEmpty(this.cboDatabase.Text))
+            if (string.IsNullOrEmpty(this.cboDatabase.Text))
             {
                 MessageBox.Show("Please select a database.");
                 return;
@@ -145,11 +145,11 @@ namespace DatabaseManager
             ConnectionProfileInfo profile = new ConnectionProfileInfo() { ConnectionInfo = this.ConnectionInfo };
 
             profile.Name = profileName;
-            profile.DatabaseType = this.DatabaseType.ToString();         
+            profile.DatabaseType = this.DatabaseType.ToString();
 
             this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
             this.DialogResult = DialogResult.OK;
-        }     
+        }
 
         private void frmDbConnect_Activated(object sender, EventArgs e)
         {
@@ -162,6 +162,27 @@ namespace DatabaseManager
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
+        }     
+
+        private void cboDatabase_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(string.IsNullOrEmpty(this.txtProfileName.Text) && !string.IsNullOrEmpty(this.cboDatabase.Text))
+            {
+                this.txtProfileName.Text = this.cboDatabase.Text;
+            }
+        }
+
+        private void rbChoose_CheckedChanged(object sender, EventArgs e)
+        {
+            if(this.rbChoose.Checked)
+            {
+                frmDbConnectionManage frm = new frmDbConnectionManage(this.DatabaseType) { IsForSelecting = true };
+
+                if (frm.ShowDialog() == DialogResult.OK)
+                {
+                    this.ucDbAccountInfo.LoadData(frm.SelectedAccountProfileInfo);
+                }
+            }
         }
     }
 }

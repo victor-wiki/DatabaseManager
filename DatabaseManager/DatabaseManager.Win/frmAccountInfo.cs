@@ -14,7 +14,7 @@ using System.Windows.Forms;
 namespace DatabaseManager
 {
     public partial class frmAccountInfo : Form
-    {        
+    {
         private bool requriePassword = false;
         public DatabaseType DatabaseType { get; set; }
         public Guid AccountProfileId { get; set; }
@@ -24,7 +24,7 @@ namespace DatabaseManager
         {
             InitializeComponent();
 
-            this.DatabaseType = dbType;           
+            this.DatabaseType = dbType;
         }
 
         public frmAccountInfo(DatabaseType dbType, bool requriePassword)
@@ -32,8 +32,8 @@ namespace DatabaseManager
             InitializeComponent();
 
             this.DatabaseType = dbType;
-            this.requriePassword = requriePassword;            
-        }       
+            this.requriePassword = requriePassword;
+        }
 
         private void frmAccountInfo_Load(object sender, EventArgs e)
         {
@@ -45,7 +45,7 @@ namespace DatabaseManager
             this.ucAccountInfo.DatabaseType = this.DatabaseType;
             this.ucAccountInfo.InitControls();
 
-            if(this.AccountProfileInfo!=null)
+            if (this.AccountProfileInfo != null)
             {
                 this.ucAccountInfo.LoadData(this.AccountProfileInfo);
             }
@@ -53,7 +53,7 @@ namespace DatabaseManager
 
         private void frmAccountInfo_Activated(object sender, EventArgs e)
         {
-            if(this.requriePassword)
+            if (this.requriePassword)
             {
                 this.ucAccountInfo.FocusPasswordTextbox();
             }
@@ -61,16 +61,41 @@ namespace DatabaseManager
 
         private void btnConfirm_Click(object sender, EventArgs e)
         {
-            if(!this.ucAccountInfo.ValidateInfo())
+            if (!this.ucAccountInfo.ValidateInfo())
             {
                 return;
             }
 
             AccountProfileInfo accountProfileInfo = this.GetAccountProfileInfo();
 
+            var profiles = AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
+
+            bool isAdd = this.AccountProfileInfo == null;
+
+            if (isAdd)
+            {
+                if (profiles.Any(item => item.Server == accountProfileInfo.Server
+                                                     && item.IntegratedSecurity == accountProfileInfo.IntegratedSecurity
+                                                     && item.UserId == accountProfileInfo.UserId))
+                {
+                    MessageBox.Show($"The record has already existed:{accountProfileInfo.Description}");
+                    return;
+                }
+            }
+            else
+            {
+                if (profiles.Where(item => item.Id != this.AccountProfileInfo.Id).Any(item => item.Server == accountProfileInfo.Server
+                                                       && item.IntegratedSecurity == accountProfileInfo.IntegratedSecurity
+                                                       && item.UserId == accountProfileInfo.UserId))
+                {
+                    MessageBox.Show($"The record has already existed:{accountProfileInfo.Description}");
+                    return;
+                }
+            }
+
             this.AccountProfileId = AccountProfileManager.Save(accountProfileInfo, this.ucAccountInfo.RememberPassword);
 
-            this.AccountProfileInfo = accountProfileInfo;           
+            this.AccountProfileInfo = accountProfileInfo;
 
             this.DialogResult = DialogResult.OK;
 
@@ -80,7 +105,7 @@ namespace DatabaseManager
         private AccountProfileInfo GetAccountProfileInfo()
         {
             ConnectionInfo connectionInfo = this.ucAccountInfo.GetConnectionInfo();
-            AccountProfileInfo accountProfileInfo = new AccountProfileInfo() {  DatabaseType = this.DatabaseType.ToString() };
+            AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { DatabaseType = this.DatabaseType.ToString() };
 
             ObjectHelper.CopyProperties(connectionInfo, accountProfileInfo);
 
