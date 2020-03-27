@@ -34,7 +34,7 @@ namespace  DatabaseInterpreter.Core
             }
             else if(lowerProviderName.Contains("mysql"))
             {
-                factory = new MySqlClientFactory();
+                factory = MySqlClientFactory.Instance;
             }            
             else
             {

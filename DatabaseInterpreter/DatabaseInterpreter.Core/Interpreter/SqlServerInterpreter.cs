@@ -432,27 +432,22 @@ namespace DatabaseInterpreter.Core
         #region Database Operation
         public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
         {
-            await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}");
+            await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}", false);
         }
 
-        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
                 await bulkCopy.WriteToServerAsync(dataTable, DataRowState.Added, bulkCopyInfo.CancellationToken);
-            }
-
-            return 0;
+            }           
         }
 
         private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
         {
             SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, SqlBulkCopyOptions.Default, bulkCopyInfo.Transaction as SqlTransaction);
 
-            if (connection.State == ConnectionState.Closed)
-            {
-                await connection.OpenAsync();
-            }
+            await this.OpenConnectionAsync(connection);
 
             bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopy.DestinationTableName);
             bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout;
@@ -463,10 +458,20 @@ namespace DatabaseInterpreter.Core
 
         public override Task SetConstrainsEnabled(bool enabled)
         {
+            return this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
+        }
+
+        public override Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        {
+            return this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
+        }
+
+        private string GetSqlForSetConstrainsEnabled(bool enabled)
+        {
             string sql = $@"EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
                           EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';";
 
-            return this.ExecuteNonQueryAsync(sql);
+            return sql;
         }
 
         public override Task Drop<T>(DbConnection dbConnection, T dbObjet)

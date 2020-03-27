@@ -468,9 +468,7 @@ namespace DatabaseManager
                 else
                 {
                     this.txtTargetDbOwner.Text = "";
-                }
-
-                this.chkBulkCopy.Checked = databaseType != DatabaseType.MySql;
+                }               
             }
         }
     }

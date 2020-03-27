@@ -58,6 +58,14 @@ namespace DatabaseInterpreter.Core
             return this.dbConnector.CreateConnection();
         }
 
+        public async Task OpenConnectionAsync(DbConnection connection)
+        {
+            if (connection.State == ConnectionState.Closed)
+            {
+                await connection.OpenAsync();
+            }
+        }
+
         public string GetObjectDisplayName(DatabaseObject obj, bool useQuotedString = false)
         {
             if (this.GetType().Name == nameof(SqlServerInterpreter))
@@ -128,10 +136,7 @@ namespace DatabaseInterpreter.Core
                 dbCommand.CommandText = sql;
                 dbCommand.CommandType = CommandType.Text;
 
-                if(dbConnection.State == ConnectionState.Closed)
-                {
-                    await dbConnection.OpenAsync();
-                }
+                await this.OpenConnectionAsync(dbConnection);
 
                 objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
 
@@ -372,7 +377,7 @@ namespace DatabaseInterpreter.Core
             return this.InternalExecuteNonQuery(this.CreateConnection(), commandInfo, true);
         }
 
-        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = true)
+        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = false)
         {
             return this.InternalExecuteNonQuery(dbConnection, new CommandInfo() { CommandText = sql }, disposeConnection);
         }
@@ -459,7 +464,7 @@ namespace DatabaseInterpreter.Core
             }
         }
 
-        public abstract Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo);
+        public abstract Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo);
 
         protected async Task<object> GetScalarAsync(DbConnection dbConnection, string sql)
         {
@@ -487,6 +492,7 @@ namespace DatabaseInterpreter.Core
         }
 
         public abstract Task SetConstrainsEnabled(bool enabled);
+        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);
 
         public virtual async Task ClearDataAsync(List<Table> tables = null)
         {
@@ -497,15 +503,15 @@ namespace DatabaseInterpreter.Core
                 tables = await this.GetTablesAsync();
             }
 
+            bool failed = false;
             try
             {
-
-                this.FeedbackInfo("Disable constrains.");
-
-                await this.SetConstrainsEnabled(false);
+                this.FeedbackInfo("Disable constrains.");               
 
                 using (DbConnection dbConnection = this.CreateConnection())
                 {
+                    await this.SetConstrainsEnabled(dbConnection, false);
+
                     foreach (Table table in tables)
                     {
                         string sql = $"DELETE FROM {this.GetQuotedObjectName(table)}";
@@ -514,17 +520,23 @@ namespace DatabaseInterpreter.Core
 
                         await this.ExecuteNonQueryAsync(dbConnection, sql, false);
                     }
+
+                    await this.SetConstrainsEnabled(dbConnection, true);
                 }
             }
             catch (Exception ex)
             {
+                failed = true;
                 this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
             }
             finally
             {
-                this.FeedbackInfo("Enable constrains.");
+                if(failed)
+                {
+                    this.FeedbackInfo("Enable constrains.");
 
-                await this.SetConstrainsEnabled(true);
+                    await this.SetConstrainsEnabled(true);
+                }               
             }
 
             this.FeedbackInfo("End clear data.");

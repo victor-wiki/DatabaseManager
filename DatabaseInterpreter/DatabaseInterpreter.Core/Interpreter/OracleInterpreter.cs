@@ -431,11 +431,11 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
-        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             if (!(connection is OracleConnection conn))
             {
-                return 0;
+                return;
             }
 
             if (conn.State != ConnectionState.Open)
@@ -451,34 +451,37 @@ namespace DatabaseInterpreter.Core
                 bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;
                 bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
 
-                await bulkCopy.WriteToServerAsync(dataTable);
-
-                return dataTable.Rows.Count;
+                await bulkCopy.WriteToServerAsync(dataTable);               
             }
         }
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
+            using (DbConnection connection = this.CreateConnection())
+            {
+                await this.SetConstrainsEnabled(connection, enabled);
+            }                
+        }
+
+        public override async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        {
             List<string> sqls = new List<string>() { this.GetSqlForEnableConstraints(enabled), this.GetSqlForEnableTrigger(enabled) };
             List<string> cmds = new List<string>();
 
-            using (DbConnection connection = this.CreateConnection())
+            foreach (string sql in sqls)
             {
-                foreach (string sql in sqls)
-                {
-                    DbDataReader reader = await this.GetDataReaderAsync(connection, sql);
+                DbDataReader reader = await this.GetDataReaderAsync(dbConnection, sql);
 
-                    while (reader.Read())
-                    {
-                        string cmd = reader[0].ToString();
-                        cmds.Add(cmd);
-                    }
-                }
-
-                foreach (string cmd in cmds)
+                while (reader.Read())
                 {
-                    await this.ExecuteNonQueryAsync(connection, cmd, false);
+                    string cmd = reader[0].ToString();
+                    cmds.Add(cmd);
                 }
+            }
+
+            foreach (string cmd in cmds)
+            {
+                await this.ExecuteNonQueryAsync(dbConnection, cmd, false);
             }
         }
 

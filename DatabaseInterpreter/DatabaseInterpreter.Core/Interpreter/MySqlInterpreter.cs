@@ -1,27 +1,18 @@
-﻿using MySql.Data.MySqlClient;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using CsvHelper;
-using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
-using Dapper;
-using DatabaseInterpreter.Model;
-using System.Globalization;
-using DatabaseInterpreter.Utility;
-using System.Threading;
 
 namespace DatabaseInterpreter.Core
 {
     public class MySqlInterpreter : DbInterpreter
     {
-        #region Field & Property 
-        private string bulkLoaderPath = "";
+        #region Field & Property       
         public override string UnicodeInsertChar => "";
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '`'; } }
@@ -396,158 +387,95 @@ namespace DatabaseInterpreter.Core
         public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
         {
             Table table = new Table() { Name = column.TableName, Owner = column.Owner };
-            await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
+            await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}", false);
         }
 
-        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             if (dataTable == null || dataTable.Rows.Count <= 0)
             {
-                return 0;
+                return;
             }
 
-            var loader = this.GetBulkLoader(connection, dataTable, bulkCopyInfo);
+            MySqlBulkCopy bulkCopy = new MySqlBulkCopy(connection as MySqlConnection, bulkCopyInfo.Transaction as MySqlTransaction);
 
-            if (loader == null)
-            {
-                return 0;
-            }
+            bulkCopy.DestinationTableName = bulkCopyInfo.DestinationTableName;
 
-            return await this.BulkLoadAsync(loader, dataTable, bulkCopyInfo.CancellationToken);
-        }      
+            await this.OpenConnectionAsync(connection);
 
-        private async Task<int> BulkLoadAsync(MySqlBulkLoader loader, DataTable dataTable, CancellationToken cancellationToken = default(CancellationToken))
+            await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable), bulkCopyInfo.CancellationToken);
+        }
+
+        private Dictionary<string, Type> dictSpecialDataType = new Dictionary<string, Type>() { { "SqlHierarchyId", typeof(string) }, { "SqlGeography", typeof(string) } };
+
+        private DataTable ConvertDataTable(DataTable dataTable)
         {
-            if (loader == null)
-            {
-                return 0;
-            }
+            bool hasSpecialColumn = false;
 
-            string path = loader.FileName;
-
-            if (string.IsNullOrEmpty(path))
+            foreach (DataColumn column in dataTable.Columns)
             {
-                path = Path.GetTempFileName();
-                loader.FileName = path;
-            }
-
-            try
-            {
-                using (var writer = new StreamWriter(path))
+                if (this.dictSpecialDataType.Keys.Contains(column.DataType.Name))
                 {
-                    var configuration = new CsvConfiguration(CultureInfo.CurrentCulture)
+                    hasSpecialColumn = true;
+                    break;
+                }
+            }
+
+            if (hasSpecialColumn)
+            {
+                DataTable dtSpecial = dataTable.Clone();
+
+                foreach (DataColumn column in dtSpecial.Columns)
+                {
+                    if (this.dictSpecialDataType.Keys.Contains(column.DataType.Name))
                     {
-                        HasHeaderRecord = false
-                    };                  
-
-                    using (var csv = new CsvWriter(writer, configuration))
-                    {
-                        using (var dt = dataTable.Copy())
-                        {
-                            foreach (DataColumn column in dt.Columns)
-                            {
-                                var columnName = column.ColumnName;
-
-                                if (columnName != RowNumberColumnName)
-                                {
-                                    loader.Columns.Add(this.GetQuotedString(columnName));
-                                }
-                            }
-
-                            foreach (DataRow row in dt.Rows)
-                            {
-                                for (var i = 0; i < dt.Columns.Count; i++)
-                                {
-                                    var column = dt.Columns[i];
-                                    var columnName = column.ColumnName;
-
-                                    if (columnName != RowNumberColumnName)
-                                    {
-                                        var value = row[i];
-
-                                        if(ValueHelper.IsNullValue(value))
-                                        {
-                                            csv.WriteField("NULL");
-                                        }
-                                        else
-                                        {
-                                            csv.WriteField(value);
-                                        }                                       
-                                    }
-                                }
-
-                                csv.NextRecord();
-                            }
-                        }
+                        column.DataType = this.dictSpecialDataType[column.DataType.Name];
                     }
                 }
 
-                return await loader.LoadAsync(cancellationToken);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                File.Delete(path);
-            }
-        }      
-
-        private MySqlBulkLoader GetBulkLoader(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
-        {
-            if (dataTable == null || dataTable.Rows.Count <= 0)
-            {
-                return null;
-            }
-
-            if (!(connection is MySqlConnection conn))
-            {
-                return null;
-            }
-
-            var loader = new MySqlBulkLoader(conn)
-            {
-                LineTerminator = Environment.NewLine,
-                FieldQuotationCharacter = '"',
-                EscapeCharacter = '"',
-                FieldTerminator = ",",
-                ConflictOption = MySqlBulkLoaderConflictOption.Ignore,
-                TableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName),
-                CharacterSet = "utf8"
-            };
-
-            string fileName = Path.GetFileName(Path.GetTempFileName());
-
-            if (string.IsNullOrEmpty(this.bulkLoaderPath))
-            {
-                //the "secure_file_priv" option exists in my.ini file, if it's running this program remotely, should set it to be "",
-                string path = conn.Query<string>(@"select @@global.secure_file_priv;").FirstOrDefault() ?? "";
-
-                if (Directory.Exists(path))
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    this.bulkLoaderPath = path;
+                    DataRow r = dtSpecial.NewRow();
+
+                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    {
+                        var value = row[i];
+
+                        if (this.dictSpecialDataType.Keys.Contains(dataTable.Columns[i].DataType.Name))
+                        {
+                            Type type = this.dictSpecialDataType[dataTable.Columns[i].DataType.Name];
+
+                            r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
+                        }
+                        else
+                        {
+                            r[i] = value;
+                        }
+
+                    }
+
+                    dtSpecial.Rows.Add(r);
+
+                    return dtSpecial;
                 }
             }
 
-            if (Directory.Exists(this.bulkLoaderPath))
-            {
-                loader.FileName = Path.Combine(this.bulkLoaderPath, fileName);
-            }
-
-            if (bulkCopyInfo.Timeout.HasValue)
-            {
-                loader.Timeout = bulkCopyInfo.Timeout.Value;
-            }
-
-            return loader;
+            return dataTable;
         }
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
-            string sql = $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";
+            await this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
+        }
 
-            await this.ExecuteNonQueryAsync(sql);
+        public override async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        {
+            await this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
+        }
+
+        private string GetSqlForSetConstrainsEnabled(bool enabled)
+        {
+            return $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";
         }
 
         public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
