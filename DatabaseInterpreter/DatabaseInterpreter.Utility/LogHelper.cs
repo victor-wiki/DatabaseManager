@@ -6,7 +6,7 @@ namespace DatabaseInterpreter.Utility
 {
     public class LogHelper
     {
-        public static bool EnableDebug { get; set; }
+      
         private static object obj = new object();
 
         public static void LogInfo(string message)
@@ -24,12 +24,7 @@ namespace DatabaseInterpreter.Utility
             lock (obj)
             {
                 File.AppendAllLines(filePath, new string[] { content });
-            }
-
-            if (EnableDebug)
-            {
-                Console.WriteLine(content);
-            }
+            }            
         }      
     }
 }

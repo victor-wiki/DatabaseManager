@@ -90,7 +90,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tvDbObjects.Location = new System.Drawing.Point(3, 55);
             this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(218, 271);
+            this.tvDbObjects.Size = new System.Drawing.Size(218, 274);
             this.tvDbObjects.TabIndex = 46;
             // 
             // UC_DbObjectsNavigator

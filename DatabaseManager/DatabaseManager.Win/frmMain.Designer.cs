@@ -38,6 +38,8 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
             this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.menuStrip1.SuspendLayout();
@@ -46,6 +48,7 @@
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.panelContent.SuspendLayout();
+            this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // menuStrip1
@@ -114,7 +117,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.panelContent);
-            this.splitContainer1.Size = new System.Drawing.Size(786, 391);
+            this.splitContainer1.Size = new System.Drawing.Size(786, 372);
             this.splitContainer1.SplitterDistance = 150;
             this.splitContainer1.TabIndex = 8;
             // 
@@ -124,15 +127,35 @@
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Location = new System.Drawing.Point(0, 0);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(632, 391);
+            this.panelContent.Size = new System.Drawing.Size(632, 372);
             this.panelContent.TabIndex = 0;
+            // 
+            // statusStrip
+            // 
+            this.statusStrip.AutoSize = false;
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsslMessage});
+            this.statusStrip.Location = new System.Drawing.Point(0, 449);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Size = new System.Drawing.Size(786, 18);
+            this.statusStrip.TabIndex = 9;
+            this.statusStrip.Text = "statusStrip1";
+            // 
+            // tsslMessage
+            // 
+            this.tsslMessage.AutoSize = false;
+            this.tsslMessage.AutoToolTip = true;
+            this.tsslMessage.Margin = new System.Windows.Forms.Padding(0);
+            this.tsslMessage.Name = "tsslMessage";
+            this.tsslMessage.Size = new System.Drawing.Size(500, 18);
+            this.tsslMessage.TextAlign = System.Drawing.ContentAlignment.TopLeft;
             // 
             // navigator
             // 
             this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
             this.navigator.Location = new System.Drawing.Point(0, 0);
             this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(150, 391);
+            this.navigator.Size = new System.Drawing.Size(150, 372);
             this.navigator.TabIndex = 0;
             // 
             // ucContent
@@ -141,7 +164,7 @@
             this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucContent.Location = new System.Drawing.Point(0, 0);
             this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(632, 391);
+            this.ucContent.Size = new System.Drawing.Size(632, 372);
             this.ucContent.TabIndex = 0;
             this.ucContent.Visible = false;
             // 
@@ -150,6 +173,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(786, 467);
+            this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.btnConvert);
             this.Controls.Add(this.btnGenerateScripts);
@@ -169,6 +193,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.panelContent.ResumeLayout(false);
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -186,6 +212,8 @@
         private Controls.UC_DbObjectsNavigator navigator;
         private System.Windows.Forms.Panel panelContent;
         private Controls.UC_DbObjectContent ucContent;
+        private System.Windows.Forms.StatusStrip statusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel tsslMessage;
     }
 }
 

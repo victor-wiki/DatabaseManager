@@ -84,12 +84,17 @@ namespace DatabaseManager
 
             ObjectHelper.CopyProperties(connectionInfo, accountProfileInfo);
 
+            if (this.AccountProfileInfo != null)
+            {
+                accountProfileInfo.Id = this.AccountProfileInfo.Id;
+            }
+
             return accountProfileInfo;
         }
 
-        private void btnTest_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.ucAccountInfo.TestConnect();
+            this.Close();
         }
     }
 }

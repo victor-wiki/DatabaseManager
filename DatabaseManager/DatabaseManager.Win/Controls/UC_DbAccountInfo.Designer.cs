@@ -40,11 +40,12 @@
             this.lblServerName = new System.Windows.Forms.Label();
             this.cboServer = new System.Windows.Forms.ComboBox();
             this.chkAsDba = new System.Windows.Forms.CheckBox();
+            this.btnTest = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtPort
             // 
-            this.txtPort.Location = new System.Drawing.Point(327, 7);
+            this.txtPort.Location = new System.Drawing.Point(324, 7);
             this.txtPort.Name = "txtPort";
             this.txtPort.Size = new System.Drawing.Size(49, 21);
             this.txtPort.TabIndex = 2;
@@ -53,7 +54,7 @@
             // lblPort
             // 
             this.lblPort.AutoSize = true;
-            this.lblPort.Location = new System.Drawing.Point(291, 10);
+            this.lblPort.Location = new System.Drawing.Point(288, 10);
             this.lblPort.Name = "lblPort";
             this.lblPort.Size = new System.Drawing.Size(35, 12);
             this.lblPort.TabIndex = 28;
@@ -137,12 +138,12 @@
             this.cboServer.Location = new System.Drawing.Point(118, 7);
             this.cboServer.Name = "cboServer";
             this.cboServer.Size = new System.Drawing.Size(166, 20);
-            this.cboServer.TabIndex = 29;
+            this.cboServer.TabIndex = 1;
             // 
             // chkAsDba
             // 
             this.chkAsDba.AutoSize = true;
-            this.chkAsDba.Location = new System.Drawing.Point(293, 46);
+            this.chkAsDba.Location = new System.Drawing.Point(288, 46);
             this.chkAsDba.Name = "chkAsDba";
             this.chkAsDba.Size = new System.Drawing.Size(78, 16);
             this.chkAsDba.TabIndex = 30;
@@ -150,10 +151,21 @@
             this.chkAsDba.UseVisualStyleBackColor = true;
             this.chkAsDba.Visible = false;
             // 
+            // btnTest
+            // 
+            this.btnTest.Location = new System.Drawing.Point(288, 108);
+            this.btnTest.Name = "btnTest";
+            this.btnTest.Size = new System.Drawing.Size(75, 23);
+            this.btnTest.TabIndex = 31;
+            this.btnTest.Text = "Test";
+            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+            // 
             // UC_DbAccountInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.btnTest);
             this.Controls.Add(this.chkAsDba);
             this.Controls.Add(this.cboServer);
             this.Controls.Add(this.txtPort);
@@ -186,5 +198,6 @@
         private System.Windows.Forms.Label lblServerName;
         private System.Windows.Forms.ComboBox cboServer;
         private System.Windows.Forms.CheckBox chkAsDba;
+        private System.Windows.Forms.Button btnTest;
     }
 }

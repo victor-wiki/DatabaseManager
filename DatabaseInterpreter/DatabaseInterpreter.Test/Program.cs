@@ -16,7 +16,9 @@ namespace DatabaseInterpreter.Test
         {
             ScriptOutputMode = GenerateScriptOutputMode.WriteToString | GenerateScriptOutputMode.WriteToFile,
             ScriptOutputFolder = "output",
-            GetAllObjectsIfNotSpecified = true
+            GetAllObjectsIfNotSpecified = true,
+            TreatBytesAsNullForReading = true,
+            TreatBytesAsNullForExecuting = true
         };
 
         static SqlServerInterpreter sqlServerInterpreter = new SqlServerInterpreter(sqlServerConn, option);
@@ -26,7 +28,7 @@ namespace DatabaseInterpreter.Test
         static void Main(string[] args)
         {
             RunDemo();
-
+;
             Console.ReadLine();
         }
 

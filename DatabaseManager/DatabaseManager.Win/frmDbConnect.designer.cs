@@ -28,28 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnTest = new System.Windows.Forms.Button();
             this.btnConfirm = new System.Windows.Forms.Button();
             this.lblDatabase = new System.Windows.Forms.Label();
             this.cboDatabase = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.txtProfileName = new System.Windows.Forms.TextBox();
             this.ucDbAccountInfo = new DatabaseManager.Controls.UC_DbAccountInfo();
+            this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
-            // 
-            // btnTest
-            // 
-            this.btnTest.Location = new System.Drawing.Point(118, 251);
-            this.btnTest.Name = "btnTest";
-            this.btnTest.Size = new System.Drawing.Size(75, 23);
-            this.btnTest.TabIndex = 8;
-            this.btnTest.Text = "Test";
-            this.btnTest.UseVisualStyleBackColor = true;
-            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // btnConfirm
             // 
-            this.btnConfirm.Location = new System.Drawing.Point(215, 251);
+            this.btnConfirm.Location = new System.Drawing.Point(123, 251);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(75, 23);
             this.btnConfirm.TabIndex = 9;
@@ -98,18 +88,28 @@
             this.ucDbAccountInfo.Size = new System.Drawing.Size(373, 162);
             this.ucDbAccountInfo.TabIndex = 1;
             // 
+            // btnCancel
+            // 
+            this.btnCancel.Location = new System.Drawing.Point(214, 251);
+            this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.TabIndex = 17;
+            this.btnCancel.Text = "Cancel";
+            this.btnCancel.UseVisualStyleBackColor = true;
+            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            // 
             // frmDbConnect
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(390, 286);
+            this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.ucDbAccountInfo);
             this.Controls.Add(this.txtProfileName);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cboDatabase);
             this.Controls.Add(this.lblDatabase);
             this.Controls.Add(this.btnConfirm);
-            this.Controls.Add(this.btnTest);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "frmDbConnect";
@@ -123,12 +123,12 @@
         }
 
         #endregion
-        private System.Windows.Forms.Button btnTest;
         private System.Windows.Forms.Button btnConfirm;
         private System.Windows.Forms.Label lblDatabase;
         private System.Windows.Forms.ComboBox cboDatabase;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtProfileName;
         private Controls.UC_DbAccountInfo ucDbAccountInfo;
+        private System.Windows.Forms.Button btnCancel;
     }
 }

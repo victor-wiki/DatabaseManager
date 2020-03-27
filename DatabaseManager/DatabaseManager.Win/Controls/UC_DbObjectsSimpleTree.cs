@@ -22,27 +22,33 @@ namespace DatabaseManager.Controls
             TreeView.CheckForIllegalCrossThreadCalls = false;
         }
 
-        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, bool loadAllObjects =false )
+        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, bool loadAllObjects = false, DatabaseObjectType excludeObjType = DatabaseObjectType.None)
         {
             this.tvDbObjects.Nodes.Clear();
 
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
             DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
 
-            if(loadAllObjects)
+            if (loadAllObjects)
             {
                 option.GetAllObjectsIfNotSpecified = true;
             }
             else
             {
-                databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
+                databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;                
+
+                if (excludeObjType != DatabaseObjectType.None)
+                {
+                    databaseObjectType = databaseObjectType ^ DatabaseObjectType.UserDefinedType;
+                }
             }
 
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);          
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() {  DatabaseObjectType = databaseObjectType });
-
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
+            
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
+
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
@@ -109,7 +115,7 @@ namespace DatabaseManager.Controls
             {
                 foreach (TreeNode child in node.Nodes)
                 {
-                    if(child.Checked)
+                    if (child.Checked)
                     {
                         return true;
                     }

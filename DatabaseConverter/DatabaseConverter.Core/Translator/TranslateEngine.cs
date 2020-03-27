@@ -14,6 +14,8 @@ namespace DatabaseConverter.Core
         private DbInterpreter targetInerpreter;
         private string targetDbOwner;
 
+        public bool SkipError { get; set; }
+
         public TranslateEngine(SchemaInfo targetSchemaInfo, DbInterpreter sourceInterpreter, DbInterpreter targetInerpreter, string targetDbOwner = null)
         {
             this.targetSchemaInfo = targetSchemaInfo;
@@ -26,13 +28,13 @@ namespace DatabaseConverter.Core
         {
             this.TranslateOwner();
 
-            ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
+            ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns) ;
             columnTranslator.Translate();
 
-            ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner);
+            ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner) { SkipError = this.SkipError };
             viewTranslator.Translate();
 
-            ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints);
+            ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
             constraintTranslator.Translate();
         }
 

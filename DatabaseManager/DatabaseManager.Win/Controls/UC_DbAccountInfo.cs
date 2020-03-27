@@ -6,13 +6,18 @@ using DatabaseManager.Model;
 using System;
 using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
+    public delegate void TestDbConnectHandler();
+
     public partial class UC_DbAccountInfo : UserControl
     {
         public DatabaseType DatabaseType { get; set; }
+
+        public TestDbConnectHandler OnTestConnect;
 
         public bool RememberPassword => this.chkRememberPassword.Checked;
 
@@ -37,6 +42,10 @@ namespace DatabaseManager.Controls
                 this.cboAuthentication.Text = AuthenticationType.Password.ToString();
                 //this.cboAuthentication.Enabled = false;
             }
+            else
+            {
+                this.cboAuthentication.Text = AuthenticationType.IntegratedSecurity.ToString();
+            }
 
             this.chkAsDba.Visible = this.DatabaseType == DatabaseType.Oracle;
 
@@ -59,7 +68,7 @@ namespace DatabaseManager.Controls
                 this.cboAuthentication.Text = AuthenticationType.IntegratedSecurity.ToString();
             }
             else
-            {
+            {                
                 if (!string.IsNullOrEmpty(info.Password))
                 {
                     this.chkRememberPassword.Checked = true;
@@ -97,7 +106,7 @@ namespace DatabaseManager.Controls
             return true;
         }
 
-        public bool TestConnect()
+        public async Task<bool> TestConnect()
         {
             if(!this.ValidateInfo())
             {
@@ -112,9 +121,14 @@ namespace DatabaseManager.Controls
             {
                 using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
-                    dbConnection.Open();
+                    await dbConnection.OpenAsync();
 
                     MessageBox.Show("Success.");
+
+                    if(this.OnTestConnect!=null)
+                    {
+                        this.OnTestConnect();
+                    }
 
                     return true;
                 }
@@ -157,6 +171,11 @@ namespace DatabaseManager.Controls
         public void FocusPasswordTextbox()
         {
             this.txtPassword.Focus();
+        }
+
+        private async void btnTest_Click(object sender, EventArgs e)
+        {
+            await this.TestConnect();
         }
     }
 }

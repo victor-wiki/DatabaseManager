@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmGenerateScripts));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.panelConnector = new System.Windows.Forms.Panel();
             this.btnConnect = new System.Windows.Forms.Button();
             this.lblOutputFolder = new System.Windows.Forms.Label();
             this.btnOutputFolder = new System.Windows.Forms.Button();
@@ -43,9 +44,9 @@
             this.txtMessage = new System.Windows.Forms.RichTextBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
-            this.panelConnector = new System.Windows.Forms.Panel();
             this.dbConnectionProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
+            this.chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -62,6 +63,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.chkTreatBytesAsNull);
             this.splitContainer1.Panel1.Controls.Add(this.panelConnector);
             this.splitContainer1.Panel1.Controls.Add(this.tvDbObjects);
             this.splitContainer1.Panel1.Controls.Add(this.lblOutputFolder);
@@ -76,10 +78,21 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.txtMessage);
-            this.splitContainer1.Size = new System.Drawing.Size(655, 463);
-            this.splitContainer1.SplitterDistance = 400;
+            this.splitContainer1.Size = new System.Drawing.Size(655, 512);
+            this.splitContainer1.SplitterDistance = 442;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // panelConnector
+            // 
+            this.panelConnector.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panelConnector.Controls.Add(this.dbConnectionProfile);
+            this.panelConnector.Controls.Add(this.btnConnect);
+            this.panelConnector.Location = new System.Drawing.Point(3, 3);
+            this.panelConnector.Name = "panelConnector";
+            this.panelConnector.Size = new System.Drawing.Size(649, 33);
+            this.panelConnector.TabIndex = 53;
             // 
             // btnConnect
             // 
@@ -100,7 +113,7 @@
             // 
             this.lblOutputFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblOutputFolder.AutoSize = true;
-            this.lblOutputFolder.Location = new System.Drawing.Point(15, 343);
+            this.lblOutputFolder.Location = new System.Drawing.Point(15, 385);
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(89, 12);
             this.lblOutputFolder.TabIndex = 52;
@@ -109,7 +122,7 @@
             // btnOutputFolder
             // 
             this.btnOutputFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnOutputFolder.Location = new System.Drawing.Point(606, 339);
+            this.btnOutputFolder.Location = new System.Drawing.Point(606, 381);
             this.btnOutputFolder.Name = "btnOutputFolder";
             this.btnOutputFolder.Size = new System.Drawing.Size(36, 23);
             this.btnOutputFolder.TabIndex = 51;
@@ -120,7 +133,7 @@
             // txtOutputFolder
             // 
             this.txtOutputFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtOutputFolder.Location = new System.Drawing.Point(110, 340);
+            this.txtOutputFolder.Location = new System.Drawing.Point(110, 382);
             this.txtOutputFolder.Name = "txtOutputFolder";
             this.txtOutputFolder.Size = new System.Drawing.Size(490, 21);
             this.txtOutputFolder.TabIndex = 50;
@@ -131,7 +144,7 @@
             this.chkScriptData.AutoSize = true;
             this.chkScriptData.Checked = true;
             this.chkScriptData.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkScriptData.Location = new System.Drawing.Point(138, 315);
+            this.chkScriptData.Location = new System.Drawing.Point(138, 328);
             this.chkScriptData.Name = "chkScriptData";
             this.chkScriptData.Size = new System.Drawing.Size(48, 16);
             this.chkScriptData.TabIndex = 49;
@@ -144,7 +157,7 @@
             this.chkScriptSchema.AutoSize = true;
             this.chkScriptSchema.Checked = true;
             this.chkScriptSchema.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkScriptSchema.Location = new System.Drawing.Point(58, 315);
+            this.chkScriptSchema.Location = new System.Drawing.Point(58, 328);
             this.chkScriptSchema.Name = "chkScriptSchema";
             this.chkScriptSchema.Size = new System.Drawing.Size(60, 16);
             this.chkScriptSchema.TabIndex = 48;
@@ -155,7 +168,7 @@
             // 
             this.lblScriptsMode.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblScriptsMode.AutoSize = true;
-            this.lblScriptsMode.Location = new System.Drawing.Point(16, 316);
+            this.lblScriptsMode.Location = new System.Drawing.Point(16, 329);
             this.lblScriptsMode.Name = "lblScriptsMode";
             this.lblScriptsMode.Size = new System.Drawing.Size(35, 12);
             this.lblScriptsMode.TabIndex = 47;
@@ -164,7 +177,7 @@
             // btnClose
             // 
             this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnClose.Location = new System.Drawing.Point(343, 371);
+            this.btnClose.Location = new System.Drawing.Point(343, 413);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(75, 23);
             this.btnClose.TabIndex = 46;
@@ -175,7 +188,7 @@
             // btnGenerate
             // 
             this.btnGenerate.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnGenerate.Location = new System.Drawing.Point(246, 371);
+            this.btnGenerate.Location = new System.Drawing.Point(246, 413);
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new System.Drawing.Size(75, 23);
             this.btnGenerate.TabIndex = 45;
@@ -191,20 +204,9 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(655, 60);
+            this.txtMessage.Size = new System.Drawing.Size(655, 67);
             this.txtMessage.TabIndex = 1;
             this.txtMessage.Text = "";
-            // 
-            // panelConnector
-            // 
-            this.panelConnector.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelConnector.Controls.Add(this.dbConnectionProfile);
-            this.panelConnector.Controls.Add(this.btnConnect);
-            this.panelConnector.Location = new System.Drawing.Point(3, 3);
-            this.panelConnector.Name = "panelConnector";
-            this.panelConnector.Size = new System.Drawing.Size(649, 33);
-            this.panelConnector.TabIndex = 53;
             // 
             // dbConnectionProfile
             // 
@@ -225,14 +227,27 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tvDbObjects.Location = new System.Drawing.Point(3, 38);
             this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(649, 263);
+            this.tvDbObjects.Size = new System.Drawing.Size(649, 279);
             this.tvDbObjects.TabIndex = 43;
+            // 
+            // chkTreatBytesAsNull
+            // 
+            this.chkTreatBytesAsNull.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkTreatBytesAsNull.AutoSize = true;
+            this.chkTreatBytesAsNull.Checked = true;
+            this.chkTreatBytesAsNull.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkTreatBytesAsNull.Location = new System.Drawing.Point(18, 358);
+            this.chkTreatBytesAsNull.Name = "chkTreatBytesAsNull";
+            this.chkTreatBytesAsNull.Size = new System.Drawing.Size(138, 16);
+            this.chkTreatBytesAsNull.TabIndex = 54;
+            this.chkTreatBytesAsNull.Text = "Treat bytes as null";
+            this.chkTreatBytesAsNull.UseVisualStyleBackColor = true;
             // 
             // frmGenerateScripts
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(655, 463);
+            this.ClientSize = new System.Drawing.Size(655, 512);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmGenerateScripts";
@@ -268,5 +283,6 @@
         private System.Windows.Forms.RichTextBox txtMessage;
         private System.Windows.Forms.FolderBrowserDialog dlgOutputFolder;
         private System.Windows.Forms.Panel panelConnector;
+        private System.Windows.Forms.CheckBox chkTreatBytesAsNull;
     }
 }

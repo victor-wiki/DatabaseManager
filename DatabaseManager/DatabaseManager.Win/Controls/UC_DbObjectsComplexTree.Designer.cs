@@ -33,13 +33,13 @@
             this.tvDbObjects = new System.Windows.Forms.TreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -56,6 +56,7 @@
             this.tvDbObjects.Size = new System.Drawing.Size(159, 195);
             this.tvDbObjects.TabIndex = 20;
             this.tvDbObjects.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.tvDbObjects_BeforeExpand);
+            this.tvDbObjects.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.tvDbObjects_AfterExpand);
             this.tvDbObjects.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvDbObjects_NodeMouseClick);
             this.tvDbObjects.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tvDbObjects_KeyDown);
             // 
@@ -76,6 +77,7 @@
             this.imageList1.Images.SetKeyName(10, "tree_Table.png");
             this.imageList1.Images.SetKeyName(11, "tree_TableConstraint.png");
             this.imageList1.Images.SetKeyName(12, "tree_TableTrigger.png");
+            this.imageList1.Images.SetKeyName(13, "Loading.gif");
             // 
             // contextMenuStrip1
             // 
@@ -88,56 +90,56 @@
             this.tsmiEmptyDatabase,
             this.tsmiDelete});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 180);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(172, 158);
+            // 
+            // tsmiRefresh
+            // 
+            this.tsmiRefresh.Name = "tsmiRefresh";
+            this.tsmiRefresh.Size = new System.Drawing.Size(171, 22);
+            this.tsmiRefresh.Text = "Refresh";
+            this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
+            // 
+            // tsmiViewData
+            // 
+            this.tsmiViewData.Name = "tsmiViewData";
+            this.tsmiViewData.Size = new System.Drawing.Size(171, 22);
+            this.tsmiViewData.Text = "View data";
+            this.tsmiViewData.Click += new System.EventHandler(this.tsmiViewData_Click);
             // 
             // tsmiConvert
             // 
             this.tsmiConvert.Name = "tsmiConvert";
-            this.tsmiConvert.Size = new System.Drawing.Size(180, 22);
+            this.tsmiConvert.Size = new System.Drawing.Size(171, 22);
             this.tsmiConvert.Text = "Convert";
             this.tsmiConvert.Click += new System.EventHandler(this.tsmiConvert_Click);
             // 
             // tsmiGenerateScripts
             // 
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
-            this.tsmiGenerateScripts.Size = new System.Drawing.Size(180, 22);
+            this.tsmiGenerateScripts.Size = new System.Drawing.Size(171, 22);
             this.tsmiGenerateScripts.Text = "Generate scripts";
             this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
-            // 
-            // tsmiRefresh
-            // 
-            this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(180, 22);
-            this.tsmiRefresh.Text = "Refresh";
-            this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
             // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(171, 22);
             this.tsmiClearData.Text = "Clear data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(171, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
             // tsmiDelete
             // 
             this.tsmiDelete.Name = "tsmiDelete";
-            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDelete.Size = new System.Drawing.Size(171, 22);
             this.tsmiDelete.Text = "Delete";
             this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
-            // 
-            // tsmiViewData
-            // 
-            this.tsmiViewData.Name = "tsmiViewData";
-            this.tsmiViewData.Size = new System.Drawing.Size(180, 22);
-            this.tsmiViewData.Text = "View data";
-            this.tsmiViewData.Click += new System.EventHandler(this.tsmiViewData_Click);
             // 
             // UC_DbObjectsComplexTree
             // 

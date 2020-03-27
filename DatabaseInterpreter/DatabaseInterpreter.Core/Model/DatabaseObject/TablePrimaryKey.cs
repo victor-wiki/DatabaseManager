@@ -1,6 +1,6 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class TablePrimaryKey : TableKey
+    public class TablePrimaryKey : TableColumnChild
     {       
         public bool IsDesc { get; set; }
     }

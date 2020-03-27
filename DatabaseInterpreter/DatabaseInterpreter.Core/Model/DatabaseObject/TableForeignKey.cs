@@ -1,6 +1,6 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class TableForeignKey: TableKey
+    public class TableForeignKey: TableColumnChild
     {             
         public string ReferencedTableName { get; set; }
         public string ReferencedColumnName { get; set; }

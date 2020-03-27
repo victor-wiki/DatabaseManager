@@ -106,7 +106,9 @@ namespace DatabaseManager
 
             try
             {
-                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, dbType == this.targetDbProfile.DatabaseType);
+                DatabaseObjectType excludeObjType = this.targetDbProfile.DatabaseType != DatabaseType.SqlServer ? DatabaseObjectType.UserDefinedType : DatabaseObjectType.None;
+
+                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, dbType == this.targetDbProfile.DatabaseType, excludeObjType);
                 this.btnExecute.Enabled = true;
             }
             catch (Exception ex)
@@ -226,7 +228,7 @@ namespace DatabaseManager
             {
                 MessageBox.Show("Please specify the script mode.");
                 return;
-            }
+            }           
 
             DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.sourceDbConnectionInfo, sourceScriptOption) };
             DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, targetScriptOption) };
@@ -239,6 +241,8 @@ namespace DatabaseManager
                     dbConverter.Option.BulkCopy = this.chkBulkCopy.Checked;
                     dbConverter.Option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
                     dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
+                    dbConverter.Option.SkipParseErrorForFunctionViewProcedure = this.chkSkipParseErrorForFunctionViewProcedure.Checked;
+                    dbConverter.Option.PickupTable = this.chkPickup.Checked;
 
                     dbConverter.Subscribe(this);
 
@@ -465,6 +469,8 @@ namespace DatabaseManager
                 {
                     this.txtTargetDbOwner.Text = "";
                 }
+
+                this.chkBulkCopy.Checked = databaseType != DatabaseType.MySql;
             }
         }
     }

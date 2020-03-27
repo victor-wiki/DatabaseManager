@@ -59,7 +59,7 @@ namespace DatabaseConverter.Core
                                .Replace("!=", "<>");
 
 
-                    definition = this.ProcessDefinition(definition);
+                    definition = this.ParseDefinition(definition);
 
                     string createAsClause = $"CREATE VIEW {targetOwnerName}.{viewNameWithQuotation} AS ";
 
@@ -77,7 +77,7 @@ namespace DatabaseConverter.Core
                 }
                 catch (Exception ex)
                 {
-                    throw new ViewConvertException(ex)
+                    var vce = new ViewConvertException(ex)
                     {
                         SourceServer = sourceDbInterpreter.ConnectionInfo.Server,
                         SourceDatabase = sourceDbInterpreter.ConnectionInfo.Database,
@@ -86,29 +86,29 @@ namespace DatabaseConverter.Core
                         TargetDatabase = targetDbInterpreter.ConnectionInfo.Database,
                         TargetObject = view.Name
                     };
+
+                    if (!this.SkipError)
+                    {
+                        throw vce;
+                    }
+                    else
+                    {
+                        FeedbackInfo info = new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = ExceptionHelper.GetExceptionDetails(ex), Owner = this };
+                        FeedbackHelper.Feedback(info);
+                    }                   
                 }
             }           
         }
 
-        private string ProcessDefinition(string definition)
+        public override string ParseDefinition(string definition)
         {
-            var tokens = this.GetTokens(definition);
-            bool changed = false;
-
-            definition = this.HandleDefinition(definition, tokens, out changed);
-
-            StringBuilder sb = new StringBuilder();           
-
-            if (changed)
-            {
-                tokens = this.GetTokens(definition);
-            }
-
-            definition = this.ParseTokens(tokens);
+            definition = base.ParseDefinition(definition);
 
             #region Handle join cluase for mysql which has no "on", so it needs to make up that.
             try
             {
+                StringBuilder sb = new StringBuilder();
+
                 if (this.sourceDbInterpreter.GetType() == typeof(MySqlInterpreter))
                 {
                     bool hasError = false;

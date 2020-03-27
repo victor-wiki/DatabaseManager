@@ -18,7 +18,7 @@
 </mapping>
 <mapping>
   <source type="interval day to second(6)" />
-  <target type="time" />
+  <target type="time" length="6"/>
 </mapping>
 <mapping>
   <source type="timestamp" />
@@ -31,7 +31,7 @@
 <mapping>
   <source type="number" />
   <target type="decimal" /> 
-  <special sourcePrecision="" sourceScale="" type="int"></special>  
+  <special sourceScale="0" type="int"></special>  
   <special sourcePrecision="16" sourceScale="4" type="money"></special>  
 </mapping>
 <mapping>
@@ -77,6 +77,10 @@
 <mapping>
   <source type="timestamp" />
   <target type="timestamp" />
+</mapping>
+<mapping>
+  <source type="INTERVAL DAY" />
+  <target type="time" length="7" />
 </mapping>
 <mapping>
   <source type="nchar" />

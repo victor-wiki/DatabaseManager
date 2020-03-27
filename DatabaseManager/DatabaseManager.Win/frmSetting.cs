@@ -14,7 +14,15 @@ namespace DatabaseManager
 
         private void frmSetting_Load(object sender, EventArgs e)
         {
+            this.InitControls();
+        }
+
+        private void InitControls()
+        {
             this.tabControl1.SelectedIndex = 0;
+
+            var dbObjectNameModes = Enum.GetNames(typeof(DbObjectNameMode));
+            this.cboDbObjectNameMode.Items.AddRange(dbObjectNameModes);           
 
             Setting setting = SettingManager.Setting;
 
@@ -23,7 +31,9 @@ namespace DatabaseManager
             this.chkShowBuiltinDatabase.Checked = setting.ShowBuiltinDatabase;
             this.txtMySqlCharset.Text = setting.MySqlCharset;
             this.txtMySqlCharsetCollation.Text = setting.MySqlCharsetCollation;
+            this.chkNotCreateIfExists.Checked = setting.NotCreateIfExists;
             this.chkEnableLog.Checked = setting.EnableLog;
+            this.cboDbObjectNameMode.Text = setting.DbObjectNameMode.ToString();
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
@@ -34,7 +44,9 @@ namespace DatabaseManager
             setting.ShowBuiltinDatabase = this.chkShowBuiltinDatabase.Checked;
             setting.MySqlCharset = this.txtMySqlCharset.Text.Trim();
             setting.MySqlCharsetCollation = this.txtMySqlCharsetCollation.Text.Trim();
+            setting.NotCreateIfExists = this.chkNotCreateIfExists.Checked;
             setting.EnableLog = this.chkEnableLog.Checked;
+            setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
 
             SettingManager.SaveConfig(setting);
         }

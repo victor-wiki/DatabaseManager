@@ -1,5 +1,9 @@
-﻿namespace DatabaseInterpreter.Utility
+﻿using System.Threading.Tasks;
+
+namespace DatabaseInterpreter.Utility
 {
+    public delegate void FeedbackHandler(FeedbackInfo feedbackInfo);   
+
     public class FeedbackInfo
     {
         public object Owner { get; set; }

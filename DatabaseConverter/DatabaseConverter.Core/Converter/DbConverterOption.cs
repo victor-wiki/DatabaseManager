@@ -12,5 +12,6 @@ namespace DatabaseConverter.Core
         public GenerateScriptMode GenerateScriptMode { get; set; } = GenerateScriptMode.Schema | GenerateScriptMode.Data;
         public bool BulkCopy { get; set; }
         public bool UseTransaction { get; set; }
+        public bool SkipParseErrorForFunctionViewProcedure { get; set; }
     }
 }

@@ -1,23 +1,25 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using NCalc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class ColumnTranslator: DbObjectTranslator
+    public class ColumnTranslator : DbObjectTranslator
     {
         private List<TableColumn> columns;
         private DatabaseType sourceDbType;
         private DatabaseType targetDbType;
 
-        public ColumnTranslator(DbInterpreter sourceInterpreter,DbInterpreter targetInterpreter, List<TableColumn> columns):base(sourceInterpreter, targetInterpreter)
+        public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, List<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
             this.columns = columns;
             this.sourceDbType = sourceInterpreter.DatabaseType;
             this.targetDbType = targetInterpreter.DatabaseType;
-        }       
+        }
 
         public override void Translate()
         {
@@ -32,28 +34,35 @@ namespace DatabaseConverter.Core
             {
                 string sourceDataType = this.GetTrimedDataType(column);
                 column.DataType = sourceDataType;
+
                 DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());
                 if (dataTypeMapping != null)
                 {
-                    column.DataType = dataTypeMapping.Tareget.Type;
+                    string targetDataType = dataTypeMapping.Tareget.Type;
+
+                    column.DataType = targetDataType;
 
                     bool isChar = DataTypeHelper.IsCharType(column.DataType);
 
                     if (isChar)
-                    {
+                    {              
                         if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Length))
                         {
                             column.MaxLength = int.Parse(dataTypeMapping.Tareget.Length);
-                        }
 
-                        bool hasSpecial = false;
+                            if(targetDataType.ToLower().StartsWith("n") && !sourceDataType.ToLower().StartsWith("n"))
+                            {
+                                column.MaxLength *= 2;
+                            }
+                        }                       
+
                         if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
                         {
-                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => item.SourceMaxLength == column.MaxLength.ToString());
+                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
+
                             if (special != null)
                             {
                                 column.DataType = special.Type;
-                                hasSpecial = true;
 
                                 if (!string.IsNullOrEmpty(special.TargetMaxLength))
                                 {
@@ -61,27 +70,21 @@ namespace DatabaseConverter.Core
                                 }
                             }
                         }
-
-                        if (!hasSpecial && column.DataType.ToLower().StartsWith("n")) //nchar,nvarchar
-                        {
-                            if (column.MaxLength > 0 && (!sourceDataType.ToLower().StartsWith("n") || this.targetDbType == DatabaseType.MySql)) //MySql doesn't have nvarchar
-                            {
-                                column.MaxLength = column.MaxLength / 2;
-                            }
-                        }                                       
                     }
                     else
                     {
                         if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
                         {
-                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => item.SourceMaxLength == column.MaxLength.ToString());
+                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
+
                             if (special != null)
                             {
                                 column.DataType = special.Type;
                             }
                             else
                             {
-                                special = dataTypeMapping.Specials.FirstOrDefault(item => item.SourcePrecision == column.Precision?.ToString() && item.SourceScale == column.Scale?.ToString());
+                                special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialPrecisionOrScaleMatched(item, column));
+
                                 if (special != null)
                                 {
                                     column.DataType = special.Type;
@@ -109,24 +112,73 @@ namespace DatabaseConverter.Core
                 if (!string.IsNullOrEmpty(column.DefaultValue))
                 {
                     string defaultValue = this.GetTrimedDefaultValue(column.DefaultValue);
-                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m=> m.Trim().ToLower() == defaultValue.Trim().ToLower())));
+
+                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
+
                     if (funcMappings != null)
                     {
                         defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
                     }
+
                     column.DefaultValue = defaultValue;
                 }
-            }           
+            }
+        }
+
+        private bool IsSpecialMaxLengthMatched(DataTypeMappingSpecial special, TableColumn column)
+        {
+            if(!string.IsNullOrEmpty(special.SourceMaxLength))
+            {
+                if (special.SourceMaxLength == column.MaxLength?.ToString())
+                {
+                    return true;
+                }
+                else if (special.SourceMaxLength.StartsWith(">") && column.MaxLength.HasValue)
+                {
+                    Expression exp = new Expression($"{column.MaxLength}{special.SourceMaxLength}");
+
+                    if (!exp.HasErrors())
+                    {
+                        object result = exp.Evaluate();
+
+                        return result != null && result.GetType() == typeof(Boolean) && (bool)result == true;
+                    }
+                }
+            }            
+
+            return false;
+        }
+
+        private bool IsSpecialPrecisionOrScaleMatched(DataTypeMappingSpecial special, TableColumn column)
+        {
+            string precision = special.SourcePrecision;
+            string scale = special.SourceScale;
+
+            if(!string.IsNullOrEmpty(precision) && !string.IsNullOrEmpty(scale))
+            {
+                return precision == column.Precision.ToString() && scale == column.Scale.ToString(); 
+            }
+            else if(!string.IsNullOrEmpty(precision) && string.IsNullOrEmpty(scale))
+            {
+                return precision == column.Precision.ToString();
+            }
+            else if(string.IsNullOrEmpty(precision) && !string.IsNullOrEmpty(scale))
+            {
+                return scale == column.Scale.ToString();
+            }
+            return false;
         }
 
         private string GetTrimedDataType(TableColumn column)
         {
             string dataType = column.DataType;
             int index = dataType.IndexOf("(");
+
             if (index > 0)
             {
                 return dataType.Substring(0, index);
             }
+
             return dataType;
         }
 
@@ -135,13 +187,16 @@ namespace DatabaseConverter.Core
             if (!string.IsNullOrEmpty(defaultValue))
             {
                 defaultValue = defaultValue.TrimStart('(').TrimEnd(')');
+
                 if (defaultValue.EndsWith("("))
                 {
                     defaultValue += ")";
                 }
+
                 return defaultValue;
             }
+
             return defaultValue;
-        }       
+        }
     }
 }

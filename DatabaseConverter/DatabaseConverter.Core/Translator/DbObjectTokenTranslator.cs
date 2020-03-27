@@ -19,134 +19,21 @@ namespace DatabaseConverter.Core
 
         }
 
-        public string ParseDefinition(string definition)
+        public virtual string ParseDefinition(string definition)
         {
-            return this.ParseTokens(this.GetTokens(definition));
-        }
+            var tokens = this.GetTokens(definition);
+            bool changed = false;
 
-        public string ParseTokens(List<TSQL.Tokens.TSQLToken> tokens)
-        {
-            StringBuilder sb = new StringBuilder();
+            definition = this.HandleDefinition(definition, tokens, out changed);
 
-            this.sourceOwnerName = DbInterpreterHelper.GetOwnerName(sourceDbInterpreter);
-
-            int ignoreCount = 0;
-
-            TSQLTokenType previousType = TSQLTokenType.Whitespace;
-            string previousText = "";
-
-            for (int i = 0; i < tokens.Count; i++)
+            if (changed)
             {
-                if (ignoreCount > 0)
-                {
-                    ignoreCount--;
-                    continue;
-                }
-
-                var token = tokens[i];
-
-                var tokenType = token.Type;
-                string text = token.Text;
-
-                switch (tokenType)
-                {
-                    case TSQLTokenType.Identifier:
-
-                        if (dataTypes.Contains(text))
-                        {
-                            sb.Append(text);
-                            continue;
-                        }
-
-                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
-
-                        //Remove owner name
-                        if (nextToken != null && nextToken.Text.Trim() != "(" &&
-                            text.Trim('"') == sourceOwnerName && i + 1 < tokens.Count && tokens[i + 1].Text == "."
-                            )
-                        {
-                            ignoreCount++;
-                            continue;
-                        }
-                        else if (nextToken != null && nextToken.Text.Trim() == "(") //function handle
-                        {
-                            string textWithBrackets = text.ToLower() + "()";
-
-                            bool useBrackets = false;
-
-                            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
-                            {
-                                useBrackets = true;
-                                text = textWithBrackets;
-                            }
-
-                            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
-                            if (funcMappings != null)
-                            {
-                                string targetFunction = funcMappings.FirstOrDefault(item => item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
-
-                                if (!string.IsNullOrEmpty(targetFunction))
-                                {
-                                    sb.Append(targetFunction);
-                                }
-
-                                if (useBrackets)
-                                {
-                                    ignoreCount += 2;
-                                }
-                            }
-                            else
-                            {
-                                sb.Append(text);
-                            }
-                        }
-                        else
-                        {
-                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim(new char[] { '"', sourceDbInterpreter.QuotationLeftChar, sourceDbInterpreter.QuotationRightChar })}{targetDbInterpreter.QuotationRightChar}");
-                        }
-                        break;
-                    case TSQLTokenType.StringLiteral:
-                        if (previousType != TSQLTokenType.Whitespace && previousText.ToLower() == "as")
-                        {
-                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim('\'', '"')}{targetDbInterpreter.QuotationRightChar}");
-                        }
-                        else
-                        {
-                            sb.Append(text);
-                        }
-                        break;
-                    case TSQLTokenType.SingleLineComment:
-                    case TSQLTokenType.MultilineComment:
-                        continue;
-                    case TSQLTokenType.Keyword:
-                        switch (text.ToUpper())
-                        {
-                            case "AS":
-                                if (targetDbInterpreter is OracleInterpreter)
-                                {
-                                    var previousKeyword = (from t in tokens where t.Type == TSQLTokenType.Keyword && t.EndPosition < token.BeginPosition select t).LastOrDefault();
-                                    if (previousKeyword != null && previousKeyword.Text.ToUpper() == "FROM")
-                                    {
-                                        continue;
-                                    }
-                                }
-                                break;
-                        }
-                        sb.Append(text);
-                        break;
-                    default:
-                        sb.Append(text);
-                        break;
-                }
-
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    previousText = text;
-                    previousType = tokenType;
-                }
+                tokens = this.GetTokens(definition);
             }
 
-            return sb.ToString();
+            definition = this.BuildDefinition(tokens);
+
+            return definition;
         }
 
         protected string HandleDefinition(string definition, List<TSQLToken> tokens, out bool changed)
@@ -174,7 +61,7 @@ namespace DatabaseConverter.Core
                         {
                             case "CONVERT":
                                 startIndex = token.BeginPosition;
-                                endIndex = definition.Substring(startIndex).ToUpper().IndexOf("AS") + startIndex;
+                                endIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ") + startIndex + 1;
 
                                 string functionBody = definition.Substring(startIndex, endIndex - startIndex);
 
@@ -295,6 +182,9 @@ namespace DatabaseConverter.Core
 
                                 break;
                         }
+                        break;
+
+                    case TSQLTokenType.Keyword:                       
 
                         break;
                 }
@@ -302,6 +192,132 @@ namespace DatabaseConverter.Core
 
             return newDefinition;
         }
+
+        public string BuildDefinition(List<TSQL.Tokens.TSQLToken> tokens)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            this.sourceOwnerName = DbInterpreterHelper.GetOwnerName(sourceDbInterpreter);
+
+            int ignoreCount = 0;
+
+            TSQLTokenType previousType = TSQLTokenType.Whitespace;
+            string previousText = "";
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                if (ignoreCount > 0)
+                {
+                    ignoreCount--;
+                    continue;
+                }
+
+                var token = tokens[i];
+
+                var tokenType = token.Type;
+                string text = token.Text;
+
+                switch (tokenType)
+                {
+                    case TSQLTokenType.Identifier:
+
+                        if (dataTypes.Contains(text))
+                        {
+                            sb.Append(text);
+                            continue;
+                        }
+
+                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
+
+                        //Remove owner name
+                        if (nextToken != null && nextToken.Text.Trim() != "(" &&
+                            text.Trim('"') == sourceOwnerName && i + 1 < tokens.Count && tokens[i + 1].Text == "."
+                            )
+                        {
+                            ignoreCount++;
+                            continue;
+                        }
+                        else if (nextToken != null && nextToken.Text.Trim() == "(") //function handle
+                        {
+                            string textWithBrackets = text.ToLower() + "()";
+
+                            bool useBrackets = false;
+
+                            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
+                            {
+                                useBrackets = true;
+                                text = textWithBrackets;
+                            }
+
+                            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
+
+                            if (funcMappings != null)
+                            {
+                                string targetFunction = funcMappings.FirstOrDefault(item => item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
+
+                                if (!string.IsNullOrEmpty(targetFunction))
+                                {
+                                    sb.Append(targetFunction);
+                                }
+
+                                if (useBrackets)
+                                {
+                                    ignoreCount += 2;
+                                }
+                            }
+                            else
+                            {
+                                sb.Append(text);
+                            }
+                        }
+                        else
+                        {
+                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim(new char[] { '"', sourceDbInterpreter.QuotationLeftChar, sourceDbInterpreter.QuotationRightChar })}{targetDbInterpreter.QuotationRightChar}");
+                        }
+                        break;
+                    case TSQLTokenType.StringLiteral:
+                        if (previousType != TSQLTokenType.Whitespace && previousText.ToLower() == "as")
+                        {
+                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim('\'', '"')}{targetDbInterpreter.QuotationRightChar}");
+                        }
+                        else
+                        {
+                            sb.Append(text);
+                        }
+                        break;
+                    case TSQLTokenType.SingleLineComment:
+                    case TSQLTokenType.MultilineComment:
+                        continue;
+                    case TSQLTokenType.Keyword:
+                        switch (text.ToUpper())
+                        {
+                            case "AS":
+                                if (targetDbInterpreter is OracleInterpreter)
+                                {
+                                    var previousKeyword = (from t in tokens where t.Type == TSQLTokenType.Keyword && t.EndPosition < token.BeginPosition select t).LastOrDefault();
+                                    if (previousKeyword != null && previousKeyword.Text.ToUpper() == "FROM")
+                                    {
+                                        continue;
+                                    }
+                                }
+                                break;                        
+                        }
+                        sb.Append(text);
+                        break;
+                    default:
+                        sb.Append(text);
+                        break;
+                }
+
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    previousText = text;
+                    previousType = tokenType;
+                }
+            }
+
+            return sb.ToString();
+        }      
 
         private string ExchangeFunctionArgs(string functionName, string args1, string args2)
         {

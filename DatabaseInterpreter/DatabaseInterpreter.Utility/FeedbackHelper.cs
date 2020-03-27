@@ -5,6 +5,7 @@ namespace DatabaseInterpreter.Utility
     public class FeedbackHelper
     {
         public static bool EnableLog { get; set; }
+        public static bool EnableDebug { get; set; }
 
         public static void Feedback(FeedbackInfo info, bool enableLog = true)
         {
@@ -26,6 +27,11 @@ namespace DatabaseInterpreter.Utility
                 }
 
                 LogHelper.LogInfo($"{prefix}{info.Message}");
+            }
+
+            if (EnableDebug)
+            {
+                Console.WriteLine(info.Message);
             }
         }
 

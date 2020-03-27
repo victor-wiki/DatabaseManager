@@ -12,12 +12,14 @@ using DatabaseManager.Core;
 using DatabaseInterpreter.Profile;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
+using DatabaseInterpreter.Core;
 
 namespace DatabaseManager.Controls
 {
     public partial class UC_DbObjectsNavigator : UserControl
     {
         public ShowDbObjectContentHandler OnShowContent;
+        public FeedbackHandler OnFeedback;
 
         public UC_DbObjectsNavigator()
         {
@@ -27,6 +29,8 @@ namespace DatabaseManager.Controls
         private void UC_DbObjectsNavigator_Load(object sender, EventArgs e)
         {
             this.InitControls();
+
+            this.tvDbObjects.OnFeedback += this.Feedback;
         }
 
         private void InitControls()
@@ -40,6 +44,14 @@ namespace DatabaseManager.Controls
             if (this.OnShowContent != null)
             {
                 this.OnShowContent(content);
+            }
+        }
+
+        private async void Feedback(FeedbackInfo info)
+        {
+            if(this.OnFeedback!=null)
+            {
+                this.OnFeedback(info);
             }
         }
 
@@ -182,10 +194,12 @@ namespace DatabaseManager.Controls
             frmAccountInfo frmAccountInfo = new frmAccountInfo(dbType, true) { AccountProfileInfo = accountProfileInfo };
 
             DialogResult dialogResult = frmAccountInfo.ShowDialog();
+
             if (dialogResult == DialogResult.OK)
             {
                 AccountProfileInfo profileInfo = frmAccountInfo.AccountProfileInfo;
-                ObjectHelper.CopyProperties(profileInfo, (this.cboAccount.SelectedItem as AccountProfileInfo));                
+                ObjectHelper.CopyProperties(profileInfo, (this.cboAccount.SelectedItem as AccountProfileInfo));
+                this.cboAccount.Text = profileInfo.Description;
                 return true;
             }
             else

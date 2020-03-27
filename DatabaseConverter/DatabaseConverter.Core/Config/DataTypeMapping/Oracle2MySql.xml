@@ -1,83 +1,88 @@
 <mappings>
-<mapping>
-  <source type="blob" />
-  <target type="longblob" />
-</mapping>
-<mapping>
-  <source type="clob" />
-  <target type="longtext" />
-</mapping>
-<mapping>
-  <source type="raw" />
-  <target type="binary" />
-  <special sourceMaxLength="16" type="char" targetMaxLength="36"></special>
-</mapping>
-<mapping>
-  <source type="date" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="interval day to second(6)" />
-  <target type="time" />
-</mapping>
-<mapping>
-  <source type="timestamp" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="timestamp(7) with time zone" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="number" />
-  <target type="decimal" />  
-</mapping>
-<mapping>
-  <source type="timestamp(9)" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="date" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="binary_double" />
-  <target type="real" />
-</mapping>
-<mapping>
-  <source type="float" />
-  <target type="float" />
-</mapping>
-<mapping>
-  <source type="nclob" />
-  <target type="longtext" />
-</mapping>
-<mapping>
-  <source type="char" />
-  <target type="char" />
-</mapping>
-<mapping>
-  <source type="blob" />
-  <target type="blob" />
-</mapping>
-<mapping>
-  <source type="clob" />
-  <target type="clob" />
-</mapping>
-<mapping>
-  <source type="varchar2" />
-  <target type="varchar" />
-</mapping>
-<mapping>
-  <source type="nvarchar2" />
-  <target type="varchar" />
-</mapping>
-<mapping>
-  <source type="timestamp" />
-  <target type="datetime" />
-</mapping>
-<mapping>
-  <source type="nchar" />
-  <target type="char" /> 
-</mapping>
+  <mapping>
+    <source type="blob" />
+    <target type="longblob" />
+  </mapping>
+  <mapping>
+    <source type="clob" />
+    <target type="longtext" />
+  </mapping>
+  <mapping>
+    <source type="raw" />
+    <target type="binary" />
+    <special sourceMaxLength="16" type="char" targetMaxLength="36"></special>
+  </mapping>
+  <mapping>
+    <source type="date" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="interval day to second(6)" />
+    <target type="time" />
+  </mapping>
+  <mapping>
+    <source type="timestamp" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="timestamp(7) with time zone" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="number" />
+    <target type="decimal" />
+    <special sourceScale="0" type="int"></special>
+  </mapping>
+  <mapping>
+    <source type="timestamp" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="date" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="binary_double" />
+    <target type="real" />
+  </mapping>
+  <mapping>
+    <source type="float" />
+    <target type="float" />
+  </mapping>
+  <mapping>
+    <source type="nclob" />
+    <target type="longtext" />
+  </mapping>
+  <mapping>
+    <source type="char" />
+    <target type="char" />
+  </mapping>
+  <mapping>
+    <source type="blob" />
+    <target type="blob" />
+  </mapping>
+  <mapping>
+    <source type="clob" />
+    <target type="clob" />
+  </mapping>
+  <mapping>
+    <source type="varchar2" />
+    <target type="varchar" />
+  </mapping>
+  <mapping>
+    <source type="nvarchar2" />
+    <target type="varchar" />
+  </mapping>
+  <mapping>
+    <source type="timestamp" />
+    <target type="datetime" />
+  </mapping>
+  <mapping>
+    <source type="INTERVAL DAY" />
+    <target type="time" length="6" />
+  </mapping>
+  <mapping>
+    <source type="nchar" />
+    <target type="char" />
+  </mapping>
 </mappings>

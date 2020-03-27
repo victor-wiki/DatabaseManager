@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
@@ -253,11 +254,12 @@ namespace DatabaseInterpreter.Core
                          object_name(FKC.referenced_object_id) AS [ReferencedTableName],RC.name AS [ReferencedColumnName],
                          FK.update_referential_action AS [UpdateCascade],FK.delete_referential_action AS [DeleteCascade]
                          FROM sys.foreign_keys FK
-                         JOIN sys.foreign_key_columns FKC ON FK.object_id=FKC.constraint_object_id AND FK.object_id=FKC.constraint_object_id
+                         JOIN sys.foreign_key_columns FKC ON FK.object_id=FKC.constraint_object_id
                          JOIN sys.columns C ON FK.parent_object_id=C.object_id AND  FKC.parent_column_id=C.column_id
                          JOIN sys.columns RC ON FKC.referenced_object_id= RC.object_id AND RC.column_id=FKC.referenced_column_id
                          JOIN sys.tables T ON C.object_id=T.object_id
-                         JOIN sys.tables RT ON RC.object_id=RT.object_id AND RT.schema_id=T.schema_id";
+                         JOIN sys.tables RT ON RC.object_id=RT.object_id
+                         WHERE 1=1";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -288,7 +290,7 @@ namespace DatabaseInterpreter.Core
                         JOIN sys.columns C ON IC.object_id=C.object_id AND IC.column_id=C.column_id
                         JOIN sys.indexes I ON IC.object_id=I.object_id AND IC.index_id=I.index_id
                         JOIN sys.tables T ON C.object_id=T.object_id
-                        WHERE I.is_primary_key=0 and I.type_desc<>'XML'";
+                        WHERE I.is_primary_key=0 and I.type_desc<>'XML' AND IC.key_ordinal > 0 ";
 
             if (tableNames != null && tableNames.Count() > 0)
             {
@@ -430,31 +432,31 @@ namespace DatabaseInterpreter.Core
         #region Database Operation
         public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
         {
-            await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT {GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}");
+            await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}");
         }
 
-        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, string destinationTableName = null, int? bulkCopyTimeout = null, int? batchSize = null)
+        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
-            SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, destinationTableName, bulkCopyTimeout, batchSize);
+            SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
-                await bulkCopy.WriteToServerAsync(dataTable);
+                await bulkCopy.WriteToServerAsync(dataTable, DataRowState.Added, bulkCopyInfo.CancellationToken);
             }
 
             return 0;
         }
 
-        private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, string destinationTableName = null, int? bulkCopyTimeout = null, int? batchSize = null)
+        private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
         {
-            SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection);
+            SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, SqlBulkCopyOptions.Default, bulkCopyInfo.Transaction as SqlTransaction);
 
             if (connection.State == ConnectionState.Closed)
             {
                 await connection.OpenAsync();
             }
 
-            bulkCopy.DestinationTableName = this.GetQuotedString(destinationTableName);
-            bulkCopy.BulkCopyTimeout = bulkCopyTimeout.HasValue ? bulkCopyTimeout.Value : SettingManager.Setting.CommandTimeout;
-            bulkCopy.BatchSize = batchSize.HasValue ? batchSize.Value : this.DataBatchSize;
+            bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopy.DestinationTableName);
+            bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout;
+            bulkCopy.BatchSize = bulkCopyInfo.BatchSize.HasValue ? bulkCopyInfo.BatchSize.Value : this.DataBatchSize;
 
             return bulkCopy;
         }
@@ -471,7 +473,7 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
-            if(dbObjet is TableKey || dbObjet is TableConstraint)
+            if(dbObjet is TableColumnChild || dbObjet is TableConstraint)
             {
                 TableChild dbObj = dbObjet as TableChild;
 
@@ -491,14 +493,14 @@ namespace DatabaseInterpreter.Core
             }        
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }
+        }      
         #endregion
 
         #region Generate Schema Script   
 
-        public override string GenerateSchemaScripts(SchemaInfo schemaInfo)
-        {
-            StringBuilder sb = new StringBuilder();
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        {           
+            ScriptBuilder sb = new ScriptBuilder();
 
             #region User Defined Type
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
@@ -508,11 +510,10 @@ namespace DatabaseInterpreter.Core
                 TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
                 string dataLength = this.GetColumnDataLength(column);
 
-                sb.AppendLine($@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userDefinedType.Name)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};");
-
-                sb.Append(this.ScriptsSplitString);
-
-                sb.Append(this.ScriptsSplitString);
+                string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userDefinedType.Name)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
+               
+                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
+                sb.AppendLine(new SpliterScript(this.ScriptsSplitString));              
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
             }
@@ -520,7 +521,7 @@ namespace DatabaseInterpreter.Core
             #endregion
 
             #region Function           
-            sb.Append(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
             #endregion
 
             #region Table
@@ -553,25 +554,34 @@ $@"
                 #endregion
 
                 #region Create Table
-                sb.AppendLine(
+
+                string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
+
+                string tableScript=
 $@"
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
+{(this.NotCreateIfExists? existsClause: "")}
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}
-) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + this.ScriptsSplitString);
+) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
+
+                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
                 #endregion
+
+                sb.AppendLine();
 
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(table.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',NULL,NULL;");
+                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(table.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',NULL,NULL;"));
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(column.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',N'column',N'{column.Name}';");
+                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(column.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',N'column',N'{column.Name}';"));
                 }
                 #endregion               
 
@@ -592,7 +602,9 @@ CREATE TABLE {quotedTableName}(
                             string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
                             string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
 
-                            sb.AppendLine(
+                            StringBuilder sbForeignKey = new StringBuilder();
+
+                            sbForeignKey.AppendLine(
 $@"
 ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT { this.GetQuotedString(keyName)} FOREIGN KEY({columnNames})
 REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeignKey.ReferencedTableName)} ({referenceColumnName})
@@ -600,15 +612,17 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
                             if (tableForeignKey.UpdateCascade)
                             {
-                                sb.AppendLine("ON UPDATE CASCADE");
+                                sbForeignKey.AppendLine("ON UPDATE CASCADE");
                             }
 
                             if (tableForeignKey.DeleteCascade)
                             {
-                                sb.AppendLine("ON DELETE CASCADE");
+                                sbForeignKey.AppendLine("ON DELETE CASCADE");
                             }
 
-                            sb.AppendLine($"ALTER TABLE {quotedTableName} CHECK CONSTRAINT { this.GetQuotedString(keyName)};");
+                            sbForeignKey.AppendLine($"ALTER TABLE {quotedTableName} CHECK CONSTRAINT { this.GetQuotedString(keyName)};");
+
+                            sb.AppendLine(new CreateDbObjectScript<TableForeignKey>(sbForeignKey.ToString()));
                         }
                     }
                 }
@@ -620,8 +634,6 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                     IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
                     if (indices.Count() > 0)
                     {
-                        sb.AppendLine();
-
                         List<string> indexColumns = new List<string>();
                         ILookup<string, TableIndex> indexLookup = indices.ToLookup(item => item.Name);
                         IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
@@ -634,7 +646,9 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                             {
                                 continue;
                             }
-                            sb.AppendLine($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX {tableIndex.Name} ON {quotedTableName}({columnNames});");
+
+                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX {tableIndex.Name} ON {quotedTableName}({columnNames});"));
+
                             if (!indexColumns.Contains(columnNames))
                             {
                                 indexColumns.Add(columnNames);
@@ -650,7 +664,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                     IEnumerable<TableColumn> defaultValueColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
                     foreach (TableColumn column in defaultValueColumns)
                     {
-                        sb.AppendLine($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($" DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};");
+                        sb.AppendLine(new AlterDbObjectScript<Table>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($" DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};"));
                     }
                 }
                 #endregion
@@ -662,12 +676,12 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
                     foreach (TableConstraint constraint in constraints)
                     {
-                        sb.AppendLine($"ALTER TABLE {quotedTableName}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition});");
+                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition});"));
                     }
                 }
                 #endregion
 
-                sb.Append(this.ScriptsSplitString);
+                sb.Append(new SpliterScript(this.ScriptsSplitString));
 
                 this.FeedbackInfo(OperationState.End, table);
             }
@@ -675,15 +689,15 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             #endregion
 
             #region View           
-            sb.Append(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
-            sb.Append(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
             #endregion
 
             if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
@@ -691,7 +705,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
             }
 
-            return sb.ToString();
+            return sb;
         }
 
         public override string ParseColumn(Table table, TableColumn column)
@@ -820,6 +834,12 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 								WHERE {RowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
 
             return pagedSql;
+        }
+
+        protected override string GetBytesConvertHexString(object value, string dataType)
+        {
+            string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
+            return $"CAST({"0x" + hex} AS {dataType})";
         }
         #endregion       
     }

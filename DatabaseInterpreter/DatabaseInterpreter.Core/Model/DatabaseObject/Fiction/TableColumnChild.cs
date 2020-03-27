@@ -1,6 +1,6 @@
 ﻿namespace DatabaseInterpreter.Model
 {
-    public class TableKey: TableChild
+    public class TableColumnChild: TableChild
     {        
         public string ColumnName { get; set; }
     }

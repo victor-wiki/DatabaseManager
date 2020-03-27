@@ -75,37 +75,42 @@ namespace DatabaseConverter.Core
         {
             DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
 
-            sourceInterpreter.Option.TreatBytesAsNullForScript = true;
+            if (sourceInterpreter.DatabaseType == DatabaseType.Oracle)
+            {
+                sourceInterpreter.Option.TreatBytesAsNullForExecuting = true;
+            }
+
             sourceInterpreter.Option.GetTableAllObjects = false;
 
-            DatabaseObjectType databaseObjectType =   
-                DatabaseObjectType.UserDefinedType |
-                DatabaseObjectType.Table |
-                DatabaseObjectType.View |
-                DatabaseObjectType.Function |
-                DatabaseObjectType.Procedure |
-                DatabaseObjectType.TableColumn |
-                DatabaseObjectType.TablePrimaryKey |
-                DatabaseObjectType.TableForeignKey |
-                DatabaseObjectType.TableIndex |
-                DatabaseObjectType.TableConstraint;
+            DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
+                        
+            #region These haven't been implemented yet.
+            if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
+            {
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Procedure;
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Function;
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
+            } 
+            #endregion
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
 
-            if (schemaInfo != null)
-            {
-                filter.UserDefinedTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).ToArray();
-                filter.TableNames = schemaInfo.Tables.Select(t => t.Name).ToArray();
-                filter.ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray();
-                filter.FunctionNames = schemaInfo.Functions.Select(item => item.Name).ToArray();
-                filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
-            }
+            SchemaInfoHelper.SetSchemaInfoFilterValues(filter, schemaInfo);
 
             SchemaInfo sourceSchemaInfo = await sourceInterpreter.GetSchemaInfoAsync(filter);
 
+            if (SettingManager.Setting.NotCreateIfExists)
+            {
+                this.Target.DbInterpreter.Option.GetTableAllObjects = false;
+
+                SchemaInfo targetSchema = await this.Target.DbInterpreter.GetSchemaInfoAsync(filter);
+
+                SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
+            }
+
             #region Set data type by user define type          
 
-            if(sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
+            if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
             {
                 List<UserDefinedType> utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
 
@@ -121,13 +126,13 @@ namespace DatabaseConverter.Core
                         }
                     }
                 }
-            }           
+            }
 
             #endregion
 
-            SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);          
+            SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
-            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner);
+            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipParseErrorForFunctionViewProcedure };
             translateEngine.Translate();
 
             if (this.Option.EnsurePrimaryKeyNameUnique)
@@ -168,13 +173,14 @@ namespace DatabaseConverter.Core
                 #region Schema sync
                 if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
-                    script = targetInterpreter.GenerateSchemaScripts(targetSchemaInfo);
+                    List<Script> scripts = targetInterpreter.GenerateSchemaScripts(targetSchemaInfo).Scripts;
 
                     if (this.Option.ExecuteScriptOnTargetServer)
                     {
-                        if (string.IsNullOrEmpty(script))
+                        if (scripts.Count == 0)
                         {
-                            this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Error);
+                            this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
+                            this.isBusy = false;
                             return;
                         }
 
@@ -190,20 +196,36 @@ namespace DatabaseConverter.Core
                             }
                             else
                             {
-                                string[] sqls = script.Split(new string[] { targetInterpreter.ScriptsSplitString }, StringSplitOptions.RemoveEmptyEntries);
-                                int count = sqls.Count();
-
-                                int i = 0;
-                                foreach (string sql in sqls)
+                                Func<Script, bool> isValidScript = (s) =>
                                 {
-                                    if (!string.IsNullOrEmpty(sql.Trim()))
+                                    return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsSplitString);
+                                };
+
+                                int count = scripts.Where(item=> isValidScript(item)).Count();
+                                int i = 0;
+
+                                foreach (Script s in scripts)
+                                {
+                                    if(!isValidScript(s))
+                                    {
+                                        continue;
+                                    }
+
+                                    string sql = s.Content?.Trim();
+
+                                    if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsSplitString)
                                     {
                                         i++;
+
+                                        if(targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
+                                        {
+                                            sql = sql.TrimEnd(targetInterpreter.ScriptsSplitString.ToArray());
+                                        }
 
                                         if (!targetInterpreter.HasError)
                                         {
                                             targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(sql.Trim(), null, transaction));
+                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(sql, null, transaction));
                                         }
                                     }
                                 }
@@ -296,7 +318,7 @@ namespace DatabaseConverter.Core
                                     {
                                         if (this.Option.BulkCopy && targetInterpreter.SupportBulkCopy)
                                         {
-                                            await targetInterpreter.BulkCopyAsync(dbConnection, dataTable, table.Name);
+                                            await targetInterpreter.BulkCopyAsync(dbConnection, dataTable, this.GetBulkCopyInfo(table.Name, this.transaction));
                                         }
                                         else
                                         {
@@ -374,7 +396,16 @@ namespace DatabaseConverter.Core
         {
             if (this.transaction != null && this.transaction.Connection != null)
             {
-                this.transaction.Rollback();
+                try
+                {
+                    this.cancelRequested = true;
+
+                    this.transaction.Rollback();
+                }
+                catch (Exception ex)
+                {
+                    //throw;
+                }
             }
         }
 
@@ -388,7 +419,20 @@ namespace DatabaseConverter.Core
                 Transaction = transaction,
                 CancellationToken = this.CancellationTokenSource.Token
             };
+
             return commandInfo;
+        }
+
+        private BulkCopyInfo GetBulkCopyInfo(string tableName, DbTransaction transaction = null)
+        {
+            BulkCopyInfo bulkCopyInfo = new BulkCopyInfo()
+            {
+                DestinationTableName = tableName,
+                Transaction = transaction,
+                CancellationToken = this.CancellationTokenSource.Token
+            };
+
+            return bulkCopyInfo;
         }
 
         private void HandleError(ConvertException ex)
@@ -403,8 +447,16 @@ namespace DatabaseConverter.Core
         public void Cancle()
         {
             this.cancelRequested = true;
-            this.Source.DbInterpreter.CancelRequested = true;
-            this.Target.DbInterpreter.CancelRequested = true;
+
+            if(this.Source!=null)
+            {
+                this.Source.DbInterpreter.CancelRequested = true;
+            }
+            
+            if(this.Target!=null)
+            {
+                this.Target.DbInterpreter.CancelRequested = true;
+            }          
 
             this.Rollback();
 

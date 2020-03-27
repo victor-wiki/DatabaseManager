@@ -1,10 +1,17 @@
-﻿namespace  DatabaseInterpreter.Core
+﻿using System;
+
+namespace  DatabaseInterpreter.Core
 {
     public class ValueHelper
     {
         public static bool IsNullValue(object value, bool emptyAsNull = false)
         {
             if (value == null)
+            {
+                return true;
+            }
+
+            if(value.GetType() == typeof(DBNull))
             {
                 return true;
             }
@@ -19,6 +26,6 @@
         public static string TransferSingleQuotation(string value)
         {
             return value?.Replace("'", "''");
-        }
+        }       
     }
 }

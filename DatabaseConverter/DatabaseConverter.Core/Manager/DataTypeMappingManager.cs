@@ -19,7 +19,8 @@ namespace DatabaseConverter.Core
              new DataTypeMapping()
              {
                  Source = new DataTypeMappingSource(item),
-                 Tareget = new DataTypeMappingTarget(item)
+                 Tareget = new DataTypeMappingTarget(item),
+                 Specials = item.Elements("special")?.Select(t => new DataTypeMappingSpecial(t)).ToList()
              })
              .ToList();
         }

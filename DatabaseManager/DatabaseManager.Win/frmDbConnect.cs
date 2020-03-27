@@ -45,6 +45,7 @@ namespace DatabaseManager
 
         private void Init()
         {
+            this.ucDbAccountInfo.OnTestConnect += this.TestConnect;
             this.ucDbAccountInfo.DatabaseType = this.DatabaseType;
             this.ucDbAccountInfo.InitControls();            
 
@@ -68,13 +69,8 @@ namespace DatabaseManager
             this.cboDatabase.Text = connectionInfo.Database;           
         }
 
-        private async void btnTest_Click(object sender, EventArgs e)
+        private async void TestConnect()
         {
-            if(!this.ucDbAccountInfo.TestConnect())
-            {
-                return;
-            }
-
             ConnectionInfo connectionInfo = this.GetConnectionInfo();
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, connectionInfo, new DbInterpreterOption());
 
@@ -161,6 +157,11 @@ namespace DatabaseManager
             {
                 this.ucDbAccountInfo.FocusPasswordTextbox();
             }
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

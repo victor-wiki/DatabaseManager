@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
@@ -22,7 +23,7 @@ namespace DatabaseInterpreter.Core
         public override char QuotationLeftChar { get { return '"'; } }
         public override char QuotationRightChar { get { return '"'; } }
         public override DatabaseType DatabaseType { get { return DatabaseType.Oracle; } }
-        public override bool SupportBulkCopy { get { return false; } }
+        public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
         #endregion
 
@@ -430,9 +431,30 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
-        public override Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, string destinationTableName = null, int? bulkCopyTimeout = null, int? batchSize = null)
+        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
-            throw new NotImplementedException();
+            if (!(connection is OracleConnection conn))
+            {
+                return 0;
+            }
+
+            if (conn.State != ConnectionState.Open)
+            {
+                await conn.OpenAsync();
+            }
+
+            using (var bulkCopy = new OracleBulkCopy(conn, bulkCopyInfo.Transaction as OracleTransaction))
+            {
+                bulkCopy.RowNumberColumnName = RowNumberColumnName;
+                bulkCopy.BatchSize = dataTable.Rows.Count;
+                bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+                bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;
+                bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
+
+                await bulkCopy.WriteToServerAsync(dataTable);
+
+                return dataTable.Rows.Count;
+            }
         }
 
         public override async Task SetConstrainsEnabled(bool enabled)
@@ -480,13 +502,13 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
-            if (dbObjet is TableKey || dbObjet is TableConstraint)
+            if (dbObjet is TableColumnChild || dbObjet is TableConstraint)
             {
                 TableChild dbObj = dbObjet as TableChild;
 
                 sql = $"ALTER TABLE {this.GetQuotedString(dbObj.Owner)}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)}";
             }
-            else if(dbObjet is TableIndex)
+            else if (dbObjet is TableIndex)
             {
                 sql = $"DROP INDEX {this.GetQuotedObjectName(dbObjet)}";
             }
@@ -497,17 +519,17 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }
+        }     
         #endregion
 
         #region Generate Schema Script 
 
-        public override string GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuilder sb = new ScriptBuilder();
 
             #region Function           
-            sb.Append(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
             #endregion
 
             #region Table
@@ -524,13 +546,16 @@ namespace DatabaseInterpreter.Core
 
                 #region Create Table
 
-                sb.AppendLine(
+                string tableScript=
 $@"
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item))).TrimEnd(',')}
 )
 TABLESPACE
-{this.ConnectionInfo.Database}" + this.ScriptsSplitString);
+{this.ConnectionInfo.Database}" + this.ScriptsSplitString;
+
+                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
                 #endregion
 
                 sb.AppendLine();
@@ -538,12 +563,12 @@ TABLESPACE
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine($"COMMENT ON TABLE {this.GetDbOwner()}.{GetQuotedString(tableName)} IS '{ValueHelper.TransferSingleQuotation(table.Comment)}'" + this.ScriptsSplitString);
+                    sb.AppendLine(new AlterDbObjectScript<Table>($"COMMENT ON TABLE {this.GetDbOwner()}.{this.GetQuotedString(tableName)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.ScriptsSplitString));
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine($"COMMENT ON COLUMN {this.GetDbOwner()}.{GetQuotedString(tableName)}.{GetQuotedString(column.Name)} IS '{ValueHelper.TransferSingleQuotation(column.Comment)}'" + this.ScriptsSplitString);
+                    sb.AppendLine(new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {this.GetDbOwner()}.{this.GetQuotedString(tableName)}.{this.GetQuotedString(column.Name)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.ScriptsSplitString));
                 }
                 #endregion
 
@@ -560,7 +585,7 @@ USING INDEX
 TABLESPACE
 {this.ConnectionInfo.Database}{this.ScriptsSplitString}";
 
-                    sb.AppendLine(primaryKey);
+                    sb.AppendLine(new CreateDbObjectScript<TablePrimaryKey>(primaryKey));
                 }
                 #endregion
 
@@ -582,17 +607,21 @@ TABLESPACE
                             string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
                             string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
 
-                            sb.AppendLine(
+                            StringBuilder foreignKeyScript = new StringBuilder();
+
+                            foreignKeyScript.AppendLine(
 $@"
 ALTER TABLE {quotedTableName} ADD CONSTRAINT { this.GetQuotedString(keyName)} FOREIGN KEY ({columnNames})
 REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referenceColumnName})");
 
                             if (tableForeignKey.DeleteCascade)
                             {
-                                sb.AppendLine("ON DELETE CASCADE");
+                                foreignKeyScript.AppendLine("ON DELETE CASCADE");
                             }
 
-                            sb.Append(this.ScriptsSplitString);
+                            foreignKeyScript.Append(this.ScriptsSplitString);
+
+                            sb.AppendLine(new CreateDbObjectScript<TableForeignKey>(foreignKeyScript.ToString()));
                         }
                     }
                 }
@@ -602,6 +631,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
                     IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+
                     if (indices.Count() > 0)
                     {
                         sb.AppendLine();
@@ -621,7 +651,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                                 continue;
                             }
 
-                            sb.AppendLine($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tableIndex.Name)} ON { this.GetQuotedString(tableName)} ({columnNames})" + this.ScriptsSplitString);
+                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tableIndex.Name)} ON { this.GetQuotedString(tableName)} ({columnNames})" + this.ScriptsSplitString));
 
                             if (!indexColumns.Contains(columnNames))
                             {
@@ -640,7 +670,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                     foreach (TableConstraint constraint in constraints)
                     {
                         sb.AppendLine();
-                        sb.AppendLine($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
+                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition})" + this.ScriptsSplitString));
                     }
                 }
                 #endregion
@@ -650,15 +680,15 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             #endregion
 
             #region View           
-            sb.Append(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
-            sb.Append(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
             #endregion
 
             if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
@@ -666,7 +696,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
             }
 
-            return sb.ToString();
+            return sb;
         }
 
         public override string ParseColumn(Table table, TableColumn column)
@@ -678,7 +708,8 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 if (isChar)
                 {
                     long? dataLength = column.MaxLength;
-                    if (dataLength > 0 && dataType.StartsWith("n"))
+
+                    if (dataLength > 0 && dataType.ToLower().StartsWith("n"))
                     {
                         dataLength = dataLength / 2;
                     }
@@ -688,6 +719,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 else if (!this.IsNoLengthDataType(dataType))
                 {
                     dataType = $"{dataType}";
+
                     if (!(column.Precision == 0 && column.Scale == 0))
                     {
                         long precision = column.Precision.HasValue ? column.Precision.Value : column.MaxLength.Value;
@@ -759,23 +791,34 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
 
             string pagedSql = $@"with PagedRecords as
 								(
-									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0 FROM DUAL)) AS {RowNumberColumnName}
+									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0 FROM DUAL)) AS ""{RowNumberColumnName}""
 									FROM {tableName}
                                     {whereClause}
 								)
 								SELECT *
 								FROM PagedRecords
-								WHERE {RowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+								WHERE ""{RowNumberColumnName}"" BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
 
             return pagedSql;
         }
 
-        protected override bool NeedInsertParameter(object value)
+        protected override bool NeedInsertParameter(TableColumn column, object value)
         {
-            if (value != null && value.GetType() == typeof(string))
+            if (value != null)
             {
-                string str = value.ToString();
-                if (str.Length > 4000 || (str.Contains(SEMICOLON_FUNC) && str.Length > 2000))
+                if(column.DataType.ToLower()=="clob")
+                {
+                    return true;
+                }
+                if(value.GetType() == typeof(string))
+                {
+                    string str = value.ToString();
+                    if (str.Length > 1000 || (str.Contains(SEMICOLON_FUNC) && str.Length > 500))
+                    {
+                        return true;
+                    }
+                }
+                else if(value.GetType().Name == nameof(TimeSpan))
                 {
                     return true;
                 }

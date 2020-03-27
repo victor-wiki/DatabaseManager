@@ -149,7 +149,7 @@ namespace DatabaseManager
             this.isBusy = true;
             this.btnGenerate.Enabled = false;
 
-            DatabaseType sourceDbType = this.useConnector ? this.dbConnectionProfile.DatabaseType : this.databaseType;
+            DatabaseType dbType = this.useConnector ? this.dbConnectionProfile.DatabaseType : this.databaseType;
 
             DbInterpreterOption option = new DbInterpreterOption()
             {
@@ -157,6 +157,24 @@ namespace DatabaseManager
                 SortObjectsByReference = true,
                 GetTableAllObjects = true
             };
+
+            if (this.chkTreatBytesAsNull.Checked)
+            {
+                option.TreatBytesAsNullForReading = true;
+                option.TreatBytesAsNullForExecuting = true;
+            }
+            else
+            {
+                if (dbType == DatabaseType.Oracle)
+                {
+                    option.TreatBytesAsNullForReading = true;
+                    option.TreatBytesAsNullForExecuting = true;
+                }
+                else
+                {
+                    option.TreatBytesAsHexStringForFile = true;
+                }
+            }           
 
             this.SetGenerateScriptOption(option);
 
@@ -168,14 +186,11 @@ namespace DatabaseManager
                 return;
             }
 
-            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.connectionInfo, option);
+            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, this.connectionInfo, option);
 
-            SchemaInfoFilter filter = new SchemaInfoFilter()
-            {
-                UserDefinedTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).ToArray(),
-                TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray(),
-                ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray()
-            };
+            SchemaInfoFilter filter = new SchemaInfoFilter();           
+
+            SchemaInfoHelper.SetSchemaInfoFilterValues(filter, schemaInfo);
 
             try
             {

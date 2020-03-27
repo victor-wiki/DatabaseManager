@@ -3,20 +3,11 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager
 {
-
-
-    public partial class frmMain : Form
+    public partial class frmMain : Form, IObserver<FeedbackInfo>
     {
         public frmMain()
         {
@@ -27,19 +18,34 @@ namespace DatabaseManager
         {
             this.InitControls();
 
+            TreeView.CheckForIllegalCrossThreadCalls = false;
+
             FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
-            LogHelper.EnableDebug = true;
+            FeedbackHelper.EnableDebug = true;
         }
 
         private void InitControls()
         {
             this.navigator.OnShowContent += this.ShowDbObjectContent;
+            this.navigator.OnFeedback += this.Feedback;
         }
 
         private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)
         {
             this.ucContent.Visible = true;
             this.ucContent.ShowContent(content);
+        }
+
+        private void Feedback(FeedbackInfo info)
+        {
+            if (info.InfoType != FeedbackInfoType.Info)
+            {
+                MessageBox.Show(info.Message);
+            }
+            else
+            {               
+                this.tsslMessage.Text = info.Message;                  
+            }
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)
@@ -69,6 +75,21 @@ namespace DatabaseManager
                     FormEventCenter.OnSave();
                 }
             }
+        }
+
+        public void OnNext(FeedbackInfo value)
+        {
+            this.Feedback(value);
+        }
+
+        public void OnError(Exception error)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnCompleted()
+        {
+            throw new NotImplementedException();
         }
     }
 }

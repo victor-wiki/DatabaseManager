@@ -32,7 +32,7 @@ namespace DatabaseInterpreter.Demo
                 ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray()               
             };
 
-            return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(filter));
+            return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(filter)).ToString();
         }
         #endregion
 

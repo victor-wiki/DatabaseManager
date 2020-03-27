@@ -7,7 +7,7 @@ namespace  DatabaseInterpreter.Core
 {
     public class SettingManager
     {
-        public static Setting Setting { get; set; } = new Setting();
+        public static Setting Setting { get; private set; } = new Setting();
 
         static SettingManager()
         {

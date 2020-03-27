@@ -35,13 +35,11 @@
             this.txtMessage = new System.Windows.Forms.RichTextBox();
             this.dlgSaveLog = new System.Windows.Forms.SaveFileDialog();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
-            this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
-            this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.btnFetch = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
             this.gbOption = new System.Windows.Forms.GroupBox();
+            this.chkSkipParseErrorForFunctionViewProcedure = new System.Windows.Forms.CheckBox();
             this.chkUseTransaction = new System.Windows.Forms.CheckBox();
             this.chkBulkCopy = new System.Windows.Forms.CheckBox();
             this.chkGenerateIdentity = new System.Windows.Forms.CheckBox();
@@ -59,6 +57,9 @@
             this.chkOutputScripts = new System.Windows.Forms.CheckBox();
             this.dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
+            this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
+            this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -100,7 +101,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 82);
+            this.txtMessage.Size = new System.Drawing.Size(731, 85);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             // 
@@ -132,39 +133,6 @@
             this.splitContainer1.SplitterDistance = 428;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 21;
-            // 
-            // tvDbObjects
-            // 
-            this.tvDbObjects.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
-            this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(269, 335);
-            this.tvDbObjects.TabIndex = 38;
-            // 
-            // targetDbProfile
-            // 
-            this.targetDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.targetDbProfile.Location = new System.Drawing.Point(11, 28);
-            this.targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
-            this.targetDbProfile.Name = "targetDbProfile";
-            this.targetDbProfile.Size = new System.Drawing.Size(679, 27);
-            this.targetDbProfile.TabIndex = 37;
-            this.targetDbProfile.Title = "Target:";
-            this.targetDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.targetDbProfile_OnSelectedChanged);
-            // 
-            // sourceDbProfile
-            // 
-            this.sourceDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.sourceDbProfile.Location = new System.Drawing.Point(11, 1);
-            this.sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
-            this.sourceDbProfile.Name = "sourceDbProfile";
-            this.sourceDbProfile.Size = new System.Drawing.Size(679, 27);
-            this.sourceDbProfile.TabIndex = 36;
-            this.sourceDbProfile.Title = "Source:";
-            this.sourceDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.sourceDbProfile_OnSelectedChanged);
             // 
             // btnFetch
             // 
@@ -207,6 +175,7 @@
             this.gbOption.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbOption.Controls.Add(this.chkSkipParseErrorForFunctionViewProcedure);
             this.gbOption.Controls.Add(this.chkUseTransaction);
             this.gbOption.Controls.Add(this.chkBulkCopy);
             this.gbOption.Controls.Add(this.chkGenerateIdentity);
@@ -229,6 +198,16 @@
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
             // 
+            // chkSkipParseErrorForFunctionViewProcedure
+            // 
+            this.chkSkipParseErrorForFunctionViewProcedure.AutoSize = true;
+            this.chkSkipParseErrorForFunctionViewProcedure.Location = new System.Drawing.Point(8, 215);
+            this.chkSkipParseErrorForFunctionViewProcedure.Name = "chkSkipParseErrorForFunctionViewProcedure";
+            this.chkSkipParseErrorForFunctionViewProcedure.Size = new System.Drawing.Size(330, 16);
+            this.chkSkipParseErrorForFunctionViewProcedure.TabIndex = 17;
+            this.chkSkipParseErrorForFunctionViewProcedure.Text = "Skip error for parsing function, view and procedure";
+            this.chkSkipParseErrorForFunctionViewProcedure.UseVisualStyleBackColor = true;
+            // 
             // chkUseTransaction
             // 
             this.chkUseTransaction.AutoSize = true;
@@ -244,6 +223,8 @@
             // chkBulkCopy
             // 
             this.chkBulkCopy.AutoSize = true;
+            this.chkBulkCopy.Checked = true;
+            this.chkBulkCopy.CheckState = System.Windows.Forms.CheckState.Checked;
             this.chkBulkCopy.Location = new System.Drawing.Point(8, 133);
             this.chkBulkCopy.Name = "chkBulkCopy";
             this.chkBulkCopy.Size = new System.Drawing.Size(186, 16);
@@ -314,7 +295,7 @@
             // chkGenerateSourceScripts
             // 
             this.chkGenerateSourceScripts.AutoSize = true;
-            this.chkGenerateSourceScripts.Location = new System.Drawing.Point(8, 249);
+            this.chkGenerateSourceScripts.Location = new System.Drawing.Point(8, 271);
             this.chkGenerateSourceScripts.Name = "chkGenerateSourceScripts";
             this.chkGenerateSourceScripts.Size = new System.Drawing.Size(270, 16);
             this.chkGenerateSourceScripts.TabIndex = 8;
@@ -336,7 +317,7 @@
             // lblOutputFolder
             // 
             this.lblOutputFolder.AutoSize = true;
-            this.lblOutputFolder.Location = new System.Drawing.Point(8, 278);
+            this.lblOutputFolder.Location = new System.Drawing.Point(8, 300);
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(137, 12);
             this.lblOutputFolder.TabIndex = 6;
@@ -344,7 +325,7 @@
             // 
             // btnOutputFolder
             // 
-            this.btnOutputFolder.Location = new System.Drawing.Point(397, 274);
+            this.btnOutputFolder.Location = new System.Drawing.Point(397, 296);
             this.btnOutputFolder.Name = "btnOutputFolder";
             this.btnOutputFolder.Size = new System.Drawing.Size(36, 23);
             this.btnOutputFolder.TabIndex = 4;
@@ -354,7 +335,7 @@
             // 
             // txtOutputFolder
             // 
-            this.txtOutputFolder.Location = new System.Drawing.Point(154, 275);
+            this.txtOutputFolder.Location = new System.Drawing.Point(154, 297);
             this.txtOutputFolder.Name = "txtOutputFolder";
             this.txtOutputFolder.Size = new System.Drawing.Size(238, 21);
             this.txtOutputFolder.TabIndex = 3;
@@ -371,14 +352,45 @@
             // chkOutputScripts
             // 
             this.chkOutputScripts.AutoSize = true;
-            this.chkOutputScripts.Checked = true;
-            this.chkOutputScripts.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkOutputScripts.Location = new System.Drawing.Point(8, 220);
+            this.chkOutputScripts.Location = new System.Drawing.Point(8, 242);
             this.chkOutputScripts.Name = "chkOutputScripts";
             this.chkOutputScripts.Size = new System.Drawing.Size(156, 16);
             this.chkOutputScripts.TabIndex = 0;
             this.chkOutputScripts.Text = "Output scripts to file";
             this.chkOutputScripts.UseVisualStyleBackColor = true;
+            // 
+            // tvDbObjects
+            // 
+            this.tvDbObjects.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
+            this.tvDbObjects.Name = "tvDbObjects";
+            this.tvDbObjects.Size = new System.Drawing.Size(269, 335);
+            this.tvDbObjects.TabIndex = 38;
+            // 
+            // targetDbProfile
+            // 
+            this.targetDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.targetDbProfile.Location = new System.Drawing.Point(11, 28);
+            this.targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
+            this.targetDbProfile.Name = "targetDbProfile";
+            this.targetDbProfile.Size = new System.Drawing.Size(679, 27);
+            this.targetDbProfile.TabIndex = 37;
+            this.targetDbProfile.Title = "Target:";
+            this.targetDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.targetDbProfile_OnSelectedChanged);
+            // 
+            // sourceDbProfile
+            // 
+            this.sourceDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.sourceDbProfile.Location = new System.Drawing.Point(11, 1);
+            this.sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
+            this.sourceDbProfile.Name = "sourceDbProfile";
+            this.sourceDbProfile.Size = new System.Drawing.Size(679, 27);
+            this.sourceDbProfile.TabIndex = 36;
+            this.sourceDbProfile.Title = "Source:";
+            this.sourceDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.sourceDbProfile_OnSelectedChanged);
             // 
             // frmConvert
             // 
@@ -432,6 +444,7 @@
         private Controls.UC_DbConnectionProfile sourceDbProfile;
         private Controls.UC_DbConnectionProfile targetDbProfile;
         private Controls.UC_DbObjectsSimpleTree tvDbObjects;
+        private System.Windows.Forms.CheckBox chkSkipParseErrorForFunctionViewProcedure;
     }
 }
 

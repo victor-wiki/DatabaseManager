@@ -99,7 +99,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Control;
+            this.BackColor = System.Drawing.SystemColors.HotTrack;
             this.Controls.Add(this.tabControl1);
             this.Name = "UC_DbObjectContent";
             this.Size = new System.Drawing.Size(496, 461);

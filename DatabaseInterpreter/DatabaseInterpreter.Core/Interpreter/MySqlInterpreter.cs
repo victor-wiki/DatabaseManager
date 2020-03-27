@@ -14,24 +14,26 @@ using Dapper;
 using DatabaseInterpreter.Model;
 using System.Globalization;
 using DatabaseInterpreter.Utility;
+using System.Threading;
 
 namespace DatabaseInterpreter.Core
 {
     public class MySqlInterpreter : DbInterpreter
     {
-        #region Field & Property
+        #region Field & Property 
+        private string bulkLoaderPath = "";
         public override string UnicodeInsertChar => "";
-
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '`'; } }
         public override char QuotationRightChar { get { return '`'; } }
         public override DatabaseType DatabaseType { get { return DatabaseType.MySql; } }
+        public int NameMaxLength => 64;
+        public int KeyIndexColumnMaxLength => 500;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
-
         public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
         public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
-        private string loaderPath = "";
+        public string NotCreateIfExistsCluase { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
         #endregion
 
         #region Constructor
@@ -112,7 +114,7 @@ namespace DatabaseInterpreter.Core
                 string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
 
                 sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
-                        CONVERT(CONCAT('CREATE {type} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
+                        CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsCluase} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
                         FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'
                         ";
             }
@@ -306,7 +308,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', TRIGGER_NAME, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsCluase} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', TRIGGER_NAME, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
 
             string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
                          {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
@@ -397,37 +399,24 @@ namespace DatabaseInterpreter.Core
             await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
         }
 
-        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, string destinationTableName = null, int? bulkCopyTimeout = null, int? batchSize = null)
+        public override async Task<int> BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             if (dataTable == null || dataTable.Rows.Count <= 0)
             {
                 return 0;
             }
 
-            var loader = this.GetBulkLoader(connection, dataTable, destinationTableName, bulkCopyTimeout);
+            var loader = this.GetBulkLoader(connection, dataTable, bulkCopyInfo);
 
             if (loader == null)
             {
                 return 0;
             }
 
-            return await this.BulkLoadAsync(loader, dataTable);
-        }
+            return await this.BulkLoadAsync(loader, dataTable, bulkCopyInfo.CancellationToken);
+        }      
 
-        private class NullDateTimeConverter : DateTimeConverter
-        {
-            public override string ConvertToString(object value, IWriterRow row, MemberMapData memberMapData)
-            {
-                if (value == null)
-                {
-                    return "NULL";
-                }
-
-                return base.ConvertToString(value, row, memberMapData);
-            }
-        }
-
-        private async Task<int> BulkLoadAsync(MySqlBulkLoader loader, DataTable dataTable)
+        private async Task<int> BulkLoadAsync(MySqlBulkLoader loader, DataTable dataTable, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (loader == null)
             {
@@ -449,8 +438,8 @@ namespace DatabaseInterpreter.Core
                     var configuration = new CsvConfiguration(CultureInfo.CurrentCulture)
                     {
                         HasHeaderRecord = false
-                    };
-                    configuration.TypeConverterCache.AddConverter<DateTime?>(new NullDateTimeConverter());
+                    };                  
+
                     using (var csv = new CsvWriter(writer, configuration))
                     {
                         using (var dt = dataTable.Copy())
@@ -458,9 +447,10 @@ namespace DatabaseInterpreter.Core
                             foreach (DataColumn column in dt.Columns)
                             {
                                 var columnName = column.ColumnName;
+
                                 if (columnName != RowNumberColumnName)
                                 {
-                                    loader.Columns.Add(columnName);
+                                    loader.Columns.Add(this.GetQuotedString(columnName));
                                 }
                             }
 
@@ -470,18 +460,29 @@ namespace DatabaseInterpreter.Core
                                 {
                                     var column = dt.Columns[i];
                                     var columnName = column.ColumnName;
+
                                     if (columnName != RowNumberColumnName)
                                     {
-                                        csv.WriteField(row[i]);
+                                        var value = row[i];
+
+                                        if(ValueHelper.IsNullValue(value))
+                                        {
+                                            csv.WriteField("NULL");
+                                        }
+                                        else
+                                        {
+                                            csv.WriteField(value);
+                                        }                                       
                                     }
                                 }
+
                                 csv.NextRecord();
                             }
                         }
                     }
                 }
 
-                return await loader.LoadAsync();
+                return await loader.LoadAsync(cancellationToken);
             }
             catch (Exception e)
             {
@@ -491,9 +492,9 @@ namespace DatabaseInterpreter.Core
             {
                 File.Delete(path);
             }
-        }
+        }      
 
-        private MySqlBulkLoader GetBulkLoader(DbConnection connection, DataTable dataTable, string destinationTableName = null, int? bulkCopyTimeout = null)
+        private MySqlBulkLoader GetBulkLoader(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             if (dataTable == null || dataTable.Rows.Count <= 0)
             {
@@ -512,30 +513,31 @@ namespace DatabaseInterpreter.Core
                 EscapeCharacter = '"',
                 FieldTerminator = ",",
                 ConflictOption = MySqlBulkLoaderConflictOption.Ignore,
-                TableName = this.GetQuotedString(destinationTableName),
+                TableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName),
                 CharacterSet = "utf8"
             };
 
             string fileName = Path.GetFileName(Path.GetTempFileName());
 
-            if (string.IsNullOrEmpty(this.loaderPath))
+            if (string.IsNullOrEmpty(this.bulkLoaderPath))
             {
+                //the "secure_file_priv" option exists in my.ini file, if it's running this program remotely, should set it to be "",
                 string path = conn.Query<string>(@"select @@global.secure_file_priv;").FirstOrDefault() ?? "";
 
                 if (Directory.Exists(path))
                 {
-                    this.loaderPath = path;
+                    this.bulkLoaderPath = path;
                 }
             }
 
-            if (Directory.Exists(this.loaderPath))
+            if (Directory.Exists(this.bulkLoaderPath))
             {
-                loader.FileName = Path.Combine(this.loaderPath, fileName);
+                loader.FileName = Path.Combine(this.bulkLoaderPath, fileName);
             }
 
-            if (bulkCopyTimeout.HasValue)
+            if (bulkCopyInfo.Timeout.HasValue)
             {
-                loader.Timeout = bulkCopyTimeout.Value;
+                loader.Timeout = bulkCopyInfo.Timeout.Value;
             }
 
             return loader;
@@ -543,16 +545,16 @@ namespace DatabaseInterpreter.Core
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
-            string sql = $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";           
+            string sql = $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";
 
-            await this.ExecuteNonQueryAsync(sql);        
+            await this.ExecuteNonQueryAsync(sql);
         }
 
         public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
         {
             string sql = "";
 
-            if(dbObjet is TablePrimaryKey)
+            if (dbObjet is TablePrimaryKey)
             {
                 TablePrimaryKey primaryKey = dbObjet as TablePrimaryKey;
 
@@ -577,17 +579,17 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }
+        }       
         #endregion
 
         #region Generate Schema Scripts 
 
-        public override string GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuilder sb = new ScriptBuilder();
 
             #region Function           
-            sb.Append(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
             #endregion
 
             #region Create Table
@@ -603,10 +605,16 @@ namespace DatabaseInterpreter.Core
                 string primaryKey = "";
 
                 IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.TableName == tableName);
+                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
+                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+
+                this.RestrictColumnLength(tableColumns, primaryKeys);               
+                this.RestrictColumnLength(tableColumns, foreignKeys);
+                this.RestrictColumnLength(tableColumns, indexes);
 
                 #region Primary Key
                 if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {                  
+                {                   
                     primaryKey =
 $@"
 ,PRIMARY KEY
@@ -617,10 +625,10 @@ $@"
                 #endregion
 
                 List<string> foreignKeysLines = new List<string>();
+
                 #region Foreign Key
                 if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
-                {
-                    IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
+                { 
                     if (foreignKeys.Count() > 0)
                     {
                         ILookup<string, TableForeignKey> foreignKeyLookup = foreignKeys.ToLookup(item => item.Name);
@@ -634,7 +642,7 @@ $@"
                             string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => this.GetQuotedString(item.ColumnName)));
                             string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
 
-                            string line = $"CONSTRAINT { this.GetQuotedString(keyName)} FOREIGN KEY ({columnNames}) REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referenceColumnName})";
+                            string line = $"CONSTRAINT { this.GetQuotedString(this.GetRestrictedLengthName(keyName))} FOREIGN KEY ({columnNames}) REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referenceColumnName})";
 
                             if (tableForeignKey.UpdateCascade)
                             {
@@ -664,18 +672,21 @@ $@"
                 #endregion
 
                 #region Table
-                sb.AppendLine(
+
+                string tableScript =
 $@"
-CREATE TABLE {quotedTableName}(
+CREATE TABLE {this.NotCreateIfExistsCluase} {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}{foreignKey}
-){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{ValueHelper.TransferSingleQuotation(table.Comment)}'") : "")}
-DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
+){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
+DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
+
+                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
                 #endregion               
 
                 #region Index
                 if (this.Option.TableScriptsGenerateOption.GenerateIndex)
                 {
-                    IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
                     if (indexes.Count() > 0)
                     {
                         sb.AppendLine();
@@ -684,6 +695,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
 
                         ILookup<string, TableIndex> indexLookup = indexes.ToLookup(item => item.Name);
                         IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
+
                         foreach (string indexName in indexNames)
                         {
                             TableIndex tableIndex = indexLookup[indexName].First();
@@ -701,7 +713,9 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                                 tempIndexName = tempIndexName.Replace("-", "_");
                             }
 
-                            sb.AppendLine($"ALTER TABLE {quotedTableName} ADD {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX {tempIndexName} ({columnNames});");
+                            tempIndexName = this.GetRestrictedLengthName(tempIndexName);
+
+                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"ALTER TABLE {quotedTableName} ADD {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tempIndexName)} ({columnNames});"));
 
                             if (!indexColumns.Contains(columnNames))
                             {
@@ -719,16 +733,16 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
             #endregion            
 
             #region View           
-            sb.Append(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
 
             #endregion
 
             #region Trigger           
-            sb.Append(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
             #endregion
 
             #region Procedure           
-            sb.Append(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
+            sb.AppendRange(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
             #endregion
 
             if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
@@ -736,7 +750,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                 this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
             }
 
-            return sb.ToString();
+            return sb;
         }
 
         public override string ParseColumn(Table table, TableColumn column)
@@ -767,14 +781,37 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
             string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
             string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
             string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
-            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{ValueHelper.TransferSingleQuotation(column.Comment)}'" : "");
+            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
 
             return $@"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause} {defaultValueClause} {commentClause}";
         }
 
+        private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T:TableColumnChild
+        {
+            var childColumns = columns.Where(item => children.Any(t => item.Name == t.ColumnName)).ToList();
+
+            childColumns.ForEach(item =>
+            {
+                if (DataTypeHelper.IsCharType(item.DataType) && item.MaxLength > this.KeyIndexColumnMaxLength)
+                {
+                    item.MaxLength = this.KeyIndexColumnMaxLength;
+                }
+            });
+        }
+
+        private string GetRestrictedLengthName(string name)
+        {
+            if (name.Length > this.NameMaxLength)
+            {
+                return name.Substring(0, this.NameMaxLength);
+            }
+
+            return name;
+        }
+
         private bool IsNoLengthDataType(string dataType)
         {
-            string[] flags = { "date", "time", "int", "text", "longblob", "longtext" };
+            string[] flags = { "date", "time", "int", "text", "longblob", "longtext", "binary" };
 
             return flags.Any(item => dataType.ToLower().Contains(item));
         }
@@ -806,6 +843,12 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString);
                              LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
 
             return pagedSql;
+        }
+
+        protected override string GetBytesConvertHexString(object value, string dataType)
+        {
+            string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
+            return $"UNHEX('{hex}')";
         }
         #endregion       
     }

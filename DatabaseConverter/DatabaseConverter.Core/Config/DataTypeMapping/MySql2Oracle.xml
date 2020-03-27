@@ -17,8 +17,8 @@
   <target type="date" />
 </mapping>
 <mapping>
-  <source type="time(6)" />
-  <target type="timestamp" />
+  <source type="time" />
+  <target type="interval day to second" />
 </mapping>
 <mapping>
   <source type="tinyint" />

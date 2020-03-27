@@ -32,10 +32,7 @@ namespace DatabaseInterpreter.Profile
                 profiles = (List<AccountProfileInfo>)JsonConvert.DeserializeObject(File.ReadAllText(ProfilePath), typeof(List<AccountProfileInfo>));
             }
 
-            AccountProfileInfo oldProfile = profiles.FirstOrDefault(item => item.Server == info.Server
-                                            && item.IntegratedSecurity == info.IntegratedSecurity
-                                            && item.UserId == info.UserId
-                                           );
+            AccountProfileInfo oldProfile = profiles.FirstOrDefault(item => item.Id == info.Id);
 
             Guid id = info.Id;
 

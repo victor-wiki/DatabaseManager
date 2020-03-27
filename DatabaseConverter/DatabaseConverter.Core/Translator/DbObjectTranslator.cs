@@ -15,6 +15,8 @@ namespace DatabaseConverter.Core
         protected List<DataTypeMapping> dataTypeMappings = new List<DataTypeMapping>();
         protected List<IEnumerable<FunctionMapping>> functionMappings = new List<IEnumerable<FunctionMapping>>();
 
+        public bool SkipError { get; set; }
+
         public DbObjectTranslator(DbInterpreter source, DbInterpreter target)
         {
             this.sourceDbInterpreter = source;
@@ -102,9 +104,7 @@ namespace DatabaseConverter.Core
 
             return newDataType;
         }
-
         
-
         public string FormatSql(string sql, out bool hasError)
         {
             hasError = false;

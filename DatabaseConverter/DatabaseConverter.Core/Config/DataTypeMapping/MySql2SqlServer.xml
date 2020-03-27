@@ -17,7 +17,7 @@
   <target type="date" />
 </mapping>
 <mapping>
-  <source type="time(6)" />
+  <source type="time" />
   <target type="time" />
 </mapping>
 <mapping>
