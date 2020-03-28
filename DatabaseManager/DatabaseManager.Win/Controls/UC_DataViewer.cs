@@ -61,6 +61,16 @@ namespace DatabaseManager.Controls
 
             this.dgvData.DataSource = result.Data;
 
+            foreach (DataGridViewColumn column in this.dgvData.Columns)
+            {
+                Type valueType = column.ValueType;
+
+                if (valueType == typeof(byte[]) || valueType == typeof(Microsoft.SqlServer.Types.SqlGeography))
+                {
+                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+            }
+
             if (this.sortedColumnIndex != -1)
             {
                 DataGridViewColumn column = this.dgvData.Columns[this.sortedColumnIndex];
@@ -69,11 +79,11 @@ namespace DatabaseManager.Controls
 
                 ListSortDirection sortDirection = this.GetSortDirection(this.sortOrder);
 
-                this.dgvData.Sort(column, sortDirection);               
+                this.dgvData.Sort(column, sortDirection);
 
                 this.isSorting = false;
             }
-        }       
+        }
 
         private ListSortDirection GetSortDirection(SortOrder sortOrder)
         {
@@ -96,7 +106,7 @@ namespace DatabaseManager.Controls
             {
                 return;
             }
-         
+
             this.sortedColumnIndex = this.dgvData.SortedColumn.DisplayIndex;
             this.sortOrder = this.dgvData.SortOrder;
 
