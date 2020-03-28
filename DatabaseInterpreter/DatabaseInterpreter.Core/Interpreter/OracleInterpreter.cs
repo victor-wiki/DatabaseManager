@@ -788,13 +788,15 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             return (isAllEnd ? $"{Environment.NewLine}SELECT 1 FROM DUAL;" : "");
         }
 
-        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
+            string orderClause = string.IsNullOrEmpty(orderColumns) ? "(SELECT 0 FROM DUAL)" : orderColumns;
+
             string pagedSql = $@"with PagedRecords as
 								(
-									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0 FROM DUAL)) AS ""{RowNumberColumnName}""
+									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY {orderClause}) AS ""{RowNumberColumnName}""
 									FROM {tableName}
                                     {whereClause}
 								)

@@ -1,7 +1,7 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Profile;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseConverter.Profile;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -469,6 +469,7 @@ namespace DatabaseConverter.Core
         private (Table Table, List<TableColumn> Columns) GetTargetTableColumns(SchemaInfo targetSchemaInfo, string targetOwner, Table sourceTable, List<TableColumn> sourceColumns)
         {
             Table targetTable = targetSchemaInfo.Tables.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.Name == sourceTable.Name);
+
             if (targetTable == null)
             {
                 this.Feedback(this, $"Source table {sourceTable.Name} cannot get a target table.", FeedbackInfoType.Error);
@@ -476,6 +477,7 @@ namespace DatabaseConverter.Core
             }
 
             List<TableColumn> targetTableColumns = new List<TableColumn>();
+
             foreach (TableColumn sourceColumn in sourceColumns)
             {
                 TableColumn targetTableColumn = targetSchemaInfo.TableColumns.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.TableName == sourceColumn.TableName && item.Name == sourceColumn.Name);
@@ -484,8 +486,10 @@ namespace DatabaseConverter.Core
                     this.Feedback(this, $"Source column {sourceColumn.TableName} of table {sourceColumn.TableName} cannot get a target column.", FeedbackInfoType.Error);
                     return (null, null);
                 }
+
                 targetTableColumns.Add(targetTableColumn);
             }
+
             return (targetTable, targetTableColumns);
         }
 
@@ -510,11 +514,7 @@ namespace DatabaseConverter.Core
         {
             this.Source = null;
             this.Target = null;
-
-            if (this.transaction != null)
-            {
-                this.transaction = null;
-            }
+            this.transaction = null;
         }
     }
 }

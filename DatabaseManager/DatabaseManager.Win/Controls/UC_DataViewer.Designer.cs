@@ -56,7 +56,8 @@
             this.dgvData.RowTemplate.Height = 23;
             this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgvData.Size = new System.Drawing.Size(701, 302);
-            this.dgvData.TabIndex = 5;
+            this.dgvData.TabIndex = 5;           
+            this.dgvData.Sorted += new System.EventHandler(this.dgvData_Sorted);
             // 
             // pagination
             // 

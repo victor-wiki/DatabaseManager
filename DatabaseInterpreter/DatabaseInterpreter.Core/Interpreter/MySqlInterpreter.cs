@@ -760,14 +760,14 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
             return base.GenerateDataScriptsAsync(schemaInfo);
         }
 
-        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
             var pagedSql = $@"SELECT {columnNames}
 							  FROM {tableName}
                              {whereClause} 
-                             ORDER BY {(!string.IsNullOrEmpty(primaryKeyColumns) ? primaryKeyColumns : "1")}
+                             ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : "1")}
                              LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
 
             return pagedSql;

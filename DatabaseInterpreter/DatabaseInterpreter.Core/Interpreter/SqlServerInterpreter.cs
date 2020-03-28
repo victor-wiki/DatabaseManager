@@ -824,13 +824,15 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             return base.GenerateDataScriptsAsync(schemaInfo);
         }
 
-        protected override string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize)
+        protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
+            string orderClause = string.IsNullOrEmpty(orderColumns) ? "(SELECT 0)" : orderColumns;
+
             string pagedSql = $@"with PagedRecords as
 								(
-									SELECT TOP 100 PERCENT {columnNames}, ROW_NUMBER() OVER (ORDER BY (SELECT 0)) AS {RowNumberColumnName}
+									SELECT TOP 100 PERCENT {columnNames}, ROW_NUMBER() OVER (ORDER BY {orderClause}) AS {RowNumberColumnName}
 									FROM {tableName}
                                     {whereClause}
 								)

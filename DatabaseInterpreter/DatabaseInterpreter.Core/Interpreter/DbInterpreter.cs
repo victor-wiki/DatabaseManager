@@ -90,7 +90,7 @@ namespace DatabaseInterpreter.Core
             return string.Join(",", columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.Name)));
         }
 
-        protected string GetQuotedString(string str)
+        public string GetQuotedString(string str)
         {
             if(this.DbObjectNameMode== DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
             {
@@ -700,7 +700,7 @@ namespace DatabaseInterpreter.Core
                     bool isSelfReference = TableReferenceHelper.IsSelfReference(tableName, schemaInfo.TableForeignKeys);
 
                     List<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName).ToList();
-                    string primaryKeyColumns = string.Join(",", primaryKeys.OrderBy(item => item.Order).Select(item => GetQuotedString(item.ColumnName)));
+                    string primaryKeyColumns = string.Join(",", primaryKeys.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.ColumnName)));
 
                     long total = await this.GetTableRecordCountAsync(connection, table);
 
@@ -853,17 +853,17 @@ namespace DatabaseInterpreter.Core
             return dictPagedData;
         }
 
-        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, long pageNumber, string whereClause = "")
+        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedObjectName(table);
             string columnNames = this.GetQuotedColumnNames(columns);
 
-            string pagedSql = this.GetSqlForPagination(quotedTableName, columnNames, primaryKeyColumns, whereClause, pageNumber, pageSize);
+            string pagedSql = this.GetSqlForPagination(quotedTableName, columnNames, orderColumns, whereClause, pageNumber, pageSize);
 
             return await this.GetDataTableAsync(connection, pagedSql);
         }
 
-        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string primaryKeyColumns, int pageSize, long pageNumber, string whereClause = "")
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
         {
             using (DbConnection connection = this.CreateConnection())
             {
@@ -871,18 +871,18 @@ namespace DatabaseInterpreter.Core
 
                 List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new string[] { table.Name });
 
-                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
+                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, total, pageSize, pageNumber, whereClause);
 
                 if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
                 {
                     dt.Columns.Remove(RowNumberColumnName);
-                }
+                }                
 
                 return (total, dt);
             }
         }
 
-        protected abstract string GetSqlForPagination(string tableName, string columnNames, string primaryKeyColumns, string whereClause, long pageNumber, int pageSize);
+        protected abstract string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize);
 
 
         public virtual Dictionary<string, object> AppendDataScripts(StringBuilder sb, Table table, List<TableColumn> columns, Dictionary<long, List<Dictionary<string, object>>> dictPagedData)
