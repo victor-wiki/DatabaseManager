@@ -92,7 +92,7 @@ namespace DatabaseInterpreter.Core
 
         public string GetQuotedString(string str)
         {
-            if(this.DbObjectNameMode== DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
+            if (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
             {
                 return $"{ this.QuotationLeftChar}{str}{this.QuotationRightChar}";
             }
@@ -155,7 +155,7 @@ namespace DatabaseInterpreter.Core
             this.FeedbackInfo($"Get {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}{(objects.Count > 1 ? "s" : "")}.");
 
             return objects;
-        }       
+        }
         #endregion
 
         #region Observer
@@ -506,7 +506,7 @@ namespace DatabaseInterpreter.Core
             bool failed = false;
             try
             {
-                this.FeedbackInfo("Disable constrains.");               
+                this.FeedbackInfo("Disable constrains.");
 
                 using (DbConnection dbConnection = this.CreateConnection())
                 {
@@ -531,12 +531,12 @@ namespace DatabaseInterpreter.Core
             }
             finally
             {
-                if(failed)
+                if (failed)
                 {
                     this.FeedbackInfo("Enable constrains.");
 
                     await this.SetConstrainsEnabled(true);
-                }               
+                }
             }
 
             this.FeedbackInfo("End clear data.");
@@ -640,7 +640,7 @@ namespace DatabaseInterpreter.Core
             return scripts;
         }
 
-        public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table);
+        public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "");
 
         protected async Task<long> GetTableRecordCountAsync(DbConnection connection, string sql)
         {
@@ -867,7 +867,7 @@ namespace DatabaseInterpreter.Core
         {
             using (DbConnection connection = this.CreateConnection())
             {
-                long total = await this.GetTableRecordCountAsync(connection, table);
+                long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
 
                 List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new string[] { table.Name });
 
@@ -876,7 +876,7 @@ namespace DatabaseInterpreter.Core
                 if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
                 {
                     dt.Columns.Remove(RowNumberColumnName);
-                }                
+                }
 
                 return (total, dt);
             }
@@ -1075,7 +1075,7 @@ namespace DatabaseInterpreter.Core
         public bool IsBytes(object value)
         {
             return (value != null && value.GetType() == typeof(byte[]));
-        }      
+        }
 
         protected virtual bool NeedInsertParameter(TableColumn column, object value)
         {
@@ -1127,7 +1127,7 @@ namespace DatabaseInterpreter.Core
                     {
                         return value;
                     }
-                }               
+                }
 
                 bool oracleSemicolon = false;
 

@@ -102,7 +102,7 @@ namespace DatabaseManager
             int count = this.dgvDbConnection.SelectedRows.Count;
             if (count == 0)
             {
-                MessageBox.Show("Please select row by clicking row header.");
+                MessageBox.Show("Please select a row first.");
                 return;
             }
 

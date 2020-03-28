@@ -195,6 +195,18 @@
     <Compile Include="frmConvert.designer.cs">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmDataFilter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDataFilter.Designer.cs">
+      <DependentUpon>frmDataFilter.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmDataFilterCondition.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDataFilterCondition.Designer.cs">
+      <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmDbObjectTypeSelector.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -268,6 +280,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDataFilter.resx">
+      <DependentUpon>frmDataFilter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDataFilterCondition.resx">
+      <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDbObjectTypeSelector.resx">
       <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
@@ -433,6 +451,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Loading.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Filter.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Column.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

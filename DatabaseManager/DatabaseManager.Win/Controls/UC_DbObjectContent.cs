@@ -14,6 +14,8 @@ namespace DatabaseManager.Controls
     {
         private Dictionary<int, Rectangle> dictCloseButtonRectangle = new Dictionary<int, Rectangle>();
 
+        public DataFilterHandler OnDataFilter;
+
         public UC_DbObjectContent()
         {
             InitializeComponent();
@@ -66,14 +68,23 @@ namespace DatabaseManager.Controls
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.Data)
             {
-                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);
+                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);               
 
                 if (dataViewer == null)
                 {
                     dataViewer = this.AddControlToTabPage<UC_DataViewer>(tabPage);
+                    dataViewer.OnDataFilter += this.DataFilter;
                 }
 
                 dataViewer.Show(info);
+            }
+        }
+
+        private void DataFilter(object sender)
+        {
+            if (this.OnDataFilter != null)
+            {
+                this.OnDataFilter(sender);
             }
         }
 
@@ -301,6 +312,6 @@ namespace DatabaseManager.Controls
             }
 
             return null;
-        }       
+        }
     }
 }

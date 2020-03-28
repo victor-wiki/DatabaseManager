@@ -1,8 +1,11 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Controls;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -28,12 +31,24 @@ namespace DatabaseManager
         {
             this.navigator.OnShowContent += this.ShowDbObjectContent;
             this.navigator.OnFeedback += this.Feedback;
+            this.ucContent.OnDataFilter += this.DataFilter;
         }
 
         private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)
         {
             this.ucContent.Visible = true;
             this.ucContent.ShowContent(content);
+        }
+
+        private void DataFilter(object sender)
+        {
+            UC_DataViewer dataViewer = sender as UC_DataViewer;
+
+            frmDataFilter filter = new frmDataFilter() { Columns = dataViewer.Columns.ToList(), ConditionBuilder= dataViewer.ConditionBuilder };
+            if(filter.ShowDialog() == DialogResult.OK)
+            {
+                dataViewer.FilterData(filter.ConditionBuilder);
+            }
         }
 
         private void Feedback(FeedbackInfo info)

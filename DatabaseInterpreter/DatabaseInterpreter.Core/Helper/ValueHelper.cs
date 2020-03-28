@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 
 namespace  DatabaseInterpreter.Core
 {
@@ -26,6 +27,24 @@ namespace  DatabaseInterpreter.Core
         public static string TransferSingleQuotation(string value)
         {
             return value?.Replace("'", "''");
-        }       
+        }      
+        
+        public static bool NeedQuotedForSql(Type type)
+        {
+            string typeName = type.Name;
+
+            if(type == typeof(string) ||
+               type == typeof(DateTime) ||
+               type == typeof(Guid) ||
+               type == typeof(DateTimeOffset) ||
+               type == typeof(TimeSpan) ||
+               typeName == "SqlHierarchyId"
+               )
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

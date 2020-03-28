@@ -451,7 +451,7 @@ namespace DatabaseInterpreter.Core
                 bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;
                 bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
 
-                await bulkCopy.WriteToServerAsync(dataTable);               
+                await bulkCopy.WriteToServerAsync(dataTable);
             }
         }
 
@@ -460,7 +460,7 @@ namespace DatabaseInterpreter.Core
             using (DbConnection connection = this.CreateConnection())
             {
                 await this.SetConstrainsEnabled(connection, enabled);
-            }                
+            }
         }
 
         public override async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
@@ -522,7 +522,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }     
+        }
         #endregion
 
         #region Generate Schema Script 
@@ -549,7 +549,7 @@ namespace DatabaseInterpreter.Core
 
                 #region Create Table
 
-                string tableScript=
+                string tableScript =
 $@"
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item))).TrimEnd(',')}
@@ -761,9 +761,14 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
 
         #region Generate Data Script       
 
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table)
+        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
         {
             string sql = $@"SELECT COUNT(1) FROM {this.GetDbOwner()}.{ this.GetQuotedString(table.Name)}";
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
 
             return base.GetTableRecordCountAsync(connection, sql);
         }
@@ -811,11 +816,11 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
         {
             if (value != null)
             {
-                if(column.DataType.ToLower()=="clob")
+                if (column.DataType.ToLower() == "clob")
                 {
                     return true;
                 }
-                if(value.GetType() == typeof(string))
+                if (value.GetType() == typeof(string))
                 {
                     string str = value.ToString();
                     if (str.Length > 1000 || (str.Contains(SEMICOLON_FUNC) && str.Length > 500))
@@ -823,7 +828,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                         return true;
                     }
                 }
-                else if(value.GetType().Name == nameof(TimeSpan))
+                else if (value.GetType().Name == nameof(TimeSpan))
                 {
                     return true;
                 }

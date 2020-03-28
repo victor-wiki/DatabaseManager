@@ -27,6 +27,6 @@ namespace DatabaseManager.Core
         public static string GetPluralString(string value)
         {
             return value.Pluralize();
-        }
+        }       
     }
 }

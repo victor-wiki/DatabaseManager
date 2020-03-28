@@ -14,12 +14,19 @@ using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {
+    public delegate void DataFilterHandler(object sender);
+
     public partial class UC_DataViewer : UserControl, IDbObjContentDisplayer
     {
         private DatabaseObjectDisplayInfo displayInfo;
         private int sortedColumnIndex = -1;
         private SortOrder sortOrder = SortOrder.None;
         private bool isSorting = false;
+        private QueryConditionBuilder conditionBuilder;
+
+        public IEnumerable<DataGridViewColumn> Columns => this.dgvData.Columns.Cast<DataGridViewColumn>();
+        public QueryConditionBuilder ConditionBuilder => this.conditionBuilder;
+        public DataFilterHandler OnDataFilter;
 
         public UC_DataViewer()
         {
@@ -55,7 +62,17 @@ namespace DatabaseManager.Controls
                 orderColumns = $"{dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
             }
 
-            (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(table, orderColumns, pageSize, pageNum);
+            string conditionClause = "";
+
+            if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
+            {
+                this.conditionBuilder.QuotationLeftChar = dbInterpreter.QuotationLeftChar;
+                this.conditionBuilder.QuotationRightChar = dbInterpreter.QuotationRightChar;
+
+                conditionClause = "WHERE " + this.conditionBuilder.ToString();
+            }
+
+            (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(table, orderColumns, pageSize, pageNum, conditionClause);
 
             this.pagination.TotalCount = result.Total;
 
@@ -111,6 +128,21 @@ namespace DatabaseManager.Controls
             this.sortOrder = this.dgvData.SortOrder;
 
             this.LoadData(this.displayInfo, 1, true);
+        }
+
+        private void btnFilter_Click(object sender, EventArgs e)
+        {
+            if (this.OnDataFilter != null)
+            {
+                this.OnDataFilter(this);
+            }
+        }
+
+        public void FilterData(QueryConditionBuilder conditionBuilder)
+        {
+            this.conditionBuilder = conditionBuilder;
+
+            this.LoadData(this.displayInfo, 1, false);
         }
     }
 }

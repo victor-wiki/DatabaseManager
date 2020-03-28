@@ -30,6 +30,7 @@
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvData = new System.Windows.Forms.DataGridView();
+            this.btnFilter = new System.Windows.Forms.Button();
             this.pagination = new DatabaseManager.Controls.UC_Pagination();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.SuspendLayout();
@@ -56,19 +57,30 @@
             this.dgvData.RowTemplate.Height = 23;
             this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgvData.Size = new System.Drawing.Size(701, 302);
-            this.dgvData.TabIndex = 5;           
+            this.dgvData.TabIndex = 5;
             this.dgvData.Sorted += new System.EventHandler(this.dgvData_Sorted);
+            // 
+            // btnFilter
+            // 
+            this.btnFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnFilter.Image = global::DatabaseManager.Properties.Resources.Filter;
+            this.btnFilter.Location = new System.Drawing.Point(3, 312);
+            this.btnFilter.Name = "btnFilter";
+            this.btnFilter.Size = new System.Drawing.Size(31, 23);
+            this.btnFilter.TabIndex = 7;
+            this.btnFilter.UseVisualStyleBackColor = true;
+            this.btnFilter.Click += new System.EventHandler(this.btnFilter_Click);
             // 
             // pagination
             // 
             this.pagination.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.pagination.Location = new System.Drawing.Point(3, 310);
+            this.pagination.Location = new System.Drawing.Point(40, 309);
             this.pagination.Name = "pagination";
             this.pagination.PageCount = ((long)(0));
             this.pagination.PageNum = ((long)(1));
             this.pagination.PageSize = 10;
-            this.pagination.Size = new System.Drawing.Size(704, 28);
+            this.pagination.Size = new System.Drawing.Size(659, 28);
             this.pagination.TabIndex = 6;
             this.pagination.TotalCount = ((long)(0));
             this.pagination.OnPageNumberChanged += new DatabaseManager.Controls.UC_Pagination.PageNumberChangeHandler(this.pagination_OnPageNumberChanged);
@@ -77,6 +89,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.btnFilter);
             this.Controls.Add(this.pagination);
             this.Controls.Add(this.dgvData);
             this.Name = "UC_DataViewer";
@@ -90,5 +103,6 @@
 
         private System.Windows.Forms.DataGridView dgvData;
         private UC_Pagination pagination;
+        private System.Windows.Forms.Button btnFilter;
     }
 }

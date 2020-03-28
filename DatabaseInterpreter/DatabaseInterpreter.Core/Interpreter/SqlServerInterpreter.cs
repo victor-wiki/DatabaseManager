@@ -812,9 +812,14 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         #endregion
 
         #region Generate Data Script       
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table)
+        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
         {
             string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
+
+            if(!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
 
             return base.GetTableRecordCountAsync(connection, sql);
         }        
