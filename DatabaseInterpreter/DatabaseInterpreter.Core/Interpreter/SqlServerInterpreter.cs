@@ -102,7 +102,7 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT o.name AS [Name], schema_name(o.schema_id) AS [Owner], 
                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(o.object_id)")} AS [Definition]
                            FROM sys.all_objects o 
-                           WHERE o.type IN ('FN', 'IF', 'FN', 'AF', 'FS', 'FT')
+                           WHERE o.type IN ('FN', 'IF', 'AF', 'FS', 'FT','TF')
                            AND SCHEMA_NAME(schema_id)='dbo'";
 
             if (functionNames != null && functionNames.Any())
