@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="15.0.1" />
     <PackageReference Include="Dapper" Version="2.0.30" />
-    <PackageReference Include="MySqlConnector" Version="0.63.0" />
+    <PackageReference Include="MySqlConnector" Version="0.63.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
