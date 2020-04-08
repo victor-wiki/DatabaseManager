@@ -198,61 +198,61 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region User Defined Type     
-        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(params string[] userDefinedTypeNames);
-        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, params string[] userDefinedTypeNames);
+        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
         #endregion
 
         #region Function        
-        public abstract Task<List<Function>> GetFunctionsAsync(params string[] viewNames);
-        public abstract Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, params string[] viewNames);
+        public abstract Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table      
-        public abstract Task<List<Table>> GetTablesAsync(params string[] tableNames);
-        public abstract Task<List<Table>> GetTablesAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<Table>> GetTablesAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<Table>> GetTablesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table Column
-        public abstract Task<List<TableColumn>> GetTableColumnsAsync(params string[] tableNames);
-        public abstract Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TableColumn>> GetTableColumnsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table Primary Key
-        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(params string[] tableNames);
-        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table Foreign Key
-        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(params string[] tableNames);
-        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table Index
-        public abstract Task<List<TableIndex>> GetTableIndexesAsync(params string[] tableNames);
-        public abstract Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
         #endregion
 
         #region Table Trigger        
-        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames);
-        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region Table Constraint
-        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames);
-        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames);
+        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
         #endregion
 
         #region View        
-        public abstract Task<List<View>> GetViewsAsync(params string[] viewNames);
-        public abstract Task<List<View>> GetViewsAsync(DbConnection dbConnection, params string[] viewNames);
+        public abstract Task<List<View>> GetViewsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<View>> GetViewsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion     
 
         #region Procedure        
-        public abstract Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames);
-        public abstract Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, params string[] procedureNames);
+        public abstract Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region SchemaInfo
@@ -271,61 +271,61 @@ namespace DatabaseInterpreter.Core
 
             using (DbConnection connection = this.CreateConnection())
             {
-                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, dbObjectType, filter.Strict))
+                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, filter))
                 {
-                    schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter.UserDefinedTypeNames);
+                    schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, dbObjectType, filter.Strict))
+                if (this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, filter))
                 {
-                    schemaInfo.Functions = await this.GetFunctionsAsync(connection, filter.FunctionNames);
+                    schemaInfo.Functions = await this.GetFunctionsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Table, filter.TableNames, dbObjectType, filter.Strict))
+                if (this.NeedFetchObjects(DatabaseObjectType.Table, filter.TableNames, filter))
                 {
-                    schemaInfo.Tables = await this.GetTablesAsync(connection, filter.TableNames);
+                    schemaInfo.Tables = await this.GetTablesAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.View, filter.ViewNames, dbObjectType, filter.Strict))
+                if (this.NeedFetchObjects(DatabaseObjectType.View, filter.ViewNames, filter))
                 {
-                    schemaInfo.Views = await this.GetViewsAsync(connection, filter.ViewNames);
+                    schemaInfo.Views = await this.GetViewsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Procedure, filter.ProcedureNames, dbObjectType, filter.Strict))
+                if (this.NeedFetchObjects(DatabaseObjectType.Procedure, filter.ProcedureNames, filter))
                 {
-                    schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter.ProcedureNames);
+                    schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter);
                 }
 
                 if (!this.IsObjectFectchSimpleMode())
                 {
-                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableColumn, null, dbObjectType))
+                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableColumn, filter, null))
                     {
-                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter.TableNames);
+                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter);
                     }
 
-                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TablePrimaryKey, null, dbObjectType))
+                    if (this.NeedFetchTableObjects(DatabaseObjectType.TablePrimaryKey, filter, null))
                     {
-                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter.TableNames);
+                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter);
                     }
 
-                    if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableForeignKey, null, dbObjectType))
+                    if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.TableForeignKey, filter, null))
                     {
-                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter.TableNames);
+                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter);
                     }
 
-                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableIndex, null, dbObjectType))
+                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableIndex, filter, null))
                     {
-                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter.TableNames);
+                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter);
                     }
 
-                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableConstraint, null, dbObjectType))
+                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableConstraint, filter, null))
                     {
-                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter.TableNames);
+                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter);
                     }
 
-                    if (this.Option.GetTableAllObjects || this.NeedFetchObjects(DatabaseObjectType.TableTrigger, null, dbObjectType))
+                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableTrigger, filter, filter.TableTriggerNames))
                     {
-                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter.TableNames);
+                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter);
                     }
                 }
             }
@@ -347,17 +347,24 @@ namespace DatabaseInterpreter.Core
             return schemaInfo;
         }
 
-        private bool NeedFetchObjects(DatabaseObjectType currentObjectType, string[] names, DatabaseObjectType fetchDbObjectType, bool strict = false)
+        private bool NeedFetchTableObjects(DatabaseObjectType currentObjectType, SchemaInfoFilter filter, string []childrenNames)
+        {
+            var filterNames = (filter.TableNames ?? Enumerable.Empty<string>()).Union(childrenNames ?? Enumerable.Empty<string>());
+
+            return this.Option.GetTableAllObjects || this.NeedFetchObjects(currentObjectType, filterNames , filter);
+        }       
+
+        private bool NeedFetchObjects(DatabaseObjectType currentObjectType, IEnumerable<string> names, SchemaInfoFilter filter)
         {
             bool hasName = names != null && names.Any();
 
-            if (strict)
+            if (filter.Strict)
             {
-                return this.Option.GetAllObjectsIfNotSpecified || (hasName && fetchDbObjectType.HasFlag(currentObjectType));
+                return this.Option.GetAllObjectsIfNotSpecified || (hasName && filter.DatabaseObjectType.HasFlag(currentObjectType));
             }
             else
             {
-                return hasName || this.Option.GetAllObjectsIfNotSpecified || fetchDbObjectType.HasFlag(currentObjectType);
+                return hasName || this.Option.GetAllObjectsIfNotSpecified || filter.DatabaseObjectType.HasFlag(currentObjectType);
             }
         }
         #endregion
@@ -608,6 +615,7 @@ namespace DatabaseInterpreter.Core
 
         public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo);
         public abstract string ParseColumn(Table table, TableColumn column);
+        public abstract string ParseDataType(TableColumn column);
 
         protected virtual List<Script> GenerateScriptDbObjectScripts<T>(List<T> dbObjects)
             where T : ScriptDbObject
@@ -869,7 +877,7 @@ namespace DatabaseInterpreter.Core
             {
                 long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
 
-                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new string[] { table.Name });
+                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { TableNames = new string[] { table.Name } });
 
                 DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, total, pageSize, pageNumber, whereClause);
 

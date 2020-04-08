@@ -15,7 +15,7 @@
     <Oracle></Oracle>
   </mapping>
   <mapping>
-    <SqlServer>LEN</SqlServer>
+    <SqlServer>LEN,DATALENGTH</SqlServer>
     <MySql>LENGTH</MySql>
     <Oracle>LENGTH</Oracle>
   </mapping>
@@ -28,5 +28,30 @@
     <SqlServer>CHARINDEX</SqlServer>
     <MySql>INSTR,LOCATE,POSITION</MySql>
     <Oracle>INSTR</Oracle>
-  </mapping>  
+  </mapping>
+  <mapping>
+    <SqlServer>STUFF</SqlServer>
+    <MySql>INSTR</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>ISNULL</SqlServer>
+    <MySql>IFNULL</MySql>
+    <Oracle>NVL</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>DATEDIFF</SqlServer>
+    <MySql>DATEDIFF</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>DATE_ADD</SqlServer>
+    <MySql>DATEADD</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>REPLICATE</SqlServer>
+    <MySql>REPEAT</MySql>
+    <Oracle>RPAD</Oracle>
+  </mapping> 
 </mappings>

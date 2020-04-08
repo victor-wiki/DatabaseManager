@@ -12,6 +12,10 @@
     <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
     <None Remove="Config\FunctionMapping.xml" />
+    <None Remove="Config\VariableMapping.xml" />
+    <None Remove="Keyword\MySql.txt" />
+    <None Remove="Keyword\Oracle.txt" />
+    <None Remove="Keyword\SqlServer.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,12 +37,25 @@
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Config\VariableMapping.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\FunctionMapping.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Keyword\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Keyword\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Keyword\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.70" />
     <PackageReference Include="PoorMansTSqlFormatterRedux" Version="1.0.3" />
     <PackageReference Include="TSQL.Parser" Version="1.3.0" />
@@ -47,6 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
+    <ProjectReference Include="..\SqlAnalyser.Core\SqlAnalyser.Core.csproj" />
   </ItemGroup>
 
 </Project>

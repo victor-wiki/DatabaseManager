@@ -13,7 +13,7 @@ namespace DatabaseManager.Helper
     public static class DbObjectsTreeHelper
     {
         public static readonly string FakeNodeName = "_FakeNode_";
-        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedType | DatabaseObjectType.Table | DatabaseObjectType.View;
+        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedType | DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Procedure | DatabaseObjectType.Function | DatabaseObjectType.TableTrigger;
 
         public static string GetFolderNameByDbObjectType(DatabaseObjectType databaseObjectType)
         {

@@ -32,82 +32,7 @@ namespace DatabaseConverter.Core
 
             foreach (TableColumn column in this.columns)
             {
-                string sourceDataType = this.GetTrimedDataType(column);
-                column.DataType = sourceDataType;
-
-                DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());
-                if (dataTypeMapping != null)
-                {
-                    string targetDataType = dataTypeMapping.Tareget.Type;
-
-                    column.DataType = targetDataType;
-
-                    bool isChar = DataTypeHelper.IsCharType(column.DataType);
-
-                    if (isChar)
-                    {              
-                        if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Length))
-                        {
-                            column.MaxLength = int.Parse(dataTypeMapping.Tareget.Length);
-
-                            if(targetDataType.ToLower().StartsWith("n") && !sourceDataType.ToLower().StartsWith("n"))
-                            {
-                                column.MaxLength *= 2;
-                            }
-                        }                       
-
-                        if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
-                        {
-                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
-
-                            if (special != null)
-                            {
-                                column.DataType = special.Type;
-
-                                if (!string.IsNullOrEmpty(special.TargetMaxLength))
-                                {
-                                    column.MaxLength = int.Parse(special.TargetMaxLength);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
-                        {
-                            DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
-
-                            if (special != null)
-                            {
-                                column.DataType = special.Type;
-                            }
-                            else
-                            {
-                                special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialPrecisionOrScaleMatched(item, column));
-
-                                if (special != null)
-                                {
-                                    column.DataType = special.Type;
-                                }
-                            }
-
-                            if (special != null && !string.IsNullOrEmpty(special.TargetMaxLength))
-                            {
-                                column.MaxLength = int.Parse(special.TargetMaxLength);
-                            }
-                        }
-
-                        if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Precision))
-                        {
-                            column.Precision = int.Parse(dataTypeMapping.Tareget.Precision);
-                        }
-
-                        if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Scale))
-                        {
-                            column.Scale = int.Parse(dataTypeMapping.Tareget.Scale);
-                        }
-                    }
-                }
+                this.ConvertDataType(column);
 
                 if (!string.IsNullOrEmpty(column.DefaultValue))
                 {
@@ -121,6 +46,87 @@ namespace DatabaseConverter.Core
                     }
 
                     column.DefaultValue = defaultValue;
+                }
+            }
+        }
+
+        public void ConvertDataType(TableColumn column)
+        {
+            string sourceDataType = GetTrimedDataType(column.DataType);
+            column.DataType = sourceDataType;
+
+            DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());
+
+            if (dataTypeMapping != null)
+            {
+                string targetDataType = dataTypeMapping.Tareget.Type;
+
+                column.DataType = targetDataType;
+
+                bool isChar = DataTypeHelper.IsCharType(column.DataType);
+
+                if (isChar)
+                {
+                    if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Length))
+                    {
+                        column.MaxLength = int.Parse(dataTypeMapping.Tareget.Length);
+
+                        if (targetDataType.ToLower().StartsWith("n") && !sourceDataType.ToLower().StartsWith("n"))
+                        {
+                            column.MaxLength *= 2;
+                        }
+                    }
+
+                    if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
+                    {
+                        DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
+
+                        if (special != null)
+                        {
+                            column.DataType = special.Type;
+
+                            if (!string.IsNullOrEmpty(special.TargetMaxLength))
+                            {
+                                column.MaxLength = int.Parse(special.TargetMaxLength);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
+                    {
+                        DataTypeMappingSpecial special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialMaxLengthMatched(item, column));
+
+                        if (special != null)
+                        {
+                            column.DataType = special.Type;
+                        }
+                        else
+                        {
+                            special = dataTypeMapping.Specials.FirstOrDefault(item => this.IsSpecialPrecisionOrScaleMatched(item, column));
+
+                            if (special != null)
+                            {
+                                column.DataType = special.Type;
+                            }
+                        }
+
+                        if (special != null && !string.IsNullOrEmpty(special.TargetMaxLength))
+                        {
+                            column.MaxLength = int.Parse(special.TargetMaxLength);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Precision))
+                    {
+                        column.Precision = int.Parse(dataTypeMapping.Tareget.Precision);
+                    }
+
+                    if (!string.IsNullOrEmpty(dataTypeMapping.Tareget.Scale))
+                    {
+                        column.Scale = int.Parse(dataTypeMapping.Tareget.Scale);
+                    }
                 }
             }
         }
@@ -167,11 +173,12 @@ namespace DatabaseConverter.Core
                 return scale == column.Scale.ToString();
             }
             return false;
-        }
+        }       
 
-        private string GetTrimedDataType(TableColumn column)
+        public string GetTrimedDataType(string dataType)
         {
-            string dataType = column.DataType;
+            dataType = dataType.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar);
+
             int index = dataType.IndexOf("(");
 
             if (index > 0)

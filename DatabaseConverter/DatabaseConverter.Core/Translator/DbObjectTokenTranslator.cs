@@ -1,5 +1,6 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -61,7 +62,11 @@ namespace DatabaseConverter.Core
                         {
                             case "CONVERT":
                                 startIndex = token.BeginPosition;
-                                endIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ") + startIndex + 1;
+
+                                int separatorIndex = definition.Substring(startIndex).IndexOfAny(new char[] { ';', '\r', '\n' });
+                                int asIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
+
+                                endIndex = asIndex < separatorIndex ? (asIndex + startIndex + 1) : (separatorIndex + startIndex);
 
                                 string functionBody = definition.Substring(startIndex, endIndex - startIndex);
 
@@ -184,7 +189,7 @@ namespace DatabaseConverter.Core
                         }
                         break;
 
-                    case TSQLTokenType.Keyword:                       
+                    case TSQLTokenType.Keyword:
 
                         break;
                 }
@@ -272,13 +277,13 @@ namespace DatabaseConverter.Core
                         }
                         else
                         {
-                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim(new char[] { '"', sourceDbInterpreter.QuotationLeftChar, sourceDbInterpreter.QuotationRightChar })}{targetDbInterpreter.QuotationRightChar}");
+                            sb.Append(this.GetQuotedString(text));
                         }
                         break;
                     case TSQLTokenType.StringLiteral:
                         if (previousType != TSQLTokenType.Whitespace && previousText.ToLower() == "as")
                         {
-                            sb.Append($"{targetDbInterpreter.QuotationLeftChar}{text.Trim('\'', '"')}{targetDbInterpreter.QuotationRightChar}");
+                            sb.Append(this.GetQuotedString(text));
                         }
                         else
                         {
@@ -300,7 +305,7 @@ namespace DatabaseConverter.Core
                                         continue;
                                     }
                                 }
-                                break;                        
+                                break;
                         }
                         sb.Append(text);
                         break;
@@ -317,18 +322,22 @@ namespace DatabaseConverter.Core
             }
 
             return sb.ToString();
-        }      
-
-        private string ExchangeFunctionArgs(string functionName, string args1, string args2)
-        {
-            string newFunctionBody = $"{functionName}({args2},{args1})";
-
-            return newFunctionBody;
         }
+
+        private string GetQuotedString(string text)
+        {
+            if (//text.StartsWith(this.sourceDbInterpreter.QuotationLeftChar.ToString()) && text.EndsWith(this.sourceDbInterpreter.QuotationRightChar.ToString())&& 
+                !text.StartsWith(this.targetDbInterpreter.QuotationLeftChar.ToString()) && !text.EndsWith(this.targetDbInterpreter.QuotationRightChar.ToString()))
+            {
+                return this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"', this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar));
+            }
+
+            return text;
+        }       
 
         public List<TSQL.Tokens.TSQLToken> GetTokens(string sql)
         {
             return TSQLTokenizer.ParseTokens(sql, true, true);
-        }
+        }       
     }
 }

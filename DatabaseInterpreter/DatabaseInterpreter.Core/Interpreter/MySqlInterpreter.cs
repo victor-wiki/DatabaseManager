@@ -61,12 +61,12 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type       
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(params string[] typeNames)
+        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<UserDefinedType>("");
         }
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, params string[] typeNames)
+        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, "");
         }
@@ -74,23 +74,24 @@ namespace DatabaseInterpreter.Core
 
         #region Function  
 
-        public override Task<List<Function>> GetFunctionsAsync(params string[] functionNames)
+        public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines("FUNCTION", functionNames));
+            return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines("FUNCTION", filter));
         }
 
-        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, params string[] functionNames)
+        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines("FUNCTION", functionNames));
+            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines("FUNCTION", filter));
         }
 
-        private string GetSqlForRoutines(string type, params string[] objectNames)
+        private string GetSqlForRoutines(string type, SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
             string nameColumn = isSimpleMode ? "ROUTINE_NAME" : "name";
 
             string sql = "";
+            bool isFunction = type.ToUpper() == "FUNCTION";
 
             if (isSimpleMode)
             {
@@ -101,14 +102,15 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                bool isFunction = type.ToUpper() == "FUNCTION";
-                string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
 
+                string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
                 sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
                         CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsCluase} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
                         FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'
                         ";
             }
+
+            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
 
             if (objectNames != null && objectNames.Any())
             {
@@ -123,17 +125,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table
-        public override Task<List<Table>> GetTablesAsync(params string[] tableNames)
+        public override Task<List<Table>> GetTablesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Table>(this.GetSqlForTables(tableNames));
+            return base.GetDbObjectsAsync<Table>(this.GetSqlForTables(filter));
         }
 
-        public override Task<List<Table>> GetTablesAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<Table>> GetTablesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Table>(dbConnection, this.GetSqlForTables(tableNames));
+            return base.GetDbObjectsAsync<Table>(dbConnection, this.GetSqlForTables(filter));
         }
 
-        private string GetSqlForTables(params string[] tableNames)
+        private string GetSqlForTables(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -142,9 +144,9 @@ namespace DatabaseInterpreter.Core
                         WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA ='{this.ConnectionInfo.Database}' 
                         ";
 
-            if (tableNames != null && tableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND TABLE_NAME IN ({ strTableNames })";
             }
 
@@ -155,17 +157,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Column
-        public override Task<List<TableColumn>> GetTableColumnsAsync(params string[] tableNames)
+        public override Task<List<TableColumn>> GetTableColumnsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(tableNames));
+            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(filter));
         }
 
-        public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(tableNames));
+            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
         }
 
-        private string GetSqlForTableColumns(params string[] tableNames)
+        private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
             string sql = $@"SELECT C.TABLE_SCHEMA AS `Owner`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
@@ -175,9 +177,9 @@ namespace DatabaseInterpreter.Core
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
                         WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
             }
 
@@ -186,17 +188,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Primary Key
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(params string[] tableNames)
+        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(tableNames));
+            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(filter));
         }
 
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(tableNames));
+            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(filter));
         }
 
-        private string GetSqlForTablePrimaryKeys(params string[] tableNames)
+        private string GetSqlForTablePrimaryKeys(SchemaInfoFilter filter = null)
         {
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
 
@@ -207,9 +209,9 @@ namespace DatabaseInterpreter.Core
                         WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
                         AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter.TableNames != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
             }
 
@@ -218,17 +220,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(params string[] tableNames)
+        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(tableNames));
+            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(filter));
         }
 
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(tableNames));
+            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(filter));
         }
 
-        private string GetSqlForTableForeignKeys(params string[] tableNames)
+        private string GetSqlForTableForeignKeys(SchemaInfoFilter filter = null)
         {
             string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
@@ -240,9 +242,9 @@ namespace DatabaseInterpreter.Core
                         WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
                         AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
             }
 
@@ -251,17 +253,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Index
-        public override Task<List<TableIndex>> GetTableIndexesAsync(params string[] tableNames)
+        public override Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(tableNames));
+            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(filter));
         }
 
-        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(tableNames));
+            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(filter));
         }
 
-        private string GetSqlForTableIndexes(params string[] tableNames)
+        private string GetSqlForTableIndexes(SchemaInfoFilter filter = null)
         {
             string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,
 	                        TABLE_NAME AS `TableName`,
@@ -274,9 +276,9 @@ namespace DatabaseInterpreter.Core
 	                        WHERE INDEX_NAME NOT IN('PRIMARY', 'FOREIGN')
 	                        AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
-            if (tableNames != null && tableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND TABLE_NAME IN ({ strTableNames })";
             }
 
@@ -285,17 +287,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Trigger  
-        public override Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames)
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(tableNames));
+            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter));
         }
 
-        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(tableNames));
+            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter));
         }
 
-        private string GetSqlForTableTriggers(params string[] tableNames)
+        private string GetSqlForTableTriggers(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -307,10 +309,19 @@ namespace DatabaseInterpreter.Core
                         WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'
                         ";
 
-            if (tableNames != null && tableNames.Any())
+            if (filter != null)
             {
-                string strNames = StringHelper.GetSingleQuotedString(tableNames);
-                sql += $" AND EVENT_OBJECT_TABLE IN ({ strNames })";
+                if(filter.TableNames != null && filter.TableNames.Any())
+                {
+                    string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
+                    sql += $" AND EVENT_OBJECT_TABLE IN ({ strNames })";
+                }
+                 
+                if(filter.TableTriggerNames!= null && filter.TableTriggerNames.Any())
+                {
+                    string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
+                    sql += $" AND TRIGGER_NAME IN ({ strNames })";
+                }
             }
 
             sql += " ORDER BY TRIGGER_NAME";
@@ -320,34 +331,34 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Constraint
-        public override Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames)
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(tableNames));
+            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(filter));
         }
 
-        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(tableNames));
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(filter));
         }
 
-        private string GetSqlForTableConstraints(params string[] tableNames)
+        private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
             return string.Empty;
         }
         #endregion
 
         #region View   
-        public override Task<List<View>> GetViewsAsync(params string[] viewNames)
+        public override Task<List<View>> GetViewsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(this.GetSqlForViews(viewNames));
+            return base.GetDbObjectsAsync<View>(this.GetSqlForViews(filter));
         }
 
-        public override Task<List<View>> GetViewsAsync(DbConnection dbConnection, params string[] viewNames)
+        public override Task<List<View>> GetViewsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(viewNames));
+            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(filter));
         }
 
-        private string GetSqlForViews(params string[] viewNames)
+        private string GetSqlForViews(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -357,9 +368,9 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
-            if (viewNames != null && viewNames.Any())
+            if (filter != null && filter.ViewNames!=null && filter.ViewNames.Any())
             {
-                string strNames = StringHelper.GetSingleQuotedString(viewNames);
+                string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
                 sql += $" AND TABLE_NAME IN ({ strNames })";
             }
 
@@ -371,14 +382,14 @@ namespace DatabaseInterpreter.Core
         #endregion      
 
         #region Procedure    
-        public override Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames)
+        public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines("PROCEDURE", procedureNames));
+            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines("PROCEDURE", filter));
         }
 
-        public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, params string[] procedureNames)
+        public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines("PROCEDURE", procedureNames));
+            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines("PROCEDURE", filter));
         }
         #endregion
         #endregion
@@ -507,7 +518,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }       
+        }
         #endregion
 
         #region Generate Schema Scripts 
@@ -536,13 +547,13 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
 
-                this.RestrictColumnLength(tableColumns, primaryKeys);               
+                this.RestrictColumnLength(tableColumns, primaryKeys);
                 this.RestrictColumnLength(tableColumns, foreignKeys);
                 this.RestrictColumnLength(tableColumns, indexes);
 
                 #region Primary Key
                 if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {                   
+                {
                     primaryKey =
 $@"
 ,PRIMARY KEY
@@ -556,7 +567,7 @@ $@"
 
                 #region Foreign Key
                 if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
-                { 
+                {
                     if (foreignKeys.Count() > 0)
                     {
                         ILookup<string, TableForeignKey> foreignKeyLookup = foreignKeys.ToLookup(item => item.Name);
@@ -683,6 +694,24 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
 
         public override string ParseColumn(Table table, TableColumn column)
         {
+            string dataType = this.ParseDataType(column);
+            bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
+
+            if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))
+            {
+                dataType += $" CHARACTER SET {DbCharset} COLLATE {DbCharsetCollation} ";
+            }
+
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
+            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
+            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+
+            return $@"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause} {defaultValueClause} {commentClause}";
+        }
+
+        public override string ParseDataType(TableColumn column)
+        {
             string dataType = column.DataType;
             bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
 
@@ -699,22 +728,12 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
 
                     dataType = $"{dataType}({precision},{scale})";
                 }
-
-                if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))
-                {
-                    dataType += $" CHARACTER SET {DbCharset} COLLATE {DbCharsetCollation} ";
-                }
             }
 
-            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
-            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
-            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
-            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
-
-            return $@"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause} {defaultValueClause} {commentClause}";
+            return dataType;
         }
 
-        private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T:TableColumnChild
+        private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T : TableColumnChild
         {
             var childColumns = columns.Where(item => children.Any(t => item.Name == t.ColumnName)).ToList();
 

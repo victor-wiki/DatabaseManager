@@ -189,7 +189,7 @@ namespace DatabaseManager.Controls
 
             dbInterpreter.Subscribe(this);           
 
-            SchemaInfo schemaInfo = await Task.Run(() => dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } }));           
+            SchemaInfo schemaInfo = await Task.Run(() => dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } }));           
          
             this.ClearNodes(treeNode);
 
@@ -645,11 +645,6 @@ namespace DatabaseManager.Controls
         private void tvDbObjects_AfterExpand(object sender, TreeViewEventArgs e)
         {
             this.Feedback("");
-        }
-
-        private async void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-
-        }
+        }       
     }
 }

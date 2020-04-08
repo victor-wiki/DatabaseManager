@@ -1,0 +1,7 @@
+<mappings>
+  <mapping>
+    <SqlServer>@@ROWCOUNT</SqlServer>
+    <MySql>(SELECT ROW_COUNT())</MySql>
+    <Oracle>SQL%ROWCOUNT</Oracle>
+  </mapping>  
+</mappings>

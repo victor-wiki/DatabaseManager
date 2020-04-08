@@ -28,14 +28,29 @@ namespace DatabaseConverter.Core
         {
             this.TranslateOwner();
 
-            ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns) ;
+            ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
             columnTranslator.Translate();
 
-            ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner) { SkipError = this.SkipError };
-            viewTranslator.Translate();
+            //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
+            if (this.sourceInterpreter.DatabaseType == DatabaseType.SqlServer)
+            {
+                ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner) { SkipError = this.SkipError };
+                viewTranslator.Translate();
+            }
+            else
+            {
+                ScriptTranslator<View> viewTranslator = new ScriptTranslator<View>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views) { SkipError = this.SkipError };
+                viewTranslator.Translate();
+            }
 
             ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
             constraintTranslator.Translate();
+
+            ScriptTranslator<Procedure> procedureTranslator = new ScriptTranslator<Procedure>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Procedures) { SkipError = this.SkipError };
+            procedureTranslator.Translate();
+
+            ScriptTranslator<Function> functionTranslator = new ScriptTranslator<Function>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Functions) { SkipError = this.SkipError };
+            functionTranslator.Translate();
         }
 
         private void TranslateOwner()
@@ -56,7 +71,7 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private void SetDatabaseObjectsOwner<T>(List<T> dbObjects) where T: DatabaseObject
+        private void SetDatabaseObjectsOwner<T>(List<T> dbObjects) where T : DatabaseObject
         {
             dbObjects.ForEach(item => item.Owner = this.targetDbOwner);
         }

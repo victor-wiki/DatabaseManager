@@ -58,24 +58,24 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type 
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(params string[] userDefinedTypeNames)
+        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(userDefinedTypeNames));
+            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(filter));
         }
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, params string[] userDefinedTypeNames)
+        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(userDefinedTypeNames));
+            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
-        private string GetSqlForUserDefinedTypes(params string[] userDefinedTypeNames)
+        private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
         {
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner],T.name as Name, ST.name AS Type, T.max_length AS MaxLength, T.precision AS Precision,T.scale AS Scale,T.is_nullable AS IsNullable
                             FROM sys.types T JOIN sys.systypes ST ON T.system_type_id=ST.xusertype
                             WHERE is_user_defined=1";
 
-            if (userDefinedTypeNames != null && userDefinedTypeNames.Any())
+            if (filter != null && filter.UserDefinedTypeNames != null && filter.UserDefinedTypeNames.Any())
             {
-                string strNames = StringHelper.GetSingleQuotedString(userDefinedTypeNames);
+                string strNames = StringHelper.GetSingleQuotedString(filter.UserDefinedTypeNames);
                 sql += $" AND T.name in ({ strNames })";
             }
 
@@ -85,17 +85,17 @@ namespace DatabaseInterpreter.Core
 
         #region Function       
 
-        public override Task<List<Function>> GetFunctionsAsync(params string[] functionNames)
+        public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(this.GetSqlForFunctions(functionNames));
+            return base.GetDbObjectsAsync<Function>(this.GetSqlForFunctions(filter));
         }
 
-        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, params string[] functionNames)
+        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForFunctions(functionNames));
+            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForFunctions(filter));
         }
 
-        private string GetSqlForFunctions(params string[] functionNames)
+        private string GetSqlForFunctions(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -105,9 +105,9 @@ namespace DatabaseInterpreter.Core
                            WHERE o.type IN ('FN', 'IF', 'AF', 'FS', 'FT','TF')
                            AND SCHEMA_NAME(schema_id)='dbo'";
 
-            if (functionNames != null && functionNames.Any())
+            if (filter != null && filter.FunctionNames != null && filter.FunctionNames.Any())
             {
-                string strNames = StringHelper.GetSingleQuotedString(functionNames);
+                string strNames = StringHelper.GetSingleQuotedString(filter.FunctionNames);
                 sql += $" AND o.name IN ({ strNames })";
             }
 
@@ -119,17 +119,17 @@ namespace DatabaseInterpreter.Core
 
         #region Table      
 
-        public override Task<List<Table>> GetTablesAsync(params string[] tableNames)
+        public override Task<List<Table>> GetTablesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Table>(this.GetSqlForTables(tableNames));
+            return base.GetDbObjectsAsync<Table>(this.GetSqlForTables(filter));
         }
 
-        public override Task<List<Table>> GetTablesAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<Table>> GetTablesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Table>(dbConnection, this.GetSqlForTables(tableNames));
+            return base.GetDbObjectsAsync<Table>(dbConnection, this.GetSqlForTables(filter));
         }
 
-        private string GetSqlForTables(params string[] tableNames)
+        private string GetSqlForTables(SchemaInfoFilter filter = null)
         {
             string sql = "";
 
@@ -150,9 +150,9 @@ namespace DatabaseInterpreter.Core
                        ";
             }
 
-            if (tableNames != null && tableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND t.name in ({ strTableNames })";
             }
 
@@ -163,17 +163,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Column
-        public override Task<List<TableColumn>> GetTableColumnsAsync(params string[] tableNames)
+        public override Task<List<TableColumn>> GetTableColumnsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(tableNames));
+            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(filter));
         }
 
-        public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(tableNames));
+            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
         }
 
-        private string GetSqlForTableColumns(params string[] tableNames)
+        private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
             //Note: MaxLength consider char/nvarchar, ie. it's nvarchar(50), the max length is 100.
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner], 
@@ -197,9 +197,9 @@ namespace DatabaseInterpreter.Core
                         LEFT JOIN sys.extended_properties EXT on C.column_id=EXT.minor_id AND C.object_id=EXT.major_id AND EXT.class_desc='OBJECT_OR_COLUMN' AND EXT.name='MS_Description'
 						LEFT JOIN sys.types STY on C.user_type_id = STY.user_type_id";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" WHERE T.name IN ({ strTableNames })";
             }
 
@@ -208,17 +208,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Primary Key
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(params string[] tableNames)
+        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(tableNames));
+            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(filter));
         }
 
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(tableNames));
+            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(filter));
         }
 
-        private string GetSqlForTablePrimaryKeys(params string[] tableNames)
+        private string GetSqlForTablePrimaryKeys(SchemaInfoFilter filter = null)
         {
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner], object_name(IC.object_id) AS TableName,I.name AS [Name], 
                            C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc]
@@ -228,9 +228,9 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.tables T ON C.object_id=T.object_id
                          WHERE I.is_primary_key=1";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter!=null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
             }
             return sql;
@@ -238,17 +238,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(params string[] tableNames)
+        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(tableNames));
+            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(filter));
         }
 
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(tableNames));
+            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(filter));
         }
 
-        private string GetSqlForTableForeignKeys(params string[] tableNames)
+        private string GetSqlForTableForeignKeys(SchemaInfoFilter filter = null)
         {
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner],object_name(FK.parent_object_id) AS TableName,FK.name AS [Name],C.name AS [ColumnName],
                          object_name(FKC.referenced_object_id) AS [ReferencedTableName],RC.name AS [ReferencedColumnName],
@@ -261,9 +261,9 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.tables RT ON RC.object_id=RT.object_id
                          WHERE 1=1";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any() )
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(FK.parent_object_id) IN ({ strTableNames })";
             }
 
@@ -272,17 +272,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Index
-        public override Task<List<TableIndex>> GetTableIndexesAsync(params string[] tableNames)
+        public override Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(tableNames));
+            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(filter));
         }
 
-        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(tableNames));
+            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(filter));
         }
 
-        private string GetSqlForTableIndexes(params string[] tableNames)
+        private string GetSqlForTableIndexes(SchemaInfoFilter filter = null)
         {
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner],object_name(IC.object_id) AS TableName,I.name AS [Name], 
                            I.is_unique AS [IsUnique], C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc]
@@ -292,9 +292,9 @@ namespace DatabaseInterpreter.Core
                         JOIN sys.tables T ON C.object_id=T.object_id
                         WHERE I.is_primary_key=0 and I.type_desc<>'XML' AND IC.key_ordinal > 0 ";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
             }
 
@@ -304,17 +304,17 @@ namespace DatabaseInterpreter.Core
 
         #region Table Trigger       
 
-        public override Task<List<TableTrigger>> GetTableTriggersAsync(params string[] tableNames)
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(tableNames));
+            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter));
         }
 
-        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(tableNames));
+            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter));
         }
 
-        private string GetSqlForTableTriggers(params string[] tableNames)
+        private string GetSqlForTableTriggers(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -323,10 +323,19 @@ namespace DatabaseInterpreter.Core
                             FROM sys.triggers t
                             WHERE 1=1";
 
-            if (tableNames != null && tableNames.Any())
+            if (filter!= null)
             {
-                string strNames = StringHelper.GetSingleQuotedString(tableNames);
-                sql += $" AND object_name(t.parent_id) IN ({ strNames })";
+                if(filter.TableNames != null && filter.TableNames.Any())
+                {
+                    string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
+                    sql += $" AND object_name(t.parent_id) IN ({ strNames })";
+                }
+
+                if(filter.TableTriggerNames!=null && filter.TableTriggerNames.Any())
+                {
+                    string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
+                    sql += $" AND t.name IN ({ strNames })";
+                }
             }
 
             sql += " ORDER BY t.name";
@@ -336,26 +345,26 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Constraint
-        public override Task<List<TableConstraint>> GetTableConstraintsAsync(params string[] tableNames)
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(tableNames));
+            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(filter));
         }
 
-        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, params string[] tableNames)
+        public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(tableNames));
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(filter));
         }
 
-        private string GetSqlForTableConstraints(params string[] tableNames)
+        private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
             string sql = @"select  schema_name(st.schema_id) AS [Owner], st.name as [TableName], col.name as [ColumnName], chk.name as [Name], chk.definition as [Definition]
                          from sys.check_constraints chk
                          inner join sys.columns col on chk.parent_object_id = col.object_id and col.column_id = chk.parent_column_id
                          inner join sys.tables st on chk.parent_object_id = st.object_id";
 
-            if (tableNames != null && tableNames.Count() > 0)
+            if (filter != null && filter.TableNames!=null && filter.TableNames.Any())
             {
-                string strTableNames = StringHelper.GetSingleQuotedString(tableNames);
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND st.name IN ({ strTableNames })";
             }
 
@@ -365,17 +374,17 @@ namespace DatabaseInterpreter.Core
 
         #region View       
 
-        public override Task<List<View>> GetViewsAsync(params string[] viewNames)
+        public override Task<List<View>> GetViewsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(this.GetSqlForViews(viewNames));
+            return base.GetDbObjectsAsync<View>(this.GetSqlForViews(filter));
         }
 
-        public override Task<List<View>> GetViewsAsync(DbConnection dbConnection, params string[] viewNames)
+        public override Task<List<View>> GetViewsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(viewNames));
+            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(filter));
         }
 
-        private string GetSqlForViews(params string[] viewNames)
+        private string GetSqlForViews(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -383,9 +392,9 @@ namespace DatabaseInterpreter.Core
                             FROM sys.views v
                             WHERE 1=1";
 
-            if (viewNames != null && viewNames.Any())
+            if (filter!=null && filter.ViewNames != null && filter.ViewNames.Any())
             {
-                string strNames = StringHelper.GetSingleQuotedString(viewNames);
+                string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
                 sql += $" AND v.name IN ({ strNames })";
             }
 
@@ -397,17 +406,17 @@ namespace DatabaseInterpreter.Core
 
         #region Procedure       
 
-        public override Task<List<Procedure>> GetProceduresAsync(params string[] procedureNames)
+        public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForProcedures(procedureNames));
+            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForProcedures(filter));
         }
 
-        public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, params string[] procedureNames)
+        public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForProcedures(procedureNames));
+            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForProcedures(filter));
         }
 
-        private string GetSqlForProcedures(params string[] procedureNames)
+        private string GetSqlForProcedures(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
@@ -416,9 +425,9 @@ namespace DatabaseInterpreter.Core
                             FROM sys.procedures
                             WHERE 1=1";
 
-            if (procedureNames != null && procedureNames.Any())
+            if (filter!= null && filter.ProcedureNames != null && filter.ProcedureNames.Any())
             {
-                string strNames = StringHelper.GetSingleQuotedString(procedureNames);
+                string strNames = StringHelper.GetSingleQuotedString(filter.ProcedureNames);
                 sql += $" AND name IN ({ strNames })";
             }
 
@@ -440,7 +449,7 @@ namespace DatabaseInterpreter.Core
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
                 await bulkCopy.WriteToServerAsync(dataTable, DataRowState.Added, bulkCopyInfo.CancellationToken);
-            }           
+            }
         }
 
         private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
@@ -478,13 +487,13 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "";
 
-            if(dbObjet is TableColumnChild || dbObjet is TableConstraint)
+            if (dbObjet is TableColumnChild || dbObjet is TableConstraint)
             {
                 TableChild dbObj = dbObjet as TableChild;
 
                 sql = $"ALTER TABLE {dbObj.Owner}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)};";
             }
-            else if(dbObjet is TableIndex)
+            else if (dbObjet is TableIndex)
             {
                 TableIndex index = dbObjet as TableIndex;
 
@@ -495,16 +504,16 @@ namespace DatabaseInterpreter.Core
                 string typeName = dbObjet.GetType() == typeof(UserDefinedType) ? "TYPE" : dbObjet.GetType().Name;
 
                 sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
-            }        
+            }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }      
+        }
         #endregion
 
         #region Generate Schema Script   
 
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
-        {           
+        {
             ScriptBuilder sb = new ScriptBuilder();
 
             #region User Defined Type
@@ -516,9 +525,9 @@ namespace DatabaseInterpreter.Core
                 string dataLength = this.GetColumnDataLength(column);
 
                 string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userDefinedType.Name)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
-               
+
                 sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
-                sb.AppendLine(new SpliterScript(this.ScriptsSplitString));              
+                sb.AppendLine(new SpliterScript(this.ScriptsSplitString));
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
             }
@@ -562,12 +571,12 @@ $@"
 
                 string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
 
-                string tableScript=
+                string tableScript =
 $@"
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
-{(this.NotCreateIfExists? existsClause: "")}
+{(this.NotCreateIfExists ? existsClause : "")}
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}
 ) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
@@ -720,6 +729,16 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 return $@"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.TypeOwner)}.{this.GetQuotedString(column.DataType)} {(column.IsRequired ? "NOT NULL" : "NULL")}";
             }
 
+            string dataType = this.ParseDataType(column);
+
+            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
+            string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+
+            return $@"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}";
+        }
+
+        public override string ParseDataType(TableColumn column)
+        {
             string dataLength = this.GetColumnDataLength(column);
 
             if (!string.IsNullOrEmpty(dataLength))
@@ -727,10 +746,9 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 dataLength = $"({dataLength})";
             }
 
-            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
-            string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+            string dataType = $"{this.GetQuotedString(column.DataType)} {dataLength}";
 
-            return $@"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.DataType)} {dataLength} {identityClause} {requireClause}";
+            return dataType;
         }
 
         private string GetColumnDataLength(TableColumn column)
@@ -816,13 +834,13 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         {
             string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
 
-            if(!string.IsNullOrEmpty(whereClause))
+            if (!string.IsNullOrEmpty(whereClause))
             {
                 sql += whereClause;
             }
 
             return base.GetTableRecordCountAsync(connection, sql);
-        }        
+        }
 
         public override Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
         {

@@ -1,5 +1,5 @@
-﻿using DatabaseInterpreter.Model;
-using DatabaseManager.Core;
+﻿using DatabaseConverter.Core;
+using DatabaseInterpreter.Model;
 using System;
 using System.Drawing;
 using System.Text.RegularExpressions;

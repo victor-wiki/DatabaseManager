@@ -87,9 +87,9 @@ namespace DatabaseConverter.Core
             #region These haven't been implemented yet.
             if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
             {
-                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Procedure;
-                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Function;
-                databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
+                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.Procedure;
+                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.Function;
+                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
             } 
             #endregion
 

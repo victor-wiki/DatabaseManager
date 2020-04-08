@@ -1,0 +1,130 @@
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using SqlAnalyser.Core;
+using System.Linq;
+using SqlAnalyser.Model;
+using System.Text.RegularExpressions;
+using DatabaseInterpreter.Utility;
+
+namespace DatabaseConverter.Core
+{
+    public class ScriptTranslator<T> : DbObjectTokenTranslator
+        where T : ScriptDbObject
+    {
+        private List<T> scripts;
+
+        public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
+        {
+            this.scripts = scripts;
+        }
+
+        public override void Translate()
+        {
+            if (this.sourceDbInterpreter.DatabaseType == this.targetDbInterpreter.DatabaseType)
+            {
+                return;
+            }
+
+            this.LoadMappings();
+
+            SqlAnalyserBase sourceAnalyser = this.GetSqlAnalyser(this.sourceDbInterpreter.DatabaseType);
+            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);
+
+            foreach (T dbObj in this.scripts)
+            {
+                //try
+                //{
+                CommonScript script = sourceAnalyser.Analyse<T>(dbObj.Definition.ToUpper());
+
+                if (script != null)
+                {
+                    if (typeof(T) == typeof(Function))
+                    {
+                        script = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
+
+                        RoutineScript routine = script as RoutineScript;
+
+                        if (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql && routine.ReturnTable != null)
+                        {
+                            routine.Type = RoutineType.PROCEDURE;
+                        }
+                    }
+
+                    ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
+
+                    tokenProcessor.Process();
+
+                    dbObj.Definition = targetAnalyser.GenerateScripts(script);
+
+                    foreach (var kp in tokenProcessor.ReplacedValues)
+                    {
+                        Regex regex = new Regex($@"({kp.Key})");
+
+                        dbObj.Definition = regex.Replace(dbObj.Definition, kp.Value);
+                    }
+
+                    bool formatHasError = false;
+
+                    string definition = this.ReplaceVariables(dbObj.Definition);
+
+                    dbObj.Definition = this.FormatSql(definition, out formatHasError);
+
+                    if(formatHasError)
+                    {
+                        dbObj.Definition = definition;
+                    }
+                }
+                //}
+                //catch (Exception ex)
+                //{
+                //    var sce = new ScriptConvertException<T>(ex)
+                //    {
+                //        SourceServer = this.sourceDbInterpreter.ConnectionInfo.Server,
+                //        SourceDatabase = this.sourceDbInterpreter.ConnectionInfo.Database,
+                //        SourceObject = dbObj.Name,
+                //        TargetServer = this.targetDbInterpreter.ConnectionInfo.Server,
+                //        TargetDatabase = this.targetDbInterpreter.ConnectionInfo.Database,
+                //        TargetObject = dbObj.Name
+                //    };
+
+                //    if (!this.SkipError)
+                //    {
+                //        throw sce;
+                //    }
+                //    else
+                //    {
+                //        FeedbackInfo info = new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = ExceptionHelper.GetExceptionDetails(ex), Owner = this };
+                //        FeedbackHelper.Feedback(info);
+                //    }
+                //}
+            }
+        }
+
+        public SqlAnalyserBase GetSqlAnalyser(DatabaseType dbType)
+        {
+            SqlAnalyserBase sqlAnalyser = null;
+
+            var assembly = typeof(SqlAnalyserBase).Assembly;
+            var typeArray = assembly.ExportedTypes;
+
+            var types = (from type in typeArray
+                         where type.IsSubclassOf(typeof(SqlAnalyserBase))
+                         select type).ToList();
+
+            foreach (var type in types)
+            {
+                sqlAnalyser = (SqlAnalyserBase)Activator.CreateInstance(type);
+
+                if (sqlAnalyser.DatabaseType == dbType)
+                {
+                    return sqlAnalyser;
+                }
+            }
+
+            return sqlAnalyser;
+        }
+    }
+}
