@@ -13,6 +13,7 @@ namespace DatabaseConverter.Core
         private DbInterpreter sourceInterpreter;
         private DbInterpreter targetInerpreter;
         private string targetDbOwner;
+        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
         public bool SkipError { get; set; }
 
@@ -31,6 +32,9 @@ namespace DatabaseConverter.Core
             ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
             columnTranslator.Translate();
 
+            ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
+            constraintTranslator.Translate();
+
             //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
             if (this.sourceInterpreter.DatabaseType == DatabaseType.SqlServer)
             {
@@ -39,18 +43,27 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                ScriptTranslator<View> viewTranslator = new ScriptTranslator<View>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views) { SkipError = this.SkipError };
+                ScriptTranslator<View> viewTranslator = this.GetScriptTranslator<View>(this.targetSchemaInfo.Views);
                 viewTranslator.Translate();
             }
 
-            ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
-            constraintTranslator.Translate();
-
-            ScriptTranslator<Procedure> procedureTranslator = new ScriptTranslator<Procedure>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Procedures) { SkipError = this.SkipError };
+            ScriptTranslator<Procedure> procedureTranslator = this.GetScriptTranslator<Procedure>(this.targetSchemaInfo.Procedures);
             procedureTranslator.Translate();
 
-            ScriptTranslator<Function> functionTranslator = new ScriptTranslator<Function>(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Functions) { SkipError = this.SkipError };
+            ScriptTranslator<Function> functionTranslator = this.GetScriptTranslator<Function>(this.targetSchemaInfo.Functions);
             functionTranslator.Translate();
+
+            ScriptTranslator<TableTrigger> triggerTranslator = this.GetScriptTranslator<TableTrigger>(this.targetSchemaInfo.TableTriggers);
+            triggerTranslator.Translate();
+        }
+
+        private ScriptTranslator<T> GetScriptTranslator<T>(List<T> dbObjects) where T:ScriptDbObject
+        {
+            ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceInterpreter, this.targetInerpreter, dbObjects) { SkipError = this.SkipError };
+            translator.UserDefinedTypes = this.UserDefinedTypes;
+            translator.TargetDbOwner = this.targetDbOwner;
+
+            return translator;
         }
 
         private void TranslateOwner()

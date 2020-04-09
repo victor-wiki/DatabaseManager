@@ -44,15 +44,16 @@ namespace DatabaseManager.Controls
             }
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
+            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
-
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures);
+            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(TableTrigger), "Triggers", schemaInfo.TableTriggers);
 
             if (this.tvDbObjects.Nodes.Count == 1)
             {
@@ -101,6 +102,9 @@ namespace DatabaseManager.Controls
                                 break;
                             case nameof(Procedure):
                                 schemaInfo.Procedures.Add(item.Tag as Procedure);
+                                break;
+                            case nameof(TableTrigger):
+                                schemaInfo.TableTriggers.Add(item.Tag as TableTrigger);
                                 break;
                         }
                     }

@@ -14,6 +14,8 @@ namespace DatabaseConverter.Core
     public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
+        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
+        public string TargetDbOwner { get; set; }
         private List<T> scripts;
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
@@ -54,25 +56,20 @@ namespace DatabaseConverter.Core
                     }
 
                     ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
+                    tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
+                    tokenProcessor.TargetDbOwner = this.TargetDbOwner;
 
                     tokenProcessor.Process();
 
-                    dbObj.Definition = targetAnalyser.GenerateScripts(script);
-
-                    foreach (var kp in tokenProcessor.ReplacedValues)
-                    {
-                        Regex regex = new Regex($@"({kp.Key})");
-
-                        dbObj.Definition = regex.Replace(dbObj.Definition, kp.Value);
-                    }
+                    dbObj.Definition = targetAnalyser.GenerateScripts(script);                
 
                     bool formatHasError = false;
 
                     string definition = this.ReplaceVariables(dbObj.Definition);
 
-                    dbObj.Definition = this.FormatSql(definition, out formatHasError);
+                    dbObj.Definition = definition; // this.FormatSql(definition, out formatHasError);
 
-                    if(formatHasError)
+                    if (formatHasError)
                     {
                         dbObj.Definition = definition;
                     }

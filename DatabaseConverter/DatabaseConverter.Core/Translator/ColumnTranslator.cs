@@ -52,7 +52,7 @@ namespace DatabaseConverter.Core
 
         public void ConvertDataType(TableColumn column)
         {
-            string sourceDataType = GetTrimedDataType(column.DataType);
+            string sourceDataType = this.GetTrimedDataType(column.DataType);
             column.DataType = sourceDataType;
 
             DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower());

@@ -30,7 +30,7 @@ namespace SqlAnalyser.Core
             return context;
         }
 
-        private DdlStatementContext GetDdlStatementContext(string content)
+        public DdlStatementContext GetDdlStatementContext(string content)
         {
             RootContext rootContext = this.GetRootContext(content);
 
@@ -88,23 +88,13 @@ namespace SqlAnalyser.Core
             return script;
         }
 
-        private void SetScriptBody(CommonScript script, RoutineBodyContext body)
+        public void SetScriptBody(CommonScript script, RoutineBodyContext body)
         {
             foreach (var child in body.children)
             {
                 if (child is BlockStatementContext block)
                 {
-                    foreach (var bc in block.children)
-                    {
-                        if (bc is DeclareVariableContext declare)
-                        {
-                            script.Statements.Add(this.ParseDeclareStatement(declare));
-                        }
-                        else if (bc is ProcedureSqlStatementContext procStatement)
-                        {
-                            script.Statements.AddRange(this.ParseProcedureStatement(procStatement));
-                        }
-                    }
+                    script.Statements.AddRange(this.ParseBlockStatement(block));
                 }
                 else if (child is SqlStatementContext sqlStatement)
                 {
@@ -113,7 +103,26 @@ namespace SqlAnalyser.Core
             }
         }
 
-        private void SetScriptName(CommonScript script, FullIdContext idContext)
+        public List<Statement> ParseBlockStatement(BlockStatementContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var bc in node.children)
+            {
+                if (bc is DeclareVariableContext declare)
+                {
+                    statements.Add(this.ParseDeclareStatement(declare));
+                }
+                else if (bc is ProcedureSqlStatementContext procStatement)
+                {
+                    statements.AddRange(this.ParseProcedureStatement(procStatement));
+                }
+            }
+
+            return statements;
+        }
+
+        public void SetScriptName(CommonScript script, FullIdContext idContext)
         {
             UidContext[] ids = idContext.uid();
 
@@ -127,7 +136,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        private void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
+        public void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
         {
             foreach (var child in nodes)
             {
@@ -262,7 +271,7 @@ namespace SqlAnalyser.Core
 
                     #endregion
 
-                    script.TableName = new TokenInfo(trigger.tableName());
+                    script.TableName = new TokenInfo(trigger.tableName()) { Type = TokenType.TableName };
 
                     foreach (var child in trigger.children)
                     {
@@ -277,13 +286,13 @@ namespace SqlAnalyser.Core
                                     script.Time = TriggerTime.AFTER;
                                     break;
                                 case MySqlParser.INSERT:
-                                    script.Event = TriggerEvent.INSERT;
+                                    script.Events.Add(TriggerEvent.INSERT);
                                     break;
                                 case MySqlParser.UPDATE:
-                                    script.Event = TriggerEvent.UPDATE;
+                                    script.Events.Add(TriggerEvent.UPDATE);
                                     break;
-                                case MySqlParser.DEALLOCATE:
-                                    script.Event = TriggerEvent.DELETE;
+                                case MySqlParser.DELETE:
+                                    script.Events.Add(TriggerEvent.DELETE);
                                     break;
                                 case MySqlParser.PRECEDES:
                                     script.Behavior = nameof(MySqlParser.PRECEDES);
@@ -308,7 +317,7 @@ namespace SqlAnalyser.Core
             return script;
         }
 
-        private List<Statement> ParseProcedureStatement(ProcedureSqlStatementContext node)
+        public List<Statement> ParseProcedureStatement(ProcedureSqlStatementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -327,7 +336,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        private List<Statement> ParseSqlStatement(SqlStatementContext node)
+        public List<Statement> ParseSqlStatement(SqlStatementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -347,12 +356,16 @@ namespace SqlAnalyser.Core
                 {
                     statements.AddRange(this.ParseDmlStatement(dml));
                 }
+                else if(child is TransactionStatementContext transaction)
+                {
+                    statements.Add(this.ParseTransactionStatement(transaction));
+                }
             }
 
             return statements;
         }
 
-        private List<Statement> ParseDmlStatement(DmlStatementContext node)
+        public List<Statement> ParseDmlStatement(DmlStatementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -370,7 +383,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is UpdateStatementContext update)
                 {
-
+                    statements.Add(this.ParseUpdateStatement(update));
                 }
                 else if (child is SimpleSelectContext selectContext)
                 {
@@ -383,7 +396,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        private InsertStatement ParseInsertStatement(InsertStatementContext node)
+        public InsertStatement ParseInsertStatement(InsertStatementContext node)
         {
             InsertStatement statement = new InsertStatement();
 
@@ -391,7 +404,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is TableNameContext tableName)
                 {
-                    statement.TableName = new TokenInfo(tableName);
+                    statement.TableName = new TokenInfo(tableName) { Type = TokenType.TableName };
                 }
                 else if (child is UidListContext columns)
                 {
@@ -428,7 +441,89 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        private List<DeleteStatement> ParseDeleteStatement(DeleteStatementContext node)
+        public UpdateStatement ParseUpdateStatement(UpdateStatementContext node)
+        {
+            UpdateStatement statement = new UpdateStatement();
+
+            SingleUpdateStatementContext single = node.singleUpdateStatement();
+            MultipleUpdateStatementContext multiple = node.multipleUpdateStatement();
+
+            UpdatedElementContext[] updateItems = null;
+            ExpressionContext condition = null;
+
+            if (single != null)
+            {
+                statement.TableNames.Add(new TokenInfo(single.tableName()) { Type = TokenType.TableName });
+                updateItems = single.updatedElement();
+                condition = single.expression();
+            }
+            else if (multiple != null)
+            {
+                updateItems = multiple.updatedElement();
+                condition = multiple.expression();
+
+                statement.FromItems = new List<UpdateFromItem>();
+
+                TableSourcesContext tableSources = multiple.tableSources();
+
+                TableSourceContext[] tables = tableSources.tableSource();
+
+                foreach (TableSourceContext table in tables)
+                {
+                    if (table is TableSourceBaseContext tb)
+                    {
+                        TokenInfo tableName = new TokenInfo(tb.tableSourceItem()) { Type = TokenType.TableName };
+
+                        JoinPartContext[] joins = tb.joinPart();
+
+                        int i = 0;
+                        if (joins != null && joins.Length > 0)
+                        {
+                            if (i == 0)
+                            {
+                                statement.TableNames.Add(tableName);
+                            }
+
+                            UpdateFromItem fromItem = new UpdateFromItem();
+
+                            if (i > 0)
+                            {
+                                fromItem.TableName = tableName;
+                            }
+
+                            fromItem.Joins.AddRange(joins.Select(item => new TokenInfo(item) { Type = TokenType.JoinOn }));
+
+                            statement.FromItems.Add(fromItem);
+
+                            i++;
+                        }
+                        else
+                        {
+                            statement.TableNames.Add(tableName);
+                        }
+                    }
+                }
+            }
+
+            if (updateItems != null)
+            {
+                statement.SetItems.AddRange(updateItems.Select(item =>
+                               new NameValueItem()
+                               {
+                                   Name = new TokenInfo(item.fullColumnName()) { Type = TokenType.ColumnName },
+                                   Value = new TokenInfo(item.expression())
+                               }));
+            }
+
+            if (condition != null)
+            {
+                statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+            }
+
+            return statement;
+        }
+
+        public List<DeleteStatement> ParseDeleteStatement(DeleteStatementContext node)
         {
             List<DeleteStatement> statements = new List<DeleteStatement>();
 
@@ -447,7 +542,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        private SelectStatement ParseSelectStatement(SimpleSelectContext node)
+        public SelectStatement ParseSelectStatement(SimpleSelectContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -478,7 +573,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        private SelectStatement ParseQuerySpecification(ParserRuleContext node)
+        public SelectStatement ParseQuerySpecification(ParserRuleContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -641,7 +736,7 @@ namespace SqlAnalyser.Core
             return sb.ToString();
         }
 
-        private List<Statement> ParseCompoundStatement(CompoundStatementContext node)
+        public List<Statement> ParseCompoundStatement(CompoundStatementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -659,12 +754,20 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseReturnStatement(returnStatement));
                 }
+                else if(child is BlockStatementContext block)
+                {
+                    statements.AddRange(this.ParseBlockStatement(block));
+                }
+                else if(child is LeaveStatementContext leave)
+                {
+                    statements.Add(this.ParseLeaveStatement(leave));
+                }
             }
 
             return statements;
         }
 
-        private DeclareStatement ParseDeclareStatement(DeclareVariableContext node)
+        public DeclareStatement ParseDeclareStatement(DeclareVariableContext node)
         {
             DeclareStatement statement = new DeclareStatement();
 
@@ -674,7 +777,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        private IfStatement ParseIfStatement(IfStatementContext node)
+        public IfStatement ParseIfStatement(IfStatementContext node)
         {
             IfStatement statement = new IfStatement();
 
@@ -692,29 +795,32 @@ namespace SqlAnalyser.Core
                 statement.Items.Add(elseIfItem);
             }
 
-            IfStatementItem elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
-            elseItem.Statements.AddRange(node._elseStatements.SelectMany(item => this.ParseProcedureStatement(item)));
+            if(node._elseStatements.Count>0)
+            {
+                IfStatementItem elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
+                elseItem.Statements.AddRange(node._elseStatements.SelectMany(item => this.ParseProcedureStatement(item)));
 
-            statement.Items.Add(elseItem);
+                statement.Items.Add(elseItem);
+            }     
 
             return statement;
         }
 
-        private WhileStatement ParseWhileStatement(WhileStatementContext node)
+        public WhileStatement ParseWhileStatement(WhileStatementContext node)
         {
             WhileStatement statement = new WhileStatement();
 
-            foreach (var whileChild in node.children)
+            foreach (var child in node.children)
             {
-                if (whileChild is ProcedureSqlStatementContext procedure)
+                if (child is ProcedureSqlStatementContext procedure)
                 {
                     statement.Statements.AddRange(this.ParseProcedureStatement(procedure));
                 }
-                else if (whileChild is PredicateExpressionContext exp)
+                else if (child is PredicateExpressionContext exp)
                 {
                     statement.Condition = new TokenInfo(exp) { Type = TokenType.Condition };
                 }
-                else if (whileChild is LogicalExpressionContext logic)
+                else if (child is LogicalExpressionContext logic)
                 {
                     statement.Condition = new TokenInfo(logic) { Type = TokenType.Condition };
                 }
@@ -723,7 +829,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        private ReturnStatement ParseReturnStatement(ReturnStatementContext node)
+        public ReturnStatement ParseReturnStatement(ReturnStatementContext node)
         {
             ReturnStatement statement = new ReturnStatement();
 
@@ -734,6 +840,36 @@ namespace SqlAnalyser.Core
                     statement.Value = new TokenInfo(predicate);
                 }
             }
+
+            return statement;
+        }
+
+        public TransactionStatement ParseTransactionStatement(TransactionStatementContext node)
+        {
+            TransactionStatement statement = new TransactionStatement();
+            statement.Content = new TokenInfo(node);
+
+            if(node.startTransaction()!=null)
+            {
+                statement.CommandType = TransactionCommandType.BEGIN;
+            }
+            else if(node.commitWork()!=null)
+            {
+                statement.CommandType = TransactionCommandType.COMMIT;
+            }
+            else if (node.rollbackStatement() != null)
+            {
+                statement.CommandType = TransactionCommandType.ROLLBACK;
+            }
+
+            return statement;
+        }
+
+        public LeaveStatement ParseLeaveStatement(LeaveStatementContext node)
+        {
+            LeaveStatement statement = new LeaveStatement();
+
+            statement.Content = new TokenInfo(node);
 
             return statement;
         }

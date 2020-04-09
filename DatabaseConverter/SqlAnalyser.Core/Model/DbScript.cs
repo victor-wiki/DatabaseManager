@@ -48,7 +48,7 @@ namespace SqlAnalyser.Model
     {
         public TokenInfo TableName { get; set; }
         public TriggerTime Time { get; set; }
-        public TriggerEvent Event { get; set; }
+        public List<TriggerEvent> Events { get; set; } = new List<TriggerEvent>();
         public string Behavior { get; set; }
 
         public TokenInfo OtherTriggerName { get; set; }

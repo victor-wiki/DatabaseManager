@@ -13,12 +13,15 @@ namespace DatabaseConverter.Core
     {
         private Regex identifierRegex = new Regex($@"([`""\[][ _0-9a-zA-Z]+[`""\]])");
         private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
+        private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;
         private ColumnTranslator columnTranslator;
         public CommonScript Script { get; set; }
         public ScriptDbObject DbObject { get; set; }
         public DbInterpreter SourceInterpreter { get; set; }
         public DbInterpreter TargetInterpreter { get; set; }
-        public Dictionary<string, string> ReplacedValues { get; private set; } = new Dictionary<string, string>();
+        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
+        public string TargetDbOwner { get; set; }
+        public Dictionary<string, string> ReplacedVariables { get; private set; } = new Dictionary<string, string>();
 
         public char[] TrimChars
         {
@@ -59,12 +62,12 @@ namespace DatabaseConverter.Core
 
                 if (this.TargetInterpreter.DatabaseType == DatabaseType.SqlServer)
                 {
-                    token.Symbol = token.Symbol.TrimStart('@') + "@";
+                    token.Symbol = "@" + token.Symbol.TrimStart('@');
                     hasChanged = true;
 
-                    if (!this.ReplacedValues.ContainsKey(token.Symbol))
+                    if (!this.ReplacedVariables.ContainsKey(token.Symbol))
                     {
-                        this.ReplacedValues.Add(oldSymbol, token.Symbol);
+                        this.ReplacedVariables.Add(oldSymbol, token.Symbol);
                     }
                 }
                 else if (this.SourceInterpreter.DatabaseType == DatabaseType.SqlServer)
@@ -78,9 +81,9 @@ namespace DatabaseConverter.Core
 
                     hasChanged = true;
 
-                    if (!this.ReplacedValues.ContainsKey(token.Symbol))
+                    if (!this.ReplacedVariables.ContainsKey(token.Symbol))
                     {
-                        this.ReplacedValues.Add(oldSymbol, token.Symbol);
+                        this.ReplacedVariables.Add(oldSymbol, token.Symbol);
                     }
                 }
 
@@ -89,6 +92,11 @@ namespace DatabaseConverter.Core
 
             this.ReplaceTokens(tokens);
 
+            foreach (TokenInfo token in tokens.Where(item => item != null && (item.Type == TokenType.ParameterName || item.Type == TokenType.VariableName)))
+            {
+                changeValue(token);
+            }
+
             foreach (TokenInfo token in tokens)
             {
                 if (token.Symbol == null)
@@ -96,27 +104,17 @@ namespace DatabaseConverter.Core
                     continue;
                 }
 
-                bool hasChanged = false;
-
-                if (token.Type == TokenType.ParameterName)
-                {
-                    hasChanged = changeValue(token);
-                }
-                else if (token.Type == TokenType.DataType)
+                if (token.Type == TokenType.DataType)
                 {
                     TableColumn tableColumn = this.CreateTableColumn(token.Symbol);
 
                     columnTranslator.ConvertDataType(tableColumn);
 
-                    token.Symbol = this.TargetInterpreter.ParseDataType(tableColumn).Trim(this.TrimChars);
+                    token.Symbol = this.TargetInterpreter.ParseDataType(tableColumn);
                 }
-                else if (token.Type == TokenType.VariableName)
+                else if (token.Type == TokenType.TableName || token.Type == TokenType.CallProc)
                 {
-                    hasChanged = changeValue(token);
-                }
-                else if (token.Type == TokenType.TableName)
-                {
-                    token.Symbol = this.GetQuotedName(token.Symbol);
+                    token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
                 }
                 else if (token.Type == TokenType.ColumnName)
                 {
@@ -124,7 +122,7 @@ namespace DatabaseConverter.Core
 
                     if (column == null)
                     {
-                        token.Symbol = this.GetQuotedName(token.Symbol);
+                        token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
                     }
                     else
                     {
@@ -132,26 +130,73 @@ namespace DatabaseConverter.Core
 
                         if (column.Expression != null)
                         {
-                            columnContent = $"{ this.GetQuotedName(column.Expression.ToString())}";
+                            columnContent = $"{ this.GetQuotedName(column.Expression.ToString(), token.Type)}";
                         }
 
                         if (column.Alias != null && !string.IsNullOrEmpty(column.Alias.Symbol))
                         {
-                            columnContent += $" AS {this.GetQuotedName(column.Alias.ToString())}";
+                            columnContent += $" AS {this.GetQuotedName(column.Alias.ToString(), token.Type)}";
                         }
 
                         token.Symbol = columnContent;
                     }
                 }
-                else if(token.Type == TokenType.Condition)
+                else if (token.Type == TokenType.Condition ||
+                        token.Type == TokenType.OrderBy
+                       )
                 {
                     token.Symbol = this.GetQuotedString(token.Symbol);
                 }
 
-                if (!hasChanged && this.ReplacedValues.ContainsKey(token.Symbol))
+                #region Replace parameter and variable Name
+                if (token.Type != TokenType.ParameterName && token.Type != TokenType.VariableName)
                 {
-                    token.Symbol = this.ReplacedValues[token.Symbol];
+                    if (this.ReplacedVariables.ContainsKey(token.Symbol))
+                    {
+                        token.Symbol = this.ReplacedVariables[token.Symbol];
+                    }
+                    else if (this.ReplacedVariables.Any(item => token.Symbol.Contains(item.Key)))
+                    {
+                        foreach (var kp in this.ReplacedVariables)
+                        {
+                            string prefix = "";
+
+                            foreach (var c in kp.Key)
+                            {
+                                if (!Regex.IsMatch(c.ToString(), "[_a-zA-Z]"))
+                                {
+                                    prefix += c;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            string pattern = "";
+
+                            char sourceLeftChar = this.SourceInterpreter.QuotationLeftChar;
+                            char sourceRightChar = this.SourceInterpreter.QuotationRightChar;
+                            char targetLeftChar = this.TargetInterpreter.QuotationLeftChar;
+                            char targetRightChar = this.TargetInterpreter.QuotationRightChar;
+
+                            if (prefix.Length == 0)
+                            {
+                                pattern = $@"[^{sourceLeftChar}^{targetLeftChar}]\b({kp.Key})\b[^{sourceRightChar}^{targetRightChar}]";
+                            }
+                            else
+                            {
+                                pattern = $@"([{prefix}][^{sourceLeftChar}^{targetLeftChar}]\b({kp.Key.Substring(prefix.Length)})\b)[^{sourceRightChar}^{targetRightChar}]";
+                            }
+
+                            if (Regex.IsMatch(token.Symbol, pattern))
+                            {
+                                token.Symbol = Regex.Replace(token.Symbol, pattern, kp.Value);
+                            }
+                        }
+                    }
                 }
+                #endregion
             }
 
             this.Script.Owner = null;
@@ -159,25 +204,32 @@ namespace DatabaseConverter.Core
             this.Script.Name.Symbol = this.TargetInterpreter.GetQuotedString(this.DbObject.Name);
         }
 
-        private string GetQuotedName(string name)
+        private string GetQuotedName(string name, TokenType tokenType)
         {
             name = this.GetQuotedString(name);
 
             List<string> items = name.Split('.').ToList();
+
+            for (int i = 0; i < items.Count - 1; i++)
+            {
+                if ((tokenType == TokenType.TableName || tokenType == TokenType.CallProc))
+                {
+                    if (i == items.Count - 2)
+                    {
+                        items[i] = this.TargetDbOwner;
+                    }
+                    else if(i < items.Count -2)
+                    {
+                        items[i] = "";
+                    }                   
+                }               
+            }
 
             string lastItem = items[items.Count - 1];
 
             if (nameRegex.IsMatch(lastItem))
             {
                 items[items.Count - 1] = this.TargetInterpreter.GetQuotedString(items[items.Count - 1].Trim(this.TrimChars));
-            }
-
-            for (int i = 0; i < items.Count - 1; i++)
-            {
-                if (this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer && this.GetTrimedName(items[i], this.SourceInterpreter) == "dbo")
-                {
-                    items[i] = "";
-                }
             }
 
             return string.Join(".", items.Where(item => !string.IsNullOrEmpty(item)));
@@ -214,7 +266,7 @@ namespace DatabaseConverter.Core
 
             this.Script.Functions.ForEach(item => { if (item != null) { changeValue(item); } });
 
-            this.TranslateFunctions();            
+            this.TranslateFunctions();
 
             foreach (var token in tokens)
             {
@@ -227,7 +279,6 @@ namespace DatabaseConverter.Core
                 {
                     changeValue(token);
 
-
                     foreach (TokenInfo function in this.Script.Functions)
                     {
                         if (function.StartIndex >= token.StartIndex && function.StopIndex <= token.StopIndex)
@@ -236,7 +287,7 @@ namespace DatabaseConverter.Core
 
                             string oldValue = this.GetOriginalValue(function);
 
-                            token.Symbol = this.ReplaceValue(token.Symbol, oldValue, function.Symbol);                           
+                            token.Symbol = this.ReplaceValue(token.Symbol, oldValue, function.Symbol);
                         }
                     }
                 }
@@ -303,7 +354,17 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                column.DataType = dataType;
+                UserDefinedType userDefinedType = this.UserDefinedTypes.FirstOrDefault(item => item.Name.Trim(this.TrimChars).ToUpper() == dataType.Trim(this.TrimChars).ToUpper());
+
+                if (userDefinedType != null)
+                {
+                    column.DataType = userDefinedType.Type;
+                    column.MaxLength = userDefinedType.MaxLength;
+                }
+                else
+                {
+                    column.DataType = dataType;
+                }
             }
 
             return column;

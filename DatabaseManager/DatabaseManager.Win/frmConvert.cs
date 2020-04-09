@@ -56,12 +56,12 @@ namespace DatabaseManager
             {
                 int increaseHeight = this.sourceDbProfile.Height;
                 this.sourceDbProfile.Visible = false;
-                this.btnFetch.Height = this.targetDbProfile.ClientHeight;                
+                this.btnFetch.Height = this.targetDbProfile.ClientHeight;
                 this.targetDbProfile.Top -= increaseHeight;
                 this.tvDbObjects.Top -= increaseHeight;
                 this.gbOption.Top -= increaseHeight;
                 this.tvDbObjects.Height += increaseHeight;
-                this.gbOption.Height += increaseHeight;               
+                this.gbOption.Height += increaseHeight;
             }
         }
 
@@ -128,7 +128,7 @@ namespace DatabaseManager
         private async void btnExecute_Click(object sender, EventArgs e)
         {
             this.txtMessage.ForeColor = Color.Black;
-            this.txtMessage.Text = "";         
+            this.txtMessage.Text = "";
 
             this.hasError = false;
 
@@ -205,7 +205,7 @@ namespace DatabaseManager
 
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
-           
+
             DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, SortObjectsByReference = true, GetTableAllObjects = true };
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToString) };
 
@@ -228,7 +228,7 @@ namespace DatabaseManager
             {
                 MessageBox.Show("Please specify the script mode.");
                 return;
-            }           
+            }
 
             DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.sourceDbConnectionInfo, sourceScriptOption) };
             DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, targetScriptOption) };
@@ -468,8 +468,24 @@ namespace DatabaseManager
                 else
                 {
                     this.txtTargetDbOwner.Text = "";
-                }               
+                }
             }
+        }
+
+        private void txtMessage_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                if (this.txtMessage.SelectionLength > 0)
+                {
+                    this.contextMenuStrip1.Show(this.txtMessage, e.Location);
+                }
+            }
+        }
+
+        private void tsmiCopySelection_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetDataObject(this.txtMessage.SelectedText);
         }
     }
 }

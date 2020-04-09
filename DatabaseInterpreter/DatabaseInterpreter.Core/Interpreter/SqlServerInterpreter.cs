@@ -321,7 +321,7 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT t.name AS [Name], OBJECT_SCHEMA_NAME(t.object_id) AS [Owner],object_name(t.parent_id) AS [TableName], 
                             {(isSimpleMode ? "''" : "OBJECT_DEFINITION(t.object_id)")} AS [Definition]
                             FROM sys.triggers t
-                            WHERE 1=1";
+                            WHERE t.parent_id >0";
 
             if (filter!= null)
             {

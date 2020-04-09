@@ -45,7 +45,7 @@ namespace SqlAnalyser.Core
 
         public string FormatScripts(string scripts)
         {
-            Regex regex = new Regex(@"(\r\n[\s]*[;])");
+            Regex regex = new Regex(@"([;]+[\s]*[;]+)|(\r\n[\s]*[;])");
 
             return regex.Replace(scripts, ";");
         }

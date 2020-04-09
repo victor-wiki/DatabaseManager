@@ -3,5 +3,10 @@
     <SqlServer>@@ROWCOUNT</SqlServer>
     <MySql>(SELECT ROW_COUNT())</MySql>
     <Oracle>SQL%ROWCOUNT</Oracle>
-  </mapping>  
+  </mapping>
+  <mapping>
+    <SqlServer>@@IDENTITY</SqlServer>
+    <MySql>(SELECT LAST_INSERT_ID())</MySql>
+    <Oracle></Oracle>
+  </mapping> 
 </mappings>

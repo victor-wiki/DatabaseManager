@@ -3,7 +3,7 @@
 namespace SqlAnalyser.Model
 {
     public class Statement
-    {       
+    {
     }
 
     public class SetStatement : Statement
@@ -71,6 +71,16 @@ namespace SqlAnalyser.Model
         public TokenInfo TableName { get; set; }
         public TokenInfo Condition { get; set; }
         public List<SelectStatement> UnionStatements { get; set; }
+        public List<WithStatement> WithStatements { get; set; }
+        public TokenInfo OrderBy { get; set; }
+        public TokenInfo Option { get; set; }
+    }
+
+    public class WithStatement : Statement
+    {
+        public TokenInfo Name { get; set; }
+        public List<TokenInfo> Columns { get; set; } = new List<TokenInfo>();
+        public List<SelectStatement> SelectStatements { get; set; }
     }
 
     public class InsertStatement : Statement
@@ -83,10 +93,17 @@ namespace SqlAnalyser.Model
 
     public class UpdateStatement : Statement
     {
-        public TokenInfo TableName { get; set; }
-        public List<NameValueItem> Items { get; set; } = new List<NameValueItem>();
-
+        public List<TokenInfo> TableNames { get; set; } = new List<TokenInfo>();
+        public List<NameValueItem> SetItems { get; set; } = new List<NameValueItem>();
+        public List<UpdateFromItem> FromItems { get; set; }
         public TokenInfo Condition { get; set; }
+        public TokenInfo Option { get; set; }
+    }
+
+    public class UpdateFromItem
+    {
+        public TokenInfo TableName { get; set; }
+        public List<TokenInfo> Joins { get; set; } = new List<TokenInfo>();
     }
 
     public class DeleteStatement : Statement
@@ -95,9 +112,43 @@ namespace SqlAnalyser.Model
         public TokenInfo Condition { get; set; }
     }
 
+    public class TryCatchStatement : Statement
+    {
+        public List<Statement> TryStatements { get; set; } = new List<Statement>();
+        public List<Statement> CatchStatements { get; set; } = new List<Statement>();
+    }
+
+    public class PrintStatement : Statement
+    {
+        public TokenInfo Content { get; set; }
+    }
+
+    public class ExecuteStatement : Statement
+    {
+        public TokenInfo Content { get; set; }
+    }
+
+    public class TransactionStatement : Statement
+    {
+        public TransactionCommandType CommandType { get; set; }
+        public TokenInfo Content { get; set; }
+    }
+
+    public class LeaveStatement:Statement
+    {
+        public TokenInfo Content { get; set; }
+    }
+
+    public enum TransactionCommandType
+    {
+        BEGIN,
+        COMMIT,
+        ROLLBACK
+    }
+
     public class NameValueItem
     {
         public TokenInfo Name { get; set; }
         public TokenInfo Value { get; set; }
-    }    
+    }
 }

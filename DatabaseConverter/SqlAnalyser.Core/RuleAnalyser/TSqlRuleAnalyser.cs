@@ -30,7 +30,7 @@ namespace SqlAnalyser.Core
             return context;
         }
 
-        private Ddl_clauseContext GetDdlStatementContext(string content)
+        public Ddl_clauseContext GetDdlStatementContext(string content)
         {
             Tsql_fileContext rootContext = this.GetRootContext(content);
 
@@ -70,305 +70,11 @@ namespace SqlAnalyser.Core
             return script;
         }
 
-        private void SetScriptBody(CommonScript script, Sql_clauseContext[] clauses)
+        public void SetScriptBody(CommonScript script, Sql_clauseContext[] clauses)
         {
             foreach (var clause in clauses)
             {
                 script.Statements.AddRange(this.ParseSqlClause(clause));
-            }
-        }
-
-        private List<Statement> ParseSqlClause(Sql_clauseContext node)
-        {
-            List<Statement> statements = new List<Statement>();
-
-            foreach (var bc in node.children)
-            {
-                if (bc is Another_statementContext another)
-                {
-                    statements.AddRange(this.ParseAnotherStatement(another));
-                }
-                else if (bc is Dml_clauseContext dml)
-                {
-                    statements.AddRange(this.ParseDmlStatement(dml));
-                }
-                else if (bc is Cfl_statementContext cfl)
-                {
-                    statements.AddRange(this.ParseCflStatement(cfl));
-                }
-            }
-
-            return statements;
-        }
-
-        private List<Statement> ParseDmlStatement(Dml_clauseContext node)
-        {
-            List<Statement> statements = new List<Statement>();
-
-            foreach (var dc in node.children)
-            {
-                if (dc is Select_statementContext select)
-                {
-                    statements.AddRange(this.ParseSelectStatement(select));
-                }
-                if (dc is Insert_statementContext insert)
-                {
-                    statements.Add(this.ParseInsertStatement(insert));
-                }
-                else if (dc is Update_statementContext update)
-                {
-                    statements.Add(this.ParseUpdateStatement(update));
-                }
-                else if (dc is Delete_statementContext delete)
-                {
-                    statements.Add(this.ParseDeleteStatement(delete));
-                }
-            }
-
-            return statements;
-        }
-
-        private InsertStatement ParseInsertStatement(Insert_statementContext node)
-        {
-            InsertStatement statement = new InsertStatement();
-
-            foreach (var child in node.children)
-            {
-                if (child is Ddl_objectContext table)
-                {
-                    statement.TableName = new TokenInfo(table);
-                }
-                else if (child is Column_name_listContext columns)
-                {
-                    statement.Columns = columns.id().Select(item => this.ParseColumn(item)).ToList();
-                }
-                else if (child is Insert_statement_valueContext values)
-                {
-                    var tableValues = values.table_value_constructor();
-                    var derivedTable = values.derived_table();
-
-                    if (tableValues != null)
-                    {
-                        statement.Values = tableValues.expression_list().SelectMany(item => item.expression().Select(t => new TokenInfo(t))).ToList();
-                    }
-                    else if (derivedTable != null)
-                    {
-                        statement.SelectStatements = new List<SelectStatement>();
-
-                        statement.SelectStatements.AddRange(this.ParseSelectStatement(derivedTable.subquery().select_statement()));
-                    }
-                }
-            }
-
-            return statement;
-        }
-
-        private UpdateStatement ParseUpdateStatement(Update_statementContext node)
-        {
-            UpdateStatement statement = new UpdateStatement();
-
-            statement.TableName = new TokenInfo(node.ddl_object());
-            foreach (var ele in node.update_elem())
-            {
-                statement.Items.Add(new NameValueItem() { Name = new TokenInfo(ele.full_column_name()), Value = new TokenInfo(ele.expression()) });
-            }
-
-            statement.Condition = new TokenInfo(node.search_condition_list()) { Type = TokenType.Condition};
-
-            return statement;
-        }
-
-        private DeleteStatement ParseDeleteStatement(Delete_statementContext node)
-        {
-            DeleteStatement statement = new DeleteStatement();
-
-            statement.TableName = new TokenInfo(node.delete_statement_from()) { Type = TokenType.TableName };
-            statement.Condition = new TokenInfo(node.search_condition()) { Type = TokenType.Condition };
-
-            return statement;
-        }
-
-        private List<Statement> ParseCflStatement(Cfl_statementContext node)
-        {
-            List<Statement> statements = new List<Statement>();
-
-            foreach (var child in node.children)
-            {
-                if (child is If_statementContext @if)
-                {
-                    statements.Add(this.ParseIfStatement(@if));
-                }
-                if (child is While_statementContext @while)
-                {
-                    statements.Add(this.ParseWhileStatement(@while));
-                }
-                else if (child is Block_statementContext block)
-                {
-                    foreach (var bc in block.children)
-                    {
-                        if (bc is Sql_clausesContext clauses)
-                        {
-                            statements.AddRange(clauses.sql_clause().SelectMany(item => this.ParseSqlClause(item)));
-                        }
-                    }
-                }
-                else if (child is Return_statementContext @return)
-                {
-                    statements.Add(this.ParseReturnStatement(@return));
-                }
-            }
-
-            return statements;
-        }
-
-        private IfStatement ParseIfStatement(If_statementContext node)
-        {
-            IfStatement statement = new IfStatement();
-
-            IfStatementItem item = new IfStatementItem();
-
-            foreach (var child in node.children)
-            {
-                if (child is Search_conditionContext condition)
-                {
-                    item.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
-                }
-                else if (child is Sql_clauseContext clause)
-                {
-                    item.Statements.AddRange(this.ParseSqlClause(clause));
-                }
-            }
-
-            statement.Items.Add(item);
-
-            return statement;
-        }
-
-        private WhileStatement ParseWhileStatement(While_statementContext node)
-        {
-            WhileStatement statement = new WhileStatement();
-
-            foreach (var child in node.children)
-            {
-                if (child is Search_conditionContext condition)
-                {
-                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
-                }
-                else if (child is Sql_clauseContext clause)
-                {
-                    statement.Statements.AddRange(this.ParseSqlClause(clause));
-                }
-            }
-
-            return statement;
-        }
-
-        private List<Statement> ParseAnotherStatement(Another_statementContext node)
-        {
-            List<Statement> statements = new List<Statement>();
-
-            foreach (var child in node.children)
-            {
-                if (child is Declare_statementContext declare)
-                {
-                    statements.AddRange(this.ParseDeclareStatement(declare));
-                }
-                else if (child is Set_statementContext set)
-                {
-                    statements.Add(this.ParseSetStatement(set));
-                }
-            }
-
-            return statements;
-        }
-
-        private List<DeclareStatement> ParseDeclareStatement(Declare_statementContext node)
-        {
-            List<DeclareStatement> statements = new List<DeclareStatement>();
-
-            foreach (var dc in node.children)
-            {
-                if (dc is Declare_localContext local)
-                {
-                    DeclareStatement declareStatement = new DeclareStatement();
-
-                    declareStatement.Name = new TokenInfo(local.LOCAL_ID()) { Type = TokenType.VariableName };
-                    declareStatement.DataType = new TokenInfo(local.data_type().GetText()) { Type = TokenType.DataType };
-
-                    statements.Add(declareStatement);
-                }
-                else if (dc is Declare_cursorContext cursor)
-                {
-
-                }
-                else if (dc is Table_type_definitionContext table)
-                {
-                    DeclareStatement declareStatement = new DeclareStatement();
-
-                    declareStatement.Type = DeclareType.Table;
-                    declareStatement.Name = new TokenInfo(node.LOCAL_ID()) { Type = TokenType.VariableName };
-                    declareStatement.Table = new TemporaryTable()
-                    {
-                        Name = declareStatement.Name,
-                        Columns = table.column_def_table_constraints().column_def_table_constraint()
-                        .Select(item => this.ParseTableColumn(item)).ToList()
-                    };
-
-                    statements.Add(declareStatement);
-                }
-            }
-
-            return statements;
-        }
-
-        private void SetScriptName(CommonScript script, IdContext[] ids)
-        {
-            var name = ids.Last();
-
-            script.Name = new TokenInfo(name);
-
-            if (ids.Length > 1)
-            {
-                script.Owner = new TokenInfo(ids.First());
-            }
-        }
-
-        private void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
-        {
-            foreach (var child in nodes)
-            {
-                if (child is TerminalNodeImpl terminalNode)
-                {
-                    if (terminalNode.Symbol.Type == TSqlParser.OUT || terminalNode.Symbol.Type == TSqlParser.OUTPUT)
-                    {
-                        parameterInfo.ParameterType = ParameterType.OUT;
-                    }
-                }
-            }
-        }
-
-        private void SetRoutineParameters(RoutineScript script, Procedure_paramContext[] parameters)
-        {
-            if (parameters != null)
-            {
-                foreach (Procedure_paramContext parameter in parameters)
-                {
-                    Parameter parameterInfo = new Parameter();
-
-                    parameterInfo.Name = new TokenInfo(parameter.children[0] as TerminalNodeImpl) { Type = TokenType.ParameterName };
-
-                    parameterInfo.DataType = new TokenInfo(parameter.data_type().GetText()) { Type = TokenType.DataType };
-                    var defaultValue = parameter.default_value();
-
-                    if (defaultValue != null)
-                    {
-                        parameterInfo.DefaultValue = new TokenInfo(defaultValue);
-                    }
-
-                    this.SetParameterType(parameterInfo, parameter.children);
-
-                    script.Parameters.Add(parameterInfo);
-                }
             }
         }
 
@@ -401,7 +107,7 @@ namespace SqlAnalyser.Core
             return script;
         }
 
-        private void SetFunction(RoutineScript script, Create_or_alter_functionContext func)
+        public void SetFunction(RoutineScript script, Create_or_alter_functionContext func)
         {
             var scalar = func.func_body_returns_scalar();
             var table = func.func_body_returns_table();
@@ -443,12 +149,12 @@ namespace SqlAnalyser.Core
 
                 foreach (var child in table.children)
                 {
-                    if(child is TerminalNodeImpl terminalNode)
-                    {                      
-                        if(terminalNode.Symbol.Text.StartsWith("@"))
+                    if (child is TerminalNodeImpl terminalNode)
+                    {
+                        if (terminalNode.Symbol.Text.StartsWith("@"))
                         {
-                            script.ReturnTable.Name = new TokenInfo(terminalNode) { Type= TokenType.VariableName };
-                        }                       
+                            script.ReturnTable.Name = new TokenInfo(terminalNode) { Type = TokenType.VariableName };
+                        }
                     }
                     else if (child is Table_type_definitionContext type)
                     {
@@ -457,10 +163,10 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                script.Statements.AddRange(table.sql_clause().SelectMany(item=>this.ParseSqlClause(item)));
+                script.Statements.AddRange(table.sql_clause().SelectMany(item => this.ParseSqlClause(item)));
             }
             else if (select != null)
-            {              
+            {
                 script.Statements.AddRange(this.ParseSelectStatement(select.select_statement()));
             }
         }
@@ -518,7 +224,7 @@ namespace SqlAnalyser.Core
 
                     #endregion
 
-                    script.TableName = new TokenInfo(trigger.table_name());
+                    script.TableName = new TokenInfo(trigger.table_name()) { Type = TokenType.TableName };
 
                     foreach (var child in trigger.children)
                     {
@@ -527,6 +233,7 @@ namespace SqlAnalyser.Core
                             switch (terminalNode.Symbol.Type)
                             {
                                 case TSqlParser.BEFORE:
+                                case TSqlParser.INSTEAD:
                                     script.Time = TriggerTime.BEFORE;
                                     break;
                                 case TSqlParser.AFTER:
@@ -536,7 +243,7 @@ namespace SqlAnalyser.Core
                         }
                         else if (child is Dml_trigger_operationContext operation)
                         {
-                            script.Event = (TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText());
+                            script.Events.Add((TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText()));
                         }
                     }
 
@@ -553,16 +260,354 @@ namespace SqlAnalyser.Core
             return script;
         }
 
-        private List<SelectStatement> ParseSelectStatement(Select_statementContext node)
+        public List<Statement> ParseSqlClause(Sql_clauseContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var bc in node.children)
+            {
+                if (bc is Another_statementContext another)
+                {
+                    statements.AddRange(this.ParseAnotherStatement(another));
+                }
+                else if (bc is Dml_clauseContext dml)
+                {
+                    statements.AddRange(this.ParseDmlStatement(dml));
+                }
+                else if (bc is Cfl_statementContext cfl)
+                {
+                    statements.AddRange(this.ParseCflStatement(cfl));
+                }
+            }
+
+            return statements;
+        }
+
+        public List<Statement> ParseDmlStatement(Dml_clauseContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var dc in node.children)
+            {
+                if (dc is Select_statementContext select)
+                {
+                    statements.AddRange(this.ParseSelectStatement(select));
+                }
+                if (dc is Insert_statementContext insert)
+                {
+                    statements.Add(this.ParseInsertStatement(insert));
+                }
+                else if (dc is Update_statementContext update)
+                {
+                    statements.Add(this.ParseUpdateStatement(update));
+                }
+                else if (dc is Delete_statementContext delete)
+                {
+                    statements.Add(this.ParseDeleteStatement(delete));
+                }
+            }
+
+            return statements;
+        }
+
+        public InsertStatement ParseInsertStatement(Insert_statementContext node)
+        {
+            InsertStatement statement = new InsertStatement();
+
+            foreach (var child in node.children)
+            {
+                if (child is Ddl_objectContext table)
+                {
+                    statement.TableName = new TokenInfo(table) { Type = TokenType.TableName };
+                }
+                else if (child is Column_name_listContext columns)
+                {
+                    statement.Columns = columns.id().Select(item => this.ParseColumn(item)).ToList();
+                }
+                else if (child is Insert_statement_valueContext values)
+                {
+                    var tableValues = values.table_value_constructor();
+                    var derivedTable = values.derived_table();
+
+                    if (tableValues != null)
+                    {
+                        statement.Values = tableValues.expression_list().SelectMany(item => item.expression().Select(t => new TokenInfo(t))).ToList();
+                    }
+                    else if (derivedTable != null)
+                    {
+                        statement.SelectStatements = new List<SelectStatement>();
+
+                        statement.SelectStatements.AddRange(this.ParseSelectStatement(derivedTable.subquery().select_statement()));
+                    }
+                }
+            }
+
+            return statement;
+        }
+
+        public UpdateStatement ParseUpdateStatement(Update_statementContext node)
+        {
+            UpdateStatement statement = new UpdateStatement();
+
+            statement.TableNames.Add(new TokenInfo(node.ddl_object()) { Type = TokenType.TableName });
+
+            foreach (var ele in node.update_elem())
+            {
+                statement.SetItems.Add(new NameValueItem()
+                {
+                    Name = new TokenInfo(ele.full_column_name()) { Type = TokenType.ColumnName },
+                    Value = new TokenInfo(ele.expression())
+                });
+            }
+
+            Table_sourcesContext fromTable = node.table_sources();
+
+            if (fromTable != null)
+            {
+                statement.FromItems = new List<UpdateFromItem>();
+
+                foreach (Table_sourceContext tc in fromTable.table_source())
+                {
+                    UpdateFromItem fromItem = new UpdateFromItem();
+
+                    Table_source_item_joinedContext join = tc.table_source_item_joined();
+
+                    fromItem.TableName = new TokenInfo(join.table_source_item()) { Type = TokenType.TableName };
+                    fromItem.Joins = join.join_part().Select(item => new TokenInfo(item) { Type = TokenType.JoinOn }).ToList();
+
+                    statement.FromItems.Add(fromItem);
+                }
+            }
+
+            statement.Condition = new TokenInfo(node.search_condition_list()) { Type = TokenType.Condition };
+
+            return statement;
+        }
+
+        public DeleteStatement ParseDeleteStatement(Delete_statementContext node)
+        {
+            DeleteStatement statement = new DeleteStatement();
+
+            statement.TableName = new TokenInfo(node.delete_statement_from()) { Type = TokenType.TableName };
+            statement.Condition = new TokenInfo(node.search_condition()) { Type = TokenType.Condition };
+
+            return statement;
+        }
+
+        public List<Statement> ParseCflStatement(Cfl_statementContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
+            {
+                if (child is If_statementContext @if)
+                {
+                    statements.Add(this.ParseIfStatement(@if));
+                }
+                if (child is While_statementContext @while)
+                {
+                    statements.Add(this.ParseWhileStatement(@while));
+                }
+                else if (child is Block_statementContext block)
+                {
+                    foreach (var bc in block.children)
+                    {
+                        if (bc is Sql_clausesContext clauses)
+                        {
+                            statements.AddRange(clauses.sql_clause().SelectMany(item => this.ParseSqlClause(item)));
+                        }
+                    }
+                }
+                else if (child is Return_statementContext @return)
+                {
+                    statements.Add(this.ParseReturnStatement(@return));
+                }
+                else if (child is Try_catch_statementContext trycatch)
+                {
+                    statements.Add(this.ParseTryCatchStatement(trycatch));
+                }
+                else if (child is Print_statementContext print)
+                {
+                    statements.Add(this.ParsePrintStatement(print));
+                }
+            }
+
+            return statements;
+        }
+
+        public IfStatement ParseIfStatement(If_statementContext node)
+        {
+            IfStatement statement = new IfStatement();
+
+            IfStatementItem item = new IfStatementItem();
+
+            foreach (var child in node.children)
+            {
+                if (child is Search_conditionContext condition)
+                {
+                    item.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                }
+                else if (child is Sql_clauseContext clause)
+                {
+                    item.Statements.AddRange(this.ParseSqlClause(clause));
+                }
+            }
+
+            statement.Items.Add(item);
+
+            return statement;
+        }
+
+        public WhileStatement ParseWhileStatement(While_statementContext node)
+        {
+            WhileStatement statement = new WhileStatement();
+
+            foreach (var child in node.children)
+            {
+                if (child is Search_conditionContext condition)
+                {
+                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                }
+                else if (child is Sql_clauseContext clause)
+                {
+                    statement.Statements.AddRange(this.ParseSqlClause(clause));
+                }
+            }
+
+            return statement;
+        }
+
+        public List<Statement> ParseAnotherStatement(Another_statementContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
+            {
+                if (child is Declare_statementContext declare)
+                {
+                    statements.AddRange(this.ParseDeclareStatement(declare));
+                }
+                else if (child is Set_statementContext set)
+                {
+                    statements.Add(this.ParseSetStatement(set));
+                }
+                else if (child is Execute_statementContext execute)
+                {
+                    statements.Add(this.ParseExecuteStatement(execute));
+                }
+                else if (child is Transaction_statementContext transaction)
+                {
+                    statements.Add(this.ParseTransactionStatment(transaction));
+                }
+            }
+
+            return statements;
+        }
+
+        public List<DeclareStatement> ParseDeclareStatement(Declare_statementContext node)
+        {
+            List<DeclareStatement> statements = new List<DeclareStatement>();
+
+            foreach (var dc in node.children)
+            {
+                if (dc is Declare_localContext local)
+                {
+                    DeclareStatement declareStatement = new DeclareStatement();
+
+                    declareStatement.Name = new TokenInfo(local.LOCAL_ID()) { Type = TokenType.VariableName };
+                    declareStatement.DataType = new TokenInfo(local.data_type().GetText()) { Type = TokenType.DataType };
+
+                    statements.Add(declareStatement);
+                }
+                else if (dc is Declare_cursorContext cursor)
+                {
+
+                }
+                else if (dc is Table_type_definitionContext table)
+                {
+                    DeclareStatement declareStatement = new DeclareStatement();
+
+                    declareStatement.Type = DeclareType.Table;
+                    declareStatement.Name = new TokenInfo(node.LOCAL_ID()) { Type = TokenType.VariableName };
+                    declareStatement.Table = new TemporaryTable()
+                    {
+                        Name = declareStatement.Name,
+                        Columns = table.column_def_table_constraints().column_def_table_constraint()
+                        .Select(item => this.ParseTableColumn(item)).ToList()
+                    };
+
+                    statements.Add(declareStatement);
+                }
+            }
+
+            return statements;
+        }
+
+        public void SetScriptName(CommonScript script, IdContext[] ids)
+        {
+            var name = ids.Last();
+
+            script.Name = new TokenInfo(name);
+
+            if (ids.Length > 1)
+            {
+                script.Owner = new TokenInfo(ids.First());
+            }
+        }
+
+        public void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
+        {
+            foreach (var child in nodes)
+            {
+                if (child is TerminalNodeImpl terminalNode)
+                {
+                    if (terminalNode.Symbol.Type == TSqlParser.OUT || terminalNode.Symbol.Type == TSqlParser.OUTPUT)
+                    {
+                        parameterInfo.ParameterType = ParameterType.OUT;
+                    }
+                }
+            }
+        }
+
+        public void SetRoutineParameters(RoutineScript script, Procedure_paramContext[] parameters)
+        {
+            if (parameters != null)
+            {
+                foreach (Procedure_paramContext parameter in parameters)
+                {
+                    Parameter parameterInfo = new Parameter();
+
+                    parameterInfo.Name = new TokenInfo(parameter.children[0] as TerminalNodeImpl) { Type = TokenType.ParameterName };
+
+                    parameterInfo.DataType = new TokenInfo(parameter.data_type().GetText()) { Type = TokenType.DataType };
+                    var defaultValue = parameter.default_value();
+
+                    if (defaultValue != null)
+                    {
+                        parameterInfo.DefaultValue = new TokenInfo(defaultValue);
+                    }
+
+                    this.SetParameterType(parameterInfo, parameter.children);
+
+                    script.Parameters.Add(parameterInfo);
+                }
+            }
+        }
+
+        public List<SelectStatement> ParseSelectStatement(Select_statementContext node)
         {
             List<SelectStatement> statements = new List<SelectStatement>();
+
+            SelectStatement selectStatement = null;
+
+            List<WithStatement> withStatements = null;
+            TokenInfo orderby = null;
+            TokenInfo option = null;
 
             foreach (var child in node.children)
             {
                 if (child is Query_expressionContext query)
                 {
-                    SelectStatement selectStatement = null;
-
                     foreach (var qc in query.children)
                     {
                         if (qc is Query_specificationContext specification)
@@ -585,12 +630,54 @@ namespace SqlAnalyser.Core
                         statements.Add(selectStatement);
                     }
                 }
+                else if (child is With_expressionContext with)
+                {
+                    withStatements = this.ParseWithStatement(with);
+                }
+                else if (child is Order_by_clauseContext order)
+                {
+                    orderby = new TokenInfo(order) { Type = TokenType.OrderBy };
+                }
+                else if (child is Option_clauseContext opt)
+                {
+                    option = new TokenInfo(opt) { Type = TokenType.Option };
+                }
+
+                if (selectStatement != null)
+                {
+                    selectStatement.WithStatements = withStatements;
+                    selectStatement.OrderBy = orderby;
+                    selectStatement.Option = option;
+                }
             }
 
             return statements;
         }
 
-        private SelectStatement ParseQuerySpecification(Query_specificationContext node)
+        public List<WithStatement> ParseWithStatement(With_expressionContext node)
+        {
+            List<WithStatement> statements = new List<WithStatement>();
+
+            var tables = node.common_table_expression();
+
+            if (tables != null)
+            {
+                foreach (Common_table_expressionContext table in tables)
+                {
+                    WithStatement statement = new WithStatement();
+
+                    statement.Name = new TokenInfo(table.id()) { Type = TokenType.TableName };
+                    statement.Columns = table.column_name_list().id().Select(item => new TokenInfo(item) { Type = TokenType.ColumnName }).ToList();
+                    statement.SelectStatements = this.ParseSelectStatement(table.select_statement());
+
+                    statements.Add(statement);
+                }
+            }
+
+            return statements;
+        }
+
+        public SelectStatement ParseQuerySpecification(Query_specificationContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -690,15 +777,76 @@ namespace SqlAnalyser.Core
             return sb.ToString();
         }
 
-        public ReturnStatement ParseReturnStatement(Return_statementContext node)
+        public Statement ParseReturnStatement(Return_statementContext node)
         {
-            ReturnStatement statement = new ReturnStatement();
+            Statement statement = null;
+
+            var expressioin = node.expression();
+
+            if (expressioin != null)
+            {
+                statement = new ReturnStatement() { Value = new TokenInfo(expressioin) };
+            }
+            else
+            {
+                statement = new LeaveStatement() { Content = new TokenInfo(node) };
+            }
+
+            return statement;
+        }
+
+        public TryCatchStatement ParseTryCatchStatement(Try_catch_statementContext node)
+        {
+            TryCatchStatement statement = new TryCatchStatement();
+
+            statement.TryStatements.AddRange(node.try_clauses.sql_clause().SelectMany(item => this.ParseSqlClause(item)));
+            statement.CatchStatements.AddRange(node.catch_clauses.sql_clause().SelectMany(item => this.ParseSqlClause(item)));
+
+            return statement;
+        }
+
+        public PrintStatement ParsePrintStatement(Print_statementContext node)
+        {
+            PrintStatement statement = new PrintStatement();
+
+            statement.Content = new TokenInfo(node.expression());
+
+            return statement;
+        }
+
+        public ExecuteStatement ParseExecuteStatement(Execute_statementContext node)
+        {
+            ExecuteStatement statement = new ExecuteStatement();
+
+            statement.Content = new TokenInfo(node.execute_body()) { Type = TokenType.CallProc };
+
+            return statement;
+        }
+
+        public TransactionStatement ParseTransactionStatment(Transaction_statementContext node)
+        {
+            TransactionStatement statement = new TransactionStatement();
+
+            statement.Content = new TokenInfo(node);
 
             foreach (var child in node.children)
             {
-                if (child is ExpressionContext predicate)
+                if (child is TerminalNodeImpl terminalNode)
                 {
-                    statement.Value = new TokenInfo(predicate);
+                    int type = terminalNode.Symbol.Type;
+
+                    if (type == TSqlParser.BEGIN)
+                    {
+                        statement.CommandType = TransactionCommandType.BEGIN;
+                    }
+                    else if (type == TSqlParser.COMMIT)
+                    {
+                        statement.CommandType = TransactionCommandType.COMMIT;
+                    }
+                    else if (type == TSqlParser.ROLLBACK)
+                    {
+                        statement.CommandType = TransactionCommandType.ROLLBACK;
+                    }
                 }
             }
 

@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Text;
 using DatabaseInterpreter.Model;
+using System.Collections.Generic;
 
 namespace SqlAnalyser.Core
 {
@@ -94,16 +95,34 @@ namespace SqlAnalyser.Core
                         strParameterType = parameterType.ToString();
                     }
 
-                    sb.AppendLine($"{strParameterType} {parameter.Name} {parameter.DataType} {(i == script.Parameters.Count - 1 ? "" : ",")}");
+                    string defaultValue = parameter.DefaultValue == null ? "" : "=" + parameter.DefaultValue;
+
+                    sb.AppendLine($"{strParameterType} {parameter.Name} {parameter.DataType} {defaultValue} {(i == script.Parameters.Count - 1 ? "" : ",")}");
+
+                    i++;
                 }
 
+                sb.AppendLine(")");
+            }
+            else if (script.Type == RoutineType.FUNCTION)
+            {
+                sb.AppendLine("(");
                 sb.AppendLine(")");
             }
 
             if (script.Type == RoutineType.FUNCTION)
             {
-                sb.AppendLine($"RETURNS {script.ReturnDataType}");
+                if (script.ReturnTable == null)
+                {
+                    sb.AppendLine($"RETURNS {script.ReturnDataType}");
+                }
+                else
+                {
+                    sb.AppendLine($"RETURNS {script.ReturnTable.Name}({string.Join(",", script.ReturnTable.Columns.Select(t => $"{t.Name} {t.DataType}")) })");
+                }
             }
+
+            sb.AppendLine("AS");
 
             sb.AppendLine("BEGIN");
 
@@ -144,13 +163,21 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE TRIGGER {script.FullName} {script.Time} {script.Event} ON {script.TableName}");
-            sb.AppendLine($"FOR EACH ROW {script.Behavior} {script.OtherTriggerName}");
+            string time = script.Time == TriggerTime.BEFORE ? "INSTEAD OF" : script.Time.ToString();
+            string events = string.Join(",", script.Events);
+
+            sb.AppendLine($"CREATE TRIGGER {script.FullName} ON {script.TableName}");
+            sb.AppendLine($"{time} {events} NOT FOR REPLICATION ");
+
+            sb.AppendLine("AS");
+            sb.AppendLine("BEGIN");
 
             foreach (Statement statement in script.Statements)
             {
                 sb.Append(this.BuildStatement(statement));
             }
+
+            sb.AppendLine("END");
 
             return this.FormatScripts(sb.ToString());
         }
@@ -165,6 +192,14 @@ namespace SqlAnalyser.Core
 
             Action<string> appendLine = (value) => { append(value + Environment.NewLine); };
 
+            Action<IEnumerable<Statement>, bool> appendStatements = (statements, needSeparator) =>
+            {
+                foreach (Statement st in statements)
+                {
+                    append(this.BuildStatement(st, level + 1, needSeparator));
+                }
+            };
+
             if (statement is SelectStatement select)
             {
                 appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
@@ -176,7 +211,44 @@ namespace SqlAnalyser.Core
 
                 if (select.TableName != null)
                 {
-                    appendLine($"FROM {select.TableName}");
+                    if (select.WithStatements == null || select.WithStatements.Count == 0)
+                    {
+                        appendLine($"FROM {select.TableName}");
+                    }
+                    else
+                    {
+                        int i = 0;
+
+                        foreach (WithStatement withStatement in select.WithStatements)
+                        {
+                            if (i == 0)
+                            {
+                                appendLine($"WITH {withStatement.Name}({string.Join(",", withStatement.Columns.Select(item => item))})");
+                            }
+                            else
+                            {
+                                appendLine($",{withStatement.Name}");
+                            }
+
+                            appendLine("AS(");
+
+                            appendStatements(select.WithStatements, false);
+
+                            appendLine(")");
+                        }
+
+                        appendLine(select.TableName.ToString());
+
+                        if (select.OrderBy != null)
+                        {
+                            appendLine(select.OrderBy.ToString());
+                        }
+
+                        if (select.Option != null)
+                        {
+                            append(select.Option.ToString());
+                        }
+                    }
                 }
 
                 if (select.Condition != null)
@@ -186,17 +258,17 @@ namespace SqlAnalyser.Core
 
                 if (select.UnionStatements != null)
                 {
-                    foreach(var union in select.UnionStatements)
+                    foreach (var union in select.UnionStatements)
                     {
                         appendLine("UNION");
                         appendLine(this.BuildStatement(union, level, false).TrimEnd(';'));
                     }
                 }
 
-                if(appendSeparator)
+                if (appendSeparator)
                 {
                     appendLine(";");
-                }               
+                }
             }
             else if (statement is InsertStatement insert)
             {
@@ -209,25 +281,57 @@ namespace SqlAnalyser.Core
 
                 if (insert.SelectStatements != null && insert.SelectStatements.Count > 0)
                 {
-                    foreach (SelectStatement st in insert.SelectStatements)
-                    {
-                        appendLine(this.BuildStatement(st, level));
-                    }
+                    appendStatements(insert.SelectStatements, true);
                 }
                 else
                 {
                     appendLine($"VALUES({string.Join(",", insert.Values.Select(item => item))});");
                 }
+
+                appendLine("");
             }
             else if (statement is UpdateStatement update)
             {
-                appendLine($"UPDATE {update.TableName} SET");
+                appendLine($"UPDATE {string.Join(",", update.TableNames)} SET");
 
-                appendLine(string.Join("," + Environment.NewLine + indent, update.Items.Select(item => $"{item.Name}={item.Value}")));
+                appendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
+
+                if (update.FromItems != null)
+                {
+                    appendLine("FROM");
+
+                    int i = 0;
+                    foreach (UpdateFromItem fromItem in update.FromItems)
+                    {
+                        if (fromItem.TableName != null)
+                        {
+                            appendLine(fromItem.TableName.ToString());
+                        }
+                        else
+                        {
+                            if (i == 0)
+                            {
+                                appendLine(update.TableNames.First().ToString());
+                            }
+                        }
+
+                        foreach (TokenInfo join in fromItem.Joins)
+                        {
+                            appendLine(join.ToString());
+                        }
+
+                        i++;
+                    }
+                }
 
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
                     appendLine($"WHERE {update.Condition}");
+                }
+
+                if (update.Option != null)
+                {
+                    appendLine(update.Option.ToString());
                 }
 
                 appendLine(";");
@@ -283,23 +387,75 @@ namespace SqlAnalyser.Core
                     }
 
                     appendLine("BEGIN");
-                    foreach (Statement st in item.Statements)
+
+                    if (item.Statements.Count > 0)
                     {
-                        append(this.BuildStatement(st, level + 1));
+                        appendStatements(item.Statements, true);
                     }
+                    else
+                    {
+                        appendLine("PRINT('BLANK!');");
+                    }
+
                     appendLine("END");
                 }
+
+                appendLine("");
             }
             else if (statement is WhileStatement @while)
             {
-                appendLine($"WHILE { @while.Condition } DO");
+                appendLine($"WHILE { @while.Condition }");
+                appendLine("BEGIN");
 
-                foreach (Statement st in @while.Statements)
+                appendStatements(@while.Statements, true);
+
+                appendLine("END");
+
+                appendLine("");
+            }
+            else if (statement is TryCatchStatement tryCatch)
+            {
+                appendLine("BEGIN TRY");
+                appendStatements(tryCatch.TryStatements, true);
+                appendLine("END TRY");
+
+                appendLine("BEGIN CATCH");
+                appendStatements(tryCatch.CatchStatements, true);
+                appendLine("END CATCH");
+
+            }
+            else if (statement is ReturnStatement @return)
+            {
+                appendLine($"RETURN {@return.Value};");
+            }
+            else if (statement is PrintStatement print)
+            {
+                appendLine($"PRINT {print.Content};");
+            }
+            else if (statement is ExecuteStatement execute)
+            {
+                appendLine($"EXECUTE {execute.Content};");
+            }
+            else if (statement is TransactionStatement transaction)
+            {
+                TransactionCommandType commandType = transaction.CommandType;
+
+                switch (commandType)
                 {
-                    append(this.BuildStatement(st, level + 1));
+                    case TransactionCommandType.BEGIN:
+                        appendLine("BEGIN TRANS");
+                        break;
+                    case TransactionCommandType.COMMIT:
+                        appendLine("COMMIT");
+                        break;
+                    case TransactionCommandType.ROLLBACK:
+                        appendLine("ROLLBACK");
+                        break;
                 }
-
-                appendLine("END WHILE;");
+            }
+            else if (statement is LeaveStatement leave)
+            {
+                appendLine("RETURN;");
             }
 
             return sb.ToString();

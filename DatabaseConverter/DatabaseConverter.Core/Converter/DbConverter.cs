@@ -83,15 +83,6 @@ namespace DatabaseConverter.Core
             sourceInterpreter.Option.GetTableAllObjects = false;
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
-                        
-            #region These haven't been implemented yet.
-            if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
-            {
-                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.Procedure;
-                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.Function;
-                //databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
-            } 
-            #endregion
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
 
@@ -110,9 +101,11 @@ namespace DatabaseConverter.Core
 
             #region Set data type by user define type          
 
+            List<UserDefinedType> utypes = new List<UserDefinedType>();
+
             if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
             {
-                List<UserDefinedType> utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
+                utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
 
                 if (utypes != null && utypes.Count > 0)
                 {
@@ -133,6 +126,8 @@ namespace DatabaseConverter.Core
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
             TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipParseErrorForFunctionViewProcedure };
+            translateEngine.UserDefinedTypes = utypes;
+
             translateEngine.Translate();
 
             if (this.Option.EnsurePrimaryKeyNameUnique)

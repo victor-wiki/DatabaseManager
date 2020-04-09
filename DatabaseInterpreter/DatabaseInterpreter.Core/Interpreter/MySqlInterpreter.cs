@@ -301,7 +301,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsCluase} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', TRIGGER_NAME, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsCluase} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
 
             string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
                          {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
@@ -723,7 +723,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
                 }
                 else if (!this.IsNoLengthDataType(dataType))
                 {
-                    long precision = column.Precision.HasValue ? column.Precision.Value : column.MaxLength.Value;
+                    long precision = column.Precision.HasValue ? column.Precision.Value : (column.MaxLength.HasValue? column.MaxLength.Value :0);
                     int scale = column.Scale.HasValue ? column.Scale.Value : 0;
 
                     dataType = $"{dataType}({precision},{scale})";

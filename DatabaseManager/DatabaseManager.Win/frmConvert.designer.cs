@@ -35,6 +35,9 @@
             this.txtMessage = new System.Windows.Forms.RichTextBox();
             this.dlgSaveLog = new System.Windows.Forms.SaveFileDialog();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
+            this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
+            this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.btnFetch = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
@@ -57,14 +60,14 @@
             this.chkOutputScripts = new System.Windows.Forms.CheckBox();
             this.dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
-            this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
-            this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.gbOption.SuspendLayout();
+            this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnSaveMessage
@@ -101,9 +104,10 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 85);
+            this.txtMessage.Size = new System.Drawing.Size(731, 86);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
+            this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);
             // 
             // splitContainer1
             // 
@@ -133,6 +137,39 @@
             this.splitContainer1.SplitterDistance = 428;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 21;
+            // 
+            // tvDbObjects
+            // 
+            this.tvDbObjects.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
+            this.tvDbObjects.Name = "tvDbObjects";
+            this.tvDbObjects.Size = new System.Drawing.Size(269, 335);
+            this.tvDbObjects.TabIndex = 38;
+            // 
+            // targetDbProfile
+            // 
+            this.targetDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.targetDbProfile.Location = new System.Drawing.Point(11, 28);
+            this.targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
+            this.targetDbProfile.Name = "targetDbProfile";
+            this.targetDbProfile.Size = new System.Drawing.Size(679, 27);
+            this.targetDbProfile.TabIndex = 37;
+            this.targetDbProfile.Title = "Target:";
+            this.targetDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.targetDbProfile_OnSelectedChanged);
+            // 
+            // sourceDbProfile
+            // 
+            this.sourceDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.sourceDbProfile.Location = new System.Drawing.Point(11, 1);
+            this.sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
+            this.sourceDbProfile.Name = "sourceDbProfile";
+            this.sourceDbProfile.Size = new System.Drawing.Size(679, 27);
+            this.sourceDbProfile.TabIndex = 36;
+            this.sourceDbProfile.Title = "Source:";
+            this.sourceDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.sourceDbProfile_OnSelectedChanged);
             // 
             // btnFetch
             // 
@@ -359,38 +396,19 @@
             this.chkOutputScripts.Text = "Output scripts to file";
             this.chkOutputScripts.UseVisualStyleBackColor = true;
             // 
-            // tvDbObjects
+            // contextMenuStrip1
             // 
-            this.tvDbObjects.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
-            this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(269, 335);
-            this.tvDbObjects.TabIndex = 38;
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiCopySelection});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
             // 
-            // targetDbProfile
+            // tsmiCopySelection
             // 
-            this.targetDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.targetDbProfile.Location = new System.Drawing.Point(11, 28);
-            this.targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
-            this.targetDbProfile.Name = "targetDbProfile";
-            this.targetDbProfile.Size = new System.Drawing.Size(679, 27);
-            this.targetDbProfile.TabIndex = 37;
-            this.targetDbProfile.Title = "Target:";
-            this.targetDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.targetDbProfile_OnSelectedChanged);
-            // 
-            // sourceDbProfile
-            // 
-            this.sourceDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.sourceDbProfile.Location = new System.Drawing.Point(11, 1);
-            this.sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
-            this.sourceDbProfile.Name = "sourceDbProfile";
-            this.sourceDbProfile.Size = new System.Drawing.Size(679, 27);
-            this.sourceDbProfile.TabIndex = 36;
-            this.sourceDbProfile.Title = "Source:";
-            this.sourceDbProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.sourceDbProfile_OnSelectedChanged);
+            this.tsmiCopySelection.Name = "tsmiCopySelection";
+            this.tsmiCopySelection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCopySelection.Text = "Copy selection";
+            this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
             // frmConvert
             // 
@@ -410,6 +428,7 @@
             this.splitContainer1.ResumeLayout(false);
             this.gbOption.ResumeLayout(false);
             this.gbOption.PerformLayout();
+            this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -445,6 +464,8 @@
         private Controls.UC_DbConnectionProfile targetDbProfile;
         private Controls.UC_DbObjectsSimpleTree tvDbObjects;
         private System.Windows.Forms.CheckBox chkSkipParseErrorForFunctionViewProcedure;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCopySelection;
     }
 }
 

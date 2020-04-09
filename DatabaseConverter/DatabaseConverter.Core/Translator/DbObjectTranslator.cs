@@ -121,9 +121,9 @@ namespace DatabaseConverter.Core
             return formattedSql;
         }
 
-        public string ReplaceValue(string source, string oldValue, string newValue)
+        public string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
         {
-            return Regex.Replace(source, Regex.Escape(oldValue), newValue, RegexOptions.IgnoreCase);
+            return Regex.Replace(source, Regex.Escape(oldValue), newValue, option);
         }
 
         public string ExchangeFunctionArgs(string functionName, string args1, string args2)

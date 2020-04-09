@@ -152,6 +152,7 @@ namespace DatabaseInterpreter.Core
                 filter.ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray();
                 filter.FunctionNames = schemaInfo.Functions.Select(item => item.Name).ToArray();
                 filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
+                filter.TableTriggerNames = schemaInfo.TableTriggers.Select(item => item.Name).ToArray();
             }
         }
     }

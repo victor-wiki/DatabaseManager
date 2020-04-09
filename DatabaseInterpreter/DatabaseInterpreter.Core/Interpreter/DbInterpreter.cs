@@ -296,37 +296,34 @@ namespace DatabaseInterpreter.Core
                     schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter);
                 }
 
-                if (!this.IsObjectFectchSimpleMode())
+                if (this.NeedFetchTableObjects(DatabaseObjectType.TableColumn, filter, null))
                 {
-                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableColumn, filter, null))
-                    {
-                        schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter);
-                    }
+                    schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter);
+                }
 
-                    if (this.NeedFetchTableObjects(DatabaseObjectType.TablePrimaryKey, filter, null))
-                    {
-                        schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter);
-                    }
+                if (this.NeedFetchTableObjects(DatabaseObjectType.TablePrimaryKey, filter, null))
+                {
+                    schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter);
+                }
 
-                    if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.TableForeignKey, filter, null))
-                    {
-                        schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter);
-                    }
+                if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.TableForeignKey, filter, null))
+                {
+                    schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter);
+                }
 
-                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableIndex, filter, null))
-                    {
-                        schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter);
-                    }
+                if (this.NeedFetchTableObjects(DatabaseObjectType.TableIndex, filter, null))
+                {
+                    schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter);
+                }
 
-                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableConstraint, filter, null))
-                    {
-                        schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter);
-                    }
+                if (this.NeedFetchTableObjects(DatabaseObjectType.TableConstraint, filter, null))
+                {
+                    schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter);
+                }
 
-                    if (this.NeedFetchTableObjects(DatabaseObjectType.TableTrigger, filter, filter.TableTriggerNames))
-                    {
-                        schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter);
-                    }
+                if (this.NeedFetchTableObjects(DatabaseObjectType.TableTrigger, filter, filter.TableTriggerNames))
+                {
+                    schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter);
                 }
             }
 
