@@ -125,7 +125,7 @@ namespace DatabaseConverter.Core
 
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
-            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipParseErrorForFunctionViewProcedure };
+            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipScriptError };
             translateEngine.UserDefinedTypes = utypes;
 
             translateEngine.Translate();
@@ -206,6 +206,9 @@ namespace DatabaseConverter.Core
                                         continue;
                                     }
 
+                                    bool skipError = this.Option.SkipScriptError
+                                    && (s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View));
+
                                     string sql = s.Content?.Trim();
 
                                     if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsSplitString)
@@ -220,7 +223,11 @@ namespace DatabaseConverter.Core
                                         if (!targetInterpreter.HasError)
                                         {
                                             targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(sql, null, transaction));
+
+                                            CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
+                                            commandInfo.SkipError = skipError;
+
+                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
                                         }
                                     }
                                 }

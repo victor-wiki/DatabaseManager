@@ -241,7 +241,7 @@ namespace DatabaseManager
                     dbConverter.Option.BulkCopy = this.chkBulkCopy.Checked;
                     dbConverter.Option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
                     dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
-                    dbConverter.Option.SkipParseErrorForFunctionViewProcedure = this.chkSkipParseErrorForFunctionViewProcedure.Checked;
+                    dbConverter.Option.SkipScriptError = this.chkSkipScriptError.Checked;
                     dbConverter.Option.PickupTable = this.chkPickup.Checked;
 
                     dbConverter.Subscribe(this);

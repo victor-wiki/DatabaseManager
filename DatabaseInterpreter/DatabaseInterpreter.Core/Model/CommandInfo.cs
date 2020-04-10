@@ -12,5 +12,6 @@ namespace DatabaseInterpreter.Model
         public Dictionary<string, object> Parameters { get; set; }
         public DbTransaction Transaction { get; set; }
         public CancellationToken CancellationToken { get; set; }
+        public bool SkipError { get; set; }
     }
 }

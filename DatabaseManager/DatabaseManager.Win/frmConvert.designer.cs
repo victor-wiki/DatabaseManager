@@ -42,7 +42,7 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
             this.gbOption = new System.Windows.Forms.GroupBox();
-            this.chkSkipParseErrorForFunctionViewProcedure = new System.Windows.Forms.CheckBox();
+            this.chkSkipScriptError = new System.Windows.Forms.CheckBox();
             this.chkUseTransaction = new System.Windows.Forms.CheckBox();
             this.chkBulkCopy = new System.Windows.Forms.CheckBox();
             this.chkGenerateIdentity = new System.Windows.Forms.CheckBox();
@@ -104,7 +104,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 86);
+            this.txtMessage.Size = new System.Drawing.Size(731, 87);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);
@@ -212,7 +212,7 @@
             this.gbOption.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.gbOption.Controls.Add(this.chkSkipParseErrorForFunctionViewProcedure);
+            this.gbOption.Controls.Add(this.chkSkipScriptError);
             this.gbOption.Controls.Add(this.chkUseTransaction);
             this.gbOption.Controls.Add(this.chkBulkCopy);
             this.gbOption.Controls.Add(this.chkGenerateIdentity);
@@ -235,15 +235,15 @@
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
             // 
-            // chkSkipParseErrorForFunctionViewProcedure
+            // chkSkipScriptError
             // 
-            this.chkSkipParseErrorForFunctionViewProcedure.AutoSize = true;
-            this.chkSkipParseErrorForFunctionViewProcedure.Location = new System.Drawing.Point(8, 215);
-            this.chkSkipParseErrorForFunctionViewProcedure.Name = "chkSkipParseErrorForFunctionViewProcedure";
-            this.chkSkipParseErrorForFunctionViewProcedure.Size = new System.Drawing.Size(330, 16);
-            this.chkSkipParseErrorForFunctionViewProcedure.TabIndex = 17;
-            this.chkSkipParseErrorForFunctionViewProcedure.Text = "Skip error for parsing function, view and procedure";
-            this.chkSkipParseErrorForFunctionViewProcedure.UseVisualStyleBackColor = true;
+            this.chkSkipScriptError.AutoSize = true;
+            this.chkSkipScriptError.Location = new System.Drawing.Point(8, 215);
+            this.chkSkipScriptError.Name = "chkSkipScriptError";
+            this.chkSkipScriptError.Size = new System.Drawing.Size(336, 16);
+            this.chkSkipScriptError.TabIndex = 17;
+            this.chkSkipScriptError.Text = "Skip error for function, procedure, trigger and view";
+            this.chkSkipScriptError.UseVisualStyleBackColor = true;
             // 
             // chkUseTransaction
             // 
@@ -401,12 +401,12 @@
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiCopySelection});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(162, 26);
             // 
             // tsmiCopySelection
             // 
             this.tsmiCopySelection.Name = "tsmiCopySelection";
-            this.tsmiCopySelection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCopySelection.Size = new System.Drawing.Size(161, 22);
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
@@ -463,7 +463,7 @@
         private Controls.UC_DbConnectionProfile sourceDbProfile;
         private Controls.UC_DbConnectionProfile targetDbProfile;
         private Controls.UC_DbObjectsSimpleTree tvDbObjects;
-        private System.Windows.Forms.CheckBox chkSkipParseErrorForFunctionViewProcedure;
+        private System.Windows.Forms.CheckBox chkSkipScriptError;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopySelection;
     }

@@ -179,9 +179,13 @@ namespace DatabaseInterpreter.Core
         {
             this.Feedback(FeedbackInfoType.Info, message);
         }
-        public void FeedbackError(string message)
+        public void FeedbackError(string message, bool skipError = false)
         {
-            this.hasError = true;
+            if(!skipError)
+            {
+                this.hasError = true;
+            }            
+
             this.Feedback(FeedbackInfoType.Error, message);
         }
 
@@ -437,12 +441,15 @@ namespace DatabaseInterpreter.Core
                 }
                 catch (Exception ex)
                 {
-                    if (command.Transaction != null)
+                    if(!commandInfo.SkipError)
                     {
-                        command.Transaction.Rollback();
-                    }
+                        if (command.Transaction != null)
+                        {
+                            command.Transaction.Rollback();
+                        }
+                    }                    
 
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.SkipError);
 
                     return 0;
                 }

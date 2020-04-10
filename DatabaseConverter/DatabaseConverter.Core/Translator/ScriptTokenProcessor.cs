@@ -175,23 +175,24 @@ namespace DatabaseConverter.Core
 
                             string pattern = "";
 
-                            char sourceLeftChar = this.SourceInterpreter.QuotationLeftChar;
-                            char sourceRightChar = this.SourceInterpreter.QuotationRightChar;
-                            char targetLeftChar = this.TargetInterpreter.QuotationLeftChar;
-                            char targetRightChar = this.TargetInterpreter.QuotationRightChar;
-
+                            bool strictMatch = true;
                             if (prefix.Length == 0)
                             {
-                                pattern = $@"[^{sourceLeftChar}^{targetLeftChar}]\b({kp.Key})\b[^{sourceRightChar}^{targetRightChar}]";
+                                strictMatch = false;
+                                pattern = $@"[^`^""^\[]\b({kp.Key})\b[^`^""^\]]";
                             }
                             else
                             {
-                                pattern = $@"([{prefix}][^{sourceLeftChar}^{targetLeftChar}]\b({kp.Key.Substring(prefix.Length)})\b)[^{sourceRightChar}^{targetRightChar}]";
+                                pattern = $@"([{prefix}]\b({kp.Key.Substring(prefix.Length)})\b)";
                             }
 
-                            if (Regex.IsMatch(token.Symbol, pattern))
+                            foreach (Match match in Regex.Matches(token.Symbol, pattern))
                             {
-                                token.Symbol = Regex.Replace(token.Symbol, pattern, kp.Value);
+                                string matchValue = match.Value;
+
+                                string replaceValue = strictMatch ? kp.Value : matchValue.First() + kp.Value + matchValue.Last();
+
+                                token.Symbol = Regex.Replace(token.Symbol, pattern, replaceValue);
                             }
                         }
                     }
@@ -218,11 +219,11 @@ namespace DatabaseConverter.Core
                     {
                         items[i] = this.TargetDbOwner;
                     }
-                    else if(i < items.Count -2)
+                    else if (i < items.Count - 2)
                     {
                         items[i] = "";
-                    }                   
-                }               
+                    }
+                }
             }
 
             string lastItem = items[items.Count - 1];
