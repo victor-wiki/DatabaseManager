@@ -16,7 +16,10 @@ namespace DatabaseConverter.Core
         private DatabaseType targetDbType;
 
         private Regex parenthesesRegex = new Regex(@"\(.*\)");
-        private Regex nameRegex = new Regex(@"\b([a-zA-Z]+)\b", RegexOptions.IgnoreCase);       
+        private Regex nameRegex = new Regex(@"\b([a-zA-Z]+)\b", RegexOptions.IgnoreCase);
+
+        private List<FunctionSpecification> sourceFuncSpecs;
+        private List<FunctionSpecification> targetFuncSpecs;
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, List<TokenInfo> functions) : base(sourceInterpreter, targetInterpreter)
         {
@@ -34,6 +37,9 @@ namespace DatabaseConverter.Core
 
             this.LoadMappings();
 
+            this.sourceFuncSpecs = FunctionManager.GetFunctionSpecifications(this.sourceDbType);
+            this.targetFuncSpecs = FunctionManager.GetFunctionSpecifications(this.targetDbType);
+
             foreach (TokenInfo token in this.functions)
             {
                 List<FunctionFomular> fomulars = this.GetFunctionFomulars(token.Symbol);
@@ -42,113 +48,52 @@ namespace DatabaseConverter.Core
                 {
                     string name = fomular.Name;
 
-                    int leftParenthesesCount = 0;
-                    int rightParenthesesCount = 0;
-                    string dataType = "";
-                    string newDataType = "";
+                    #region Mapping handle
+                    string text = name;
+                    string textWithBrackets = name.ToLower() + "()";
 
-                    switch (name.ToUpper())
+                    if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
                     {
-                        case "CONVERT":
+                        text = textWithBrackets;
+                    }
 
-                            string body = fomular.Body;
+                    string targetFunctionName = name;
 
-                            int firstCommaIndex = body.IndexOf(',');
+                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t =>
+                     (t.Direction == FunctionMappingDirection.OUT || t.Direction == FunctionMappingDirection.INOUT)
+                      && t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
 
-                            string[] args = new string[2] { body.Substring(0, firstCommaIndex), body.Substring(firstCommaIndex + 1) };
+                    if (funcMappings != null)
+                    {
+                        targetFunctionName = funcMappings.FirstOrDefault(item =>
+                                (item.Direction == FunctionMappingDirection.IN || item.Direction == FunctionMappingDirection.INOUT)
+                                && item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
 
-                            string expression = "";
-                            dataType = "";
-
-                            if (sourceDbInterpreter is SqlServerInterpreter)
+                        if (!string.IsNullOrEmpty(targetFunctionName))
+                        {
+                            if (targetFunctionName.ToUpper().Trim() != name.ToUpper().Trim())
                             {
-                                dataType = args[0];
-                                expression = args[1];
+                                fomular.Expression = this.ReplaceValue(token.Symbol, name, targetFunctionName);
+                                token.Symbol = fomular.Expression;
                             }
-                            else if (sourceDbInterpreter is MySqlInterpreter)
-                            {
-                                dataType = args[1];
-                                expression = args[0];
-                            }
+                        }
+                        else
+                        {
+                            targetFunctionName = name;
+                        }
+                    }
+                    #endregion
 
-                            newDataType = this.GetNewDataType(dataTypeMappings, dataType);                           
+                    Dictionary<string, string> dictDataType = null;
+                    string newExpression = this.HandleFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
 
-                            string newExpression = "";
-
-                            if (targetDbInterpreter is OracleInterpreter)
-                            {
-                                newExpression = $"CAST({expression} AS {newDataType})";
-                            }
-                            else if
-                            (
-                                (sourceDbInterpreter is SqlServerInterpreter || sourceDbInterpreter is MySqlInterpreter)
-                                &&
-                                (targetDbInterpreter is SqlServerInterpreter || targetDbInterpreter is MySqlInterpreter)
-                            )
-                            {
-                                newExpression = this.ExchangeFunctionArgs(name, newDataType, expression);
-                            }
-
-                            token.Symbol = this.ReplaceValue(token.Symbol, fomular.Expression, newExpression);
-
-                            break;
-
-                        case "CAST":
-
-                            int asIndex = fomular.Expression.ToUpper().IndexOf(" AS ");
-
-                            string arg = fomular.Expression.Substring(name.Length, asIndex - 3);
-
-                            int functionEndIndex = -1;
-                            for (int i = asIndex + 3; i < fomular.Expression.Length; i++)
-                            {
-                                if (fomular.Expression[i] == '(')
-                                {
-                                    leftParenthesesCount++;
-                                }
-                                else if (fomular.Expression[i] == ')')
-                                {
-                                    rightParenthesesCount++;
-                                }
-
-                                if (rightParenthesesCount - leftParenthesesCount == 1)
-                                {
-                                    dataType = fomular.Expression.Substring(asIndex + 4, i - asIndex - 4);
-                                    functionEndIndex = i;
-                                    break;
-                                }
-                            }
-
-                            newDataType = this.GetNewDataType(dataTypeMappings, dataType);                        
-
-                            token.Symbol = this.ReplaceValue(token.Symbol, dataType, newDataType);
-
-                            break;
-
-                        default:
-
-                            string text = name;
-                            string textWithBrackets = name.ToLower() + "()";
-
-                            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
-                            {
-                                text = textWithBrackets;
-                            }
-
-                            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
-
-                            if (funcMappings != null)
-                            {
-                                string targetFunction = funcMappings.FirstOrDefault(item => item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
-
-                                token.Symbol = this.ReplaceValue(token.Symbol, name, targetFunction);
-                            }
-
-                            break;
+                    if (newExpression != fomular.Expression)
+                    {
+                        token.Symbol = this.ReplaceValue(token.Symbol, fomular.Expression, newExpression);
                     }
                 }
             }
-        }        
+        }       
 
         private List<FunctionFomular> GetFunctionFomulars(string value)
         {
@@ -199,18 +144,15 @@ namespace DatabaseConverter.Core
 
                     int startIndex = nameMatch.Index;
 
-                    FunctionFomular func = new FunctionFomular()
-                    {
-                        Name = name,
-                        StartIndex = startIndex,
-                        StopIndex = lastRightParenthesesIndex
-                    };
-
-                    int length = func.Length;
+                    int length = lastRightParenthesesIndex - startIndex + 1;
 
                     string expression = innerContent.Substring(startIndex, length);
 
-                    func.Expression = expression;
+                    FunctionFomular func = new FunctionFomular(name, expression)
+                    {                       
+                        StartIndex = startIndex,
+                        StopIndex = lastRightParenthesesIndex
+                    };
 
                     functions.Add(func);
 
@@ -224,5 +166,5 @@ namespace DatabaseConverter.Core
 
             return functions;
         }
-    }    
+    }
 }

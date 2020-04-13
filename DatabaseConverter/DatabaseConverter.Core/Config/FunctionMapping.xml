@@ -53,5 +53,10 @@
     <SqlServer>REPLICATE</SqlServer>
     <MySql>REPEAT</MySql>
     <Oracle>RPAD</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>CONVERT</SqlServer>
+    <MySql>CONVERT</MySql>
+    <Oracle direction="IN">CAST</Oracle>
   </mapping> 
 </mappings>

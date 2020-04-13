@@ -1,4 +1,5 @@
 ﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
@@ -66,7 +67,7 @@ namespace SqlAnalyser.Core
 
         public abstract void ExtractFunctions(CommonScript script, ParserRuleContext node);
 
-        public void ExtractFunctions<T>(CommonScript script, ParserRuleContext node)
+        public void ExtractFunctions(CommonScript script, ParserRuleContext node, Func<IParseTree, bool> func)
         {
             if (node == null)
             {
@@ -75,13 +76,13 @@ namespace SqlAnalyser.Core
 
             foreach (var child in node.children)
             {
-                if (child is T)
+                if (func(child))
                 {
                     script.Functions.Add(new TokenInfo(child as ParserRuleContext));
                 }
                 else if (child is ParserRuleContext)
                 {
-                    this.ExtractFunctions<T>(script, child as ParserRuleContext);
+                    this.ExtractFunctions(script, child as ParserRuleContext, func);
                 }
             }
         }

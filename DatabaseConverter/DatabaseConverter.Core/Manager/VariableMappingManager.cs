@@ -6,14 +6,14 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class VariableMappingManager : MappingManager
+    public class VariableMappingManager : ConfigManager
     {
         public static string FunctionMappingFilePath { get { return Path.Combine(ConfigRootFolder, "VariableMapping.xml"); } }
 
         public static List<IEnumerable<VariableMapping>> GetVariableMappings()
         {
-            XDocument functionMappingDoc = XDocument.Load(FunctionMappingFilePath);
-            return functionMappingDoc.Root.Elements("mapping").Select(item =>
+            XDocument doc = XDocument.Load(FunctionMappingFilePath);
+            return doc.Root.Elements("mapping").Select(item =>
             item.Elements().Select(t => new VariableMapping() { DbType = t.Name.ToString(), Variable = t.Value }))
             .ToList();
         }

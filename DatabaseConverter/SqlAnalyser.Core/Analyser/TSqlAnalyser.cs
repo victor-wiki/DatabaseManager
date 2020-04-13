@@ -245,9 +245,13 @@ namespace SqlAnalyser.Core
 
             if (statement is SelectStatement select)
             {
-                appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
 
-                if (select.IntoTableName != null)
+                string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
+
+                appendLine($"SELECT {intoVariable}{string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+
+                if (select.IntoTableName != null && !isIntoVariable)
                 {
                     appendLine($"INTO {select.IntoTableName.ToString()}");
                 }
@@ -256,7 +260,10 @@ namespace SqlAnalyser.Core
                 {
                     if (select.WithStatements == null || select.WithStatements.Count == 0)
                     {
-                        appendLine($"FROM {select.TableName}");
+                        if(select.TableName.Symbol.Trim('[',']').ToUpper()!="DUAL")
+                        {
+                            appendLine($"FROM {select.TableName}");
+                        }                        
                     }
                     else
                     {

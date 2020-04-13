@@ -6,11 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
+    <PackageReference Include="SqlParserSharp" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
-    <ProjectReference Include="..\SqlParser\SqlParser.csproj" />
   </ItemGroup>
 
 </Project>

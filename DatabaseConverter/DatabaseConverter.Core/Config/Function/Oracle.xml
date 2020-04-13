@@ -1,0 +1,4 @@
+﻿<items>
+  <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="RPAD" args="EXP,LENGTH,EXP"></item>
+</items>

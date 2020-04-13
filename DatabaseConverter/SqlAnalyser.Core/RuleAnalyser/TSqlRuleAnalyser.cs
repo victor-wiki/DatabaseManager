@@ -995,7 +995,17 @@ namespace SqlAnalyser.Core
 
         public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
-            this.ExtractFunctions<Function_callContext>(script, node);
+            this.ExtractFunctions(script, node, this.IsFunction);
         }
+
+        private Func<IParseTree, bool> IsFunction = (node) =>
+        {
+            if (node is Function_callContext)
+            {
+                return true;
+            }
+           
+            return false;
+        };
     }
 }

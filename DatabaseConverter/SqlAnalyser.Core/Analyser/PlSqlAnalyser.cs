@@ -238,18 +238,19 @@ namespace SqlAnalyser.Core
 
             if (statement is SelectStatement select)
             {
+                if (select.TableName == null)
+                {
+                    select.TableName = new TokenInfo("DUAL");
+                }
+
                 if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
                 {
                     appendLine($"SET {select.Columns.First()}");
                 }
-                else if (select.IntoTableName != null || select.TableName != null)
-                {
-                    appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
-                }
                 else
                 {
-                    return this.BuildStatement(new PrintStatement() { Content = select.Columns.First() }, level);
-                }
+                    appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                }                
 
                 if (select.IntoTableName != null)
                 {

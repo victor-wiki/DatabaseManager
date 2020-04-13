@@ -13,6 +13,9 @@ namespace DatabaseConverter.Core
     {
         private List<string> dataTypes = new List<string>();
 
+        private List<FunctionSpecification> sourceFuncSpecs;
+        private List<FunctionSpecification> targetFuncSpecs;
+
         public DbObjectTokenTranslator(DbInterpreter source, DbInterpreter target) : base(source, target) { }
 
         public override void Translate()
@@ -39,6 +42,9 @@ namespace DatabaseConverter.Core
 
         protected string HandleDefinition(string definition, List<TSQLToken> tokens, out bool changed)
         {
+            this.sourceFuncSpecs = FunctionManager.GetFunctionSpecifications(this.sourceDbInterpreter.DatabaseType);
+            this.targetFuncSpecs = FunctionManager.GetFunctionSpecifications(this.targetDbInterpreter.DatabaseType);
+
             changed = false;
 
             string newDefinition = definition;
@@ -58,90 +64,33 @@ namespace DatabaseConverter.Core
                 {
                     case TSQLTokenType.SystemIdentifier:
 
-                        switch (text.ToUpper())
+                        string name = text.ToUpper();
+
+                        startIndex = token.BeginPosition;
+
+                        int separatorIndex = definition.Substring(startIndex).IndexOfAny(new char[] { ';', '\r', '\n' });
+                        int asIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
+
+                        endIndex = asIndex < separatorIndex ? (asIndex + startIndex + 1) : (separatorIndex + startIndex);
+
+                        string functionExpression = definition.Substring(startIndex, endIndex - startIndex);
+
+                        FunctionFomular fomular = new FunctionFomular(name, functionExpression);
+
+                        Dictionary<string, string> dictDataType = null;
+                        string newExpression = this.HandleFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, name, out dictDataType);
+
+                        if (newExpression != fomular.Expression)
                         {
-                            case "CONVERT":
-                                startIndex = token.BeginPosition;
+                            newDefinition = this.ReplaceValue(newDefinition, fomular.Expression, newExpression);
 
-                                int separatorIndex = definition.Substring(startIndex).IndexOfAny(new char[] { ';', '\r', '\n' });
-                                int asIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
+                            changed = true;
 
-                                endIndex = asIndex < separatorIndex ? (asIndex + startIndex + 1) : (separatorIndex + startIndex);
-
-                                string functionBody = definition.Substring(startIndex, endIndex - startIndex);
-
-                                leftBracketCount = functionBody.Length - functionBody.Replace("(", "").Length;
-                                rightBracketCount = functionBody.Length - functionBody.Replace(")", "").Length;
-
-                                if (leftBracketCount < rightBracketCount)
-                                {
-                                    int count = 0;
-                                    for (int k = 0; k < functionBody.Length; k++)
-                                    {
-                                        if (functionBody[k] == ')')
-                                        {
-                                            count++;
-                                            if (count == leftBracketCount)
-                                            {
-                                                functionBody = functionBody.Substring(0, k + 1);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                int firstLeftBracketIndex = functionBody.IndexOf('(');
-                                int lastRightBracketIndex = functionBody.LastIndexOf(')');
-
-                                string mainBody = functionBody.Substring(firstLeftBracketIndex + 1, lastRightBracketIndex - firstLeftBracketIndex - 1);
-
-                                int firstCommaIndex = mainBody.IndexOf(',');
-
-                                string[] args = new string[2] { mainBody.Substring(0, firstCommaIndex), mainBody.Substring(firstCommaIndex + 1) };
-
-                                string expression = "";
-                                dataType = "";
-
-                                if (sourceDbInterpreter is SqlServerInterpreter)
-                                {
-                                    dataType = args[0];
-                                    expression = args[1];
-                                }
-                                else if (sourceDbInterpreter is MySqlInterpreter)
-                                {
-                                    dataType = args[1];
-                                    expression = args[0];
-                                }
-
-                                newDataType = this.GetNewDataType(dataTypeMappings, dataType);
-
-                                if (!string.IsNullOrEmpty(newDataType) && !dataTypes.Contains(dataType))
-                                {
-                                    dataTypes.Add(newDataType);
-                                }
-
-                                string newFunctionBody = "";
-
-                                if (targetDbInterpreter is OracleInterpreter)
-                                {
-                                    newFunctionBody = $"CAST({expression} AS {newDataType})";
-                                }
-                                else if
-                                (
-                                    (sourceDbInterpreter is SqlServerInterpreter || sourceDbInterpreter is MySqlInterpreter)
-                                    &&
-                                    (targetDbInterpreter is SqlServerInterpreter || targetDbInterpreter is MySqlInterpreter)
-                                )
-                                {
-                                    newFunctionBody = this.ExchangeFunctionArgs(text, newDataType, expression);
-                                }
-
-                                newDefinition = newDefinition.Replace(functionBody, newFunctionBody);
-
-                                changed = true;
-
-                                break;
-                        }
+                            if (dictDataType!=null)
+                            {
+                                this.dataTypes.AddRange(dictDataType.Values);
+                            }
+                        }                       
 
                         break;
 
@@ -150,7 +99,7 @@ namespace DatabaseConverter.Core
                         {
                             case "CAST":
                                 startIndex = token.BeginPosition;
-                                int asIndex = startIndex + definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
+                                asIndex = startIndex + definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
 
                                 string arg = definition.Substring(token.EndPosition + 1, asIndex - startIndex - 3);
 

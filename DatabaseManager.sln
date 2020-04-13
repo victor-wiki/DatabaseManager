@@ -29,8 +29,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseConverter.Test", "D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlAnalyser.Core", "DatabaseConverter\SqlAnalyser.Core\SqlAnalyser.Core.csproj", "{F4623EC9-5292-4CC0-B46D-FB919717B01B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlParser", "DatabaseConverter\SqlParser\SqlParser.csproj", "{23170FE7-6BE3-433C-9205-B42215110919}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -161,18 +159,6 @@ Global
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x64.Build.0 = Release|Any CPU
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x86.ActiveCfg = Release|Any CPU
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x86.Build.0 = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|x64.Build.0 = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Debug|x86.Build.0 = Debug|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|x64.ActiveCfg = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|x64.Build.0 = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|x86.ActiveCfg = Release|Any CPU
-		{23170FE7-6BE3-433C-9205-B42215110919}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -188,7 +174,6 @@ Global
 		{557AC416-FD90-4268-B0D0-A079DA28503A} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
 		{014E5F8E-0404-4764-9E10-B44F3FA84B09} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
-		{23170FE7-6BE3-433C-9205-B42215110919} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {25A155A8-4316-42C2-881F-CC951DBD2CE8}

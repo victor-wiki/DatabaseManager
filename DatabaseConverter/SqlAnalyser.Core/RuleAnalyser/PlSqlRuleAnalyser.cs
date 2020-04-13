@@ -264,18 +264,27 @@ namespace SqlAnalyser.Core
 
         public void SetScriptBody(CommonScript script, BodyContext body)
         {
-            foreach (var child in body.children)
+            script.Statements.AddRange(this.ParseBody(body));
+        }
+
+        public List<Statement> ParseBody(BodyContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
             {
                 if (child is Seq_of_statementsContext seq)
                 {
-                    script.Statements.AddRange(this.ParseSeqStatement(seq));
+                    statements.AddRange(this.ParseSeqStatement(seq));
                 }
             }
 
-            if (body.exception_handler()?.Any() == true)
+            if (node.exception_handler()?.Any() == true)
             {
-                script.Statements.Add(this.ParseException(body));
+                statements.Add(this.ParseException(node));
             }
+
+            return statements;
         }
 
         public void SetRoutineParameters(RoutineScript script, ParameterContext[] parameters)
@@ -381,6 +390,10 @@ namespace SqlAnalyser.Core
                 else if (child is Exit_statementContext exit)
                 {
                     statements.Add(this.ParseExitStatement(exit));
+                }
+                else if(child is BodyContext body)
+                {                    
+                    statements.AddRange(this.ParseBody(body));
                 }
             }
 
@@ -910,7 +923,20 @@ namespace SqlAnalyser.Core
 
         public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
-            this.ExtractFunctions<Standard_functionContext>(script, node);
+            this.ExtractFunctions(script, node, this.IsFunction);
         }
+
+        private Func<IParseTree, bool> IsFunction = (node) =>
+        {
+            if(node is Standard_functionContext)
+            {
+                return true;
+            }
+            else if(node is General_element_partContext && (node as General_element_partContext).children.Any(item=>item is Function_argumentContext))
+            {
+                return true;
+            }
+            return false;
+        };
     }
 }

@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using PoorMansTSqlFormatterRedux;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -155,6 +156,94 @@ namespace DatabaseConverter.Core
             }
 
             return script;
+        }
+
+        public string HandleFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,  
+            FunctionFomular fomular, string targetFunctionName, out Dictionary<string, string> dictDataType)
+        {
+            dictDataType = new Dictionary<string, string>();
+
+            string name = fomular.Name;
+
+            FunctionSpecification sourceFuncSpec = sourceFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == name.ToUpper());
+            FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionName.ToUpper());
+
+            string newExpression = fomular.Expression;
+
+            if (sourceFuncSpec != null && targetFuncSpec != null)
+            {
+                Dictionary<int, FunctionArgumentToken> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec);
+                Dictionary<int, FunctionArgumentToken> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec);
+
+                string delimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+
+                fomular.Delimiter = delimiter;
+
+                List<string> args = new List<string>();               
+
+                foreach (var kp in targetTokens)
+                {
+                    int targetIndex = kp.Key;
+                    FunctionArgumentToken token = kp.Value;
+
+                    if (sourceTokens.ContainsValue(token))
+                    {
+                        int sourceIndex = sourceTokens.FirstOrDefault(item => item.Value == token).Key;
+
+                        if (fomular.Args.Count > sourceIndex)
+                        {
+                            string oldArg = fomular.Args[sourceIndex];
+                            string newArg = oldArg;
+
+                            switch (token)
+                            {
+                                case FunctionArgumentToken.TYPE:
+
+                                    if (!dictDataType.ContainsKey(oldArg))
+                                    {
+                                        newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
+
+                                        dictDataType.Add(oldArg, newArg);
+                                    }
+                                    else
+                                    {
+                                        newArg = dictDataType[oldArg];
+                                    }
+                                    break;
+                            }
+
+                            args.Add(newArg);
+                        }
+                    }
+                }
+
+                newExpression = $"{targetFunctionName}({string.Join(delimiter, args)})";
+            }
+
+            return newExpression;
+        }
+
+        public Dictionary<int, FunctionArgumentToken> GetFunctionArgumentTokens(FunctionSpecification spec)
+        {
+            string[] args = spec.Args.Split(new string[] { spec.Delimiter }, StringSplitOptions.RemoveEmptyEntries);
+
+            Dictionary<int, FunctionArgumentToken> dictTokenIndex = new Dictionary<int, FunctionArgumentToken>();
+
+            int i = 0;
+
+            foreach (string arg in args)
+            {
+                FunctionArgumentToken token = FunctionArgumentToken.UNKNOWN;
+
+                if (Enum.TryParse(arg.ToUpper(), out token))
+                {
+                    dictTokenIndex.Add(i, token);
+                }
+
+                i++;
+            }
+
+            return dictTokenIndex;
         }
     }
 }

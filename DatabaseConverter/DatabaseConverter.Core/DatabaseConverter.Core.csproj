@@ -12,10 +12,13 @@
     <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
     <None Remove="Config\FunctionMapping.xml" />
+    <None Remove="Config\Function\MySql.xml" />
+    <None Remove="Config\Function\Oracle.xml" />
+    <None Remove="Config\Function\SqlServer.xml" />
     <None Remove="Config\VariableMapping.xml" />
-    <None Remove="Keyword\MySql.txt" />
-    <None Remove="Keyword\Oracle.txt" />
-    <None Remove="Keyword\SqlServer.txt" />
+    <None Remove="Config\Keyword\MySql.txt" />
+    <None Remove="Config\Keyword\Oracle.txt" />
+    <None Remove="Config\Keyword\SqlServer.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,19 +40,28 @@
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Config\Function\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Function\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Function\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\VariableMapping.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\FunctionMapping.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Keyword\MySql.txt">
+    <Content Include="Config\Keyword\MySql.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Keyword\Oracle.txt">
+    <Content Include="Config\Keyword\Oracle.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Keyword\SqlServer.txt">
+    <Content Include="Config\Keyword\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

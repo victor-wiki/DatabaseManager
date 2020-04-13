@@ -1,0 +1,5 @@
+﻿<items>
+  <item name="CONVERT" args="EXP,TYPE"></item>
+  <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="REPLICATE" args="EXP,LENGTH"></item>
+</items>

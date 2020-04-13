@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class KeywordManager
+    public class KeywordManager: ConfigManager
     {
-        public static readonly string KeywordFolder = "Keyword";
+        public static readonly string KeywordFolder = Path.Combine(ConfigRootFolder, "Keyword");
 
         public static IEnumerable<string> GetKeywords(DatabaseType databaseType)
         {

@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class DataTypeMappingManager : MappingManager
+    public class DataTypeMappingManager : ConfigManager
     {
         public static List<DataTypeMapping> GetDataTypeMappings(DatabaseType sourceDatabaseType, DatabaseType targetDatabaseType)
         {
