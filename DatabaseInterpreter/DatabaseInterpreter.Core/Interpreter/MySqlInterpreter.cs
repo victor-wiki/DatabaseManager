@@ -28,7 +28,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Constructor
-        public MySqlInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption options) : base(connectionInfo, options)
+        public MySqlInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
         {
             this.dbConnector = this.GetDbConnector();
         }

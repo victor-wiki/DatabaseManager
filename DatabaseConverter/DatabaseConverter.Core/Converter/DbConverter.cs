@@ -159,7 +159,7 @@ namespace DatabaseConverter.Core
             {
                 this.isBusy = true;
 
-                if (this.Option.UseTransaction)
+                if (this.Option.ExecuteScriptOnTargetServer && this.Option.UseTransaction)
                 {
                     dbConnection.Open();
                     this.transaction = dbConnection.BeginTransaction();
@@ -206,8 +206,9 @@ namespace DatabaseConverter.Core
                                         continue;
                                     }
 
-                                    bool skipError = this.Option.SkipScriptError
-                                    && (s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View));
+                                    bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View);
+
+                                    bool skipError = this.Option.SkipScriptError && isCreateScript;
 
                                     string sql = s.Content?.Trim();
 
@@ -215,7 +216,7 @@ namespace DatabaseConverter.Core
                                     {
                                         i++;
 
-                                        if(targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
+                                        if(!isCreateScript && targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
                                         {
                                             sql = sql.TrimEnd(targetInterpreter.ScriptsSplitString.ToArray());
                                         }

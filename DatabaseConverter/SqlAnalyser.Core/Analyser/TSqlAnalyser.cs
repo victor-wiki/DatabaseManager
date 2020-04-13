@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using DatabaseInterpreter.Model;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
@@ -126,9 +127,51 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
-            foreach (Statement statement in script.Statements)
+            Action<IEnumerable<Statement>> appendStatements = (statements) =>
             {
-                sb.Append(this.BuildStatement(statement));
+                foreach (Statement statement in statements)
+                {
+                    if (statement is WhileStatement @while)
+                    {
+                        FetchCursorStatement fetchCursorStatement = @while.Statements.FirstOrDefault(item => item is FetchCursorStatement) as FetchCursorStatement;
+
+                        if (fetchCursorStatement != null && !statements.Any(item => item is FetchCursorStatement))
+                        {
+                            @while.Condition.Symbol = "@@FETCH_STATUS = 0";
+
+                            sb.AppendLine(this.BuildStatement(fetchCursorStatement));
+                        }
+                    }
+
+                    sb.AppendLine(this.BuildStatement(statement));
+                }
+            };
+
+            ExceptionStatement exceptionStatement = (ExceptionStatement)script.Statements.FirstOrDefault(item => item is ExceptionStatement);
+
+            if (exceptionStatement != null)
+            {
+                sb.AppendLine("BEGIN TRY");
+                appendStatements(script.Statements.Where(item => !(item is ExceptionStatement)));
+                sb.AppendLine("END TRY");
+
+                sb.AppendLine("BEGIN CATCH");
+
+                foreach (ExceptionItem exceptionItem in exceptionStatement.Items)
+                {
+                    sb.AppendLine($"IF {exceptionItem.Name} = ERROR_PROCEDURE() OR {exceptionItem.Name} = ERROR_NUMBER()");
+                    sb.AppendLine("BEGIN");
+
+                    appendStatements(exceptionItem.Statements);
+
+                    sb.AppendLine("END");
+                }
+
+                sb.AppendLine("END CATCH");
+            }
+            else
+            {
+                appendStatements(script.Statements);
             }
 
             sb.AppendLine("END");
@@ -287,12 +330,64 @@ namespace SqlAnalyser.Core
                 {
                     appendLine($"VALUES({string.Join(",", insert.Values.Select(item => item))});");
                 }
-
-                appendLine("");
             }
             else if (statement is UpdateStatement update)
             {
-                appendLine($"UPDATE {string.Join(",", update.TableNames)} SET");
+                List<TokenInfo> tableNames = new List<TokenInfo>();
+
+                #region Handle for mysql and plsql update join
+                if (update.TableNames.Count == 1)
+                {
+                    string[] items = update.TableNames[0].Symbol.Split(' ');
+
+                    if (items.Length > 1)
+                    {
+                        string alias = items[1];
+
+                        bool added = false;
+
+                        foreach (NameValueItem nameValue in update.SetItems)
+                        {
+                            if (nameValue.Name.Symbol.ToUpper().Trim().StartsWith(alias.ToUpper() + "."))
+                            {
+                                if (!added)
+                                {
+                                    tableNames.Add(new TokenInfo(alias));
+                                    added = true;
+                                }
+
+                                if (nameValue.Value.Symbol?.ToUpper()?.Contains("SELECT") == true)
+                                {
+                                    string oldValue = nameValue.Value.Symbol;
+                                    int fromIndex = oldValue.ToUpper().IndexOf("FROM");
+
+                                    nameValue.Value.Symbol = Regex.Replace(oldValue.Substring(0, fromIndex), "SELECT ", "", RegexOptions.IgnoreCase).Trim(' ', '(');
+
+                                    if (update.FromItems == null)
+                                    {
+                                        update.FromItems = new List<UpdateFromItem>();
+
+                                        UpdateFromItem fromItem = new UpdateFromItem() { TableName = update.TableNames[0] };
+
+                                        string join = "JOIN " + Regex.Replace(oldValue.Substring(fromIndex + 5), " WHERE ", " ON ", RegexOptions.IgnoreCase).Trim(')');
+
+                                        fromItem.Joins.Add(new TokenInfo(join));
+
+                                        update.FromItems.Add(fromItem);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+                #endregion
+
+                if (tableNames.Count == 0)
+                {
+                    tableNames.AddRange(update.TableNames);
+                }
+
+                appendLine($"UPDATE {string.Join(",", tableNames)} SET");
 
                 appendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
 
@@ -351,7 +446,8 @@ namespace SqlAnalyser.Core
             {
                 if (declare.Type == DeclareType.Variable)
                 {
-                    appendLine($"DECLARE {declare.Name} {declare.DataType};");
+                    string defaultValue = (declare.DefaultValue == null ? "" : $"= {declare.DefaultValue}");
+                    appendLine($"DECLARE {declare.Name} {declare.DataType} {defaultValue};");
                 }
                 else if (declare.Type == DeclareType.Table)
                 {
@@ -399,8 +495,38 @@ namespace SqlAnalyser.Core
 
                     appendLine("END");
                 }
+            }
+            else if (statement is CaseStatement @case)
+            {
+                string variableName = @case.VariableName.ToString();
 
-                appendLine("");
+                IfStatement ifStatement = new IfStatement();
+
+                int i = 0;
+                foreach (var item in @case.Items)
+                {
+                    IfStatementItem ifItem = new IfStatementItem();
+
+                    ifItem.Type = i == 0 ? IfStatementType.IF : item.Type;
+
+                    if (item.Type != IfStatementType.ELSE)
+                    {
+                        ifItem.Condition = new TokenInfo($"{variableName}={item.Condition}") { Type = TokenType.Condition };
+                    }
+
+                    i++;
+                }
+
+                append(this.BuildStatement(ifStatement));
+            }
+            else if (statement is LoopStatement loop)
+            {
+                appendLine($"WHILE {loop.Condition}");
+                appendLine("BEGIN");
+
+                appendStatements(loop.Statements, true);
+
+                appendLine("END");
             }
             else if (statement is WhileStatement @while)
             {
@@ -410,8 +536,13 @@ namespace SqlAnalyser.Core
                 appendStatements(@while.Statements, true);
 
                 appendLine("END");
-
-                appendLine("");
+            }
+            else if (statement is WhileExitStatement whileExit)
+            {
+                appendLine($"IF {whileExit.Condition}");
+                appendLine("BEGIN");
+                appendLine("BREAK");
+                appendLine("END");
             }
             else if (statement is TryCatchStatement tryCatch)
             {
@@ -430,9 +561,9 @@ namespace SqlAnalyser.Core
             }
             else if (statement is PrintStatement print)
             {
-                appendLine($"PRINT {print.Content};");
+                appendLine($"PRINT {print.Content.Symbol?.Replace("||", "+")};");
             }
-            else if (statement is ExecuteStatement execute)
+            else if (statement is ProcedureCallStatement execute)
             {
                 appendLine($"EXECUTE {execute.Content};");
             }
@@ -456,6 +587,32 @@ namespace SqlAnalyser.Core
             else if (statement is LeaveStatement leave)
             {
                 appendLine("RETURN;");
+            }
+            else if (statement is DeclareCursorStatement declareCursor)
+            {
+                appendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
+                append(this.BuildStatement(declareCursor.SelectStatement, level));
+            }
+            else if (statement is OpenCursorStatement openCursor)
+            {
+                appendLine($"OPEN {openCursor.CursorName}");
+            }
+            else if (statement is FetchCursorStatement fetchCursor)
+            {
+                appendLine($"FETCH NEXT FROM {fetchCursor.CursorName} INTO {string.Join(",", fetchCursor.Variables)}");
+            }
+            else if (statement is CloseCursorStatement closeCursor)
+            {
+                appendLine($"CLOSE {closeCursor.CursorName}");
+
+                if (closeCursor.IsEnd)
+                {
+                    appendLine($"DEALLOCATE {closeCursor.CursorName}");
+                }
+            }
+            else if (statement is DeallocateCursorStatement deallocateCursor)
+            {
+                appendLine($"DEALLOCATE {deallocateCursor.CursorName}");
             }
 
             return sb.ToString();

@@ -162,18 +162,33 @@ namespace DatabaseConverter.Core
 
             if(!string.IsNullOrEmpty(precision) && !string.IsNullOrEmpty(scale))
             {
-                return precision == column.Precision.ToString() && scale == column.Scale.ToString(); 
+                return this.IsValueEqual(precision, column.Precision) && this.IsValueEqual(scale, column.Scale); 
             }
             else if(!string.IsNullOrEmpty(precision) && string.IsNullOrEmpty(scale))
             {
-                return precision == column.Precision.ToString();
+                return this.IsValueEqual(precision , column.Precision);
             }
             else if(string.IsNullOrEmpty(precision) && !string.IsNullOrEmpty(scale))
             {
-                return scale == column.Scale.ToString();
+                return this.IsValueEqual(scale , column.Scale);
             }
             return false;
-        }       
+        }    
+        
+        private bool IsValueEqual(string value1, int? value2)
+        {
+            string v2 = value2?.ToString();
+            if(value1 == v2)
+            {
+                return true;
+            }
+            else if(value1 == "0" && (v2 is null || v2 ==""))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         public string GetTrimedDataType(string dataType)
         {

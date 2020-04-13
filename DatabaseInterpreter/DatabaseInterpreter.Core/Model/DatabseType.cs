@@ -2,8 +2,8 @@
 {
     public enum DatabaseType
     {
-        SqlServer = 0,
-        MySql = 1,
-        Oracle = 2
+        SqlServer = 1,
+        MySql = 2,
+        Oracle = 3
     }
 }

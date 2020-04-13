@@ -65,7 +65,7 @@ namespace DatabaseConverter.Core
                     token.Symbol = "@" + token.Symbol.TrimStart('@');
                     hasChanged = true;
 
-                    if (!this.ReplacedVariables.ContainsKey(token.Symbol))
+                    if (!this.ReplacedVariables.ContainsKey(oldSymbol))
                     {
                         this.ReplacedVariables.Add(oldSymbol, token.Symbol);
                     }
@@ -81,7 +81,7 @@ namespace DatabaseConverter.Core
 
                     hasChanged = true;
 
-                    if (!this.ReplacedVariables.ContainsKey(token.Symbol))
+                    if (!this.ReplacedVariables.ContainsKey(oldSymbol))
                     {
                         this.ReplacedVariables.Add(oldSymbol, token.Symbol);
                     }
@@ -112,7 +112,20 @@ namespace DatabaseConverter.Core
 
                     token.Symbol = this.TargetInterpreter.ParseDataType(tableColumn);
                 }
-                else if (token.Type == TokenType.TableName || token.Type == TokenType.CallProc)
+                else if (token.Type == TokenType.TableName)
+                {
+                    TableNameInfo tableNameInfo = token.Tag as TableNameInfo;
+
+                    if (tableNameInfo == null)
+                    {
+                        token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
+                    }
+                    else
+                    {
+                        token.Symbol = $"{ this.GetQuotedName(tableNameInfo.Name.ToString(), token.Type)}" + (tableNameInfo.Alias == null ? "" : " " + tableNameInfo.Alias);
+                    }
+                }
+                else if (token.Type == TokenType.ProcedureCall)
                 {
                     token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
                 }
@@ -213,7 +226,7 @@ namespace DatabaseConverter.Core
 
             for (int i = 0; i < items.Count - 1; i++)
             {
-                if ((tokenType == TokenType.TableName || tokenType == TokenType.CallProc))
+                if ((tokenType == TokenType.TableName || tokenType == TokenType.ProcedureCall))
                 {
                     if (i == items.Count - 2)
                     {

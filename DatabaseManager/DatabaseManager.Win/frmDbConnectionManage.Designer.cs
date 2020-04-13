@@ -227,7 +227,7 @@
             this.MaximizeBox = false;
             this.Name = "frmDbConnectionManage";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Databae connection manage";
+            this.Text = "Databae Connection Manage";
             this.Load += new System.EventHandler(this.frmDbConnectionManage_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvDbConnection)).EndInit();
             this.panelOperation.ResumeLayout(false);

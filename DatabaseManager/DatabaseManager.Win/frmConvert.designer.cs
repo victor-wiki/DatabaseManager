@@ -104,7 +104,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 87);
+            this.txtMessage.Size = new System.Drawing.Size(731, 78);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);
@@ -133,8 +133,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.btnSaveMessage);
             this.splitContainer1.Panel2.Controls.Add(this.txtMessage);
             this.splitContainer1.Panel2.Controls.Add(this.btnCopyMessage);
-            this.splitContainer1.Size = new System.Drawing.Size(770, 512);
-            this.splitContainer1.SplitterDistance = 428;
+            this.splitContainer1.Size = new System.Drawing.Size(770, 517);
+            this.splitContainer1.SplitterDistance = 432;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 21;
             // 
@@ -144,7 +144,7 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
             this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(269, 335);
+            this.tvDbObjects.Size = new System.Drawing.Size(269, 339);
             this.tvDbObjects.TabIndex = 38;
             // 
             // targetDbProfile
@@ -187,7 +187,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.Enabled = false;
-            this.btnCancel.Location = new System.Drawing.Point(415, 399);
+            this.btnCancel.Location = new System.Drawing.Point(415, 403);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 22;
@@ -199,7 +199,7 @@
             // 
             this.btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnExecute.Enabled = false;
-            this.btnExecute.Location = new System.Drawing.Point(318, 399);
+            this.btnExecute.Location = new System.Drawing.Point(318, 403);
             this.btnExecute.Name = "btnExecute";
             this.btnExecute.Size = new System.Drawing.Size(75, 23);
             this.btnExecute.TabIndex = 21;
@@ -230,7 +230,7 @@
             this.gbOption.Controls.Add(this.chkOutputScripts);
             this.gbOption.Location = new System.Drawing.Point(286, 54);
             this.gbOption.Name = "gbOption";
-            this.gbOption.Size = new System.Drawing.Size(475, 339);
+            this.gbOption.Size = new System.Drawing.Size(475, 343);
             this.gbOption.TabIndex = 20;
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
@@ -419,7 +419,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmConvert";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database convert";
+            this.Text = "Database Convert";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMain_FormClosing);
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);

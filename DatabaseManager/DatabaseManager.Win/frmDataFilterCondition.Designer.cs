@@ -42,10 +42,10 @@
             this.panelSeries = new System.Windows.Forms.Panel();
             this.txtValues = new System.Windows.Forms.TextBox();
             this.gbSingle = new System.Windows.Forms.GroupBox();
-            this.rbSingle = new System.Windows.Forms.RadioButton();
-            this.cboOperator = new System.Windows.Forms.ComboBox();
-            this.txtValue = new System.Windows.Forms.TextBox();
             this.panelSingle = new System.Windows.Forms.Panel();
+            this.txtValue = new System.Windows.Forms.TextBox();
+            this.cboOperator = new System.Windows.Forms.ComboBox();
+            this.rbSingle = new System.Windows.Forms.RadioButton();
             this.rbSeries = new System.Windows.Forms.RadioButton();
             this.gbRange.SuspendLayout();
             this.panelRange.SuspendLayout();
@@ -191,18 +191,21 @@
             this.gbSingle.TabIndex = 8;
             this.gbSingle.TabStop = false;
             // 
-            // rbSingle
+            // panelSingle
             // 
-            this.rbSingle.AutoSize = true;
-            this.rbSingle.Checked = true;
-            this.rbSingle.Location = new System.Drawing.Point(17, 6);
-            this.rbSingle.Name = "rbSingle";
-            this.rbSingle.Size = new System.Drawing.Size(149, 16);
-            this.rbSingle.TabIndex = 2;
-            this.rbSingle.TabStop = true;
-            this.rbSingle.Text = "Single value criteria";
-            this.rbSingle.UseVisualStyleBackColor = true;
-            this.rbSingle.CheckedChanged += new System.EventHandler(this.rbSingle_CheckedChanged);
+            this.panelSingle.Controls.Add(this.txtValue);
+            this.panelSingle.Controls.Add(this.cboOperator);
+            this.panelSingle.Location = new System.Drawing.Point(6, 20);
+            this.panelSingle.Name = "panelSingle";
+            this.panelSingle.Size = new System.Drawing.Size(410, 27);
+            this.panelSingle.TabIndex = 3;
+            // 
+            // txtValue
+            // 
+            this.txtValue.Location = new System.Drawing.Point(72, 3);
+            this.txtValue.Name = "txtValue";
+            this.txtValue.Size = new System.Drawing.Size(333, 21);
+            this.txtValue.TabIndex = 1;
             // 
             // cboOperator
             // 
@@ -221,21 +224,18 @@
             this.cboOperator.Size = new System.Drawing.Size(56, 20);
             this.cboOperator.TabIndex = 0;
             // 
-            // txtValue
+            // rbSingle
             // 
-            this.txtValue.Location = new System.Drawing.Point(72, 3);
-            this.txtValue.Name = "txtValue";
-            this.txtValue.Size = new System.Drawing.Size(333, 21);
-            this.txtValue.TabIndex = 1;
-            // 
-            // panelSingle
-            // 
-            this.panelSingle.Controls.Add(this.txtValue);
-            this.panelSingle.Controls.Add(this.cboOperator);
-            this.panelSingle.Location = new System.Drawing.Point(6, 20);
-            this.panelSingle.Name = "panelSingle";
-            this.panelSingle.Size = new System.Drawing.Size(410, 27);
-            this.panelSingle.TabIndex = 3;
+            this.rbSingle.AutoSize = true;
+            this.rbSingle.Checked = true;
+            this.rbSingle.Location = new System.Drawing.Point(17, 6);
+            this.rbSingle.Name = "rbSingle";
+            this.rbSingle.Size = new System.Drawing.Size(149, 16);
+            this.rbSingle.TabIndex = 2;
+            this.rbSingle.TabStop = true;
+            this.rbSingle.Text = "Single value criteria";
+            this.rbSingle.UseVisualStyleBackColor = true;
+            this.rbSingle.CheckedChanged += new System.EventHandler(this.rbSingle_CheckedChanged);
             // 
             // rbSeries
             // 
@@ -265,7 +265,7 @@
             this.MaximizeBox = false;
             this.Name = "frmDataFilterCondition";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Query condition";
+            this.Text = "Query Condition";
             this.Load += new System.EventHandler(this.frmDataFilterCondition_Load);
             this.gbRange.ResumeLayout(false);
             this.panelRange.ResumeLayout(false);

@@ -28,7 +28,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Constructor
-        public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption options) : base(connectionInfo, options)
+        public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
         {
             this.dbOwner = connectionInfo.UserId;
             this.dbConnector = this.GetDbConnector();
@@ -88,12 +88,41 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>("");
+            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(filter));
         }
 
         public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, "");
+            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+        }
+
+        private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
+        {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string sql = "";
+
+            if (isSimpleMode)
+            {
+                sql = $@"SELECT T.OWNER AS ""Owner"",T.TYPE_NAME AS ""Name""
+                        FROM ALL_TYPES T";
+            }
+            else
+            {
+                sql = $@"SELECT T.OWNER AS ""Owner"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""DataType"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
+                        FROM ALL_TYPES T
+                        JOIN ALL_TYPE_ATTRS TA ON T.OWNER = TA.OWNER AND T.TYPE_NAME = TA.TYPE_NAME
+                      ";
+            }
+
+            sql += $" WHERE UPPER(T.OWNER)=UPPER('{this.GetDbOwner()}')";
+
+            if (filter != null && filter.UserDefinedTypeNames != null && filter.UserDefinedTypeNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(filter.UserDefinedTypeNames);
+                sql += $" AND T.TYPE_NAME IN ({ strNames })";
+            }
+
+            return sql;
         }
         #endregion
 
@@ -128,12 +157,12 @@ namespace DatabaseInterpreter.Core
             {
                 sql = $@"SELECT P.OBJECT_NAME AS ""Name"", P.OWNER AS ""Owner""
                          FROM ALL_PROCEDURES P 
-                         WHERE P.OBJECT_TYPE='FUNCTION' {ownerCondition}
+                         WHERE P.OBJECT_TYPE='{type}' {ownerCondition}
                          {nameCondition}";
             }
             else
             {
-                sql = $@"SELECT S.NAME AS ""Name"", P.OWNER AS ""Owner"", LISTAGG(TEXT,'') WITHIN GROUP(ORDER BY LINE) ""Definition""
+                sql = $@"SELECT S.NAME AS ""Name"", P.OWNER AS ""Owner"", 'CREATE OR REPLACE ' || LISTAGG(TEXT,'') WITHIN GROUP(ORDER BY LINE) ""Definition""
                         FROM ALL_PROCEDURES P
                         JOIN ALL_SOURCE S ON P.OWNER = S.OWNER AND P.OBJECT_NAME = S.NAME
                         WHERE P.OBJECT_TYPE = '{type}' {ownerCondition}
@@ -345,13 +374,13 @@ namespace DatabaseInterpreter.Core
 
             if (filter != null)
             {
-                if(filter.TableNames != null && filter.TableNames.Any())
+                if (filter.TableNames != null && filter.TableNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                     sql += $" AND TABLE_NAME IN ({ strNames })";
                 }
-                
-                if(filter.TableTriggerNames!= null && filter.TableTriggerNames.Any())
+
+                if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
                     sql += $" AND TRIGGER_NAME IN ({ strNames })";
@@ -382,7 +411,7 @@ namespace DatabaseInterpreter.Core
                          WHERE CONSTRAINT_TYPE = 'C' AND GENERATED = 'USER NAME'
                          ";
 
-            if (filter != null && filter.TableNames!=null && filter.TableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND TABLE_NAME IN ({ strNames })";
@@ -413,7 +442,7 @@ namespace DatabaseInterpreter.Core
                         FROM ALL_VIEWS V
                         WHERE UPPER(OWNER) = UPPER('{this.GetDbOwner()}')";
 
-            if (filter!=null && filter.ViewNames != null && filter.ViewNames.Any())
+            if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
                 sql += $" AND V.VIEW_NAME IN ({ strNames })";
@@ -540,6 +569,27 @@ namespace DatabaseInterpreter.Core
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
             ScriptBuilder sb = new ScriptBuilder();
+
+            #region User Defined Type
+
+            List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
+
+            foreach (string userTypeName in userTypeNames)
+            {
+                IEnumerable<UserDefinedType> userTypes = schemaInfo.UserDefinedTypes.Where(item => item.Name == userTypeName);
+
+                this.FeedbackInfo(OperationState.Begin, userTypes.First());
+
+                string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
+
+                string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.ScriptsSplitString;
+
+                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
+
+                this.FeedbackInfo(OperationState.End, userTypes.First());
+            }
+
+            #endregion
 
             #region Function           
             sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
@@ -742,7 +792,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 {
                     dataType = $"{dataType}";
 
-                    if (!(column.Precision == 0 && column.Scale == 0))
+                    if (!((column.Precision == null || column.Precision == 0) && (column.Scale == null || column.Scale == 0)))
                     {
                         long precision = column.Precision.HasValue ? column.Precision.Value : column.MaxLength.Value;
                         int scale = column.Scale.HasValue ? column.Scale.Value : 0;

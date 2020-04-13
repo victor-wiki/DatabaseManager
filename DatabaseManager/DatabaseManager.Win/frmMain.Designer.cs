@@ -78,7 +78,7 @@
             // 
             this.tsmiSetting.Image = global::DatabaseManager.Properties.Resources.Config;
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(141, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -86,7 +86,7 @@
             // 
             this.tsmiDbConnection.Image = global::DatabaseManager.Properties.Resources.DbConnect16;
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(141, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -192,7 +192,7 @@
             this.KeyPreview = true;
             this.Name = "frmMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database manager";
+            this.Text = "Database Manager";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmMain_KeyDown);

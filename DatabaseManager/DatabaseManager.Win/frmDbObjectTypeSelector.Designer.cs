@@ -78,7 +78,7 @@
             this.chkSelectAll.UseVisualStyleBackColor = true;
             this.chkSelectAll.CheckedChanged += new System.EventHandler(this.chkSelectAll_CheckedChanged);
             // 
-            // frmDatabaseObjectTypeSelector
+            // frmDbObjectTypeSelector
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -88,9 +88,9 @@
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.MaximizeBox = false;
-            this.Name = "frmDatabaseObjectTypeSelector";
+            this.Name = "frmDbObjectTypeSelector";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Select databaes objects";
+            this.Text = "Select Database Objects";
             this.Load += new System.EventHandler(this.frmDbObjectTypeSelector_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

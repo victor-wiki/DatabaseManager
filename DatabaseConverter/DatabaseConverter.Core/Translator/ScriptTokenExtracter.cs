@@ -54,7 +54,7 @@ namespace DatabaseConverter.Core
 
                 else if (value is TokenInfo t)
                 {
-                    this.AddToken(t);
+                    this.ExtractTokens(t);
                 }
                 else if (property.PropertyType.IsGenericType && !(property.DeclaringType == typeof(CommonScript) && property.Name == nameof(CommonScript.Functions)))
                 {

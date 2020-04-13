@@ -12,11 +12,29 @@ namespace SqlAnalyser.Model
         public TokenInfo Value { get; set; }
     }
 
+    public class WhileExitStatement : Statement
+    {
+        public TokenInfo Condition { get; set; }
+    }
+
     public class WhileStatement : Statement
     {
         public TokenInfo Condition { get; set; }
 
         public List<Statement> Statements { get; set; } = new List<Statement>();
+    }
+
+    public class LoopStatement : WhileStatement
+    {
+        public LoopType Type { get; set; }
+        public TokenInfo Name { get; set; }      
+    }
+
+    public enum LoopType
+    {
+        LOOP = 0,
+        WHILE = 1,
+        FOR = 2
     }
 
     public class ReturnStatement : Statement
@@ -30,6 +48,7 @@ namespace SqlAnalyser.Model
         public TokenInfo DataType { get; set; }
         public DeclareType Type { get; set; }
         public TemporaryTable Table { get; set; }
+        public TokenInfo DefaultValue { get; set; }
     }
 
     public class TemporaryTable
@@ -62,6 +81,12 @@ namespace SqlAnalyser.Model
         IF = 0,
         ELSEIF = 1,
         ELSE = 2
+    }
+
+    public class CaseStatement : Statement
+    {
+        public TokenInfo VariableName { get; set; }
+        public List<IfStatementItem> Items { get; set; } = new List<IfStatementItem>();
     }
 
     public class SelectStatement : Statement
@@ -118,12 +143,23 @@ namespace SqlAnalyser.Model
         public List<Statement> CatchStatements { get; set; } = new List<Statement>();
     }
 
+    public class ExceptionStatement : Statement
+    {
+        public List<ExceptionItem> Items { get; set; } = new List<ExceptionItem>();
+    }
+
+    public class ExceptionItem
+    {
+        public TokenInfo Name { get; set; }
+        public List<Statement> Statements { get; set; } = new List<Statement>();
+    }
+
     public class PrintStatement : Statement
     {
         public TokenInfo Content { get; set; }
     }
 
-    public class ExecuteStatement : Statement
+    public class ProcedureCallStatement : Statement
     {
         public TokenInfo Content { get; set; }
     }
@@ -134,16 +170,57 @@ namespace SqlAnalyser.Model
         public TokenInfo Content { get; set; }
     }
 
-    public class LeaveStatement:Statement
+    public class LeaveStatement : Statement
     {
         public TokenInfo Content { get; set; }
     }
 
+    public class FunctionCallStatement : Statement
+    {
+        public TokenInfo Name { get; set; }
+        public List<TokenInfo> Arguments { get; set; } = new List<TokenInfo>();
+    }
+
+    public class DeclareCursorStatement : Statement
+    {
+        public TokenInfo CursorName { get; set; }
+        public SelectStatement SelectStatement { get; set; }
+    }
+
+    public class DeclareCursorHandlerStatement:Statement
+    {
+        public List<TokenInfo> Conditions { get; set; } = new List<TokenInfo>();
+        public List<Statement> Statements = new List<Statement>();
+    }
+
+    public class OpenCursorStatement:Statement
+    {
+        public TokenInfo CursorName { get; set; }
+    }
+
+    public class FetchCursorStatement : Statement
+    {
+        public TokenInfo CursorName { get; set; }
+        public List<TokenInfo> Variables { get; set; } = new List<TokenInfo>();
+    }
+
+    public class CloseCursorStatement : Statement
+    {
+        public TokenInfo CursorName { get; set; }
+        public bool IsEnd { get; set; }
+    }
+
+    public class DeallocateCursorStatement : Statement
+    {
+        public TokenInfo CursorName { get; set; }
+    }
+
     public enum TransactionCommandType
     {
-        BEGIN,
-        COMMIT,
-        ROLLBACK
+        BEGIN = 1,
+        COMMIT = 2,
+        ROLLBACK = 3,
+        SET = 4
     }
 
     public class NameValueItem

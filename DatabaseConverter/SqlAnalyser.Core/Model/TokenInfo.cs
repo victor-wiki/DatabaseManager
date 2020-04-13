@@ -72,11 +72,13 @@ namespace SqlAnalyser.Model
         DataType = 2,
         VariableName = 3,
         TableName = 4,
-        ColumnName = 5,
-        Condition = 6,
-        OrderBy = 7,
-        Option = 8,
-        CallProc = 9,
-        JoinOn = 10
+        FunctionName = 5,
+        ColumnName = 6,
+        Condition = 7,
+        OrderBy = 8,
+        Option = 9,
+        ProcedureCall = 10,
+        JoinOn = 11,
+        CursorName = 12
     }
 }

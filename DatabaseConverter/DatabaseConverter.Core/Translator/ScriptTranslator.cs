@@ -104,21 +104,17 @@ namespace DatabaseConverter.Core
         {
             SqlAnalyserBase sqlAnalyser = null;
 
-            var assembly = typeof(SqlAnalyserBase).Assembly;
-            var typeArray = assembly.ExportedTypes;
-
-            var types = (from type in typeArray
-                         where type.IsSubclassOf(typeof(SqlAnalyserBase))
-                         select type).ToList();
-
-            foreach (var type in types)
+            if(dbType == DatabaseType.SqlServer)
             {
-                sqlAnalyser = (SqlAnalyserBase)Activator.CreateInstance(type);
-
-                if (sqlAnalyser.DatabaseType == dbType)
-                {
-                    return sqlAnalyser;
-                }
+                sqlAnalyser = new TSqlAnalyser();
+            }
+            else if(dbType == DatabaseType.MySql)
+            {
+                sqlAnalyser = new MySqlAnalyser();
+            }
+            else if(dbType == DatabaseType.Oracle)
+            {
+                sqlAnalyser = new PlSqlAnalyser();
             }
 
             return sqlAnalyser;

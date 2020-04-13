@@ -25,7 +25,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Constructor
-        public SqlServerInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption options) : base(connectionInfo, options)
+        public SqlServerInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
         {
             this.dbConnector = this.GetDbConnector();
         }
@@ -69,7 +69,7 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
         {
-            string sql = @"SELECT schema_name(T.schema_id) AS [Owner],T.name as Name, ST.name AS Type, T.max_length AS MaxLength, T.precision AS Precision,T.scale AS Scale,T.is_nullable AS IsNullable
+            string sql = @"SELECT schema_name(T.schema_id) AS [Owner],T.name as [Name], T.name as [AttrName], ST.name AS [Type], T.max_length AS [MaxLength], T.precision AS [Precision],T.scale AS [Scale],T.is_nullable AS IsNullable
                             FROM sys.types T JOIN sys.systypes ST ON T.system_type_id=ST.xusertype
                             WHERE is_user_defined=1";
 
@@ -517,17 +517,27 @@ namespace DatabaseInterpreter.Core
             ScriptBuilder sb = new ScriptBuilder();
 
             #region User Defined Type
+            List<string> userTypeNames = new List<string>();
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
             {
                 this.FeedbackInfo(OperationState.Begin, userDefinedType);
 
+                string userTypeName = userDefinedType.Name;
+
+                if(userTypeNames.Contains(userTypeName))
+                {
+                    userTypeName += "_"  + userDefinedType.AttrName;
+                }
+
                 TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
                 string dataLength = this.GetColumnDataLength(column);
 
-                string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userDefinedType.Name)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
+                string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userTypeName)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
 
                 sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
                 sb.AppendLine(new SpliterScript(this.ScriptsSplitString));
+
+                userTypeNames.Add(userDefinedType.Name);
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
             }

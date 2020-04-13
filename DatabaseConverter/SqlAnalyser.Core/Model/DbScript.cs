@@ -13,7 +13,7 @@ namespace SqlAnalyser.Model
             {
                 if (this.Owner == null || this.Owner.Symbol == null)
                 {
-                    return this.Name.ToString();
+                    return this.Name?.ToString();
                 }
                 else
                 {
@@ -52,6 +52,7 @@ namespace SqlAnalyser.Model
         public string Behavior { get; set; }
 
         public TokenInfo OtherTriggerName { get; set; }
+        public TokenInfo Condition { get; set; }
     }
 
     public enum TriggerTime

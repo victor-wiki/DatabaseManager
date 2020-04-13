@@ -4,18 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
-    public class MySqlAnalyser : SqlAnalyserBase
+    public class PlSqlAnalyser : SqlAnalyserBase
     {
-        private MySqlRuleAnalyser ruleAnalyser = null;
+        private PlSqlRuleAnalyser ruleAnalyser = null;
 
-        public override DatabaseType DatabaseType => DatabaseType.MySql;
+        public override DatabaseType DatabaseType => DatabaseType.Oracle;
 
-        public MySqlAnalyser()
+        public PlSqlAnalyser()
         {
-            this.ruleAnalyser = new MySqlRuleAnalyser();
+            this.ruleAnalyser = new PlSqlRuleAnalyser();
         }
 
         public override ViewScript AnalyseView(string content)
@@ -73,92 +74,60 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE {script.Type.ToString()} {script.FullName}");
-
-            sb.AppendLine("(");
+            sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.FullName}");
 
             if (script.Parameters.Count > 0)
             {
+                sb.AppendLine("(");
                 int i = 0;
                 foreach (Parameter parameter in script.Parameters)
                 {
                     ParameterType parameterType = parameter.ParameterType;
 
+                    string dataType = parameter.DataType.Symbol;
                     string strParameterType = "";
+
+                    int parenthesesIndex = dataType.IndexOf("(");
+
+                    if (parenthesesIndex > 0)
+                    {
+                        dataType = dataType.Substring(0, parenthesesIndex);
+                    }
 
                     if (parameterType.HasFlag(ParameterType.IN) && parameterType.HasFlag(ParameterType.OUT))
                     {
-                        strParameterType = "INOUT";
+                        strParameterType = "IN OUT";
                     }
                     else if (parameterType != ParameterType.NONE)
                     {
                         strParameterType = parameterType.ToString();
                     }
 
-                    sb.AppendLine($"{strParameterType} {parameter.Name} {parameter.DataType} {(i == script.Parameters.Count - 1 ? "" : ",")}");
+                    sb.AppendLine($"{parameter.Name} {strParameterType} {dataType} {(i == script.Parameters.Count - 1 ? "" : ",")}");
 
                     i++;
                 }
-            }
 
-            sb.AppendLine(")");
+                sb.AppendLine(")");
+            }
 
             if (script.Type == RoutineType.FUNCTION)
             {
-                sb.AppendLine($"RETURNS {script.ReturnDataType}");
+                sb.AppendLine($"RETURN {script.ReturnDataType}");
             }
 
-            int beginIndex = sb.Length - 1;
-            bool hasLeaveStatement = false;
+            sb.AppendLine("AS");
+
+            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement || item is DeclareCursorStatement))
+            {
+                sb.AppendLine(this.BuildStatement(statement).Replace("DECLARE ", ""));
+            }
 
             sb.AppendLine("BEGIN");
 
-            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
-            {
-                sb.AppendLine(this.BuildStatement(statement));
-            }
-
-            #region Cursor
-
-            Action appendDeclareCursor = () =>
-            {
-                foreach (Statement statement in script.Statements.Where(item => item is DeclareCursorStatement))
-                {
-                    sb.AppendLine(this.BuildStatement(statement));
-                }
-            };
-
-            if (script.Statements.Any(item => item is OpenCursorStatement) && !script.Statements.Any(item => item is DeclareCursorHandlerStatement))
-            {
-                if (!script.Statements.Any(item => item is DeclareStatement && (item as DeclareStatement).Name.Symbol == "FINISHED"))
-                {
-                    DeclareStatement declareStatement = new DeclareStatement()
-                    {
-                        Name = new TokenInfo("FINISHED") { Type = TokenType.VariableName },
-                        DataType = new TokenInfo("INT") { Type = TokenType.DataType },
-                        DefaultValue = new TokenInfo("0")
-                    };
-
-                    sb.AppendLine(this.BuildStatement(declareStatement));
-                }
-
-                appendDeclareCursor();
-
-                DeclareCursorHandlerStatement handler = new DeclareCursorHandlerStatement();
-                handler.Statements.Add(new SetStatement() { Key = new TokenInfo("FINISHED") { Type = TokenType.VariableName }, Value = new TokenInfo("1") });
-
-                sb.AppendLine(this.BuildStatement(handler));
-            }
-            else
-            {
-                appendDeclareCursor();
-            }
-
-            #endregion
-
             if (script.ReturnTable != null)
             {
-                sb.AppendLine(this.BuildTemporaryTable(script.ReturnTable));
+
             }
 
             FetchCursorStatement fetchCursorStatement = null;
@@ -176,7 +145,7 @@ namespace SqlAnalyser.Core
 
                     if (fetchCursorStatement != null && fs != null)
                     {
-                        @while.Condition.Symbol = "FINISHED = 0";
+                        @while.Condition.Symbol = $"{fs.CursorName}%NOTFOUND";
 
                         if (fs.Variables.Count == 0)
                         {
@@ -185,20 +154,10 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                if (statement is LeaveStatement)
-                {
-                    hasLeaveStatement = true;
-                }
-
                 sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.AppendLine("END");
-
-            if (hasLeaveStatement)
-            {
-                sb.Insert(beginIndex, "sp:");
-            }
+            sb.AppendLine($"END {script.FullName};");
 
             return this.FormatScripts(sb.ToString());
         }
@@ -230,37 +189,30 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            string events = string.Join(",", script.Events);
+            string events = string.Join(" OR ", script.Events);
 
-            sb.AppendLine($"CREATE TRIGGER {script.FullName} {script.Time} {events} ON {script.TableName}");
-            sb.AppendLine($"FOR EACH ROW {script.Behavior} {script.OtherTriggerName}");
+            sb.AppendLine($"CREATE OR TRIGGER {script.FullName}");
+            sb.AppendLine($"{script.Time} {events} ON {script.TableName}");
+            sb.AppendLine($"FOR EACH ROW");
 
-            int beginIndex = sb.Length - 1;
-            bool hasLeaveStatement = false;
-
-            sb.AppendLine("BEGIN");
+            if (script.Condition != null)
+            {
+                sb.AppendLine($"WHEN ({script.Condition})");
+            }
 
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
             {
                 sb.AppendLine(this.BuildStatement(statement));
             }
 
+            sb.AppendLine("BEGIN");
+
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
             {
-                if (statement is LeaveStatement)
-                {
-                    hasLeaveStatement = true;
-                }
-
                 sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.AppendLine("END");
-
-            if (hasLeaveStatement)
-            {
-                sb.Insert(beginIndex, "sp:");
-            }
+            sb.AppendLine("END;");
 
             return this.FormatScripts(sb.ToString());
         }
@@ -290,9 +242,13 @@ namespace SqlAnalyser.Core
                 {
                     appendLine($"SET {select.Columns.First()}");
                 }
-                else
+                else if (select.IntoTableName != null || select.TableName != null)
                 {
                     appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                }
+                else
+                {
+                    return this.BuildStatement(new PrintStatement() { Content = select.Columns.First() }, level);
                 }
 
                 if (select.IntoTableName != null)
@@ -379,34 +335,51 @@ namespace SqlAnalyser.Core
 
                 if (update.FromItems != null)
                 {
-                    tableNames.Add(update.FromItems.First().TableName);
-                }
-                else if (update.TableNames.Count > 0)
-                {
-                    tableNames.AddRange(update.TableNames);
-                }
-
-                append($" {string.Join(",", tableNames)}");
-
-                if (update.FromItems != null)
-                {
                     int i = 0;
 
                     foreach (UpdateFromItem fromItem in update.FromItems)
                     {
-                        if (fromItem.TableName != null && i > 0)
+                        if (i == 0 && fromItem.TableName != null)
                         {
-                            appendLine($" {fromItem.TableName}");
+                            tableNames.Add(fromItem.TableName);
                         }
+                        StringBuilder from = new StringBuilder();
 
                         foreach (TokenInfo join in fromItem.Joins)
                         {
-                            appendLine(join.ToString());
+                            from.AppendLine(join.ToString());
+                        }
+
+                        string strFrom = from.ToString();
+
+                        foreach (NameValueItem nameValue in update.SetItems)
+                        {
+                            string[] ids = nameValue.Value.Symbol.Split('.').Select(item => item.Trim()).ToArray();
+
+                            string tableName = ids[0];
+                            string columnName = ids[1];
+
+                            if (strFrom.Split(' ', '.').Any(item => item == tableName))
+                            {
+                                int joinIndex = strFrom.IndexOf("JOIN");
+
+                                nameValue.Value.Symbol = $"(SELECT {nameValue.Value} FROM {strFrom.Substring(joinIndex + 5).Trim()})";
+
+                                nameValue.Value.Symbol = Regex.Replace(nameValue.Value.Symbol, " ON ", " WHERE ", RegexOptions.IgnoreCase);
+                            }
                         }
 
                         i++;
                     }
                 }
+
+
+                if (tableNames.Count == 0 && update.TableNames.Count > 0)
+                {
+                    tableNames.AddRange(update.TableNames);
+                }
+
+                append($" {string.Join(",", tableNames)}");
 
                 appendLine("SET");
 
@@ -421,7 +394,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeleteStatement delete)
             {
-                appendLine($"DELETE FROM {delete.TableName}");
+                appendLine($"DELETE {delete.TableName}");
 
                 if (delete.Condition != null)
                 {
@@ -434,12 +407,12 @@ namespace SqlAnalyser.Core
             {
                 if (declare.Type == DeclareType.Variable)
                 {
-                    string defaultValue = (declare.DefaultValue == null ? "" : $"DEFAULT {declare.DefaultValue}");
+                    string defaultValue = (declare.DefaultValue == null ? "" : $":={declare.DefaultValue}");
                     appendLine($"DECLARE {declare.Name} {declare.DataType} {defaultValue};");
                 }
                 else if (declare.Type == DeclareType.Table)
                 {
-                    appendLine(this.BuildTemporaryTable(declare.Table));
+
                 }
             }
             else if (statement is IfStatement @if)
@@ -461,6 +434,7 @@ namespace SqlAnalyser.Core
 
                     appendLine("END;");
                 }
+
                 appendLine("END IF;");
             }
             else if (statement is CaseStatement @case)
@@ -489,59 +463,30 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null && set.Value != null)
                 {
-                    appendLine($"SET {set.Key } = {set.Value };");
+                    appendLine($"{set.Key } := {set.Value };");
                 }
             }
             else if (statement is LoopStatement loop)
             {
-                TokenInfo name = loop.Name;
-
-                if (loop.Type != LoopType.LOOP)
-                {
-                    if (loop.Type == LoopType.LOOP)
-                    {
-                        appendLine($"WHILE 1=1 DO");
-                    }
-                    else
-                    {
-                        appendLine($"WHILE {loop.Condition} DO");
-                    }
-                }
-                else
+                if (loop.Type == LoopType.LOOP)
                 {
                     appendLine("LOOP");
                 }
-
-                appendLine("BEGIN");
-
-                appendStatements(loop.Statements, true);
-
-                appendLine("END;");
-
-                if (loop.Type != LoopType.LOOP)
-                {
-                    appendLine($"END WHILE;");
-                }
                 else
                 {
-                    appendLine($"END LOOP {(name == null ? "" : name + ":")};");
+                    appendLine($"{loop.Type.ToString()} {loop.Condition} LOOP");
                 }
+
+                appendStatements(loop.Statements, true);
+                appendLine("END LOOP;");
             }
             else if (statement is WhileStatement @while)
             {
-                appendLine($"WHILE {@while.Condition} DO");
+                LoopStatement loopStatement = @while as LoopStatement;
 
+                appendLine($"WHILE {@while.Condition} LOOP");
                 appendStatements(@while.Statements, true);
-
-                appendLine("END WHILE;");
-            }
-            else if (statement is WhileExitStatement whileExit)
-            {
-                appendLine($"IF {whileExit.Condition} THEN");
-                appendLine("BEGIN");
-                appendLine("BREAK;");
-                appendLine("END;");
-                appendLine("END IF;");
+                appendLine("END LOOP;");
             }
             else if (statement is ReturnStatement @return)
             {
@@ -549,11 +494,15 @@ namespace SqlAnalyser.Core
             }
             else if (statement is PrintStatement print)
             {
-                appendLine($"SELECT {print.Content.Symbol?.Replace("||", "+")};");
+                appendLine($"DBMS_OUTPUT.PUT_LINE({print.Content.Symbol?.ToString()?.Replace("+", "||")});");
+            }
+            else if (statement is FunctionCallStatement funcCall)
+            {
+                appendLine($"{funcCall.Name}({string.Join(",", funcCall.Arguments)});");
             }
             else if (statement is ProcedureCallStatement execute)
             {
-                appendLine($"CALL {execute.Content};");
+                appendLine($"EXECUTE {execute.Content};");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -561,9 +510,6 @@ namespace SqlAnalyser.Core
 
                 switch (commandType)
                 {
-                    case TransactionCommandType.BEGIN:
-                        appendLine("START TRANSACTION;");
-                        break;
                     case TransactionCommandType.COMMIT:
                         appendLine("COMMIT;");
                         break;
@@ -574,11 +520,11 @@ namespace SqlAnalyser.Core
             }
             else if (statement is LeaveStatement leave)
             {
-                appendLine("LEAVE sp;");
+                appendLine("RETURN;");
             }
             else if (statement is TryCatchStatement tryCatch)
             {
-                appendLine("DECLARE EXIT HANDLER FOR 1 #[REPLACE ERROR CODE HERE]");
+                appendLine("EXCEPTION");
                 appendLine("BEGIN");
 
                 appendStatements(tryCatch.CatchStatements, true);
@@ -589,9 +535,11 @@ namespace SqlAnalyser.Core
             }
             else if (statement is ExceptionStatement exception)
             {
+                appendLine("EXCEPTION");
+
                 foreach (ExceptionItem exceptionItem in exception.Items)
                 {
-                    appendLine($"DECLARE EXIT HANDLER FOR {exceptionItem.Name}");
+                    appendLine($"WHEN {exceptionItem.Name} THEN");
                     appendLine("BEGIN");
 
                     appendStatements(exceptionItem.Statements, true);
@@ -601,16 +549,8 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                appendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
+                appendLine($"DECLARE CURSOR {declareCursor.CursorName} IS");
                 append(this.BuildStatement(declareCursor.SelectStatement));
-            }
-            else if (statement is DeclareCursorHandlerStatement declareCursorHandler)
-            {
-                appendLine($"DECLARE CONTINUE HANDLER");
-                appendLine($"FOR NOT FOUND");
-                appendLine($"BEGIN");
-                appendStatements(declareCursorHandler.Statements, true);
-                appendLine($"END;");
             }
             else if (statement is OpenCursorStatement openCursor)
             {
@@ -627,24 +567,6 @@ namespace SqlAnalyser.Core
             {
                 appendLine($"CLOSE {closeCursor.CursorName};");
             }
-
-            return sb.ToString();
-        }
-
-        private string BuildTemporaryTable(TemporaryTable table)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            sb.AppendLine($"CREATE TEMPORARY TABLE {table.Name}(");
-
-            int i = 0;
-            foreach (var column in table.Columns)
-            {
-                sb.AppendLine($"{column.Name} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
-                i++;
-            }
-
-            sb.AppendLine(");");
 
             return sb.ToString();
         }

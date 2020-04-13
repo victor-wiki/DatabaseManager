@@ -8,5 +8,5 @@
     <SqlServer>@@IDENTITY</SqlServer>
     <MySql>(SELECT LAST_INSERT_ID())</MySql>
     <Oracle></Oracle>
-  </mapping> 
+  </mapping>
 </mappings>

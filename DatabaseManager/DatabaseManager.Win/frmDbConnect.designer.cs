@@ -153,7 +153,7 @@
             this.MinimizeBox = false;
             this.Name = "frmDbConnect";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database connection";
+            this.Text = "Database Connection";
             this.Activated += new System.EventHandler(this.frmDbConnect_Activated);
             this.Load += new System.EventHandler(this.frmDbConnect_Load);
             this.ResumeLayout(false);

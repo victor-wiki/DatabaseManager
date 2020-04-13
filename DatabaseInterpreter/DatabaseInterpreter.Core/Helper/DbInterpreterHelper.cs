@@ -11,22 +11,18 @@ namespace  DatabaseInterpreter.Core
         {
             DbInterpreter dbInterpreter = null;
 
-            var assembly = Assembly.GetExecutingAssembly();          
-            var typeArray = assembly.ExportedTypes;
-
-            var types = (from type in typeArray
-                         where type.IsSubclassOf(typeof(DbInterpreter))
-                         select type).ToList();
-
-            foreach (var type in types)
+            if(dbType == DatabaseType.SqlServer)
             {
-                dbInterpreter = (DbInterpreter)Activator.CreateInstance(type, connectionInfo, option);
-
-                if (dbInterpreter.DatabaseType == dbType)
-                {
-                    return dbInterpreter;
-                }
+                dbInterpreter = new SqlServerInterpreter(connectionInfo, option);
             }
+            else if(dbType == DatabaseType.MySql)
+            {
+                dbInterpreter = new MySqlInterpreter(connectionInfo, option);
+            }
+            else if(dbType == DatabaseType.Oracle)
+            {
+                dbInterpreter = new OracleInterpreter(connectionInfo, option);
+            }           
 
             return dbInterpreter;
         }

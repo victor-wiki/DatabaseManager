@@ -6,6 +6,7 @@ using System.Text;
 using System.Linq;
 using static MySqlParser;
 using Antlr4.Runtime;
+using DatabaseInterpreter.Model;
 
 namespace SqlAnalyser.Core
 {
@@ -90,17 +91,26 @@ namespace SqlAnalyser.Core
 
         public void SetScriptBody(CommonScript script, RoutineBodyContext body)
         {
-            foreach (var child in body.children)
+            script.Statements.AddRange(this.ParseRoutineBody(body));
+        }
+
+        public List<Statement> ParseRoutineBody(RoutineBodyContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
             {
                 if (child is BlockStatementContext block)
                 {
-                    script.Statements.AddRange(this.ParseBlockStatement(block));
+                    statements.AddRange(this.ParseBlockStatement(block));
                 }
                 else if (child is SqlStatementContext sqlStatement)
                 {
-                    script.Statements.AddRange(this.ParseSqlStatement(sqlStatement));
+                    statements.AddRange(this.ParseSqlStatement(sqlStatement));
                 }
             }
+
+            return statements;
         }
 
         public List<Statement> ParseBlockStatement(BlockStatementContext node)
@@ -116,6 +126,14 @@ namespace SqlAnalyser.Core
                 else if (bc is ProcedureSqlStatementContext procStatement)
                 {
                     statements.AddRange(this.ParseProcedureStatement(procStatement));
+                }
+                else if (bc is DeclareCursorContext cursor)
+                {
+                    statements.Add(this.ParseDeclareCursor(cursor));
+                }
+                else if (bc is DeclareHandlerContext handler)
+                {
+                    statements.Add(this.ParseDeclareHandler(handler));
                 }
             }
 
@@ -336,6 +354,54 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
+        public DeclareCursorStatement ParseDeclareCursor(DeclareCursorContext node)
+        {
+            DeclareCursorStatement statement = new DeclareCursorStatement();
+
+            statement.CursorName = new TokenInfo(node.uid()) { Type = TokenType.CursorName };
+            statement.SelectStatement = this.ParseSelectStatement(node.selectStatement());
+
+            return statement;
+        }
+
+        public DeclareCursorHandlerStatement ParseDeclareHandler(DeclareHandlerContext node)
+        {
+            DeclareCursorHandlerStatement statement = new DeclareCursorHandlerStatement();
+
+            statement.Conditions.AddRange(node.handlerConditionValue().Select(item => new TokenInfo(item) { Type = TokenType.Condition }));
+            statement.Statements.AddRange(this.ParseRoutineBody(node.routineBody()));
+
+            return statement;
+        }
+
+        public OpenCursorStatement ParseOpenCursorSatement(OpenCursorContext node)
+        {
+            OpenCursorStatement statement = new OpenCursorStatement();
+
+            statement.CursorName = new TokenInfo(node.uid()) { Type = TokenType.CursorName };
+
+            return statement;
+        }
+
+        public FetchCursorStatement ParseFetchCursorSatement(FetchCursorContext node)
+        {
+            FetchCursorStatement statement = new FetchCursorStatement();
+
+            statement.CursorName = new TokenInfo(node.uid()) { Type = TokenType.CursorName };
+            statement.Variables.AddRange(node.uidList().uid().Select(item => new TokenInfo(item) { Type = TokenType.VariableName }));
+
+            return statement;
+        }
+
+        public CloseCursorStatement ParseCloseCursorSatement(CloseCursorContext node)
+        {
+            CloseCursorStatement statement = new CloseCursorStatement() { IsEnd = true };
+
+            statement.CursorName = new TokenInfo(node.uid()) { Type = TokenType.CursorName };
+
+            return statement;
+        }
+
         public List<Statement> ParseSqlStatement(SqlStatementContext node)
         {
             List<Statement> statements = new List<Statement>();
@@ -356,7 +422,7 @@ namespace SqlAnalyser.Core
                 {
                     statements.AddRange(this.ParseDmlStatement(dml));
                 }
-                else if(child is TransactionStatementContext transaction)
+                else if (child is TransactionStatementContext transaction)
                 {
                     statements.Add(this.ParseTransactionStatement(transaction));
                 }
@@ -453,7 +519,8 @@ namespace SqlAnalyser.Core
 
             if (single != null)
             {
-                statement.TableNames.Add(new TokenInfo(single.tableName()) { Type = TokenType.TableName });
+                statement.TableNames.Add(new TokenInfo(single.tableName()) { Type = TokenType.TableName, Tag = this.ParseTableName(single) });
+
                 updateItems = single.updatedElement();
                 condition = single.expression();
             }
@@ -472,7 +539,9 @@ namespace SqlAnalyser.Core
                 {
                     if (table is TableSourceBaseContext tb)
                     {
-                        TokenInfo tableName = new TokenInfo(tb.tableSourceItem()) { Type = TokenType.TableName };
+                        TableSourceItemContext name = tb.tableSourceItem();
+
+                        TokenInfo tableName = new TokenInfo(name) { Type = TokenType.TableName, Tag =this.ParseTableName(name) };
 
                         JoinPartContext[] joins = tb.joinPart();
 
@@ -542,7 +611,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public SelectStatement ParseSelectStatement(SimpleSelectContext node)
+        public SelectStatement ParseSelectStatement(SelectStatementContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -597,7 +666,7 @@ namespace SqlAnalyser.Core
                     {
                         if (ic is AssignmentFieldContext field)
                         {
-                            statement.IntoTableName = new TokenInfo(field);
+                            statement.IntoTableName = new TokenInfo(field) { Type = TokenType.TableName };
                         }
                     }
                 }
@@ -607,11 +676,11 @@ namespace SqlAnalyser.Core
                     {
                         if (fc is TableSourceContext t)
                         {
-                            statement.TableName = new TokenInfo(t) { Type = TokenType.TableName };
+                            statement.TableName = new TokenInfo(t) { Type = TokenType.TableName, Tag = this.ParseTableName(t) };
                         }
                         else if (fc is TableSourcesContext ts)
                         {
-                            statement.TableName = new TokenInfo(ts) { Type = TokenType.TableName };
+                            statement.TableName = new TokenInfo(ts) { Type = TokenType.TableName, Tag = this.ParseTableName(ts) };
                         }
                         else if (fc is PredicateExpressionContext exp)
                         {
@@ -746,21 +815,41 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseIfStatement(@if));
                 }
+                else if (child is CaseStatementContext @case)
+                {
+                    statements.Add(this.ParseCaseStatement(@case));
+                }
                 else if (child is WhileStatementContext @while)
                 {
                     statements.Add(this.ParseWhileStatement(@while));
+                }
+                else if (child is LoopStatementContext loop)
+                {
+                    statements.Add(this.ParseLoopStatement(loop));
                 }
                 else if (child is ReturnStatementContext returnStatement)
                 {
                     statements.Add(this.ParseReturnStatement(returnStatement));
                 }
-                else if(child is BlockStatementContext block)
+                else if (child is BlockStatementContext block)
                 {
                     statements.AddRange(this.ParseBlockStatement(block));
                 }
-                else if(child is LeaveStatementContext leave)
+                else if (child is LeaveStatementContext leave)
                 {
                     statements.Add(this.ParseLeaveStatement(leave));
+                }
+                else if (child is OpenCursorContext openCursor)
+                {
+                    statements.Add(this.ParseOpenCursorSatement(openCursor));
+                }
+                else if (child is FetchCursorContext fetchCursor)
+                {
+                    statements.Add(this.ParseFetchCursorSatement(fetchCursor));
+                }
+                else if (child is CloseCursorContext closeCursor)
+                {
+                    statements.Add(this.ParseCloseCursorSatement(closeCursor));
                 }
             }
 
@@ -773,6 +862,13 @@ namespace SqlAnalyser.Core
 
             statement.Name = new TokenInfo(node.uidList().uid().First()) { Type = TokenType.VariableName };
             statement.DataType = new TokenInfo(node.dataType().GetText()) { Type = TokenType.DataType };
+
+            var defaultValue = node.defaultValue();
+
+            if (defaultValue != null)
+            {
+                statement.DefaultValue = new TokenInfo(defaultValue);
+            }
 
             return statement;
         }
@@ -795,13 +891,41 @@ namespace SqlAnalyser.Core
                 statement.Items.Add(elseIfItem);
             }
 
-            if(node._elseStatements.Count>0)
+            if (node._elseStatements.Count > 0)
             {
                 IfStatementItem elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
                 elseItem.Statements.AddRange(node._elseStatements.SelectMany(item => this.ParseProcedureStatement(item)));
 
                 statement.Items.Add(elseItem);
-            }     
+            }
+
+            return statement;
+        }
+
+        public CaseStatement ParseCaseStatement(CaseStatementContext node)
+        {
+            CaseStatement statement = new CaseStatement();
+
+            statement.VariableName = new TokenInfo(node.uid()) { Type = TokenType.VariableName };
+
+            foreach (CaseAlternativeContext when in node.caseAlternative())
+            {
+                IfStatementItem elseIfItem = new IfStatementItem() { Type = IfStatementType.ELSEIF };
+                elseIfItem.Condition = new TokenInfo(when.expression() as PredicateExpressionContext) { Type = TokenType.Condition };
+                elseIfItem.Statements.AddRange(when.procedureSqlStatement().SelectMany(item => this.ParseProcedureStatement(item)));
+
+                statement.Items.Add(elseIfItem);
+            }
+
+            ProcedureSqlStatementContext[] sqls = node.procedureSqlStatement();
+
+            if (sqls != null && sqls.Length > 0)
+            {
+                IfStatementItem elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
+                elseItem.Statements.AddRange(sqls.SelectMany(item => this.ParseProcedureStatement(item)));
+
+                statement.Items.Add(elseItem);
+            }
 
             return statement;
         }
@@ -829,6 +953,23 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
+        public LoopStatement ParseLoopStatement(LoopStatementContext node)
+        {
+            LoopStatement statement = new LoopStatement();
+
+            statement.Name = new TokenInfo(node.uid().First());
+
+            foreach (var child in node.children)
+            {
+                if (child is ProcedureSqlStatementContext sql)
+                {
+                    statement.Statements.AddRange(this.ParseProcedureStatement(sql));
+                }
+            }
+
+            return statement;
+        }
+
         public ReturnStatement ParseReturnStatement(ReturnStatementContext node)
         {
             ReturnStatement statement = new ReturnStatement();
@@ -849,11 +990,11 @@ namespace SqlAnalyser.Core
             TransactionStatement statement = new TransactionStatement();
             statement.Content = new TokenInfo(node);
 
-            if(node.startTransaction()!=null)
+            if (node.startTransaction() != null)
             {
                 statement.CommandType = TransactionCommandType.BEGIN;
             }
-            else if(node.commitWork()!=null)
+            else if (node.commitWork() != null)
             {
                 statement.CommandType = TransactionCommandType.COMMIT;
             }
@@ -872,6 +1013,51 @@ namespace SqlAnalyser.Core
             statement.Content = new TokenInfo(node);
 
             return statement;
+        }
+
+        public TableNameInfo ParseTableName(ParserRuleContext node)
+        {
+            TableNameInfo tableNameInfo = null;
+
+            if (node != null)
+            {
+                if (node is AtomTableItemContext ati)
+                {
+                    tableNameInfo = new TableNameInfo();
+
+                    tableNameInfo.Name = new TokenInfo(ati.tableName()) { Type = TokenType.TableName };
+
+                    UidContext alias = ati.uid();
+
+                    if (alias != null)
+                    {
+                        tableNameInfo.Alias = new TokenInfo(alias);
+                    }
+                } 
+                else if(node is TableSourceBaseContext tsb)
+                {
+                    return this.ParseTableName(tsb.tableSourceItem());
+                }
+                else if(node is TableSourceContext ts)
+                {
+                    return this.ParseTableName(ts.children.FirstOrDefault(item => item is TableSourceBaseContext) as ParserRuleContext);
+                }
+                else if(node is SingleUpdateStatementContext update)
+                {
+                    tableNameInfo = new TableNameInfo();
+
+                    tableNameInfo.Name = new TokenInfo(update.tableName()) { Type = TokenType.TableName };
+
+                    UidContext alias = update.uid();
+
+                    if (alias != null)
+                    {
+                        tableNameInfo.Alias = new TokenInfo(alias);
+                    }
+                }
+            }
+
+            return tableNameInfo;
         }
 
         public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
