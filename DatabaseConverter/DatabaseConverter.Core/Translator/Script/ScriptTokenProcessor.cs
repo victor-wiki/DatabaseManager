@@ -11,17 +11,18 @@ namespace DatabaseConverter.Core
 {
     public class ScriptTokenProcessor
     {
+        private ColumnTranslator columnTranslator;
         private Regex identifierRegex = new Regex($@"([`""\[][ _0-9a-zA-Z]+[`""\]])");
         private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
-        private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;
-        private ColumnTranslator columnTranslator;
+        private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;        
+        private bool nameWithQuotation = SettingManager.Setting.DbObjectNameMode == DbObjectNameMode.WithQuotation;
         public CommonScript Script { get; set; }
         public ScriptDbObject DbObject { get; set; }
         public DbInterpreter SourceInterpreter { get; set; }
         public DbInterpreter TargetInterpreter { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public string TargetDbOwner { get; set; }
-        public Dictionary<string, string> ReplacedVariables { get; private set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> ReplacedVariables { get; private set; } = new Dictionary<string, string>();       
 
         public char[] TrimChars
         {
@@ -50,6 +51,7 @@ namespace DatabaseConverter.Core
             List<TokenInfo> tokens = tokenExtracter.Extract();
 
             IEnumerable<string> keywords = KeywordManager.GetKeywords(this.TargetInterpreter.DatabaseType);
+            IEnumerable<string> functions = FunctionManager.GetFunctions(this.TargetInterpreter.DatabaseType);
 
             this.columnTranslator = new ColumnTranslator(this.SourceInterpreter, this.TargetInterpreter, null);
             columnTranslator.LoadMappings();
@@ -74,7 +76,7 @@ namespace DatabaseConverter.Core
                 {
                     token.Symbol = token.Symbol.TrimStart('@');
 
-                    if (keywords.Contains(token.Symbol.ToUpper()))
+                    if (keywords.Contains(token.Symbol.ToUpper()) || functions.Contains(token.Symbol.ToUpper()))
                     {
                         token.Symbol = "_" + token.Symbol;
                     }
@@ -135,7 +137,7 @@ namespace DatabaseConverter.Core
 
                     if (column == null)
                     {
-                        token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
+                        token.Symbol = this.GetQuotedName(token.Symbol.Trim('.').Trim(this.TrimChars), token.Type);
                     }
                     else
                     {
@@ -143,7 +145,7 @@ namespace DatabaseConverter.Core
 
                         if (column.Expression != null)
                         {
-                            columnContent = $"{ this.GetQuotedName(column.Expression.ToString(), token.Type)}";
+                            columnContent = $"{ this.GetQuotedName(column.Expression.ToString().Trim('.').Trim(this.TrimChars), token.Type)}";
                         }
 
                         if (column.Alias != null && !string.IsNullOrEmpty(column.Alias.Symbol))
@@ -161,7 +163,7 @@ namespace DatabaseConverter.Core
                     token.Symbol = this.GetQuotedString(token.Symbol);
                 }
 
-                #region Replace parameter and variable Name
+                #region Replace parameter and variable name
                 if (token.Type != TokenType.ParameterName && token.Type != TokenType.VariableName)
                 {
                     if (this.ReplacedVariables.ContainsKey(token.Symbol))
@@ -189,6 +191,7 @@ namespace DatabaseConverter.Core
                             string pattern = "";
 
                             bool strictMatch = true;
+
                             if (prefix.Length == 0)
                             {
                                 strictMatch = false;
@@ -212,6 +215,37 @@ namespace DatabaseConverter.Core
                 }
                 #endregion
             }
+
+            #region Nested token handle
+            if(this.nameWithQuotation)
+            {
+                var nestedTokens = tokens.Where(item => item.Symbol != null && item.Tokens.Count > 0);
+               
+                foreach (TokenInfo nestedToken in nestedTokens)
+                {
+                    List<string> replacedSymbols = new List<string>();
+
+                    foreach (var token in nestedToken.Tokens)
+                    {
+                        string trimedSymbol = token.Symbol.Trim(this.TrimChars);
+
+                        if(replacedSymbols.Contains(trimedSymbol))
+                        {
+                            continue;
+                        }
+
+                        Regex regex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedSymbol})\b[{this.SourceInterpreter.QuotationRightChar}]?");
+
+                        if (regex.IsMatch(nestedToken.Symbol))
+                        {
+                            nestedToken.Symbol = regex.Replace(nestedToken.Symbol, token.Symbol);
+
+                            replacedSymbols.Add(trimedSymbol);
+                        }
+                    }
+                }
+            }           
+            #endregion
 
             this.Script.Owner = null;
 

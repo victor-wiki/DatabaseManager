@@ -24,7 +24,9 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.richTextBox1.Text = displayInfo.Content;
+            this.richTextBox1.Clear();
+
+            this.richTextBox1.AppendText(displayInfo.Content);
         }
 
         public void Save(string filePath)

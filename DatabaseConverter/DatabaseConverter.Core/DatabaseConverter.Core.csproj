@@ -12,9 +12,12 @@
     <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
     <None Remove="Config\FunctionMapping.xml" />
-    <None Remove="Config\Function\MySql.xml" />
-    <None Remove="Config\Function\Oracle.xml" />
-    <None Remove="Config\Function\SqlServer.xml" />
+    <None Remove="Config\FunctionSpecification\MySql.xml" />
+    <None Remove="Config\FunctionSpecification\Oracle.xml" />
+    <None Remove="Config\FunctionSpecification\SqlServer.xml" />
+    <None Remove="Config\Function\MySql.txt" />
+    <None Remove="Config\Function\Oracle.txt" />
+    <None Remove="Config\Function\SqlServer.txt" />
     <None Remove="Config\VariableMapping.xml" />
     <None Remove="Config\Keyword\MySql.txt" />
     <None Remove="Config\Keyword\Oracle.txt" />
@@ -40,13 +43,22 @@
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Config\Function\Oracle.xml">
+    <Content Include="Config\FunctionSpecification\Oracle.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Config\Function\MySql.xml">
+    <Content Include="Config\FunctionSpecification\MySql.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Config\Function\SqlServer.xml">
+    <Content Include="Config\FunctionSpecification\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Function\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Function\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Function\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\VariableMapping.xml">

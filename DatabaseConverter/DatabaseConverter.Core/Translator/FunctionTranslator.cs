@@ -48,44 +48,19 @@ namespace DatabaseConverter.Core
                 {
                     string name = fomular.Name;
 
-                    #region Mapping handle
-                    string text = name;
-                    string textWithBrackets = name.ToLower() + "()";
+                    string targetFunctionName = this.GetMappedFunctionName(name);
 
-                    if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
+                    if (!string.IsNullOrEmpty(targetFunctionName))
                     {
-                        text = textWithBrackets;
-                    }
-
-                    string targetFunctionName = name;
-
-                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t =>
-                     (t.Direction == FunctionMappingDirection.OUT || t.Direction == FunctionMappingDirection.INOUT)
-                      && t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
-
-                    if (funcMappings != null)
-                    {
-                        targetFunctionName = funcMappings.FirstOrDefault(item =>
-                                (item.Direction == FunctionMappingDirection.IN || item.Direction == FunctionMappingDirection.INOUT)
-                                && item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
-
-                        if (!string.IsNullOrEmpty(targetFunctionName))
+                        if (targetFunctionName.ToUpper().Trim() != name.ToUpper().Trim())
                         {
-                            if (targetFunctionName.ToUpper().Trim() != name.ToUpper().Trim())
-                            {
-                                fomular.Expression = this.ReplaceValue(token.Symbol, name, targetFunctionName);
-                                token.Symbol = fomular.Expression;
-                            }
+                            fomular.Expression = this.ReplaceValue(token.Symbol, name, targetFunctionName);
+                            token.Symbol = fomular.Expression;
                         }
-                        else
-                        {
-                            targetFunctionName = name;
-                        }
-                    }
-                    #endregion
+                    }                  
 
                     Dictionary<string, string> dictDataType = null;
-                    string newExpression = this.HandleFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
+                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
 
                     if (newExpression != fomular.Expression)
                     {

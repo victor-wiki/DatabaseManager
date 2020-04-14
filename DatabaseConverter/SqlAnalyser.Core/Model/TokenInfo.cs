@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using System.Collections.Generic;
 
 namespace SqlAnalyser.Model
 {
@@ -13,6 +14,8 @@ namespace SqlAnalyser.Model
         public object Tag { get; set; }
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
+
+        public List<TokenInfo> Tokens { get; set; } = new List<TokenInfo>();
 
         public TokenInfo(string symbol)
         {

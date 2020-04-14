@@ -7,17 +7,40 @@ namespace DatabaseConverter.Model
 {
     public class FunctionFomular
     {
+        private string _name;
         private string _body;
         private List<string> _args;
         private string _expression;
 
         public string Delimiter { get; set; } = ",";
 
-        public string Name { get; set; }
+        
         public int StartIndex { get; set; }
         public int StopIndex { get; set; }
 
         public int Length => this.StopIndex - this.StartIndex + 1;
+
+        public string Name
+        {
+            get
+            {
+                if(string.IsNullOrEmpty(this._name) && !string.IsNullOrEmpty(this._expression))
+                {
+                    int firstParenthesesIndex = this.Expression.IndexOf('(');
+
+                    if(firstParenthesesIndex>0)
+                    {
+                        this._name = this._expression.Substring(0, firstParenthesesIndex);
+                    }                   
+                }
+
+                return this._name;
+            }
+            set
+            {
+                this._name = value;
+            }
+        }
 
         public string Expression
         {
@@ -31,6 +54,11 @@ namespace DatabaseConverter.Model
                 this._args = null;
                 this._expression = value;
             }
+        }
+
+        public FunctionFomular(string expression)
+        {
+            this.Expression = expression;
         }
 
         public FunctionFomular(string name , string expression)
@@ -47,12 +75,12 @@ namespace DatabaseConverter.Model
                 {
                     if (!string.IsNullOrEmpty(this.Expression))
                     {
-                        int firstLeftIndex = this.Expression.IndexOf('(');
-                        int lastRightIndex = this.Expression.LastIndexOf(')');
+                        int firstParenthesesIndexIndex = this.Expression.IndexOf('(');
+                        int lastParenthesesIndex = this.Expression.LastIndexOf(')');
 
-                        if (firstLeftIndex > 0 && lastRightIndex > 0 && lastRightIndex > firstLeftIndex)
+                        if (firstParenthesesIndexIndex > 0 && lastParenthesesIndex > 0 && lastParenthesesIndex > firstParenthesesIndexIndex)
                         {
-                            this._body = this.Expression.Substring(firstLeftIndex + 1, lastRightIndex - firstLeftIndex - 1);
+                            this._body = this.Expression.Substring(firstParenthesesIndexIndex + 1, lastParenthesesIndex - firstParenthesesIndexIndex - 1);
                         }
                     }
                 }
@@ -69,7 +97,7 @@ namespace DatabaseConverter.Model
                 {
                     this._args = new List<string>();
 
-                    List<int> commaIndexes = new List<int>();
+                    List<int> delimiterIndexes = new List<int>();
 
                     if (this.Delimiter.Length == 1)
                     {
@@ -90,28 +118,28 @@ namespace DatabaseConverter.Model
 
                                 if (leftClosed && rightClosed)
                                 {
-                                    commaIndexes.Add(i);
+                                    delimiterIndexes.Add(i);
                                 }
                             }
 
                             i++;
                         }
 
-                        int lastCommaIndex = -1;
+                        int lastDelimiterIndex = -1;
 
-                        foreach (int commaIndex in commaIndexes)
+                        foreach (int delimiterIndex in delimiterIndexes)
                         {
-                            int startIndex = lastCommaIndex == -1 ? 0 : lastCommaIndex + 1;
-                            int length = commaIndex - startIndex;
+                            int startIndex = lastDelimiterIndex == -1 ? 0 : lastDelimiterIndex + 1;
+                            int length = delimiterIndex - startIndex;
 
                             this._args.Add(this.Body.Substring(startIndex, length));
 
-                            lastCommaIndex = commaIndex;
+                            lastDelimiterIndex = delimiterIndex;
                         }
 
-                        if (lastCommaIndex < this.Body.Length - 1)
+                        if (lastDelimiterIndex < this.Body.Length - 1)
                         {
-                            this._args.Add(this.Body.Substring(lastCommaIndex + 1));
+                            this._args.Add(this.Body.Substring(lastDelimiterIndex + 1));
                         }
                     }
                     else

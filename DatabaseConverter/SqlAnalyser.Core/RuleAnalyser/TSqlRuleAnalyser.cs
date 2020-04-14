@@ -358,7 +358,7 @@ namespace SqlAnalyser.Core
                 statement.SetItems.Add(new NameValueItem()
                 {
                     Name = new TokenInfo(ele.full_column_name()) { Type = TokenType.ColumnName },
-                    Value = new TokenInfo(ele.expression())
+                    Value = this.ParseToken(ele.expression())
                 });
             }
 
@@ -377,13 +377,13 @@ namespace SqlAnalyser.Core
                     Table_source_itemContext fromTableName = join.table_source_item();
 
                     fromItem.TableName = new TokenInfo(fromTableName) { Type = TokenType.TableName, Tag = this.ParseTableName(fromTableName) };
-                    fromItem.Joins = join.join_part().Select(item => new TokenInfo(item) { Type = TokenType.JoinOn }).ToList();
+                    fromItem.Joins = join.join_part().Select(item => this.ParseToken(item, TokenType.JoinOn)).ToList();
 
                     statement.FromItems.Add(fromItem);
                 }
             }
 
-            statement.Condition = new TokenInfo(node.search_condition_list()) { Type = TokenType.Condition };
+            statement.Condition = this.ParseToken(node.search_condition_list(), TokenType.Condition);
 
             return statement;
         }
@@ -393,7 +393,7 @@ namespace SqlAnalyser.Core
             DeleteStatement statement = new DeleteStatement();
 
             statement.TableName = new TokenInfo(node.delete_statement_from()) { Type = TokenType.TableName };
-            statement.Condition = new TokenInfo(node.search_condition()) { Type = TokenType.Condition };
+            statement.Condition = this.ParseToken(node.search_condition(), TokenType.Condition);
 
             return statement;
         }
@@ -449,7 +449,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is Search_conditionContext condition)
                 {
-                    item.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    item.Condition = this.ParseToken(condition, TokenType.Condition);
                 }
                 else if (child is Sql_clauseContext clause)
                 {
@@ -470,7 +470,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is Search_conditionContext condition)
                 {
-                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    statement.Condition = this.ParseToken(condition, TokenType.Condition);
                 }
                 else if (child is Sql_clauseContext clause)
                 {
@@ -715,7 +715,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Search_conditionContext condition)
                 {
-                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    statement.Condition = this.ParseToken(condition, TokenType.Condition);
                 }
             }
 
@@ -773,7 +773,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is ExpressionContext exp)
                 {
-                    statement.Value = new TokenInfo(exp);
+                    statement.Value = this.ParseToken(exp);
 
                     break;
                 }
@@ -979,10 +979,10 @@ namespace SqlAnalyser.Core
 
                     As_table_aliasContext alias = tsi.as_table_alias();
 
-                    if(alias!=null)
+                    if (alias != null)
                     {
                         tableNameInfo.Alias = new TokenInfo(alias);
-                    }                   
+                    }
                 }
                 else if (node is Table_sourcesContext tss)
                 {
@@ -991,21 +991,48 @@ namespace SqlAnalyser.Core
             }
 
             return tableNameInfo;
-        }
+        }    
 
-        public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
-        {
-            this.ExtractFunctions(script, node, this.IsFunction);
-        }
-
-        private Func<IParseTree, bool> IsFunction = (node) =>
+        protected override bool IsFunction (IParseTree node)
         {
             if (node is Function_callContext)
             {
                 return true;
             }
-           
+
             return false;
-        };
+        }
+
+        protected override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is Table_name_with_hintContext tableName)
+            {
+                parsedNode = tableName;
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is Full_column_nameContext columnName)
+            {
+                IdContext id = columnName.id();
+
+                if (id != null)
+                {
+                    parsedNode = id;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace DatabaseConverter.Core
     {
         public static List<FunctionSpecification> GetFunctionSpecifications(DatabaseType dbType)
         {
-            string filePath = Path.Combine(ConfigRootFolder, $"Function/{dbType}.xml");
+            string filePath = Path.Combine(ConfigRootFolder, $"FunctionSpecification/{dbType}.xml");
 
             XDocument doc = XDocument.Load(filePath);
 
@@ -21,6 +21,13 @@ namespace DatabaseConverter.Core
                 Args = item.Attribute("args").Value,
                 Delimiter= item.Attribute("delimiter")?.Value
             }).ToList();
+        }
+
+        public static IEnumerable<string> GetFunctions(DatabaseType dbType)
+        {
+            string filePath = Path.Combine(ConfigRootFolder, $"Function/{dbType}.txt");
+
+            return File.ReadAllLines(filePath);
         }
     }
 }

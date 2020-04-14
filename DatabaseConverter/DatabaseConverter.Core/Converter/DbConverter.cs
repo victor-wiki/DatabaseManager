@@ -13,7 +13,8 @@ using System.Threading.Tasks;
 
 namespace DatabaseConverter.Core
 {
-    public delegate void FeedbackHandle(FeedbackInfo info);
+    public delegate void FeedbackHandler(FeedbackInfo info);
+    public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, object result);
 
     public class DbConverter : IDisposable
     {
@@ -32,7 +33,8 @@ namespace DatabaseConverter.Core
 
         public DbConverterOption Option { get; set; } = new DbConverterOption();
 
-        public event FeedbackHandle OnFeedback;
+        public event FeedbackHandler OnFeedback;
+        public event TranslateHandler OnTranslated;
 
         public CancellationTokenSource CancellationTokenSource { get; private set; }
 
@@ -127,17 +129,20 @@ namespace DatabaseConverter.Core
 
             TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipScriptError };
             translateEngine.UserDefinedTypes = utypes;
-
+            translateEngine.OnTranslated += this.Translated;
             translateEngine.Translate();
 
-            if (this.Option.EnsurePrimaryKeyNameUnique)
+            if (targetSchemaInfo.Tables.Any())
             {
-                SchemaInfoHelper.EnsurePrimaryKeyNameUnique(targetSchemaInfo);
-            }
+                if (this.Option.EnsurePrimaryKeyNameUnique)
+                {
+                    SchemaInfoHelper.EnsurePrimaryKeyNameUnique(targetSchemaInfo);
+                }
 
-            if (this.Option.EnsureIndexNameUnique)
-            {
-                SchemaInfoHelper.EnsureIndexNameUnique(targetSchemaInfo);
+                if (this.Option.EnsureIndexNameUnique)
+                {
+                    SchemaInfoHelper.EnsureIndexNameUnique(targetSchemaInfo);
+                }
             }
 
             DbInterpreter targetInterpreter = this.Target.DbInterpreter;
@@ -153,9 +158,26 @@ namespace DatabaseConverter.Core
             sourceInterpreter.Subscribe(this.observer);
             targetInterpreter.Subscribe(this.observer);
 
+            ScriptBuilder scriptBuilder = null;
+
+            if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
+            {
+                scriptBuilder = targetInterpreter.GenerateSchemaScripts(targetSchemaInfo);
+
+                if (targetSchemaInfo.Tables.Any())
+                {
+                    this.Translated(targetInterpreter.DatabaseType, targetSchemaInfo.Tables.First(), scriptBuilder.ToString());
+                }
+            }
+
+            if (this.Option.OnlyForTranslate)
+            {
+                return;
+            }
+
             DataTransferErrorProfile dataErrorProfile = null;
 
-            using (DbConnection dbConnection = targetInterpreter.CreateConnection())
+            using (DbConnection dbConnection = this.Option.ExecuteScriptOnTargetServer ? targetInterpreter.CreateConnection() : null)
             {
                 this.isBusy = true;
 
@@ -165,97 +187,95 @@ namespace DatabaseConverter.Core
                     this.transaction = dbConnection.BeginTransaction();
                 }
 
-                #region Schema sync
-                if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
+                #region Schema sync        
+
+                if (scriptBuilder != null && this.Option.ExecuteScriptOnTargetServer)
                 {
-                    List<Script> scripts = targetInterpreter.GenerateSchemaScripts(targetSchemaInfo).Scripts;
+                    List<Script> scripts = scriptBuilder.Scripts;
 
-                    if (this.Option.ExecuteScriptOnTargetServer)
+                    if (scripts.Count == 0)
                     {
-                        if (scripts.Count == 0)
+                        this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
+                        this.isBusy = false;
+                        return;
+                    }
+
+                    targetInterpreter.Feedback(FeedbackInfoType.Info, "Begin to sync schema...");
+
+                    try
+                    {
+                        if (!this.Option.SplitScriptsToExecute)
                         {
-                            this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
-                            this.isBusy = false;
-                            return;
+                            targetInterpreter.Feedback(FeedbackInfoType.Info, script);
+
+                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, null, this.transaction));
                         }
-
-                        targetInterpreter.Feedback(FeedbackInfoType.Info, "Begin to sync schema...");
-
-                        try
+                        else
                         {
-                            if (!this.Option.SplitScriptsToExecute)
+                            Func<Script, bool> isValidScript = (s) =>
                             {
-                                targetInterpreter.Feedback(FeedbackInfoType.Info, script);
+                                return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsSplitString);
+                            };
 
-                                await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, null, this.transaction));
-                            }
-                            else
+                            int count = scripts.Where(item => isValidScript(item)).Count();
+                            int i = 0;
+
+                            foreach (Script s in scripts)
                             {
-                                Func<Script, bool> isValidScript = (s) =>
+                                if (!isValidScript(s))
                                 {
-                                    return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsSplitString);
-                                };
+                                    continue;
+                                }
 
-                                int count = scripts.Where(item=> isValidScript(item)).Count();
-                                int i = 0;
+                                bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View);
 
-                                foreach (Script s in scripts)
+                                bool skipError = this.Option.SkipScriptError && isCreateScript;
+
+                                string sql = s.Content?.Trim();
+
+                                if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsSplitString)
                                 {
-                                    if(!isValidScript(s))
+                                    i++;
+
+                                    if (!isCreateScript && targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
                                     {
-                                        continue;
+                                        sql = sql.TrimEnd(targetInterpreter.ScriptsSplitString.ToArray());
                                     }
 
-                                    bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View);
-
-                                    bool skipError = this.Option.SkipScriptError && isCreateScript;
-
-                                    string sql = s.Content?.Trim();
-
-                                    if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsSplitString)
+                                    if (!targetInterpreter.HasError)
                                     {
-                                        i++;
+                                        targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
 
-                                        if(!isCreateScript && targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
-                                        {
-                                            sql = sql.TrimEnd(targetInterpreter.ScriptsSplitString.ToArray());
-                                        }
+                                        CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
+                                        commandInfo.SkipError = skipError;
 
-                                        if (!targetInterpreter.HasError)
-                                        {
-                                            targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
-
-                                            CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
-                                            commandInfo.SkipError = skipError;
-
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
-                                        }
+                                        await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
                                     }
                                 }
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            targetInterpreter.CancelRequested = true;
-
-                            this.Rollback();
-
-                            ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
-                            ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
-
-                            SchemaTransferException schemaTransferException = new SchemaTransferException(ex)
-                            {
-                                SourceServer = sourceConnectionInfo.Server,
-                                SourceDatabase = sourceConnectionInfo.Database,
-                                TargetServer = targetConnectionInfo.Server,
-                                TargetDatabase = targetConnectionInfo.Database
-                            };
-
-                            this.HandleError(schemaTransferException);
-                        }
-
-                        targetInterpreter.Feedback(FeedbackInfoType.Info, "End sync schema.");
                     }
+                    catch (Exception ex)
+                    {
+                        targetInterpreter.CancelRequested = true;
+
+                        this.Rollback();
+
+                        ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
+                        ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
+
+                        SchemaTransferException schemaTransferException = new SchemaTransferException(ex)
+                        {
+                            SourceServer = sourceConnectionInfo.Server,
+                            SourceDatabase = sourceConnectionInfo.Database,
+                            TargetServer = targetConnectionInfo.Server,
+                            TargetDatabase = targetConnectionInfo.Database
+                        };
+
+                        this.HandleError(schemaTransferException);
+                    }
+
+                    targetInterpreter.Feedback(FeedbackInfoType.Info, "End sync schema.");
                 }
                 #endregion
 
@@ -451,15 +471,15 @@ namespace DatabaseConverter.Core
         {
             this.cancelRequested = true;
 
-            if(this.Source!=null)
+            if (this.Source != null)
             {
                 this.Source.DbInterpreter.CancelRequested = true;
             }
-            
-            if(this.Target!=null)
+
+            if (this.Target != null)
             {
                 this.Target.DbInterpreter.CancelRequested = true;
-            }          
+            }
 
             this.Rollback();
 
@@ -510,6 +530,14 @@ namespace DatabaseConverter.Core
             if (this.OnFeedback != null)
             {
                 this.OnFeedback(info);
+            }
+        }
+
+        private void Translated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        {
+            if (this.OnTranslated != null)
+            {
+                this.OnTranslated(dbType, dbObject, result);
             }
         }
 

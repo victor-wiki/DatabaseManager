@@ -16,5 +16,6 @@ namespace DatabaseConverter.Core
         /// For function, procedure, trigger and view
         /// </summary>
         public bool SkipScriptError { get; set; }
+        public bool OnlyForTranslate { get; set; }
     }
 }

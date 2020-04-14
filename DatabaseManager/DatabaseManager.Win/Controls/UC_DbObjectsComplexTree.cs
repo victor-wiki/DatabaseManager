@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using DatabaseInterpreter.Model;
+﻿using DatabaseConverter.Core;
 using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
-using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -25,7 +23,7 @@ namespace DatabaseManager.Controls
         private DbInterpreterOption simpleInterpreterOption = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
 
         public ShowDbObjectContentHandler OnShowContent;
-        public FeedbackHandler OnFeedback;
+        public DatabaseInterpreter.Utility.FeedbackHandler OnFeedback;
 
         public UC_DbObjectsComplexTree()
         {
@@ -90,6 +88,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = node.Level == 0;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = node.Tag is Table;
+            this.tsmiTranslate.Visible = node.Tag is Table || node.Tag is ScriptDbObject;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -645,6 +644,105 @@ namespace DatabaseManager.Controls
         private void tvDbObjects_AfterExpand(object sender, TreeViewEventArgs e)
         {
             this.Feedback("");
-        }       
+        }     
+
+        private void tsmiTranslate_MouseEnter(object sender, EventArgs e)
+        {
+            this.tsmiTranslate.DropDownItems.Clear();
+
+            var dbTypes = Enum.GetValues(typeof(DatabaseType));
+
+            foreach(var dbType in dbTypes)
+            {
+                if((int)dbType != (int)this.databaseType)
+                {
+                    ToolStripMenuItem item = new ToolStripMenuItem(dbType.ToString());
+                    item.Click += TranslateItem_Click;
+
+                    this.tsmiTranslate.DropDownItems.Add(item);
+                }
+            }
+        }
+
+        private async void TranslateItem_Click(object sender, EventArgs e)
+        {
+            DatabaseType dbType = ManagerUtil.GetDatabaseType((sender as ToolStripMenuItem).Text);
+
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+            this.tvDbObjects.SelectedNode = node;
+
+            await this.Translate(node, dbType);
+        }
+
+        private async Task Translate(TreeNode node, DatabaseType targetDbType)
+        {
+            object tag = node.Tag;          
+
+            ConnectionInfo connectionInfo = this.GetConnectionInfo((this.GetDatabaseNode(node).Tag as Database).Name);
+
+            if (tag is DatabaseObject)
+            {
+                DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
+                DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
+
+                targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = true;              
+
+                DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, sourceScriptOption) };
+                DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, new ConnectionInfo(), sourceScriptOption) };
+
+                using (DbConverter dbConverter = new DbConverter(source, target))
+                {
+                    dbConverter.Option.OnlyForTranslate = true;
+                    dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
+                    dbConverter.Option.ExecuteScriptOnTargetServer = false;
+
+                    dbConverter.Subscribe(this);
+                    dbConverter.OnTranslated += this.DbConverter_OnTranslated;
+
+                    if (targetDbType == DatabaseType.SqlServer)
+                    {
+                        target.DbOwner = "dbo";
+                    }
+
+                    SchemaInfo schemaInfo = new SchemaInfo();
+                   
+                    if(tag is Table)
+                    {
+                        schemaInfo.Tables.Add(tag as Table);
+                    }
+                    else if(tag is DatabaseInterpreter.Model.View)
+                    {
+                        schemaInfo.Views.Add(tag as DatabaseInterpreter.Model.View);
+                    }
+                    else if(tag is Function)
+                    {
+                        schemaInfo.Functions.Add(tag as Function);
+                    }
+                    else if (tag is Procedure)
+                    {
+                        schemaInfo.Procedures.Add(tag as Procedure);
+                    }
+                    else if (tag is TableTrigger)
+                    {
+                        schemaInfo.TableTriggers.Add(tag as TableTrigger);
+                    }
+
+                    await dbConverter.Convert(schemaInfo);                   
+                }
+            }
+        }
+
+        private void DbConverter_OnTranslated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        {
+            if (this.OnShowContent != null)
+            {
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result?.ToString(), ConnectionInfo = null });
+            }
+        }
     }
 }

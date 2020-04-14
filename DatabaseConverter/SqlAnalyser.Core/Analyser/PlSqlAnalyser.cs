@@ -145,10 +145,11 @@ namespace SqlAnalyser.Core
 
                     if (fetchCursorStatement != null && fs != null)
                     {
-                        @while.Condition.Symbol = $"{fs.CursorName}%NOTFOUND";
+                        @while.Condition.Symbol = "1=1";
 
                         if (fs.Variables.Count == 0)
-                        {
+                        {                            
+                            @while.Statements.Insert(0, new LoopExitStatement() { Condition = new TokenInfo($"{fs.CursorName}%NOTFOUND") });
                             @while.Statements.Insert(0, fetchCursorStatement);
                         }
                     }
@@ -480,6 +481,10 @@ namespace SqlAnalyser.Core
 
                 appendStatements(loop.Statements, true);
                 appendLine("END LOOP;");
+            }
+            else if(statement is LoopExitStatement loopExit)
+            {
+                appendLine($"EXIT WHEN {loopExit.Condition};");
             }
             else if (statement is WhileStatement @while)
             {

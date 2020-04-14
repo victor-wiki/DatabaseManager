@@ -3,6 +3,8 @@ using Antlr4.Runtime.Tree;
 using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SqlAnalyser.Core
 {
@@ -27,6 +29,11 @@ namespace SqlAnalyser.Core
 
             return parser;
         }
+
+        protected abstract bool IsFunction(IParseTree node);
+        protected abstract bool IsTableName(IParseTree node, out ParserRuleContext parsedNode);
+        protected abstract bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode);
+
 
         public virtual CommonScript Analyse<T>(string content)
             where T : DatabaseObject
@@ -63,11 +70,9 @@ namespace SqlAnalyser.Core
 
         public abstract TriggerScript AnalyseTrigger(string content);
 
-        public abstract ViewScript AnalyseView(string content);
+        public abstract ViewScript AnalyseView(string content);      
 
-        public abstract void ExtractFunctions(CommonScript script, ParserRuleContext node);
-
-        public void ExtractFunctions(CommonScript script, ParserRuleContext node, Func<IParseTree, bool> func)
+        public virtual void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
             if (node == null)
             {
@@ -76,14 +81,52 @@ namespace SqlAnalyser.Core
 
             foreach (var child in node.children)
             {
-                if (func(child))
+                if (this.IsFunction(child))
                 {
                     script.Functions.Add(new TokenInfo(child as ParserRuleContext));
                 }
                 else if (child is ParserRuleContext)
                 {
-                    this.ExtractFunctions(script, child as ParserRuleContext, func);
+                    this.ExtractFunctions(script, child as ParserRuleContext);
                 }
+            }
+        }
+
+        protected TokenInfo ParseToken(ParserRuleContext node, TokenType tokenType = TokenType.General)
+        {
+            TokenInfo tokenInfo = new TokenInfo(node) { Type = tokenType };
+
+            this.AddTokens(tokenInfo.Tokens, node, tokenType);
+
+            return tokenInfo;
+        }
+
+        protected void AddTokens(List<TokenInfo> tokens, ParserRuleContext node, TokenType tokenType = TokenType.General)
+        {
+            foreach (var child in node.children)
+            {
+                ParserRuleContext parsedNode = null;
+
+                if (this.IsTableName(child, out parsedNode))
+                {
+                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.TableName });
+                }
+                else if (this.IsColumnName(child, out parsedNode))
+                {
+                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.ColumnName });
+                }
+                else if (child is ParserRuleContext)
+                {
+                    this.AddTokens(tokens, child as ParserRuleContext, tokenType);
+                }
+            }
+        }
+
+        protected void AddToken(List<TokenInfo> tokens, TokenInfo tokenInfo)
+        {
+            if (!tokens.Any(item => item != null && item.StartIndex == tokenInfo.StartIndex && item.StopIndex == tokenInfo.StopIndex))
+            {
+                tokens.Add(tokenInfo);
             }
         }
     }

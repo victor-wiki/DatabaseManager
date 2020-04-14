@@ -391,8 +391,8 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseExitStatement(exit));
                 }
-                else if(child is BodyContext body)
-                {                    
+                else if (child is BodyContext body)
+                {
                     statements.AddRange(this.ParseBody(body));
                 }
             }
@@ -400,9 +400,9 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public WhileExitStatement ParseExitStatement(Exit_statementContext node)
+        public LoopExitStatement ParseExitStatement(Exit_statementContext node)
         {
-            WhileExitStatement statement = new WhileExitStatement();
+            LoopExitStatement statement = new LoopExitStatement();
 
             statement.Condition = new TokenInfo(node.condition()) { Type = TokenType.Condition };
 
@@ -576,7 +576,7 @@ namespace SqlAnalyser.Core
             UpdateStatement statement = new UpdateStatement();
 
             General_table_refContext table = node.general_table_ref();
-            TokenInfo tableName = new TokenInfo(table) { Type = TokenType.TableName, Tag= this.ParseTableName(table) };
+            TokenInfo tableName = new TokenInfo(table) { Type = TokenType.TableName, Tag = this.ParseTableName(table) };
             statement.TableNames.Add(tableName);
 
             Update_set_clauseContext set = node.update_set_clause();
@@ -589,7 +589,7 @@ namespace SqlAnalyser.Core
                     statement.SetItems.Add(new NameValueItem()
                     {
                         Name = new TokenInfo(colSet.column_name()) { Type = TokenType.ColumnName },
-                        Value = new TokenInfo(colSet.expression())
+                        Value = this.ParseToken(colSet.expression())
                     });
                 }
             }
@@ -598,7 +598,7 @@ namespace SqlAnalyser.Core
 
             if (where != null)
             {
-                statement.Condition = new TokenInfo(where) { Type = TokenType.Condition };
+                statement.Condition = this.ParseToken(where, TokenType.Condition);
             }
 
             return statement;
@@ -615,7 +615,7 @@ namespace SqlAnalyser.Core
 
             if (where != null)
             {
-                statement.Condition = new TokenInfo(where) { Type = TokenType.Condition };
+                statement.Condition = this.ParseToken(where, TokenType.Condition);
             }
 
             statements.Add(statement);
@@ -661,7 +661,7 @@ namespace SqlAnalyser.Core
 
                             Table_ref_listContext table = block.from_clause().table_ref_list();
 
-                            statement.TableName = new TokenInfo(table) { Type = TokenType.TableName, Tag= this.ParseTableName(table) };
+                            statement.TableName = new TokenInfo(table) { Type = TokenType.TableName, Tag = this.ParseTableName(table) };
 
                             Into_clauseContext into = block.into_clause();
 
@@ -674,7 +674,7 @@ namespace SqlAnalyser.Core
 
                             if (expression != null)
                             {
-                                statement.Condition = new TokenInfo(expression) { Type = TokenType.Condition };
+                                statement.Condition = this.ParseToken(expression, TokenType.Condition);
                             }
                         }
                     }
@@ -700,7 +700,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is ExpressionContext exp)
                 {
-                    statements.Last().Value = new TokenInfo(exp);
+                    statements.Last().Value = this.ParseToken(exp);
                 }
             }
 
@@ -911,8 +911,8 @@ namespace SqlAnalyser.Core
                     {
                         tableNameInfo.Alias = new TokenInfo(alias);
                     }
-                } 
-                else if(node is Table_ref_listContext trl)
+                }
+                else if (node is Table_ref_listContext trl)
                 {
                     return this.ParseTableName(trl.table_ref().FirstOrDefault());
                 }
@@ -921,22 +921,87 @@ namespace SqlAnalyser.Core
             return tableNameInfo;
         }
 
-        public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
+        protected override bool IsFunction(IParseTree node)
         {
-            this.ExtractFunctions(script, node, this.IsFunction);
-        }
-
-        private Func<IParseTree, bool> IsFunction = (node) =>
-        {
-            if(node is Standard_functionContext)
+            if (node is Standard_functionContext)
             {
                 return true;
             }
-            else if(node is General_element_partContext && (node as General_element_partContext).children.Any(item=>item is Function_argumentContext))
+            else if (node is General_element_partContext && (node as General_element_partContext).children.Any(item => item is Function_argumentContext))
             {
                 return true;
             }
             return false;
-        };
+        }
+
+        protected override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is Tableview_nameContext || node is Table_ref_aux_internal_oneContext)
+            {
+                parsedNode = node as ParserRuleContext;
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is Column_nameContext columnName)
+            {
+                Id_expressionContext[] ids = columnName.id_expression();
+
+                if (ids != null && ids.Length > 0)
+                {
+                    parsedNode = ids[0];
+                }
+
+                return true;
+            }
+            else if (node is General_element_partContext ele)
+            {
+                if (this.IsChildOfType<Select_list_elementsContext>(ele))
+                {
+                    Id_expressionContext[] ids = ele.id_expression();
+
+                    if (ids != null && ids.Length > 0)
+                    {
+                        if (ids.Length > 1)
+                        {
+                            parsedNode = ids[1];
+                        }
+                        else
+                        {
+                            parsedNode = ids[0];
+                        }
+
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsChildOfType<T>(RuleContext node)
+        {
+            if (node == null || node.Parent == null)
+            {
+                return false;
+            }
+
+            if (node.Parent != null && node.Parent.GetType() == typeof(T))
+            {
+                return true;
+            }
+            else
+            {
+                return this.IsChildOfType<T>(node.Parent as RuleContext);
+            }
+        }
     }
 }

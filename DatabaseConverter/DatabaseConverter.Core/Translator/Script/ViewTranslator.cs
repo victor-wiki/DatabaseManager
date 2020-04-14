@@ -44,8 +44,7 @@ namespace DatabaseConverter.Core
             foreach (View view in views)
             {
                 try
-                {
-                    string ownerNameWithQuotation = $"{targetDbInterpreter.QuotationLeftChar}{targetOwnerName}{targetDbInterpreter.QuotationRightChar}";
+                {                    
                     string viewNameWithQuotation = $"{targetDbInterpreter.QuotationLeftChar}{view.Name}{targetDbInterpreter.QuotationRightChar}";
 
                     string definition = view.Definition;
@@ -61,7 +60,7 @@ namespace DatabaseConverter.Core
 
                     definition = this.ParseDefinition(definition);
 
-                    string createAsClause = $"CREATE VIEW {targetOwnerName}.{viewNameWithQuotation} AS ";
+                    string createAsClause = $"CREATE VIEW {(string.IsNullOrEmpty(targetOwnerName)? "": targetOwnerName + "." )}{viewNameWithQuotation} AS ";
 
                     if (!definition.Trim().ToLower().StartsWith("create"))
                     {
@@ -74,6 +73,11 @@ namespace DatabaseConverter.Core
                     }
 
                     view.Definition = definition;
+
+                    if (this.OnTranslated != null)
+                    {
+                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, view, view.Definition);
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -20,6 +20,8 @@ namespace DatabaseConverter.Core
 
         public bool SkipError { get; set; }
 
+        public TranslateHandler OnTranslated;
+
         public DbObjectTranslator(DbInterpreter source, DbInterpreter target)
         {
             this.sourceDbInterpreter = source;
@@ -45,8 +47,10 @@ namespace DatabaseConverter.Core
             return mappings.FirstOrDefault(item => item.Source.Type?.ToLower() == dataType?.ToLower());
         }
 
-        public string GetNewDataType(List<DataTypeMapping> mappings, string dataType)
+        public string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
         {
+            dataType = dataType.Trim();
+
             DatabaseType sourceDbType = this.sourceDbInterpreter.DatabaseType;
             DatabaseType targetDbType = this.targetDbInterpreter.DatabaseType;
 
@@ -62,26 +66,30 @@ namespace DatabaseConverter.Core
             string upperTypeName = newDataType.ToUpper();
 
             DataTypeMapping mapping = this.GetDataTypeMapping(mappings, cleanDataType);
+
             if (mapping != null)
             {
                 DataTypeMappingTarget targetDataType = mapping.Tareget;
                 newDataType = targetDataType.Type;
 
-                if (targetDbType == DatabaseType.MySql)
+                if(usedForFunction)
                 {
-                    if (upperTypeName == "INT")
+                    if (targetDbType == DatabaseType.MySql)
                     {
-                        newDataType = "SIGNED";
+                        if (upperTypeName == "INT")
+                        {
+                            newDataType = "SIGNED";
+                        }
+                        else if (upperTypeName == "FLOAT" || upperTypeName == "DOUBLE" || upperTypeName == "NUMBER")
+                        {
+                            newDataType = "DECIMAL";
+                        }
+                        else if (DataTypeHelper.IsCharType(newDataType))
+                        {
+                            newDataType = "CHAR";
+                        }
                     }
-                    else if (upperTypeName == "FLOAT" || upperTypeName == "DOUBLE" || upperTypeName == "NUMBER")
-                    {
-                        newDataType = "DECIMAL";
-                    }
-                    else if (DataTypeHelper.IsCharType(newDataType))
-                    {
-                        newDataType = "CHAR";
-                    }
-                }
+                }                
 
                 if (!hasPrecisionScale && !string.IsNullOrEmpty(targetDataType.Precision) && !string.IsNullOrEmpty(targetDataType.Scale))
                 {
@@ -94,20 +102,23 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                if (sourceDbType == DatabaseType.MySql)
+                if(usedForFunction)
                 {
-                    if (upperTypeName == "SIGNED")
+                    if (sourceDbType == DatabaseType.MySql)
                     {
-                        if (targetDbType == DatabaseType.SqlServer)
+                        if (upperTypeName == "SIGNED")
                         {
-                            newDataType = "DECIMAL";
-                        }
-                        else if (targetDbType == DatabaseType.Oracle)
-                        {
-                            newDataType = "NUMBER";
+                            if (targetDbType == DatabaseType.SqlServer)
+                            {
+                                newDataType = "DECIMAL";
+                            }
+                            else if (targetDbType == DatabaseType.Oracle)
+                            {
+                                newDataType = "NUMBER";
+                            }
                         }
                     }
-                }
+                }                
             }
 
             return newDataType;
@@ -118,7 +129,9 @@ namespace DatabaseConverter.Core
             hasError = false;
 
             SqlFormattingManager manager = new SqlFormattingManager();
+
             string formattedSql = manager.Format(sql, ref hasError);
+
             return formattedSql;
         }
 
@@ -158,7 +171,7 @@ namespace DatabaseConverter.Core
             return script;
         }
 
-        public string HandleFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,  
+        public string ParseFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,  
             FunctionFomular fomular, string targetFunctionName, out Dictionary<string, string> dictDataType)
         {
             dictDataType = new Dictionary<string, string>();
@@ -175,7 +188,7 @@ namespace DatabaseConverter.Core
                 Dictionary<int, FunctionArgumentToken> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec);
                 Dictionary<int, FunctionArgumentToken> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec);
 
-                string delimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+                string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
 
                 fomular.Delimiter = delimiter;
 
@@ -203,7 +216,7 @@ namespace DatabaseConverter.Core
                                     {
                                         newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
 
-                                        dictDataType.Add(oldArg, newArg);
+                                        dictDataType.Add(oldArg, newArg.Trim());
                                     }
                                     else
                                     {
@@ -217,7 +230,9 @@ namespace DatabaseConverter.Core
                     }
                 }
 
-                newExpression = $"{targetFunctionName}({string.Join(delimiter, args)})";
+                string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+
+                newExpression = $"{targetFunctionName}({string.Join(targetDelimiter, args)})";
             }
 
             return newExpression;
@@ -244,6 +259,37 @@ namespace DatabaseConverter.Core
             }
 
             return dictTokenIndex;
+        }
+
+        public string GetMappedFunctionName(string name)
+        {
+            string text = name;
+            string textWithBrackets = name.ToLower() + "()";
+
+            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
+            {
+                text = textWithBrackets;
+            }
+
+            string targetFunctionName = name;
+
+            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t =>
+             (t.Direction == FunctionMappingDirection.OUT || t.Direction == FunctionMappingDirection.INOUT)
+              && t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
+
+            if (funcMappings != null)
+            {
+                targetFunctionName = funcMappings.FirstOrDefault(item =>
+                        (item.Direction == FunctionMappingDirection.IN || item.Direction == FunctionMappingDirection.INOUT)
+                        && item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
+
+                if (string.IsNullOrEmpty(targetFunctionName))
+                {
+                    targetFunctionName = name;
+                }               
+            }
+
+            return targetFunctionName;
         }
     }
 }

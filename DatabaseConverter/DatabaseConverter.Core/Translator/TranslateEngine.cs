@@ -15,6 +15,8 @@ namespace DatabaseConverter.Core
         private string targetDbOwner;
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
+        public TranslateHandler OnTranslated;
+
         public bool SkipError { get; set; }
 
         public TranslateEngine(SchemaInfo targetSchemaInfo, DbInterpreter sourceInterpreter, DbInterpreter targetInerpreter, string targetDbOwner = null)
@@ -39,6 +41,7 @@ namespace DatabaseConverter.Core
             if (this.sourceInterpreter.DatabaseType == DatabaseType.SqlServer)
             {
                 ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner) { SkipError = this.SkipError };
+                viewTranslator.OnTranslated += this.ScriptTranslated;
                 viewTranslator.Translate();
             }
             else
@@ -57,13 +60,22 @@ namespace DatabaseConverter.Core
             triggerTranslator.Translate();
         }
 
-        private ScriptTranslator<T> GetScriptTranslator<T>(List<T> dbObjects) where T:ScriptDbObject
+        private ScriptTranslator<T> GetScriptTranslator<T>(List<T> dbObjects) where T : ScriptDbObject
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceInterpreter, this.targetInerpreter, dbObjects) { SkipError = this.SkipError };
             translator.UserDefinedTypes = this.UserDefinedTypes;
             translator.TargetDbOwner = this.targetDbOwner;
+            translator.OnTranslated += this.ScriptTranslated;
 
             return translator;
+        }
+
+        private void ScriptTranslated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        {
+            if (this.OnTranslated != null)
+            {
+                this.OnTranslated(dbType, dbObject, result);
+            }
         }
 
         private void TranslateOwner()

@@ -4,6 +4,7 @@ using System;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace DatabaseManager.Helper
 {
@@ -27,23 +28,34 @@ namespace DatabaseManager.Helper
             richTextBox.ScrollToCaret();
         }
 
-        public static void HighlightingKeywords(RichTextBox richTextBox, DatabaseType databaseType)
+        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType)
         {
             var keywords = KeywordManager.GetKeywords(databaseType);
+            var functions = FunctionManager.GetFunctions(databaseType).Except(keywords);
 
             string keywordsRegex = $@"\b({string.Join("|", keywords)})\b";
-            MatchCollection keywordMatches = Regex.Matches(richTextBox.Text, keywordsRegex, RegexOptions.IgnoreCase);
+            string functionsRegex = $@"\b({string.Join("|", functions)})\b";
+            string stringRegex = $@"(['][^'^(^)]*['])";
 
-            foreach (Match m in keywordMatches)
-            {
-                richTextBox.SelectionStart = m.Index;
-                richTextBox.SelectionLength = m.Length;
-                richTextBox.SelectionColor = Color.Blue;
-            }
+            Highlighting(richTextBox, keywordsRegex, RegexOptions.IgnoreCase, Color.Blue);             
+            Highlighting(richTextBox, functionsRegex, RegexOptions.IgnoreCase, ColorTranslator.FromHtml("#FF00FF"));
+            Highlighting(richTextBox, stringRegex, RegexOptions.IgnoreCase, Color.Red);           
 
             richTextBox.SelectionStart = 0;
             richTextBox.SelectionLength = 0;
             richTextBox.Focus();
+        }
+
+        public static void Highlighting(RichTextBox richTextBox, string regex, RegexOptions option, Color color)
+        {
+            MatchCollection matches = Regex.Matches(richTextBox.Text, regex, option);
+
+            foreach (Match m in matches)
+            {
+                richTextBox.SelectionStart = m.Index;
+                richTextBox.SelectionLength = m.Length;
+                richTextBox.SelectionColor = color;
+            }
         }
     }
 }

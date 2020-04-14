@@ -52,87 +52,23 @@ namespace DatabaseConverter.Core
             foreach (TSQLToken token in tokens)
             {
                 string text = token.Text;
-
-                int startIndex = -1;
-                int endIndex = -1;
-                int leftBracketCount = 0;
-                int rightBracketCount = 0;
-                string dataType = "";
-                string newDataType = "";
+                string functionExpression = null;
 
                 switch (token.Type)
                 {
                     case TSQLTokenType.SystemIdentifier:
 
-                        string name = text.ToUpper();
-
-                        startIndex = token.BeginPosition;
-
-                        int separatorIndex = definition.Substring(startIndex).IndexOfAny(new char[] { ';', '\r', '\n' });
-                        int asIndex = definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
-
-                        endIndex = asIndex < separatorIndex ? (asIndex + startIndex + 1) : (separatorIndex + startIndex);
-
-                        string functionExpression = definition.Substring(startIndex, endIndex - startIndex);
-
-                        FunctionFomular fomular = new FunctionFomular(name, functionExpression);
-
-                        Dictionary<string, string> dictDataType = null;
-                        string newExpression = this.HandleFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, name, out dictDataType);
-
-                        if (newExpression != fomular.Expression)
-                        {
-                            newDefinition = this.ReplaceValue(newDefinition, fomular.Expression, newExpression);
-
-                            changed = true;
-
-                            if (dictDataType!=null)
-                            {
-                                this.dataTypes.AddRange(dictDataType.Values);
-                            }
-                        }                       
+                        functionExpression = this.GetFunctionExpression(token, definition);
 
                         break;
 
                     case TSQLTokenType.Identifier:
+
                         switch (text.ToUpper())
                         {
                             case "CAST":
-                                startIndex = token.BeginPosition;
-                                asIndex = startIndex + definition.Substring(startIndex).ToUpper().IndexOf(" AS ");
 
-                                string arg = definition.Substring(token.EndPosition + 1, asIndex - startIndex - 3);
-
-                                int functionEndIndex = -1;
-                                for (int i = asIndex + 3; i < definition.Length; i++)
-                                {
-                                    if (definition[i] == '(')
-                                    {
-                                        leftBracketCount++;
-                                    }
-                                    else if (definition[i] == ')')
-                                    {
-                                        rightBracketCount++;
-                                    }
-
-                                    if (rightBracketCount - leftBracketCount == 1)
-                                    {
-                                        dataType = definition.Substring(asIndex + 4, i - asIndex - 4);
-                                        functionEndIndex = i;
-                                        break;
-                                    }
-                                }
-
-                                newDataType = this.GetNewDataType(dataTypeMappings, dataType);
-
-                                if (!string.IsNullOrEmpty(newDataType) && !dataTypes.Contains(dataType))
-                                {
-                                    dataTypes.Add(newDataType);
-                                }
-
-                                newDefinition = newDefinition.Replace(dataType, newDataType);
-
-                                changed = true;
+                                functionExpression = this.GetFunctionExpression(token, definition);
 
                                 break;
                         }
@@ -142,9 +78,74 @@ namespace DatabaseConverter.Core
 
                         break;
                 }
+
+                if (!string.IsNullOrEmpty(functionExpression))
+                {
+                    string targetFunctionName = this.GetMappedFunctionName(text);
+
+                    FunctionFomular fomular = new FunctionFomular(functionExpression);
+
+                    Dictionary<string, string> dictDataType = null;
+
+                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
+
+                    if (newExpression != fomular.Expression)
+                    {
+                        newDefinition = this.ReplaceValue(newDefinition, fomular.Expression, newExpression);
+
+                        changed = true;
+                    }
+
+                    if (dictDataType != null)
+                    {
+                        this.dataTypes.AddRange(dictDataType.Values);
+                    }
+                }
             }
 
             return newDefinition;
+        }
+
+        private string GetFunctionExpression(TSQLToken token, string definition)
+        {
+            int startIndex = startIndex = token.BeginPosition;
+            int functionEndIndex = functionEndIndex = this.FindFunctionEndIndex(startIndex + token.Text.Length, definition);
+
+            string functionExpression = null;
+
+            if (functionEndIndex != -1)
+            {
+                functionExpression = definition.Substring(startIndex, functionEndIndex - startIndex + 1);
+            }
+
+            return functionExpression;
+        }
+
+        private int FindFunctionEndIndex(int startIndex, string definition)
+        {
+            int leftBracketCount = 0;
+            int rightBracketCount = 0;
+            int functionEndIndex = -1;
+
+            for (int i = startIndex; i < definition.Length; i++)
+            {
+                if (definition[i] == '(')
+                {
+                    leftBracketCount++;
+                }
+                else if (definition[i] == ')')
+                {
+                    rightBracketCount++;
+                }
+
+                if (rightBracketCount == leftBracketCount)
+                {
+                    functionEndIndex = i;
+                    break;
+                }
+            }
+
+            return functionEndIndex;
         }
 
         public string BuildDefinition(List<TSQL.Tokens.TSQLToken> tokens)
@@ -282,11 +283,11 @@ namespace DatabaseConverter.Core
             }
 
             return text;
-        }       
+        }
 
         public List<TSQL.Tokens.TSQLToken> GetTokens(string sql)
         {
             return TSQLTokenizer.ParseTokens(sql, true, true);
-        }       
+        }
     }
 }

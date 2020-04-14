@@ -535,7 +535,7 @@ namespace SqlAnalyser.Core
 
                 appendLine("END WHILE;");
             }
-            else if (statement is WhileExitStatement whileExit)
+            else if (statement is LoopExitStatement whileExit)
             {
                 appendLine($"IF {whileExit.Condition} THEN");
                 appendLine("BEGIN");

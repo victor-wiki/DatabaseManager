@@ -541,7 +541,7 @@ namespace SqlAnalyser.Core
                     {
                         TableSourceItemContext name = tb.tableSourceItem();
 
-                        TokenInfo tableName = new TokenInfo(name) { Type = TokenType.TableName, Tag =this.ParseTableName(name) };
+                        TokenInfo tableName = new TokenInfo(name) { Type = TokenType.TableName, Tag = this.ParseTableName(name) };
 
                         JoinPartContext[] joins = tb.joinPart();
 
@@ -560,7 +560,7 @@ namespace SqlAnalyser.Core
                                 fromItem.TableName = tableName;
                             }
 
-                            fromItem.Joins.AddRange(joins.Select(item => new TokenInfo(item) { Type = TokenType.JoinOn }));
+                            fromItem.Joins.AddRange(joins.Select(item => this.ParseToken(item, TokenType.JoinOn)));
 
                             statement.FromItems.Add(fromItem);
 
@@ -580,13 +580,13 @@ namespace SqlAnalyser.Core
                                new NameValueItem()
                                {
                                    Name = new TokenInfo(item.fullColumnName()) { Type = TokenType.ColumnName },
-                                   Value = new TokenInfo(item.expression())
+                                   Value = this.ParseToken(item.expression())
                                }));
             }
 
             if (condition != null)
             {
-                statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                statement.Condition = this.ParseToken(condition, TokenType.Condition);
             }
 
             return statement;
@@ -603,7 +603,7 @@ namespace SqlAnalyser.Core
             {
                 DeleteStatement statement = new DeleteStatement();
                 statement.TableName = new TokenInfo(single.tableName()) { Type = TokenType.TableName };
-                statement.Condition = new TokenInfo(single.expression() as PredicateExpressionContext) { Type = TokenType.Condition };
+                statement.Condition = this.ParseToken(single.expression() as PredicateExpressionContext, TokenType.Condition);
 
                 statements.Add(statement);
             }
@@ -684,11 +684,11 @@ namespace SqlAnalyser.Core
                         }
                         else if (fc is PredicateExpressionContext exp)
                         {
-                            statement.Condition = new TokenInfo(exp) { Type = TokenType.Condition };
+                            statement.Condition = this.ParseToken(exp, TokenType.Condition);
                         }
                         else if (fc is LogicalExpressionContext logic)
                         {
-                            statement.Condition = new TokenInfo(logic) { Type = TokenType.Condition };
+                            statement.Condition = this.ParseToken(logic, TokenType.Condition);
                         }
                     }
                 }
@@ -713,7 +713,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is PredicateExpressionContext exp)
                 {
-                    statements.Last().Value = new TokenInfo(exp);
+                    statements.Last().Value = this.ParseToken(exp);
                 }
             }
 
@@ -1033,16 +1033,16 @@ namespace SqlAnalyser.Core
                     {
                         tableNameInfo.Alias = new TokenInfo(alias);
                     }
-                } 
-                else if(node is TableSourceBaseContext tsb)
+                }
+                else if (node is TableSourceBaseContext tsb)
                 {
                     return this.ParseTableName(tsb.tableSourceItem());
                 }
-                else if(node is TableSourceContext ts)
+                else if (node is TableSourceContext ts)
                 {
                     return this.ParseTableName(ts.children.FirstOrDefault(item => item is TableSourceBaseContext) as ParserRuleContext);
                 }
-                else if(node is SingleUpdateStatementContext update)
+                else if (node is SingleUpdateStatementContext update)
                 {
                     tableNameInfo = new TableNameInfo();
 
@@ -1058,14 +1058,9 @@ namespace SqlAnalyser.Core
             }
 
             return tableNameInfo;
-        }
+        }       
 
-        public override void ExtractFunctions(CommonScript script, ParserRuleContext node)
-        {
-            this.ExtractFunctions(script, node, this.IsFunction);
-        }
-
-        private Func<IParseTree, bool> IsFunction = (node) =>
+        protected override bool IsFunction(IParseTree node)
         {
             if (node is FunctionCallContext)
             {
@@ -1073,6 +1068,43 @@ namespace SqlAnalyser.Core
             }
 
             return false;
-        };
+        }
+
+        protected override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is TableNameContext tableName)
+            {
+                parsedNode = tableName;
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is FullColumnNameContext columnName)
+            {
+                UidContext uid = columnName.uid();
+                DottedIdContext[] ids = columnName.dottedId();
+               
+                if (ids != null && ids.Length > 0)
+                {
+                    parsedNode = ids[0];
+                }
+                else if (uid != null)
+                {
+                    parsedNode = uid;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

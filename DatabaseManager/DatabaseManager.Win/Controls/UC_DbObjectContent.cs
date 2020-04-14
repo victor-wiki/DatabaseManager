@@ -57,13 +57,13 @@ namespace DatabaseManager.Controls
                 if (ucRichTextBox == null)
                 {
                     ucRichTextBox = this.AddControlToTabPage<UC_RichTextBox>(tabPage);
-                }
+                }               
 
                 ucRichTextBox.Show(info);
 
                 if (!string.IsNullOrEmpty(ucRichTextBox.TextBox.Text))
                 {
-                    RichTextBoxHelper.HighlightingKeywords(ucRichTextBox.TextBox, info.DatabaseType);
+                    RichTextBoxHelper.Highlighting(ucRichTextBox.TextBox, info.DatabaseType);
                 }
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.Data)
@@ -95,7 +95,7 @@ namespace DatabaseManager.Controls
             tabPage.Controls.Add(control);
 
             return control;
-        }
+        }       
 
         private T GetUcControl<T>(TabPage tabPage) where T : UserControl
         {

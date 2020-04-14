@@ -1,6 +1,7 @@
 ﻿using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace DatabaseConverter.Core
@@ -38,6 +39,11 @@ namespace DatabaseConverter.Core
                     this.ExtractTokens(token.Tag);
                 }
 
+                token.Tokens.ForEach(item =>
+                {
+                    this.ExtractTokens(item);
+                });
+
                 return;
             }
 
@@ -72,6 +78,11 @@ namespace DatabaseConverter.Core
 
         private void AddToken(TokenInfo token)
         {
+            if (token == null)
+            {
+                return;
+            }
+
             this.tokens.Add(token);
         }
     }

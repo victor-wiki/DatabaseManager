@@ -3,12 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Text.RegularExpressions;
+using DatabaseInterpreter.Utility;
 
 namespace DatabaseInterpreter.Core
 {
     public class ScriptBuilder
     {
         private List<Script> scripts = new List<Script>();
+        public bool FormatScript { get; set; } = true;
         public List<Script> Scripts => this.scripts;
 
         public void Append(Script script)
@@ -33,8 +36,17 @@ namespace DatabaseInterpreter.Core
         }
 
         public override string ToString()
+        {           
+            string script = string.Join("", this.scripts.Select(item => item.Content)) ;
+
+            return this.FormatScript ? this.Format(script) : script;
+        }
+
+        private string Format(string script)
         {
-            return string.Join("", this.scripts.Select(item => item.Content));
+            Regex regex = new Regex(@"([;]+[\s]*[;]+)|(\r\n[\s]*[;])");
+
+            return StringHelper.ToSingleEmptyLine(regex.Replace(script, ";"));
         }
     }
 }

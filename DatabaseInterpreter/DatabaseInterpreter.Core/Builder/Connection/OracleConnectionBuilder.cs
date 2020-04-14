@@ -16,7 +16,7 @@ namespace DatabaseInterpreter.Core
                 port = "1521";
             }
 
-            if (server.Contains("/"))
+            if (server != null && server.Contains("/"))
             {
                 string[] serverService = connectionInfo.Server.Split('/');
                 server = serverService[0];

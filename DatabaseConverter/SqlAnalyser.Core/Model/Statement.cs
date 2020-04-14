@@ -12,7 +12,7 @@ namespace SqlAnalyser.Model
         public TokenInfo Value { get; set; }
     }
 
-    public class WhileExitStatement : Statement
+    public class LoopExitStatement : Statement
     {
         public TokenInfo Condition { get; set; }
     }
