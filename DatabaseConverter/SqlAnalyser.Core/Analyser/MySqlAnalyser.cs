@@ -215,9 +215,9 @@ namespace SqlAnalyser.Core
 
                 sb.AppendLine($"FROM {statement.TableName}");
 
-                if (statement.Condition != null)
+                if (statement.Where != null)
                 {
-                    sb.AppendLine($"WHERE {statement.Condition}");
+                    sb.AppendLine($"WHERE {statement.Where}");
                 }
 
                 sb.Append(";");
@@ -300,7 +300,27 @@ namespace SqlAnalyser.Core
                     appendLine($"INTO {select.IntoTableName.ToString()}");
                 }
 
-                if (select.TableName != null)
+                if (select.FromItems != null && select.FromItems.Count > 0)
+                {
+                    int i = 0;
+                    foreach (FromItem fromItem in select.FromItems)
+                    {
+                        if (i == 0)
+                        {
+                            appendLine($"FROM {fromItem.TableName}");
+                        }
+
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
+                        {
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                        }
+
+                        i++;
+                    }
+                }
+                else if (select.TableName != null)
                 {
                     if (select.WithStatements == null || select.WithStatements.Count == 0)
                     {
@@ -329,14 +349,34 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                if (select.Condition != null)
+                if (select.Where != null)
                 {
-                    appendLine($"WHERE {select.Condition}");
+                    appendLine($"WHERE {select.Where}");
                 }
 
-                if (select.OrderBy != null)
+                if (select.GroupBy != null && select.GroupBy.Count > 0)
                 {
-                    appendLine(select.OrderBy.ToString());
+                    appendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+                }
+
+                if (select.Having != null)
+                {
+                    appendLine($"HAVING {select.Having}");
+                }
+
+                if (select.OrderBy != null && select.OrderBy.Count > 0)
+                {
+                    appendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+                }
+
+                if (select.TopInfo != null)
+                {
+                    appendLine($"LIMIT 0,{select.TopInfo.TopCount}");
+                }
+
+                if (select.LimitInfo != null)
+                {
+                    appendLine($"LIMIT {select.LimitInfo.StartRowIndex},{select.LimitInfo.RowCount}");
                 }
 
                 if (select.UnionStatements != null)
@@ -388,20 +428,22 @@ namespace SqlAnalyser.Core
 
                 append($" {string.Join(",", tableNames)}");
 
-                if (update.FromItems != null)
+                if (update.FromItems != null && update.FromItems.Count > 0)
                 {
                     int i = 0;
 
-                    foreach (UpdateFromItem fromItem in update.FromItems)
+                    foreach (FromItem fromItem in update.FromItems)
                     {
                         if (fromItem.TableName != null && i > 0)
                         {
                             appendLine($" {fromItem.TableName}");
                         }
 
-                        foreach (TokenInfo join in fromItem.Joins)
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
                         {
-                            appendLine(join.ToString());
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
                         }
 
                         i++;

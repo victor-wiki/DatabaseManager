@@ -148,7 +148,7 @@ namespace SqlAnalyser.Core
                         @while.Condition.Symbol = "1=1";
 
                         if (fs.Variables.Count == 0)
-                        {                            
+                        {
                             @while.Statements.Insert(0, new LoopExitStatement() { Condition = new TokenInfo($"{fs.CursorName}%NOTFOUND") });
                             @while.Statements.Insert(0, fetchCursorStatement);
                         }
@@ -175,9 +175,9 @@ namespace SqlAnalyser.Core
 
                 sb.AppendLine($"FROM {statement.TableName}");
 
-                if (statement.Condition != null)
+                if (statement.Where != null)
                 {
-                    sb.AppendLine($"WHERE {statement.Condition}");
+                    sb.AppendLine($"WHERE {statement.Where}");
                 }
 
                 sb.Append(";");
@@ -239,19 +239,21 @@ namespace SqlAnalyser.Core
 
             if (statement is SelectStatement select)
             {
+                bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
+
                 if (select.TableName == null)
                 {
-                    select.TableName = new TokenInfo("DUAL");
+                    select.TableName = new TableName("DUAL");
                 }
 
                 if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
                 {
                     appendLine($"SET {select.Columns.First()}");
                 }
-                else
+                else if (!isWith)
                 {
                     appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
-                }                
+                }
 
                 if (select.IntoTableName != null)
                 {
@@ -260,41 +262,67 @@ namespace SqlAnalyser.Core
 
                 if (select.TableName != null)
                 {
-                    if (select.WithStatements == null || select.WithStatements.Count == 0)
+                    if (!isWith)
                     {
                         appendLine($"FROM {select.TableName}");
                     }
                     else
                     {
-                        string tableName = select.TableName.ToString();
-
-                        appendLine("FROM");
-
                         int i = 0;
 
                         foreach (WithStatement withStatement in select.WithStatements)
                         {
-                            appendLine("(");
+                            if (i == 0)
+                            {
+                                appendLine($"WITH {withStatement.Name}");
+                            }
+                            else
+                            {
+                                appendLine($",{withStatement.Name}");
+                            }
+
+                            appendLine("AS(");
 
                             appendStatements(withStatement.SelectStatements, false);
 
-                            appendLine($") AS {(tableName.StartsWith(withStatement.Name.ToString()) ? "" : withStatement.Name.ToString())}{(i < select.WithStatements.Count - 1 ? "," : "")}");
+                            appendLine(")");
 
                             i++;
                         }
 
-                        appendLine(select.TableName.ToString());
+                        appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                        appendLine($"FROM {select.TableName}");
                     }
                 }
 
-                if (select.Condition != null)
+                if (select.Where != null)
                 {
-                    appendLine($"WHERE {select.Condition}");
+                    appendLine($"WHERE {select.Where}");
                 }
 
-                if (select.OrderBy != null)
+                if (select.GroupBy != null && select.GroupBy.Count > 0)
                 {
-                    appendLine(select.OrderBy.ToString());
+                    appendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+                }
+
+                if (select.Having != null)
+                {
+                    appendLine($"HAVING {select.Having}");
+                }
+
+                if (select.OrderBy != null && select.OrderBy.Count > 0)
+                {
+                    appendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+                }
+
+                if (select.TopInfo != null)
+                {
+                    //TODO
+                }
+
+                if (select.LimitInfo != null)
+                {
+                    //TODO
                 }
 
                 if (select.UnionStatements != null)
@@ -339,20 +367,14 @@ namespace SqlAnalyser.Core
                 {
                     int i = 0;
 
-                    foreach (UpdateFromItem fromItem in update.FromItems)
+                    foreach (FromItem fromItem in update.FromItems)
                     {
                         if (i == 0 && fromItem.TableName != null)
                         {
                             tableNames.Add(fromItem.TableName);
                         }
-                        StringBuilder from = new StringBuilder();
 
-                        foreach (TokenInfo join in fromItem.Joins)
-                        {
-                            from.AppendLine(join.ToString());
-                        }
-
-                        string strFrom = from.ToString();
+                        List<JoinItem> usedJoinItems = new List<JoinItem>();
 
                         foreach (NameValueItem nameValue in update.SetItems)
                         {
@@ -361,20 +383,32 @@ namespace SqlAnalyser.Core
                             string tableName = ids[0];
                             string columnName = ids[1];
 
-                            if (strFrom.Split(' ', '.').Any(item => item == tableName))
+                            JoinItem joinItem = fromItem.JoinItems.FirstOrDefault(item => item.TableName.Name?.Symbol?.ToUpper().Trim('"') == tableName.ToUpper()
+                                                || item.TableName.Alias?.Symbol?.ToUpper()?.Trim('"') == tableName.ToUpper());
+                          
+                            if (joinItem != null)
                             {
-                                int joinIndex = strFrom.IndexOf("JOIN");
+                                usedJoinItems.Add(joinItem);
 
-                                nameValue.Value.Symbol = $"(SELECT {nameValue.Value} FROM {strFrom.Substring(joinIndex + 5).Trim()})";
+                                string condition = joinItem.Condition == null ? "" : $" WHERE {joinItem.Condition}";
 
-                                nameValue.Value.Symbol = Regex.Replace(nameValue.Value.Symbol, " ON ", " WHERE ", RegexOptions.IgnoreCase);
+                                nameValue.Value = new TokenInfo($"(SELECT {nameValue.Name} FROM {joinItem.TableName}{condition})");
+                            }                           
+                        }
+
+                        var otherJoinItems = fromItem.JoinItems.Where(item => !usedJoinItems.Contains(item));
+
+                        if (otherJoinItems != null && otherJoinItems.Count() > 0)
+                        {
+                            foreach (var otherJoinItem in otherJoinItems)
+                            {
+                                //TODO
                             }
                         }
 
                         i++;
                     }
                 }
-
 
                 if (tableNames.Count == 0 && update.TableNames.Count > 0)
                 {
@@ -482,7 +516,7 @@ namespace SqlAnalyser.Core
                 appendStatements(loop.Statements, true);
                 appendLine("END LOOP;");
             }
-            else if(statement is LoopExitStatement loopExit)
+            else if (statement is LoopExitStatement loopExit)
             {
                 appendLine($"EXIT WHEN {loopExit.Condition};");
             }

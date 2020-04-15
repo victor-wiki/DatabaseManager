@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Model\ColumnInfo.cs" />
+    <Compile Remove="Model\TableNameInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="SqlParserSharp" Version="1.0.1" />
   </ItemGroup>

@@ -191,9 +191,9 @@ namespace SqlAnalyser.Core
 
                 sb.AppendLine($"FROM {statement.TableName}");
 
-                if (statement.Condition != null)
+                if (statement.Where != null)
                 {
-                    sb.AppendLine($"WHERE {statement.Condition}");
+                    sb.AppendLine($"WHERE {statement.Where}");
                 }
 
                 sb.Append(";");
@@ -246,24 +246,46 @@ namespace SqlAnalyser.Core
             if (statement is SelectStatement select)
             {
                 bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
+                bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
+                string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : "")}";
                 string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
 
-                appendLine($"SELECT {intoVariable}{string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                appendLine($"SELECT {top}{intoVariable}{string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
 
                 if (select.IntoTableName != null && !isIntoVariable)
                 {
                     appendLine($"INTO {select.IntoTableName.ToString()}");
                 }
 
-                if (select.TableName != null)
+                if (select.FromItems != null && select.FromItems.Count > 0)
                 {
-                    if (select.WithStatements == null || select.WithStatements.Count == 0)
+                    int i = 0;
+                    foreach (FromItem fromItem in select.FromItems)
                     {
-                        if(select.TableName.Symbol.Trim('[',']').ToUpper()!="DUAL")
+                        if (i == 0)
+                        {
+                            appendLine($"FROM {fromItem.TableName}");
+                        }
+
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
+                        {
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                        }
+
+                        i++;
+                    }
+                }
+                else if (select.TableName != null)
+                {
+                    if (!isWith)
+                    {
+                        if (select.TableName.Symbol.Trim('[', ']').ToUpper() != "DUAL")
                         {
                             appendLine($"FROM {select.TableName}");
-                        }                        
+                        }
                     }
                     else
                     {
@@ -273,7 +295,12 @@ namespace SqlAnalyser.Core
                         {
                             if (i == 0)
                             {
-                                appendLine($"WITH {withStatement.Name}({string.Join(",", withStatement.Columns.Select(item => item))})");
+                                appendLine($"WITH {withStatement.Name}");
+
+                                if (withStatement.Columns != null && withStatement.Columns.Count > 0)
+                                {
+                                    appendLine($"({string.Join(",", withStatement.Columns.Select(item => item))})");
+                                }
                             }
                             else
                             {
@@ -285,9 +312,13 @@ namespace SqlAnalyser.Core
                             appendStatements(select.WithStatements, false);
 
                             appendLine(")");
+
+                            i++;
                         }
 
-                        appendLine(select.TableName.ToString());
+                        appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                        appendLine($"FROM {select.TableName};");
+
 
                         if (select.OrderBy != null)
                         {
@@ -301,9 +332,29 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                if (select.Condition != null)
+                if (select.Where != null)
                 {
-                    append($"WHERE {select.Condition}");
+                    append($"WHERE {select.Where}");
+                }
+
+                if (select.GroupBy != null && select.GroupBy.Count > 0)
+                {
+                    appendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+                }
+
+                if (select.Having != null)
+                {
+                    appendLine($"HAVING {select.Having}");
+                }
+
+                if (select.OrderBy != null && select.OrderBy.Count > 0)
+                {
+                    appendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+                }
+
+                if (select.LimitInfo != null)
+                {
+                    //TODO
                 }
 
                 if (select.UnionStatements != null)
@@ -365,20 +416,26 @@ namespace SqlAnalyser.Core
 
                                 if (nameValue.Value.Symbol?.ToUpper()?.Contains("SELECT") == true)
                                 {
+                                    string from = nameof(TSqlParser.FROM);
+                                    string where = nameof(TSqlParser.WHERE); ;
+
                                     string oldValue = nameValue.Value.Symbol;
-                                    int fromIndex = oldValue.ToUpper().IndexOf("FROM");
+                                    int fromIndex = oldValue.ToUpper().IndexOf(from);
 
                                     nameValue.Value.Symbol = Regex.Replace(oldValue.Substring(0, fromIndex), "SELECT ", "", RegexOptions.IgnoreCase).Trim(' ', '(');
 
-                                    if (update.FromItems == null)
+                                    if (update.FromItems == null || update.FromItems.Count == 0)
                                     {
-                                        update.FromItems = new List<UpdateFromItem>();
+                                        update.FromItems = new List<FromItem>();
 
-                                        UpdateFromItem fromItem = new UpdateFromItem() { TableName = update.TableNames[0] };
+                                        FromItem fromItem = new FromItem() { TableName = update.TableNames[0] };
 
-                                        string join = "JOIN " + Regex.Replace(oldValue.Substring(fromIndex + 5), " WHERE ", " ON ", RegexOptions.IgnoreCase).Trim(')');
+                                        int whereIndex = oldValue.ToUpper().IndexOf(where);
 
-                                        fromItem.Joins.Add(new TokenInfo(join));
+                                        string tableName = oldValue.Substring(fromIndex + from.Length, whereIndex - (fromIndex + from.Length) - 1);
+                                        string condition = oldValue.Substring(whereIndex + where.Length).Trim(')');
+
+                                        fromItem.JoinItems.Add(new JoinItem() { TableName = new TableName(tableName), Condition = new TokenInfo(condition) });
 
                                         update.FromItems.Add(fromItem);
                                     }
@@ -386,7 +443,7 @@ namespace SqlAnalyser.Core
                             }
                         }
                     }
-                } 
+                }
                 #endregion
 
                 if (tableNames.Count == 0)
@@ -398,28 +455,21 @@ namespace SqlAnalyser.Core
 
                 appendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
 
-                if (update.FromItems != null)
+                if (update.FromItems != null && update.FromItems.Count > 0)
                 {
-                    appendLine("FROM");
-
                     int i = 0;
-                    foreach (UpdateFromItem fromItem in update.FromItems)
+                    foreach (FromItem fromItem in update.FromItems)
                     {
-                        if (fromItem.TableName != null)
+                        if (i == 0)
                         {
-                            appendLine(fromItem.TableName.ToString());
-                        }
-                        else
-                        {
-                            if (i == 0)
-                            {
-                                appendLine(update.TableNames.First().ToString());
-                            }
+                            appendLine($"FROM {fromItem.TableName}");
                         }
 
-                        foreach (TokenInfo join in fromItem.Joins)
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
                         {
-                            appendLine(join.ToString());
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
                         }
 
                         i++;

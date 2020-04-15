@@ -27,7 +27,7 @@ namespace SqlAnalyser.Model
     public class LoopStatement : WhileStatement
     {
         public LoopType Type { get; set; }
-        public TokenInfo Name { get; set; }      
+        public TokenInfo Name { get; set; }
     }
 
     public enum LoopType
@@ -54,7 +54,7 @@ namespace SqlAnalyser.Model
     public class TemporaryTable
     {
         public TokenInfo Name { get; set; }
-        public List<ColumnInfo> Columns { get; set; } = new List<ColumnInfo>();
+        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
     }
 
     public enum DeclareType
@@ -91,49 +91,89 @@ namespace SqlAnalyser.Model
 
     public class SelectStatement : Statement
     {
-        public List<TokenInfo> Columns { get; set; } = new List<TokenInfo>();
+        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
         public TokenInfo IntoTableName { get; set; }
-        public TokenInfo TableName { get; set; }
-        public TokenInfo Condition { get; set; }
+        public TableName TableName { get; set; }
+        public List<SelectJoinInfo> Joins { get; set; } = new List<SelectJoinInfo>();
+        public TokenInfo Where { get; set; }
+        public List<TokenInfo> GroupBy { get; set; }
+        public TokenInfo Having { get; set; }
         public List<SelectStatement> UnionStatements { get; set; }
         public List<WithStatement> WithStatements { get; set; }
-        public TokenInfo OrderBy { get; set; }
+        public List<FromItem> FromItems { get; set; }
+        public List<TokenInfo> OrderBy { get; set; }
         public TokenInfo Option { get; set; }
+        public SelectTopInfo TopInfo { get; set; }
+        public SelectLimitInfo LimitInfo { get; set; }
+    }
+
+    public class SelectJoinInfo
+    {
+        public TableName TableName { get; set; }
+        public TokenInfo Condition { get; set; }
+    }
+
+    public class SelectTopInfo
+    {
+        public int TopCount { get; set; }
+        public bool IsPercent { get; set; }
+    }
+
+    public class SelectLimitInfo
+    {
+        public long StartRowIndex { get; set; }
+        public long RowCount { get; set; }
     }
 
     public class WithStatement : Statement
     {
         public TokenInfo Name { get; set; }
-        public List<TokenInfo> Columns { get; set; } = new List<TokenInfo>();
+        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
         public List<SelectStatement> SelectStatements { get; set; }
     }
 
     public class InsertStatement : Statement
     {
-        public TokenInfo TableName { get; set; }
-        public List<TokenInfo> Columns { get; set; } = new List<TokenInfo>();
+        public TableName TableName { get; set; }
+        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
         public List<TokenInfo> Values { get; set; } = new List<TokenInfo>();
         public List<SelectStatement> SelectStatements { get; set; }
     }
 
     public class UpdateStatement : Statement
     {
-        public List<TokenInfo> TableNames { get; set; } = new List<TokenInfo>();
+        public List<TableName> TableNames { get; set; } = new List<TableName>();
         public List<NameValueItem> SetItems { get; set; } = new List<NameValueItem>();
-        public List<UpdateFromItem> FromItems { get; set; }
+        public List<FromItem> FromItems { get; set; }
         public TokenInfo Condition { get; set; }
         public TokenInfo Option { get; set; }
     }
 
-    public class UpdateFromItem
+    public class FromItem
     {
-        public TokenInfo TableName { get; set; }
-        public List<TokenInfo> Joins { get; set; } = new List<TokenInfo>();
+        public TableName TableName { get; set; }
+        public List<JoinItem> JoinItems { get; set; } = new List<JoinItem>();
+    }
+
+    public class JoinItem
+    {
+        public JoinType Type { get; set; }
+        public TableName TableName { get; set; }
+        public TokenInfo Condition { get; set; }       
+    }
+
+    public enum JoinType
+    {
+        INNER = 0,
+        LEFT = 1,
+        RIGHT = 2,       
+        FULL = 3,
+        CROSS = 4
     }
 
     public class DeleteStatement : Statement
     {
-        public TokenInfo TableName { get; set; }
+        public TableName TableName { get; set; }
         public TokenInfo Condition { get; set; }
     }
 
@@ -187,13 +227,13 @@ namespace SqlAnalyser.Model
         public SelectStatement SelectStatement { get; set; }
     }
 
-    public class DeclareCursorHandlerStatement:Statement
+    public class DeclareCursorHandlerStatement : Statement
     {
         public List<TokenInfo> Conditions { get; set; } = new List<TokenInfo>();
         public List<Statement> Statements = new List<Statement>();
     }
 
-    public class OpenCursorStatement:Statement
+    public class OpenCursorStatement : Statement
     {
         public TokenInfo CursorName { get; set; }
     }

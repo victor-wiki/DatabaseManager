@@ -114,50 +114,38 @@ namespace DatabaseConverter.Core
 
                     token.Symbol = this.TargetInterpreter.ParseDataType(tableColumn);
                 }
-                else if (token.Type == TokenType.TableName)
+                else if (token is TableName tableName)
                 {
-                    TableNameInfo tableNameInfo = token.Tag as TableNameInfo;
+                    token.Symbol = $"{ this.GetQuotedName(tableName.Name.ToString(), token.Type)}" + (tableName.Alias == null ? "" : " " + tableName.Alias);
+                }                
+                else if (token is ColumnName columnName)
+                {
+                    string columnContent = "";
 
-                    if (tableNameInfo == null)
+                    if (columnName.Name != null)
                     {
-                        token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
+                        columnContent = $"{ this.GetQuotedName(columnName.Name.ToString().Trim('.').Trim(this.TrimChars), token.Type)}";
                     }
-                    else
+
+                    if (columnName.Alias != null && !string.IsNullOrEmpty(columnName.Alias.Symbol))
                     {
-                        token.Symbol = $"{ this.GetQuotedName(tableNameInfo.Name.ToString(), token.Type)}" + (tableNameInfo.Alias == null ? "" : " " + tableNameInfo.Alias);
+                        columnContent += $" AS {this.GetQuotedName(columnName.Alias.ToString(), token.Type)}";
                     }
+
+                    token.Symbol = columnContent;
+                }
+                else if(token.Type == TokenType.TableName || token.Type == TokenType.ColumnName)
+                {
+                    token.Symbol = this.GetQuotedName(token.Symbol.Trim('.'), token.Type);
                 }
                 else if (token.Type == TokenType.ProcedureCall)
                 {
                     token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
                 }
-                else if (token.Type == TokenType.ColumnName)
-                {
-                    ColumnInfo column = token.Tag as ColumnInfo;
-
-                    if (column == null)
-                    {
-                        token.Symbol = this.GetQuotedName(token.Symbol.Trim('.').Trim(this.TrimChars), token.Type);
-                    }
-                    else
-                    {
-                        string columnContent = "";
-
-                        if (column.Expression != null)
-                        {
-                            columnContent = $"{ this.GetQuotedName(column.Expression.ToString().Trim('.').Trim(this.TrimChars), token.Type)}";
-                        }
-
-                        if (column.Alias != null && !string.IsNullOrEmpty(column.Alias.Symbol))
-                        {
-                            columnContent += $" AS {this.GetQuotedName(column.Alias.ToString(), token.Type)}";
-                        }
-
-                        token.Symbol = columnContent;
-                    }
-                }
                 else if (token.Type == TokenType.Condition ||
-                        token.Type == TokenType.OrderBy
+                        token.Type == TokenType.OrderBy ||
+                        token.Type == TokenType.GroupBy
+                       
                        )
                 {
                     token.Symbol = this.GetQuotedString(token.Symbol);
@@ -234,11 +222,13 @@ namespace DatabaseConverter.Core
                             continue;
                         }
 
-                        Regex regex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedSymbol})\b[{this.SourceInterpreter.QuotationRightChar}]?");
 
-                        if (regex.IsMatch(nestedToken.Symbol))
+                        Regex matchRegex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedSymbol})\b[{this.SourceInterpreter.QuotationRightChar}]?");
+                        string quotedValue = $"{this.TargetInterpreter.QuotationLeftChar}{trimedSymbol}{this.TargetInterpreter.QuotationRightChar}";
+
+                        if (matchRegex.IsMatch(nestedToken.Symbol) && !nestedToken.Symbol.Contains(quotedValue))
                         {
-                            nestedToken.Symbol = regex.Replace(nestedToken.Symbol, token.Symbol);
+                            nestedToken.Symbol = matchRegex.Replace(nestedToken.Symbol, token.Symbol);
 
                             replacedSymbols.Add(trimedSymbol);
                         }

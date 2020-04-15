@@ -30,50 +30,50 @@ namespace DatabaseConverter.Core
         {
             Type type = obj.GetType();
 
+            Action readProperties = () =>
+            {
+                var properties = type.GetProperties();
+
+                foreach (PropertyInfo property in properties)
+                {
+                    dynamic value = property.GetValue(obj);
+
+                    if (value == null)
+                    {
+                        continue;
+                    }
+
+                    if (value is TokenInfo)
+                    {
+                        if (!value.Equals(obj))
+                        {
+                            this.ExtractTokens(value);
+                        }
+                    }
+                    else if (value.GetType().IsClass && property.PropertyType.IsGenericType && !(property.DeclaringType == typeof(CommonScript) && property.Name == nameof(CommonScript.Functions)))
+                    {
+                        foreach (var v in value)
+                        {
+                            this.ExtractTokens(v);
+                        }
+                    }
+                    else if (value is Statement || value is TemporaryTable)
+                    {
+                        this.ExtractTokens(value);
+                    }
+                }
+            };
+
             if (obj is TokenInfo token)
             {
                 this.AddToken(token);
 
-                if (token.Tag != null)
-                {
-                    this.ExtractTokens(token.Tag);
-                }
-
-                token.Tokens.ForEach(item =>
-                {
-                    this.ExtractTokens(item);
-                });
+                readProperties();
 
                 return;
             }
 
-            var properties = type.GetProperties();
-
-            foreach (PropertyInfo property in properties)
-            {
-                dynamic value = property.GetValue(obj);
-
-                if (value == null)
-                {
-                    continue;
-                }
-
-                else if (value is TokenInfo t)
-                {
-                    this.ExtractTokens(t);
-                }
-                else if (property.PropertyType.IsGenericType && !(property.DeclaringType == typeof(CommonScript) && property.Name == nameof(CommonScript.Functions)))
-                {
-                    foreach (var v in value)
-                    {
-                        this.ExtractTokens(v);
-                    }
-                }
-                else if (value is Statement || value is TemporaryTable)
-                {
-                    this.ExtractTokens(value);
-                }
-            }
+            readProperties();
         }
 
         private void AddToken(TokenInfo token)

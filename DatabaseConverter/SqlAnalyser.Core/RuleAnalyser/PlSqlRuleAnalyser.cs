@@ -540,11 +540,11 @@ namespace SqlAnalyser.Core
                 {
                     if (child is Insert_into_clauseContext into)
                     {
-                        statement.TableName = new TokenInfo(into.general_table_ref()) { Type = TokenType.TableName };
+                        statement.TableName = this.ParseTableName(into.general_table_ref());
 
                         foreach (Column_nameContext colName in into.paren_column_list().column_list().column_name())
                         {
-                            statement.Columns.Add(new TokenInfo(colName) { Type = TokenType.ColumnName });
+                            statement.Columns.Add(this.ParseColumnName(colName));
                         }
                     }
                     else if (child is Values_clauseContext values)
@@ -576,8 +576,8 @@ namespace SqlAnalyser.Core
             UpdateStatement statement = new UpdateStatement();
 
             General_table_refContext table = node.general_table_ref();
-            TokenInfo tableName = new TokenInfo(table) { Type = TokenType.TableName, Tag = this.ParseTableName(table) };
-            statement.TableNames.Add(tableName);
+
+            statement.TableNames.Add(this.ParseTableName(table));
 
             Update_set_clauseContext set = node.update_set_clause();
             Column_based_update_set_clauseContext[] columnSets = set.column_based_update_set_clause();
@@ -593,13 +593,8 @@ namespace SqlAnalyser.Core
                     });
                 }
             }
-
-            Where_clauseContext where = node.where_clause();
-
-            if (where != null)
-            {
-                statement.Condition = this.ParseToken(where, TokenType.Condition);
-            }
+          
+            statement.Condition = this.ParseCondition(node.where_clause());            
 
             return statement;
         }
@@ -609,14 +604,9 @@ namespace SqlAnalyser.Core
             List<DeleteStatement> statements = new List<DeleteStatement>();
 
             DeleteStatement statement = new DeleteStatement();
-            statement.TableName = new TokenInfo(node.general_table_ref()) { Type = TokenType.TableName };
+            statement.TableName = this.ParseTableName(node.general_table_ref());
 
-            Where_clauseContext where = node.where_clause();
-
-            if (where != null)
-            {
-                statement.Condition = this.ParseToken(where, TokenType.Condition);
-            }
+            statement.Condition = this.ParseCondition(node.where_clause());
 
             statements.Add(statement);
 
@@ -654,14 +644,12 @@ namespace SqlAnalyser.Core
 
                             foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
                             {
-                                TokenInfo column = new TokenInfo(col.expression()) { Type = TokenType.ColumnName };
-
-                                statement.Columns.Add(column);
+                                statement.Columns.Add(this.ParseColumnName(col));
                             }
 
                             Table_ref_listContext table = block.from_clause().table_ref_list();
 
-                            statement.TableName = new TokenInfo(table) { Type = TokenType.TableName, Tag = this.ParseTableName(table) };
+                            statement.TableName = this.ParseTableName(table);
 
                             Into_clauseContext into = block.into_clause();
 
@@ -672,10 +660,7 @@ namespace SqlAnalyser.Core
 
                             var expression = block.where_clause()?.expression();
 
-                            if (expression != null)
-                            {
-                                statement.Condition = this.ParseToken(expression, TokenType.Condition);
-                            }
+                            statement.Where = this.ParseCondition(expression);
                         }
                     }
                 }
@@ -893,35 +878,91 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public TableNameInfo ParseTableName(ParserRuleContext node)
+        public override TableName ParseTableName(ParserRuleContext node)
         {
-            TableNameInfo tableNameInfo = null;
+            TableName tableName = null;
 
             if (node != null)
             {
                 if (node is General_table_refContext gtr)
                 {
-                    tableNameInfo = new TableNameInfo();
+                    tableName = new TableName(gtr);
 
-                    tableNameInfo.Name = new TokenInfo(gtr.dml_table_expression_clause().tableview_name()) { Type = TokenType.TableName };
+                    tableName.Name = new TokenInfo(gtr.dml_table_expression_clause().tableview_name()) { Type = TokenType.TableName };
 
                     Table_aliasContext alias = gtr.table_alias();
 
                     if (alias != null)
                     {
-                        tableNameInfo.Alias = new TokenInfo(alias);
+                        tableName.Alias = new TokenInfo(alias);
                     }
                 }
                 else if (node is Table_ref_listContext trl)
                 {
                     return this.ParseTableName(trl.table_ref().FirstOrDefault());
                 }
+
+                if (tableName == null)
+                {
+                    tableName = new TableName(node);
+                }
             }
 
-            return tableNameInfo;
+            return tableName;
         }
 
-        protected override bool IsFunction(IParseTree node)
+        public override ColumnName ParseColumnName(ParserRuleContext node)
+        {
+            ColumnName columnName = null;
+
+            if (node != null)
+            {
+                if (node is Column_nameContext cn)
+                {
+                    columnName = new ColumnName(cn);
+                    columnName.Name = new TokenInfo(cn);
+                }
+                else if (node is Select_list_elementsContext ele)
+                {
+                    columnName = new ColumnName(ele);
+
+                    ExpressionContext expression = ele.expression();
+                    Column_aliasContext alias = ele.column_alias();
+
+                    if (expression != null)
+                    {
+                        columnName.Name = new TokenInfo(expression);
+                    }
+
+                    if (alias != null)
+                    {
+                        columnName.Alias = new TokenInfo(alias);
+                    }
+                }
+
+                if (columnName == null)
+                {
+                    columnName = new ColumnName(node);
+                }
+            }
+
+            return columnName;
+        }
+
+        private TokenInfo ParseCondition(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is Where_clauseContext || node is ExpressionContext)
+                {
+                    return this.ParseToken(node, TokenType.Condition);
+                }
+            }
+
+            return null;
+        }
+
+        public override bool IsFunction(IParseTree node)
         {
             if (node is Standard_functionContext)
             {
@@ -934,7 +975,7 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        protected override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        public override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
         {
             parsedNode = null;
 
@@ -947,7 +988,7 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        protected override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        public override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
         {
             parsedNode = null;
 

@@ -30,9 +30,11 @@ namespace SqlAnalyser.Core
             return parser;
         }
 
-        protected abstract bool IsFunction(IParseTree node);
-        protected abstract bool IsTableName(IParseTree node, out ParserRuleContext parsedNode);
-        protected abstract bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode);
+        public abstract TableName ParseTableName(ParserRuleContext node);
+        public abstract ColumnName ParseColumnName(ParserRuleContext node);
+        public abstract bool IsFunction(IParseTree node);
+        public abstract bool IsTableName(IParseTree node, out ParserRuleContext parsedNode);
+        public abstract bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode);
 
 
         public virtual CommonScript Analyse<T>(string content)
@@ -59,7 +61,7 @@ namespace SqlAnalyser.Core
             else
             {
                 throw new NotSupportedException($"Not support analyse for type:{typeof(T).Name}");
-            }            
+            }
 
             return script;
         }
@@ -70,11 +72,11 @@ namespace SqlAnalyser.Core
 
         public abstract TriggerScript AnalyseTrigger(string content);
 
-        public abstract ViewScript AnalyseView(string content);      
+        public abstract ViewScript AnalyseView(string content);
 
         public virtual void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
-            if (node == null)
+            if (node == null || node.children == null)
             {
                 return;
             }
@@ -124,7 +126,7 @@ namespace SqlAnalyser.Core
 
         protected void AddToken(List<TokenInfo> tokens, TokenInfo tokenInfo)
         {
-            if (!tokens.Any(item => item != null && item.StartIndex == tokenInfo.StartIndex && item.StopIndex == tokenInfo.StopIndex))
+            if (!tokens.Any(item => item != null && item.Symbol != null && item.StartIndex == tokenInfo.StartIndex && item.StopIndex == tokenInfo.StopIndex))
             {
                 tokens.Add(tokenInfo);
             }

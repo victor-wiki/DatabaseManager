@@ -9,9 +9,7 @@ namespace SqlAnalyser.Model
         public TokenType Type { get; set; }
         public string Symbol { get; set; }
         public int? StartIndex { get; set; }
-        public int? StopIndex { get; set; }
-
-        public object Tag { get; set; }
+        public int? StopIndex { get; set; }       
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
 
@@ -40,10 +38,10 @@ namespace SqlAnalyser.Model
             this.SetIndex(node);
         }
 
-        public TokenInfo(string symbol, ITerminalNode context)
+        public TokenInfo(string symbol, ITerminalNode node)
         {
             this.Symbol = symbol;
-            this.SetIndex(context);
+            this.SetIndex(node);
         }
 
         public TokenInfo SetIndex(ParserRuleContext context)
@@ -79,9 +77,10 @@ namespace SqlAnalyser.Model
         ColumnName = 6,
         Condition = 7,
         OrderBy = 8,
-        Option = 9,
-        ProcedureCall = 10,
-        JoinOn = 11,
-        CursorName = 12
+        GroupBy =9,
+        Option = 10,
+        ProcedureCall = 11,
+        JoinOn = 12,
+        CursorName = 13
     }
 }
