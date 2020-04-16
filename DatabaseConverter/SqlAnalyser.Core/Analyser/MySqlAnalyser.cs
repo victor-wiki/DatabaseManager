@@ -209,18 +209,9 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine($"CREATE VIEW {script.FullName} AS");
 
-            foreach (SelectStatement statement in script.Statements.Where(item => item is SelectStatement))
+            foreach (Statement statement in script.Statements)
             {
-                sb.AppendLine($"SELECT {string.Join("," + Environment.NewLine, statement.Columns.Select(item => item.ToString()))}");
-
-                sb.AppendLine($"FROM {statement.TableName}");
-
-                if (statement.Where != null)
-                {
-                    sb.AppendLine($"WHERE {statement.Where}");
-                }
-
-                sb.Append(";");
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
             return this.FormatScripts(sb.ToString());
@@ -288,7 +279,9 @@ namespace SqlAnalyser.Core
             {
                 if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
                 {
-                    appendLine($"SET {select.Columns.First()}");
+                    ColumnName columnName = select.Columns.First();
+
+                    appendLine($"SET {columnName}");
                 }
                 else
                 {
@@ -593,9 +586,9 @@ namespace SqlAnalyser.Core
             {
                 appendLine($"SELECT {print.Content.Symbol?.Replace("||", "+")};");
             }
-            else if (statement is ProcedureCallStatement execute)
+            else if (statement is CallStatement call)
             {
-                appendLine($"CALL {execute.Content};");
+                appendLine($"CALL {call.Name}({string.Join(",", call.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {

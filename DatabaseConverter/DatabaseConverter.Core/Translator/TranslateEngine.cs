@@ -35,20 +35,10 @@ namespace DatabaseConverter.Core
             columnTranslator.Translate();
 
             ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
-            constraintTranslator.Translate();
+            constraintTranslator.Translate();            
 
-            //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
-            if (this.sourceInterpreter.DatabaseType == DatabaseType.SqlServer)
-            {
-                ViewTranslator viewTranslator = new ViewTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Views, this.targetDbOwner) { SkipError = this.SkipError };
-                viewTranslator.OnTranslated += this.ScriptTranslated;
-                viewTranslator.Translate();
-            }
-            else
-            {
-                ScriptTranslator<View> viewTranslator = this.GetScriptTranslator<View>(this.targetSchemaInfo.Views);
-                viewTranslator.Translate();
-            }
+            ScriptTranslator<View> viewTranslator = this.GetScriptTranslator<View>(this.targetSchemaInfo.Views);
+            viewTranslator.Translate();                
 
             ScriptTranslator<Procedure> procedureTranslator = this.GetScriptTranslator<Procedure>(this.targetSchemaInfo.Procedures);
             procedureTranslator.Translate();

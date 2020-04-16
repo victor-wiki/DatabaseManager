@@ -93,8 +93,7 @@ namespace SqlAnalyser.Model
     {
         public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
         public TokenInfo IntoTableName { get; set; }
-        public TableName TableName { get; set; }
-        public List<SelectJoinInfo> Joins { get; set; } = new List<SelectJoinInfo>();
+        public TableName TableName { get; set; }      
         public TokenInfo Where { get; set; }
         public List<TokenInfo> GroupBy { get; set; }
         public TokenInfo Having { get; set; }
@@ -105,13 +104,7 @@ namespace SqlAnalyser.Model
         public TokenInfo Option { get; set; }
         public SelectTopInfo TopInfo { get; set; }
         public SelectLimitInfo LimitInfo { get; set; }
-    }
-
-    public class SelectJoinInfo
-    {
-        public TableName TableName { get; set; }
-        public TokenInfo Condition { get; set; }
-    }
+    }  
 
     public class SelectTopInfo
     {
@@ -197,12 +190,7 @@ namespace SqlAnalyser.Model
     public class PrintStatement : Statement
     {
         public TokenInfo Content { get; set; }
-    }
-
-    public class ProcedureCallStatement : Statement
-    {
-        public TokenInfo Content { get; set; }
-    }
+    }  
 
     public class TransactionStatement : Statement
     {
@@ -215,7 +203,7 @@ namespace SqlAnalyser.Model
         public TokenInfo Content { get; set; }
     }
 
-    public class FunctionCallStatement : Statement
+    public class CallStatement : Statement
     {
         public TokenInfo Name { get; set; }
         public List<TokenInfo> Arguments { get; set; } = new List<TokenInfo>();

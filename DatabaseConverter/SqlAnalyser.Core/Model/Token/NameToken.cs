@@ -5,21 +5,26 @@ namespace SqlAnalyser.Model
 {
     public class NameToken : TokenInfo
     {
-        private TokenInfo _name;       
+        private TokenInfo _name;
 
         public TokenInfo Name
         {
             get
             {
-                if (this._name == null && this != null)
+                if (this._name == null)
                 {
                     return this;
                 }
 
                 return this._name;
             }
-            set
+            internal set
             {
+                if (value == null && this._name != null && this.Equals(this._name))
+                {
+                    return;
+                }
+
                 this._name = value;
             }
         }
@@ -31,6 +36,7 @@ namespace SqlAnalyser.Model
 
         public NameToken(ParserRuleContext context) : base(context)
         {
+
         }
 
         public NameToken(string symbol, ParserRuleContext context) : base(symbol, context)

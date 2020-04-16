@@ -438,7 +438,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT V.OWNER AS ""Owner"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : "TEXT_VC")} AS ""Definition"" 
+            string sql = $@"SELECT V.OWNER AS ""Owner"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : "'CREATE OR REPLACE VIEW '||V.VIEW_NAME||' AS ' || CHR(13) || TEXT_VC")} AS ""Definition"" 
                         FROM ALL_VIEWS V
                         WHERE UPPER(OWNER) = UPPER('{this.GetDbOwner()}')";
 
@@ -572,22 +572,22 @@ namespace DatabaseInterpreter.Core
 
             #region User Defined Type
 
-            List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
+            //List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
 
-            foreach (string userTypeName in userTypeNames)
-            {
-                IEnumerable<UserDefinedType> userTypes = schemaInfo.UserDefinedTypes.Where(item => item.Name == userTypeName);
+            //foreach (string userTypeName in userTypeNames)
+            //{
+            //    IEnumerable<UserDefinedType> userTypes = schemaInfo.UserDefinedTypes.Where(item => item.Name == userTypeName);
 
-                this.FeedbackInfo(OperationState.Begin, userTypes.First());
+            //    this.FeedbackInfo(OperationState.Begin, userTypes.First());
 
-                string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
+            //    string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
 
-                string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.ScriptsSplitString;
+            //    string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.ScriptsSplitString;
 
-                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
+            //    sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
 
-                this.FeedbackInfo(OperationState.End, userTypes.First());
-            }
+            //    this.FeedbackInfo(OperationState.End, userTypes.First());
+            //}
 
             #endregion
 

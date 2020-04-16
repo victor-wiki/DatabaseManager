@@ -31,7 +31,7 @@
   </mapping>
   <mapping>
     <SqlServer>STUFF</SqlServer>
-    <MySql>INSTR</MySql>
+    <MySql>INSERT</MySql>
     <Oracle></Oracle>
   </mapping>
   <mapping>
@@ -45,8 +45,8 @@
     <Oracle></Oracle>
   </mapping>
   <mapping>
-    <SqlServer>DATE_ADD</SqlServer>
-    <MySql>DATEADD</MySql>
+    <SqlServer>DATEADD</SqlServer>
+    <MySql>DATE_ADD</MySql>
     <Oracle></Oracle>
   </mapping>
   <mapping>
@@ -58,5 +58,69 @@
     <SqlServer>CONVERT</SqlServer>
     <MySql>CONVERT</MySql>
     <Oracle direction="IN">CAST</Oracle>
-  </mapping> 
+  </mapping>
+  <mapping>
+    <SqlServer>SYSTEM_USER</SqlServer>
+    <MySql>CURRENT_USER</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>DB_NAME</SqlServer>
+    <MySql>DATABASE</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>DAY</SqlServer>
+    <MySql>DAYOFMONTH</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>DATEPART</SqlServer>
+    <MySql>EXTRACT</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>IIF</SqlServer>
+    <MySql>IF</MySql>
+    <Oracle></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer direction="IN">LOWER</SqlServer>
+    <MySql direction="OUT">LCASE</MySql>
+    <Oracle direction="IN">LOWER</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer direction="IN">UPPER</SqlServer>
+    <MySql direction="OUT">UCASE</MySql>
+    <Oracle direction="IN">UPPER</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer direction="IN">LOG</SqlServer>
+    <MySql direction="OUT">LN</MySql>
+    <Oracle direction="OUT">LN</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer direction="IN">POWER</SqlServer>
+    <MySql direction="OUT">EXP</MySql>
+    <Oracle direction="IN"></Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer direction="IN">REPLICATE</SqlServer>
+    <MySql direction="OUT">RPAD</MySql>  
+  </mapping>
+  <mapping>
+    <SqlServer>CEILING</SqlServer>
+    <MySql>CEILING,CEIL</MySql>
+    <Oracle>CEIL</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer>CHAR</SqlServer>
+    <MySql>CHAR</MySql>
+    <Oracle>CHR,NCHR</Oracle>
+  </mapping>
+  <mapping>
+    <SqlServer></SqlServer>
+    <MySql>TRUNCATE</MySql>
+    <Oracle>TRUNC</Oracle>
+  </mapping>
 </mappings>

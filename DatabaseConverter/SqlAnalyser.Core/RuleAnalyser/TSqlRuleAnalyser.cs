@@ -7,6 +7,8 @@ using System.Linq;
 using static TSqlParser;
 using Antlr4.Runtime;
 using System.Text.RegularExpressions;
+using System.IO;
+using Antlr4.Runtime.Misc;
 
 namespace SqlAnalyser.Core
 {
@@ -22,17 +24,27 @@ namespace SqlAnalyser.Core
             return new TSqlParser(tokenStream);
         }
 
-        public Tsql_fileContext GetRootContext(string content)
+        public Tsql_fileContext GetRootContext(string content, out bool hasError)
         {
+            hasError = false;
+
             TSqlParser parser = this.GetParser(content) as TSqlParser;
 
+            SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
+
+            parser.AddErrorListener(errorListener);
+
             Tsql_fileContext context = parser.tsql_file();
+
+            hasError = errorListener.HasError;
 
             return context;
         }
 
-        public Ddl_clauseContext GetDdlStatementContext(string content)
+        public Ddl_clauseContext GetDdlStatementContext(string content, out bool hasError)
         {
+            hasError = false;
+
             Regex regex = new Regex(@"(TOP[\s]+100[\s]+PERCENT)", RegexOptions.IgnoreCase);
 
             if (regex.IsMatch(content))
@@ -40,40 +52,46 @@ namespace SqlAnalyser.Core
                 content = regex.Replace(content, "");
             }
 
-            Tsql_fileContext rootContext = this.GetRootContext(content);
+            Tsql_fileContext rootContext = this.GetRootContext(content, out hasError);
 
             return rootContext?.batch().FirstOrDefault()?.sql_clauses()?.sql_clause().Select(item => item?.ddl_clause()).FirstOrDefault();
         }
 
         public override RoutineScript AnalyseProcedure(string content)
         {
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content);
+            bool hasError = false;
 
-            RoutineScript script = new RoutineScript();
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            if (ddlStatement != null)
+            RoutineScript script = new RoutineScript() { HasError = hasError };
+
+            if (!hasError)
             {
-                Create_or_alter_procedureContext proc = ddlStatement.create_or_alter_procedure();
-
-                if (proc != null)
+                if (ddlStatement != null)
                 {
-                    #region Name
-                    this.SetScriptName(script, proc.func_proc_name_schema().id());
-                    #endregion
+                    Create_or_alter_procedureContext proc = ddlStatement.create_or_alter_procedure();
 
-                    #region Parameters
-                    this.SetRoutineParameters(script, proc.procedure_param());
-                    #endregion
+                    if (proc != null)
+                    {
+                        #region Name
+                        this.SetScriptName(script, proc.func_proc_name_schema().id());
+                        #endregion
 
-                    #region Body
+                        #region Parameters
+                        this.SetRoutineParameters(script, proc.procedure_param());
+                        #endregion
 
-                    this.SetScriptBody(script, proc.sql_clauses().sql_clause());
+                        #region Body
 
-                    #endregion
+                        this.SetScriptBody(script, proc.sql_clauses().sql_clause());
+
+                        #endregion
+                    }
                 }
+
+                this.ExtractFunctions(script, ddlStatement);
             }
 
-            this.ExtractFunctions(script, ddlStatement);
 
             return script;
         }
@@ -88,25 +106,29 @@ namespace SqlAnalyser.Core
 
         public override RoutineScript AnalyseFunction(string content)
         {
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content);
+            bool hasError = false;
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            RoutineScript script = new RoutineScript();
+            RoutineScript script = new RoutineScript() { HasError = hasError };
 
-            if (ddlStatement != null)
+            if (!hasError)
             {
-                Create_or_alter_functionContext func = ddlStatement.create_or_alter_function();
-
-                if (func != null)
+                if (ddlStatement != null)
                 {
-                    #region Name
-                    this.SetScriptName(script, func.func_proc_name_schema().id());
-                    #endregion
+                    Create_or_alter_functionContext func = ddlStatement.create_or_alter_function();
 
-                    #region Parameters
-                    this.SetRoutineParameters(script, func.procedure_param());
-                    #endregion
+                    if (func != null)
+                    {
+                        #region Name
+                        this.SetScriptName(script, func.func_proc_name_schema().id());
+                        #endregion
 
-                    this.SetFunction(script, func);
+                        #region Parameters
+                        this.SetRoutineParameters(script, func.procedure_param());
+                        #endregion
+
+                        this.SetFunction(script, func);
+                    }
                 }
             }
 
@@ -181,89 +203,98 @@ namespace SqlAnalyser.Core
 
         public override ViewScript AnalyseView(string content)
         {
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content);
+            bool hasError = false;
 
-            ViewScript script = new ViewScript();
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            if (ddlStatement != null)
+            ViewScript script = new ViewScript() { HasError = hasError };
+
+            if (!hasError)
             {
-                Create_viewContext view = ddlStatement.create_view();
-
-                if (view != null)
+                if (ddlStatement != null)
                 {
-                    #region Name
-                    this.SetScriptName(script, view.simple_name().id());
-                    #endregion                  
+                    Create_viewContext view = ddlStatement.create_view();
 
-                    #region Statement
-
-                    foreach (var child in view.children)
+                    if (view != null)
                     {
-                        if (child is Select_statementContext select)
+                        #region Name
+                        this.SetScriptName(script, view.simple_name().id());
+                        #endregion
+
+                        #region Statement
+
+                        foreach (var child in view.children)
                         {
-                            script.Statements.AddRange(this.ParseSelectStatement(select));
+                            if (child is Select_statementContext select)
+                            {
+                                script.Statements.AddRange(this.ParseSelectStatement(select));
+                            }
                         }
+
+                        #endregion
                     }
-
-                    #endregion
                 }
-            }
 
-            this.ExtractFunctions(script, ddlStatement);
+                this.ExtractFunctions(script, ddlStatement);
+            }
 
             return script;
         }
 
         public override TriggerScript AnalyseTrigger(string content)
         {
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content);
+            bool hasError = false;
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            TriggerScript script = new TriggerScript();
+            TriggerScript script = new TriggerScript() { HasError = hasError };
 
-            if (ddlStatement != null)
+            if (!hasError)
             {
-                Create_or_alter_dml_triggerContext trigger = ddlStatement.create_or_alter_trigger().create_or_alter_dml_trigger();
-
-                if (trigger != null)
+                if (ddlStatement != null)
                 {
-                    #region Name                 
+                    Create_or_alter_dml_triggerContext trigger = ddlStatement.create_or_alter_trigger().create_or_alter_dml_trigger();
 
-                    this.SetScriptName(script, trigger.simple_name().id());
-
-                    #endregion
-
-                    script.TableName = new TokenInfo(trigger.table_name()) { Type = TokenType.TableName };
-
-                    foreach (var child in trigger.children)
+                    if (trigger != null)
                     {
-                        if (child is TerminalNodeImpl terminalNode)
+                        #region Name                 
+
+                        this.SetScriptName(script, trigger.simple_name().id());
+
+                        #endregion
+
+                        script.TableName = new TokenInfo(trigger.table_name()) { Type = TokenType.TableName };
+
+                        foreach (var child in trigger.children)
                         {
-                            switch (terminalNode.Symbol.Type)
+                            if (child is TerminalNodeImpl terminalNode)
                             {
-                                case TSqlParser.BEFORE:
-                                case TSqlParser.INSTEAD:
-                                    script.Time = TriggerTime.BEFORE;
-                                    break;
-                                case TSqlParser.AFTER:
-                                    script.Time = TriggerTime.AFTER;
-                                    break;
+                                switch (terminalNode.Symbol.Type)
+                                {
+                                    case TSqlParser.BEFORE:
+                                    case TSqlParser.INSTEAD:
+                                        script.Time = TriggerTime.BEFORE;
+                                        break;
+                                    case TSqlParser.AFTER:
+                                        script.Time = TriggerTime.AFTER;
+                                        break;
+                                }
+                            }
+                            else if (child is Dml_trigger_operationContext operation)
+                            {
+                                script.Events.Add((TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText()));
                             }
                         }
-                        else if (child is Dml_trigger_operationContext operation)
-                        {
-                            script.Events.Add((TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText()));
-                        }
+
+                        #region Body
+
+                        this.SetScriptBody(script, trigger.sql_clauses().sql_clause());
+
+                        #endregion
                     }
-
-                    #region Body
-
-                    this.SetScriptBody(script, trigger.sql_clauses().sql_clause());
-
-                    #endregion
                 }
-            }
 
-            this.ExtractFunctions(script, ddlStatement);
+                this.ExtractFunctions(script, ddlStatement);
+            }
 
             return script;
         }
@@ -664,6 +695,7 @@ namespace SqlAnalyser.Core
                     parameterInfo.Name = new TokenInfo(parameter.children[0] as TerminalNodeImpl) { Type = TokenType.ParameterName };
 
                     parameterInfo.DataType = new TokenInfo(parameter.data_type().GetText()) { Type = TokenType.DataType };
+
                     var defaultValue = parameter.default_value();
 
                     if (defaultValue != null)
@@ -720,7 +752,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Order_by_clauseContext order)
                 {
-                    orderby.AddRange(order.order_by_expression().Select(item => this.ParseToken(item ,TokenType.OrderBy )));
+                    orderby.AddRange(order.order_by_expression().Select(item => this.ParseToken(item, TokenType.OrderBy)));
                 }
                 else if (child is Option_clauseContext opt)
                 {
@@ -755,7 +787,7 @@ namespace SqlAnalyser.Core
                 {
                     WithStatement statement = new WithStatement();
 
-                    statement.Name = new TokenInfo(table.id()) { Type = TokenType.TableName };
+                    statement.Name = new TokenInfo(table.id()) { Type = TokenType.General };
                     Column_name_listContext cols = table.column_name_list();
 
                     if (cols != null)
@@ -908,11 +940,23 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public ProcedureCallStatement ParseExecuteStatement(Execute_statementContext node)
+        public CallStatement ParseExecuteStatement(Execute_statementContext node)
         {
-            ProcedureCallStatement statement = new ProcedureCallStatement();
+            CallStatement statement = new CallStatement();
 
-            statement.Content = new TokenInfo(node.execute_body()) { Type = TokenType.ProcedureCall };
+            Execute_bodyContext body = node.execute_body();
+
+            statement.Name = new TokenInfo(body.func_proc_name_server_database_schema()) { Type = TokenType.RoutineName };
+
+            Execute_statement_argContext[] args = body.execute_statement_arg();
+
+            if (args != null && args.Length > 0)
+            {
+                foreach (Execute_statement_argContext arg in args)
+                {
+                    statement.Arguments.Add(new TokenInfo(arg));
+                }
+            }
 
             return statement;
         }
@@ -1122,6 +1166,11 @@ namespace SqlAnalyser.Core
                 column = new ColumnName(node);
             }
 
+            if (column.Symbol?.Contains("=") == true)
+            {
+                column.Tokens.AddRange(this.ParseToken(node, TokenType.RoutineName, true).Tokens);
+            }
+
             return column;
         }
 
@@ -1159,6 +1208,29 @@ namespace SqlAnalyser.Core
                 if (id != null)
                 {
                     parsedNode = id;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public override bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if(node is Func_proc_name_server_database_schemaContext proc && proc.Parent.GetType() == typeof(Execute_bodyContext))
+            {
+                parsedNode = proc;
+                return true;
+            }
+            else if (node is Scalar_function_nameContext sfn)
+            {                
+                IdContext[] ids = sfn.func_proc_name_server_database_schema()?.func_proc_name_database_schema()?.func_proc_name_schema()?.id();
+
+                if (ids != null && ids.Length > 1)
+                {
+                    parsedNode = sfn;
                     return true;
                 }                
             }

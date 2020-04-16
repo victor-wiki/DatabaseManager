@@ -168,19 +168,10 @@ namespace SqlAnalyser.Core
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"CREATE VIEW {script.FullName} AS");
-
-            foreach (SelectStatement statement in script.Statements.Where(item => item is SelectStatement))
+           
+            foreach (Statement statement in script.Statements)
             {
-                sb.AppendLine($"SELECT {string.Join("," + Environment.NewLine, statement.Columns.Select(item => item.ToString()))}");
-
-                sb.AppendLine($"FROM {statement.TableName}");
-
-                if (statement.Where != null)
-                {
-                    sb.AppendLine($"WHERE {statement.Where}");
-                }
-
-                sb.Append(";");
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
             return this.FormatScripts(sb.ToString());
@@ -246,13 +237,15 @@ namespace SqlAnalyser.Core
                     select.TableName = new TableName("DUAL");
                 }
 
+                string selectColumns = $"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
+
                 if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
                 {
                     appendLine($"SET {select.Columns.First()}");
                 }
                 else if (!isWith)
                 {
-                    appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                    appendLine(selectColumns);
                 }
 
                 if (select.IntoTableName != null)
@@ -260,40 +253,60 @@ namespace SqlAnalyser.Core
                     appendLine($"INTO {select.IntoTableName.ToString()}");
                 }
 
-                if (select.TableName != null)
+                Action appendWith = () =>
+                  {
+                      int i = 0;
+
+                      foreach (WithStatement withStatement in select.WithStatements)
+                      {
+                          if (i == 0)
+                          {
+                              appendLine($"WITH {withStatement.Name}");
+                          }
+                          else
+                          {
+                              appendLine($",{withStatement.Name}");
+                          }
+
+                          appendLine("AS(");
+
+                          appendStatements(withStatement.SelectStatements, false);
+
+                          appendLine(")");
+
+                          i++;
+                      }                    
+                     
+                  };
+
+                Action appendFrom = () =>
                 {
-                    if (!isWith)
+                    int i = 0;
+                    foreach (FromItem fromItem in select.FromItems)
                     {
-                        appendLine($"FROM {select.TableName}");
-                    }
-                    else
-                    {
-                        int i = 0;
-
-                        foreach (WithStatement withStatement in select.WithStatements)
+                        if (i == 0)
                         {
-                            if (i == 0)
-                            {
-                                appendLine($"WITH {withStatement.Name}");
-                            }
-                            else
-                            {
-                                appendLine($",{withStatement.Name}");
-                            }
-
-                            appendLine("AS(");
-
-                            appendStatements(withStatement.SelectStatements, false);
-
-                            appendLine(")");
-
-                            i++;
+                            appendLine($"FROM {fromItem.TableName}");
                         }
 
-                        appendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
-                        appendLine($"FROM {select.TableName}");
-                    }
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
+                        {
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                        }
+
+                        i++;
+                    }                   
+                };
+
+                if (isWith)
+                {
+                    appendWith();
+                    appendLine(selectColumns);
                 }
+
+                appendFrom();
 
                 if (select.Where != null)
                 {
@@ -535,14 +548,10 @@ namespace SqlAnalyser.Core
             else if (statement is PrintStatement print)
             {
                 appendLine($"DBMS_OUTPUT.PUT_LINE({print.Content.Symbol?.ToString()?.Replace("+", "||")});");
-            }
-            else if (statement is FunctionCallStatement funcCall)
+            }          
+            else if (statement is CallStatement execute)
             {
-                appendLine($"{funcCall.Name}({string.Join(",", funcCall.Arguments)});");
-            }
-            else if (statement is ProcedureCallStatement execute)
-            {
-                appendLine($"EXECUTE {execute.Content};");
+                appendLine($"{execute.Name}({string.Join(",", execute.Arguments.Select(item=> item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -609,6 +618,6 @@ namespace SqlAnalyser.Core
             }
 
             return sb.ToString();
-        }
+        }        
     }
 }

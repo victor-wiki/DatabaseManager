@@ -21,7 +21,7 @@ namespace DatabaseConverter.Core
             {
                 DbType = t.Name.ToString(),
                 Function = t.Value,
-                Direction = string.IsNullOrEmpty(t.Attribute("direction")?.Value)? FunctionMappingDirection.INOUT: (FunctionMappingDirection)Enum.Parse(typeof(FunctionMappingDirection), t.Attribute("direction").Value)
+                Direction = string.IsNullOrEmpty(t.Attribute("direction")?.Value)? FunctionMappingDirection.INOUT: (FunctionMappingDirection)Enum.Parse(typeof(FunctionMappingDirection), t.Attribute("direction").Value.ToUpper())
             }))
             .ToList();
         }

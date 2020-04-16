@@ -9,6 +9,7 @@ namespace DatabaseConverter.Model
         private string _delimiter;
         public string Name { get; set; }
         public string Args { get; set; }
+        public bool NoParenthesess{ get; set; }
 
         public string Delimiter
         {
@@ -26,15 +27,5 @@ namespace DatabaseConverter.Model
                 this._delimiter = value;
             }
         }
-    }
-
-    public enum FunctionArgumentToken
-    {
-        UNKNOWN = 0,
-        TYPE = 1,
-        EXP = 2, //Expression
-        VALUE = 3,
-        START = 4,
-        LENGTH = 5
-    }
+    }   
 }

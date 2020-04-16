@@ -31,7 +31,7 @@ namespace DatabaseManager.Helper
         public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType)
         {
             var keywords = KeywordManager.GetKeywords(databaseType);
-            var functions = FunctionManager.GetFunctions(databaseType).Except(keywords);
+            var functions = FunctionManager.GetFunctionSpecifications(databaseType).Select(item=>item.Name).Except(keywords);
 
             string keywordsRegex = $@"\b({string.Join("|", keywords)})\b";
             string functionsRegex = $@"\b({string.Join("|", functions)})\b";

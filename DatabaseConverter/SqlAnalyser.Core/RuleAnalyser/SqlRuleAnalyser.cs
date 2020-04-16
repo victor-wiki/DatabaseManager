@@ -35,6 +35,7 @@ namespace SqlAnalyser.Core
         public abstract bool IsFunction(IParseTree node);
         public abstract bool IsTableName(IParseTree node, out ParserRuleContext parsedNode);
         public abstract bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode);
+        public abstract bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode);
 
 
         public virtual CommonScript Analyse<T>(string content)
@@ -94,28 +95,37 @@ namespace SqlAnalyser.Core
             }
         }
 
-        protected TokenInfo ParseToken(ParserRuleContext node, TokenType tokenType = TokenType.General)
+        protected TokenInfo ParseToken(ParserRuleContext node, TokenType tokenType = TokenType.General, bool strict = false)
         {
             TokenInfo tokenInfo = new TokenInfo(node) { Type = tokenType };
 
-            this.AddTokens(tokenInfo.Tokens, node, tokenType);
+            this.AddTokens(tokenInfo.Tokens, node, tokenType, strict);
 
             return tokenInfo;
         }
 
-        protected void AddTokens(List<TokenInfo> tokens, ParserRuleContext node, TokenType tokenType = TokenType.General)
+        protected void AddTokens(List<TokenInfo> tokens, ParserRuleContext node, TokenType tokenType = TokenType.General, bool strict = false)
         {
+            Func<TokenType, bool> isMatched = (type) =>
+            {
+                return !strict || (strict && tokenType == type);
+            };
+
             foreach (var child in node.children)
             {
                 ParserRuleContext parsedNode = null;
 
-                if (this.IsTableName(child, out parsedNode))
+                if (isMatched(TokenType.TableName) && this.IsTableName(child, out parsedNode))
                 {
                     this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.TableName });
                 }
-                else if (this.IsColumnName(child, out parsedNode))
+                else if (isMatched(TokenType.ColumnName) && this.IsColumnName(child, out parsedNode))
                 {
                     this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.ColumnName });
+                }
+                else if (isMatched(TokenType.RoutineName) && this.IsRoutineName(child, out parsedNode))
+                {
+                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.RoutineName });
                 }
                 else if (child is ParserRuleContext)
                 {
@@ -123,6 +133,7 @@ namespace SqlAnalyser.Core
                 }
             }
         }
+
 
         protected void AddToken(List<TokenInfo> tokens, TokenInfo tokenInfo)
         {

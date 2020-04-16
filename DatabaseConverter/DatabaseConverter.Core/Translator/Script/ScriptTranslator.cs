@@ -43,25 +43,41 @@ namespace DatabaseConverter.Core
 
                     if (script != null)
                     {
-                        if (typeof(T) == typeof(Function))
+                        if (script.HasError)
                         {
-                            script = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
-
-                            RoutineScript routine = script as RoutineScript;
-
-                            if (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql && routine.ReturnTable != null)
+                            if(typeof(T) == typeof(View))
                             {
-                                routine.Type = RoutineType.PROCEDURE;
-                            }
+                                //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
+                                if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
+                                {
+                                    ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbOwner) { SkipError = this.SkipError };
+                                    viewTranslator.Translate();
+                                }                               
+                            }                            
                         }
 
-                        ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
-                        tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
-                        tokenProcessor.TargetDbOwner = this.TargetDbOwner;
+                        if(!script.HasError)
+                        {
+                            if (typeof(T) == typeof(Function))
+                            {
+                                script = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
 
-                        tokenProcessor.Process();
+                                RoutineScript routine = script as RoutineScript;
 
-                        dbObj.Definition = targetAnalyser.GenerateScripts(script);
+                                if (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql && routine.ReturnTable != null)
+                                {
+                                    routine.Type = RoutineType.PROCEDURE;
+                                }
+                            }
+
+                            ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
+                            tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
+                            tokenProcessor.TargetDbOwner = this.TargetDbOwner;
+
+                            tokenProcessor.Process();
+
+                            dbObj.Definition = targetAnalyser.GenerateScripts(script);
+                        }                       
 
                         bool formatHasError = false;
 

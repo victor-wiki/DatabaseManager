@@ -9,4 +9,9 @@
     <MySql>(SELECT LAST_INSERT_ID())</MySql>
     <Oracle></Oracle>
   </mapping>
+  <mapping>
+    <SqlServer>@@VERSION</SqlServer>
+    <MySql>(SELECT VERSION())</MySql>
+    <Oracle></Oracle>
+  </mapping>
 </mappings>

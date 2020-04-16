@@ -30,12 +30,12 @@ namespace DatabaseConverter.Core
 
         public DbObjectTranslator LoadMappings()
         {
-            if(this.sourceDbInterpreter.DatabaseType != this.targetDbInterpreter.DatabaseType)
+            if (this.sourceDbInterpreter.DatabaseType != this.targetDbInterpreter.DatabaseType)
             {
                 this.functionMappings = FunctionMappingManager.GetFunctionMappings();
                 this.variableMappings = VariableMappingManager.GetVariableMappings();
                 this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
-            }          
+            }
 
             return this;
         }
@@ -72,7 +72,7 @@ namespace DatabaseConverter.Core
                 DataTypeMappingTarget targetDataType = mapping.Tareget;
                 newDataType = targetDataType.Type;
 
-                if(usedForFunction)
+                if (usedForFunction)
                 {
                     if (targetDbType == DatabaseType.MySql)
                     {
@@ -89,7 +89,7 @@ namespace DatabaseConverter.Core
                             newDataType = "CHAR";
                         }
                     }
-                }                
+                }
 
                 if (!hasPrecisionScale && !string.IsNullOrEmpty(targetDataType.Precision) && !string.IsNullOrEmpty(targetDataType.Scale))
                 {
@@ -102,7 +102,7 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                if(usedForFunction)
+                if (usedForFunction)
                 {
                     if (sourceDbType == DatabaseType.MySql)
                     {
@@ -118,12 +118,12 @@ namespace DatabaseConverter.Core
                             }
                         }
                     }
-                }                
+                }
             }
 
             return newDataType;
         }
-        
+
         public string FormatSql(string sql, out bool hasError)
         {
             hasError = false;
@@ -171,7 +171,7 @@ namespace DatabaseConverter.Core
             return script;
         }
 
-        public string ParseFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,  
+        public string ParseFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,
             FunctionFomular fomular, string targetFunctionName, out Dictionary<string, string> dictDataType)
         {
             dictDataType = new Dictionary<string, string>();
@@ -185,77 +185,87 @@ namespace DatabaseConverter.Core
 
             if (sourceFuncSpec != null && targetFuncSpec != null)
             {
-                Dictionary<int, FunctionArgumentToken> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec);
-                Dictionary<int, FunctionArgumentToken> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec);
+                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec);
+                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec);
 
-                string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
+                bool ignore = false;
 
-                fomular.Delimiter = delimiter;
-
-                List<string> args = new List<string>();               
-
-                foreach (var kp in targetTokens)
+                if(fomular.Args.Count >0 && (targetTokens.Count == 0 || sourceTokens.Count==0))
                 {
-                    int targetIndex = kp.Key;
-                    FunctionArgumentToken token = kp.Value;
-
-                    if (sourceTokens.ContainsValue(token))
-                    {
-                        int sourceIndex = sourceTokens.FirstOrDefault(item => item.Value == token).Key;
-
-                        if (fomular.Args.Count > sourceIndex)
-                        {
-                            string oldArg = fomular.Args[sourceIndex];
-                            string newArg = oldArg;
-
-                            switch (token)
-                            {
-                                case FunctionArgumentToken.TYPE:
-
-                                    if (!dictDataType.ContainsKey(oldArg))
-                                    {
-                                        newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
-
-                                        dictDataType.Add(oldArg, newArg.Trim());
-                                    }
-                                    else
-                                    {
-                                        newArg = dictDataType[oldArg];
-                                    }
-                                    break;
-                            }
-
-                            args.Add(newArg);
-                        }
-                    }
+                    ignore = true;
                 }
 
-                string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+                if(!ignore)
+                {
+                    string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
 
-                newExpression = $"{targetFunctionName}({string.Join(targetDelimiter, args)})";
+                    fomular.Delimiter = delimiter;
+
+                    List<string> args = new List<string>();
+
+                    foreach (var kp in targetTokens)
+                    {
+                        int targetIndex = kp.Key;
+                        string token = kp.Value;
+
+                        if (sourceTokens.ContainsValue(token))
+                        {
+                            int sourceIndex = sourceTokens.FirstOrDefault(item => item.Value == token).Key;
+
+                            if (fomular.Args.Count > sourceIndex)
+                            {
+                                string oldArg = fomular.Args[sourceIndex];
+                                string newArg = oldArg;
+
+                                switch (token.ToUpper())
+                                {
+                                    case "TYPE":
+
+                                        if (!dictDataType.ContainsKey(oldArg))
+                                        {
+                                            newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
+
+                                            dictDataType.Add(oldArg, newArg.Trim());
+                                        }
+                                        else
+                                        {
+                                            newArg = dictDataType[oldArg];
+                                        }
+                                        break;
+                                }
+
+                                args.Add(newArg);
+                            }
+                        }
+                    }
+
+                    string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+
+                    string strArgs = string.Join(targetDelimiter, args);
+
+                    newExpression = $"{targetFunctionName}{ (targetFuncSpec.NoParenthesess ? "" : $"({strArgs})") }";
+                }                
             }
 
             return newExpression;
         }
 
-        public Dictionary<int, FunctionArgumentToken> GetFunctionArgumentTokens(FunctionSpecification spec)
+        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec)
         {
-            string[] args = spec.Args.Split(new string[] { spec.Delimiter }, StringSplitOptions.RemoveEmptyEntries);
+            Dictionary<int, string> dictTokenIndex = new Dictionary<int, string>();
 
-            Dictionary<int, FunctionArgumentToken> dictTokenIndex = new Dictionary<int, FunctionArgumentToken>();
-
-            int i = 0;
-
-            foreach (string arg in args)
+            if (!(spec.Args.EndsWith(",...") || spec.Args.Contains("[")))
             {
-                FunctionArgumentToken token = FunctionArgumentToken.UNKNOWN;
+                string[] args = spec.Args.Split(new string[] { spec.Delimiter }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (Enum.TryParse(arg.ToUpper(), out token))
+                int i = 0;
+
+                foreach (string arg in args)
                 {
-                    dictTokenIndex.Add(i, token);
-                }
+                    dictTokenIndex.Add(i, arg.Trim());
 
-                i++;
+                    i++;
+                }
             }
 
             return dictTokenIndex;
@@ -286,7 +296,7 @@ namespace DatabaseConverter.Core
                 if (string.IsNullOrEmpty(targetFunctionName))
                 {
                     targetFunctionName = name;
-                }               
+                }
             }
 
             return targetFunctionName;

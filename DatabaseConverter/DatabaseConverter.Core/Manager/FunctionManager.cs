@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class FunctionManager: ConfigManager
+    public class FunctionManager : ConfigManager
     {
         public static List<FunctionSpecification> GetFunctionSpecifications(DatabaseType dbType)
         {
@@ -19,15 +19,9 @@ namespace DatabaseConverter.Core
             {
                 Name = item.Attribute("name").Value,
                 Args = item.Attribute("args").Value,
-                Delimiter= item.Attribute("delimiter")?.Value
+                Delimiter = item.Attribute("delimiter")?.Value,
+                NoParenthesess = item.Attribute("noParenthesess")?.Value == "1"
             }).ToList();
-        }
-
-        public static IEnumerable<string> GetFunctions(DatabaseType dbType)
-        {
-            string filePath = Path.Combine(ConfigRootFolder, $"Function/{dbType}.txt");
-
-            return File.ReadAllLines(filePath);
-        }
+        }      
     }
 }

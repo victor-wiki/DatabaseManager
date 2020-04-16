@@ -15,9 +15,6 @@
     <None Remove="Config\FunctionSpecification\MySql.xml" />
     <None Remove="Config\FunctionSpecification\Oracle.xml" />
     <None Remove="Config\FunctionSpecification\SqlServer.xml" />
-    <None Remove="Config\Function\MySql.txt" />
-    <None Remove="Config\Function\Oracle.txt" />
-    <None Remove="Config\Function\SqlServer.txt" />
     <None Remove="Config\VariableMapping.xml" />
     <None Remove="Config\Keyword\MySql.txt" />
     <None Remove="Config\Keyword\Oracle.txt" />
@@ -50,15 +47,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\FunctionSpecification\SqlServer.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Function\MySql.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Function\Oracle.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Function\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\VariableMapping.xml">

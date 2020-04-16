@@ -425,10 +425,26 @@ namespace SqlAnalyser.Core
                 else if (child is TransactionStatementContext transaction)
                 {
                     statements.Add(this.ParseTransactionStatement(transaction));
-                }
+                }               
             }
 
             return statements;
+        }
+
+        public CallStatement ParseCallStatement(CallStatementContext node)
+        {
+            CallStatement statement = new CallStatement();
+
+            statement.Name = new TokenInfo(node.fullId()) { Type = TokenType.RoutineName };
+
+            ExpressionContext []expressions = node.expressions().expression();
+
+            if(expressions!=null && expressions.Length>0)
+            {
+                statement.Arguments.AddRange(expressions.Select(item => new TokenInfo(item)));
+            }            
+
+            return statement;
         }
 
         public List<Statement> ParseDmlStatement(DmlStatementContext node)
@@ -456,6 +472,10 @@ namespace SqlAnalyser.Core
                     SelectStatement statement = this.ParseSelectStatement(selectContext);
 
                     statements.Add(statement);
+                }
+                else if (child is CallStatementContext call)
+                {
+                    statements.Add(this.ParseCallStatement(call));
                 }
             }
 
@@ -533,46 +553,8 @@ namespace SqlAnalyser.Core
 
                 TableSourcesContext tableSources = multiple.tableSources();
 
-                TableSourceContext[] tables = tableSources.tableSource();
-
-                foreach (TableSourceContext table in tables)
-                {
-                    if (table is TableSourceBaseContext tb)
-                    {
-                        TableSourceItemContext name = tb.tableSourceItem();
-
-                        TableName tableName = this.ParseTableName(name);
-
-                        JoinPartContext[] joins = tb.joinPart();
-
-                        int i = 0;
-                        if (joins != null && joins.Length > 0)
-                        {
-                            if (i == 0)
-                            {
-                                statement.TableNames.Add(tableName);
-                            }
-
-                            FromItem fromItem = new FromItem();
-                            fromItem.TableName = tableName;
-
-                            foreach (JoinPartContext join in joins)
-                            {
-                                JoinItem joinItem = this.ParseJoin(join);                               
-
-                                fromItem.JoinItems.Add(joinItem);
-                            }                          
-
-                            statement.FromItems.Add(fromItem);
-
-                            i++;
-                        }
-                        else
-                        {
-                            statement.TableNames.Add(tableName);
-                        }
-                    }
-                }
+                statement.FromItems = this.ParseTableSources(tableSources);
+                statement.TableNames.AddRange(statement.FromItems.Select(item => item.TableName));                
             }
 
             if (updateItems != null)
@@ -588,6 +570,42 @@ namespace SqlAnalyser.Core
             statement.Condition = this.ParseCondition(condition);
 
             return statement;
+        }
+
+        public List<FromItem> ParseTableSources(TableSourcesContext node)
+        {
+            List<FromItem> fromItems = new List<FromItem>();
+
+            TableSourceContext[] tables = node.tableSource();
+
+            foreach (TableSourceContext table in tables)
+            {
+                if (table is TableSourceBaseContext tb)
+                {
+                    TableSourceItemContext name = tb.tableSourceItem();
+
+                    TableName tableName = this.ParseTableName(name);
+
+                    FromItem fromItem = new FromItem();
+                    fromItem.TableName = tableName;
+
+                    JoinPartContext[] joins = tb.joinPart();
+                   
+                    if (joins != null && joins.Length > 0)
+                    {
+                        foreach (JoinPartContext join in joins)
+                        {
+                            JoinItem joinItem = this.ParseJoin(join);
+
+                            fromItem.JoinItems.Add(joinItem);
+                        }                        
+                    }                   
+
+                    fromItems.Add(fromItem);
+                }
+            }
+
+            return fromItems;
         }
 
         public List<DeleteStatement> ParseDeleteStatement(DeleteStatementContext node)
@@ -675,8 +693,8 @@ namespace SqlAnalyser.Core
                             statement.TableName = this.ParseTableName(t);
                         }
                         else if (fc is TableSourcesContext ts)
-                        {
-                            statement.TableName = this.ParseTableName(ts);
+                        {             
+                            statement.FromItems = this.ParseTableSources(ts);
                         }
                         else if (fc is PredicateExpressionContext exp)
                         {
@@ -1099,6 +1117,26 @@ namespace SqlAnalyser.Core
         {
             JoinItem joinItem = new JoinItem();
 
+            if(node.children.Count>0 && node.children[0] is TerminalNodeImpl terminalNode)
+            {
+                int type = terminalNode.Symbol.Type;
+                switch(type)
+                {
+                    case MySqlParser.LEFT:
+                        joinItem.Type = JoinType.LEFT;
+                        break;
+                    case MySqlParser.RIGHT:
+                        joinItem.Type = JoinType.RIGHT;
+                        break;
+                    case MySqlParser.FULL:
+                        joinItem.Type = JoinType.FULL;
+                        break;
+                    case MySqlParser.CROSS:
+                        joinItem.Type = JoinType.CROSS;
+                        break;
+                }
+            }
+
             if(node is InnerJoinContext innerJoin)
             {
                 joinItem.TableName = this.ParseTableName(innerJoin.tableSourceItem());
@@ -1170,6 +1208,20 @@ namespace SqlAnalyser.Core
                 {
                     parsedNode = uid;
                 }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public override bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is UdfFunctionCallContext udf)
+            {
+                parsedNode = udf.fullId();
 
                 return true;
             }

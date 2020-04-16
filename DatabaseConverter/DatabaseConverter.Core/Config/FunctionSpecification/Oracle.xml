@@ -1,4 +1,137 @@
 ﻿<items>
+  <item name="ABS" args="EXP"></item>
+  <item name="ACOS" args="EXP"></item>
+  <item name="ADD_MONTHS" args="DATE,NUMBER"></item>
+  <item name="ASCII" args="EXP"></item>
+  <item name="ASCIISTR" args="EXP"></item>
+  <item name="ASIN" args="EXP"></item>
+  <item name="ATAN" args="EXP"></item>
+  <item name="ATAN2" args="EXP"></item>
+  <item name="AVG" args="EXP"></item>
+  <item name="BFILENAME" args="DIR,FILE_NAME"></item>
+  <item name="BIN_TO_NUM" args="EXP1,EXP2,..."></item>
+  <item name="BITAND" args="EXP1,EXP2"></item>
+  <item name="CARDINALITY" args="COLUMN"></item> 
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="CEIL" args="EXL"></item>
+  <item name="CHARTOROWID" args="EXP"></item>
+  <item name="CHR" args="NUMBER"></item>
+  <item name="COALESCE" args="EXP1,EXP2,..."></item>
+  <item name="COMPOSE" args="EXP"></item>
+  <item name="CONCAT" args="EXP1,EXP2,..."></item>
+  <!--<item name="CONVERT" args="EXP,NEW[,OLD]"></item>-->
+  <!--<item name="CORR" args=""></item>-->
+  <item name="COS" args="EXP"></item>
+  <item name="COSH" args="EXP"></item>
+  <item name="COUNT" args="EXP"></item>
+  <item name="COVAR_POP" args="EXP1,EXP2"></item>
+  <item name="COVAR_SAMP" args="EXP1,EXP2"></item>
+  <!--<item name="CUME_DIST" args=""></item>-->
+  <item name="CURRENT_DATE" args=""  noParenthesess="1"></item>
+  <item name="CURRENT_TIMESTAMP" args="" noParenthesess="1"></item>
+  <item name="DBTIMEZONE" args="" noParenthesess="1"></item>
+  <item name="DECODE" args="EXP,SEARCH,RESULT[,SEARCH,RESULT],..."></item>
+  <item name="DECOMPOSE" args="EXP"></item>
+  <!--<item name="DENSE_RANK" args=""></item>-->
+  <item name="DUMP" args="EXP[,FORMAT][,START][,LENGTH]"></item>
+  <item name="EMPTY_BLOB" args=""></item>
+  <item name="EMPTY_CLOB" args=""></item>
+  <item name="EXP" args="EXP"></item>
+  <item name="EXTRACT" args="UNIT FROM DATE VALUE"></item>
+  <!--<item name="FIRST_VALUE" args=""></item>-->
+  <item name="FLOOR" args="EXP"></item>
+  <item name="FROM_TZ" args="TIMESTAMP,TIME_ZONE"></item>
+  <item name="GREATEST" args="EXP1,EXP2,..."></item>
+  <item name="GROUP_ID" args=""></item>
+  <item name="HEXTORAW" args="EXP"></item>
+  <item name="INITCAP" args="EXP"></item>
+  <item name="INSTR" args="EXP,SEARCH[,START]"></item>
+  <item name="INSTR2" args="EXP,SEARCH[,START]"></item>
+  <item name="INSTR4" args="EXP,SEARCH[,START]"></item>
+  <item name="INSTRB" args="EXP,SEARCH[,START]"></item>
+  <item name="INSTRC" args="EXP,SEARCH[,START]"></item>
+  <!--<item name="LAG" args=""></item>-->
+  <item name="LAST_DAY" args="DATE"></item>
+  <!--<item name="LAST_VALUE" args=""></item>-->
+  <!--<item name="LEAD" args=""></item>-->
+  <item name="LEAST" args="EXP1,EXP2,..."></item>
+  <item name="LENGTH" args="EXP"></item>
+  <item name="LENGTH2" args="EXP"></item>
+  <item name="LENGTH4" args="EXP"></item>
+  <item name="LENGTHB" args="EXP"></item>
+  <item name="LENGTHC" args="EXP"></item>
+  <!--<item name="LISTAGG" args=""></item>-->
+  <item name="LN" args="EXP"></item>
+  <item name="LNNVL" args="EXP"></item>
+  <item name="LOCALTIMESTAMP" args="" noParenthesess="1"></item>
+  <item name="LOG" args="EXP"></item>
+  <item name="LOWER" args="EXP"></item>
+  <item name="LPAD" args="EXP,LENGTH[,VALUE]"></item>
+  <item name="LTRIM" args="EXP"></item>
+  <item name="MAX" args="EXP"></item>
+  <!--<item name="MEDIAN" args=""></item>-->
+  <item name="MIN" args="EXP"></item>
+  <item name="MOD" args="EXP1,EXP2"></item>
+  <item name="MONTHS_BETWEEN" args="DATE1,DATE2"></item>
+  <item name="NANVL" args="EXP,NEW"></item>
+  <item name="NCHR" args="NUMBER"></item>
+  <item name="NEW_TIME" args="DATE,TIME_ZONE1,TIME_ZONE2"></item>
+  <item name="NEXT_DAY" args="DATE,WEEKDAY"></item>
+  <!--<item name="NTH_VALUE" args=""></item>-->
+  <item name="NULLIF" args="EXP1,EXP2"></item>
+  <item name="NUMTODSINTERVAL" args="NUMBER,UNIT"></item>
+  <item name="NUMTOYMINTERVAL" args="NUMBER,UNIT"></item>
+  <item name="NVL" args="EXP,DEFAULT"></item>
+  <item name="NVL2" args="EXP,NOT_NULL_DEFAUT,DEFAUT"></item>
+  <item name="POWER" args="EXP"></item>
+  <!--<item name="RANK" args=""></item>-->
+  <item name="RAWTOHEX" args="EXP"></item>
+  <item name="REGEXP_COUNT" args="EXP,PATTERN[,START[,MATCH]]"></item>
+  <item name="REGEXP_INSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[SUB_EXP]]]]]"></item>
+  <item name="REGEXP_REPLACE" args="EXP,PATTERN[,NEW[,START[,NTH[,MATCH]]]]"></item>
+  <item name="REGEXP_SUBSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[SUB_EXP]]]]]"></item>
+  <item name="REMAINDER" args="EXP1,EXP2"></item>
+  <item name="REPLACE" args="EXP,OLD[,NEW]"></item>
+  <item name="ROUND" args="EXP"></item>
+  <item name="ROWNUM" args="" noParenthesess="1"></item>
   <item name="RPAD" args="EXP,LENGTH,EXP"></item>
+  <item name="RTRIM" args="EXP"></item>
+  <item name="SESSIONTIMEZONE" args="" noParenthesess="1"></item>
+  <item name="SIGN" args="EXP"></item>
+  <item name="SIN" args="EXP"></item>
+  <item name="SINH" args="EXP"></item>
+  <item name="SOUNDEX" args="EXP"></item>
+  <item name="SQRT" args="EXP"></item>
+  <item name="STDDEV" args="[ALL|DISTINCT]EXP"></item>
+  <item name="SUBSTR" args="EXP,START[,LENGTH]"></item>
+  <item name="SUM" args="EXP"></item>
+  <item name="SYS_CONTEXT" args="NAMESPACE,PARAMETER[,LENGTH]"></item>
+  <item name="SYSDATE" args="" noParenthesess="1"></item>
+  <item name="SYSTIMESTAMP" args=""  noParenthesess="1"></item>
+  <item name="TAN" args="EXP"></item>
+  <item name="TANH" args="TANH"></item>
+  <item name="TO_CHAR" args="EXP[,FORMAT][,LANGUAGE]"></item>
+  <item name="TO_CLOB" args="EXP"></item>
+  <item name="TO_DATE" args="EXP[,FORMAT][,LANGUAGE]"></item>
+  <item name="TO_DSINTERVAL" args="EXP"></item>
+  <item name="TO_LOB" args="EXP"></item>
+  <item name="TO_MULTI_BYTE" args="EXP"></item>
+  <item name="TO_NCLOB" args="EXP"></item>
+  <item name="TO_NUMBER" args="EXP[,FORMAT][,LANGUAGE]"></item>
+  <item name="TO_SINGLE_BYTE" args="EXP"></item>
+  <item name="TO_TIMESTAMP" args="EXP[,FORMAT]"></item>
+  <item name="TO_TIMESTAMP_TZ" args="EXP[,FORMAT]"></item>
+  <item name="TO_YMINTERVAL" args="EXP"></item>
+  <item name="TRANSLATE" args="EXP,OLD,NEW"></item>
+  <item name="TRIM" args="EXP"></item>
+  <item name="TRUNC" args="EXP[,DECIMAL]"></item>
+  <item name="TZ_OFFSET" args="TIME_ZONE"></item>
+  <item name="UID" args="" noParenthesess="1"></item>
+  <item name="UPPER" args="EXP"></item>
+  <item name="USER" args="" noParenthesess="1"></item>
+  <item name="USERENV" args="EXP"></item>
+  <item name="VAR_POP" args="EXP"></item>
+  <item name="VAR_SAMP" args="EXP"></item>
+  <item name="VARIANCE" args="EXP"></item>
+  <item name="VSIZE" args="EXP"></item>
 </items>

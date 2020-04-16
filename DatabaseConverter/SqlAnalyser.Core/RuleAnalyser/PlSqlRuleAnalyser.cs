@@ -300,7 +300,13 @@ namespace SqlAnalyser.Core
                     parameterInfo.Name = new TokenInfo(paraName) { Type = TokenType.ParameterName };
 
                     parameterInfo.DataType = new TokenInfo(parameter.type_spec().GetText()) { Type = TokenType.DataType };
-                    parameterInfo.DefaultValue = new TokenInfo(parameter.default_value_part());
+
+                    Default_value_partContext defaultValue = parameter.default_value_part();
+
+                    if (defaultValue != null)
+                    {
+                        parameterInfo.DefaultValue = new TokenInfo(defaultValue);
+                    }
 
                     this.SetParameterType(parameterInfo, parameter.children);
 
@@ -413,7 +419,7 @@ namespace SqlAnalyser.Core
         {
             Statement statement;
 
-            TokenInfo functionName = new TokenInfo(node.routine_name()) { Type = TokenType.FunctionName };
+            TokenInfo functionName = new TokenInfo(node.routine_name()) { Type = TokenType.RoutineName };
 
             if (functionName.Symbol.ToUpper().Contains("DBMS_OUTPUT"))
             {
@@ -421,7 +427,7 @@ namespace SqlAnalyser.Core
             }
             else
             {
-                statement = new FunctionCallStatement()
+                statement = new CallStatement()
                 {
                     Name = functionName,
                     Arguments = node.function_argument().argument().Select(item => new TokenInfo(item)).ToList()
@@ -593,8 +599,8 @@ namespace SqlAnalyser.Core
                     });
                 }
             }
-          
-            statement.Condition = this.ParseCondition(node.where_clause());            
+
+            statement.Condition = this.ParseCondition(node.where_clause());
 
             return statement;
         }
@@ -632,41 +638,140 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
+            List<WithStatement> withStatements = null;
+
             foreach (var child in node.children)
             {
                 if (child is SubqueryContext subquery)
                 {
-                    foreach (var sc in subquery.children)
+                    statement = this.ParseSubQuery(subquery);
+                }
+                else if (child is Subquery_factoring_clauseContext factor)
+                {
+                    bool isWith = false;
+
+                    foreach (var fc in factor.children)
                     {
-                        if (sc is Subquery_basic_elementsContext elements)
+                        if (fc is TerminalNodeImpl terminalNode)
                         {
-                            Query_blockContext block = elements.query_block();
-
-                            foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
+                            if (terminalNode.Symbol.Type == PlSqlParser.WITH)
                             {
-                                statement.Columns.Add(this.ParseColumnName(col));
+                                isWith = true;
                             }
-
-                            Table_ref_listContext table = block.from_clause().table_ref_list();
-
-                            statement.TableName = this.ParseTableName(table);
-
-                            Into_clauseContext into = block.into_clause();
-
-                            if (into != null)
+                        }
+                        else if (fc is Factoring_elementContext fe)
+                        {
+                            if (isWith)
                             {
-                                statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
+                                if (withStatements == null)
+                                {
+                                    withStatements = new List<WithStatement>();
+                                }
+
+                                WithStatement withStatement = new WithStatement() { SelectStatements = new List<SelectStatement>() };
+
+                                withStatement.Name = new TokenInfo(fe.query_name()) { Type = TokenType.General };
+
+                                withStatement.SelectStatements.Add(this.ParseSubQuery(fe.subquery()));
+
+                                withStatements.Add(withStatement);
                             }
-
-                            var expression = block.where_clause()?.expression();
-
-                            statement.Where = this.ParseCondition(expression);
                         }
                     }
                 }
             }
 
+            if(withStatements!=null)
+            {
+                statement.WithStatements = withStatements;
+            }
+
             return statement;
+        }
+
+        public SelectStatement ParseSubQuery(SubqueryContext node)
+        {
+            SelectStatement statement = new SelectStatement();
+
+            foreach (var sc in node.children)
+            {
+                if (sc is Subquery_basic_elementsContext elements)
+                {
+                    Query_blockContext block = elements.query_block();
+
+                    foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
+                    {
+                        statement.Columns.Add(this.ParseColumnName(col));
+                    }
+
+                    statement.FromItems = this.ParseFormClause(block.from_clause());
+
+                    Into_clauseContext into = block.into_clause();
+
+                    if (into != null)
+                    {
+                        statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
+                    }
+
+                    var expression = block.where_clause()?.expression();
+
+                    statement.Where = this.ParseCondition(expression);
+                }
+            }
+
+            return statement;
+        }
+
+        public List<FromItem> ParseFormClause(From_clauseContext node)
+        {
+            List<FromItem> fromItems = new List<FromItem>();
+
+            Table_ref_listContext tableList = node.table_ref_list();
+            Table_refContext[] tables = tableList.table_ref();
+
+            foreach (Table_refContext table in tables)
+            {
+                FromItem fromItem = new FromItem();
+
+                fromItem.TableName = this.ParseTableName(table);
+
+                Join_clauseContext[] joins = table.join_clause();
+
+                if (joins != null && joins.Length > 0)
+                {
+                    foreach (Join_clauseContext join in joins)
+                    {
+                        JoinItem joinItem = new JoinItem();
+
+                        string type = join.outer_join_type().GetText();
+
+                        switch (type)
+                        {
+                            case nameof(PlSqlParser.LEFT):
+                                joinItem.Type = JoinType.LEFT;
+                                break;
+                            case nameof(PlSqlParser.RIGHT):
+                                joinItem.Type = JoinType.RIGHT;
+                                break;
+                            case nameof(PlSqlParser.FULL):
+                                joinItem.Type = JoinType.FULL;
+                                break;
+                            case nameof(PlSqlParser.CROSS):
+                                joinItem.Type = JoinType.CROSS;
+                                break;
+                        }
+
+                        joinItem.TableName = this.ParseTableName(join.table_ref_aux());
+                        joinItem.Condition = this.ParseCondition(join.join_on_part().FirstOrDefault()?.condition());
+
+                        fromItem.JoinItems.Add(joinItem);
+                    }
+                }
+
+                fromItems.Add(fromItem);
+            }
+
+            return fromItems;
         }
 
         public List<SetStatement> ParseSetStatement(Assignment_statementContext node)
@@ -882,6 +987,14 @@ namespace SqlAnalyser.Core
         {
             TableName tableName = null;
 
+            Action<Table_aliasContext> setAlias = (alias) =>
+            {
+                if (tableName != null && alias != null)
+                {
+                    tableName.Alias = new TokenInfo(alias);
+                }
+            };
+
             if (node != null)
             {
                 if (node is General_table_refContext gtr)
@@ -890,16 +1003,23 @@ namespace SqlAnalyser.Core
 
                     tableName.Name = new TokenInfo(gtr.dml_table_expression_clause().tableview_name()) { Type = TokenType.TableName };
 
-                    Table_aliasContext alias = gtr.table_alias();
+                    setAlias(gtr.table_alias());
+                }
+                else if (node is Table_ref_auxContext tra)
+                {
+                    tableName = new TableName(tra);
 
-                    if (alias != null)
-                    {
-                        tableName.Alias = new TokenInfo(alias);
-                    }
+                    tableName.Name = new TokenInfo(tra.table_ref_aux_internal()) { Type = TokenType.TableName };
+
+                    setAlias(tra.table_alias());
                 }
                 else if (node is Table_ref_listContext trl)
                 {
                     return this.ParseTableName(trl.table_ref().FirstOrDefault());
+                }
+                else if (node is Table_refContext tr)
+                {
+                    return this.ParseTableName(tr.table_ref_aux());
                 }
 
                 if (tableName == null)
@@ -953,7 +1073,9 @@ namespace SqlAnalyser.Core
         {
             if (node != null)
             {
-                if (node is Where_clauseContext || node is ExpressionContext)
+                if (node is ConditionContext ||
+                    node is Where_clauseContext ||
+                    node is ExpressionContext)
                 {
                     return this.ParseToken(node, TokenType.Condition);
                 }
@@ -1043,6 +1165,20 @@ namespace SqlAnalyser.Core
             {
                 return this.IsChildOfType<T>(node.Parent as RuleContext);
             }
+        }
+
+        public override bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode)
+        {
+            parsedNode = null;
+
+            if (node is General_element_partContext gep && (node as General_element_partContext).children.Any(item => item is Function_argumentContext))
+            {
+                parsedNode = gep.id_expression().LastOrDefault();
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -1,5 +1,120 @@
 ﻿<items>
-  <item name="CONVERT" args="TYPE,EXP"></item>
+  <item name="ABS" args="EXP"></item>
+  <item name="ACOS" args="EXP"></item>
+  <item name="APPROX_COUNT_DISTINCT" args="EXP"></item>
+  <item name="ASCII" args="EXP"></item>
+  <item name="ASIN" args="EXP"></item>
+  <item name="ATAN" args="EXP"></item>
+  <item name="ATN2" args="EXP"></item>
+  <item name="AVG" args="EXP"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="CEILING" args="EXP"></item>
+  <item name="CHAR" args="NUMBER"></item>
+  <item name="CHARINDEX" args="SEARCH,EXP,START"></item>
+  <item name="CHECKSUM_AGG" args="EXP"></item>
+  <item name="CHOOSE" args="INDEX,VALUE1,VALUE2,..."></item>
+  <item name="COALESCE" args="EXP1,EXP2,..."></item>
+  <item name="CONCAT" args="EXP1,EXP2,..."></item>
+  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..."></item>
+  <item name="CONVERT" args="TYPE,EXP"></item>
+  <item name="COS" args="EXP"></item>
+  <item name="COT" args="EXP"></item>
+  <item name="COUNT" args="EXP"></item>
+  <item name="COUNT_BIG" args="EXP"></item>
+  <item name="CURRENT_TIMESTAMP" args="" noParenthesess="1"></item>
+  <item name="CURRENT_TIMEZONE" args="" ></item>
+  <item name="CURRENT_USER" args="" noParenthesess="1"></item>
+  <item name="DATALENGTH" args="EXP"></item>
+  <item name="DATEADD" args="UNIT,INTERVEL,DATE"></item>
+  <item name="DATEDIFF" args="UNIT,DATE1,DATE2"></item>
+  <item name="DATEDIFF_BIG" args="UNIT,DATE1,DATE2"></item>
+  <item name="DATEFROMPARTS" args="YEAR,MONTH,DAY"></item>
+  <item name="DATENAME" args="UNIT,DATE"></item>
+  <item name="DATEPART" args="UNIT,DATE"></item>
+  <item name="DATETIME2FROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,FRACTIONS,PRECISION"></item>
+  <item name="DATETIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
+  <item name="DATETIMEOFFSETFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,FRACTIONS,HOUR_OFFSET,MINUTE_OFFSET,PRECISION"></item>
+  <item name="DAY" args="DATE"></item>
+  <item name="DEGREES" args="EXP"></item>
+  <item name="DIFFERENCE" args="EXP1,EXP2"></item>
+  <item name="EOMONTH" args="DATE[,OFFSET]"></item>
+  <item name="EXP" args="EXP"></item>
+  <!--<item name="FIRST_VALUE" args=""></item>-->
+  <item name="FLOOR" args="EXP"></item>
+  <item name="FORMAT" args="EXP,FORMAT[,CULTURE]"></item>
+  <item name="GETDATE" args=""></item>
+  <item name="GETUTCDATE" args=""></item>
+  <item name="GROUPING" args="COLUMN"></item>
+  <item name="GROUPING_ID" args="COLUMN[,COLUMN]"></item>
+  <item name="IDENT_CURRENT" args="TABLE"></item>
+  <item name="IDENT_INCR" args="TABLE"></item>
+  <item name="IDENT_SEED" args="TABLE"></item>
+  <item name="IDENTITY" args="TYPE[,SEED,INCREMENT]"></item>
+  <item name="IIF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
+  <item name="ISDATE" args="EXP"></item>
+  <item name="ISNULL" args="EXP,DEFAULT"></item>
+  <item name="ISNUMERIC" args="EXP"></item>
+  <!--<item name="LAG" args=""></item>-->
+  <!--<item name="LAST_VALUE" args=""></item>-->
+  <!--<item name="LEAD" args=""></item>-->
+  <item name="LEFT" args="EXP,LENGTH"></item>
+  <item name="LEN" args="EXP"></item>
+  <item name="LOG" args="EXP"></item>
+  <item name="LOG10" args="EXP"></item>
+  <item name="LOWER" args="EXP"></item>
+  <item name="LTRIM" args="EXP"></item>
+  <item name="MAX" args="EXP"></item>
+  <item name="MIN" args="EXP"></item>
+  <item name="MONTH" args="DATE"></item>
+  <item name="NCHAR" args="EXP"></item>
+  <item name="NULLIF" args="EXP1,EXP2"></item>
+  <item name="PARSE" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="PATINDEX" args="SEARCH,EXP"></item>
+  <!--<item name="PERCENT_RANK" args=""></item>-->
+  <!--<item name="PERCENTILE_CONT" args=""></item>-->
+  <!--<item name="PERCENTILE_DISC" args=""></item>-->
+  <item name="PI" args=""></item>
+  <item name="POWER" args="EXP,Y"></item>
+  <item name="QUOTENAME" args="EXP[,CHAR]"></item>
+  <item name="RADIANS" args="EXP"></item>
+  <item name="RAND" args="EXP"></item>
+  <item name="REPLACE" args="EXP,OLD,NEW"></item>
   <item name="REPLICATE" args="EXP,LENGTH"></item>
+  <item name="REVERSE" args="EXP"></item>
+  <item name="RIGHT" args="EXP,LENGTH"></item>
+  <item name="ROUND" args="EXP"></item>
+  <item name="RTRIM" args="EXP"></item>
+  <item name="SESSION_USER" args="" noParenthesess="1"></item>
+  <item name="SESSIONPROPERTY" args="OPTION" ></item>
+  <item name="SIGN" args="EXP"></item>
+  <item name="SIN" args="EXP"></item>
+  <item name="SMALLDATETIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE"></item>
+  <item name="SOUNDEX" args="EXP"></item>
+  <item name="SPACE" args="LENGTH"></item>
+  <item name="SQRT" args="EXP"></item>
+  <item name="SQUARE" args="EXP"></item>
+  <item name="STDEV" args="[ALL|DISTINCT]EXP"></item>
+  <item name="STDEVP" args="[ALL|DISTINCT]EXP"></item>
+  <item name="STR" args="EXP[,LENGTH,DECIMAL]"></item>
+  <item name="STRING_AGG" args="EXP,SEPARATOR"></item>
+  <item name="STRING_ESCAPE" args="EXP,TYPE"></item>
+  <item name="STRING_SPLIT" args="EXP,SEPARATOR"></item>
+  <item name="STUFF" args="EXP,START,LENGTH,VALUE"></item>
+  <item name="SUBSTRING" args="EXP,START,LENGTH"></item>
+  <item name="SUM" args="EXP"></item>
+  <item name="SYSDATETIME" args=""></item>
+  <item name="SYSDATETIMEOFFSET" args=""></item>
+  <item name="SYSTEM_USER" args="" noParenthesess="1"></item>
+  <item name="SYSUTCDATETIME" args=""></item>
+  <item name="TAN" args="EXP"></item>
+  <item name="TIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
+  <item name="TODATETIMEOFFSET" args="EXP,TIME_ZONE"></item>
+  <item name="TRANSLATE" args="EXP,OLD,NEW"></item>
+  <item name="TRY_CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="TRY_CONVERT" args="TYPE,EXP"></item>
+  <item name="UPPER" args="EXP"></item>
+  <item name="USER_NAME" args=""></item>
+  <item name="VAR" args="[ALL|DISTINCT]EXP"></item>
+  <item name="VARP" args="[ALL|DISTINCT]EXP"></item>
+  <item name="YEAR" args="DATE"></item>
 </items>

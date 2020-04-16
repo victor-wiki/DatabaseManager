@@ -51,7 +51,7 @@ namespace DatabaseConverter.Core
             List<TokenInfo> tokens = tokenExtracter.Extract();
 
             IEnumerable<string> keywords = KeywordManager.GetKeywords(this.TargetInterpreter.DatabaseType);
-            IEnumerable<string> functions = FunctionManager.GetFunctions(this.TargetInterpreter.DatabaseType);
+            IEnumerable<string> functions = FunctionManager.GetFunctionSpecifications(this.TargetInterpreter.DatabaseType).Select(item=>item.Name);
 
             this.columnTranslator = new ColumnTranslator(this.SourceInterpreter, this.TargetInterpreter, null);
             columnTranslator.LoadMappings();
@@ -125,6 +125,7 @@ namespace DatabaseConverter.Core
                     if (columnName.Name != null)
                     {
                         columnContent = $"{ this.GetQuotedName(columnName.Name.ToString().Trim('.').Trim(this.TrimChars), token.Type)}";
+                        columnName.Name.Symbol = columnContent;
                     }
 
                     if (columnName.Alias != null && !string.IsNullOrEmpty(columnName.Alias.Symbol))
@@ -138,14 +139,13 @@ namespace DatabaseConverter.Core
                 {
                     token.Symbol = this.GetQuotedName(token.Symbol.Trim('.'), token.Type);
                 }
-                else if (token.Type == TokenType.ProcedureCall)
+                else if (token.Type == TokenType.RoutineName)
                 {
                     token.Symbol = this.GetQuotedName(token.Symbol, token.Type);
                 }
                 else if (token.Type == TokenType.Condition ||
                         token.Type == TokenType.OrderBy ||
-                        token.Type == TokenType.GroupBy
-                       
+                        token.Type == TokenType.GroupBy                       
                        )
                 {
                     token.Symbol = this.GetQuotedString(token.Symbol);
@@ -222,7 +222,6 @@ namespace DatabaseConverter.Core
                             continue;
                         }
 
-
                         Regex matchRegex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedSymbol})\b[{this.SourceInterpreter.QuotationRightChar}]?");
                         string quotedValue = $"{this.TargetInterpreter.QuotationLeftChar}{trimedSymbol}{this.TargetInterpreter.QuotationRightChar}";
 
@@ -250,7 +249,7 @@ namespace DatabaseConverter.Core
 
             for (int i = 0; i < items.Count - 1; i++)
             {
-                if ((tokenType == TokenType.TableName || tokenType == TokenType.ProcedureCall))
+                if ((tokenType == TokenType.TableName || tokenType == TokenType.RoutineName))
                 {
                     if (i == items.Count - 2)
                     {
@@ -300,6 +299,11 @@ namespace DatabaseConverter.Core
             Action<TokenInfo> changeValue = (token) =>
              {
                  token.Symbol = this.DbObject.Definition.Substring(token.StartIndex.Value, token.Length);
+
+                 if(this.TargetInterpreter.DatabaseType!= DatabaseType.SqlServer && this.TargetDbOwner!= "dbo" && token.Symbol.ToLower().Contains("dbo."))
+                 {
+                     token.Symbol = this.ReplaceValue(token.Symbol, "dbo.", "");
+                 }
              };
 
             this.Script.Functions.ForEach(item => { if (item != null) { changeValue(item); } });
