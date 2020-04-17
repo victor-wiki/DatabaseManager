@@ -256,7 +256,6 @@ namespace SqlAnalyser.Core
             return this.FormatScripts(sb.ToString());
         }
 
-
         private string BuildStatement(Statement statement, int level = 0, bool appendSeparator = true)
         {
             StringBuilder sb = new StringBuilder();
@@ -661,6 +660,10 @@ namespace SqlAnalyser.Core
             else if (statement is CloseCursorStatement closeCursor)
             {
                 appendLine($"CLOSE {closeCursor.CursorName};");
+            }
+            else if (statement is TruncateStatement truncate)
+            {
+                appendLine($"TRUNCATE TABLE {truncate.TableName};");
             }
 
             return sb.ToString();

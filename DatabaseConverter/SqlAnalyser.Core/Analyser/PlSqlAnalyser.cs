@@ -79,6 +79,7 @@ namespace SqlAnalyser.Core
             if (script.Parameters.Count > 0)
             {
                 sb.AppendLine("(");
+
                 int i = 0;
                 foreach (Parameter parameter in script.Parameters)
                 {
@@ -120,7 +121,7 @@ namespace SqlAnalyser.Core
 
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement || item is DeclareCursorStatement))
             {
-                sb.AppendLine(this.BuildStatement(statement).Replace("DECLARE ", ""));
+                sb.Append(this.BuildStatement(statement).Replace("DECLARE ", ""));
             }
 
             sb.AppendLine("BEGIN");
@@ -281,23 +282,30 @@ namespace SqlAnalyser.Core
 
                 Action appendFrom = () =>
                 {
-                    int i = 0;
-                    foreach (FromItem fromItem in select.FromItems)
+                    if (select.FromItems != null && select.FromItems.Count > 0)
                     {
-                        if (i == 0)
+                        int i = 0;
+                        foreach (FromItem fromItem in select.FromItems)
                         {
-                            appendLine($"FROM {fromItem.TableName}");
+                            if (i == 0)
+                            {
+                                appendLine($"FROM {fromItem.TableName}");
+                            }
+
+                            foreach (JoinItem joinItem in fromItem.JoinItems)
+                            {
+                                string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                                appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                            }
+
+                            i++;
                         }
-
-                        foreach (JoinItem joinItem in fromItem.JoinItems)
-                        {
-                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
-
-                            appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
-                        }
-
-                        i++;
-                    }                   
+                    }
+                    else if(select.TableName!=null)
+                    {
+                        appendLine($"FROM {select.TableName}");
+                    }
                 };
 
                 if (isWith)
@@ -457,6 +465,7 @@ namespace SqlAnalyser.Core
                 if (declare.Type == DeclareType.Variable)
                 {
                     string defaultValue = (declare.DefaultValue == null ? "" : $":={declare.DefaultValue}");
+
                     appendLine($"DECLARE {declare.Name} {declare.DataType} {defaultValue};");
                 }
                 else if (declare.Type == DeclareType.Table)
@@ -615,6 +624,10 @@ namespace SqlAnalyser.Core
             else if (statement is CloseCursorStatement closeCursor)
             {
                 appendLine($"CLOSE {closeCursor.CursorName};");
+            }
+            else if (statement is TruncateStatement truncate)
+            {
+                appendLine($"TRUNCATE TABLE {truncate.TableName};");
             }
 
             return sb.ToString();

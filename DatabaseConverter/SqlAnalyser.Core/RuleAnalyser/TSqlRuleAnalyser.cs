@@ -313,6 +313,10 @@ namespace SqlAnalyser.Core
                 {
                     statements.AddRange(this.ParseDmlStatement(dml));
                 }
+                else if(bc is Ddl_clauseContext ddl)
+                {
+                    statements.AddRange(this.ParseDdlStatement(ddl));
+                }
                 else if (bc is Cfl_statementContext cfl)
                 {
                     statements.AddRange(this.ParseCflStatement(cfl));
@@ -328,23 +332,45 @@ namespace SqlAnalyser.Core
 
             if (node.children != null)
             {
-                foreach (var dc in node.children)
+                foreach (var child in node.children)
                 {
-                    if (dc is Select_statementContext select)
+                    if (child is Select_statementContext select)
                     {
                         statements.AddRange(this.ParseSelectStatement(select));
                     }
-                    if (dc is Insert_statementContext insert)
+                    if (child is Insert_statementContext insert)
                     {
                         statements.Add(this.ParseInsertStatement(insert));
                     }
-                    else if (dc is Update_statementContext update)
+                    else if (child is Update_statementContext update)
                     {
                         statements.Add(this.ParseUpdateStatement(update));
                     }
-                    else if (dc is Delete_statementContext delete)
+                    else if (child is Delete_statementContext delete)
                     {
                         statements.Add(this.ParseDeleteStatement(delete));
+                    }
+                }
+            }
+
+            return statements;
+        }
+
+        public List<Statement> ParseDdlStatement(Ddl_clauseContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            if (node.children != null)
+            {
+                foreach (var child in node.children)
+                {
+                    if(child is Truncate_tableContext truncate)
+                    {
+                        TruncateStatement truncateStatement = new TruncateStatement();
+
+                        truncateStatement.TableName = this.ParseTableName(truncate.table_name());
+
+                        statements.Add(truncateStatement);
                     }
                 }
             }
@@ -1100,7 +1126,11 @@ namespace SqlAnalyser.Core
 
             if (node != null)
             {
-                if (node is Table_source_itemContext tsi)
+                if (node is Table_nameContext tn)
+                {
+                    tableName = new TableName(tn);                    
+                }
+                else if (node is Table_source_itemContext tsi)
                 {
                     tableName = new TableName(tsi);
 
@@ -1188,9 +1218,14 @@ namespace SqlAnalyser.Core
         {
             parsedNode = null;
 
-            if (node is Table_name_with_hintContext tableName)
+            if(node is Table_nameContext tn)
             {
-                parsedNode = tableName;
+                parsedNode = tn;
+                return true;
+            }
+            else if (node is Table_name_with_hintContext tnwh)
+            {
+                parsedNode = tnwh;
                 return true;
             }
 

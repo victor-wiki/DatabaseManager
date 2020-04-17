@@ -185,17 +185,19 @@ namespace DatabaseConverter.Core
 
             if (sourceFuncSpec != null && targetFuncSpec != null)
             {
-                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec);
-                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec);
+                List<string> fomularArgs = fomular.Args;
+
+                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec, fomularArgs.Count);
+                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, fomularArgs.Count);               
 
                 bool ignore = false;
 
-                if(fomular.Args.Count >0 && (targetTokens.Count == 0 || sourceTokens.Count==0))
+                if (fomularArgs.Count > 0 && (targetTokens.Count == 0 || sourceTokens.Count == 0))
                 {
                     ignore = true;
                 }
 
-                if(!ignore)
+                if (!ignore)
                 {
                     string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
 
@@ -212,7 +214,7 @@ namespace DatabaseConverter.Core
                         {
                             int sourceIndex = sourceTokens.FirstOrDefault(item => item.Value == token).Key;
 
-                            if (fomular.Args.Count > sourceIndex)
+                            if (fomularArgs.Count > sourceIndex)
                             {
                                 string oldArg = fomular.Args[sourceIndex];
                                 string newArg = oldArg;
@@ -244,27 +246,29 @@ namespace DatabaseConverter.Core
                     string strArgs = string.Join(targetDelimiter, args);
 
                     newExpression = $"{targetFunctionName}{ (targetFuncSpec.NoParenthesess ? "" : $"({strArgs})") }";
-                }                
+                }
             }
 
             return newExpression;
         }
 
-        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec)
+        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, int fetchCount = -1)
         {
             Dictionary<int, string> dictTokenIndex = new Dictionary<int, string>();
 
-            if (!(spec.Args.EndsWith(",...") || spec.Args.Contains("[")))
+            if (!spec.Args.EndsWith("..."))
             {
-                string[] args = spec.Args.Split(new string[] { spec.Delimiter }, StringSplitOptions.RemoveEmptyEntries);
+                string str = Regex.Replace(spec.Args, @"[\[\]]", "");              
 
-                int i = 0;
+                string[] args = str.Split(new string[] { spec.Delimiter, " " }, StringSplitOptions.RemoveEmptyEntries);
 
-                foreach (string arg in args)
+                int num = (fetchCount > 0 && args.Length > fetchCount) ? fetchCount : args.Length;
+
+                for (int i = 0; i < num; i++)
                 {
-                    dictTokenIndex.Add(i, arg.Trim());
+                    string arg = args[i];
 
-                    i++;
+                    dictTokenIndex.Add(i, arg.Trim());
                 }
             }
 

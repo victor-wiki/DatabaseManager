@@ -112,7 +112,7 @@
   <item name="SIN" args="EXP"></item>
   <item name="SPACE" args="LENGTH"></item>
   <item name="SQRT" args="EXP"></item>
-  <item name="STDDEV" args="[ALL|DISTINCT]EXP"></item>
+  <!--<item name="STDDEV" args="[ALL|DISTINCT] EXP"></item>-->
   <item name="STR_TO_DATE" args="EXP,FORMAT"></item>
   <item name="STRCMP" args="EXP1,EXP2"></item>
   <item name="SUBDATE" args="DATE,INTERVAL NUMBER UNIT"></item>

@@ -87,9 +87,9 @@
   <!--<item name="RANK" args=""></item>-->
   <item name="RAWTOHEX" args="EXP"></item>
   <item name="REGEXP_COUNT" args="EXP,PATTERN[,START[,MATCH]]"></item>
-  <item name="REGEXP_INSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[SUB_EXP]]]]]"></item>
+  <item name="REGEXP_INSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[,SUB_EXP]]]]]"></item>
   <item name="REGEXP_REPLACE" args="EXP,PATTERN[,NEW[,START[,NTH[,MATCH]]]]"></item>
-  <item name="REGEXP_SUBSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[SUB_EXP]]]]]"></item>
+  <item name="REGEXP_SUBSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[,SUB_EXP]]]]]"></item>
   <item name="REMAINDER" args="EXP1,EXP2"></item>
   <item name="REPLACE" args="EXP,OLD[,NEW]"></item>
   <item name="ROUND" args="EXP"></item>
@@ -102,7 +102,7 @@
   <item name="SINH" args="EXP"></item>
   <item name="SOUNDEX" args="EXP"></item>
   <item name="SQRT" args="EXP"></item>
-  <item name="STDDEV" args="[ALL|DISTINCT]EXP"></item>
+  <!--<item name="STDDEV" args="[ALL|DISTINCT] EXP"></item>-->
   <item name="SUBSTR" args="EXP,START[,LENGTH]"></item>
   <item name="SUM" args="EXP"></item>
   <item name="SYS_CONTEXT" args="NAMESPACE,PARAMETER[,LENGTH]"></item>

@@ -244,7 +244,7 @@ namespace SqlAnalyser.Core
 
                 string selectColumns = $"SELECT {top}{intoVariable}{string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
 
-                if(!isWith)
+                if (!isWith)
                 {
                     appendLine(selectColumns);
                 }
@@ -281,27 +281,34 @@ namespace SqlAnalyser.Core
                           appendLine(")");
 
                           i++;
-                      }            
+                      }
                   };
 
                 Action appendFrom = () =>
                   {
-                      int i = 0;
-                      foreach (FromItem fromItem in select.FromItems)
+                      if (select.FromItems != null && select.FromItems.Count > 0)
                       {
-                          if (i == 0)
+                          int i = 0;
+                          foreach (FromItem fromItem in select.FromItems)
                           {
-                              appendLine($"FROM {fromItem.TableName}");
+                              if (i == 0)
+                              {
+                                  appendLine($"FROM {fromItem.TableName}");
+                              }
+
+                              foreach (JoinItem joinItem in fromItem.JoinItems)
+                              {
+                                  string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                                  appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                              }
+
+                              i++;
                           }
-
-                          foreach (JoinItem joinItem in fromItem.JoinItems)
-                          {
-                              string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
-
-                              appendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
-                          }
-
-                          i++;
+                      }
+                      else if (select.TableName != null)
+                      {
+                          appendLine($"FROM {select.TableName}");
                       }
                   };
 
@@ -310,7 +317,7 @@ namespace SqlAnalyser.Core
                     appendWith();
                     appendLine(selectColumns);
                 }
-               
+
                 appendFrom();
 
                 if (select.Where != null)
@@ -670,6 +677,10 @@ namespace SqlAnalyser.Core
             else if (statement is DeallocateCursorStatement deallocateCursor)
             {
                 appendLine($"DEALLOCATE {deallocateCursor.CursorName}");
+            }
+            else if (statement is TruncateStatement truncate)
+            {
+                appendLine($"TRUNCATE TABLE {truncate.TableName}");
             }
 
             return sb.ToString();

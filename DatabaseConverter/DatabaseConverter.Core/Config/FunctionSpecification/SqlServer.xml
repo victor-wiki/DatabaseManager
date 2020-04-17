@@ -93,8 +93,8 @@
   <item name="SPACE" args="LENGTH"></item>
   <item name="SQRT" args="EXP"></item>
   <item name="SQUARE" args="EXP"></item>
-  <item name="STDEV" args="[ALL|DISTINCT]EXP"></item>
-  <item name="STDEVP" args="[ALL|DISTINCT]EXP"></item>
+  <item name="STDEV" args="[ALL|DISTINCT] EXP"></item>
+  <item name="STDEVP" args="[ALL|DISTINCT] EXP"></item>
   <item name="STR" args="EXP[,LENGTH,DECIMAL]"></item>
   <item name="STRING_AGG" args="EXP,SEPARATOR"></item>
   <item name="STRING_ESCAPE" args="EXP,TYPE"></item>
@@ -114,7 +114,7 @@
   <item name="TRY_CONVERT" args="TYPE,EXP"></item>
   <item name="UPPER" args="EXP"></item>
   <item name="USER_NAME" args=""></item>
-  <item name="VAR" args="[ALL|DISTINCT]EXP"></item>
-  <item name="VARP" args="[ALL|DISTINCT]EXP"></item>
+  <item name="VAR" args="[ALL|DISTINCT] EXP"></item>
+  <item name="VARP" args="[ALL|DISTINCT] EXP"></item>
   <item name="YEAR" args="DATE"></item>
 </items>
