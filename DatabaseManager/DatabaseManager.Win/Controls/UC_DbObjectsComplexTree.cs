@@ -61,6 +61,11 @@ namespace DatabaseManager.Controls
         {
             if (e.Button == MouseButtons.Right)
             {
+                if(e.Node.Name == DbObjectsTreeHelper.FakeNodeName)
+                {
+                    return;
+                }
+
                 this.tvDbObjects.SelectedNode = e.Node;
 
                 this.SetMenuItemVisible(e.Node);
@@ -127,7 +132,8 @@ namespace DatabaseManager.Controls
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
+            SchemaInfo schemaInfo = databaseObjectType == DatabaseObjectType.None ? new SchemaInfo() :
+                                    await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
 
             this.ClearNodes(parentNode);
 
@@ -135,8 +141,6 @@ namespace DatabaseManager.Controls
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Function, schemaInfo.Functions, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
-
-            parentNode.Expand();
         }
 
         private TreeNodeCollection AddTreeNodes<T>(TreeNode node, DatabaseObjectType types, DatabaseObjectType type, List<T> dbObjects, bool createFolderNode = true, bool createFakeNode = false)
@@ -171,13 +175,21 @@ namespace DatabaseManager.Controls
         {
             this.ClearNodes(tableNode);
 
-            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Columns", "Columns", true));
-            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Triggers", "Triggers", true));
-            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Indexes", "Indexes", true));
-            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Keys", "Keys", true));
-            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode("Constraints", "Constraints", true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Columns), nameof(DbObjectTreeFolderType.Columns), true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Triggers), nameof(DbObjectTreeFolderType.Triggers), true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Indexes), nameof(DbObjectTreeFolderType.Indexes), true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Keys), nameof(DbObjectTreeFolderType.Keys), true));
+            tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Constraints), nameof(DbObjectTreeFolderType.Constraints), true));
+        }    
+        
+        private void AddDatabaseFakeNodes(TreeNode databaseNode, Database database)
+        {
+            this.ClearNodes(databaseNode);
 
-            tableNode.Expand();
+            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Tables), nameof(DbObjectTreeFolderType.Tables), true));
+            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Views), nameof(DbObjectTreeFolderType.Views), true));
+            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
+            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));           
         }
 
         private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
@@ -193,7 +205,7 @@ namespace DatabaseManager.Controls
             this.ClearNodes(treeNode);
 
             #region Columns           
-            if (nodeName == "Columns")
+            if (nodeName == nameof(DbObjectTreeFolderType.Columns))
             {
                 foreach (TableColumn column in schemaInfo.TableColumns)
                 {
@@ -210,13 +222,13 @@ namespace DatabaseManager.Controls
             }
             #endregion
 
-            if (nodeName == "Triggers")
+            if (nodeName == nameof(DbObjectTreeFolderType.Triggers))
             {
                 treeNode.AddDbObjectNodes(schemaInfo.TableTriggers);
             }
 
             #region Indexes
-            if (nodeName == "Indexes" && schemaInfo.TableIndexes.Any())
+            if (nodeName == nameof(DbObjectTreeFolderType.Indexes) && schemaInfo.TableIndexes.Any())
             {
                 ILookup<string, TableIndex> indexLookup = schemaInfo.TableIndexes.ToLookup(item => item.Name);
 
@@ -237,7 +249,7 @@ namespace DatabaseManager.Controls
                 }
             }
             #endregion
-            if (nodeName == "Keys")
+            if (nodeName == nameof(DbObjectTreeFolderType.Keys))
             {
                 if (schemaInfo.TablePrimaryKeys.Any() || schemaInfo.TablePrimaryKeys.Any())
                 {
@@ -256,7 +268,7 @@ namespace DatabaseManager.Controls
             }
 
             #region Constraints
-            if (nodeName == "Constraints" && schemaInfo.TableConstraints.Any())
+            if (nodeName == nameof(DbObjectTreeFolderType.Constraints) && schemaInfo.TableConstraints.Any())
             {
                 foreach (TableConstraint constraint in schemaInfo.TableConstraints)
                 {
@@ -265,8 +277,6 @@ namespace DatabaseManager.Controls
                 }
             }
             #endregion          
-
-            treeNode.Expand();
 
             this.Feedback("");
         }
@@ -298,7 +308,7 @@ namespace DatabaseManager.Controls
         private void ShowLoading(TreeNode node)
         {
             string loadingImageKey = "Loading.gif";
-            string loadingText = "loading..";
+            string loadingText = "loading...";
 
             if(this.IsOnlyHasFakeChild(node))
             {
@@ -320,7 +330,8 @@ namespace DatabaseManager.Controls
             if (tag is Database)
             {
                 Database database = tag as Database;
-                await this.AddDbObjectNodes(node, database.Name, DbObjectsTreeHelper.DefaultObjectType | DatabaseObjectType.Function | DatabaseObjectType.Procedure);
+
+                this.AddDatabaseFakeNodes(node, database);
             }
             else if (tag is Table)
             {
@@ -337,6 +348,7 @@ namespace DatabaseManager.Controls
                 {
                     string databaseName = parentNode.Name;
                     DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
+
                     if (databaseObjectType != DatabaseObjectType.None)
                     {
                         await this.AddDbObjectNodes(node, databaseName, databaseObjectType, false);
@@ -347,19 +359,19 @@ namespace DatabaseManager.Controls
                     DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
                     switch (name)
                     {
-                        case "Columns":
+                        case nameof(DbObjectTreeFolderType.Columns):
                             databaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
                             break;
-                        case "Triggers":
+                        case nameof(DbObjectTreeFolderType.Triggers):
                             databaseObjectType = DatabaseObjectType.TableTrigger;
                             break;
-                        case "Indexes":
+                        case nameof(DbObjectTreeFolderType.Indexes):
                             databaseObjectType = DatabaseObjectType.TableIndex;
                             break;
-                        case "Keys":
+                        case nameof(DbObjectTreeFolderType.Keys):
                             databaseObjectType = DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
                             break;
-                        case "Constraints":
+                        case nameof(DbObjectTreeFolderType.Constraints):
                             databaseObjectType = DatabaseObjectType.TableConstraint;
                             break;
                     }

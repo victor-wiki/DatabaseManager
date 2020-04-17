@@ -252,6 +252,7 @@
     <Compile Include="Helper\DbObjectsTreeHelper.cs" />
     <Compile Include="Helper\FormEventCenter.cs" />
     <Compile Include="Helper\RichTextBoxHelper.cs" />
+    <Compile Include="Model\DbObjectTreeFolderType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Controls\UC_DataViewer.resx">

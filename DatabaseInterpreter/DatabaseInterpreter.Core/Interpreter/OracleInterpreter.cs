@@ -354,12 +354,22 @@ namespace DatabaseInterpreter.Core
         #region Table Trigger      
         public override Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter));
+            return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
         }
 
         public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter));
+            return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
+        }
+
+        private Task<List<TableTrigger>> SetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
+        {
+            foreach(TableTrigger trigger in tableTriggers.Result)
+            {
+                trigger.Definition = trigger.CreateClause + trigger.Definition;
+            }
+
+            return tableTriggers;
         }
 
         private string GetSqlForTableTriggers(SchemaInfoFilter filter = null)
@@ -367,6 +377,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
             string sql = $@"SELECT TRIGGER_NAME AS ""Name"",TABLE_OWNER AS ""Owner"", TABLE_NAME AS ""TableName"", 
+                         { (isSimpleMode ? "''" : "('CREATE OR REPLACE TRIGGER ' || DESCRIPTION)")} AS ""CreateClause"",
                          { (isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
                         FROM USER_TRIGGERS
                         WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetDbOwner()}')

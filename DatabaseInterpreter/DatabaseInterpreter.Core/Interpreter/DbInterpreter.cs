@@ -131,24 +131,31 @@ namespace DatabaseInterpreter.Core
 
             if (!string.IsNullOrEmpty(sql))
             {
-                DbCommand dbCommand = dbConnection.CreateCommand();
-
-                dbCommand.CommandText = sql;
-                dbCommand.CommandType = CommandType.Text;
-
-                await this.OpenConnectionAsync(dbConnection);
-
-                objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
-
-                bool isAllOrdersIsZero = !objects.Any(item => item.Order != 0);
-
-                if (isAllOrdersIsZero)
+                try
                 {
-                    int i = 1;
-                    objects.ForEach(item =>
+                    DbCommand dbCommand = dbConnection.CreateCommand();
+
+                    dbCommand.CommandText = sql;
+                    dbCommand.CommandType = CommandType.Text;
+
+                    await this.OpenConnectionAsync(dbConnection);
+
+                    objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
+
+                    bool isAllOrdersIsZero = !objects.Any(item => item.Order != 0);
+
+                    if (isAllOrdersIsZero)
                     {
-                        item.Order = i++;
-                    });
+                        int i = 1;
+                        objects.ForEach(item =>
+                        {
+                            item.Order = i++;
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
                 }
             }
 

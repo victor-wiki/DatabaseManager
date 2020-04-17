@@ -1,11 +1,8 @@
-﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Helper
