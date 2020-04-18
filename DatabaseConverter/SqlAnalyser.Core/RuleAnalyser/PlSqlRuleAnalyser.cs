@@ -648,40 +648,16 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Subquery_factoring_clauseContext factor)
                 {
-                    bool isWith = false;
+                    List<Statement> statements = this.ParseSubQueryFactoringCause(factor);
 
-                    foreach (var fc in factor.children)
+                    if (statements != null)
                     {
-                        if (fc is TerminalNodeImpl terminalNode)
-                        {
-                            if (terminalNode.Symbol.Type == PlSqlParser.WITH)
-                            {
-                                isWith = true;
-                            }
-                        }
-                        else if (fc is Factoring_elementContext fe)
-                        {
-                            if (isWith)
-                            {
-                                if (withStatements == null)
-                                {
-                                    withStatements = new List<WithStatement>();
-                                }
-
-                                WithStatement withStatement = new WithStatement() { SelectStatements = new List<SelectStatement>() };
-
-                                withStatement.Name = new TokenInfo(fe.query_name()) { Type = TokenType.General };
-
-                                withStatement.SelectStatements.Add(this.ParseSubQuery(fe.subquery()));
-
-                                withStatements.Add(withStatement);
-                            }
-                        }
+                        withStatements = statements.Where(item => item is WithStatement).Select(item => (WithStatement)item).ToList();
                     }
                 }
             }
 
-            if(withStatements!=null)
+            if (withStatements != null)
             {
                 statement.WithStatements = withStatements;
             }
@@ -691,31 +667,138 @@ namespace SqlAnalyser.Core
 
         public SelectStatement ParseSubQuery(SubqueryContext node)
         {
+            SelectStatement statement = null;
+
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
+            {
+                if (child is Subquery_basic_elementsContext basic)
+                {
+                    statement = this.ParseSubQueryBasic(basic);
+                }
+                else if (child is Subquery_operation_partContext operation)
+                {
+                    Statement st = this.ParseSubQueryOperation(operation);
+
+                    if (st != null)
+                    {
+                        statements.Add(st);
+                    }
+                }
+            }
+
+            if (statement != null)
+            {
+                var unionStatements = statements.Where(item => item is UnionStatement).Select(item => (UnionStatement)item);
+
+                if (unionStatements.Count() > 0)
+                {
+                    statement.UnionStatements = unionStatements.ToList();
+                }
+            }
+
+            return statement;
+        }
+
+        public List<Statement> ParseSubQueryFactoringCause(Subquery_factoring_clauseContext node)
+        {
+            List<Statement> statements = null;
+
+            bool isWith = false;
+
+            foreach (var fc in node.children)
+            {
+                if (fc is TerminalNodeImpl terminalNode)
+                {
+                    if (terminalNode.Symbol.Type == PlSqlParser.WITH)
+                    {
+                        isWith = true;
+                    }
+                }
+                else if (fc is Factoring_elementContext fe)
+                {
+                    if (isWith)
+                    {
+                        if (statements == null)
+                        {
+                            statements = new List<Statement>();
+                        }
+
+                        WithStatement withStatement = new WithStatement() { SelectStatements = new List<SelectStatement>() };
+
+                        withStatement.Name = new TokenInfo(fe.query_name()) { Type = TokenType.General };
+
+                        withStatement.SelectStatements.Add(this.ParseSubQuery(fe.subquery()));
+
+                        statements.Add(withStatement);
+                    }
+                }
+            }
+
+            return statements;
+        }
+
+        public SelectStatement ParseSubQueryBasic(Subquery_basic_elementsContext node)
+        {
             SelectStatement statement = new SelectStatement();
 
-            foreach (var sc in node.children)
+            Query_blockContext block = node.query_block();
+
+            foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
             {
-                if (sc is Subquery_basic_elementsContext elements)
+                statement.Columns.Add(this.ParseColumnName(col));
+            }
+
+            statement.FromItems = this.ParseFormClause(block.from_clause());
+
+            Into_clauseContext into = block.into_clause();
+
+            if (into != null)
+            {
+                statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
+            }
+
+            var expression = block.where_clause()?.expression();
+
+            statement.Where = this.ParseCondition(expression);
+
+            return statement;
+        }
+
+        public Statement ParseSubQueryOperation(Subquery_operation_partContext node)
+        {
+            Statement statement = null;
+
+            bool isUnion = false;
+            UnionType unionType = UnionType.UNION;
+
+            foreach (var child in node.children)
+            {
+                if (child is TerminalNodeImpl terminalNode)
                 {
-                    Query_blockContext block = elements.query_block();
+                    int type = terminalNode.Symbol.Type;
 
-                    foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
+                    switch (type)
                     {
-                        statement.Columns.Add(this.ParseColumnName(col));
+                        case TSqlParser.UNION:
+                            isUnion = true;
+                            break;
+                        case TSqlParser.ALL:
+                            unionType = UnionType.UNION_ALL;
+                            break;
                     }
-
-                    statement.FromItems = this.ParseFormClause(block.from_clause());
-
-                    Into_clauseContext into = block.into_clause();
-
-                    if (into != null)
+                }
+                else if (child is Subquery_basic_elementsContext basic)
+                {
+                    if (isUnion)
                     {
-                        statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
+                        UnionStatement unionStatement = new UnionStatement();
+                        unionStatement.Type = unionType;
+                        unionStatement.SelectStatement = this.ParseSubQueryBasic(basic);
+
+                        statement = unionStatement;
                     }
-
-                    var expression = block.where_clause()?.expression();
-
-                    statement.Where = this.ParseCondition(expression);
                 }
             }
 

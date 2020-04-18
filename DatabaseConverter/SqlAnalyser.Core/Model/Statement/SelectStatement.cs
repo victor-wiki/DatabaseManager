@@ -10,7 +10,7 @@ namespace SqlAnalyser.Model
         public TokenInfo Where { get; set; }
         public List<TokenInfo> GroupBy { get; set; }
         public TokenInfo Having { get; set; }
-        public List<SelectStatement> UnionStatements { get; set; }
+        public List<UnionStatement> UnionStatements { get; set; }
         public List<WithStatement> WithStatements { get; set; }
         public List<FromItem> FromItems { get; set; }
         public List<TokenInfo> OrderBy { get; set; }

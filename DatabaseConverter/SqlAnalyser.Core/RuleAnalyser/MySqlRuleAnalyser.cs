@@ -651,7 +651,7 @@ namespace SqlAnalyser.Core
                         statement = this.ParseQuerySpecification(specNointo);
                     }
 
-                    statement.UnionStatements = union.unionStatement().Select(item => this.ParseQuerySpecification(item.querySpecificationNointo())).ToList();
+                    statement.UnionStatements.AddRange(union.unionStatement().Select(item => this.ParseUnionSatement(item)));
                 }
             }
 
@@ -714,6 +714,42 @@ namespace SqlAnalyser.Core
 
                     statement.LimitInfo.StartRowIndex = long.Parse(items[0].GetText());
                     statement.LimitInfo.RowCount = long.Parse(items[1].GetText());
+                }
+            }
+
+            return statement;
+        }
+
+        public UnionStatement ParseUnionSatement(UnionStatementContext node)
+        {
+            UnionStatement statement = new UnionStatement();
+
+            UnionType unionType = UnionType.UNION;
+
+            foreach (var child in node.children)
+            {
+                if (child is TerminalNodeImpl terminalNode)
+                {
+                    int type = terminalNode.Symbol.Type;
+
+                    switch (type)
+                    {
+                        case TSqlParser.ALL:
+                            unionType = UnionType.UNION_ALL;
+                            break;
+                        case TSqlParser.INTERSECT:
+                            unionType = UnionType.INTERSECT;
+                            break;
+                        case TSqlParser.EXCEPT:
+                            unionType = UnionType.EXCEPT;
+                            break;
+                    }
+                }
+                else if (child is QuerySpecificationContext ||
+                         child is QuerySpecificationNointoContext)
+                {
+                    statement.Type = unionType;
+                    statement.SelectStatement = this.ParseQuerySpecification(child as ParserRuleContext);
                 }
             }
 

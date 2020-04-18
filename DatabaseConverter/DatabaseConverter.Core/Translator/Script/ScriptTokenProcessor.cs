@@ -14,7 +14,7 @@ namespace DatabaseConverter.Core
         private ColumnTranslator columnTranslator;
         private Regex identifierRegex = new Regex($@"([`""\[][ _0-9a-zA-Z]+[`""\]])");
         private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
-        private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;        
+        private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;
         private bool nameWithQuotation = SettingManager.Setting.DbObjectNameMode == DbObjectNameMode.WithQuotation;
         public CommonScript Script { get; set; }
         public ScriptDbObject DbObject { get; set; }
@@ -22,7 +22,7 @@ namespace DatabaseConverter.Core
         public DbInterpreter TargetInterpreter { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public string TargetDbOwner { get; set; }
-        public Dictionary<string, string> ReplacedVariables { get; private set; } = new Dictionary<string, string>();       
+        public Dictionary<string, string> ReplacedVariables { get; private set; } = new Dictionary<string, string>();
 
         public char[] TrimChars
         {
@@ -51,7 +51,7 @@ namespace DatabaseConverter.Core
             List<TokenInfo> tokens = tokenExtracter.Extract();
 
             IEnumerable<string> keywords = KeywordManager.GetKeywords(this.TargetInterpreter.DatabaseType);
-            IEnumerable<string> functions = FunctionManager.GetFunctionSpecifications(this.TargetInterpreter.DatabaseType).Select(item=>item.Name);
+            IEnumerable<string> functions = FunctionManager.GetFunctionSpecifications(this.TargetInterpreter.DatabaseType).Select(item => item.Name);
 
             this.columnTranslator = new ColumnTranslator(this.SourceInterpreter, this.TargetInterpreter, null);
             columnTranslator.LoadMappings();
@@ -116,8 +116,11 @@ namespace DatabaseConverter.Core
                 }
                 else if (token is TableName tableName)
                 {
-                    token.Symbol = $"{ this.GetQuotedName(tableName.Name.ToString(), token.Type)}" + (tableName.Alias == null ? "" : " " + tableName.Alias);
-                }                
+                    if (tableName.Name != null && tableName.Name.Symbol != null)
+                    {
+                        token.Symbol = $"{ this.GetQuotedName(tableName.Name.ToString(), token.Type)}" + (tableName.Alias == null ? "" : " " + tableName.Alias);
+                    }
+                }
                 else if (token is ColumnName columnName)
                 {
                     string columnContent = "";
@@ -135,7 +138,7 @@ namespace DatabaseConverter.Core
 
                     token.Symbol = columnContent;
                 }
-                else if(token.Type == TokenType.TableName || token.Type == TokenType.ColumnName)
+                else if (token.Type == TokenType.TableName || token.Type == TokenType.ColumnName)
                 {
                     token.Symbol = this.GetQuotedName(token.Symbol.Trim('.'), token.Type);
                 }
@@ -145,7 +148,7 @@ namespace DatabaseConverter.Core
                 }
                 else if (token.Type == TokenType.Condition ||
                         token.Type == TokenType.OrderBy ||
-                        token.Type == TokenType.GroupBy                       
+                        token.Type == TokenType.GroupBy
                        )
                 {
                     token.Symbol = this.GetQuotedString(token.Symbol);
@@ -205,10 +208,10 @@ namespace DatabaseConverter.Core
             }
 
             #region Nested token handle
-            if(this.nameWithQuotation)
+            if (this.nameWithQuotation)
             {
                 var nestedTokens = tokens.Where(item => item.Symbol != null && item.Tokens.Count > 0);
-               
+
                 foreach (TokenInfo nestedToken in nestedTokens)
                 {
                     List<string> replacedSymbols = new List<string>();
@@ -217,7 +220,7 @@ namespace DatabaseConverter.Core
                     {
                         string trimedSymbol = token.Symbol.Trim(this.TrimChars);
 
-                        if(replacedSymbols.Contains(trimedSymbol))
+                        if (replacedSymbols.Contains(trimedSymbol))
                         {
                             continue;
                         }
@@ -233,7 +236,7 @@ namespace DatabaseConverter.Core
                         }
                     }
                 }
-            }           
+            }
             #endregion
 
             this.Script.Owner = null;
@@ -300,7 +303,7 @@ namespace DatabaseConverter.Core
              {
                  token.Symbol = this.DbObject.Definition.Substring(token.StartIndex.Value, token.Length);
 
-                 if(this.TargetInterpreter.DatabaseType!= DatabaseType.SqlServer && this.TargetDbOwner!= "dbo" && token.Symbol.ToLower().Contains("dbo."))
+                 if (this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer && this.TargetDbOwner != "dbo" && token.Symbol.ToLower().Contains("dbo."))
                  {
                      token.Symbol = this.ReplaceValue(token.Symbol, "dbo.", "");
                  }

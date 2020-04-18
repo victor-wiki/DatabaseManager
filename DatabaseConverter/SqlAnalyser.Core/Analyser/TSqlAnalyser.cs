@@ -347,10 +347,9 @@ namespace SqlAnalyser.Core
 
                 if (select.UnionStatements != null)
                 {
-                    foreach (var union in select.UnionStatements)
-                    {
-                        appendLine("UNION");
-                        appendLine(this.BuildStatement(union, level, false).TrimEnd(';'));
+                    foreach (UnionStatement union in select.UnionStatements)
+                    {                       
+                        sb.Append(this.BuildStatement(union, level, false).TrimEnd(';'));
                     }
                 }
 
@@ -376,6 +375,11 @@ namespace SqlAnalyser.Core
                 {
                     appendLine($"VALUES({string.Join(",", insert.Values.Select(item => item))});");
                 }
+            }
+            else if(statement is UnionStatement union)
+            {
+                appendLine(this.GetUnionTypeName(union.Type));
+                sb.AppendLine(this.BuildStatement(union.SelectStatement));
             }
             else if (statement is UpdateStatement update)
             {
@@ -696,6 +700,19 @@ namespace SqlAnalyser.Core
             if (!name.Contains("."))
             {
                 token.Symbol = $"dbo." + symbol;
+            }
+        }
+
+        private string GetUnionTypeName(UnionType unionType)
+        {
+            switch(unionType)
+            {
+                case UnionType.UNION_ALL:
+                    return "UNION ALL";
+                case UnionType.MINUS:
+                    return nameof(UnionType.EXCEPT);
+                default:
+                    return unionType.ToString();
             }
         }
     }

@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>victor-wiki</Authors>
+    <Company>victor-wiki</Company>
+    <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
+    <Description>Convert or translate database objects and data between SqlServer, MySql and Oracle.</Description>
   </PropertyGroup>
 
   <ItemGroup>

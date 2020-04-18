@@ -374,9 +374,8 @@ namespace SqlAnalyser.Core
                 if (select.UnionStatements != null)
                 {
                     foreach (var union in select.UnionStatements)
-                    {
-                        appendLine("UNION");
-                        append(this.BuildStatement(union, level, false).TrimEnd(';'));
+                    {                       
+                        sb.Append(this.BuildStatement(union, level, false).TrimEnd(';'));
                     }
                 }
 
@@ -384,6 +383,11 @@ namespace SqlAnalyser.Core
                 {
                     appendLine(";");
                 }
+            }
+            else if (statement is UnionStatement union)
+            {
+                appendLine(this.GetUnionTypeName(union.Type));
+                sb.AppendLine(this.BuildStatement(union.SelectStatement));
             }
             else if (statement is InsertStatement insert)
             {
@@ -685,6 +689,21 @@ namespace SqlAnalyser.Core
             sb.AppendLine(");");
 
             return sb.ToString();
+        }
+
+        private string GetUnionTypeName(UnionType unionType)
+        {
+            switch (unionType)
+            {
+                case UnionType.UNION_ALL:
+                    return "UNION ALL";
+                //case UnionType.INTERSECT:
+                //case UnionType.MINUS:
+                //case UnionType.EXCEPT:
+                //    return nameof(UnionType.UNION);
+                default:
+                    return unionType.ToString();
+            }
         }
     }
 }

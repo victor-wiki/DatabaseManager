@@ -313,7 +313,7 @@ namespace SqlAnalyser.Core
                 {
                     statements.AddRange(this.ParseDmlStatement(dml));
                 }
-                else if(bc is Ddl_clauseContext ddl)
+                else if (bc is Ddl_clauseContext ddl)
                 {
                     statements.AddRange(this.ParseDdlStatement(ddl));
                 }
@@ -364,7 +364,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (var child in node.children)
                 {
-                    if(child is Truncate_tableContext truncate)
+                    if (child is Truncate_tableContext truncate)
                     {
                         TruncateStatement truncateStatement = new TruncateStatement();
 
@@ -758,12 +758,12 @@ namespace SqlAnalyser.Core
                         }
                         else if (qc is Sql_unionContext union)
                         {
-                            var spec = union.query_specification();
-
-                            if (spec != null && selectStatement != null)
+                            if (selectStatement.UnionStatements == null)
                             {
-                                selectStatement.UnionStatements = new List<SelectStatement>() { this.ParseQuerySpecification(spec) };
+                                selectStatement.UnionStatements = new List<UnionStatement>();
                             }
+
+                            selectStatement.UnionStatements.Add(this.ParseUnionSatement(union));
                         }
                     }
 
@@ -880,6 +880,41 @@ namespace SqlAnalyser.Core
                     statement.TopInfo = new SelectTopInfo();
                     statement.TopInfo.TopCount = int.Parse(top.top_count().GetText());
                     statement.TopInfo.IsPercent = node.select_list().select_list_elem().Any(item => item.children.Any(t => t?.GetText()?.ToUpper() == "PERCENT"));
+                }
+            }
+
+            return statement;
+        }
+
+        public UnionStatement ParseUnionSatement(Sql_unionContext node)
+        {
+            UnionStatement statement = new UnionStatement();
+
+            UnionType unionType = UnionType.UNION;
+
+            foreach (var child in node.children)
+            {
+                if (child is TerminalNodeImpl terminalNode)
+                {
+                    int type = terminalNode.Symbol.Type;
+
+                    switch (type)
+                    {
+                        case TSqlParser.ALL:
+                            unionType = UnionType.UNION_ALL;
+                            break;
+                        case TSqlParser.INTERSECT:
+                            unionType = UnionType.INTERSECT;
+                            break;
+                        case TSqlParser.EXCEPT:
+                            unionType = UnionType.EXCEPT;
+                            break;
+                    }
+                }
+                else if (child is Query_specificationContext spec)
+                {
+                    statement.Type = unionType;
+                    statement.SelectStatement = this.ParseQuerySpecification(spec);
                 }
             }
 
@@ -1128,7 +1163,7 @@ namespace SqlAnalyser.Core
             {
                 if (node is Table_nameContext tn)
                 {
-                    tableName = new TableName(tn);                    
+                    tableName = new TableName(tn);
                 }
                 else if (node is Table_source_itemContext tsi)
                 {
@@ -1218,7 +1253,7 @@ namespace SqlAnalyser.Core
         {
             parsedNode = null;
 
-            if(node is Table_nameContext tn)
+            if (node is Table_nameContext tn)
             {
                 parsedNode = tn;
                 return true;
@@ -1254,20 +1289,20 @@ namespace SqlAnalyser.Core
         {
             parsedNode = null;
 
-            if(node is Func_proc_name_server_database_schemaContext proc && proc.Parent.GetType() == typeof(Execute_bodyContext))
+            if (node is Func_proc_name_server_database_schemaContext proc && proc.Parent.GetType() == typeof(Execute_bodyContext))
             {
                 parsedNode = proc;
                 return true;
             }
             else if (node is Scalar_function_nameContext sfn)
-            {                
+            {
                 IdContext[] ids = sfn.func_proc_name_server_database_schema()?.func_proc_name_database_schema()?.func_proc_name_schema()?.id();
 
                 if (ids != null && ids.Length > 1)
                 {
                     parsedNode = sfn;
                     return true;
-                }                
+                }
             }
 
             return false;
