@@ -1,10 +1,9 @@
-﻿using System.IO;
-using System.Linq;
+﻿using DatabaseInterpreter.Utility;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using DatabaseInterpreter.Utility;
-using DatabaseInterpreter.Model;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace DatabaseInterpreter.Profile
 {
