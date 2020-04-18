@@ -86,6 +86,12 @@ namespace DatabaseConverter.Core
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
 
+            if (schemaInfo != null && !this.Source.DbInterpreter.Option.GetTableAllObjects
+                && (schemaInfo.TableTriggers == null || schemaInfo.TableTriggers.Count == 0))
+            {
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
+            }
+
             SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
 
             SchemaInfoHelper.SetSchemaInfoFilterValues(filter, schemaInfo);

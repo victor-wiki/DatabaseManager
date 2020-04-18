@@ -75,7 +75,7 @@
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.70" />
     <PackageReference Include="PoorMansTSqlFormatterRedux" Version="1.0.3" />
-    <PackageReference Include="TSQL.Parser" Version="1.3.0" />
+    <PackageReference Include="TSQL.Parser" Version="1.5.0" />
   </ItemGroup>
 
   <ItemGroup>
