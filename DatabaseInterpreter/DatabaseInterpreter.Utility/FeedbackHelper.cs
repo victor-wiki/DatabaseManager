@@ -26,7 +26,16 @@ namespace DatabaseInterpreter.Utility
                     prefix += ":";
                 }
 
-                LogHelper.LogInfo($"{prefix}{info.Message}");
+                string logContent = $"{prefix}{info.Message}";
+
+                if((LogHelper.LogType.HasFlag(LogType.Info) && info.InfoType == FeedbackInfoType.Info)                   )
+                {
+                    LogHelper.LogInfo(logContent);
+                }            
+                else if(LogHelper.LogType.HasFlag(LogType.Error) && info.InfoType == FeedbackInfoType.Error)
+                {
+                    LogHelper.LogError(logContent);
+                }
             }
 
             if (EnableDebug)

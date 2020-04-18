@@ -23,7 +23,8 @@ namespace DatabaseManager
 
             TreeView.CheckForIllegalCrossThreadCalls = false;
 
-            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
+            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;           
+            LogHelper.LogType = SettingManager.Setting.LogType;
             FeedbackHelper.EnableDebug = true;
         }
 

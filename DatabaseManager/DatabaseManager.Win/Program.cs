@@ -26,7 +26,7 @@ namespace DatabaseManager
             {
                 string errMsg = ExceptionHelper.GetExceptionDetails(ex);
 
-                LogHelper.LogInfo(errMsg);
+                LogHelper.LogError(errMsg);
 
                 MessageBox.Show(errMsg);
             }

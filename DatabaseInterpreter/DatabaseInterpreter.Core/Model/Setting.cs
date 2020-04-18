@@ -1,4 +1,6 @@
-﻿namespace DatabaseInterpreter.Model
+﻿using DatabaseInterpreter.Utility;
+
+namespace DatabaseInterpreter.Model
 {
     public class Setting
     {
@@ -10,6 +12,7 @@
         public string MySqlCharsetCollation { get; set; } = "utf8mb4_bin";
         public bool EnableLog { get; set; } = true;
         public DbObjectNameMode DbObjectNameMode { get; set; } = DbObjectNameMode.WithQuotation;
+        public LogType LogType { get; set; } = LogType.Info | LogType.Error;
     }
 
     public enum DbObjectNameMode

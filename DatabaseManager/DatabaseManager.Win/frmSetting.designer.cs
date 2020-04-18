@@ -38,6 +38,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.chkNotCreateIfExists = new System.Windows.Forms.CheckBox();
             this.chkShowBuiltinDatabase = new System.Windows.Forms.CheckBox();
             this.chkEnableLog = new System.Windows.Forms.CheckBox();
@@ -46,8 +48,9 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
+            this.lblLogType = new System.Windows.Forms.Label();
+            this.chkLogInfo = new System.Windows.Forms.CheckBox();
+            this.chkLogError = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -165,6 +168,9 @@
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.chkLogError);
+            this.tabGeneral.Controls.Add(this.chkLogInfo);
+            this.tabGeneral.Controls.Add(this.lblLogType);
             this.tabGeneral.Controls.Add(this.cboDbObjectNameMode);
             this.tabGeneral.Controls.Add(this.label4);
             this.tabGeneral.Controls.Add(this.chkNotCreateIfExists);
@@ -181,6 +187,24 @@
             this.tabGeneral.Size = new System.Drawing.Size(421, 228);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
+            // 
+            // cboDbObjectNameMode
+            // 
+            this.cboDbObjectNameMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboDbObjectNameMode.FormattingEnabled = true;
+            this.cboDbObjectNameMode.Location = new System.Drawing.Point(175, 66);
+            this.cboDbObjectNameMode.Name = "cboDbObjectNameMode";
+            this.cboDbObjectNameMode.Size = new System.Drawing.Size(119, 20);
+            this.cboDbObjectNameMode.TabIndex = 19;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(9, 70);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(161, 12);
+            this.label4.TabIndex = 18;
+            this.label4.Text = "Database object name mode:";
             // 
             // chkNotCreateIfExists
             // 
@@ -258,23 +282,38 @@
             this.lblMySqlCharset.TabIndex = 0;
             this.lblMySqlCharset.Text = "Charset:";
             // 
-            // label4
+            // lblLogType
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(9, 70);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(161, 12);
-            this.label4.TabIndex = 18;
-            this.label4.Text = "Database object name mode:";
+            this.lblLogType.AutoSize = true;
+            this.lblLogType.Location = new System.Drawing.Point(11, 170);
+            this.lblLogType.Name = "lblLogType";
+            this.lblLogType.Size = new System.Drawing.Size(59, 12);
+            this.lblLogType.TabIndex = 20;
+            this.lblLogType.Text = "Log type:";
             // 
-            // cboDbObjectNameMode
+            // chkLogInfo
             // 
-            this.cboDbObjectNameMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboDbObjectNameMode.FormattingEnabled = true;
-            this.cboDbObjectNameMode.Location = new System.Drawing.Point(175, 66);
-            this.cboDbObjectNameMode.Name = "cboDbObjectNameMode";
-            this.cboDbObjectNameMode.Size = new System.Drawing.Size(119, 20);
-            this.cboDbObjectNameMode.TabIndex = 19;
+            this.chkLogInfo.AutoSize = true;
+            this.chkLogInfo.Checked = true;
+            this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogInfo.Location = new System.Drawing.Point(83, 170);
+            this.chkLogInfo.Name = "chkLogInfo";
+            this.chkLogInfo.Size = new System.Drawing.Size(84, 16);
+            this.chkLogInfo.TabIndex = 21;
+            this.chkLogInfo.Text = "Infomation";
+            this.chkLogInfo.UseVisualStyleBackColor = true;
+            // 
+            // chkLogError
+            // 
+            this.chkLogError.AutoSize = true;
+            this.chkLogError.Checked = true;
+            this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogError.Location = new System.Drawing.Point(177, 170);
+            this.chkLogError.Name = "chkLogError";
+            this.chkLogError.Size = new System.Drawing.Size(54, 16);
+            this.chkLogError.TabIndex = 22;
+            this.chkLogError.Text = "Error";
+            this.chkLogError.UseVisualStyleBackColor = true;
             // 
             // frmSetting
             // 
@@ -322,5 +361,8 @@
         private System.Windows.Forms.CheckBox chkNotCreateIfExists;
         private System.Windows.Forms.ComboBox cboDbObjectNameMode;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.CheckBox chkLogError;
+        private System.Windows.Forms.CheckBox chkLogInfo;
+        private System.Windows.Forms.Label lblLogType;
     }
 }

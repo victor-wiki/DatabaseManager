@@ -117,7 +117,7 @@ namespace DatabaseManager
 
                 string message = ExceptionHelper.GetExceptionDetails(ex);
 
-                LogHelper.LogInfo(message);
+                LogHelper.LogError(message);
 
                 MessageBox.Show("Error:" + message);
             }
@@ -295,7 +295,7 @@ namespace DatabaseManager
         {
             string errMsg = ExceptionHelper.GetExceptionDetails(ex);
 
-            LogHelper.LogInfo(errMsg);
+            LogHelper.LogError(errMsg);
 
             this.AppendMessage(errMsg, true);
 

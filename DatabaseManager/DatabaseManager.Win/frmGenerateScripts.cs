@@ -119,7 +119,7 @@ namespace DatabaseManager
 
                 string message = ExceptionHelper.GetExceptionDetails(ex);
 
-                LogHelper.LogInfo(message);
+                LogHelper.LogError(message);
 
                 MessageBox.Show("Error:" + message);
             }

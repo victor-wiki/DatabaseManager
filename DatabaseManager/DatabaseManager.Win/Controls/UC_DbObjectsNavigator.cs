@@ -170,7 +170,7 @@ namespace DatabaseManager.Controls
 
                 string message = ExceptionHelper.GetExceptionDetails(ex);
 
-                LogHelper.LogInfo(message);
+                LogHelper.LogError(message);
 
                 MessageBox.Show("Error:" + message);
 
