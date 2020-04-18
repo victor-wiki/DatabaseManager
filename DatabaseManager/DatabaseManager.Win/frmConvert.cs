@@ -379,7 +379,7 @@ namespace DatabaseManager
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (this.dbConverter != null && this.dbConverter.IsBusy)
+            if (!this.hasError && this.dbConverter != null && this.dbConverter.IsBusy)
             {
                 if (this.ConfirmCancel())
                 {

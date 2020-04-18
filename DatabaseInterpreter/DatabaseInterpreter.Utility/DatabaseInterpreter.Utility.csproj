@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>victor-wiki</Authors>
+    <PackageLicenseUrl />
+    <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
+    <Description>Utility for libraries of the DatabaseManager project.</Description>
   </PropertyGroup>
 
   <ItemGroup>
