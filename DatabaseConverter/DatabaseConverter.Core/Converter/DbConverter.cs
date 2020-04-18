@@ -50,6 +50,7 @@ namespace DatabaseConverter.Core
         {
             this.Source = source;
             this.Target = target;
+
             if (option != null)
             {
                 this.Option = option;
@@ -134,6 +135,7 @@ namespace DatabaseConverter.Core
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
             TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipScriptError };
+
             translateEngine.UserDefinedTypes = utypes;
             translateEngine.OnTranslated += this.Translated;
             translateEngine.Translate();
