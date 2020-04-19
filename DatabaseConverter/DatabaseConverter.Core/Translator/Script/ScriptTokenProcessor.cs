@@ -127,7 +127,7 @@ namespace DatabaseConverter.Core
 
                     if (columnName.Name != null)
                     {
-                        columnContent = $"{ this.GetQuotedName(columnName.Name.ToString().Trim('.').Trim(this.TrimChars), token.Type)}";
+                        columnContent = $"{ this.GetQuotedName(columnName.Name.ToString().Trim('.'), token.Type)}";
                         columnName.Name.Symbol = columnContent;
                     }
 

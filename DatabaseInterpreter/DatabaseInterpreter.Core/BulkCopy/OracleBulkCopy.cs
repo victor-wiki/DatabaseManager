@@ -55,9 +55,7 @@ namespace DatabaseInterpreter.Core
 
                 _destinationTableName = value;
             }
-        }
-
-        public string RowNumberColumnName { get; set; }
+        }        
 
         private int _batchSize = 0;
 
@@ -197,24 +195,21 @@ namespace DatabaseInterpreter.Core
 
             foreach (DataColumn c in data.Columns)
             {
-                if (!this.IsRowNumberColumn(c.ColumnName))
-                {
-                    OracleDbType dbType = GetOracleDbTypeFromDotnetType(c.DataType);
+                OracleDbType dbType = GetOracleDbTypeFromDotnetType(c.DataType);
 
-                    // https://stackoverflow.com/a/23735845/2442468
-                    // https://stackoverflow.com/a/17595403/2442468
-                    
-                    var columnData = data.AsEnumerable().Select(r => r.Field<object>(c.ColumnName));
-                    object[] paramDataArray = (UploadEverythingInSingleBatch)
-                        ? columnData.ToArray()
-                        : columnData.Skip(skipOffset).Take(batchSize).ToArray();
+                // https://stackoverflow.com/a/23735845/2442468
+                // https://stackoverflow.com/a/17595403/2442468
 
-                    OracleParameter param = new OracleParameter();
-                    param.OracleDbType = dbType;
-                    param.Value = paramDataArray;
+                var columnData = data.AsEnumerable().Select(r => r.Field<object>(c.ColumnName));
+                object[] paramDataArray = (UploadEverythingInSingleBatch)
+                    ? columnData.ToArray()
+                    : columnData.Skip(skipOffset).Take(batchSize).ToArray();
 
-                    parameters.Add(param);
-                }
+                OracleParameter param = new OracleParameter();
+                param.OracleDbType = dbType;
+                param.Value = paramDataArray;
+
+                parameters.Add(param);
             }
 
             return parameters;
@@ -223,7 +218,7 @@ namespace DatabaseInterpreter.Core
 
         private string GetColumnList(DataTable data)
         {
-            string[] columnNames = data.Columns.Cast<DataColumn>().Where(item => !this.IsRowNumberColumn(item.ColumnName))
+            string[] columnNames = data.Columns.Cast<DataColumn>()
                                    .Select(x => this.GetColumnName(x.ColumnName)).ToArray();
 
             string columnList = string.Join(",", columnNames);
@@ -249,23 +244,15 @@ namespace DatabaseInterpreter.Core
             StringBuilder sb = new StringBuilder();
             for (int i = 1; i <= data.Columns.Count; i++)
             {
-                if (!this.IsRowNumberColumn(data.Columns[i - 1].ColumnName))
-                {
-                    sb.Append(string.Format(":{0}", i));
-                    sb.Append(Delimiter);
-                }
+                sb.Append(string.Format(":{0}", i));
+                sb.Append(Delimiter);
             }
 
             sb.Length -= Delimiter.Length;
 
             string valueList = sb.ToString();
             return valueList;
-        }
-
-        private bool IsRowNumberColumn(string columnName)
-        {
-            return columnName == this.RowNumberColumnName;
-        }
+        }       
 
         public void Dispose()
         {

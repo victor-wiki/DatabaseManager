@@ -22,25 +22,18 @@ namespace DatabaseManager.Controls
             TreeView.CheckForIllegalCrossThreadCalls = false;
         }
 
-        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, bool loadAllObjects = false, DatabaseObjectType excludeObjType = DatabaseObjectType.None)
+        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, DatabaseObjectType excludeObjType = DatabaseObjectType.None)
         {
             this.tvDbObjects.Nodes.Clear();
 
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
             DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
 
-            if (loadAllObjects)
-            {
-                option.GetAllObjectsIfNotSpecified = true;
-            }
-            else
-            {
-                databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;                
+            databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
 
-                if (excludeObjType != DatabaseObjectType.None)
-                {
-                    databaseObjectType = databaseObjectType ^ DatabaseObjectType.UserDefinedType;
-                }
+            if (excludeObjType != DatabaseObjectType.None)
+            {
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.UserDefinedType;
             }
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);

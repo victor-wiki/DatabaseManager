@@ -15,8 +15,7 @@ namespace DatabaseInterpreter.Test
         static DbInterpreterOption option = new DbInterpreterOption()
         {
             ScriptOutputMode = GenerateScriptOutputMode.WriteToString | GenerateScriptOutputMode.WriteToFile,
-            ScriptOutputFolder = "output",
-            GetAllObjectsIfNotSpecified = true,
+            ScriptOutputFolder = "output",           
             TreatBytesAsNullForReading = true,
             TreatBytesAsNullForExecuting = true
         };
@@ -34,9 +33,24 @@ namespace DatabaseInterpreter.Test
 
         static async void RunDemo()
         {
-            await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), new SchemaInfoFilter() { });
-            //await InterpreterDemoRuner.Run(new InterpreterDemo(mySqlInterpreter), new SelectionInfo() { });
-            //await InterpreterDemoRuner.Run(new InterpreterDemo(oracleInterpreter), new SelectionInfo() { });
+            SchemaInfoFilter filter = new SchemaInfoFilter();
+
+            filter.DatabaseObjectType =
+                 DatabaseObjectType.UserDefinedType
+                 | DatabaseObjectType.Function
+                 | DatabaseObjectType.Table
+                 | DatabaseObjectType.View
+                 | DatabaseObjectType.Procedure
+                 | DatabaseObjectType.TableColumn
+                 | DatabaseObjectType.TablePrimaryKey
+                 | DatabaseObjectType.TableForeignKey
+                 | DatabaseObjectType.TableIndex
+                 | DatabaseObjectType.TableConstraint
+                 | DatabaseObjectType.TableTrigger;
+
+            await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), filter);
+            await InterpreterDemoRuner.Run(new InterpreterDemo(mySqlInterpreter), filter);
+            await InterpreterDemoRuner.Run(new InterpreterDemo(oracleInterpreter), filter);
 
             Console.WriteLine("OK");
         }

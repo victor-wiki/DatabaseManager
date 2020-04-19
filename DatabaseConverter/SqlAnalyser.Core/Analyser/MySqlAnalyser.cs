@@ -18,35 +18,24 @@ namespace SqlAnalyser.Core
             this.ruleAnalyser = new MySqlRuleAnalyser();
         }
 
-        public override ViewScript AnalyseView(string content)
+        public override AnalyseResult AnalyseView(string content)
         {
-            ViewScript view = this.ruleAnalyser.AnalyseView(content);
-
-            return view;
+            return this.ruleAnalyser.AnalyseView(content);            
         }
 
-        public override RoutineScript AnalyseProcedure(string content)
+        public override AnalyseResult AnalyseProcedure(string content)
         {
-            RoutineScript procedure = this.ruleAnalyser.AnalyseProcedure(content);
-
-            procedure.Type = RoutineType.PROCEDURE;
-
-            return procedure;
+            return this.ruleAnalyser.AnalyseProcedure(content);           
         }
 
-        public override RoutineScript AnalyseFunction(string content)
+        public override AnalyseResult AnalyseFunction(string content)
         {
-            RoutineScript function = this.ruleAnalyser.AnalyseFunction(content);
-            function.Type = RoutineType.FUNCTION;
-
-            return function;
+            return this.ruleAnalyser.AnalyseFunction(content);          
         }
 
-        public override TriggerScript AnalyseTrigger(string content)
+        public override AnalyseResult AnalyseTrigger(string content)
         {
-            TriggerScript trigger = this.ruleAnalyser.AnalyseTrigger(content);
-
-            return trigger;
+            return this.ruleAnalyser.AnalyseTrigger(content);           
         }
 
         public override string GenerateScripts(CommonScript script)

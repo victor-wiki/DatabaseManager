@@ -21,14 +21,14 @@ namespace SqlAnalyser.Model
 
     public class SelectTopInfo
     {
-        public int TopCount { get; set; }
+        public TokenInfo TopCount { get; set; }
         public bool IsPercent { get; set; }
     }
 
     public class SelectLimitInfo
     {
-        public long StartRowIndex { get; set; }
-        public long RowCount { get; set; }
+        public TokenInfo StartRowIndex { get; set; }
+        public TokenInfo RowCount { get; set; }
     }
 
     public class FromItem

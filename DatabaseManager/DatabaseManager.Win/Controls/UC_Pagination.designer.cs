@@ -47,7 +47,7 @@
             // 
             this.cboPageNum.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.cboPageNum.FormattingEnabled = true;
-            this.cboPageNum.Location = new System.Drawing.Point(104, 4);
+            this.cboPageNum.Location = new System.Drawing.Point(70, 2);
             this.cboPageNum.Name = "cboPageNum";
             this.cboPageNum.Size = new System.Drawing.Size(51, 21);
             this.cboPageNum.TabIndex = 6;
@@ -58,7 +58,7 @@
             // lblPageCount
             // 
             this.lblPageCount.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.lblPageCount.Location = new System.Drawing.Point(172, 8);
+            this.lblPageCount.Location = new System.Drawing.Point(147, 8);
             this.lblPageCount.Name = "lblPageCount";
             this.lblPageCount.Size = new System.Drawing.Size(33, 14);
             this.lblPageCount.TabIndex = 4;
@@ -67,8 +67,10 @@
             // 
             // btnRefresh
             // 
+            this.btnRefresh.FlatAppearance.BorderSize = 0;
+            this.btnRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRefresh.Image = global::DatabaseManager.Properties.Resources.Refresh;
-            this.btnRefresh.Location = new System.Drawing.Point(415, 2);
+            this.btnRefresh.Location = new System.Drawing.Point(379, 2);
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(37, 25);
             this.btnRefresh.TabIndex = 10;
@@ -78,10 +80,12 @@
             // 
             // btnNext
             // 
+            this.btnNext.FlatAppearance.BorderSize = 0;
+            this.btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnNext.Image = global::DatabaseManager.Properties.Resources.Next;
-            this.btnNext.Location = new System.Drawing.Point(205, 3);
+            this.btnNext.Location = new System.Drawing.Point(176, 1);
             this.btnNext.Name = "btnNext";
-            this.btnNext.Size = new System.Drawing.Size(37, 23);
+            this.btnNext.Size = new System.Drawing.Size(27, 23);
             this.btnNext.TabIndex = 3;
             this.toolTip1.SetToolTip(this.btnNext, "Next page");
             this.btnNext.UseVisualStyleBackColor = true;
@@ -89,10 +93,12 @@
             // 
             // btnPrevious
             // 
+            this.btnPrevious.FlatAppearance.BorderSize = 0;
+            this.btnPrevious.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPrevious.Image = global::DatabaseManager.Properties.Resources.Previous;
-            this.btnPrevious.Location = new System.Drawing.Point(55, 3);
+            this.btnPrevious.Location = new System.Drawing.Point(38, 1);
             this.btnPrevious.Name = "btnPrevious";
-            this.btnPrevious.Size = new System.Drawing.Size(40, 23);
+            this.btnPrevious.Size = new System.Drawing.Size(26, 23);
             this.btnPrevious.TabIndex = 2;
             this.toolTip1.SetToolTip(this.btnPrevious, "Previous page");
             this.btnPrevious.UseVisualStyleBackColor = true;
@@ -100,10 +106,12 @@
             // 
             // btnLast
             // 
+            this.btnLast.FlatAppearance.BorderSize = 0;
+            this.btnLast.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLast.Image = global::DatabaseManager.Properties.Resources.Last;
-            this.btnLast.Location = new System.Drawing.Point(248, 3);
+            this.btnLast.Location = new System.Drawing.Point(209, 2);
             this.btnLast.Name = "btnLast";
-            this.btnLast.Size = new System.Drawing.Size(42, 23);
+            this.btnLast.Size = new System.Drawing.Size(29, 23);
             this.btnLast.TabIndex = 1;
             this.toolTip1.SetToolTip(this.btnLast, "Last page");
             this.btnLast.UseVisualStyleBackColor = true;
@@ -111,10 +119,12 @@
             // 
             // btnFirst
             // 
+            this.btnFirst.FlatAppearance.BorderSize = 0;
+            this.btnFirst.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFirst.Image = global::DatabaseManager.Properties.Resources.First;
-            this.btnFirst.Location = new System.Drawing.Point(3, 3);
+            this.btnFirst.Location = new System.Drawing.Point(3, 2);
             this.btnFirst.Name = "btnFirst";
-            this.btnFirst.Size = new System.Drawing.Size(46, 23);
+            this.btnFirst.Size = new System.Drawing.Size(29, 23);
             this.btnFirst.TabIndex = 0;
             this.toolTip1.SetToolTip(this.btnFirst, "First page");
             this.btnFirst.UseVisualStyleBackColor = true;
@@ -123,7 +133,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(298, 8);
+            this.label1.Location = new System.Drawing.Point(257, 7);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(65, 12);
             this.label1.TabIndex = 7;
@@ -132,6 +142,7 @@
             // cboPageSize
             // 
             this.cboPageSize.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPageSize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboPageSize.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.cboPageSize.FormattingEnabled = true;
             this.cboPageSize.Items.AddRange(new object[] {
@@ -144,7 +155,7 @@
             "200",
             "500",
             "1000"});
-            this.cboPageSize.Location = new System.Drawing.Point(364, 4);
+            this.cboPageSize.Location = new System.Drawing.Point(328, 2);
             this.cboPageSize.Name = "cboPageSize";
             this.cboPageSize.Size = new System.Drawing.Size(45, 21);
             this.cboPageSize.TabIndex = 8;
@@ -154,7 +165,7 @@
             // 
             this.lblSepartor.AutoSize = true;
             this.lblSepartor.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.lblSepartor.Location = new System.Drawing.Point(158, 8);
+            this.lblSepartor.Location = new System.Drawing.Point(127, 8);
             this.lblSepartor.Name = "lblSepartor";
             this.lblSepartor.Size = new System.Drawing.Size(14, 13);
             this.lblSepartor.TabIndex = 5;
@@ -163,7 +174,7 @@
             // lblTotalCount
             // 
             this.lblTotalCount.AutoSize = true;
-            this.lblTotalCount.Location = new System.Drawing.Point(460, 8);
+            this.lblTotalCount.Location = new System.Drawing.Point(443, 8);
             this.lblTotalCount.Name = "lblTotalCount";
             this.lblTotalCount.Size = new System.Drawing.Size(47, 12);
             this.lblTotalCount.TabIndex = 13;
@@ -174,6 +185,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.Transparent;
             this.Controls.Add(this.lblTotalCount);
             this.Controls.Add(this.btnRefresh);
             this.Controls.Add(this.cboPageSize);
@@ -186,7 +198,7 @@
             this.Controls.Add(this.btnLast);
             this.Controls.Add(this.btnFirst);
             this.Name = "UC_Pagination";
-            this.Size = new System.Drawing.Size(516, 28);
+            this.Size = new System.Drawing.Size(539, 28);
             this.ResumeLayout(false);
             this.PerformLayout();
 

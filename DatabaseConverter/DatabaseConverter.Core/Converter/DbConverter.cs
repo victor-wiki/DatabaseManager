@@ -235,7 +235,7 @@ namespace DatabaseConverter.Core
                                     continue;
                                 }
 
-                                bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger) || s.ObjectType == nameof(View);
+                                bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger);
 
                                 bool skipError = this.Option.SkipScriptError && isCreateScript;
 

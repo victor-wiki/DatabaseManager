@@ -8,18 +8,25 @@ using System.Linq;
 using SqlAnalyser.Model;
 using System.Text.RegularExpressions;
 using DatabaseInterpreter.Utility;
+using System.Text;
 
 namespace DatabaseConverter.Core
 {
     public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
+        private List<T> scripts;
+        private DatabaseType sourceDbType;
+        private DatabaseType targetDbType;
+
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public string TargetDbOwner { get; set; }
-        private List<T> scripts;
+        
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
+            this.sourceDbType = sourceDbInterpreter.DatabaseType;
+            this.targetDbType = targetDbInterpreter.DatabaseType;
             this.scripts = scripts;
         }
 
@@ -33,67 +40,111 @@ namespace DatabaseConverter.Core
             this.LoadMappings();
 
             SqlAnalyserBase sourceAnalyser = this.GetSqlAnalyser(this.sourceDbInterpreter.DatabaseType);
-            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);
+            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);           
+
+            Action<T, CommonScript> processTokens = (dbObj, script) =>
+            {
+                if (typeof(T) == typeof(Function))
+                {
+                    AnalyseResult result = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
+
+                    if(!result.HasError)
+                    {
+                        RoutineScript routine = result.Script as RoutineScript;
+
+                        if (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql && routine.ReturnTable != null)
+                        {
+                            routine.Type = RoutineType.PROCEDURE;
+                        }
+                    }                   
+                }
+
+                ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
+                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
+                tokenProcessor.TargetDbOwner = this.TargetDbOwner;
+
+                tokenProcessor.Process();
+
+                dbObj.Definition = targetAnalyser.GenerateScripts(script);
+            };
 
             foreach (T dbObj in this.scripts)
             {
                 try
                 {
-                    CommonScript script = sourceAnalyser.Analyse<T>(dbObj.Definition.ToUpper());
+                    Type type = typeof(T);
 
-                    if (script != null)
+                    bool tokenProcessed = false;
+
+                    this.Validate(dbObj);
+
+                    AnalyseResult result = sourceAnalyser.Analyse<T>(dbObj.Definition.ToUpper());
+
+                    CommonScript script = result.Script;
+
+                    if (result.HasError)
                     {
-                        if (script.HasError)
+                        #region Special handle for view
+                        if (typeof(T) == typeof(View))
                         {
-                            if(typeof(T) == typeof(View))
+                            //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
+                            if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
                             {
-                                //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
-                                if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
-                                {
-                                    ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbOwner) { SkipError = this.SkipError };
-                                    viewTranslator.Translate();
-                                }                               
-                            }                            
-                        }
-
-                        if(!script.HasError)
-                        {
-                            if (typeof(T) == typeof(Function))
-                            {
-                                script = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
-
-                                RoutineScript routine = script as RoutineScript;
-
-                                if (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql && routine.ReturnTable != null)
-                                {
-                                    routine.Type = RoutineType.PROCEDURE;
-                                }
+                                ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbOwner) { SkipError = this.SkipError };
+                                viewTranslator.Translate();
                             }
 
-                            ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
-                            tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
-                            tokenProcessor.TargetDbOwner = this.TargetDbOwner;
+                            //Currently, ANTLR can't parse some view correctly, use procedure to parse it temporarily.
+                            if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Oracle)
+                            {
+                                string oldDefinition = dbObj.Definition;
 
-                            tokenProcessor.Process();
+                                int asIndex = oldDefinition.ToUpper().IndexOf(" AS ");
 
-                            dbObj.Definition = targetAnalyser.GenerateScripts(script);
-                        }                       
+                                StringBuilder sbNewDefinition = new StringBuilder();
 
-                        bool formatHasError = false;
+                                sbNewDefinition.AppendLine($"CREATE OR REPLACE PROCEDURE {dbObj.Name} AS");
+                                sbNewDefinition.AppendLine("BEGIN");
+                                sbNewDefinition.AppendLine($"{oldDefinition.Substring(asIndex + 5).TrimEnd(';') + ";"}");
+                                sbNewDefinition.AppendLine($"END {dbObj.Name};");
 
-                        string definition = this.ReplaceVariables(dbObj.Definition);
+                                dbObj.Definition = sbNewDefinition.ToString();
 
-                        dbObj.Definition = definition; // this.FormatSql(definition, out formatHasError);
+                                AnalyseResult procResult = sourceAnalyser.Analyse<Procedure>(dbObj.Definition.ToUpper());
 
-                        if (formatHasError)
-                        {
-                            dbObj.Definition = definition;
+                                if (!procResult.HasError)
+                                {
+                                    processTokens(dbObj, procResult.Script);
+
+                                    tokenProcessed = true;
+
+                                    dbObj.Definition = Regex.Replace(dbObj.Definition, " PROCEDURE ", " VIEW ", RegexOptions.IgnoreCase);
+                                    dbObj.Definition = Regex.Replace(dbObj.Definition, @"(BEGIN[\r][\n])|(END[\r][\n])", "", RegexOptions.IgnoreCase);                                    
+                                }
+                            }
                         }
+                        #endregion
+                    }
 
-                        if (this.OnTranslated != null)
-                        {
-                            this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, dbObj.Definition);
-                        }
+                    if (!result.HasError && !tokenProcessed)
+                    {
+                        processTokens(dbObj, script);
+                    }
+
+                    bool formatHasError = false;
+
+                    string definition = this.ReplaceVariables(dbObj.Definition);
+
+                    dbObj.Definition = definition; // this.FormatSql(definition, out formatHasError);
+
+                    if (formatHasError)
+                    {
+                        dbObj.Definition = definition;
+                    }
+
+                    if (this.OnTranslated != null)
+                    {
+                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, dbObj.Definition);
                     }
                 }
                 catch (Exception ex)
@@ -117,6 +168,30 @@ namespace DatabaseConverter.Core
                         FeedbackInfo info = new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = ExceptionHelper.GetExceptionDetails(ex), Owner = this };
                         FeedbackHelper.Feedback(info);
                     }
+                }
+            }
+        }
+
+        public void Validate(ScriptDbObject script)
+        {
+            if (sourceDbType == DatabaseType.SqlServer && targetDbType != DatabaseType.SqlServer)
+            {
+                //ANTRL can't handle "top 100 percent" correctly.
+                Regex regex = new Regex(@"(TOP[\s]+100[\s]+PERCENT)", RegexOptions.IgnoreCase);
+
+                if (regex.IsMatch(script.Definition))
+                {
+                    script.Definition = regex.Replace(script.Definition, "");
+                }
+            }
+
+            if (script.Owner != this.TargetDbOwner)
+            {
+                Regex ownerRegex = new Regex($@"[{this.sourceDbInterpreter.QuotationLeftChar}]({script.Owner})[{this.sourceDbInterpreter.QuotationRightChar}][\.]", RegexOptions.IgnoreCase);
+
+                if(ownerRegex.IsMatch(script.Definition))
+                {
+                    script.Definition = ownerRegex.Replace(script.Definition, "");
                 }
             }
         }

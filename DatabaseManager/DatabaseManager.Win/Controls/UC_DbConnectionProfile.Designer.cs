@@ -106,6 +106,7 @@
             // cboDbType
             // 
             this.cboDbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboDbType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboDbType.FormattingEnabled = true;
             this.cboDbType.Location = new System.Drawing.Point(62, 2);
             this.cboDbType.Name = "cboDbType";

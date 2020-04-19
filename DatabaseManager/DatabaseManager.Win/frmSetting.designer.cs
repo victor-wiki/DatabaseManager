@@ -38,6 +38,9 @@
             this.label2 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.chkLogError = new System.Windows.Forms.CheckBox();
+            this.chkLogInfo = new System.Windows.Forms.CheckBox();
+            this.lblLogType = new System.Windows.Forms.Label();
             this.cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.chkNotCreateIfExists = new System.Windows.Forms.CheckBox();
@@ -48,9 +51,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
-            this.lblLogType = new System.Windows.Forms.Label();
-            this.chkLogInfo = new System.Windows.Forms.CheckBox();
-            this.chkLogError = new System.Windows.Forms.CheckBox();
+            this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
+            this.label5 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -93,7 +95,7 @@
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(148, 262);
+            this.btnConfirm.Location = new System.Drawing.Point(148, 267);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(75, 23);
             this.btnConfirm.TabIndex = 10;
@@ -105,7 +107,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnCancel.Location = new System.Drawing.Point(252, 262);
+            this.btnCancel.Location = new System.Drawing.Point(252, 267);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 11;
@@ -162,12 +164,14 @@
             this.tabControl1.Location = new System.Drawing.Point(1, 2);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(429, 254);
+            this.tabControl1.Size = new System.Drawing.Size(429, 259);
             this.tabControl1.TabIndex = 15;
             // 
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.cboPreferredDatabase);
+            this.tabGeneral.Controls.Add(this.label5);
             this.tabGeneral.Controls.Add(this.chkLogError);
             this.tabGeneral.Controls.Add(this.chkLogInfo);
             this.tabGeneral.Controls.Add(this.lblLogType);
@@ -184,9 +188,42 @@
             this.tabGeneral.Location = new System.Drawing.Point(4, 22);
             this.tabGeneral.Name = "tabGeneral";
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(3);
-            this.tabGeneral.Size = new System.Drawing.Size(421, 228);
+            this.tabGeneral.Size = new System.Drawing.Size(421, 233);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
+            // 
+            // chkLogError
+            // 
+            this.chkLogError.AutoSize = true;
+            this.chkLogError.Checked = true;
+            this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogError.Location = new System.Drawing.Point(177, 170);
+            this.chkLogError.Name = "chkLogError";
+            this.chkLogError.Size = new System.Drawing.Size(54, 16);
+            this.chkLogError.TabIndex = 22;
+            this.chkLogError.Text = "Error";
+            this.chkLogError.UseVisualStyleBackColor = true;
+            // 
+            // chkLogInfo
+            // 
+            this.chkLogInfo.AutoSize = true;
+            this.chkLogInfo.Checked = true;
+            this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogInfo.Location = new System.Drawing.Point(83, 170);
+            this.chkLogInfo.Name = "chkLogInfo";
+            this.chkLogInfo.Size = new System.Drawing.Size(84, 16);
+            this.chkLogInfo.TabIndex = 21;
+            this.chkLogInfo.Text = "Infomation";
+            this.chkLogInfo.UseVisualStyleBackColor = true;
+            // 
+            // lblLogType
+            // 
+            this.lblLogType.AutoSize = true;
+            this.lblLogType.Location = new System.Drawing.Point(10, 170);
+            this.lblLogType.Name = "lblLogType";
+            this.lblLogType.Size = new System.Drawing.Size(59, 12);
+            this.lblLogType.TabIndex = 20;
+            this.lblLogType.Text = "Log type:";
             // 
             // cboDbObjectNameMode
             // 
@@ -282,45 +319,30 @@
             this.lblMySqlCharset.TabIndex = 0;
             this.lblMySqlCharset.Text = "Charset:";
             // 
-            // lblLogType
+            // cboPreferredDatabase
             // 
-            this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(11, 170);
-            this.lblLogType.Name = "lblLogType";
-            this.lblLogType.Size = new System.Drawing.Size(59, 12);
-            this.lblLogType.TabIndex = 20;
-            this.lblLogType.Text = "Log type:";
+            this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPreferredDatabase.FormattingEnabled = true;
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(132, 196);
+            this.cboPreferredDatabase.Name = "cboPreferredDatabase";
+            this.cboPreferredDatabase.Size = new System.Drawing.Size(109, 20);
+            this.cboPreferredDatabase.TabIndex = 24;
             // 
-            // chkLogInfo
+            // label5
             // 
-            this.chkLogInfo.AutoSize = true;
-            this.chkLogInfo.Checked = true;
-            this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(83, 170);
-            this.chkLogInfo.Name = "chkLogInfo";
-            this.chkLogInfo.Size = new System.Drawing.Size(84, 16);
-            this.chkLogInfo.TabIndex = 21;
-            this.chkLogInfo.Text = "Infomation";
-            this.chkLogInfo.UseVisualStyleBackColor = true;
-            // 
-            // chkLogError
-            // 
-            this.chkLogError.AutoSize = true;
-            this.chkLogError.Checked = true;
-            this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(177, 170);
-            this.chkLogError.Name = "chkLogError";
-            this.chkLogError.Size = new System.Drawing.Size(54, 16);
-            this.chkLogError.TabIndex = 22;
-            this.chkLogError.Text = "Error";
-            this.chkLogError.UseVisualStyleBackColor = true;
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(9, 199);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(119, 12);
+            this.label5.TabIndex = 23;
+            this.label5.Text = "Preferred database:";
             // 
             // frmSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(442, 297);
+            this.ClientSize = new System.Drawing.Size(442, 302);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
@@ -364,5 +386,7 @@
         private System.Windows.Forms.CheckBox chkLogError;
         private System.Windows.Forms.CheckBox chkLogInfo;
         private System.Windows.Forms.Label lblLogType;
+        private System.Windows.Forms.ComboBox cboPreferredDatabase;
+        private System.Windows.Forms.Label label5;
     }
 }

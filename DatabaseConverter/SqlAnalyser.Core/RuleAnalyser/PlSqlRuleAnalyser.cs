@@ -22,30 +22,44 @@ namespace SqlAnalyser.Core
             return new PlSqlParser(tokenStream);
         }
 
-        public Sql_scriptContext GetRootContext(string content)
+        public Sql_scriptContext GetRootContext(string content, out bool hasError)
         {
+            hasError = false;
+
             PlSqlParser parser = this.GetParser(content) as PlSqlParser;
 
+            SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
+
+            parser.AddErrorListener(errorListener);
+
             Sql_scriptContext context = parser.sql_script();
+
+            hasError = errorListener.HasError;
 
             return context;
         }
 
-        public Unit_statementContext GetUnitStatementContext(string content)
+        public Unit_statementContext GetUnitStatementContext(string content, out bool hasError)
         {
-            Sql_scriptContext rootContext = this.GetRootContext(content);
+            hasError = false;
+
+            Sql_scriptContext rootContext = this.GetRootContext(content, out hasError);
 
             return rootContext?.unit_statement()?.FirstOrDefault();
         }
 
-        public override RoutineScript AnalyseProcedure(string content)
+        public override AnalyseResult AnalyseProcedure(string content)
         {
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content);
+            bool hasError = false;
 
-            RoutineScript script = new RoutineScript();
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
 
-            if (unitStatement != null)
+            AnalyseResult result = new AnalyseResult(){ HasError = hasError };           
+
+            if (!hasError && unitStatement != null)
             {
+                RoutineScript script = new RoutineScript() { Type = RoutineType.PROCEDURE };
+
                 Create_procedure_bodyContext proc = unitStatement.create_procedure_body();
 
                 if (proc != null)
@@ -81,21 +95,27 @@ namespace SqlAnalyser.Core
                     this.SetScriptBody(script, proc.body());
                     #endregion
                 }
+
+                this.ExtractFunctions(script, unitStatement);
+
+                result.Script = script;
             }
 
-            this.ExtractFunctions(script, unitStatement);
-
-            return script;
+            return result;
         }
 
-        public override RoutineScript AnalyseFunction(string content)
+        public override AnalyseResult AnalyseFunction(string content)
         {
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content);
+            bool hasError = false;
 
-            RoutineScript script = new RoutineScript();
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
 
-            if (unitStatement != null)
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };          
+
+            if (!hasError && unitStatement != null)
             {
+                RoutineScript script = new RoutineScript() { Type = RoutineType.FUNCTION };
+
                 Create_function_bodyContext func = unitStatement.create_function_body();
 
                 if (func != null)
@@ -124,21 +144,27 @@ namespace SqlAnalyser.Core
                     this.SetScriptBody(script, func.body());
                     #endregion
                 }
+
+                this.ExtractFunctions(script, unitStatement);
+
+                result.Script = script;
             }
 
-            this.ExtractFunctions(script, unitStatement);
-
-            return script;
+            return result;
         }
 
-        public override ViewScript AnalyseView(string content)
+        public override AnalyseResult AnalyseView(string content)
         {
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content);
+            bool hasError = false;
 
-            ViewScript script = new ViewScript();
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
 
-            if (unitStatement != null)
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };           
+
+            if (!hasError && unitStatement != null)
             {
+                ViewScript script = new ViewScript();
+
                 Create_viewContext view = unitStatement.create_view();
 
                 if (view != null)
@@ -169,21 +195,27 @@ namespace SqlAnalyser.Core
 
                     #endregion
                 }
+
+                this.ExtractFunctions(script, unitStatement);
+
+                result.Script = script;
             }
 
-            this.ExtractFunctions(script, unitStatement);
-
-            return script;
+            return result;
         }
 
-        public override TriggerScript AnalyseTrigger(string content)
+        public override AnalyseResult AnalyseTrigger(string content)
         {
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content);
+            bool hasError = false;
 
-            TriggerScript script = new TriggerScript();
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
 
-            if (unitStatement != null)
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };           
+
+            if (!hasError && unitStatement != null)
             {
+                TriggerScript script = new TriggerScript();
+
                 Create_triggerContext trigger = unitStatement.create_trigger();
 
                 if (trigger != null)
@@ -255,11 +287,13 @@ namespace SqlAnalyser.Core
 
                     #endregion
                 }
+
+                this.ExtractFunctions(script, unitStatement);
+
+                result.Script = script;
             }
 
-            this.ExtractFunctions(script, unitStatement);
-
-            return script;
+            return result;
         }
 
         public void SetScriptBody(CommonScript script, BodyContext body)
@@ -623,11 +657,39 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
+            SelectLimitInfo selectLimitInfo = null;
+
             foreach (var child in node.children)
             {
                 if (child is Select_only_statementContext query)
                 {
                     statement = this.ParseSelectOnlyStatement(query);
+                }
+                else if (child is Offset_clauseContext offset)
+                {
+                    if (selectLimitInfo == null)
+                    {
+                        selectLimitInfo = new SelectLimitInfo();
+                    }
+
+                    selectLimitInfo.StartRowIndex = new TokenInfo(offset.expression());
+                }
+                else if (child is Fetch_clauseContext fetch)
+                {
+                    if (selectLimitInfo == null)
+                    {
+                        selectLimitInfo = new SelectLimitInfo();
+                    }
+
+                    selectLimitInfo.RowCount = new TokenInfo(fetch.expression());
+                }
+            }
+
+            if (statement != null)
+            {
+                if (selectLimitInfo != null)
+                {
+                    statement.LimitInfo = selectLimitInfo;
                 }
             }
 
@@ -745,10 +807,21 @@ namespace SqlAnalyser.Core
 
             Query_blockContext block = node.query_block();
 
-            foreach (Select_list_elementsContext col in block.selected_list().select_list_elements())
+            List<ColumnName> columnNames = new List<ColumnName>();
+
+            Selected_listContext selectColumns = block.selected_list();
+
+            foreach (Select_list_elementsContext col in selectColumns.select_list_elements())
             {
-                statement.Columns.Add(this.ParseColumnName(col));
+                columnNames.Add(this.ParseColumnName(col));
             }
+
+            if (columnNames.Count == 0)
+            {
+                columnNames.Add(this.ParseColumnName(selectColumns));
+            }
+
+            statement.Columns = columnNames;
 
             statement.FromItems = this.ParseFormClause(block.from_clause());
 
@@ -759,9 +832,40 @@ namespace SqlAnalyser.Core
                 statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
             }
 
-            var expression = block.where_clause()?.expression();
+            Where_clauseContext where = block.where_clause();
+            Order_by_clauseContext orderby = block.order_by_clause();
+            Group_by_clauseContext groupby = block.group_by_clause();
 
-            statement.Where = this.ParseCondition(expression);
+            if (where != null)
+            {
+                statement.Where = this.ParseCondition(where.expression());
+            }
+
+            if (orderby != null)
+            {
+                Order_by_elementsContext[] orderbyElements = orderby.order_by_elements();
+
+                if (orderbyElements != null && orderbyElements.Length > 0)
+                {
+                    statement.OrderBy = orderbyElements.Select(item => this.ParseToken(item, TokenType.OrderBy)).ToList();
+                }
+            }
+
+            if (groupby != null)
+            {
+                Group_by_elementsContext[] groupbyElements = groupby.group_by_elements();
+                Having_clauseContext having = groupby.having_clause();
+
+                if (groupbyElements != null && groupbyElements.Length > 0)
+                {
+                    statement.GroupBy = groupbyElements.Select(item => this.ParseToken(item, TokenType.GroupBy)).ToList();
+                }
+
+                if (having != null)
+                {
+                    statement.Having = this.ParseCondition(having.condition());
+                }
+            }
 
             return statement;
         }
@@ -810,7 +914,7 @@ namespace SqlAnalyser.Core
             List<FromItem> fromItems = new List<FromItem>();
 
             Table_ref_listContext tableList = node.table_ref_list();
-            Table_refContext[] tables = tableList.table_ref();
+            Table_refContext[] tables = tableList.table_ref();            
 
             foreach (Table_refContext table in tables)
             {

@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -37,6 +38,11 @@ namespace DatabaseManager
             this.cboDbObjectNameMode.Text = setting.DbObjectNameMode.ToString();
             this.chkLogInfo.Checked = setting.LogType.HasFlag(LogType.Info);
             this.chkLogError.Checked = setting.LogType.HasFlag(LogType.Error);
+
+            var dbTypes = Enum.GetNames(typeof(DatabaseType));
+            this.cboPreferredDatabase.Items.AddRange(dbTypes);
+
+            this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
@@ -50,6 +56,11 @@ namespace DatabaseManager
             setting.NotCreateIfExists = this.chkNotCreateIfExists.Checked;
             setting.EnableLog = this.chkEnableLog.Checked;
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
+
+            if(this.cboPreferredDatabase.SelectedIndex>=0)
+            {
+                setting.PreferredDatabase =(DatabaseType) Enum.Parse(typeof(DatabaseType), this.cboPreferredDatabase.Text);
+            }
 
             LogType logType = LogType.None;
 

@@ -448,7 +448,7 @@ namespace DatabaseInterpreter.Core
         {
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
-                await bulkCopy.WriteToServerAsync(dataTable, DataRowState.Added, bulkCopyInfo.CancellationToken);
+                await bulkCopy.WriteToServerAsync(dataTable, bulkCopyInfo.CancellationToken);
             }
         }
 
@@ -458,7 +458,7 @@ namespace DatabaseInterpreter.Core
 
             await this.OpenConnectionAsync(connection);
 
-            bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopy.DestinationTableName);
+            bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
             bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout;
             bulkCopy.BatchSize = bulkCopyInfo.BatchSize.HasValue ? bulkCopyInfo.BatchSize.Value : this.DataBatchSize;
 

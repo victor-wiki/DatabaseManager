@@ -13,6 +13,7 @@ namespace DatabaseInterpreter.Model
         public bool EnableLog { get; set; } = true;
         public DbObjectNameMode DbObjectNameMode { get; set; } = DbObjectNameMode.WithQuotation;
         public LogType LogType { get; set; } = LogType.Info | LogType.Error;
+        public DatabaseType PreferredDatabase { get; set; }
     }
 
     public enum DbObjectNameMode

@@ -108,7 +108,7 @@ namespace DatabaseManager
             {
                 DatabaseObjectType excludeObjType =(this.sourceDatabaseType!= DatabaseType.SqlServer || this.targetDbProfile.DatabaseType != DatabaseType.SqlServer) ? DatabaseObjectType.UserDefinedType : DatabaseObjectType.None;
 
-                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, dbType == this.targetDbProfile.DatabaseType, excludeObjType);
+                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, excludeObjType);
                 this.btnExecute.Enabled = true;
             }
             catch (Exception ex)

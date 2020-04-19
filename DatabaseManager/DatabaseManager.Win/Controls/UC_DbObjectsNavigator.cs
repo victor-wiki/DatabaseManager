@@ -65,8 +65,10 @@ namespace DatabaseManager.Controls
 
             if (this.cboDbType.Items.Count > 0)
             {
-                this.cboDbType.SelectedIndex = 0;
+                this.cboDbType.Text = SettingManager.Setting.PreferredDatabase.ToString();
             }
+
+            this.btnConnect.Focus();
         }
 
         private void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
@@ -96,7 +98,7 @@ namespace DatabaseManager.Controls
             {
                 if (profiles.Count() > 0)
                 {
-                    this.cboAccount.SelectedIndex = 0;
+                    this.cboAccount.SelectedIndex = 0;                    
                 }
             }
             else

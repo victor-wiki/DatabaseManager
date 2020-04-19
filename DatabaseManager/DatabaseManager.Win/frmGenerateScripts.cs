@@ -111,7 +111,7 @@ namespace DatabaseManager
 
             try
             {
-                await this.tvDbObjects.LoadTree(dbType, this.connectionInfo, true);
+                await this.tvDbObjects.LoadTree(dbType, this.connectionInfo);
             }
             catch (Exception ex)
             {

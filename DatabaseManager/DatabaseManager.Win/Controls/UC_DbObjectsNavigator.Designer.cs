@@ -40,7 +40,9 @@
             // 
             this.cboDbType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.cboDbType.BackColor = System.Drawing.Color.White;
             this.cboDbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboDbType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboDbType.FormattingEnabled = true;
             this.cboDbType.Location = new System.Drawing.Point(3, 3);
             this.cboDbType.Name = "cboDbType";
@@ -52,9 +54,12 @@
             // 
             this.cboAccount.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.cboAccount.BackColor = System.Drawing.Color.White;
             this.cboAccount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cboAccount.FormattingEnabled = true;
             this.cboAccount.Location = new System.Drawing.Point(3, 29);
+            this.cboAccount.MaxDropDownItems = 100;
             this.cboAccount.Name = "cboAccount";
             this.cboAccount.Size = new System.Drawing.Size(185, 20);
             this.cboAccount.TabIndex = 40;
@@ -63,6 +68,8 @@
             // 
             this.btnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnConnect.Enabled = false;
+            this.btnConnect.FlatAppearance.BorderSize = 0;
+            this.btnConnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnConnect.Image = global::DatabaseManager.Properties.Resources.DbConnect16;
             this.btnConnect.Location = new System.Drawing.Point(190, 28);
             this.btnConnect.Name = "btnConnect";
@@ -75,6 +82,8 @@
             // btnAddAccount
             // 
             this.btnAddAccount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddAccount.FlatAppearance.BorderSize = 0;
+            this.btnAddAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAddAccount.Image = ((System.Drawing.Image)(resources.GetObject("btnAddAccount.Image")));
             this.btnAddAccount.Location = new System.Drawing.Point(190, 2);
             this.btnAddAccount.Name = "btnAddAccount";

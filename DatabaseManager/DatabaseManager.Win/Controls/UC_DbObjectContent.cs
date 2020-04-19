@@ -25,13 +25,15 @@ namespace DatabaseManager.Controls
 
         public void ShowContent(DatabaseObjectDisplayInfo info)
         {
-            TabPage page = this.FindTabPage(info);
+            this.Visible = true;
+
+            TabPage page = this.FindTabPage(info);           
 
             string title = $" {info.Name}  ";
 
             if (page == null)
             {
-                page = new TabPage(title);
+                page = new TabPage(title) { };               
 
                 this.tabControl1.TabPages.Insert(0, page);
 
@@ -43,9 +45,9 @@ namespace DatabaseManager.Controls
             }
 
             page.Tag = info;
-            page.BackColor = Color.Transparent;
+            page.BackColor = Color.White;
 
-            this.SetTabPageContent(info, page);
+            this.SetTabPageContent(info, page);            
         }
 
         private void SetTabPageContent(DatabaseObjectDisplayInfo info, TabPage tabPage)
@@ -130,7 +132,7 @@ namespace DatabaseManager.Controls
             if (e.Index >= this.tabControl1.TabPages.Count)
             {
                 return;
-            }
+            }           
 
             Bitmap imgClose = Resources.TabClose;
 
@@ -140,7 +142,7 @@ namespace DatabaseManager.Controls
 
             SolidBrush backBrush = new SolidBrush(isSelected ? Color.White : ColorTranslator.FromHtml("#DEE1E6"));
 
-            Rectangle headerRect = tabControl1.GetTabRect(e.Index);
+            Rectangle headerRect = tabControl1.GetTabRect(e.Index);           
 
             e.Graphics.FillRectangle(backBrush, headerRect);
 
@@ -189,6 +191,8 @@ namespace DatabaseManager.Controls
             if (tabPageIndex >= 0)
             {
                 this.tabControl1.TabPages.RemoveAt(tabPageIndex);
+
+                this.SetControlVisible();
             }
         }
 
@@ -227,6 +231,8 @@ namespace DatabaseManager.Controls
                 this.tabControl1.TabPages.RemoveAt(this.tabControl1.SelectedIndex);
                 this.dictCloseButtonRectangle.Remove(this.tabControl1.SelectedIndex);
             }
+
+            this.SetControlVisible();
         }
 
         private void tsmiCloseOthers_Click(object sender, EventArgs e)
@@ -244,12 +250,21 @@ namespace DatabaseManager.Controls
             {
                 this.tabControl1.TabPages.RemoveAt(0);
             }
+
+            this.SetControlVisible();
+        }
+
+        private void SetControlVisible()
+        {
+            this.Visible = this.tabControl1.TabPages.Count > 0;
         }
 
         private void tsmiCloseAll_Click(object sender, EventArgs e)
         {
             this.tabControl1.TabPages.Clear();
             this.dictCloseButtonRectangle.Clear();
+
+            this.SetControlVisible();
         }
 
         private void tsmiSave_Click(object sender, EventArgs e)

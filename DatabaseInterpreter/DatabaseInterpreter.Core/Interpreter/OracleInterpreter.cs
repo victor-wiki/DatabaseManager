@@ -494,8 +494,7 @@ namespace DatabaseInterpreter.Core
             }
 
             using (var bulkCopy = new OracleBulkCopy(conn, bulkCopyInfo.Transaction as OracleTransaction))
-            {
-                bulkCopy.RowNumberColumnName = RowNumberColumnName;
+            {               
                 bulkCopy.BatchSize = dataTable.Rows.Count;
                 bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
                 bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;

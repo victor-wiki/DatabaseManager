@@ -152,7 +152,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 6);
+            this.label1.Location = new System.Drawing.Point(5, 6);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(89, 12);
             this.label1.TabIndex = 24;
@@ -164,7 +164,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.cboDbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboDbType.FormattingEnabled = true;
-            this.cboDbType.Location = new System.Drawing.Point(109, 2);
+            this.cboDbType.Location = new System.Drawing.Point(102, 2);
             this.cboDbType.Name = "cboDbType";
             this.cboDbType.Size = new System.Drawing.Size(91, 20);
             this.cboDbType.TabIndex = 37;
@@ -209,7 +209,7 @@
             // 
             this.panelDbType.Controls.Add(this.label1);
             this.panelDbType.Controls.Add(this.cboDbType);
-            this.panelDbType.Location = new System.Drawing.Point(8, 3);
+            this.panelDbType.Location = new System.Drawing.Point(4, 2);
             this.panelDbType.Name = "panelDbType";
             this.panelDbType.Size = new System.Drawing.Size(362, 24);
             this.panelDbType.TabIndex = 41;

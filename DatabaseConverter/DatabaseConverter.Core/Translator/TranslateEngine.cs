@@ -29,8 +29,6 @@ namespace DatabaseConverter.Core
 
         public void Translate()
         {
-            this.TranslateOwner();
-
             ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
             columnTranslator.Translate();
 
@@ -48,6 +46,8 @@ namespace DatabaseConverter.Core
 
             ScriptTranslator<TableTrigger> triggerTranslator = this.GetScriptTranslator<TableTrigger>(this.targetSchemaInfo.TableTriggers);
             triggerTranslator.Translate();
+
+            this.TranslateOwner();
         }
 
         private ScriptTranslator<T> GetScriptTranslator<T>(List<T> dbObjects) where T : ScriptDbObject

@@ -368,11 +368,11 @@ namespace DatabaseInterpreter.Core
 
             if (filter.Strict)
             {
-                return this.Option.GetAllObjectsIfNotSpecified || (hasName && filter.DatabaseObjectType.HasFlag(currentObjectType));
+                return hasName && filter.DatabaseObjectType.HasFlag(currentObjectType);
             }
             else
             {
-                return hasName || this.Option.GetAllObjectsIfNotSpecified || filter.DatabaseObjectType.HasFlag(currentObjectType);
+                return hasName || filter.DatabaseObjectType.HasFlag(currentObjectType);
             }
         }
         #endregion
@@ -879,7 +879,14 @@ namespace DatabaseInterpreter.Core
 
             string pagedSql = this.GetSqlForPagination(quotedTableName, columnNames, orderColumns, whereClause, pageNumber, pageSize);
 
-            return await this.GetDataTableAsync(connection, pagedSql);
+            DataTable dt = await this.GetDataTableAsync(connection, pagedSql);
+
+            if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
+            {
+                dt.Columns.Remove(RowNumberColumnName);
+            }
+
+            return dt;
         }
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
@@ -891,11 +898,6 @@ namespace DatabaseInterpreter.Core
                 List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { TableNames = new string[] { table.Name } });
 
                 DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, total, pageSize, pageNumber, whereClause);
-
-                if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
-                {
-                    dt.Columns.Remove(RowNumberColumnName);
-                }
 
                 return (total, dt);
             }

@@ -30,6 +30,15 @@ namespace SqlAnalyser.Core
             return parser;
         }
 
+        public SqlSyntaxErrorListener AddParserErrorListener(Parser parser)
+        {
+            SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
+
+            parser.AddErrorListener(errorListener);
+
+            return errorListener;
+        }
+
         public abstract TableName ParseTableName(ParserRuleContext node);
         public abstract ColumnName ParseColumnName(ParserRuleContext node);
         public abstract bool IsFunction(IParseTree node);
@@ -38,42 +47,42 @@ namespace SqlAnalyser.Core
         public abstract bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode);
 
 
-        public virtual CommonScript Analyse<T>(string content)
+        public virtual AnalyseResult Analyse<T>(string content)
             where T : DatabaseObject
         {
-            CommonScript script = null;
+            AnalyseResult result = null;
 
             if (typeof(T) == typeof(Procedure))
             {
-                script = this.AnalyseProcedure(content);
+                result = this.AnalyseProcedure(content);
             }
             else if (typeof(T) == typeof(Function))
             {
-                script = this.AnalyseFunction(content);
+                result = this.AnalyseFunction(content);
             }
             else if (typeof(T) == typeof(View))
             {
-                script = this.AnalyseView(content);
+                result = this.AnalyseView(content);
             }
             else if (typeof(T) == typeof(TableTrigger))
             {
-                script = this.AnalyseTrigger(content);
+                result = this.AnalyseTrigger(content);
             }
             else
             {
                 throw new NotSupportedException($"Not support analyse for type:{typeof(T).Name}");
             }
 
-            return script;
+            return result;
         }
 
-        public abstract RoutineScript AnalyseProcedure(string content);
+        public abstract AnalyseResult AnalyseProcedure(string content);
 
-        public abstract RoutineScript AnalyseFunction(string content);
+        public abstract AnalyseResult AnalyseFunction(string content);
 
-        public abstract TriggerScript AnalyseTrigger(string content);
+        public abstract AnalyseResult AnalyseTrigger(string content);
 
-        public abstract ViewScript AnalyseView(string content);
+        public abstract AnalyseResult AnalyseView(string content);
 
         public virtual void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {

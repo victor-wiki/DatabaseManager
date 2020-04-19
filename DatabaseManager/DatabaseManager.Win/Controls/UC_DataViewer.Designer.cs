@@ -50,7 +50,7 @@
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             this.dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvData.Location = new System.Drawing.Point(3, 3);
+            this.dgvData.Location = new System.Drawing.Point(0, 0);
             this.dgvData.Name = "dgvData";
             this.dgvData.ReadOnly = true;
             this.dgvData.RowHeadersVisible = false;
@@ -63,6 +63,8 @@
             // btnFilter
             // 
             this.btnFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnFilter.FlatAppearance.BorderSize = 0;
+            this.btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFilter.Image = global::DatabaseManager.Properties.Resources.Filter;
             this.btnFilter.Location = new System.Drawing.Point(3, 312);
             this.btnFilter.Name = "btnFilter";
@@ -75,6 +77,7 @@
             // 
             this.pagination.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.pagination.BackColor = System.Drawing.Color.WhiteSmoke;
             this.pagination.Location = new System.Drawing.Point(40, 309);
             this.pagination.Name = "pagination";
             this.pagination.PageCount = ((long)(0));
@@ -89,9 +92,11 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.Controls.Add(this.btnFilter);
             this.Controls.Add(this.pagination);
             this.Controls.Add(this.dgvData);
+            this.Margin = new System.Windows.Forms.Padding(0);
             this.Name = "UC_DataViewer";
             this.Size = new System.Drawing.Size(707, 338);
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).EndInit();

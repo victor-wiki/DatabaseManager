@@ -36,8 +36,7 @@ namespace DatabaseManager
         }
 
         private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)
-        {
-            this.ucContent.Visible = true;
+        {           
             this.ucContent.ShowContent(content);
         }
 
@@ -68,13 +67,7 @@ namespace DatabaseManager
         {
             frmSetting frmSetting = new frmSetting();
             frmSetting.ShowDialog();
-        }
-
-        private void btnGenerateScripts_Click(object sender, EventArgs e)
-        {
-            frmGenerateScripts frmGenerateScripts = new frmGenerateScripts();
-            frmGenerateScripts.ShowDialog();
-        }
+        }       
 
         private void btnConvert_Click(object sender, EventArgs e)
         {
@@ -112,6 +105,18 @@ namespace DatabaseManager
         {
             frmDbConnectionManage frmDbConnectionManage = new frmDbConnectionManage();
             frmDbConnectionManage.ShowDialog();
+        }
+
+        private void tsBtnGenerateScripts_Click(object sender, EventArgs e)
+        {
+            frmGenerateScripts frmGenerateScripts = new frmGenerateScripts();
+            frmGenerateScripts.ShowDialog();
+        }
+
+        private void tsBtnConvert_Click(object sender, EventArgs e)
+        {
+            frmConvert frmConvert = new frmConvert();
+            frmConvert.ShowDialog();
         }
     }
 }
