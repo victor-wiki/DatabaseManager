@@ -39,7 +39,7 @@ namespace SqlAnalyser.Core
 
         public Ddl_clauseContext GetDdlStatementContext(string content, out bool hasError)
         {
-            hasError = false;           
+            hasError = false;
 
             Tsql_fileContext rootContext = this.GetRootContext(content, out hasError);
 
@@ -52,7 +52,7 @@ namespace SqlAnalyser.Core
 
             Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };         
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };
 
             if (!hasError && ddlStatement != null)
             {
@@ -79,7 +79,7 @@ namespace SqlAnalyser.Core
 
                 this.ExtractFunctions(script, ddlStatement);
 
-                result.Script = script; 
+                result.Script = script;
             }
 
 
@@ -100,7 +100,7 @@ namespace SqlAnalyser.Core
 
             Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };           
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };
 
             if (!hasError && ddlStatement != null)
             {
@@ -124,7 +124,7 @@ namespace SqlAnalyser.Core
                 this.ExtractFunctions(script, ddlStatement);
 
                 result.Script = script;
-            }           
+            }
 
             return result;
         }
@@ -199,7 +199,7 @@ namespace SqlAnalyser.Core
 
             Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };            
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };
 
             if (!hasError && ddlStatement != null)
             {
@@ -240,7 +240,7 @@ namespace SqlAnalyser.Core
 
             Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
 
-            AnalyseResult result = new AnalyseResult(){ HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { HasError = hasError };
             TriggerScript script = new TriggerScript();
 
             if (!hasError && ddlStatement != null)
@@ -563,21 +563,52 @@ namespace SqlAnalyser.Core
         {
             IfStatement statement = new IfStatement();
 
-            IfStatementItem item = new IfStatementItem();
+            IfStatementItem ifItem = new IfStatementItem() { Type = IfStatementType.IF };
+            IfStatementItem elseItem = null;
+
+            bool isElse = false;
 
             foreach (var child in node.children)
             {
+                if (child is TerminalNodeImpl terminalNode)
+                {
+                    int type = terminalNode.Symbol.Type;
+
+                    if (type == TSqlParser.ELSE)
+                    {
+                        isElse = true;
+                    }
+                }
                 if (child is Search_conditionContext condition)
                 {
-                    item.Condition = this.ParseCondition(condition);
+                    ifItem.Condition = this.ParseCondition(condition);
                 }
                 else if (child is Sql_clauseContext clause)
                 {
-                    item.Statements.AddRange(this.ParseSqlClause(clause));
+                    List<Statement> statements = this.ParseSqlClause(clause);
+
+                    if (!isElse)
+                    {
+                        ifItem.Statements.AddRange(statements);
+                    }
+                    else
+                    {
+                        if (elseItem == null)
+                        {
+                            elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
+
+                            elseItem.Statements.AddRange(statements);
+                        }
+                    }
                 }
             }
 
-            statement.Items.Add(item);
+            statement.Items.Add(ifItem);
+
+            if (elseItem != null)
+            {
+                statement.Items.Add(elseItem);
+            }
 
             return statement;
         }
@@ -776,26 +807,26 @@ namespace SqlAnalyser.Core
                     bool isLimit = false;
                     int limitKeyword = 0;
 
-                    foreach(var oc in order.children)
+                    foreach (var oc in order.children)
                     {
-                        if(oc is Order_by_expressionContext orderByExp)
+                        if (oc is Order_by_expressionContext orderByExp)
                         {
                             orderbyList.Add(this.ParseToken(orderByExp, TokenType.OrderBy));
                         }
-                        else if(oc is TerminalNodeImpl terminalNode)
+                        else if (oc is TerminalNodeImpl terminalNode)
                         {
-                            if((limitKeyword = terminalNode.Symbol.Type) == TSqlParser.OFFSET)
+                            if ((limitKeyword = terminalNode.Symbol.Type) == TSqlParser.OFFSET)
                             {
                                 isLimit = true;
                             }
                         }
-                        else if(oc is ExpressionContext exp)
-                        {                           
-                            if(isLimit)
+                        else if (oc is ExpressionContext exp)
+                        {
+                            if (isLimit)
                             {
-                                if(selectLimitInfo==null)
+                                if (selectLimitInfo == null)
                                 {
-                                    selectLimitInfo = new SelectLimitInfo();                                   
+                                    selectLimitInfo = new SelectLimitInfo();
                                 }
 
                                 if (limitKeyword == TSqlParser.OFFSET)
@@ -808,7 +839,7 @@ namespace SqlAnalyser.Core
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 else if (child is Option_clauseContext opt)
                 {
@@ -824,7 +855,7 @@ namespace SqlAnalyser.Core
                         selectStatement.OrderBy = orderbyList;
                     }
 
-                    if(selectLimitInfo!=null)
+                    if (selectLimitInfo != null)
                     {
                         selectStatement.LimitInfo = selectLimitInfo;
                     }

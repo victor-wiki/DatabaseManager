@@ -99,7 +99,7 @@ namespace DatabaseConverter.Core
                             {
                                 string oldDefinition = dbObj.Definition;
 
-                                int asIndex = oldDefinition.ToUpper().IndexOf(" AS ");
+                                int asIndex = oldDefinition.IndexOf(" AS ", StringComparison.OrdinalIgnoreCase);
 
                                 StringBuilder sbNewDefinition = new StringBuilder();
 
