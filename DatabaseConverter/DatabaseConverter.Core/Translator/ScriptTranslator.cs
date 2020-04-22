@@ -1,14 +1,13 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using SqlAnalyser.Core;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using SqlAnalyser.Core;
-using System.Linq;
-using SqlAnalyser.Model;
-using System.Text.RegularExpressions;
-using DatabaseInterpreter.Utility;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace DatabaseConverter.Core
 {
@@ -21,7 +20,7 @@ namespace DatabaseConverter.Core
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public string TargetDbOwner { get; set; }
-        
+
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
@@ -37,10 +36,15 @@ namespace DatabaseConverter.Core
                 return;
             }
 
+            if (this.hasError)
+            {
+                return;
+            }
+
             this.LoadMappings();
 
             SqlAnalyserBase sourceAnalyser = this.GetSqlAnalyser(this.sourceDbInterpreter.DatabaseType);
-            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);           
+            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);
 
             Action<T, CommonScript> processTokens = (dbObj, script) =>
             {
@@ -48,7 +52,7 @@ namespace DatabaseConverter.Core
                 {
                     AnalyseResult result = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
 
-                    if(!result.HasError)
+                    if (!result.HasError)
                     {
                         RoutineScript routine = result.Script as RoutineScript;
 
@@ -56,7 +60,7 @@ namespace DatabaseConverter.Core
                         {
                             routine.Type = RoutineType.PROCEDURE;
                         }
-                    }                   
+                    }
                 }
 
                 ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
@@ -70,15 +74,24 @@ namespace DatabaseConverter.Core
 
             foreach (T dbObj in this.scripts)
             {
+                if(this.hasError)
+                {
+                    break;
+                }
+
                 try
                 {
                     Type type = typeof(T);
+
+                    this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\".");
 
                     bool tokenProcessed = false;
 
                     this.Validate(dbObj);
 
-                    AnalyseResult result = sourceAnalyser.Analyse<T>(dbObj.Definition.ToUpper());
+                    string originalDefinition = dbObj.Definition;
+
+                    AnalyseResult result = sourceAnalyser.Analyse<T>(originalDefinition.ToUpper());
 
                     CommonScript script = result.Script;
 
@@ -119,7 +132,7 @@ namespace DatabaseConverter.Core
                                     tokenProcessed = true;
 
                                     dbObj.Definition = Regex.Replace(dbObj.Definition, " PROCEDURE ", " VIEW ", RegexOptions.IgnoreCase);
-                                    dbObj.Definition = Regex.Replace(dbObj.Definition, @"(BEGIN[\r][\n])|(END[\r][\n])", "", RegexOptions.IgnoreCase);                                    
+                                    dbObj.Definition = Regex.Replace(dbObj.Definition, @"(BEGIN[\r][\n])|(END[\r][\n])", "", RegexOptions.IgnoreCase);
                                 }
                             }
                         }
@@ -144,7 +157,19 @@ namespace DatabaseConverter.Core
 
                     if (this.OnTranslated != null)
                     {
-                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, dbObj.Definition);
+                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, new TranslateResult() { Error = result.Error, Data = dbObj.Definition });
+                    }
+
+                    this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: { (result.HasError ? "Error" : "OK") }.");
+
+                    if (result.HasError)
+                    {
+                        this.FeedbackError(this.ParseSqlSyntaxError(result.Error, originalDefinition).ToString(), this.SkipError);
+
+                        if(!this.SkipError)
+                        {
+                            this.hasError = true;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -161,12 +186,12 @@ namespace DatabaseConverter.Core
 
                     if (!this.SkipError)
                     {
+                        this.hasError = true;
                         throw sce;
                     }
                     else
                     {
-                        FeedbackInfo info = new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = ExceptionHelper.GetExceptionDetails(ex), Owner = this };
-                        FeedbackHelper.Feedback(info);
+                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.SkipError);
                     }
                 }
             }
@@ -189,11 +214,21 @@ namespace DatabaseConverter.Core
             {
                 Regex ownerRegex = new Regex($@"[{this.sourceDbInterpreter.QuotationLeftChar}]({script.Owner})[{this.sourceDbInterpreter.QuotationRightChar}][\.]", RegexOptions.IgnoreCase);
 
-                if(ownerRegex.IsMatch(script.Definition))
+                if (ownerRegex.IsMatch(script.Definition))
                 {
                     script.Definition = ownerRegex.Replace(script.Definition, "");
                 }
             }
+        }
+
+        private SqlSyntaxError ParseSqlSyntaxError(SqlSyntaxError error, string definition)
+        {
+            foreach (SqlSyntaxErrorItem item in error.Items)
+            {
+                item.Text = definition.Substring(item.StartIndex, item.StopIndex - item.StartIndex + 1);
+            }
+
+            return error;
         }
 
         public SqlAnalyserBase GetSqlAnalyser(DatabaseType dbType)

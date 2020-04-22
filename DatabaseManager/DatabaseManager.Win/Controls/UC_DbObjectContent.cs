@@ -27,13 +27,13 @@ namespace DatabaseManager.Controls
         {
             this.Visible = true;
 
-            TabPage page = this.FindTabPage(info);           
+            TabPage page = this.FindTabPage(info);
 
             string title = $" {info.Name}  ";
 
             if (page == null)
             {
-                page = new TabPage(title) { };               
+                page = new TabPage(title) { };
 
                 this.tabControl1.TabPages.Insert(0, page);
 
@@ -47,7 +47,7 @@ namespace DatabaseManager.Controls
             page.Tag = info;
             page.BackColor = Color.White;
 
-            this.SetTabPageContent(info, page);            
+            this.SetTabPageContent(info, page);
         }
 
         private void SetTabPageContent(DatabaseObjectDisplayInfo info, TabPage tabPage)
@@ -59,18 +59,23 @@ namespace DatabaseManager.Controls
                 if (ucRichTextBox == null)
                 {
                     ucRichTextBox = this.AddControlToTabPage<UC_RichTextBox>(tabPage);
-                }               
+                }
 
                 ucRichTextBox.Show(info);
 
                 if (!string.IsNullOrEmpty(ucRichTextBox.TextBox.Text))
                 {
                     RichTextBoxHelper.Highlighting(ucRichTextBox.TextBox, info.DatabaseType);
+
+                    if (info.Error != null)
+                    {
+                        RichTextBoxHelper.HighlightingError(ucRichTextBox.TextBox, info.Error);
+                    }
                 }
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.Data)
             {
-                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);               
+                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);
 
                 if (dataViewer == null)
                 {
@@ -97,7 +102,7 @@ namespace DatabaseManager.Controls
             tabPage.Controls.Add(control);
 
             return control;
-        }       
+        }
 
         private T GetUcControl<T>(TabPage tabPage) where T : UserControl
         {
@@ -132,7 +137,7 @@ namespace DatabaseManager.Controls
             if (e.Index >= this.tabControl1.TabPages.Count)
             {
                 return;
-            }           
+            }
 
             Bitmap imgClose = Resources.TabClose;
 
@@ -142,7 +147,7 @@ namespace DatabaseManager.Controls
 
             SolidBrush backBrush = new SolidBrush(isSelected ? Color.White : ColorTranslator.FromHtml("#DEE1E6"));
 
-            Rectangle headerRect = tabControl1.GetTabRect(e.Index);           
+            Rectangle headerRect = tabControl1.GetTabRect(e.Index);
 
             e.Graphics.FillRectangle(backBrush, headerRect);
 

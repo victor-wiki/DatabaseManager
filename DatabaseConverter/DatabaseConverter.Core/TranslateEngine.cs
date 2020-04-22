@@ -1,9 +1,9 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
 
 namespace DatabaseConverter.Core
 {
@@ -13,6 +13,7 @@ namespace DatabaseConverter.Core
         private DbInterpreter sourceInterpreter;
         private DbInterpreter targetInerpreter;
         private string targetDbOwner;
+        private IObserver<FeedbackInfo> observer;
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
         public TranslateHandler OnTranslated;
@@ -30,9 +31,11 @@ namespace DatabaseConverter.Core
         public void Translate()
         {
             ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
+            columnTranslator.Subscribe(this.observer);
             columnTranslator.Translate();
 
             ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { SkipError = this.SkipError };
+            constraintTranslator.Subscribe(this.observer);
             constraintTranslator.Translate();            
 
             ScriptTranslator<View> viewTranslator = this.GetScriptTranslator<View>(this.targetSchemaInfo.Views);
@@ -56,11 +59,12 @@ namespace DatabaseConverter.Core
             translator.UserDefinedTypes = this.UserDefinedTypes;
             translator.TargetDbOwner = this.targetDbOwner;
             translator.OnTranslated += this.ScriptTranslated;
+            translator.Subscribe(this.observer);
 
             return translator;
         }
 
-        private void ScriptTranslated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        private void ScriptTranslated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
         {
             if (this.OnTranslated != null)
             {
@@ -90,5 +94,10 @@ namespace DatabaseConverter.Core
         {
             dbObjects.ForEach(item => item.Owner = this.targetDbOwner);
         }
+
+        public void Subscribe(IObserver<FeedbackInfo> observer)
+        {
+            this.observer = observer;           
+        }       
     }
 }

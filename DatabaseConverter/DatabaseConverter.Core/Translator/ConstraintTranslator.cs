@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -20,6 +21,13 @@ namespace DatabaseConverter.Core
             {
                 return;
             }
+
+            if (this.hasError)
+            {
+                return;
+            }
+
+            this.FeedbackInfo("Begin to translate constraints.");
 
             this.LoadMappings();
 
@@ -58,16 +66,16 @@ namespace DatabaseConverter.Core
                         string likeFunctionName = "REGEXP_LIKE";
                         Regex likeFunctionNameExp = new Regex($"({likeFunctionName})", RegexOptions.IgnoreCase);
 
-                        if (constraint.Definition.ToUpper().Contains(likeFunctionName))
+                        if (constraint.Definition.IndexOf(likeFunctionName, StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            string likeRegex= $@"({likeFunctionName})[\s]?[(][\w\[\]""` ]+[,][\s]?(['][\[].+[\]]['])[)]"; //example: REGEXP_LIKE("SHELF",'[A-Za-z]')
+                            string likeRegex = $@"({likeFunctionName})[\s]?[(][\w\[\]""` ]+[,][\s]?(['][\[].+[\]]['])[)]"; //example: REGEXP_LIKE("SHELF",'[A-Za-z]')
 
                             MatchCollection matches = Regex.Matches(constraint.Definition, likeRegex, RegexOptions.IgnoreCase);
 
                             if (matches.Count > 0)
                             {
                                 foreach (Match m in matches)
-                                {   
+                                {
                                     string[] items = likeFunctionNameExp.Replace(m.Value, "").Trim('(', ')').Split(',');
 
                                     string newValue = $"{items[0]} like {items[1]}";
@@ -81,6 +89,8 @@ namespace DatabaseConverter.Core
             }
 
             this.constraints.RemoveAll(item => invalidConstraints.Contains(item));
+
+            this.FeedbackInfo("End translate constraints.");
         }
     }
 }

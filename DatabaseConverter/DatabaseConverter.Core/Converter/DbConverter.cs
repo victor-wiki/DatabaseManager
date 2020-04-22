@@ -1,4 +1,5 @@
-﻿using DatabaseConverter.Profile;
+﻿using DatabaseConverter.Model;
+using DatabaseConverter.Profile;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 namespace DatabaseConverter.Core
 {
     public delegate void FeedbackHandler(FeedbackInfo info);
-    public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, object result);
+    public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result);
 
     public class DbConverter : IDisposable
     {
@@ -134,11 +135,25 @@ namespace DatabaseConverter.Core
 
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
-            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner) { SkipError = this.Option.SkipScriptError };
+            #region Translate
+            TranslateEngine translateEngine = new TranslateEngine(targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Target.DbOwner);
+
+            translateEngine.SkipError = this.Option.SkipScriptError || this.Option.OnlyForTranslate;
 
             translateEngine.UserDefinedTypes = utypes;
             translateEngine.OnTranslated += this.Translated;
+            translateEngine.Subscribe(this.observer);
             translateEngine.Translate();
+
+            if (this.Option.OnlyForTranslate)
+            {
+                if (targetSchemaInfo.Tables.Count == 0 && targetSchemaInfo.UserDefinedTypes.Count == 0)
+                {
+                    return;
+                }
+            }
+
+            #endregion
 
             if (targetSchemaInfo.Tables.Any())
             {
@@ -174,7 +189,7 @@ namespace DatabaseConverter.Core
 
                 if (targetSchemaInfo.Tables.Any())
                 {
-                    this.Translated(targetInterpreter.DatabaseType, targetSchemaInfo.Tables.First(), scriptBuilder.ToString());
+                    this.Translated(targetInterpreter.DatabaseType, targetSchemaInfo.Tables.First(), new TranslateResult() { Data = scriptBuilder.ToString() });
                 }
             }
 
@@ -541,7 +556,7 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private void Translated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        private void Translated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
         {
             if (this.OnTranslated != null)
             {

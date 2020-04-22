@@ -10,6 +10,20 @@ namespace DatabaseConverter.Core
     {
         public static string FunctionMappingFilePath { get { return Path.Combine(ConfigRootFolder, "VariableMapping.xml"); } }
 
+        private static List<IEnumerable<VariableMapping>> _variableMappings;
+        public static List<IEnumerable<VariableMapping>> VariableMappings
+        {
+            get
+            {
+                if (_variableMappings == null)
+                {
+                    _variableMappings = GetVariableMappings();
+                }
+
+                return _variableMappings;
+            }
+        }
+
         public static List<IEnumerable<VariableMapping>> GetVariableMappings()
         {
             XDocument doc = XDocument.Load(FunctionMappingFilePath);

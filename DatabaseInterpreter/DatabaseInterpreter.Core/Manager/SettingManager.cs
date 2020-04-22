@@ -32,7 +32,10 @@ namespace  DatabaseInterpreter.Core
 
         public static void LoadConfig()
         {
-            Setting = (Setting)JsonConvert.DeserializeObject(File.ReadAllText(ConfigFilePath), typeof(Setting));
+            if(File.Exists(ConfigFilePath))
+            {
+                Setting = (Setting)JsonConvert.DeserializeObject(File.ReadAllText(ConfigFilePath), typeof(Setting));
+            }            
         }
 
         public static void SaveConfig(Setting setting)

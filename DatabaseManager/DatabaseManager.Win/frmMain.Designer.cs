@@ -36,21 +36,19 @@
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
-            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
-            this.statusStrip = new System.Windows.Forms.StatusStrip();
-            this.tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
+            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
+            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
+            this.txtMessage = new System.Windows.Forms.TextBox();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.panelContent.SuspendLayout();
-            this.statusStrip.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -81,7 +79,7 @@
             // 
             this.tsmiSetting.Image = global::DatabaseManager.Properties.Resources.Config;
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(141, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -89,7 +87,7 @@
             // 
             this.tsmiDbConnection.Image = global::DatabaseManager.Properties.Resources.DbConnect16;
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(141, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -109,18 +107,10 @@
             // 
             this.splitContainer1.Panel2.BackColor = System.Drawing.Color.White;
             this.splitContainer1.Panel2.Controls.Add(this.panelContent);
-            this.splitContainer1.Size = new System.Drawing.Size(786, 372);
+            this.splitContainer1.Size = new System.Drawing.Size(786, 374);
             this.splitContainer1.SplitterDistance = 150;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 8;
-            // 
-            // navigator
-            // 
-            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.navigator.Location = new System.Drawing.Point(0, 0);
-            this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(150, 372);
-            this.navigator.TabIndex = 0;
             // 
             // panelContent
             // 
@@ -128,38 +118,8 @@
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Location = new System.Drawing.Point(0, 0);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(633, 372);
+            this.panelContent.Size = new System.Drawing.Size(633, 374);
             this.panelContent.TabIndex = 0;
-            // 
-            // ucContent
-            // 
-            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
-            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucContent.Location = new System.Drawing.Point(0, 0);
-            this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(633, 372);
-            this.ucContent.TabIndex = 0;
-            this.ucContent.Visible = false;
-            // 
-            // statusStrip
-            // 
-            this.statusStrip.AutoSize = false;
-            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsslMessage});
-            this.statusStrip.Location = new System.Drawing.Point(0, 449);
-            this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(786, 18);
-            this.statusStrip.TabIndex = 9;
-            this.statusStrip.Text = "statusStrip1";
-            // 
-            // tsslMessage
-            // 
-            this.tsslMessage.AutoSize = false;
-            this.tsslMessage.AutoToolTip = true;
-            this.tsslMessage.Margin = new System.Windows.Forms.Padding(0);
-            this.tsslMessage.Name = "tsslMessage";
-            this.tsslMessage.Size = new System.Drawing.Size(500, 18);
-            this.tsslMessage.TextAlign = System.Drawing.ContentAlignment.TopLeft;
             // 
             // toolStrip1
             // 
@@ -199,14 +159,43 @@
             this.tsBtnConvert.ToolTipText = "Convert Database";
             this.tsBtnConvert.Click += new System.EventHandler(this.tsBtnConvert_Click);
             // 
+            // navigator
+            // 
+            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.navigator.Location = new System.Drawing.Point(0, 0);
+            this.navigator.Name = "navigator";
+            this.navigator.Size = new System.Drawing.Size(150, 374);
+            this.navigator.TabIndex = 0;
+            // 
+            // ucContent
+            // 
+            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
+            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucContent.Location = new System.Drawing.Point(0, 0);
+            this.ucContent.Name = "ucContent";
+            this.ucContent.Size = new System.Drawing.Size(633, 374);
+            this.ucContent.TabIndex = 0;
+            this.ucContent.Visible = false;
+            // 
+            // txtMessage
+            // 
+            this.txtMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.txtMessage.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.txtMessage.ForeColor = System.Drawing.Color.Black;
+            this.txtMessage.Location = new System.Drawing.Point(0, 453);
+            this.txtMessage.Name = "txtMessage";
+            this.txtMessage.ReadOnly = true;
+            this.txtMessage.Size = new System.Drawing.Size(786, 14);
+            this.txtMessage.TabIndex = 11;
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(786, 467);
+            this.Controls.Add(this.txtMessage);
             this.Controls.Add(this.toolStrip1);
-            this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -224,8 +213,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.panelContent.ResumeLayout(false);
-            this.statusStrip.ResumeLayout(false);
-            this.statusStrip.PerformLayout();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -243,12 +230,11 @@
         private Controls.UC_DbObjectsNavigator navigator;
         private System.Windows.Forms.Panel panelContent;
         private Controls.UC_DbObjectContent ucContent;
-        private System.Windows.Forms.StatusStrip statusStrip;
-        private System.Windows.Forms.ToolStripStatusLabel tsslMessage;
         private System.Windows.Forms.ToolStripMenuItem tsmiDbConnection;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton tsBtnGenerateScripts;
         private System.Windows.Forms.ToolStripButton tsBtnConvert;
+        private System.Windows.Forms.TextBox txtMessage;
     }
 }
 

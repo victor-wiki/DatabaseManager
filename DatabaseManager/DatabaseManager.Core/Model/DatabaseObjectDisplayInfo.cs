@@ -10,6 +10,7 @@ namespace DatabaseManager.Model
         public DatabaseType DatabaseType { get; set; }
         public string Content { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
+        public object Error { get; set; }
     }
 
     public enum DatabaseObjectDisplayType

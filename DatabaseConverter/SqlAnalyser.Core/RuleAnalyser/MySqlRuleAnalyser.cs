@@ -22,9 +22,9 @@ namespace SqlAnalyser.Core
             return new MySqlParser(tokenStream);
         }
 
-        public RootContext GetRootContext(string content, out bool hasError)
+        public RootContext GetRootContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
             MySqlParser parser = this.GetParser(content) as MySqlParser;
 
@@ -32,27 +32,29 @@ namespace SqlAnalyser.Core
 
             RootContext context = parser.root();
 
+            error = errorListener.Error;
+
             return context;
         }
 
-        public DdlStatementContext GetDdlStatementContext(string content, out bool hasError)
+        public DdlStatementContext GetDdlStatementContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
-            RootContext rootContext = this.GetRootContext(content, out hasError);
+            RootContext rootContext = this.GetRootContext(content, out error);
 
             return rootContext?.sqlStatements()?.sqlStatement()?.Select(item => item?.ddlStatement()).FirstOrDefault();
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.PROCEDURE };
 
@@ -190,13 +192,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseFunction(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError};
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.FUNCTION };
 
@@ -242,20 +244,20 @@ namespace SqlAnalyser.Core
                 this.ExtractFunctions(script, ddlStatement);
 
                 result.Script = script;
-            }          
+            }
 
             return result;
         }
 
         public override AnalyseResult AnalyseView(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 ViewScript script = new ViewScript();
 
@@ -283,24 +285,24 @@ namespace SqlAnalyser.Core
                 this.ExtractFunctions(script, ddlStatement);
 
                 result.Script = script;
-            }           
+            }
 
             return result;
         }
 
         public override AnalyseResult AnalyseTrigger(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            DdlStatementContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 TriggerScript script = new TriggerScript();
 
-                CreateTriggerContext trigger = ddlStatement.createTrigger();                
+                CreateTriggerContext trigger = ddlStatement.createTrigger();
 
                 if (trigger != null)
                 {
@@ -360,7 +362,7 @@ namespace SqlAnalyser.Core
                 this.ExtractFunctions(script, ddlStatement);
 
                 result.Script = script;
-            }           
+            }
 
             return result;
         }
@@ -506,6 +508,10 @@ namespace SqlAnalyser.Core
                 else if (child is CallStatementContext call)
                 {
                     statements.Add(this.ParseCallStatement(call));
+                }
+                else if (child is UnionSelectContext union)
+                {
+                    statements.Add(this.ParseUnionSelect(union));
                 }
             }
 
@@ -669,19 +675,38 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is UnionSelectContext union)
                 {
-                    var spec = union.querySpecification();
-                    var specNointo = union.querySpecificationNointo();
+                    statement = this.ParseUnionSelect(union);
+                }
+            }
 
-                    if (spec != null)
-                    {
-                        statement = this.ParseQuerySpecification(spec);
-                    }
-                    else if (specNointo != null)
-                    {
-                        statement = this.ParseQuerySpecification(specNointo);
-                    }
+            return statement;
+        }
 
-                    statement.UnionStatements.AddRange(union.unionStatement().Select(item => this.ParseUnionSatement(item)));
+        public SelectStatement ParseUnionSelect(UnionSelectContext node)
+        {
+            SelectStatement statement = null;
+
+            var spec = node.querySpecification();
+            var specNointo = node.querySpecificationNointo();
+
+            if (spec != null)
+            {
+                statement = this.ParseQuerySpecification(spec);
+            }
+            else if (specNointo != null)
+            {
+                statement = this.ParseQuerySpecification(specNointo);
+            }
+
+            if (statement != null)
+            {
+                UnionStatementContext []unionStatements = node.unionStatement();
+
+                if (unionStatements != null)
+                {
+                    statement.UnionStatements = new List<UnionStatement>();
+
+                    statement.UnionStatements.AddRange(unionStatements.Select(item => this.ParseUnionSatement(item)));
                 }
             }
 

@@ -9,6 +9,7 @@ namespace DatabaseInterpreter.Utility
         public object Owner { get; set; }
         public FeedbackInfoType InfoType { get; set; }
         public string Message { get; set; }
+        public bool IgnoreError { get; set; }
     }
 
     public enum FeedbackInfoType

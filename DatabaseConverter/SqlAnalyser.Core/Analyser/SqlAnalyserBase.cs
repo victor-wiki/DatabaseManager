@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 namespace SqlAnalyser.Core
 {
     public abstract class SqlAnalyserBase
-    {      
+    {
         public abstract DatabaseType DatabaseType { get; }
         public abstract string GenerateScripts(CommonScript script);
         public abstract AnalyseResult AnalyseView(string content);
@@ -15,7 +15,7 @@ namespace SqlAnalyser.Core
         public abstract AnalyseResult AnalyseFunction(string content);
         public abstract AnalyseResult AnalyseTrigger(string content);
 
-        public AnalyseResult Analyse<T>(string content) where T:DatabaseObject
+        public AnalyseResult Analyse<T>(string content) where T : DatabaseObject
         {
             AnalyseResult result = null;
 
@@ -48,6 +48,32 @@ namespace SqlAnalyser.Core
             Regex regex = new Regex(@"([;]+[\s]*[;]+)|(\r\n[\s]*[;])");
 
             return regex.Replace(scripts, ";");
+        }
+
+        public string BuildStatement(Statement statement)
+        {
+            StatementScriptBuilder sb = null;
+
+            if (this.DatabaseType == DatabaseType.SqlServer)
+            {
+                sb = new TSqlStatementScriptBuilder();
+            }
+            else if (this.DatabaseType == DatabaseType.MySql)
+            {
+                sb = new MySqlStatementScriptBuilder();
+            }
+            else if (this.DatabaseType == DatabaseType.Oracle)
+            {
+                sb = new PlSqlStatementScriptBuilder();
+            }
+            else
+            {
+                throw new NotSupportedException($"Not support buid statement for: {this.DatabaseType}");
+            }
+
+            sb.Build(statement);
+
+            return sb.ToString();
         }
     }
 }

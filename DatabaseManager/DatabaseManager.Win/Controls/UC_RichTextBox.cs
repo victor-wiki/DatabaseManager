@@ -33,5 +33,20 @@ namespace DatabaseManager.Controls
         {
             File.WriteAllText(filePath, this.richTextBox1.Text);
         }
+
+        private void tsmiCopy_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetDataObject(this.richTextBox1.SelectedText);
+        }
+
+        private void richTextBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                this.tsmiCopy.Enabled = this.richTextBox1.SelectionLength > 0;
+
+                this.contextMenuStrip1.Show(this.richTextBox1, e.Location);
+            }
+        }
     }
 }

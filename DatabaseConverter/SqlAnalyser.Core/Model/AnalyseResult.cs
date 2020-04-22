@@ -2,7 +2,8 @@
 {
     public class AnalyseResult
     {
-        public bool HasError { get; internal set; }
+        public SqlSyntaxError Error { get; internal set; }
+        public bool HasError => this.Error != null;
         public CommonScript Script { get; internal set; }
     }
 }

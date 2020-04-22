@@ -16,7 +16,7 @@ namespace DatabaseInterpreter.Core
     public abstract class DbInterpreter
     {
         #region Field & Property       
-        private IObserver<FeedbackInfo> m_Observer;
+        private IObserver<FeedbackInfo> observer;
         protected DbConnector dbConnector;
         protected bool hasError = false;
         public const string RowNumberColumnName = "_ROWNUMBER";
@@ -165,20 +165,19 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
-        #region Observer
-        public IDisposable Subscribe(IObserver<FeedbackInfo> observer)
+        #region Feedback
+        public void Subscribe(IObserver<FeedbackInfo> observer)
         {
-            this.m_Observer = observer;
-            return null;
+            this.observer = observer;
         }
 
         public void Feedback(FeedbackInfoType infoType, string message)
         {
             FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
 
-            if (this.m_Observer != null)
+            if (this.observer != null)
             {
-                FeedbackHelper.Feedback(this.m_Observer, info);
+                FeedbackHelper.Feedback(this.observer, info);
             }
         }
 
@@ -188,17 +187,17 @@ namespace DatabaseInterpreter.Core
         }
         public void FeedbackError(string message, bool skipError = false)
         {
-            if(!skipError)
+            if (!skipError)
             {
                 this.hasError = true;
-            }            
+            }
 
             this.Feedback(FeedbackInfoType.Error, message);
         }
 
         public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
         {
-            string message = $"{state.ToString()} to generate script for { StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower() } \"{dbObject.Name}\".";
+            string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for { StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower() } \"{dbObject.Name}\".";
             this.Feedback(FeedbackInfoType.Info, message);
         }
         #endregion
@@ -355,12 +354,12 @@ namespace DatabaseInterpreter.Core
             return schemaInfo;
         }
 
-        private bool NeedFetchTableObjects(DatabaseObjectType currentObjectType, SchemaInfoFilter filter, string []childrenNames)
+        private bool NeedFetchTableObjects(DatabaseObjectType currentObjectType, SchemaInfoFilter filter, string[] childrenNames)
         {
             var filterNames = (filter.TableNames ?? Enumerable.Empty<string>()).Union(childrenNames ?? Enumerable.Empty<string>());
 
-            return this.Option.GetTableAllObjects || this.NeedFetchObjects(currentObjectType, filterNames , filter);
-        }       
+            return this.Option.GetTableAllObjects || this.NeedFetchObjects(currentObjectType, filterNames, filter);
+        }
 
         private bool NeedFetchObjects(DatabaseObjectType currentObjectType, IEnumerable<string> names, SchemaInfoFilter filter)
         {
@@ -448,13 +447,13 @@ namespace DatabaseInterpreter.Core
                 }
                 catch (Exception ex)
                 {
-                    if(!commandInfo.SkipError)
+                    if (!commandInfo.SkipError)
                     {
                         if (command.Transaction != null)
                         {
                             command.Transaction.Rollback();
                         }
-                    }                    
+                    }
 
                     this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.SkipError);
 

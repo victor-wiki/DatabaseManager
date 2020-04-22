@@ -22,9 +22,9 @@ namespace SqlAnalyser.Core
             return new TSqlParser(tokenStream);
         }
 
-        public Tsql_fileContext GetRootContext(string content, out bool hasError)
+        public Tsql_fileContext GetRootContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
             TSqlParser parser = this.GetParser(content) as TSqlParser;
 
@@ -32,29 +32,29 @@ namespace SqlAnalyser.Core
 
             Tsql_fileContext context = parser.tsql_file();
 
-            hasError = errorListener.HasError;
+            error = errorListener.Error;
 
             return context;
         }
 
-        public Ddl_clauseContext GetDdlStatementContext(string content, out bool hasError)
+        public Ddl_clauseContext GetDdlStatementContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
-            Tsql_fileContext rootContext = this.GetRootContext(content, out hasError);
+            Tsql_fileContext rootContext = this.GetRootContext(content, out error);
 
             return rootContext?.batch().FirstOrDefault()?.sql_clauses()?.sql_clause().Select(item => item?.ddl_clause()).FirstOrDefault();
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.PROCEDURE };
 
@@ -96,13 +96,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseFunction(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.FUNCTION };
 
@@ -195,13 +195,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseView(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 ViewScript script = new ViewScript();
 
@@ -236,14 +236,14 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseTrigger(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out hasError);
+            Ddl_clauseContext ddlStatement = this.GetDdlStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };
+            AnalyseResult result = new AnalyseResult() { Error = error };
             TriggerScript script = new TriggerScript();
 
-            if (!hasError && ddlStatement != null)
+            if (!result.HasError && ddlStatement != null)
             {
                 Create_or_alter_dml_triggerContext trigger = ddlStatement.create_or_alter_trigger().create_or_alter_dml_trigger();
 

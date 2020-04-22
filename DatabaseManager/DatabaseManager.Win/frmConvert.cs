@@ -106,7 +106,7 @@ namespace DatabaseManager
 
             try
             {
-                DatabaseObjectType excludeObjType =(this.sourceDatabaseType!= DatabaseType.SqlServer || this.targetDbProfile.DatabaseType != DatabaseType.SqlServer) ? DatabaseObjectType.UserDefinedType : DatabaseObjectType.None;
+                DatabaseObjectType excludeObjType = (this.sourceDatabaseType != DatabaseType.SqlServer || this.targetDbProfile.DatabaseType != DatabaseType.SqlServer) ? DatabaseObjectType.UserDefinedType : DatabaseObjectType.None;
 
                 await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, excludeObjType);
                 this.btnExecute.Enabled = true;
@@ -314,15 +314,18 @@ namespace DatabaseManager
             {
                 if (info.InfoType == FeedbackInfoType.Error)
                 {
-                    this.hasError = true;
-
-                    if (this.dbConverter != null && this.dbConverter.IsBusy)
+                    if (!info.IgnoreError)
                     {
-                        this.dbConverter.Cancle();
-                    }
+                        this.hasError = true;
 
-                    this.btnExecute.Enabled = true;
-                    this.btnCancel.Enabled = false;
+                        if (this.dbConverter != null && this.dbConverter.IsBusy)
+                        {
+                            this.dbConverter.Cancle();
+                        }
+
+                        this.btnExecute.Enabled = true;
+                        this.btnCancel.Enabled = false;
+                    }
 
                     this.AppendMessage(info.Message, true);
                 }

@@ -22,9 +22,9 @@ namespace SqlAnalyser.Core
             return new PlSqlParser(tokenStream);
         }
 
-        public Sql_scriptContext GetRootContext(string content, out bool hasError)
+        public Sql_scriptContext GetRootContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
             PlSqlParser parser = this.GetParser(content) as PlSqlParser;
 
@@ -34,29 +34,29 @@ namespace SqlAnalyser.Core
 
             Sql_scriptContext context = parser.sql_script();
 
-            hasError = errorListener.HasError;
+            error = errorListener.Error;
 
             return context;
         }
 
-        public Unit_statementContext GetUnitStatementContext(string content, out bool hasError)
+        public Unit_statementContext GetUnitStatementContext(string content, out SqlSyntaxError error)
         {
-            hasError = false;
+            error = null;
 
-            Sql_scriptContext rootContext = this.GetRootContext(content, out hasError);
+            Sql_scriptContext rootContext = this.GetRootContext(content, out error);
 
             return rootContext?.unit_statement()?.FirstOrDefault();
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult(){ HasError = hasError };           
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && unitStatement != null)
+            if (!result.HasError && unitStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.PROCEDURE };
 
@@ -106,13 +106,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseFunction(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };          
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && unitStatement != null)
+            if (!result.HasError && unitStatement != null)
             {
                 RoutineScript script = new RoutineScript() { Type = RoutineType.FUNCTION };
 
@@ -155,13 +155,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseView(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };           
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && unitStatement != null)
+            if (!result.HasError && unitStatement != null)
             {
                 ViewScript script = new ViewScript();
 
@@ -206,13 +206,13 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseTrigger(string content)
         {
-            bool hasError = false;
+            SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out hasError);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
 
-            AnalyseResult result = new AnalyseResult() { HasError = hasError };           
+            AnalyseResult result = new AnalyseResult() { Error = error };
 
-            if (!hasError && unitStatement != null)
+            if (!result.HasError && unitStatement != null)
             {
                 TriggerScript script = new TriggerScript();
 
@@ -455,7 +455,7 @@ namespace SqlAnalyser.Core
 
             TokenInfo functionName = new TokenInfo(node.routine_name()) { Type = TokenType.RoutineName };
 
-            if (functionName.Symbol.ToUpper().Contains("DBMS_OUTPUT"))
+            if (functionName.Symbol.IndexOf("DBMS_OUTPUT", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 statement = new PrintStatement() { Content = new TokenInfo(node.function_argument()) };
             }
@@ -914,7 +914,7 @@ namespace SqlAnalyser.Core
             List<FromItem> fromItems = new List<FromItem>();
 
             Table_ref_listContext tableList = node.table_ref_list();
-            Table_refContext[] tables = tableList.table_ref();            
+            Table_refContext[] tables = tableList.table_ref();
 
             foreach (Table_refContext table in tables)
             {

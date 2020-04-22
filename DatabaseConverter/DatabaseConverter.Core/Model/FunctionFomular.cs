@@ -144,7 +144,7 @@ namespace DatabaseConverter.Model
                     }
                     else
                     {
-                        int lastIndex = this.Body.ToUpper().LastIndexOf(this.Delimiter);
+                        int lastIndex = this.Body.LastIndexOf(this.Delimiter, StringComparison.OrdinalIgnoreCase);
 
                         if (lastIndex >= 0)
                         {

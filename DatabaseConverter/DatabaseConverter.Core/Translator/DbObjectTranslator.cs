@@ -1,6 +1,7 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using PoorMansTSqlFormatterRedux;
 using System;
 using System.Collections.Generic;
@@ -11,14 +12,17 @@ namespace DatabaseConverter.Core
 {
     public abstract class DbObjectTranslator
     {
+        private IObserver<FeedbackInfo> observer;
         protected string sourceOwnerName;
         protected DbInterpreter sourceDbInterpreter;
         protected DbInterpreter targetDbInterpreter;
-        protected List<DataTypeMapping> dataTypeMappings = new List<DataTypeMapping>();
-        protected List<IEnumerable<FunctionMapping>> functionMappings = new List<IEnumerable<FunctionMapping>>();
-        protected List<IEnumerable<VariableMapping>> variableMappings = new List<IEnumerable<VariableMapping>>();
+        protected List<DataTypeMapping> dataTypeMappings = null;
+        protected List<IEnumerable<FunctionMapping>> functionMappings = null;
+        protected List<IEnumerable<VariableMapping>> variableMappings = null;
+        protected bool hasError = false;
 
         public bool SkipError { get; set; }
+        public bool HasError => this.hasError;
 
         public TranslateHandler OnTranslated;
 
@@ -32,8 +36,8 @@ namespace DatabaseConverter.Core
         {
             if (this.sourceDbInterpreter.DatabaseType != this.targetDbInterpreter.DatabaseType)
             {
-                this.functionMappings = FunctionMappingManager.GetFunctionMappings();
-                this.variableMappings = VariableMappingManager.GetVariableMappings();
+                this.functionMappings = FunctionMappingManager.FunctionMappings;
+                this.variableMappings = VariableMappingManager.VariableMappings;
                 this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
             }
 
@@ -305,5 +309,29 @@ namespace DatabaseConverter.Core
 
             return targetFunctionName;
         }
+
+        public void Subscribe(IObserver<FeedbackInfo> observer)
+        {
+            this.observer = observer;            
+        }
+
+        public void Feedback(FeedbackInfoType infoType, string message, bool skipError = false)
+        {
+            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message), IgnoreError = skipError };
+
+            if (this.observer != null)
+            {
+                FeedbackHelper.Feedback(this.observer, info);
+            }
+        }
+
+        public void FeedbackInfo(string message)
+        {
+            this.Feedback(FeedbackInfoType.Info, message);
+        }
+        public void FeedbackError(string message, bool skipError = false)
+        {
+            this.Feedback(FeedbackInfoType.Error, message, skipError);
+        }       
     }
 }

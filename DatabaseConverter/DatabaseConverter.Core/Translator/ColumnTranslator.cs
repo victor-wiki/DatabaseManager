@@ -28,6 +28,13 @@ namespace DatabaseConverter.Core
                 return;
             }
 
+            if (this.hasError)
+            {
+                return;
+            }
+
+            this.FeedbackInfo("Begin to translate columns.");
+
             this.LoadMappings();
 
             foreach (TableColumn column in this.columns)
@@ -48,6 +55,8 @@ namespace DatabaseConverter.Core
                     column.DefaultValue = defaultValue;
                 }
             }
+
+            this.FeedbackInfo("End translate columns.");
         }
 
         public void ConvertDataType(TableColumn column)

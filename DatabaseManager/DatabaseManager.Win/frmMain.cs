@@ -5,6 +5,7 @@ using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -23,7 +24,7 @@ namespace DatabaseManager
 
             TreeView.CheckForIllegalCrossThreadCalls = false;
 
-            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;           
+            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
             LogHelper.LogType = SettingManager.Setting.LogType;
             FeedbackHelper.EnableDebug = true;
         }
@@ -36,7 +37,7 @@ namespace DatabaseManager
         }
 
         private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)
-        {           
+        {
             this.ucContent.ShowContent(content);
         }
 
@@ -44,8 +45,8 @@ namespace DatabaseManager
         {
             UC_DataViewer dataViewer = sender as UC_DataViewer;
 
-            frmDataFilter filter = new frmDataFilter() { Columns = dataViewer.Columns.ToList(), ConditionBuilder= dataViewer.ConditionBuilder };
-            if(filter.ShowDialog() == DialogResult.OK)
+            frmDataFilter filter = new frmDataFilter() { Columns = dataViewer.Columns.ToList(), ConditionBuilder = dataViewer.ConditionBuilder };
+            if (filter.ShowDialog() == DialogResult.OK)
             {
                 dataViewer.FilterData(filter.ConditionBuilder);
             }
@@ -53,13 +54,23 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            if (info.InfoType != FeedbackInfoType.Info)
+            this.txtMessage.ForeColor = Color.Black;
+
+            if (info.InfoType == FeedbackInfoType.Error)
             {
-                MessageBox.Show(info.Message);
+                if (!info.IgnoreError)
+                {
+                    MessageBox.Show(info.Message);
+                }
+
+                this.txtMessage.Text = info.Message;
+                this.txtMessage.BackColor = this.BackColor;
+                this.txtMessage.ForeColor = Color.Red;
+                this.toolTip1.SetToolTip(this.txtMessage, info.Message);
             }
             else
-            {               
-                this.tsslMessage.Text = info.Message;                  
+            {
+                this.txtMessage.Text = info.Message;
             }
         }
 
@@ -67,7 +78,7 @@ namespace DatabaseManager
         {
             frmSetting frmSetting = new frmSetting();
             frmSetting.ShowDialog();
-        }       
+        }
 
         private void btnConvert_Click(object sender, EventArgs e)
         {

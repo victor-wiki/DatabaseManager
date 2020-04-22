@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
@@ -23,6 +24,11 @@ namespace DatabaseConverter.Core
         public override void Translate()
         {
             if (sourceDbInterpreter.DatabaseType == targetDbInterpreter.DatabaseType)
+            {
+                return;
+            }
+
+            if (this.hasError)
             {
                 return;
             }
@@ -76,7 +82,7 @@ namespace DatabaseConverter.Core
 
                     if (this.OnTranslated != null)
                     {
-                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, view, view.Definition);
+                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, view, new TranslateResult() { Data = view.Definition });
                     }
                 }
                 catch (Exception ex)
@@ -97,8 +103,7 @@ namespace DatabaseConverter.Core
                     }
                     else
                     {
-                        FeedbackInfo info = new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = ExceptionHelper.GetExceptionDetails(ex), Owner = this };
-                        FeedbackHelper.Feedback(info);
+                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.SkipError);
                     }                   
                 }
             }           

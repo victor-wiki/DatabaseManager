@@ -1,4 +1,5 @@
 ﻿using DatabaseConverter.Core;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
@@ -749,11 +750,11 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private void DbConverter_OnTranslated(DatabaseType dbType, DatabaseObject dbObject, object result)
+        private void DbConverter_OnTranslated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
         {
             if (this.OnShowContent != null)
             {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result?.ToString(), ConnectionInfo = null });
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error });
             }
         }
     }
