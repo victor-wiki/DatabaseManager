@@ -187,8 +187,7 @@ namespace SqlAnalyser.Core
                         {
                             string[] ids = nameValue.Value.Symbol.Split('.').Select(item => item.Trim()).ToArray();
 
-                            string tableName = ids[0];
-                            string columnName = ids[1];
+                            string tableName = ids[0];                                               
 
                             JoinItem joinItem = fromItem.JoinItems.FirstOrDefault(item => item.TableName.Name?.Symbol?.ToUpper().Trim('"') == tableName.ToUpper()
                                                 || item.TableName.Alias?.Symbol?.ToUpper()?.Trim('"') == tableName.ToUpper());

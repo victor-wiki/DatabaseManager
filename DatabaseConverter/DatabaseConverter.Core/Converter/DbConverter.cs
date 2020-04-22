@@ -237,7 +237,7 @@ namespace DatabaseConverter.Core
                         {
                             Func<Script, bool> isValidScript = (s) =>
                             {
-                                return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsSplitString);
+                                return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsDelimiter);
                             };
 
                             int count = scripts.Where(item => isValidScript(item)).Count();
@@ -256,13 +256,13 @@ namespace DatabaseConverter.Core
 
                                 string sql = s.Content?.Trim();
 
-                                if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsSplitString)
+                                if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsDelimiter)
                                 {
                                     i++;
 
-                                    if (!isCreateScript && targetInterpreter.ScriptsSplitString.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsSplitString))
+                                    if (!isCreateScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
                                     {
-                                        sql = sql.TrimEnd(targetInterpreter.ScriptsSplitString.ToArray());
+                                        sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
                                     }
 
                                     if (!targetInterpreter.HasError)

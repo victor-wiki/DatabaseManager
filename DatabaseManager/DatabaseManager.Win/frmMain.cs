@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
 using DatabaseManager.Helper;
@@ -94,7 +95,7 @@ namespace DatabaseManager
                 {
                     FormEventCenter.OnSave();
                 }
-            }
+            }           
         }
 
         public void OnNext(FeedbackInfo value)
@@ -128,6 +129,34 @@ namespace DatabaseManager
         {
             frmConvert frmConvert = new frmConvert();
             frmConvert.ShowDialog();
+        }
+
+        private void tsBtnAddQuery_Click(object sender, EventArgs e)
+        {
+            ConnectionInfo connectionInfo = this.navigator.GetCurrentConnectionInfo();
+
+            if (connectionInfo != null)
+            {
+                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true,  DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.navigator.DatabaseType };
+               
+                info.ConnectionInfo = connectionInfo;
+
+                this.ShowDbObjectContent(info);
+            }
+            else
+            {
+                MessageBox.Show("Please select a database from left navigator first.");
+            }
+        }
+
+        private void tsBtnRun_Click(object sender, EventArgs e)
+        {
+            this.RunScripts();
+        }
+
+        private void RunScripts()
+        {
+            this.ucContent.RunScripts();
         }
     }
 }

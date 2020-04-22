@@ -21,6 +21,14 @@ namespace DatabaseManager.Controls
         public ShowDbObjectContentHandler OnShowContent;
         public FeedbackHandler OnFeedback;
 
+        public DatabaseType DatabaseType
+        {
+            get
+            {
+                return this.tvDbObjects.DatabaseType;
+            }
+        }
+
         public UC_DbObjectsNavigator()
         {
             InitializeComponent();
@@ -209,6 +217,11 @@ namespace DatabaseManager.Controls
                 this.btnConnect.Enabled = true;
             }
             return false;
+        }
+
+        public ConnectionInfo GetCurrentConnectionInfo()
+        {
+            return this.tvDbObjects.GetCurrentConnectionInfo();
         }
     }
 }

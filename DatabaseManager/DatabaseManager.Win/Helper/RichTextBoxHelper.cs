@@ -11,7 +11,7 @@ namespace DatabaseManager.Helper
 {
     public class RichTextBoxHelper
     {
-        public static void AppendMessage(RichTextBox richTextBox, string message, bool isError = false)
+        public static void AppendMessage(RichTextBox richTextBox, string message, bool isError = false, bool scrollToCaret = true)
         {
             int start = richTextBox.Text.Length;
 
@@ -25,8 +25,11 @@ namespace DatabaseManager.Helper
             richTextBox.Select(start, richTextBox.Text.Length - start);
             richTextBox.SelectionColor = isError ? Color.Red : Color.Black;
 
-            richTextBox.SelectionStart = richTextBox.TextLength;
-            richTextBox.ScrollToCaret();
+            if(scrollToCaret)
+            {
+                richTextBox.SelectionStart = richTextBox.TextLength;
+                richTextBox.ScrollToCaret();
+            }         
         }
 
         public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType)

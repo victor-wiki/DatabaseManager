@@ -15,8 +15,8 @@ using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
-    public delegate void ShowDbObjectContentHandler(DatabaseObjectDisplayInfo content);   
-    
+    public delegate void ShowDbObjectContentHandler(DatabaseObjectDisplayInfo content);
+
     public partial class UC_DbObjectsComplexTree : UserControl, IObserver<FeedbackInfo>
     {
         private DatabaseType databaseType;
@@ -26,10 +26,12 @@ namespace DatabaseManager.Controls
         public ShowDbObjectContentHandler OnShowContent;
         public DatabaseInterpreter.Utility.FeedbackHandler OnFeedback;
 
+        public DatabaseType DatabaseType => this.databaseType;
+
         public UC_DbObjectsComplexTree()
         {
-            InitializeComponent();            
-            
+            InitializeComponent();
+
             TreeView.CheckForIllegalCrossThreadCalls = false;
             Form.CheckForIllegalCrossThreadCalls = false;
         }
@@ -62,7 +64,7 @@ namespace DatabaseManager.Controls
         {
             if (e.Button == MouseButtons.Right)
             {
-                if(e.Node.Name == DbObjectsTreeHelper.FakeNodeName)
+                if (e.Node.Name == DbObjectsTreeHelper.FakeNodeName)
                 {
                     return;
                 }
@@ -102,6 +104,21 @@ namespace DatabaseManager.Controls
             ConnectionInfo info = ObjectHelper.CloneObject<ConnectionInfo>(this.connectionInfo);
             info.Database = database;
             return info;
+        }
+
+        public ConnectionInfo GetCurrentConnectionInfo()
+        {
+            TreeNode node = this.tvDbObjects.SelectedNode;
+
+            if (node != null)
+            {
+                TreeNode dbNode = this.GetDatabaseNode(node);
+                ConnectionInfo connectionInfo = this.GetConnectionInfo(dbNode.Name);
+
+                return connectionInfo;
+            }
+
+            return null;
         }
 
         private bool IsOnlyHasFakeChild(TreeNode node)
@@ -181,8 +198,8 @@ namespace DatabaseManager.Controls
             tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Indexes), nameof(DbObjectTreeFolderType.Indexes), true));
             tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Keys), nameof(DbObjectTreeFolderType.Keys), true));
             tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Constraints), nameof(DbObjectTreeFolderType.Constraints), true));
-        }    
-        
+        }
+
         private void AddDatabaseFakeNodes(TreeNode databaseNode, Database database)
         {
             this.ClearNodes(databaseNode);
@@ -190,19 +207,19 @@ namespace DatabaseManager.Controls
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Tables), nameof(DbObjectTreeFolderType.Tables), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Views), nameof(DbObjectTreeFolderType.Views), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
-            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));           
+            databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));
         }
 
         private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
-        {            
+        {
             string nodeName = treeNode.Name;
             string database = this.GetDatabaseNode(treeNode).Name;
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
 
-            dbInterpreter.Subscribe(this);           
+            dbInterpreter.Subscribe(this);
 
-            SchemaInfo schemaInfo = await Task.Run(() => dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } }));           
-         
+            SchemaInfo schemaInfo = await Task.Run(() => dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } }));
+
             this.ClearNodes(treeNode);
 
             #region Columns           
@@ -311,9 +328,9 @@ namespace DatabaseManager.Controls
             string loadingImageKey = "Loading.gif";
             string loadingText = "loading...";
 
-            if(this.IsOnlyHasFakeChild(node))
+            if (this.IsOnlyHasFakeChild(node))
             {
-                node.Nodes[0].ImageKey = loadingImageKey ;
+                node.Nodes[0].ImageKey = loadingImageKey;
                 node.Nodes[0].Text = loadingText;
             }
             else
@@ -324,7 +341,7 @@ namespace DatabaseManager.Controls
 
         private async Task LoadChildNodes(TreeNode node)
         {
-            this.ShowLoading(node);          
+            this.ShowLoading(node);
 
             object tag = node.Tag;
 
@@ -476,7 +493,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            TreeNode node = this.GetSelectedNode();           
+            TreeNode node = this.GetSelectedNode();
 
             this.ConvertDatabase(node);
         }
@@ -509,7 +526,7 @@ namespace DatabaseManager.Controls
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
             dbInterpreter.Subscribe(this);
 
-            await Task.Run(()=> dbInterpreter.ClearDataAsync());
+            await Task.Run(() => dbInterpreter.ClearDataAsync());
 
             if (!dbInterpreter.HasError)
             {
@@ -633,11 +650,11 @@ namespace DatabaseManager.Controls
         private void ViewData(TreeNode node)
         {
             string database = this.GetDatabaseNode(node).Name;
-            Table table = node.Tag as Table;            
+            Table table = node.Tag as Table;
 
             if (this.OnShowContent != null)
             {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType= DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
+                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
             }
         }
 
@@ -647,17 +664,17 @@ namespace DatabaseManager.Controls
         }
 
         public void OnError(Exception error)
-        {           
+        {
         }
 
         public void OnCompleted()
-        {            
+        {
         }
 
         private void tvDbObjects_AfterExpand(object sender, TreeViewEventArgs e)
         {
             this.Feedback("");
-        }     
+        }
 
         private void tsmiTranslate_MouseEnter(object sender, EventArgs e)
         {
@@ -665,9 +682,9 @@ namespace DatabaseManager.Controls
 
             var dbTypes = Enum.GetValues(typeof(DatabaseType));
 
-            foreach(var dbType in dbTypes)
+            foreach (var dbType in dbTypes)
             {
-                if((int)dbType != (int)this.databaseType)
+                if ((int)dbType != (int)this.databaseType)
                 {
                     ToolStripMenuItem item = new ToolStripMenuItem(dbType.ToString());
                     item.Click += TranslateItem_Click;
@@ -694,7 +711,7 @@ namespace DatabaseManager.Controls
 
         private async Task Translate(TreeNode node, DatabaseType targetDbType)
         {
-            object tag = node.Tag;          
+            object tag = node.Tag;
 
             ConnectionInfo connectionInfo = this.GetConnectionInfo((this.GetDatabaseNode(node).Tag as Database).Name);
 
@@ -703,7 +720,7 @@ namespace DatabaseManager.Controls
                 DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
                 DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
 
-                targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = true;              
+                targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = true;
 
                 DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, sourceScriptOption) };
                 DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, new ConnectionInfo(), sourceScriptOption) };
@@ -723,16 +740,16 @@ namespace DatabaseManager.Controls
                     }
 
                     SchemaInfo schemaInfo = new SchemaInfo();
-                   
-                    if(tag is Table)
+
+                    if (tag is Table)
                     {
                         schemaInfo.Tables.Add(tag as Table);
                     }
-                    else if(tag is DatabaseInterpreter.Model.View)
+                    else if (tag is DatabaseInterpreter.Model.View)
                     {
                         schemaInfo.Views.Add(tag as DatabaseInterpreter.Model.View);
                     }
-                    else if(tag is Function)
+                    else if (tag is Function)
                     {
                         schemaInfo.Functions.Add(tag as Function);
                     }
@@ -745,7 +762,7 @@ namespace DatabaseManager.Controls
                         schemaInfo.TableTriggers.Add(tag as TableTrigger);
                     }
 
-                    await dbConverter.Convert(schemaInfo);                   
+                    await dbConverter.Convert(schemaInfo);
                 }
             }
         }

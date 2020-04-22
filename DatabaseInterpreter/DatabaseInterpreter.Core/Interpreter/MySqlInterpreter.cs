@@ -311,13 +311,13 @@ namespace DatabaseInterpreter.Core
 
             if (filter != null)
             {
-                if(filter.TableNames != null && filter.TableNames.Any())
+                if (filter.TableNames != null && filter.TableNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                     sql += $" AND EVENT_OBJECT_TABLE IN ({ strNames })";
                 }
-                 
-                if(filter.TableTriggerNames!= null && filter.TableTriggerNames.Any())
+
+                if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
                     sql += $" AND TRIGGER_NAME IN ({ strNames })";
@@ -368,7 +368,7 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
-            if (filter != null && filter.ViewNames!=null && filter.ViewNames.Any())
+            if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
                 sql += $" AND TABLE_NAME IN ({ strNames })";
@@ -617,7 +617,7 @@ $@"
 CREATE TABLE {this.NotCreateIfExistsCluase} {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}{foreignKey}
 ){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
-DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
+DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
 
                 sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 
@@ -723,7 +723,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
                 }
                 else if (!this.IsNoLengthDataType(dataType))
                 {
-                    long precision = column.Precision.HasValue ? column.Precision.Value : (column.MaxLength.HasValue? column.MaxLength.Value :0);
+                    long precision = column.Precision.HasValue ? column.Precision.Value : (column.MaxLength.HasValue ? column.MaxLength.Value : 0);
                     int scale = column.Scale.HasValue ? column.Scale.Value : 0;
 
                     dataType = $"{dataType}({precision},{scale})";
@@ -791,10 +791,20 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsSplitString;
             var pagedSql = $@"SELECT {columnNames}
 							  FROM {tableName}
                              {whereClause} 
-                             ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : "1")}
+                             ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : this.GetDefaultOrder())}
                              LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
 
             return pagedSql;
+        }
+
+        public override string GetDefaultOrder()
+        {
+            return "1";
+        }
+
+        public override string GetLimitClause(int limitCount)
+        {
+            return $"LIMIT 0, {limitCount}";
         }
 
         protected override string GetBytesConvertHexString(object value, string dataType)

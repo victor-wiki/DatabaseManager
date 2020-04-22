@@ -462,8 +462,7 @@ namespace DatabaseInterpreter.Core
             sql += " ORDER BY VIEW_NAME";
 
             return sql;
-        }
-
+        }       
         #endregion        
 
         #region Procedure     
@@ -625,7 +624,7 @@ CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item))).TrimEnd(',')}
 )
 TABLESPACE
-{this.ConnectionInfo.Database}" + this.ScriptsSplitString;
+{this.ConnectionInfo.Database}" + this.ScriptsDelimiter;
 
                 sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 
@@ -636,12 +635,12 @@ TABLESPACE
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine(new AlterDbObjectScript<Table>($"COMMENT ON TABLE {this.GetDbOwner()}.{this.GetQuotedString(tableName)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.ScriptsSplitString));
+                    sb.AppendLine(new AlterDbObjectScript<Table>($"COMMENT ON TABLE {this.GetDbOwner()}.{this.GetQuotedString(tableName)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.ScriptsDelimiter));
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine(new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {this.GetDbOwner()}.{this.GetQuotedString(tableName)}.{this.GetQuotedString(column.Name)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.ScriptsSplitString));
+                    sb.AppendLine(new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {this.GetDbOwner()}.{this.GetQuotedString(tableName)}.{this.GetQuotedString(column.Name)} IS '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.ScriptsDelimiter));
                 }
                 #endregion
 
@@ -656,7 +655,7 @@ ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(primaryKeys.F
 )
 USING INDEX 
 TABLESPACE
-{this.ConnectionInfo.Database}{this.ScriptsSplitString}";
+{this.ConnectionInfo.Database}{this.ScriptsDelimiter}";
 
                     sb.AppendLine(new CreateDbObjectScript<TablePrimaryKey>(primaryKey));
                 }
@@ -692,7 +691,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                                 foreignKeyScript.AppendLine("ON DELETE CASCADE");
                             }
 
-                            foreignKeyScript.Append(this.ScriptsSplitString);
+                            foreignKeyScript.Append(this.ScriptsDelimiter);
 
                             sb.AppendLine(new CreateDbObjectScript<TableForeignKey>(foreignKeyScript.ToString()));
                         }
@@ -724,7 +723,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                                 continue;
                             }
 
-                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tableIndex.Name)} ON { this.GetQuotedString(tableName)} ({columnNames})" + this.ScriptsSplitString));
+                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tableIndex.Name)} ON { this.GetQuotedString(tableName)} ({columnNames})" + this.ScriptsDelimiter));
 
                             if (!indexColumns.Contains(columnNames))
                             {
@@ -743,7 +742,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                     foreach (TableConstraint constraint in constraints)
                     {
                         sb.AppendLine();
-                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition})" + this.ScriptsSplitString));
+                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition})" + this.ScriptsDelimiter));
                     }
                 }
                 #endregion
@@ -873,7 +872,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
-            string orderClause = string.IsNullOrEmpty(orderColumns) ? "(SELECT 0 FROM DUAL)" : orderColumns;
+            string orderClause = string.IsNullOrEmpty(orderColumns) ? this.GetDefaultOrder() : orderColumns;
 
             string pagedSql = $@"with PagedRecords as
 								(
@@ -886,6 +885,16 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
 								WHERE ""{RowNumberColumnName}"" BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
 
             return pagedSql;
+        }
+
+        public override string GetDefaultOrder()
+        {
+            return "(SELECT 0 FROM DUAL)";
+        }
+
+        public override string GetLimitClause(int limitCount)
+        {
+            return $"OFFSET 0 ROWS FETCH NEXT {limitCount} ROWS ONLY";
         }
 
         protected override bool NeedInsertParameter(TableColumn column, object value)

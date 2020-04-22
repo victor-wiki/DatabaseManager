@@ -11,6 +11,7 @@ namespace DatabaseManager.Model
         public string Content { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
         public object Error { get; set; }
+        public bool IsNew { get; set; }
     }
 
     public enum DatabaseObjectDisplayType

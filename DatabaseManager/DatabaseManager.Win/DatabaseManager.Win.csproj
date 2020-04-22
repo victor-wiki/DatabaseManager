@@ -135,6 +135,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\UC_DataGridView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\UC_DataGridView.Designer.cs">
+      <DependentUpon>UC_DataGridView.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\UC_DataViewer.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -183,11 +189,11 @@
     <Compile Include="Controls\UC_DbObjectsSimpleTree.Designer.cs">
       <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controls\UC_RichTextBox.cs">
+    <Compile Include="Controls\UC_ScriptEditor.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\UC_RichTextBox.Designer.cs">
-      <DependentUpon>UC_RichTextBox.cs</DependentUpon>
+    <Compile Include="Controls\UC_ScriptEditor.Designer.cs">
+      <DependentUpon>UC_ScriptEditor.cs</DependentUpon>
     </Compile>
     <Compile Include="frmAccountInfo.cs">
       <SubType>Form</SubType>
@@ -255,6 +261,9 @@
     <Compile Include="Model\DbObjectTreeFolderType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Controls\UC_DataGridView.resx">
+      <DependentUpon>UC_DataGridView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\UC_DataViewer.resx">
       <DependentUpon>UC_DataViewer.cs</DependentUpon>
     </EmbeddedResource>
@@ -279,8 +288,8 @@
     <EmbeddedResource Include="Controls\UC_DbObjectsSimpleTree.resx">
       <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controls\UC_RichTextBox.resx">
-      <DependentUpon>UC_RichTextBox.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\UC_ScriptEditor.resx">
+      <DependentUpon>UC_ScriptEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmAccountInfo.resx">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
@@ -468,6 +477,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Column.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_account.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AddQuery.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Run.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

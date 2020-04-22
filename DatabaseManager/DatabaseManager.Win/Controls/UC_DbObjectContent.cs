@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -21,6 +23,7 @@ namespace DatabaseManager.Controls
             InitializeComponent();
 
             FormEventCenter.OnSave += this.Save;
+            FormEventCenter.OnRunScripts += this.RunScripts;
         }
 
         public void ShowContent(DatabaseObjectDisplayInfo info)
@@ -29,7 +32,7 @@ namespace DatabaseManager.Controls
 
             TabPage page = this.FindTabPage(info);
 
-            string title = $" {info.Name}  ";
+            string title = $" { this.GetInfoName(info)}  ";
 
             if (page == null)
             {
@@ -54,23 +57,27 @@ namespace DatabaseManager.Controls
         {
             if (info.DisplayType == DatabaseObjectDisplayType.Script)
             {
-                UC_RichTextBox ucRichTextBox = this.GetUcControl<UC_RichTextBox>(tabPage);
+                UC_ScriptEditor ucRichTextBox = this.GetUcControl<UC_ScriptEditor>(tabPage);
 
                 if (ucRichTextBox == null)
                 {
-                    ucRichTextBox = this.AddControlToTabPage<UC_RichTextBox>(tabPage);
+                    ucRichTextBox = this.AddControlToTabPage<UC_ScriptEditor>(tabPage);
                 }
 
                 ucRichTextBox.Show(info);
 
-                if (!string.IsNullOrEmpty(ucRichTextBox.TextBox.Text))
+                if (!string.IsNullOrEmpty(ucRichTextBox.Editor.Text))
                 {
-                    RichTextBoxHelper.Highlighting(ucRichTextBox.TextBox, info.DatabaseType);
+                    RichTextBoxHelper.Highlighting(ucRichTextBox.Editor, info.DatabaseType);
 
                     if (info.Error != null)
                     {
-                        RichTextBoxHelper.HighlightingError(ucRichTextBox.TextBox, info.Error);
+                        RichTextBoxHelper.HighlightingError(ucRichTextBox.Editor, info.Error);
                     }
+                }
+                else
+                {
+                    ucRichTextBox.Editor.Focus();
                 }
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.Data)
@@ -332,6 +339,92 @@ namespace DatabaseManager.Controls
             }
 
             return null;
+        }
+
+        private string GetInfoName(DatabaseObjectDisplayInfo info)
+        {
+            string name = info.Name;
+
+            if (string.IsNullOrEmpty(name))
+            {
+                if (info.IsNew)
+                {
+                    string prefix = "";
+
+                    if (info.DisplayType == DatabaseObjectDisplayType.Script)
+                    {
+                        prefix = "New Query";
+                    }
+
+                    int num = GetNewMaxNameNumber(prefix);
+
+                    name = prefix + (num + 1);
+
+                    info.Name = name;
+                }
+            }
+
+            return name;
+        }
+
+        private int GetNewMaxNameNumber(string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix))
+            {
+                return 0;
+            }
+
+            List<string> names = new List<string>();
+            foreach (TabPage page in this.tabControl1.TabPages)
+            {
+                DatabaseObjectDisplayInfo data = page.Tag as DatabaseObjectDisplayInfo;
+
+                if (data.Content == null && data.Name.Trim().StartsWith(prefix))
+                {
+                    names.Add(data.Name.Trim());
+                }
+            }
+
+            string maxName = names.OrderByDescending(item => item.Length).ThenByDescending(item => item).FirstOrDefault();
+
+            int num = 0;
+
+            if (!string.IsNullOrEmpty(maxName))
+            {
+                string strNum = maxName.Replace(prefix, "");
+
+                if (int.TryParse(strNum, out num))
+                {
+                }
+            }
+
+            return num;
+        }
+
+        public void RunScripts()
+        {
+            if (this.tabControl1.TabCount == 0)
+            {
+                return;
+            }
+
+            TabPage tabPage = this.tabControl1.SelectedTab;
+
+            if (tabPage == null)
+            {
+                return;
+            }
+
+            DatabaseObjectDisplayInfo data = tabPage.Tag as DatabaseObjectDisplayInfo;
+
+            if (data == null || data.DisplayType != DatabaseObjectDisplayType.Script)
+            {
+                return;
+            }
+
+            UC_ScriptEditor editor = this.GetUcControl<UC_ScriptEditor>(tabPage);
+
+            editor.RunScripts(data);
         }
     }
 }

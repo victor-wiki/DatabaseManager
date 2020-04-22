@@ -18,6 +18,7 @@ namespace DatabaseInterpreter.Model
         public string ScriptOutputFolder { get; set; } = "output";
         public bool GetTableAllObjects { get; set; }
         public TableScriptsGenerateOption TableScriptsGenerateOption = new TableScriptsGenerateOption();
+        public bool ThrowExceptionWhenErrorOccurs { get; set; }
     }
 
     [Flags]

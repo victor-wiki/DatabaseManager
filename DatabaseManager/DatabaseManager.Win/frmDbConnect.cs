@@ -94,7 +94,7 @@ namespace DatabaseManager
             }
         }
 
-        private ConnectionInfo GetConnectionInfo()
+        public ConnectionInfo GetConnectionInfo()
         {
             ConnectionInfo connectionInfo = this.ucDbAccountInfo.GetConnectionInfo();
             connectionInfo.Database = this.cboDatabase.Text;

@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmAccountInfo));
             this.btnConfirm = new System.Windows.Forms.Button();
             this.ucAccountInfo = new DatabaseManager.Controls.UC_DbAccountInfo();
             this.btnCancel = new System.Windows.Forms.Button();
@@ -69,10 +70,11 @@
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
             this.Controls.Add(this.ucAccountInfo);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "frmAccountInfo";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database account";
+            this.Text = "Database Account";
             this.Activated += new System.EventHandler(this.frmAccountInfo_Activated);
             this.Load += new System.EventHandler(this.frmAccountInfo_Load);
             this.ResumeLayout(false);

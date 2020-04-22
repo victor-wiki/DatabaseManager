@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
         public override char QuotationRightChar { get { return ']'; } }
         public override DatabaseType DatabaseType { get { return DatabaseType.SqlServer; } }
         public override bool SupportBulkCopy { get { return true; } }
-        public override string ScriptsSplitString => "GO" + Environment.NewLine;
+        public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };
         #endregion
 
@@ -535,7 +535,7 @@ namespace DatabaseInterpreter.Core
                 string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userTypeName)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
 
                 sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
-                sb.AppendLine(new SpliterScript(this.ScriptsSplitString));
+                sb.AppendLine(new SpliterScript(this.ScriptsDelimiter));
 
                 userTypeNames.Add(userDefinedType.Name);
 
@@ -705,7 +705,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 }
                 #endregion
 
-                sb.Append(new SpliterScript(this.ScriptsSplitString));
+                sb.Append(new SpliterScript(this.ScriptsDelimiter));
 
                 this.FeedbackInfo(OperationState.End, table);
             }
@@ -861,7 +861,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
-            string orderClause = string.IsNullOrEmpty(orderColumns) ? "(SELECT 0)" : orderColumns;
+            string orderClause = string.IsNullOrEmpty(orderColumns) ? this.GetDefaultOrder() : orderColumns;
 
             string pagedSql = $@"with PagedRecords as
 								(
@@ -876,10 +876,20 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             return pagedSql;
         }
 
+        public override string GetDefaultOrder()
+        {
+            return "(SELECT 0)";
+        }
+
         protected override string GetBytesConvertHexString(object value, string dataType)
         {
             string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
             return $"CAST({"0x" + hex} AS {dataType})";
+        }
+
+        public override string GetLimitClause(int limitCount)
+        {
+            return $"OFFSET 0 ROWS FETCH NEXT {limitCount} ROWS ONLY";
         }
         #endregion       
     }

@@ -36,12 +36,14 @@
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
-            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
-            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
+            this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -112,6 +114,14 @@
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 8;
             // 
+            // navigator
+            // 
+            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.navigator.Location = new System.Drawing.Point(0, 0);
+            this.navigator.Name = "navigator";
+            this.navigator.Size = new System.Drawing.Size(150, 374);
+            this.navigator.TabIndex = 0;
+            // 
             // panelContent
             // 
             this.panelContent.Controls.Add(this.ucContent);
@@ -121,17 +131,42 @@
             this.panelContent.Size = new System.Drawing.Size(633, 374);
             this.panelContent.TabIndex = 0;
             // 
+            // ucContent
+            // 
+            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
+            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucContent.Location = new System.Drawing.Point(0, 0);
+            this.ucContent.Name = "ucContent";
+            this.ucContent.Size = new System.Drawing.Size(633, 374);
+            this.ucContent.TabIndex = 0;
+            this.ucContent.Visible = false;
+            // 
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsBtnAddQuery,
             this.tsBtnGenerateScripts,
-            this.tsBtnConvert});
+            this.tsBtnConvert,
+            this.tsBtnRun});
             this.toolStrip1.Location = new System.Drawing.Point(0, 25);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
             this.toolStrip1.Size = new System.Drawing.Size(786, 43);
             this.toolStrip1.TabIndex = 10;
             this.toolStrip1.Text = "toolStrip1";
+            // 
+            // tsBtnAddQuery
+            // 
+            this.tsBtnAddQuery.AutoSize = false;
+            this.tsBtnAddQuery.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnAddQuery.Image = global::DatabaseManager.Properties.Resources.AddQuery;
+            this.tsBtnAddQuery.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnAddQuery.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnAddQuery.Name = "tsBtnAddQuery";
+            this.tsBtnAddQuery.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnAddQuery.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnAddQuery.ToolTipText = "New Query";
+            this.tsBtnAddQuery.Click += new System.EventHandler(this.tsBtnAddQuery_Click);
             // 
             // tsBtnGenerateScripts
             // 
@@ -159,23 +194,18 @@
             this.tsBtnConvert.ToolTipText = "Convert Database";
             this.tsBtnConvert.Click += new System.EventHandler(this.tsBtnConvert_Click);
             // 
-            // navigator
+            // tsBtnRun
             // 
-            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.navigator.Location = new System.Drawing.Point(0, 0);
-            this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(150, 374);
-            this.navigator.TabIndex = 0;
-            // 
-            // ucContent
-            // 
-            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
-            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucContent.Location = new System.Drawing.Point(0, 0);
-            this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(633, 374);
-            this.ucContent.TabIndex = 0;
-            this.ucContent.Visible = false;
+            this.tsBtnRun.AutoSize = false;
+            this.tsBtnRun.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnRun.Image = ((System.Drawing.Image)(resources.GetObject("tsBtnRun.Image")));
+            this.tsBtnRun.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnRun.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnRun.Name = "tsBtnRun";
+            this.tsBtnRun.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnRun.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnRun.ToolTipText = "Run(F5)";
+            this.tsBtnRun.Click += new System.EventHandler(this.tsBtnRun_Click);
             // 
             // txtMessage
             // 
@@ -235,6 +265,8 @@
         private System.Windows.Forms.ToolStripButton tsBtnGenerateScripts;
         private System.Windows.Forms.ToolStripButton tsBtnConvert;
         private System.Windows.Forms.TextBox txtMessage;
+        private System.Windows.Forms.ToolStripButton tsBtnAddQuery;
+        private System.Windows.Forms.ToolStripButton tsBtnRun;
     }
 }
 

@@ -5,6 +5,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -21,7 +22,7 @@ namespace DatabaseInterpreter.Core
         protected bool hasError = false;
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
-        public virtual string ScriptsSplitString => ";";
+        public virtual string ScriptsDelimiter => ";";
         public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
         public bool NotCreateIfExists => SettingManager.Setting.NotCreateIfExists;
         public DbObjectNameMode DbObjectNameMode => SettingManager.Setting.DbObjectNameMode;
@@ -109,7 +110,7 @@ namespace DatabaseInterpreter.Core
 
         protected string ReplaceSplitChar(string value)
         {
-            return value?.Replace(this.ScriptsSplitString, ",");
+            return value?.Replace(this.ScriptsDelimiter, ",");
         }
 
         protected async Task<List<T>> GetDbObjectsAsync<T>(string sql) where T : DatabaseObject
@@ -455,6 +456,11 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
+                    if (this.Option.ThrowExceptionWhenErrorOccurs)
+                    {
+                        throw ex;
+                    }
+
                     this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.SkipError);
 
                     return 0;
@@ -498,8 +504,20 @@ namespace DatabaseInterpreter.Core
             return await dbConnection.ExecuteReaderAsync(sql);
         }
 
-        protected async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql)
+        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, int? limitCount = null)
         {
+            if (limitCount > 0)
+            {
+                sql = sql.TrimEnd(';');
+
+                if(!Regex.IsMatch(sql, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
+                {
+                    sql += Environment.NewLine + "ORDER BY " +this.GetDefaultOrder();
+                }
+
+                sql +=  Environment.NewLine + this.GetLimitClause(limitCount.Value);
+            }
+
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
 
             DataTable table = new DataTable();
@@ -622,7 +640,8 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Generate Scripts     
-
+        public virtual string GetLimitClause(int limitCount) { return string.Empty; }
+        public virtual string GetDefaultOrder() { return string.Empty; }
         public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo);
         public abstract string ParseColumn(Table table, TableColumn column);
         public abstract string ParseDataType(TableColumn column);
@@ -636,18 +655,18 @@ namespace DatabaseInterpreter.Core
             {
                 this.FeedbackInfo(OperationState.Begin, dbObject);
 
-                bool hasNewLine = this.ScriptsSplitString.Contains(Environment.NewLine);
+                bool hasNewLine = this.ScriptsDelimiter.Contains(Environment.NewLine);
 
                 scripts.Add(new CreateDbObjectScript<T>(dbObject.Definition.Trim()));
 
                 if (!hasNewLine)
                 {
-                    scripts.Add(new SpliterScript(this.ScriptsSplitString));
+                    scripts.Add(new SpliterScript(this.ScriptsDelimiter));
                 }
                 else
                 {
                     scripts.Add(new NewLineSript());
-                    scripts.Add(new SpliterScript(this.ScriptsSplitString));
+                    scripts.Add(new SpliterScript(this.ScriptsDelimiter));
                 }
 
                 scripts.Add(new NewLineSript());

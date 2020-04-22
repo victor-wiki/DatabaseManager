@@ -36,11 +36,11 @@
             this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -92,63 +92,63 @@
             this.tsmiEmptyDatabase,
             this.tsmiDelete});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 202);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(173, 180);
             // 
             // tsmiRefresh
             // 
             this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(172, 22);
+            this.tsmiRefresh.Size = new System.Drawing.Size(180, 22);
             this.tsmiRefresh.Text = "Refresh";
             this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
             // 
             // tsmiViewData
             // 
             this.tsmiViewData.Name = "tsmiViewData";
-            this.tsmiViewData.Size = new System.Drawing.Size(172, 22);
+            this.tsmiViewData.Size = new System.Drawing.Size(180, 22);
             this.tsmiViewData.Text = "View Data";
             this.tsmiViewData.Click += new System.EventHandler(this.tsmiViewData_Click);
             // 
             // tsmiConvert
             // 
             this.tsmiConvert.Name = "tsmiConvert";
-            this.tsmiConvert.Size = new System.Drawing.Size(172, 22);
+            this.tsmiConvert.Size = new System.Drawing.Size(180, 22);
             this.tsmiConvert.Text = "Convert";
             this.tsmiConvert.Click += new System.EventHandler(this.tsmiConvert_Click);
+            // 
+            // tsmiTranslate
+            // 
+            this.tsmiTranslate.Name = "tsmiTranslate";
+            this.tsmiTranslate.Size = new System.Drawing.Size(172, 22);
+            this.tsmiTranslate.Text = "Translate";
+            this.tsmiTranslate.MouseEnter += new System.EventHandler(this.tsmiTranslate_MouseEnter);
             // 
             // tsmiGenerateScripts
             // 
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
-            this.tsmiGenerateScripts.Size = new System.Drawing.Size(172, 22);
+            this.tsmiGenerateScripts.Size = new System.Drawing.Size(180, 22);
             this.tsmiGenerateScripts.Text = "Generate Scripts";
             this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
             // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(172, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
             this.tsmiClearData.Text = "Clear Data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(172, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
             // tsmiDelete
             // 
             this.tsmiDelete.Name = "tsmiDelete";
-            this.tsmiDelete.Size = new System.Drawing.Size(172, 22);
+            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
             this.tsmiDelete.Text = "Delete";
             this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
-            // 
-            // tsmiTranslate
-            // 
-            this.tsmiTranslate.Name = "tsmiTranslate";
-            this.tsmiTranslate.Size = new System.Drawing.Size(180, 22);
-            this.tsmiTranslate.Text = "Translate";           
-            this.tsmiTranslate.MouseEnter += new System.EventHandler(this.tsmiTranslate_MouseEnter);
             // 
             // UC_DbObjectsComplexTree
             // 
