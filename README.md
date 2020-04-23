@@ -6,11 +6,11 @@
  * Copy table data (support bulkcopy).
 
 ### SQL Query Editor
-  Execute custom select, insert, update, delete clauses and so on.
+  Execute custom select, insert, update, delete, create and alter statements.
  
 ### Generate Scripts
-  * Generate scripts of create database objects.
-  * Generate scripts of insert data to tables.
+  * Generate database objects create scripts.
+  * Generate table insert data scripts.
   
 ### Translate
    Translate scripts of one database object to another. Compared to convert, this doesn't need connection to target databse.
