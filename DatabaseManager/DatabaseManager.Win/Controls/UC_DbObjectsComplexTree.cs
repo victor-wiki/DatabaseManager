@@ -790,13 +790,21 @@ namespace DatabaseManager.Controls
             {
                 TreeNode treeNode = e.Item as TreeNode;
 
-                if(treeNode!=null && treeNode.Tag is DatabaseObject)
+                if (treeNode != null && treeNode.Tag is DatabaseObject)
                 {
+                    string text = treeNode.Text;
+                    int index = text.IndexOf('(');
+
+                    if (index > 0)
+                    {
+                        text = text.Substring(0, index);
+                    }
+
                     DbInterpreter dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(treeNode).Name);
 
-                    DoDragDrop(dbInterpreter.GetQuotedString(treeNode.Text), DragDropEffects.Move);
-                }               
+                    DoDragDrop(dbInterpreter.GetQuotedString(text.Trim()), DragDropEffects.Move);
+                }
             }
-        }       
+        }
     }
 }
