@@ -28,7 +28,10 @@
 ![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=1)
 
 ## UI - Convert Database
-![Convert database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
+![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
+
+## UI - Generate Scripts
+![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=1)
 
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=1)
