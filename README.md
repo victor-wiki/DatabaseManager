@@ -4,6 +4,9 @@
 ### Convert Database
  * Convert database objects (table, function, view, procedure, trigger).
  * Copy table data (support bulkcopy).
+
+### SQL Query
+  Execute custom select, insert, update, delete clauses and so on.
  
 ### Generate Scripts
   * Generate scripts of create database objects.
