@@ -48,7 +48,7 @@ namespace DatabaseManager.Controls
             }
 
             page.Tag = info;
-            page.BackColor = Color.White;
+            page.BackColor = Color.Transparent;
 
             this.SetTabPageContent(info, page);
         }

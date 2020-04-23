@@ -48,6 +48,7 @@
             // 
             this.tvDbObjects.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tvDbObjects.Font = new System.Drawing.Font("Times New Roman", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tvDbObjects.HideSelection = false;
             this.tvDbObjects.ImageIndex = 0;
             this.tvDbObjects.ImageList = this.imageList1;
             this.tvDbObjects.Location = new System.Drawing.Point(0, 0);
@@ -58,6 +59,7 @@
             this.tvDbObjects.TabIndex = 20;
             this.tvDbObjects.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.tvDbObjects_BeforeExpand);
             this.tvDbObjects.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.tvDbObjects_AfterExpand);
+            this.tvDbObjects.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.tvDbObjects_ItemDrag);
             this.tvDbObjects.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvDbObjects_NodeMouseClick);
             this.tvDbObjects.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tvDbObjects_KeyDown);
             // 
@@ -97,21 +99,21 @@
             // tsmiRefresh
             // 
             this.tsmiRefresh.Name = "tsmiRefresh";
-            this.tsmiRefresh.Size = new System.Drawing.Size(180, 22);
+            this.tsmiRefresh.Size = new System.Drawing.Size(172, 22);
             this.tsmiRefresh.Text = "Refresh";
             this.tsmiRefresh.Click += new System.EventHandler(this.tsmiRefresh_Click);
             // 
             // tsmiViewData
             // 
             this.tsmiViewData.Name = "tsmiViewData";
-            this.tsmiViewData.Size = new System.Drawing.Size(180, 22);
+            this.tsmiViewData.Size = new System.Drawing.Size(172, 22);
             this.tsmiViewData.Text = "View Data";
             this.tsmiViewData.Click += new System.EventHandler(this.tsmiViewData_Click);
             // 
             // tsmiConvert
             // 
             this.tsmiConvert.Name = "tsmiConvert";
-            this.tsmiConvert.Size = new System.Drawing.Size(180, 22);
+            this.tsmiConvert.Size = new System.Drawing.Size(172, 22);
             this.tsmiConvert.Text = "Convert";
             this.tsmiConvert.Click += new System.EventHandler(this.tsmiConvert_Click);
             // 
@@ -125,28 +127,28 @@
             // tsmiGenerateScripts
             // 
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
-            this.tsmiGenerateScripts.Size = new System.Drawing.Size(180, 22);
+            this.tsmiGenerateScripts.Size = new System.Drawing.Size(172, 22);
             this.tsmiGenerateScripts.Text = "Generate Scripts";
             this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
             // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(172, 22);
             this.tsmiClearData.Text = "Clear Data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(172, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
             // tsmiDelete
             // 
             this.tsmiDelete.Name = "tsmiDelete";
-            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDelete.Size = new System.Drawing.Size(172, 22);
             this.tsmiDelete.Text = "Delete";
             this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
             // 

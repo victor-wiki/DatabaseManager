@@ -22,6 +22,7 @@ namespace DatabaseInterpreter.Core
         public override string CommandParameterChar { get { return ":"; } }
         public override char QuotationLeftChar { get { return '"'; } }
         public override char QuotationRightChar { get { return '"'; } }
+        public override string CommentString => "--";
         public override DatabaseType DatabaseType { get { return DatabaseType.Oracle; } }
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
@@ -892,10 +893,10 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             return "(SELECT 0 FROM DUAL)";
         }
 
-        public override string GetLimitClause(int limitCount)
+        public override string GetLimitStatement(int limitStart, int limitCount)
         {
-            return $"OFFSET 0 ROWS FETCH NEXT {limitCount} ROWS ONLY";
-        }
+            return $"OFFSET {limitStart} ROWS FETCH NEXT {limitCount} ROWS ONLY";
+        }        
 
         protected override bool NeedInsertParameter(TableColumn column, object value)
         {

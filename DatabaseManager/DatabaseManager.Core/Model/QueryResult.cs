@@ -5,6 +5,7 @@
         public QueryResultType ResultType { get; set; }
         public object Result;   
         public bool HasError { get; set; }
+        public bool DoNothing { get; set; }
     }
 
     public enum QueryResultType

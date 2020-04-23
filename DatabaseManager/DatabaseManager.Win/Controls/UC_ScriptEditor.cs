@@ -12,24 +12,28 @@ using DatabaseManager.Core;
 using DatabaseManager.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Helper;
+using DatabaseInterpreter.Core;
 
 namespace DatabaseManager.Controls
 {
     public partial class UC_ScriptEditor : UserControl, IDbObjContentDisplayer, IObserver<FeedbackInfo>
     {
-        private ScriptRunner scriptRunner;     
-        private RichTextBox resultTextbox;
-        private UC_DataGridView resultGridView;
+        private DatabaseObjectDisplayInfo displayInfo;
+        private ScriptRunner scriptRunner;
 
         public UC_ScriptEditor()
         {
             InitializeComponent();
-        }
+
+            this.SetResultPanelVisible(false);             
+        }   
 
         public RichTextBox Editor => this.txtEditor;
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
+            this.displayInfo = displayInfo;
+
             this.txtEditor.Clear();
 
             if (!string.IsNullOrEmpty(displayInfo.Content))
@@ -65,33 +69,65 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            this.SetControlVisible(result.ResultType);
-
-            if (result.HasError)
+            if (result.DoNothing)
             {
-                this.CheckCreateResultTextBox();
-                this.resultTextbox.Clear();
+                this.tabResult.SelectedIndex = 1;
+
+                this.AppendMessage("Nothing can be done.");
+            }
+            else if (result.HasError)
+            {
+                this.tabResult.SelectedIndex = 1;
 
                 this.AppendMessage(result.Result?.ToString(), true);
             }
             else
             {
+                int selectedTabIndex = -1;
+
                 if (result.ResultType == QueryResultType.Grid)
                 {
-                    this.CheckCreateDataGridView();
+                    DataTable dataTable = result.Result as DataTable;
 
-                    this.resultGridView.LoadData(result.Result as DataTable);
+                    if (dataTable != null && dataTable.Rows.Count > 0)
+                    {
+                        selectedTabIndex = 0;
+                       
+                        this.resultGridView.LoadData(dataTable);
+                    }
                 }
                 else if (result.ResultType == QueryResultType.Text)
                 {
-                    this.CheckCreateResultTextBox();
-                    this.resultTextbox.Clear();
+                    selectedTabIndex = 1;            
 
-                    this.AppendMessage("command executed.");
-                }               
+                    if (this.resultTextBox.Text.Length == 0)
+                    {
+                        bool appended = false;
+
+                        if (result.Result is int affectedRows)
+                        {
+                            if (affectedRows >= 0)
+                            {
+                                appended = true;
+
+                                this.AppendMessage($"{affectedRows} row(s) affected.");
+                            }
+                        }
+
+                        if(!appended)
+                        {
+                            this.AppendMessage("command executed.");
+                        }                       
+                    }
+                }
+
+                if (selectedTabIndex >= 0)
+                {
+                    this.tabResult.SelectedIndex = selectedTabIndex;
+                }
             }
 
-            this.splitContainer1.Panel2Collapsed = false;
+            this.SetResultPanelVisible(true);
         }
 
         public async void RunScripts(DatabaseObjectDisplayInfo data)
@@ -101,12 +137,9 @@ namespace DatabaseManager.Controls
             if (script.Trim().Length == 0)
             {
                 return;
-            }
+            }         
 
-            if (this.resultTextbox != null)
-            {
-                this.resultTextbox.Clear();
-            }
+            this.ClearResults();           
 
             this.scriptRunner = new ScriptRunner() { DelimiterRelaceChars = "\r" };
             this.scriptRunner.Subscribe(this);
@@ -154,48 +187,17 @@ namespace DatabaseManager.Controls
             }));
         }
 
-        private void CheckCreateResultTextBox()
+        private void ClearResults()
         {
-            if (this.resultTextbox == null)
-            {
-                this.resultTextbox = new RichTextBox();
-                this.resultTextbox.Dock = DockStyle.Fill;
-
-                this.splitContainer1.Panel2.Controls.Add(this.resultTextbox);
-            }
-        }
-
-        private void CheckCreateDataGridView()
-        {
-            if (this.resultGridView == null)
-            {
-                this.resultGridView = new UC_DataGridView();
-                this.resultGridView.Dock = DockStyle.Fill;
-
-                this.splitContainer1.Panel2.Controls.Add(this.resultGridView);
-            }
-        }
-
-        private void SetControlVisible(QueryResultType resultType)
-        {
-            if (this.resultTextbox != null)
-            {
-                this.resultTextbox.Visible = resultType == QueryResultType.Text;
-            }
-
-            if (this.resultGridView != null)
-            {
-                this.resultGridView.Visible = resultType == QueryResultType.Grid;
-            }
+            this.resultTextBox.Clear();
+            this.resultGridView.ClearData();           
         }
 
         private void AppendMessage(string message, bool isError = false)
         {
-            this.CheckCreateResultTextBox();
+            RichTextBoxHelper.AppendMessage(this.resultTextBox, message, isError, false);
 
-            RichTextBoxHelper.AppendMessage(this.resultTextbox, message, isError, false);
-
-            this.splitContainer1.Panel2Collapsed = false;
+            this.SetResultPanelVisible(true);
         }
 
         private void txtEditor_KeyDown(object sender, KeyEventArgs e)
@@ -207,6 +209,42 @@ namespace DatabaseManager.Controls
                     FormEventCenter.OnRunScripts();
                 }
             }
+        }
+
+        private void tsmiPaste_Click(object sender, EventArgs e)
+        {
+            this.txtEditor.Paste();
+        }
+
+        private void txtEditor_MouseClick(object sender, MouseEventArgs e)
+        {
+            this.ShowCurrentPosition();
+        }
+
+        private void SetResultPanelVisible(bool visible)
+        {
+            this.splitContainer1.Panel2Collapsed = !visible;
+            this.splitContainer1.SplitterWidth = visible ? 3 : 1;
+        }
+
+        private void ShowCurrentPosition()
+        {
+            if (this.txtEditor.SelectionStart >= 0)
+            {
+                int lineIndex = this.txtEditor.GetLineFromCharIndex(this.txtEditor.SelectionStart);
+                int column = this.txtEditor.SelectionStart - this.txtEditor.GetFirstCharIndexOfCurrentLine() + 1;
+
+                this.tsslMessage.Text = $"Line:{lineIndex + 1}  Column:{column}";
+            }
+            else
+            {
+                this.tsslMessage.Text = "";
+            }
+        }
+
+        private void txtEditor_KeyUp(object sender, KeyEventArgs e)
+        {
+            this.ShowCurrentPosition();
         }
     }
 }

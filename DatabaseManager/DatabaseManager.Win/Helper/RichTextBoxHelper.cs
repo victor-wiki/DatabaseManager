@@ -25,9 +25,10 @@ namespace DatabaseManager.Helper
             richTextBox.Select(start, richTextBox.Text.Length - start);
             richTextBox.SelectionColor = isError ? Color.Red : Color.Black;
 
-            if(scrollToCaret)
-            {
-                richTextBox.SelectionStart = richTextBox.TextLength;
+            richTextBox.SelectionStart = richTextBox.TextLength;
+
+            if (scrollToCaret)
+            {               
                 richTextBox.ScrollToCaret();
             }         
         }

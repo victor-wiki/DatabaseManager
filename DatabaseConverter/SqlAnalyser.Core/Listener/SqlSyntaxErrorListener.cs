@@ -14,10 +14,10 @@ namespace SqlAnalyser.Core
 
         public override void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
         {
-            if(this.Error==null)
+            if (this.Error == null)
             {
                 this.Error = new SqlSyntaxError();
-            }           
+            }
 
             if (offendingSymbol is CommonToken token)
             {
@@ -26,7 +26,7 @@ namespace SqlAnalyser.Core
                 errorItem.StartIndex = token.StartIndex;
                 errorItem.StopIndex = token.StopIndex;
                 errorItem.Line = token.Line;
-                errorItem.Column = token.Column;
+                errorItem.Column = token.Column + 1;
                 errorItem.Text = token.Text;
 
                 this.Error.Items.Add(errorItem);

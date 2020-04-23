@@ -44,16 +44,26 @@ namespace DatabaseManager.Core
 
             QueryResult result = new QueryResult();
 
-            DbInterpreterOption option = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs = true };
+            DbInterpreterOption option = new DbInterpreterOption() { RequireInfoMessage = true };
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
 
+            dbInterpreter.Subscribe(this.observer);
+
             try
             {
+                ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);
+
+                script = scriptParser.Parse();
+
+                if(string.IsNullOrEmpty(script))
+                {
+                    result.DoNothing = true;
+                    return result;
+                }
+
                 using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
-                    ScriptParser scriptParser = new ScriptParser(script);
-
                     if (scriptParser.IsSelect())
                     {
                         this.isBusy = true;
@@ -90,6 +100,11 @@ namespace DatabaseManager.Core
 
                         foreach (string command in commands)
                         {
+                            if(string.IsNullOrEmpty(command.Trim()))
+                            {
+                                continue;
+                            }
+
                             CommandInfo commandInfo = new CommandInfo()
                             {
                                 CommandType = CommandType.Text,

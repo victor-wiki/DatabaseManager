@@ -21,6 +21,7 @@ namespace DatabaseInterpreter.Core
         public override DatabaseType DatabaseType { get { return DatabaseType.SqlServer; } }
         public override bool SupportBulkCopy { get { return true; } }
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
+        public override string CommentString => "--";
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };
         #endregion
 
@@ -453,7 +454,7 @@ namespace DatabaseInterpreter.Core
         }
 
         private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
-        {
+        {           
             SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, SqlBulkCopyOptions.Default, bulkCopyInfo.Transaction as SqlTransaction);
 
             await this.OpenConnectionAsync(connection);
@@ -887,10 +888,32 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             return $"CAST({"0x" + hex} AS {dataType})";
         }
 
-        public override string GetLimitClause(int limitCount)
+        public override string GetLimitStatement(int limitStart, int limitCount)
         {
-            return $"OFFSET 0 ROWS FETCH NEXT {limitCount} ROWS ONLY";
+            return $"OFFSET {limitStart} ROWS FETCH NEXT {limitCount} ROWS ONLY";
         }
-        #endregion       
+
+        protected override void SubscribeInfoMessage(DbConnection dbConnection)
+        {
+            SqlConnection connection = dbConnection as SqlConnection;             
+            connection.InfoMessage += SqlConnection_InfoMessage;
+        }
+
+        private void SqlConnection_InfoMessage(object sender, SqlInfoMessageEventArgs e)
+        {
+            this.FeedbackInfo(e.Message);
+        }
+
+        protected override void SubscribeInfoMessage(DbCommand dbCommand)
+        {
+            SqlCommand command = dbCommand as SqlCommand;
+            command.StatementCompleted += Command_StatementCompleted;
+        }
+
+        private void Command_StatementCompleted(object sender, StatementCompletedEventArgs e)
+        {
+            this.FeedbackInfo($"{e.RecordCount} row(s) affected.");
+        }      
+        #endregion
     }
 }

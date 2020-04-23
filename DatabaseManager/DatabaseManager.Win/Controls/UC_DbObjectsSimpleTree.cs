@@ -26,7 +26,8 @@ namespace DatabaseManager.Controls
         {
             this.tvDbObjects.Nodes.Clear();
 
-            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
+            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };          
+
             DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
 
             databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;

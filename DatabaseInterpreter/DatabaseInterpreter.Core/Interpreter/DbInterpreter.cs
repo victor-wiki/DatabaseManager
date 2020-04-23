@@ -23,6 +23,7 @@ namespace DatabaseInterpreter.Core
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsDelimiter => ";";
+        public abstract string CommentString { get; }
         public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
         public bool NotCreateIfExists => SettingManager.Setting.NotCreateIfExists;
         public DbObjectNameMode DbObjectNameMode => SettingManager.Setting.DbObjectNameMode;
@@ -56,8 +57,18 @@ namespace DatabaseInterpreter.Core
 
         public DbConnection CreateConnection()
         {
-            return this.dbConnector.CreateConnection();
+            DbConnection dbConnection = this.dbConnector.CreateConnection();
+
+            if(this.Option.RequireInfoMessage)
+            {
+                this.SubscribeInfoMessage(dbConnection);
+            }
+
+            return dbConnection;
         }
+
+        protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
+        protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
 
         public async Task OpenConnectionAsync(DbConnection connection)
         {
@@ -156,6 +167,11 @@ namespace DatabaseInterpreter.Core
                 }
                 catch (Exception ex)
                 {
+                    if (this.Option.ThrowExceptionWhenErrorOccurs)
+                    {
+                        throw ex;
+                    }
+
                     this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
                 }
             }
@@ -412,7 +428,12 @@ namespace DatabaseInterpreter.Core
             DbCommand command = dbConnection.CreateCommand();
             command.CommandType = commandInfo.CommandType;
             command.CommandText = commandInfo.CommandText;
-            command.CommandTimeout = SettingManager.Setting.CommandTimeout;
+            command.CommandTimeout = SettingManager.Setting.CommandTimeout;  
+            
+            if(this.Option.RequireInfoMessage)
+            {
+                this.SubscribeInfoMessage(command);
+            }
 
             if (commandInfo.Transaction != null)
             {
@@ -508,14 +529,7 @@ namespace DatabaseInterpreter.Core
         {
             if (limitCount > 0)
             {
-                sql = sql.TrimEnd(';');
-
-                if(!Regex.IsMatch(sql, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
-                {
-                    sql += Environment.NewLine + "ORDER BY " +this.GetDefaultOrder();
-                }
-
-                sql +=  Environment.NewLine + this.GetLimitClause(limitCount.Value);
+                sql = this.AppendLimitClause(sql, limitCount.Value);
             }
 
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
@@ -524,6 +538,34 @@ namespace DatabaseInterpreter.Core
             table.Load(reader);
 
             return table;
+        }
+
+        protected string AppendLimitClause(string sql, int limitCount)
+        {
+            sql = sql.TrimEnd(';');
+
+            int index = sql.LastIndexOf(')');
+
+            string select = index > 0 ? sql.Substring(index + 1) : sql;
+
+            if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
+            {
+                sql += Environment.NewLine + "ORDER BY " + this.GetDefaultOrder();
+            }
+
+            if (this.DatabaseType == DatabaseType.SqlServer)
+            {
+                if (!Regex.IsMatch(select, @"SELECT[\s]+TOP[\s]+", RegexOptions.IgnoreCase))
+                {
+                    sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
+                }
+            }
+            else
+            {
+                sql += Environment.NewLine + this.GetLimitStatement(0, limitCount);
+            }
+
+            return sql;
         }
 
         public abstract Task SetConstrainsEnabled(bool enabled);
@@ -640,7 +682,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Generate Scripts     
-        public virtual string GetLimitClause(int limitCount) { return string.Empty; }
+        public virtual string GetLimitStatement(int limitStart, int limitCount) { return string.Empty; }
         public virtual string GetDefaultOrder() { return string.Empty; }
         public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo);
         public abstract string ParseColumn(Table table, TableColumn column);

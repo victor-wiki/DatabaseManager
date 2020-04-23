@@ -85,6 +85,8 @@ namespace DatabaseConverter.Core
             }
 
             sourceInterpreter.Option.GetTableAllObjects = false;
+            sourceInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
+            this.Target.DbInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
 
@@ -168,7 +170,8 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            DbInterpreter targetInterpreter = this.Target.DbInterpreter;
+            DbInterpreter targetInterpreter = this.Target.DbInterpreter;          
+
             bool generateIdentity = targetInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity;
 
             if (generateIdentity)

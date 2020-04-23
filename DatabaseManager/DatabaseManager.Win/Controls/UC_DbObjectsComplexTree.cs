@@ -53,6 +53,11 @@ namespace DatabaseManager.Controls
 
                 this.tvDbObjects.Nodes.Add(node);
             }
+
+            if (this.tvDbObjects.Nodes.Count == 1)
+            {
+                this.tvDbObjects.SelectedNode = this.tvDbObjects.Nodes[0];
+            }
         }
 
         public void ClearNodes()
@@ -142,7 +147,11 @@ namespace DatabaseManager.Controls
         private DbInterpreter GetDbInterpreter(string database, bool isSimpleMode = true)
         {
             ConnectionInfo connectionInfo = this.GetConnectionInfo(database);
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, isSimpleMode ? simpleInterpreterOption : new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Details });
+
+            DbInterpreterOption option = isSimpleMode ? simpleInterpreterOption : new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Details };
+            option.ThrowExceptionWhenErrorOccurs = false;
+
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, option);
             return dbInterpreter;
         }
 
@@ -774,5 +783,20 @@ namespace DatabaseManager.Controls
                 this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error });
             }
         }
+
+        private void tvDbObjects_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                TreeNode treeNode = e.Item as TreeNode;
+
+                if(treeNode!=null && treeNode.Tag is DatabaseObject)
+                {
+                    DbInterpreter dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(treeNode).Name);
+
+                    DoDragDrop(dbInterpreter.GetQuotedString(treeNode.Text), DragDropEffects.Move);
+                }               
+            }
+        }       
     }
 }

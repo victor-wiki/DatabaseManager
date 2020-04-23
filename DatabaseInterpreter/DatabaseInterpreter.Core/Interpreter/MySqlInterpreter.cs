@@ -17,6 +17,7 @@ namespace DatabaseInterpreter.Core
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '`'; } }
         public override char QuotationRightChar { get { return '`'; } }
+        public override string CommentString => "#";
         public override DatabaseType DatabaseType { get { return DatabaseType.MySql; } }
         public int NameMaxLength => 64;
         public int KeyIndexColumnMaxLength => 500;
@@ -802,16 +803,16 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
             return "1";
         }
 
-        public override string GetLimitClause(int limitCount)
+        public override string GetLimitStatement(int limitStart, int limitCount)
         {
-            return $"LIMIT 0, {limitCount}";
+            return $"LIMIT {limitStart}, {limitCount}";
         }
 
         protected override string GetBytesConvertHexString(object value, string dataType)
         {
             string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
             return $"UNHEX('{hex}')";
-        }
+        }       
         #endregion       
     }
 }
