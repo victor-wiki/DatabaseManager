@@ -542,28 +542,31 @@ namespace DatabaseInterpreter.Core
 
         protected string AppendLimitClause(string sql, int limitCount)
         {
-            sql = sql.TrimEnd(';');
+            sql = sql.TrimEnd(';', '\r', '\n');
 
             int index = sql.LastIndexOf(')');
 
             string select = index > 0 ? sql.Substring(index + 1) : sql;
 
-            if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
+            if(!Regex.IsMatch(select, @"(LIMIT|OFFSET)(.[\n]?)+",  RegexOptions.IgnoreCase))
             {
-                sql += Environment.NewLine + "ORDER BY " + this.GetDefaultOrder();
-            }
-
-            if (this.DatabaseType == DatabaseType.SqlServer)
-            {
-                if (!Regex.IsMatch(select, @"SELECT[\s]+TOP[\s]+", RegexOptions.IgnoreCase))
+                if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
                 {
-                    sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
+                    sql += Environment.NewLine + "ORDER BY " + this.GetDefaultOrder();
                 }
-            }
-            else
-            {
-                sql += Environment.NewLine + this.GetLimitStatement(0, limitCount);
-            }
+
+                if (this.DatabaseType == DatabaseType.SqlServer)
+                {
+                    if (!Regex.IsMatch(select, @"SELECT[\s]+TOP[\s]+", RegexOptions.IgnoreCase))
+                    {
+                        sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
+                    }
+                }
+                else
+                {
+                    sql += Environment.NewLine + this.GetLimitStatement(0, limitCount);
+                }
+            }           
 
             return sql;
         }
