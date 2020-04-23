@@ -6,7 +6,8 @@
     <Authors>victor-wiki</Authors>
     <PackageLicenseUrl />
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Description>Utility for libraries of the DatabaseManager project.</Description>
+    <Description>Utility for DatabaseManager projects.</Description>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
