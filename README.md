@@ -6,11 +6,11 @@
  * Copy table data (support bulkcopy).
 
 ### SQL Query Editor
-  Execute custom select, insert, update, delete clauses and so on.
+  Execute custom select, insert, update, delete, create and alter statements.
  
 ### Generate Scripts
-  * Generate scripts of create database objects.
-  * Generate scripts of insert data to tables.
+  * Generate database objects create scripts.
+  * Generate table insert data scripts.
   
 ### Translate
    Translate scripts of one database object to another. Compared to convert, this doesn't need connection to target databse.
@@ -28,7 +28,10 @@
 ![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=1)
 
 ## UI - Convert Database
-![Convert database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
+![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
+
+## UI - Generate Scripts
+![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=1)
 
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=1)
