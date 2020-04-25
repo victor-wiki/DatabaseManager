@@ -48,36 +48,50 @@ namespace DatabaseManager.Controls
             }
 
             page.Tag = info;
+
             page.BackColor = Color.Transparent;
 
             this.SetTabPageContent(info, page);
+
+            this.SetTabPageTooltip(page);
+        }
+
+        private void SetTabPageTooltip(TabPage page)
+        {
+            DatabaseObjectDisplayInfo info = page.Tag as DatabaseObjectDisplayInfo;
+
+            if (info != null)
+            {
+                string database = info.ConnectionInfo == null ? "" : $@"\{info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
+                page.ToolTipText = $@"{info.DatabaseType}{database}";
+            }
         }
 
         private void SetTabPageContent(DatabaseObjectDisplayInfo info, TabPage tabPage)
         {
             if (info.DisplayType == DatabaseObjectDisplayType.Script)
             {
-                UC_ScriptEditor ucRichTextBox = this.GetUcControl<UC_ScriptEditor>(tabPage);
+                UC_SqlQuery sqlQuery = this.GetUcControl<UC_SqlQuery>(tabPage);
 
-                if (ucRichTextBox == null)
+                if (sqlQuery == null)
                 {
-                    ucRichTextBox = this.AddControlToTabPage<UC_ScriptEditor>(tabPage);
+                    sqlQuery = this.AddControlToTabPage<UC_SqlQuery>(tabPage);
                 }
 
-                ucRichTextBox.Show(info);
+                sqlQuery.Show(info);
 
-                if (!string.IsNullOrEmpty(ucRichTextBox.Editor.Text))
+                if (!string.IsNullOrEmpty(sqlQuery.Editor.Text))
                 {
-                    RichTextBoxHelper.Highlighting(ucRichTextBox.Editor, info.DatabaseType);
+                    RichTextBoxHelper.Highlighting(sqlQuery.Editor, info.DatabaseType, false);
 
                     if (info.Error != null)
                     {
-                        RichTextBoxHelper.HighlightingError(ucRichTextBox.Editor, info.Error);
+                        RichTextBoxHelper.HighlightingError(sqlQuery.Editor, info.Error);
                     }
                 }
                 else
                 {
-                    ucRichTextBox.Editor.Focus();
+                    sqlQuery.Editor.Focus();
                 }
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.Data)
@@ -422,9 +436,19 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            UC_ScriptEditor editor = this.GetUcControl<UC_ScriptEditor>(tabPage);
+            UC_SqlQuery sqlQuery = this.GetUcControl<UC_SqlQuery>(tabPage);
 
-            editor.RunScripts(data);
+            sqlQuery.RunScripts(data);
+        }
+
+        private void tabControl1_MouseHover(object sender, EventArgs e)
+        {
+            TabPage tabPage = this.tabControl1.SelectedTab;
+
+            if (tabPage != null)
+            {
+                this.SetTabPageTooltip(tabPage);
+            }
         }
     }
 }

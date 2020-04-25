@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager.Controls
 {
-    partial class UC_ScriptEditor
+    partial class UC_SqlQuery
     {
         /// <summary> 
         /// 必需的设计器变量。
@@ -28,11 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.txtEditor = new System.Windows.Forms.RichTextBox();
-            this.editorContexMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiPaste = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabResult = new System.Windows.Forms.TabControl();
             this.tabPageData = new System.Windows.Forms.TabPage();
@@ -40,8 +35,8 @@
             this.resultTextBox = new System.Windows.Forms.RichTextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
-            this.resultGridView = new DatabaseManager.Controls.UC_DataGridView();
-            this.editorContexMenu.SuspendLayout();
+            this.resultGridView = new DatabaseManager.Controls.UC_QueryResultGrid();
+            this.queryEditor = new DatabaseManager.Controls.UC_QueryEditor();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -51,46 +46,6 @@
             this.tabPageMessage.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // txtEditor
-            // 
-            this.txtEditor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtEditor.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtEditor.EnableAutoDragDrop = true;
-            this.txtEditor.Font = new System.Drawing.Font("宋体", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.txtEditor.HideSelection = false;
-            this.txtEditor.Location = new System.Drawing.Point(0, 0);
-            this.txtEditor.Margin = new System.Windows.Forms.Padding(0);
-            this.txtEditor.Name = "txtEditor";
-            this.txtEditor.Size = new System.Drawing.Size(432, 331);
-            this.txtEditor.TabIndex = 0;
-            this.txtEditor.Text = "";
-            this.txtEditor.MouseClick += new System.Windows.Forms.MouseEventHandler(this.txtEditor_MouseClick);
-            this.txtEditor.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtEditor_KeyDown);
-            this.txtEditor.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtEditor_KeyUp);
-            this.txtEditor.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtEditor_MouseUp);
-            // 
-            // editorContexMenu
-            // 
-            this.editorContexMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCopy,
-            this.tsmiPaste});
-            this.editorContexMenu.Name = "contextMenuStrip1";
-            this.editorContexMenu.Size = new System.Drawing.Size(108, 48);
-            // 
-            // tsmiCopy
-            // 
-            this.tsmiCopy.Name = "tsmiCopy";
-            this.tsmiCopy.Size = new System.Drawing.Size(107, 22);
-            this.tsmiCopy.Text = "Copy";
-            this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
-            // 
-            // tsmiPaste
-            // 
-            this.tsmiPaste.Name = "tsmiPaste";
-            this.tsmiPaste.Size = new System.Drawing.Size(107, 22);
-            this.tsmiPaste.Text = "Paste";
-            this.tsmiPaste.Click += new System.EventHandler(this.tsmiPaste_Click);
             // 
             // splitContainer1
             // 
@@ -103,7 +58,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.txtEditor);
+            this.splitContainer1.Panel1.Controls.Add(this.queryEditor);
             // 
             // splitContainer1.Panel2
             // 
@@ -186,16 +141,23 @@
             this.resultGridView.Size = new System.Drawing.Size(424, 48);
             this.resultGridView.TabIndex = 0;
             // 
-            // UC_ScriptEditor
+            // queryEditor
+            // 
+            this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.queryEditor.Location = new System.Drawing.Point(0, 0);
+            this.queryEditor.Name = "queryEditor";
+            this.queryEditor.Size = new System.Drawing.Size(432, 331);
+            this.queryEditor.TabIndex = 0;
+            // 
+            // UC_SqlQuery
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.splitContainer1);
             this.Margin = new System.Windows.Forms.Padding(0);
-            this.Name = "UC_ScriptEditor";
+            this.Name = "UC_SqlQuery";
             this.Size = new System.Drawing.Size(432, 431);
-            this.editorContexMenu.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -211,18 +173,14 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.RichTextBox txtEditor;
-        private System.Windows.Forms.ContextMenuStrip editorContexMenu;
-        private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.ToolStripMenuItem tsmiPaste;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel tsslMessage;
         private System.Windows.Forms.TabControl tabResult;
         private System.Windows.Forms.TabPage tabPageMessage;
         private System.Windows.Forms.TabPage tabPageData;
         private System.Windows.Forms.RichTextBox resultTextBox;
-        private UC_DataGridView resultGridView;
+        private UC_QueryResultGrid resultGridView;
+        private UC_QueryEditor queryEditor;
     }
 }

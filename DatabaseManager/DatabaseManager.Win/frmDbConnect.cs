@@ -15,6 +15,7 @@ namespace DatabaseManager
     {
         public DatabaseType DatabaseType { get; set; }
         public string ProflieName { get; set; }
+        public bool NotUseProfile { get; set; }
 
         public ConnectionInfo ConnectionInfo { get; set; }
 
@@ -49,15 +50,23 @@ namespace DatabaseManager
             this.ucDbAccountInfo.DatabaseType = this.DatabaseType;
             this.ucDbAccountInfo.InitControls();
 
-            if (string.IsNullOrEmpty(this.ProflieName))
+            if(!this.NotUseProfile)
             {
-                this.txtProfileName.Text = "";
+                if (string.IsNullOrEmpty(this.ProflieName))
+                {
+                    this.txtProfileName.Text = "";
+                }
+                else
+                {
+                    this.txtProfileName.Text = this.ProflieName.ToString();
+                    this.LoadProfile();
+                }
             }
             else
             {
-                this.txtProfileName.Text = this.ProflieName.ToString();
-                this.LoadProfile();
-            }
+                this.lblProfileName.Visible = false;
+                this.txtProfileName.Visible = false;
+            }           
         }
 
         private void LoadProfile()
@@ -120,34 +129,38 @@ namespace DatabaseManager
 
             this.ConnectionInfo = this.GetConnectionInfo();
 
-            IEnumerable<ConnectionProfileInfo> profiles = ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
-
-            if (!string.IsNullOrEmpty(profileName) && profiles.Any(item => item.Name == profileName))
+            if(!this.NotUseProfile)
             {
-                string msg = $"The profile name \"{profileName}\" has been existed";
-                if (this.isAdd)
-                {
-                    DialogResult dialogResult = MessageBox.Show(msg + ", are you sure to override it.", "Confirm", MessageBoxButtons.YesNo);
+                IEnumerable<ConnectionProfileInfo> profiles = ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
 
-                    if (dialogResult != DialogResult.Yes)
+                if (!string.IsNullOrEmpty(profileName) && profiles.Any(item => item.Name == profileName))
+                {
+                    string msg = $"The profile name \"{profileName}\" has been existed";
+                    if (this.isAdd)
                     {
-                        this.DialogResult = DialogResult.None;
+                        DialogResult dialogResult = MessageBox.Show(msg + ", are you sure to override it.", "Confirm", MessageBoxButtons.YesNo);
+
+                        if (dialogResult != DialogResult.Yes)
+                        {
+                            this.DialogResult = DialogResult.None;
+                            return;
+                        }
+                    }
+                    else if (!this.isAdd && this.ProflieName != profileName)
+                    {
+                        MessageBox.Show(msg + ", please edit that.");
                         return;
                     }
                 }
-                else if (!this.isAdd && this.ProflieName != profileName)
-                {
-                    MessageBox.Show(msg + ", please edit that.");
-                    return;
-                }
+
+                ConnectionProfileInfo profile = new ConnectionProfileInfo() { ConnectionInfo = this.ConnectionInfo };
+
+                profile.Name = profileName;
+                profile.DatabaseType = this.DatabaseType.ToString();
+
+                this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
             }
-
-            ConnectionProfileInfo profile = new ConnectionProfileInfo() { ConnectionInfo = this.ConnectionInfo };
-
-            profile.Name = profileName;
-            profile.DatabaseType = this.DatabaseType.ToString();
-
-            this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
+            
             this.DialogResult = DialogResult.OK;
         }
 

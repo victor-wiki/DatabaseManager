@@ -28,13 +28,15 @@ namespace DatabaseManager.Helper
             richTextBox.SelectionStart = richTextBox.TextLength;
 
             if (scrollToCaret)
-            {               
+            {
                 richTextBox.ScrollToCaret();
-            }         
+            }
         }
 
-        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType)
+        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true)
         {
+            int start = richTextBox.SelectionStart;
+
             var keywords = KeywordManager.GetKeywords(databaseType);
             var functions = FunctionManager.GetFunctionSpecifications(databaseType).Select(item => item.Name).Except(keywords);
 
@@ -46,7 +48,7 @@ namespace DatabaseManager.Helper
             Highlighting(richTextBox, functionsRegex, RegexOptions.IgnoreCase, ColorTranslator.FromHtml("#FF00FF"));
             Highlighting(richTextBox, stringRegex, RegexOptions.IgnoreCase, Color.Red);
 
-            richTextBox.SelectionStart = 0;
+            richTextBox.SelectionStart = keepPosition ? start : 0;
             richTextBox.SelectionLength = 0;
             richTextBox.Focus();
         }
@@ -67,7 +69,7 @@ namespace DatabaseManager.Helper
         {
             if (error is SqlSyntaxError sqlSyntaxError)
             {
-                foreach(SqlSyntaxErrorItem item in sqlSyntaxError.Items)
+                foreach (SqlSyntaxErrorItem item in sqlSyntaxError.Items)
                 {
                     int rowIndex = item.Line - 1;
 
@@ -77,8 +79,8 @@ namespace DatabaseManager.Helper
                     richTextBox.SelectionLength = item.Text.Length;
 
                     richTextBox.SelectionColor = Color.Red;
-                    richTextBox.SelectionBackColor = Color.Yellow;                       
-                }                            
+                    richTextBox.SelectionBackColor = Color.Yellow;
+                }
             }
 
             richTextBox.SelectionStart = 0;

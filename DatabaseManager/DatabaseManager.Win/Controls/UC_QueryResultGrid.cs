@@ -11,16 +11,16 @@ using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {
-    public partial class UC_DataGridView : UserControl
+    public partial class UC_QueryResultGrid : UserControl
     {
-        public UC_DataGridView()
+        public UC_QueryResultGrid()
         {
             InitializeComponent();
         }
 
         public void LoadData(DataTable dataTable)
         {
-            this.dgvData.DataSource = dataTable;           
+            this.dgvData.DataSource = dataTable;
         }
 
         public void ClearData()
@@ -72,6 +72,11 @@ namespace DatabaseManager.Controls
             this.dgvData.ClipboardCopyMode = mode;
 
             Clipboard.SetDataObject(this.dgvData.GetClipboardContent());
+        }
+
+        private void dgvData_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            this.dgvData.ClearSelection();
         }
     }
 }

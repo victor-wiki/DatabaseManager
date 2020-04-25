@@ -73,14 +73,14 @@
             this.imageList1.Images.SetKeyName(3, "tree_TableForeignKey.png");
             this.imageList1.Images.SetKeyName(4, "tree_Procedure.png");
             this.imageList1.Images.SetKeyName(5, "tree_View.png");
-            this.imageList1.Images.SetKeyName(6, "tree_Function.png");
-            this.imageList1.Images.SetKeyName(7, "tree_TableIndex.png");
-            this.imageList1.Images.SetKeyName(8, "tree_TableColumn.png");
-            this.imageList1.Images.SetKeyName(9, "tree_TablePrimaryKey.png");
-            this.imageList1.Images.SetKeyName(10, "tree_Table.png");
-            this.imageList1.Images.SetKeyName(11, "tree_TableConstraint.png");
-            this.imageList1.Images.SetKeyName(12, "tree_TableTrigger.png");
-            this.imageList1.Images.SetKeyName(13, "Loading.gif");
+            this.imageList1.Images.SetKeyName(6, "tree_TableIndex.png");
+            this.imageList1.Images.SetKeyName(7, "tree_TableColumn.png");
+            this.imageList1.Images.SetKeyName(8, "tree_TablePrimaryKey.png");
+            this.imageList1.Images.SetKeyName(9, "tree_Table.png");
+            this.imageList1.Images.SetKeyName(10, "tree_TableConstraint.png");
+            this.imageList1.Images.SetKeyName(11, "tree_TableTrigger.png");
+            this.imageList1.Images.SetKeyName(12, "Loading.gif");
+            this.imageList1.Images.SetKeyName(13, "tree_Function.png");
             // 
             // contextMenuStrip1
             // 

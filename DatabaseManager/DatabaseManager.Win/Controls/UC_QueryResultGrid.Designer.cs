@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager.Controls
 {
-    partial class UC_DataGridView
+    partial class UC_QueryResultGrid
     {
         /// <summary> 
         /// 必需的设计器变量。
@@ -32,10 +32,10 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvData = new System.Windows.Forms.DataGridView();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
-            this.dlgSave = new System.Windows.Forms.SaveFileDialog();
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
+            this.dlgSave = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -63,6 +63,7 @@
             this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgvData.Size = new System.Drawing.Size(564, 232);
             this.dgvData.TabIndex = 6;
+            this.dgvData.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvData_DataBindingComplete);
             this.dgvData.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvData_MouseUp);
             // 
             // contextMenuStrip1
@@ -73,17 +74,6 @@
             this.tsmiSave});
             this.contextMenuStrip1.Name = "contextMenuStrip2";
             this.contextMenuStrip1.Size = new System.Drawing.Size(179, 70);
-            // 
-            // tsmiSave
-            // 
-            this.tsmiSave.Name = "tsmiSave";
-            this.tsmiSave.Size = new System.Drawing.Size(178, 22);
-            this.tsmiSave.Text = "Save";
-            this.tsmiSave.Click += new System.EventHandler(this.tsmiSave_Click);
-            // 
-            // dlgSave
-            // 
-            this.dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
             // 
             // tsmiCopy
             // 
@@ -99,12 +89,23 @@
             this.tsmiCopyWithHeader.Text = "Copy with header";
             this.tsmiCopyWithHeader.Click += new System.EventHandler(this.tsmiCopyWithHeader_Click);
             // 
-            // UC_DataGridView
+            // tsmiSave
+            // 
+            this.tsmiSave.Name = "tsmiSave";
+            this.tsmiSave.Size = new System.Drawing.Size(178, 22);
+            this.tsmiSave.Text = "Save";
+            this.tsmiSave.Click += new System.EventHandler(this.tsmiSave_Click);
+            // 
+            // dlgSave
+            // 
+            this.dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
+            // 
+            // UC_QueryResultGrid
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.dgvData);
-            this.Name = "UC_DataGridView";
+            this.Name = "UC_QueryResultGrid";
             this.Size = new System.Drawing.Size(564, 232);
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);

@@ -31,7 +31,7 @@
             this.btnConfirm = new System.Windows.Forms.Button();
             this.lblDatabase = new System.Windows.Forms.Label();
             this.cboDatabase = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblProfileName = new System.Windows.Forms.Label();
             this.txtProfileName = new System.Windows.Forms.TextBox();
             this.btnCancel = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
@@ -68,14 +68,14 @@
             this.cboDatabase.TabIndex = 7;
             this.cboDatabase.SelectedIndexChanged += new System.EventHandler(this.cboDatabase_SelectedIndexChanged);
             // 
-            // label1
+            // lblProfileName
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(15, 238);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(83, 12);
-            this.label1.TabIndex = 16;
-            this.label1.Text = "Profile name:";
+            this.lblProfileName.AutoSize = true;
+            this.lblProfileName.Location = new System.Drawing.Point(15, 238);
+            this.lblProfileName.Name = "lblProfileName";
+            this.lblProfileName.Size = new System.Drawing.Size(83, 12);
+            this.lblProfileName.TabIndex = 16;
+            this.lblProfileName.Text = "Profile name:";
             // 
             // txtProfileName
             // 
@@ -145,7 +145,7 @@
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.ucDbAccountInfo);
             this.Controls.Add(this.txtProfileName);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblProfileName);
             this.Controls.Add(this.cboDatabase);
             this.Controls.Add(this.lblDatabase);
             this.Controls.Add(this.btnConfirm);
@@ -165,7 +165,7 @@
         private System.Windows.Forms.Button btnConfirm;
         private System.Windows.Forms.Label lblDatabase;
         private System.Windows.Forms.ComboBox cboDatabase;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblProfileName;
         private System.Windows.Forms.TextBox txtProfileName;
         private Controls.UC_DbAccountInfo ucDbAccountInfo;
         private System.Windows.Forms.Button btnCancel;

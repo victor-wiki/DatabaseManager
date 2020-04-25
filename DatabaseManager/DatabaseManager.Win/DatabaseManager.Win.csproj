@@ -135,11 +135,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controls\UC_DataGridView.cs">
+    <Compile Include="Controls\UC_QueryResultGrid.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\UC_DataGridView.Designer.cs">
-      <DependentUpon>UC_DataGridView.cs</DependentUpon>
+    <Compile Include="Controls\UC_QueryResultGrid.Designer.cs">
+      <DependentUpon>UC_QueryResultGrid.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\UC_DataViewer.cs">
       <SubType>UserControl</SubType>
@@ -189,12 +189,20 @@
     <Compile Include="Controls\UC_DbObjectsSimpleTree.Designer.cs">
       <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controls\UC_ScriptEditor.cs">
+    <Compile Include="Controls\UC_QueryEditor.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\UC_ScriptEditor.Designer.cs">
-      <DependentUpon>UC_ScriptEditor.cs</DependentUpon>
+    <Compile Include="Controls\UC_QueryEditor.Designer.cs">
+      <DependentUpon>UC_QueryEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\UC_SqlQuery.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\UC_SqlQuery.Designer.cs">
+      <DependentUpon>UC_SqlQuery.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Data\DataStore.cs" />
+    <Compile Include="Helper\SqlWordFinder.cs" />
     <Compile Include="frmAccountInfo.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -259,10 +267,11 @@
     <Compile Include="Helper\FormEventCenter.cs" />
     <Compile Include="Helper\RichTextBoxHelper.cs" />
     <Compile Include="Model\DbObjectTreeFolderType.cs" />
+    <Compile Include="Model\SqlWord.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="Controls\UC_DataGridView.resx">
-      <DependentUpon>UC_DataGridView.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\UC_QueryResultGrid.resx">
+      <DependentUpon>UC_QueryResultGrid.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\UC_DataViewer.resx">
       <DependentUpon>UC_DataViewer.cs</DependentUpon>
@@ -288,8 +297,11 @@
     <EmbeddedResource Include="Controls\UC_DbObjectsSimpleTree.resx">
       <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controls\UC_ScriptEditor.resx">
-      <DependentUpon>UC_ScriptEditor.cs</DependentUpon>
+    <EmbeddedResource Include="Controls\UC_QueryEditor.resx">
+      <DependentUpon>UC_QueryEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\UC_SqlQuery.resx">
+      <DependentUpon>UC_SqlQuery.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmAccountInfo.resx">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
@@ -486,6 +498,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Run.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Keyword.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,65 +1,88 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.IO;
-using DatabaseManager.Core;
-using DatabaseManager.Model;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
 using DatabaseManager.Helper;
-using DatabaseInterpreter.Core;
+using DatabaseManager.Model;
+using System;
+using System.Data;
+using System.IO;
+using System.Windows.Forms;
+using DatabaseInterpreter.Model;
+using DatabaseManager.Data;
 
 namespace DatabaseManager.Controls
 {
-    public partial class UC_ScriptEditor : UserControl, IDbObjContentDisplayer, IObserver<FeedbackInfo>
+    public partial class UC_SqlQuery : UserControl, IDbObjContentDisplayer, IObserver<FeedbackInfo>
     {
         private DatabaseObjectDisplayInfo displayInfo;
         private ScriptRunner scriptRunner;
 
-        public UC_ScriptEditor()
+        public UC_SqlQuery()
         {
             InitializeComponent();
 
-            this.SetResultPanelVisible(false);             
-        }   
+            this.SetResultPanelVisible(false);
+            this.queryEditor.OnQueryEditorInfoMessage += this.ShowEditorInfoMessage;
+            this.queryEditor.SetupIntellisenseRequired += QueryEditor_SetupIntellisenseRequired;
+        }
 
-        public RichTextBox Editor => this.txtEditor;
+        private void QueryEditor_SetupIntellisenseRequired(object sender, EventArgs e)
+        {
+            this.SetupIntellisence();
+        }
+
+        public RichTextBox Editor => this.queryEditor.Editor;
+
+        private void ShowEditorInfoMessage(string message)
+        {
+            this.tsslMessage.Text = message;
+        }
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
             this.displayInfo = displayInfo;
 
-            this.txtEditor.Clear();
+            this.Editor.Clear();
 
             if (!string.IsNullOrEmpty(displayInfo.Content))
             {
-                this.txtEditor.AppendText(displayInfo.Content);
+                this.Editor.AppendText(displayInfo.Content);
             }
+
+            if (displayInfo.IsNew)
+            {
+                this.SetupIntellisence();
+            }
+        }
+
+        private async void SetupIntellisence()
+        {
+            this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
+
+            if(this.CheckConnection()==true)
+            {
+                DbInterpreterOption option = new DbInterpreterOption();
+
+                DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.displayInfo.DatabaseType, this.displayInfo.ConnectionInfo, option);
+
+                this.queryEditor.DbInterpreter = dbInterpreter;              
+
+                SchemaInfoFilter filter = new SchemaInfoFilter()
+                {
+                    DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.TableColumn
+                };
+
+                SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
+
+                DataStore.SetSchemaInfo(this.displayInfo.DatabaseType, schemaInfo);
+
+                this.queryEditor.SetupIntellisence();
+            }           
         }
 
         public void Save(string filePath)
         {
-            File.WriteAllText(filePath, this.txtEditor.Text);
-        }
-
-        private void tsmiCopy_Click(object sender, EventArgs e)
-        {
-            Clipboard.SetDataObject(this.txtEditor.SelectedText);
-        }
-
-        private void txtEditor_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                this.tsmiCopy.Enabled = this.txtEditor.SelectionLength > 0;
-
-                this.editorContexMenu.Show(this.txtEditor, e.Location);
-            }
+            File.WriteAllText(filePath, this.Editor.Text);
         }
 
         public void ShowResult(QueryResult result)
@@ -89,16 +112,16 @@ namespace DatabaseManager.Controls
                 {
                     DataTable dataTable = result.Result as DataTable;
 
-                    if (dataTable != null && dataTable.Rows.Count > 0)
+                    if (dataTable != null)
                     {
                         selectedTabIndex = 0;
-                       
+
                         this.resultGridView.LoadData(dataTable);
                     }
                 }
                 else if (result.ResultType == QueryResultType.Text)
                 {
-                    selectedTabIndex = 1;            
+                    selectedTabIndex = 1;
 
                     if (this.resultTextBox.Text.Length == 0)
                     {
@@ -114,10 +137,10 @@ namespace DatabaseManager.Controls
                             }
                         }
 
-                        if(!appended)
+                        if (!appended)
                         {
                             this.AppendMessage("command executed.");
-                        }                       
+                        }
                     }
                 }
 
@@ -132,21 +155,48 @@ namespace DatabaseManager.Controls
 
         public async void RunScripts(DatabaseObjectDisplayInfo data)
         {
+            this.displayInfo = data;
+
             string script = this.Editor.SelectionLength > 0 ? this.Editor.SelectedText : this.Editor.Text;
 
             if (script.Trim().Length == 0)
             {
                 return;
-            }         
+            }
 
-            this.ClearResults();           
+            this.ClearResults();
 
             this.scriptRunner = new ScriptRunner() { DelimiterRelaceChars = "\r" };
             this.scriptRunner.Subscribe(this);
 
-            QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script);
+            if (this.CheckConnection())
+            {
+                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script);
 
-            this.ShowResult(result);
+                this.ShowResult(result);
+            }
+        }
+
+        private bool CheckConnection()
+        {
+            if (this.displayInfo.ConnectionInfo == null)
+            {
+                frmDbConnect dbConnect = new frmDbConnect(this.displayInfo.DatabaseType) { NotUseProfile = true };
+                if (dbConnect.ShowDialog() == DialogResult.OK)
+                {
+                    this.displayInfo.ConnectionInfo = dbConnect.ConnectionInfo;
+                }
+            }
+
+            if (this.displayInfo.ConnectionInfo != null && !string.IsNullOrEmpty(this.displayInfo.ConnectionInfo.Database))
+            {
+                return true;
+            }
+            else
+            {
+                MessageBox.Show("No database connection established.");
+                return false;
+            }
         }
 
         #region IObserver<FeedbackInfo>
@@ -190,7 +240,7 @@ namespace DatabaseManager.Controls
         private void ClearResults()
         {
             this.resultTextBox.Clear();
-            this.resultGridView.ClearData();           
+            this.resultGridView.ClearData();
         }
 
         private void AppendMessage(string message, bool isError = false)
@@ -200,51 +250,10 @@ namespace DatabaseManager.Controls
             this.SetResultPanelVisible(true);
         }
 
-        private void txtEditor_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.F5)
-            {
-                if (FormEventCenter.OnRunScripts != null)
-                {
-                    FormEventCenter.OnRunScripts();
-                }
-            }
-        }
-
-        private void tsmiPaste_Click(object sender, EventArgs e)
-        {
-            this.txtEditor.Paste();
-        }
-
-        private void txtEditor_MouseClick(object sender, MouseEventArgs e)
-        {
-            this.ShowCurrentPosition();
-        }
-
         private void SetResultPanelVisible(bool visible)
         {
             this.splitContainer1.Panel2Collapsed = !visible;
             this.splitContainer1.SplitterWidth = visible ? 3 : 1;
-        }
-
-        private void ShowCurrentPosition()
-        {
-            if (this.txtEditor.SelectionStart >= 0)
-            {
-                int lineIndex = this.txtEditor.GetLineFromCharIndex(this.txtEditor.SelectionStart);
-                int column = this.txtEditor.SelectionStart - this.txtEditor.GetFirstCharIndexOfCurrentLine() + 1;
-
-                this.tsslMessage.Text = $"Line:{lineIndex + 1}  Column:{column}";
-            }
-            else
-            {
-                this.tsslMessage.Text = "";
-            }
-        }
-
-        private void txtEditor_KeyUp(object sender, KeyEventArgs e)
-        {
-            this.ShowCurrentPosition();
         }
     }
 }
