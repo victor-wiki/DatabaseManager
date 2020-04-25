@@ -37,21 +37,21 @@ namespace DatabaseManager.Helper
                 {
                     var tables = schemaInfo.Tables.Where(item => Contains(item.Name, search));
 
-                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Table, Text = item.Name }));
+                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Table, Text = item.Name, Source = item }));
                 }
 
                 if (IsTypeMatched(tokenType, SqlWordTokenType.Function))
                 {
                     var tables = schemaInfo.Functions.Where(item => Contains(item.Name, search));
 
-                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Function, Text = item.Name }));
+                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Function, Text = item.Name, Source = item }));
                 }
 
                 if (IsTypeMatched(tokenType, SqlWordTokenType.View))
                 {
                     var views = schemaInfo.Views.Where(item => Contains(item.Name, search));
 
-                    words.AddRange(views.Select(item => new SqlWord() { Type = SqlWordTokenType.View, Text = item.Name }));
+                    words.AddRange(views.Select(item => new SqlWord() { Type = SqlWordTokenType.View, Text = item.Name, Source = item }));
                 }
 
                 if (IsTypeMatched(tokenType, SqlWordTokenType.TableColumn))
@@ -63,10 +63,10 @@ namespace DatabaseManager.Helper
                         columns = schemaInfo.TableColumns.Where(item => item.TableName.ToUpper() == parentName.ToUpper());
                     }
 
-                    if(!string.IsNullOrEmpty(search))
+                    if (!string.IsNullOrEmpty(search))
                     {
                         columns = columns.Where(item => Contains(item.Name, search));
-                    }                            
+                    }
 
                     words.AddRange(columns.Select(item => new SqlWord() { Type = SqlWordTokenType.TableColumn, Text = item.Name, Source = item }));
                 }

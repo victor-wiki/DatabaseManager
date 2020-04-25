@@ -618,10 +618,21 @@ namespace DatabaseManager.Controls
         {
             SqlWordToken token = this.GetLastWordToken(true, true);
 
-            string selectedWord = this.lvWords.SelectedItems[0].SubItems[1].Text;
+            ListViewItem item = this.lvWords.SelectedItems[0];
+            object tag = item.Tag;
+
+            string selectedWord = item.SubItems[1].Text;
 
             this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
-            this.txtEditor.SelectedText = this.DbInterpreter.GetQuotedString(selectedWord);
+
+            string quotationValue = selectedWord;
+
+            if(!(tag is FunctionSpecification))
+            {
+                quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
+            }            
+
+            this.txtEditor.SelectedText = quotationValue;
 
             this.SetWordListViewVisible(false);
 
