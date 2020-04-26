@@ -759,7 +759,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
             string dataType = $"{this.GetQuotedString(column.DataType)} {dataLength}";
 
-            return dataType;
+            return dataType.Trim();
         }
 
         private string GetColumnDataLength(TableColumn column)

@@ -823,7 +823,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 }
             }
 
-            return dataType;
+            return dataType.Trim();
         }
 
         private bool IsNoLengthDataType(string dataType)

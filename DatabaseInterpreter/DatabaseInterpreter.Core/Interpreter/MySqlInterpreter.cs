@@ -731,7 +731,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
                 }
             }
 
-            return dataType;
+            return dataType.Trim();
         }
 
         private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T : TableColumnChild
