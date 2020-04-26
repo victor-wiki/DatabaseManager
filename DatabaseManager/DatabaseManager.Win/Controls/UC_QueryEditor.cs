@@ -462,7 +462,7 @@ namespace DatabaseManager.Controls
             {
                 List<char> chars = new List<char>();
 
-                string delimeterPattern = @"[ \.\r\n=]";
+                string delimeterPattern = @"[ ,\.\r\n=]";
 
                 int i = -1;
 
