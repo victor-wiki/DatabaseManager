@@ -50,7 +50,7 @@ namespace DatabaseManager.Helper
         {
             TreeNode node = CreateTreeNode(name, text, "Folder");
 
-            if(createFakeNode)
+            if (createFakeNode)
             {
                 node.Nodes.Add(CreateFakeNode());
             }
@@ -127,12 +127,20 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(List<T> dbObjects)
+        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects)
            where T : DatabaseObject
         {
+            bool isUniqueDbOwner = dbObjects.GroupBy(item => item.Owner).Count() == 1;
+
+            if(!isUniqueDbOwner)
+            {
+                dbObjects = dbObjects.OrderBy(item => item.Owner).ThenBy(item => item.Name);
+            }
+
             foreach (var dbObj in dbObjects)
             {
-                TreeNode node = CreateTreeNode(dbObj.Name, dbObj.Name, dbObj.GetType().Name);
+                string text = isUniqueDbOwner ? dbObj.Name : $"{dbObj.Owner}.{dbObj.Name}";
+                TreeNode node = CreateTreeNode(dbObj.Name, text, dbObj.GetType().Name);
                 node.Tag = dbObj;
 
                 yield return node;

@@ -489,7 +489,7 @@ namespace DatabaseManager.Controls
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             string script = dbInterpreter.GenerateSchemaScripts(schemaInfo).ToString();
-           
+
             this.ShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, DatabaseObject = obj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
         }
 
@@ -684,7 +684,7 @@ namespace DatabaseManager.Controls
         {
             this.tsmiTranslate.DropDownItems.Clear();
 
-            var dbTypes = Enum.GetValues(typeof(DatabaseType));
+            var dbTypes = DbInterpreterHelper.GetDisplayDatabaseTypes();
 
             foreach (var dbType in dbTypes)
             {
@@ -796,7 +796,11 @@ namespace DatabaseManager.Controls
 
                     DbInterpreter dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(treeNode).Name);
 
-                    DoDragDrop(dbInterpreter.GetQuotedString(text.Trim()), DragDropEffects.Move);
+                    string[] items = text.Trim().Split('.');
+
+                    items[items.Length - 1] = dbInterpreter.GetQuotedString(items[items.Length - 1]);
+
+                    DoDragDrop(string.Join(".", items), DragDropEffects.Move);
                 }
             }
         }

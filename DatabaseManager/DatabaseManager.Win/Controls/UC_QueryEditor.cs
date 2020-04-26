@@ -41,7 +41,7 @@ namespace DatabaseManager.Controls
         public UC_QueryEditor()
         {
             InitializeComponent();
-
+          
             this.lvWords.MouseWheel += LvWords_MouseWheel;
             this.panelWords.VerticalScroll.Enabled = true;
             this.panelWords.VerticalScroll.Visible = true;

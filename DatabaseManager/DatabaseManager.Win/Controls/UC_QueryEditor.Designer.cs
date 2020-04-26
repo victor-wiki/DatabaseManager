@@ -49,6 +49,7 @@
             // txtEditor
             // 
             this.txtEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtEditor.EnableAutoDragDrop = true;
             this.txtEditor.Font = new System.Drawing.Font("新宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.txtEditor.HideSelection = false;
             this.txtEditor.Location = new System.Drawing.Point(0, 0);
