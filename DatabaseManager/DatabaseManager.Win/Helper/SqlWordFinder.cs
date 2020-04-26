@@ -20,11 +20,11 @@ namespace DatabaseManager.Helper
             //    var keywords = KeywordManager.GetKeywords(databaseType).Where(item => Contains(item, search));
 
             //    words.AddRange(keywords.Select(item => new SqlWord() { Type = SqlWordTokenType.Keyword, Text = item }));
-            //}
+            //}           
 
             if (IsTypeMatched(tokenType, SqlWordTokenType.BuiltinFunction))
             {
-                var builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => Contains(item.Name, search));
+                var builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => ContainsWithNull(item.Name, search));
 
                 words.AddRange(builtinFunctions.Select(item => new SqlWord() { Type = SqlWordTokenType.BuiltinFunction, Text = item.Name, Source = item }));
             }
@@ -33,28 +33,20 @@ namespace DatabaseManager.Helper
 
             if (schemaInfo != null)
             {
-                if (IsTypeMatched(tokenType, SqlWordTokenType.Table))
+                if (IsTypeMatched(tokenType, SqlWordTokenType.Owner))
                 {
-                    var tables = schemaInfo.Tables.Where(item => Contains(item.Name, search));
+                    var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Owner, search)).Select(item => item.Owner).Distinct();
 
-                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Table, Text = item.Name, Source = item }));
+                    words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Owner, Text = item, Source = item }));
                 }
 
-                if (IsTypeMatched(tokenType, SqlWordTokenType.Function))
-                {
-                    var tables = schemaInfo.Functions.Where(item => Contains(item.Name, search));
+                FilterDbObjects(words, schemaInfo.Functions, SqlWordTokenType.Function, tokenType, search, parentName);
 
-                    words.AddRange(tables.Select(item => new SqlWord() { Type = SqlWordTokenType.Function, Text = item.Name, Source = item }));
-                }
+                FilterDbObjects(words, schemaInfo.Tables, SqlWordTokenType.Table, tokenType, search, parentName);
 
-                if (IsTypeMatched(tokenType, SqlWordTokenType.View))
-                {
-                    var views = schemaInfo.Views.Where(item => Contains(item.Name, search));
+                FilterDbObjects(words, schemaInfo.Views, SqlWordTokenType.View, tokenType, search, parentName);
 
-                    words.AddRange(views.Select(item => new SqlWord() { Type = SqlWordTokenType.View, Text = item.Name, Source = item }));
-                }
-
-                if (IsTypeMatched(tokenType, SqlWordTokenType.TableColumn))
+                if (tokenType == SqlWordTokenType.TableColumn)
                 {
                     IEnumerable<TableColumn> columns = schemaInfo.TableColumns;
 
@@ -65,7 +57,7 @@ namespace DatabaseManager.Helper
 
                     if (!string.IsNullOrEmpty(search))
                     {
-                        columns = columns.Where(item => Contains(item.Name, search));
+                        columns = columns.Where(item => ContainsWithNull(item.Name, search));
                     }
 
                     words.AddRange(columns.Select(item => new SqlWord() { Type = SqlWordTokenType.TableColumn, Text = item.Name, Source = item }));
@@ -73,6 +65,24 @@ namespace DatabaseManager.Helper
             }
 
             return words;
+        }
+
+        private static void FilterDbObjects<T>(List<SqlWord> words, IEnumerable<T> dbObjects, SqlWordTokenType currentTokenType, SqlWordTokenType tokenType = SqlWordTokenType.None, string search = null, string parentName = null)
+            where T : DatabaseObject
+        {
+            if (IsTypeMatched(tokenType, currentTokenType))
+            {
+                IEnumerable<T> objs = dbObjects;
+
+                if (!string.IsNullOrEmpty(parentName))
+                {
+                    objs = objs.Where(item => item.Owner.ToUpper() == parentName.ToUpper());
+                }
+
+                objs = objs.Where(item => ContainsWithNull(item.Name, search));
+
+                words.AddRange(objs.Select(item => new SqlWord() { Type = currentTokenType, Text = item.Name, Source = item }));
+            }
         }
 
         public static bool IsTypeMatched(SqlWordTokenType tokenType, SqlWordTokenType currentType)
@@ -84,9 +94,19 @@ namespace DatabaseManager.Helper
             return false;
         }
 
+        public static bool ContainsWithNull(string source, string search)
+        {
+            return search == null || Contains(source, search);
+        }
+
         public static bool Contains(string source, string search)
         {
-            return search == null || source.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+            if (search == null)
+            {
+                return false;
+            }
+
+            return source.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

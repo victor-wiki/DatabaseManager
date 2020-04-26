@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DatabaseManager.Helper
 {
-    public delegate void SaveHandler();
+    public delegate void SaveHandler();  
     public delegate void RunScriptsHandler();
 
     public class FormEventCenter

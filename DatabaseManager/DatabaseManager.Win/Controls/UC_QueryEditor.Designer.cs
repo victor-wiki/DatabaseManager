@@ -41,6 +41,7 @@
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.txtToolTip = new System.Windows.Forms.TextBox();
             this.panelWords = new System.Windows.Forms.Panel();
+            this.tsmiUpdateIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.editorContexMenu.SuspendLayout();
             this.panelWords.SuspendLayout();
             this.SuspendLayout();
@@ -49,6 +50,7 @@
             // 
             this.txtEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtEditor.Font = new System.Drawing.Font("新宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtEditor.HideSelection = false;
             this.txtEditor.Location = new System.Drawing.Point(0, 0);
             this.txtEditor.Name = "txtEditor";
             this.txtEditor.Size = new System.Drawing.Size(329, 340);
@@ -58,6 +60,7 @@
             this.txtEditor.MouseClick += new System.Windows.Forms.MouseEventHandler(this.txtEditor_MouseClick);
             this.txtEditor.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtEditor_KeyDown);
             this.txtEditor.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtEditor_KeyUp);
+            this.txtEditor.MouseDown += new System.Windows.Forms.MouseEventHandler(this.txtEditor_MouseDown);
             this.txtEditor.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtEditor_MouseUp);
             // 
             // editorContexMenu
@@ -65,9 +68,10 @@
             this.editorContexMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiCopy,
             this.tsmiPaste,
-            this.tsmiDisableIntellisense});
+            this.tsmiDisableIntellisense,
+            this.tsmiUpdateIntellisense});
             this.editorContexMenu.Name = "contextMenuStrip1";
-            this.editorContexMenu.Size = new System.Drawing.Size(188, 70);
+            this.editorContexMenu.Size = new System.Drawing.Size(188, 92);
             // 
             // tsmiCopy
             // 
@@ -133,6 +137,7 @@
             this.imageList1.Images.SetKeyName(2, "tree_Table.png");
             this.imageList1.Images.SetKeyName(3, "tree_View.png");
             this.imageList1.Images.SetKeyName(4, "tree_TableColumn.png");
+            this.imageList1.Images.SetKeyName(5, "Owner.png");
             // 
             // txtToolTip
             // 
@@ -153,7 +158,14 @@
             this.panelWords.Name = "panelWords";
             this.panelWords.Size = new System.Drawing.Size(290, 119);
             this.panelWords.TabIndex = 7;
-            this.panelWords.Visible = false;           
+            this.panelWords.Visible = false;
+            // 
+            // tsmiUpdateIntellisense
+            // 
+            this.tsmiUpdateIntellisense.Name = "tsmiUpdateIntellisense";
+            this.tsmiUpdateIntellisense.Size = new System.Drawing.Size(187, 22);
+            this.tsmiUpdateIntellisense.Text = "Update Intellisense";
+            this.tsmiUpdateIntellisense.Click += new System.EventHandler(this.tsmiUpdateIntellisense_Click);
             // 
             // UC_QueryEditor
             // 
@@ -184,5 +196,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiDisableIntellisense;
         private System.Windows.Forms.TextBox txtToolTip;
         private System.Windows.Forms.Panel panelWords;
+        private System.Windows.Forms.ToolStripMenuItem tsmiUpdateIntellisense;
     }
 }

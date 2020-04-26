@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -42,6 +43,11 @@ namespace  DatabaseInterpreter.Core
 
                 return dbInterpreter.ConnectionInfo.Database;
             }
+        }
+
+        public static IEnumerable<DatabaseType> GetDisplayDatabaseTypes()
+        {
+            return Enum.GetValues(typeof(DatabaseType)).Cast<DatabaseType>().Where(item=>item != DatabaseType.Unknown );
         }
     }
 }

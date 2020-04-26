@@ -48,6 +48,10 @@ namespace DatabaseManager.Controls
             {
                 this.Editor.AppendText(displayInfo.Content);
             }
+            else if(File.Exists(displayInfo.FilePath))
+            {
+                this.Editor.AppendText(File.ReadAllText(displayInfo.FilePath));
+            }
 
             if (displayInfo.IsNew)
             {

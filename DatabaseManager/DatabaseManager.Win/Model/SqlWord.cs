@@ -20,7 +20,8 @@ namespace DatabaseManager.Model
         Table = 32,
         View = 64,
         TableColumn = 128,
-        String = 256
+        String = 256,
+        Comment = 512
     }
 
     public class SqlWordToken

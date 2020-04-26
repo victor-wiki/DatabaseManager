@@ -94,6 +94,7 @@ namespace DatabaseManager.Controls
 
         private void SetMenuItemVisible(TreeNode node)
         {
+            this.tsmiNewQuery.Visible = node.Level == 0;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
             this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
             this.tsmiConvert.Visible = node.Level == 0;
@@ -488,11 +489,8 @@ namespace DatabaseManager.Controls
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             string script = dbInterpreter.GenerateSchemaScripts(schemaInfo).ToString();
-
-            if (this.OnShowContent != null)
-            {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, DatabaseObject = obj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
-            }
+           
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, DatabaseObject = obj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
         }
 
         private void tsmiConvert_Click(object sender, EventArgs e)
@@ -661,10 +659,7 @@ namespace DatabaseManager.Controls
             string database = this.GetDatabaseNode(node).Name;
             Table table = node.Tag as Table;
 
-            if (this.OnShowContent != null)
-            {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
-            }
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
         }
 
         public void OnNext(FeedbackInfo value)
@@ -778,10 +773,9 @@ namespace DatabaseManager.Controls
 
         private void DbConverter_OnTranslated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
         {
-            if (this.OnShowContent != null)
-            {
-                this.OnShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error });
-            }
+            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error };
+
+            this.ShowContent(info);
         }
 
         private void tvDbObjects_ItemDrag(object sender, ItemDragEventArgs e)
@@ -804,6 +798,52 @@ namespace DatabaseManager.Controls
 
                     DoDragDrop(dbInterpreter.GetQuotedString(text.Trim()), DragDropEffects.Move);
                 }
+            }
+        }
+
+        public DatabaseObjectDisplayInfo GetDisplayInfo()
+        {
+            TreeNode node = this.tvDbObjects.SelectedNode;
+
+            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { DatabaseType = this.DatabaseType };
+
+            if (node != null)
+            {
+                if (node.Tag is DatabaseObject dbObject)
+                {
+                    info.Name = dbObject.Name;
+                    info.DatabaseObject = dbObject;
+                }
+
+                TreeNode databaseNode = this.GetDatabaseNode(node);
+
+                if (databaseNode != null)
+                {
+                    info.ConnectionInfo = this.GetConnectionInfo(databaseNode.Name);
+                }
+                else
+                {
+                    info.ConnectionInfo = this.connectionInfo;
+                }
+            }
+
+            return info;
+        }
+
+        private void tsmiNewQuery_Click(object sender, EventArgs e)
+        {
+            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.DatabaseType };
+
+            info.ConnectionInfo = this.GetConnectionInfo(this.tvDbObjects.SelectedNode.Name); ;
+
+            this.ShowContent(info);
+        }
+
+        private void ShowContent(DatabaseObjectDisplayInfo info)
+        {
+            if (this.OnShowContent != null)
+            {
+                this.OnShowContent(info);
             }
         }
     }

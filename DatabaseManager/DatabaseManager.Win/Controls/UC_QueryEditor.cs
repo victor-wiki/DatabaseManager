@@ -30,7 +30,7 @@ namespace DatabaseManager.Controls
         private bool intellisenseSetuped;
         private bool enableIntellisense;
         private bool isPasting = false;
-        private string dbOwner;
+        private List<string> dbOwners;
         private const int WordListMinWidth = 160;
 
         public DatabaseType DatabaseType { get; set; }
@@ -65,7 +65,7 @@ namespace DatabaseManager.Controls
             this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
             this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
             this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
-            this.dbOwner = this.schemaInfo.Tables.FirstOrDefault()?.Owner;
+            this.dbOwners = this.allWords.Where(item => item.Type == SqlWordTokenType.Owner).Select(item => item.Text).ToList();
         }
 
         private void tsmiCopy_Click(object sender, EventArgs e)
@@ -84,6 +84,7 @@ namespace DatabaseManager.Controls
             {
                 this.tsmiCopy.Enabled = this.txtEditor.SelectionLength > 0;
                 this.tsmiDisableIntellisense.Text = $"{(this.enableIntellisense ? "Disable" : "Enable")} Intellisense";
+                this.tsmiUpdateIntellisense.Visible = this.enableIntellisense;
                 this.editorContexMenu.Show(this.txtEditor, e.Location);
             }
         }
@@ -159,6 +160,8 @@ namespace DatabaseManager.Controls
 
             if (token == null || token.Text == null || token.Type != SqlWordTokenType.None)
             {
+                this.SetWordListViewVisible(false);
+
                 if (token != null)
                 {
                     if (token.Type != SqlWordTokenType.String && token.Text.Contains("'"))
@@ -166,8 +169,6 @@ namespace DatabaseManager.Controls
                         this.ClearStyle(token);
                     }
                 }
-
-                this.SetWordListViewVisible(false);
 
                 return;
             }
@@ -210,15 +211,30 @@ namespace DatabaseManager.Controls
                 }
                 else if (word.Type == SqlWordTokenType.Owner)
                 {
-                    this.ShowDbObjects(null);
+                    this.ShowDbObjects(null, word.Text);
                     this.lvWords.Tag = word;
                 }
             }
             else if (e.KeyCode == Keys.Back)
             {
-                if ((this.panelWords.Visible && !this.IsMatchWord(token.Text)) || this.txtEditor.Text.Length == 0)
+                if (this.panelWords.Visible)
                 {
-                    this.SetWordListViewVisible(false);
+                    if (!this.IsMatchWord(token.Text) || this.txtEditor.Text.Length == 0)
+                    {
+                        this.SetWordListViewVisible(false);
+                    }
+                    else
+                    {
+                        this.ShowWordListByToken(token);
+                    }
+                }
+
+                if(this.DbInterpreter.CommentString.Contains(token.Text))
+                {
+                    int start = this.txtEditor.SelectionStart;
+                    int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
+                    int stop =  this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
+                    RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop);
                 }
             }
             else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
@@ -227,19 +243,24 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                if (string.IsNullOrEmpty(token.Text))
-                {
-                    this.SetWordListViewVisible(false);
-
-                    return;
-                }
-
-                SqlWordTokenType type = this.DetectTypeByWord(token.Text);
-
-                var words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type);
-
-                this.ShowWordList(words);
+                this.ShowWordListByToken(token);
             }
+        }
+
+        private void ShowWordListByToken(SqlWordToken token)
+        {
+            if (string.IsNullOrEmpty(token.Text))
+            {
+                this.SetWordListViewVisible(false);
+
+                return;
+            }
+
+            SqlWordTokenType type = this.DetectTypeByWord(token.Text);
+
+            var words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type);
+
+            this.ShowWordList(words);
         }
 
         private void ShowTableColumns(string tableName, string columnName = null)
@@ -249,11 +270,23 @@ namespace DatabaseManager.Controls
             this.ShowWordList(columns);
         }
 
-        private void ShowDbObjects(string search)
+        private void ShowDbObjects(string search, string owner = null)
         {
-            IEnumerable<SqlWord> words = SqlWordFinder.FindWords(this.DatabaseType, search, SqlWordTokenType.Table | SqlWordTokenType.View | SqlWordTokenType.Function);
+            IEnumerable<SqlWord> words = SqlWordFinder.FindWords(this.DatabaseType, search, SqlWordTokenType.Table | SqlWordTokenType.View | SqlWordTokenType.Function, owner);
 
-            this.ShowWordList(words);
+            if (!string.IsNullOrEmpty(search))
+            {
+                List<SqlWord> sortedWords = new List<SqlWord>();
+
+                sortedWords.AddRange(words.Where(item => item.Text.StartsWith(search, StringComparison.OrdinalIgnoreCase)));
+                sortedWords.AddRange(words.Where(item => !item.Text.StartsWith(search, StringComparison.OrdinalIgnoreCase)));
+
+                this.ShowWordList(sortedWords);
+            }
+            else
+            {
+                this.ShowWordList(words);
+            }
         }
 
         private void ShowWordList(IEnumerable<SqlWord> words)
@@ -261,10 +294,6 @@ namespace DatabaseManager.Controls
             if (words.Count() > 0)
             {
                 this.lvWords.Items.Clear();
-
-                Point point = this.txtEditor.GetPositionFromCharIndex(txtEditor.SelectionStart);
-                point.Y += (int)Math.Ceiling(this.txtEditor.Font.GetHeight()) + 2;
-                point.X += 2;
 
                 foreach (SqlWord sw in words)
                 {
@@ -287,9 +316,13 @@ namespace DatabaseManager.Controls
                         case SqlWordTokenType.TableColumn:
                             item.ImageIndex = 4;
                             break;
+                        case SqlWordTokenType.Owner:
+                            item.ImageIndex = 5;
+                            break;
                     }
 
                     item.SubItems.Add(sw.Text);
+                    item.SubItems[1].Tag = sw.Type;
                     item.Tag = sw.Source;
 
                     this.lvWords.Items.Add(item);
@@ -301,11 +334,11 @@ namespace DatabaseManager.Controls
 
                 this.lvWords.Columns[1].Width = width + 20;
 
-                this.panelWords.Location = point;
-
                 int totalWidth = this.lvWords.Columns.Cast<ColumnHeader>().Sum(item => item.Width) + 50;
 
                 this.panelWords.Width = totalWidth < WordListMinWidth ? WordListMinWidth : totalWidth;
+
+                this.SetWordListPanelPostition();
 
                 this.SetWordListViewVisible(true);
             }
@@ -313,6 +346,15 @@ namespace DatabaseManager.Controls
             {
                 this.SetWordListViewVisible(false);
             }
+        }
+
+        private void SetWordListPanelPostition()
+        {
+            Point point = this.txtEditor.GetPositionFromCharIndex(txtEditor.SelectionStart);
+            point.Y += (int)Math.Ceiling(this.txtEditor.Font.GetHeight()) + 2;
+            point.X += 2;
+
+            this.panelWords.Location = point;
         }
 
         private void ClearStyle(SqlWordToken token)
@@ -375,6 +417,9 @@ namespace DatabaseManager.Controls
             SqlWordToken token = null;
 
             int currentIndex = this.txtEditor.SelectionStart;
+            int lineIndex = this.txtEditor.GetLineFromCharIndex(currentIndex);
+            int lineFirstCharIndex = this.txtEditor.GetFirstCharIndexOfCurrentLine();
+
             int index = currentIndex - 1;
 
             if (index < 0 || index > this.txtEditor.Text.Length - 1)
@@ -402,95 +447,121 @@ namespace DatabaseManager.Controls
 
             token.StopIndex = index;
 
-            List<char> chars = new List<char>();
+            string lineBefore = this.txtEditor.Text.Substring(lineFirstCharIndex, currentIndex - lineFirstCharIndex);
 
-            string delimeterPattern = @"[ \.\r\n=]";
+            bool isComment = false;
 
-            int i = -1;
-
-            bool exited = false;
-            for (i = index; i >= 0; i--)
+            if (lineBefore.Contains(this.DbInterpreter.CommentString))
             {
-                char c = this.txtEditor.Text[i];
-
-                if (!Regex.IsMatch(c.ToString(), delimeterPattern))
-                {
-                    chars.Add(c);
-
-                    if (c == '\'' || c == '(')
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    exited = true;
-                    break;
-                }
+                isComment = true;
             }
 
-            if (i == -1)
+            string word = "";
+
+            if (!isComment)
             {
-                i = 0;
-            }
+                List<char> chars = new List<char>();
 
-            chars.Reverse();
+                string delimeterPattern = @"[ \.\r\n=]";
 
-            string word = string.Join("", chars);
+                int i = -1;
 
-            token.Text = word;
-
-            token.StartIndex = i + (exited ? 1 : 0);
-
-            if (word.Contains("'"))
-            {
-                int lineIndex = this.txtEditor.GetLineFromCharIndex(this.txtEditor.SelectionStart);
-                int lineFirstCharIndex = this.txtEditor.GetFirstCharIndexFromLine(lineIndex);
-
-                string lineContent = this.txtEditor.Text.Substring(lineFirstCharIndex, this.txtEditor.SelectionStart - lineFirstCharIndex);
-
-                int singQuotationCount = lineContent.Count(item => item == '\'');
-
-                bool isQuotationPaired = singQuotationCount % 2 == 0;
-
-                if (isQuotationPaired && word.StartsWith("'"))
+                bool exited = false;
+                for (i = index; i >= 0; i--)
                 {
-                    List<char> afterChars = new List<char>();
-                    for (int j = currentIndex; j < this.txtEditor.Text.Length; j++)
+                    char c = this.txtEditor.Text[i];
+
+                    if (!Regex.IsMatch(c.ToString(), delimeterPattern))
                     {
-                        char c = this.txtEditor.Text[j];
-                        if (Regex.IsMatch(c.ToString(), delimeterPattern))
+                        chars.Add(c);
+
+                        if (c == '\'')
                         {
                             break;
                         }
-                        else
+                        else if (c == '(')
                         {
-                            afterChars.Add(c);
+                            if (chars.Count > 1)
+                            {
+                                chars.RemoveAt(chars.Count - 1);
+                                i++;
+                            }
+
+                            break;
                         }
-                    }
-
-                    string afterWord = string.Join("", afterChars);
-
-                    if (afterWord.EndsWith("'") || (word == "'" && afterChars.Count == 0))
-                    {
-                        token.Type = SqlWordTokenType.String;
                     }
                     else
                     {
-                        token.StartIndex++;
-                        token.Text = token.Text.Substring(1);
+                        exited = true;
+                        break;
                     }
                 }
-                else if (!isQuotationPaired || (isQuotationPaired && word.EndsWith("'")))
+
+                if (i == -1)
                 {
-                    token.Type = SqlWordTokenType.String;
+                    i = 0;
                 }
 
-                if (token.Type == SqlWordTokenType.String)
+                chars.Reverse();
+
+                word = string.Join("", chars);
+
+                token.Text = word;
+
+                token.StartIndex = i + (exited ? 1 : 0);
+
+                if (word.Contains("'"))
                 {
-                    this.SetWordColor(token);
-                    return token;
+                    int singQuotationCount = lineBefore.Count(item => item == '\'');
+
+                    bool isQuotationPaired = singQuotationCount % 2 == 0;
+
+                    if (isQuotationPaired && word.StartsWith("'"))
+                    {
+                        List<char> afterChars = new List<char>();
+                        for (int j = currentIndex; j < this.txtEditor.Text.Length; j++)
+                        {
+                            char c = this.txtEditor.Text[j];
+                            if (Regex.IsMatch(c.ToString(), delimeterPattern))
+                            {
+                                break;
+                            }
+                            else
+                            {
+                                afterChars.Add(c);
+                            }
+                        }
+
+                        string afterWord = string.Join("", afterChars);
+
+                        if (afterWord.EndsWith("'") || (word == "'" && afterChars.Count == 0))
+                        {
+                            token.Type = SqlWordTokenType.String;
+                        }
+                        else
+                        {
+                            token.StartIndex++;
+                            token.Text = token.Text.Substring(1);
+                        }
+                    }
+                    else if (!isQuotationPaired || (isQuotationPaired && word.EndsWith("'")))
+                    {
+                        token.Type = SqlWordTokenType.String;
+                    }
+
+                    if (token.Type == SqlWordTokenType.String)
+                    {
+                        this.SetWordColor(token);
+                        return token;
+                    }
                 }
+            }
+            else
+            {
+                int firstIndexOfComment = lineBefore.IndexOf(this.DbInterpreter.CommentString);
+
+                token.StartIndex = firstIndexOfComment;
+                token.StopIndex = lineFirstCharIndex + this.txtEditor.Lines[lineIndex].Length - 1;
             }
 
             if (!noAction)
@@ -507,6 +578,11 @@ namespace DatabaseManager.Controls
                     token.Type = SqlWordTokenType.BuiltinFunction;
 
                     this.SetWordColor(token);
+                }
+                else if (isComment)
+                {
+                    token.Type = SqlWordTokenType.Comment;
+                    this.SetWordColor(token, true);
                 }
                 else
                 {
@@ -526,7 +602,7 @@ namespace DatabaseManager.Controls
 
             SqlWord word = null;
 
-            if (!string.IsNullOrEmpty(this.dbOwner) && text.ToUpper() == this.dbOwner.ToUpper())
+            if (this.dbOwners.Count > 0 && this.dbOwners.Any(item => text.ToUpper() == item.ToUpper()))
             {
                 word = new SqlWord() { Type = SqlWordTokenType.Owner, Text = text };
 
@@ -591,7 +667,7 @@ namespace DatabaseManager.Controls
             return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar);
         }
 
-        private void SetWordColor(SqlWordToken token)
+        private void SetWordColor(SqlWordToken token, bool keepCurrentPos = false)
         {
             Color color = Color.Black;
 
@@ -607,10 +683,17 @@ namespace DatabaseManager.Controls
             {
                 color = Color.Red;
             }
+            else if (token.Type == SqlWordTokenType.Comment)
+            {
+                color = ColorTranslator.FromHtml("#008000");
+            }
+
+            int start = this.txtEditor.SelectionStart;
 
             this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
+            this.txtEditor.SelectionBackColor = this.txtEditor.BackColor;
             this.txtEditor.SelectionColor = color;
-            this.txtEditor.SelectionStart = token.StopIndex + 1;
+            this.txtEditor.SelectionStart = keepCurrentPos ? start : token.StopIndex + 1;
             this.txtEditor.SelectionLength = 0;
         }
 
@@ -627,10 +710,10 @@ namespace DatabaseManager.Controls
 
             string quotationValue = selectedWord;
 
-            if(!(tag is FunctionSpecification))
+            if (!(tag is FunctionSpecification))
             {
                 quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
-            }            
+            }
 
             this.txtEditor.SelectedText = quotationValue;
 
@@ -662,28 +745,6 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private void txtEditor_MouseClick(object sender, MouseEventArgs e)
-        {
-            this.ShowCurrentPosition();
-
-            this.isPasting = false;
-
-            if (!this.enableIntellisense)
-            {
-                return;
-            }
-
-            this.txtToolTip.Visible = false;
-
-            if (this.panelWords.Visible && !this.lvWords.DisplayRectangle.Contains(e.Location))
-            {
-                this.panelWords.Visible = false;
-                this.lvWords.Items.Clear();
-                this.lvWords.Tag = null;
-            }
-        }
-
-
         private void lvWords_DoubleClick(object sender, EventArgs e)
         {
             if (this.lvWords.SelectedItems.Count > 0)
@@ -698,7 +759,7 @@ namespace DatabaseManager.Controls
             {
                 this.InsertSelectedWord();
             }
-            else if (e.KeyCode == Keys.Back)
+            else if (!(e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
             {
                 if (this.panelWords.Visible)
                 {
@@ -777,6 +838,45 @@ namespace DatabaseManager.Controls
             using (Graphics g = this.CreateGraphics())
             {
                 return (int)Math.Ceiling(g.MeasureString(text, control.Font).Width);
+            }
+        }
+
+        private void tsmiUpdateIntellisense_Click(object sender, EventArgs e)
+        {
+            if (this.SetupIntellisenseRequired != null)
+            {
+                this.SetupIntellisenseRequired(this, null);
+            }
+        }
+
+        private void txtEditor_MouseClick(object sender, MouseEventArgs e)
+        {
+            this.HandleMouseDownClick(e);
+        }
+
+        private void txtEditor_MouseDown(object sender, MouseEventArgs e)
+        {
+            this.HandleMouseDownClick(e);
+        }
+
+        private void HandleMouseDownClick(MouseEventArgs e)
+        {
+            this.ShowCurrentPosition();
+
+            this.isPasting = false;
+
+            if (!this.enableIntellisense)
+            {
+                return;
+            }
+
+            this.txtToolTip.Visible = false;
+
+            if (this.panelWords.Visible && !this.panelWords.Bounds.Contains(e.Location))
+            {
+                this.panelWords.Visible = false;
+                this.lvWords.Items.Clear();
+                this.lvWords.Tag = null;
             }
         }
     }

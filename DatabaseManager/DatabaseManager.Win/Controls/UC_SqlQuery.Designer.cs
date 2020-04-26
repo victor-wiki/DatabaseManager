@@ -35,8 +35,8 @@
             this.resultTextBox = new System.Windows.Forms.RichTextBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
-            this.resultGridView = new DatabaseManager.Controls.UC_QueryResultGrid();
             this.queryEditor = new DatabaseManager.Controls.UC_QueryEditor();
+            this.resultGridView = new DatabaseManager.Controls.UC_QueryResultGrid();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -64,7 +64,7 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.tabResult);
             this.splitContainer1.Size = new System.Drawing.Size(432, 407);
-            this.splitContainer1.SplitterDistance = 331;
+            this.splitContainer1.SplitterDistance = 250;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 1;
             // 
@@ -76,7 +76,7 @@
             this.tabResult.Location = new System.Drawing.Point(0, 0);
             this.tabResult.Name = "tabResult";
             this.tabResult.SelectedIndex = 0;
-            this.tabResult.Size = new System.Drawing.Size(432, 74);
+            this.tabResult.Size = new System.Drawing.Size(432, 155);
             this.tabResult.TabIndex = 0;
             // 
             // tabPageData
@@ -85,7 +85,7 @@
             this.tabPageData.Location = new System.Drawing.Point(4, 22);
             this.tabPageData.Margin = new System.Windows.Forms.Padding(0);
             this.tabPageData.Name = "tabPageData";
-            this.tabPageData.Size = new System.Drawing.Size(424, 48);
+            this.tabPageData.Size = new System.Drawing.Size(424, 129);
             this.tabPageData.TabIndex = 1;
             this.tabPageData.Text = "Data";
             this.tabPageData.UseVisualStyleBackColor = true;
@@ -132,22 +132,23 @@
             this.tsslMessage.Size = new System.Drawing.Size(250, 17);
             this.tsslMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // queryEditor
+            // 
+            this.queryEditor.DbInterpreter = null;
+            this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.queryEditor.Location = new System.Drawing.Point(0, 0);
+            this.queryEditor.Name = "queryEditor";
+            this.queryEditor.Size = new System.Drawing.Size(432, 250);
+            this.queryEditor.TabIndex = 0;
+            // 
             // resultGridView
             // 
             this.resultGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.resultGridView.Location = new System.Drawing.Point(0, 0);
             this.resultGridView.Margin = new System.Windows.Forms.Padding(0);
             this.resultGridView.Name = "resultGridView";
-            this.resultGridView.Size = new System.Drawing.Size(424, 48);
+            this.resultGridView.Size = new System.Drawing.Size(424, 129);
             this.resultGridView.TabIndex = 0;
-            // 
-            // queryEditor
-            // 
-            this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.queryEditor.Location = new System.Drawing.Point(0, 0);
-            this.queryEditor.Name = "queryEditor";
-            this.queryEditor.Size = new System.Drawing.Size(432, 331);
-            this.queryEditor.TabIndex = 0;
             // 
             // UC_SqlQuery
             // 

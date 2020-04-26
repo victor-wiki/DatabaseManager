@@ -25,7 +25,7 @@ namespace DatabaseManager.Controls
         {
             get
             {
-                return this.tvDbObjects.DatabaseType;
+                return ManagerUtil.GetDatabaseType(this.cboDbType.Text);
             }
         }
 
@@ -57,7 +57,7 @@ namespace DatabaseManager.Controls
 
         private void Feedback(FeedbackInfo info)
         {
-            if(this.OnFeedback!=null)
+            if (this.OnFeedback != null)
             {
                 this.OnFeedback(info);
             }
@@ -65,8 +65,8 @@ namespace DatabaseManager.Controls
 
         public void LoadDbTypes()
         {
-            var values = Enum.GetValues(typeof(DatabaseType));
-            foreach (var value in values)
+            var databaseTypes = DbInterpreterHelper.GetDisplayDatabaseTypes();
+            foreach (var value in databaseTypes)
             {
                 this.cboDbType.Items.Add(value.ToString());
             }
@@ -74,6 +74,11 @@ namespace DatabaseManager.Controls
             if (this.cboDbType.Items.Count > 0)
             {
                 this.cboDbType.Text = SettingManager.Setting.PreferredDatabase.ToString();
+
+                if (string.IsNullOrEmpty(this.cboDbType.Text))
+                {
+                    this.cboDbType.SelectedIndex = 0;
+                }
             }
 
             this.btnConnect.Focus();
@@ -106,7 +111,7 @@ namespace DatabaseManager.Controls
             {
                 if (profiles.Count() > 0)
                 {
-                    this.cboAccount.SelectedIndex = 0;                    
+                    this.cboAccount.SelectedIndex = 0;
                 }
             }
             else
@@ -171,7 +176,7 @@ namespace DatabaseManager.Controls
                 ConnectionInfo connectionInfo = new ConnectionInfo();
                 ObjectHelper.CopyProperties(profileInfo, connectionInfo);
 
-                await this.tvDbObjects.LoadTree(ManagerUtil.GetDatabaseType(this.cboDbType.Text), connectionInfo);
+                await this.tvDbObjects.LoadTree(this.DatabaseType, connectionInfo);
 
             }
             catch (Exception ex)
@@ -185,7 +190,7 @@ namespace DatabaseManager.Controls
                 MessageBox.Show("Error:" + message);
 
                 if (!this.SetConnectionInfo(profileInfo))
-                {                    
+                {
                     return;
                 }
                 else
@@ -222,6 +227,15 @@ namespace DatabaseManager.Controls
         public ConnectionInfo GetCurrentConnectionInfo()
         {
             return this.tvDbObjects.GetCurrentConnectionInfo();
+        }
+
+        public DatabaseObjectDisplayInfo GetDisplayInfo()
+        {
+            DatabaseObjectDisplayInfo info = this.tvDbObjects.GetDisplayInfo();
+
+            info.DatabaseType = this.DatabaseType;
+
+            return info;
         }
     }
 }

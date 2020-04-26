@@ -7,6 +7,7 @@ using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -95,7 +96,7 @@ namespace DatabaseManager
                 {
                     FormEventCenter.OnSave();
                 }
-            }           
+            }
         }
 
         public void OnNext(FeedbackInfo value)
@@ -137,8 +138,8 @@ namespace DatabaseManager
 
             if (connectionInfo != null)
             {
-                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true,  DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.navigator.DatabaseType };
-               
+                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.navigator.DatabaseType };
+
                 info.ConnectionInfo = connectionInfo;
 
                 this.ShowDbObjectContent(info);
@@ -157,6 +158,78 @@ namespace DatabaseManager
         private void RunScripts()
         {
             this.ucContent.RunScripts();
+        }
+
+        private void tsBtnSave_Click(object sender, EventArgs e)
+        {
+            if (FormEventCenter.OnSave != null)
+            {
+                FormEventCenter.OnSave();
+            }
+        }
+
+        private void tsBtnOpenFile_Click(object sender, EventArgs e)
+        {
+            if (this.dlgOpenFile == null)
+            {
+                this.dlgOpenFile = new OpenFileDialog();
+            }
+
+            if (this.dlgOpenFile.ShowDialog() == DialogResult.OK)
+            {
+                this.LoadFile(this.dlgOpenFile.FileName);
+            }
+        }
+
+        private void LoadFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                return;
+            }
+
+            DatabaseObjectDisplayInfo info = this.navigator.GetDisplayInfo();
+
+            info.DisplayType = DatabaseObjectDisplayType.Script;
+            info.FilePath = filePath;
+            info.Name = Path.GetFileNameWithoutExtension(info.FilePath);
+
+            this.ucContent.ShowContent(info);
+        }
+
+        private void frmMain_DragOver(object sender, DragEventArgs e)
+        {
+            this.SetDragEffect(e);
+        }
+
+        private void frmMain_DragDrop(object sender, DragEventArgs e)
+        {
+            this.SetDropFiles(e);
+        }
+
+        private void SetDragEffect(DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void SetDropFiles(DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] filePaths = (string[])e.Data.GetData(DataFormats.FileDrop.ToString());
+
+                foreach (string filePath in filePaths)
+                {
+                    this.LoadFile(filePath);
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Profile;
 using DatabaseManager.Core;
 using System;
@@ -57,8 +58,8 @@ namespace DatabaseManager
 
         public void LoadDbTypes()
         {
-            var values = Enum.GetValues(typeof(DatabaseType));
-            foreach (var value in values)
+            var databaseTypes = DbInterpreterHelper.GetDisplayDatabaseTypes();
+            foreach (var value in databaseTypes)
             {
                 this.cboDbType.Items.Add(value.ToString());
             }

@@ -33,7 +33,7 @@ namespace DatabaseManager.Helper
             }
         }
 
-        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true)
+        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null)
         {
             int start = richTextBox.SelectionStart;
 
@@ -48,18 +48,29 @@ namespace DatabaseManager.Helper
             Highlighting(richTextBox, functionsRegex, RegexOptions.IgnoreCase, ColorTranslator.FromHtml("#FF00FF"));
             Highlighting(richTextBox, stringRegex, RegexOptions.IgnoreCase, Color.Red);
 
+            string commentString = databaseType == DatabaseType.MySql ? "#" : "--";
+            string commentRegex = $@"({commentString}).*[\n]?";
+            Highlighting(richTextBox, commentRegex, RegexOptions.IgnoreCase, Color.Green);
+
             richTextBox.SelectionStart = keepPosition ? start : 0;
             richTextBox.SelectionLength = 0;
             richTextBox.Focus();
         }
 
-        public static void Highlighting(RichTextBox richTextBox, string regex, RegexOptions option, Color color)
+        public static void Highlighting(RichTextBox richTextBox, string regex, RegexOptions option, Color color, int? startIndex = null, int? stopIndex = null)
         {
-            MatchCollection matches = Regex.Matches(richTextBox.Text, regex, option);
+            string text = richTextBox.Text;
+
+            if (startIndex.HasValue && stopIndex.HasValue)
+            {
+                text = text.Substring(startIndex.Value, stopIndex.Value - startIndex.Value + 1);
+            }
+
+            MatchCollection matches = Regex.Matches(text, regex, option);
 
             foreach (Match m in matches)
             {
-                richTextBox.SelectionStart = m.Index;
+                richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
                 richTextBox.SelectionLength = m.Length;
                 richTextBox.SelectionColor = color;
             }

@@ -41,6 +41,7 @@
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiNewQuery = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -85,6 +86,7 @@
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiNewQuery,
             this.tsmiRefresh,
             this.tsmiViewData,
             this.tsmiConvert,
@@ -94,7 +96,7 @@
             this.tsmiEmptyDatabase,
             this.tsmiDelete});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(173, 180);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 224);
             // 
             // tsmiRefresh
             // 
@@ -152,6 +154,13 @@
             this.tsmiDelete.Text = "Delete";
             this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
             // 
+            // tsmiNewQuery
+            // 
+            this.tsmiNewQuery.Name = "tsmiNewQuery";
+            this.tsmiNewQuery.Size = new System.Drawing.Size(180, 22);
+            this.tsmiNewQuery.Text = "New Query";
+            this.tsmiNewQuery.Click += new System.EventHandler(this.tsmiNewQuery_Click);
+            // 
             // UC_DbObjectsComplexTree
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -177,5 +186,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiDelete;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewData;
         private System.Windows.Forms.ToolStripMenuItem tsmiTranslate;
+        private System.Windows.Forms.ToolStripMenuItem tsmiNewQuery;
     }
 }

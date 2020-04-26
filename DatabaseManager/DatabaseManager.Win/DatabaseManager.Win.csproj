@@ -502,5 +502,14 @@
   <ItemGroup>
     <None Include="Resources\Keyword.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Save32.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Owner.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\OpenFile.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

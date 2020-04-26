@@ -36,15 +36,18 @@
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
-            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
+            this.tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
+            this.tsBtnSave = new System.Windows.Forms.ToolStripButton();
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
+            this.dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
+            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
+            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -114,14 +117,6 @@
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 8;
             // 
-            // navigator
-            // 
-            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.navigator.Location = new System.Drawing.Point(0, 0);
-            this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(150, 374);
-            this.navigator.TabIndex = 0;
-            // 
             // panelContent
             // 
             this.panelContent.Controls.Add(this.ucContent);
@@ -131,20 +126,12 @@
             this.panelContent.Size = new System.Drawing.Size(633, 374);
             this.panelContent.TabIndex = 0;
             // 
-            // ucContent
-            // 
-            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
-            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucContent.Location = new System.Drawing.Point(0, 0);
-            this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(633, 374);
-            this.ucContent.TabIndex = 0;
-            this.ucContent.Visible = false;
-            // 
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsBtnAddQuery,
+            this.tsBtnOpenFile,
+            this.tsBtnSave,
             this.tsBtnGenerateScripts,
             this.tsBtnConvert,
             this.tsBtnRun});
@@ -167,6 +154,32 @@
             this.tsBtnAddQuery.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tsBtnAddQuery.ToolTipText = "New Query";
             this.tsBtnAddQuery.Click += new System.EventHandler(this.tsBtnAddQuery_Click);
+            // 
+            // tsBtnOpenFile
+            // 
+            this.tsBtnOpenFile.AutoSize = false;
+            this.tsBtnOpenFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnOpenFile.Image = ((System.Drawing.Image)(resources.GetObject("tsBtnOpenFile.Image")));
+            this.tsBtnOpenFile.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnOpenFile.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnOpenFile.Name = "tsBtnOpenFile";
+            this.tsBtnOpenFile.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnOpenFile.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnOpenFile.ToolTipText = "Open File";
+            this.tsBtnOpenFile.Click += new System.EventHandler(this.tsBtnOpenFile_Click);
+            // 
+            // tsBtnSave
+            // 
+            this.tsBtnSave.AutoSize = false;
+            this.tsBtnSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnSave.Image = global::DatabaseManager.Properties.Resources.Save32;
+            this.tsBtnSave.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnSave.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnSave.Name = "tsBtnSave";
+            this.tsBtnSave.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnSave.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnSave.ToolTipText = "Save(Ctrl+S)";
+            this.tsBtnSave.Click += new System.EventHandler(this.tsBtnSave_Click);
             // 
             // tsBtnGenerateScripts
             // 
@@ -218,8 +231,31 @@
             this.txtMessage.Size = new System.Drawing.Size(786, 14);
             this.txtMessage.TabIndex = 11;
             // 
+            // dlgOpenFile
+            // 
+            this.dlgOpenFile.Filter = "sql file|*.sql|all files|*.*";
+            // 
+            // navigator
+            // 
+            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.navigator.Location = new System.Drawing.Point(0, 0);
+            this.navigator.Name = "navigator";
+            this.navigator.Size = new System.Drawing.Size(150, 374);
+            this.navigator.TabIndex = 0;
+            // 
+            // ucContent
+            // 
+            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
+            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucContent.Location = new System.Drawing.Point(0, 0);
+            this.ucContent.Name = "ucContent";
+            this.ucContent.Size = new System.Drawing.Size(633, 374);
+            this.ucContent.TabIndex = 0;
+            this.ucContent.Visible = false;
+            // 
             // frmMain
             // 
+            this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
@@ -235,6 +271,8 @@
             this.Text = "Database Manager";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.frmMain_Load);
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.frmMain_DragDrop);
+            this.DragOver += new System.Windows.Forms.DragEventHandler(this.frmMain_DragOver);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmMain_KeyDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -267,6 +305,9 @@
         private System.Windows.Forms.TextBox txtMessage;
         private System.Windows.Forms.ToolStripButton tsBtnAddQuery;
         private System.Windows.Forms.ToolStripButton tsBtnRun;
+        private System.Windows.Forms.ToolStripButton tsBtnSave;
+        private System.Windows.Forms.ToolStripButton tsBtnOpenFile;
+        private System.Windows.Forms.OpenFileDialog dlgOpenFile;
     }
 }
 

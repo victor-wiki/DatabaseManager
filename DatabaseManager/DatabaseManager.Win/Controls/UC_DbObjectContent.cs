@@ -32,7 +32,7 @@ namespace DatabaseManager.Controls
 
             TabPage page = this.FindTabPage(info);
 
-            string title = $" { this.GetInfoName(info)}  ";
+            string title = this.GetFormatTabHeaderText(this.GetInfoName(info));
 
             if (page == null)
             {
@@ -56,6 +56,11 @@ namespace DatabaseManager.Controls
             this.SetTabPageTooltip(page);
         }
 
+        private string GetFormatTabHeaderText(string text)
+        {
+            return $" { text}  ";
+        }
+
         private void SetTabPageTooltip(TabPage page)
         {
             DatabaseObjectDisplayInfo info = page.Tag as DatabaseObjectDisplayInfo;
@@ -63,7 +68,10 @@ namespace DatabaseManager.Controls
             if (info != null)
             {
                 string database = info.ConnectionInfo == null ? "" : $@"\{info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
-                page.ToolTipText = $@"{info.DatabaseType}{database}";
+
+                string filePath = File.Exists(info.FilePath) ? (info.FilePath + "  -  ") : "";
+
+                page.ToolTipText = $@"{filePath}{info.DatabaseType}{database}";
             }
         }
 
@@ -216,9 +224,7 @@ namespace DatabaseManager.Controls
 
             if (tabPageIndex >= 0)
             {
-                this.tabControl1.TabPages.RemoveAt(tabPageIndex);
-
-                this.SetControlVisible();
+                this.CloseTabPage(tabPageIndex);
             }
         }
 
@@ -254,11 +260,58 @@ namespace DatabaseManager.Controls
         {
             if (this.tabControl1.SelectedIndex >= 0)
             {
-                this.tabControl1.TabPages.RemoveAt(this.tabControl1.SelectedIndex);
-                this.dictCloseButtonRectangle.Remove(this.tabControl1.SelectedIndex);
+                this.CloseTabPage(this.tabControl1.SelectedIndex);
             }
 
             this.SetControlVisible();
+        }
+
+        private bool CloseTabPage(int tabPageIndex)
+        {
+            bool canClose = true;
+
+            TabPage tabPage = this.tabControl1.TabPages[tabPageIndex];
+
+            DatabaseObjectDisplayInfo info = tabPage.Tag as DatabaseObjectDisplayInfo;
+
+            if (info != null && info.IsNew)
+            {
+                IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
+
+                bool saveRequired = false;
+
+                if (control is UC_SqlQuery sqlQuery)
+                {
+                    if (sqlQuery.Editor.Text.Trim().Length > 0)
+                    {
+                        saveRequired = true;
+                    }
+                }
+
+                if (saveRequired)
+                {
+                    DialogResult result = MessageBox.Show($"Do you want to save {info.Name}?", "Confirm", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        this.Save();
+                    }
+                    else if(result == DialogResult.Cancel)
+                    {
+                        canClose = false;
+                    }
+                }
+            }
+
+            if(canClose)
+            {
+                this.tabControl1.TabPages.RemoveAt(tabPageIndex);
+                this.dictCloseButtonRectangle.Remove(tabPageIndex);
+            }           
+
+            this.SetControlVisible();
+
+            return canClose;
         }
 
         private void tsmiCloseOthers_Click(object sender, EventArgs e)
@@ -269,12 +322,12 @@ namespace DatabaseManager.Controls
 
             for (int i = this.tabControl1.TabPages.Count - 1; i >= index + 1; i--)
             {
-                this.tabControl1.TabPages.RemoveAt(i);
+                this.CloseTabPage(i);
             }
 
             while (this.tabControl1.TabPages.Count > 1)
             {
-                this.tabControl1.TabPages.RemoveAt(0);
+                this.CloseTabPage(0);
             }
 
             this.SetControlVisible();
@@ -287,8 +340,10 @@ namespace DatabaseManager.Controls
 
         private void tsmiCloseAll_Click(object sender, EventArgs e)
         {
-            this.tabControl1.TabPages.Clear();
-            this.dictCloseButtonRectangle.Clear();
+            for (int i = this.tabControl1.TabCount - 1; i >= 0; i--)
+            {
+                this.CloseTabPage(i);
+            }
 
             this.SetControlVisible();
         }
@@ -314,6 +369,12 @@ namespace DatabaseManager.Controls
                 return;
             }
 
+            if (File.Exists(displayInfo.FilePath))
+            {
+                this.SaveToFile(tabPage, displayInfo.FilePath);
+                return;
+            }
+
             if (this.dlgSave == null)
             {
                 this.dlgSave = new SaveFileDialog();
@@ -333,12 +394,30 @@ namespace DatabaseManager.Controls
             DialogResult result = this.dlgSave.ShowDialog();
             if (result == DialogResult.OK)
             {
-                IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
+                string filePath = this.dlgSave.FileName;
 
-                if (control != null)
-                {
-                    control.Save(this.dlgSave.FileName);
-                }
+                this.SaveToFile(tabPage, filePath);
+
+                displayInfo.FilePath = filePath;
+
+                string name = Path.GetFileNameWithoutExtension(filePath);
+
+                displayInfo.IsNew = false;
+                displayInfo.Name = name;
+
+                tabPage.Text = this.GetFormatTabHeaderText(name);
+
+                this.SetTabPageTooltip(tabPage);
+            }
+        }
+
+        private void SaveToFile(TabPage tabPage, string filePath)
+        {
+            IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
+
+            if (control != null)
+            {
+                control.Save(filePath);
             }
         }
 
