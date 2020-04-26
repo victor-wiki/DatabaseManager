@@ -6,7 +6,7 @@
  * Copy table data (support bulkcopy).
 
 ### SQL Query Editor
-  Execute custom select, insert, update, delete, create and alter statements.
+  Create new query or open existing sql file to execute select, insert, update, delete, create and alter statements. It supports input intellisense.
  
 ### Generate Scripts
   * Generate database objects create scripts.
