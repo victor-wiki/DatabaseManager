@@ -17,6 +17,9 @@
     <None Remove="Config\DataTypeMapping\Oracle2SqlServer.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
+    <None Remove="Config\DataType\MySql.txt" />
+    <None Remove="Config\DataType\Oracle.txt" />
+    <None Remove="Config\DataType\SqlServer.txt" />
     <None Remove="Config\FunctionMapping.xml" />
     <None Remove="Config\FunctionSpecification\MySql.xml" />
     <None Remove="Config\FunctionSpecification\Oracle.xml" />
@@ -44,6 +47,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataType\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataType\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataType\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\FunctionSpecification\Oracle.xml">

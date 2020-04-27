@@ -1,0 +1,12 @@
+﻿$ACTION$ FUNCTION $NAME$ 
+(	
+   ParameterName INT
+)
+RETURNS INT
+BEGIN
+	
+	DECLARE VariableName INT;
+    
+	RETURN VariableName;
+
+END;

@@ -13,6 +13,7 @@ namespace DatabaseManager.Model
         public object Error { get; set; }
         public bool IsNew { get; set; }
         public string FilePath { get; set; }
+        public ScriptAction ScriptAction;
     }
 
     public enum DatabaseObjectDisplayType

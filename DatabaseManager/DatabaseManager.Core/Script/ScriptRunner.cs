@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace DatabaseManager.Core
 {
@@ -56,7 +57,7 @@ namespace DatabaseManager.Core
 
                 script = scriptParser.Parse();
 
-                if(string.IsNullOrEmpty(script))
+                if (string.IsNullOrEmpty(script))
                 {
                     result.DoNothing = true;
                     return result;
@@ -87,20 +88,29 @@ namespace DatabaseManager.Core
 
                         this.transaction = dbConnection.BeginTransaction();
 
-                        string delimiter = dbInterpreter.ScriptsDelimiter;
+                        IEnumerable<string> commands = Enumerable.Empty<string>();
 
-                        if (this.DelimiterRelaceChars != null)
+                        if (scriptParser.IsCreateOrAlterScript())
                         {
-                            delimiter = delimiter.Replace(this.DelimiterRelaceChars, "");
+                            commands = new string[] { script };
                         }
+                        else
+                        {
+                            string delimiter = dbInterpreter.ScriptsDelimiter;
 
-                        string[] commands = script.Split(new string[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
+                            if (this.DelimiterRelaceChars != null)
+                            {
+                                delimiter = delimiter.Replace(this.DelimiterRelaceChars, "");
+                            }
+
+                            commands = script.Split(new string[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
+                        }
 
                         int affectedRows = 0;
 
                         foreach (string command in commands)
                         {
-                            if(string.IsNullOrEmpty(command.Trim()))
+                            if (string.IsNullOrEmpty(command.Trim()))
                             {
                                 continue;
                             }

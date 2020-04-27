@@ -5,6 +5,52 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Config\Template\Function\MySql.txt" />
+    <None Remove="Config\Template\Function\Oracle.txt" />
+    <None Remove="Config\Template\Function\SqlServer.txt" />
+    <None Remove="Config\Template\Procedure\MySql.txt" />
+    <None Remove="Config\Template\Procedure\Oracle.txt" />
+    <None Remove="Config\Template\Procedure\SqlServer.txt" />
+    <None Remove="Config\Template\TableTrigger\MySql.txt" />
+    <None Remove="Config\Template\TableTrigger\Oracle.txt" />
+    <None Remove="Config\Template\TableTrigger\SqlServer.txt" />
+    <None Remove="Config\Template\View\Common.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\Template\Function\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\Function\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\Function\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\Procedure\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\Procedure\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\Procedure\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\TableTrigger\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\TableTrigger\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\TableTrigger\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Template\View\Common.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CsvHelper" Version="15.0.5" />
     <PackageReference Include="Humanizer.Core" Version="2.7.9" />
   </ItemGroup>

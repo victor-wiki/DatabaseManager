@@ -179,28 +179,25 @@ namespace DatabaseConverter.Core
                                 }
                             }
 
-                            string pattern = "";
-
-                            bool strictMatch = true;
+                            string excludePattern = $@"[`""\[]\b({kp.Key})\b[`""\]]";
+                            string pattern = "";                         
 
                             if (prefix.Length == 0)
-                            {
-                                strictMatch = false;
-                                pattern = $@"[^`^""^\[]\b({kp.Key})\b[^`^""^\]]";
+                            {                               
+                                pattern = $@"\b({kp.Key})\b";
                             }
                             else
                             {
                                 pattern = $@"([{prefix}]\b({kp.Key.Substring(prefix.Length)})\b)";
                             }
 
-                            foreach (Match match in Regex.Matches(token.Symbol, pattern))
+                            if(!Regex.IsMatch(token.Symbol , excludePattern))
                             {
-                                string matchValue = match.Value;
-
-                                string replaceValue = strictMatch ? kp.Value : matchValue.First() + kp.Value + matchValue.Last();
-
-                                token.Symbol = Regex.Replace(token.Symbol, pattern, replaceValue);
-                            }
+                                foreach (Match match in Regex.Matches(token.Symbol, pattern))
+                                {
+                                    token.Symbol = Regex.Replace(token.Symbol, pattern, kp.Value);
+                                }
+                            }                           
                         }
                     }
                 }

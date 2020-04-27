@@ -95,6 +95,10 @@ namespace DatabaseManager.Controls
         private void SetMenuItemVisible(TreeNode node)
         {
             this.tsmiNewQuery.Visible = node.Level == 0;
+            this.tsmiNewView.Visible = node.Name == nameof(DbObjectTreeFolderType.Views) || node.Tag is DatabaseInterpreter.Model.View;
+            this.tsmiNewFunction.Visible = node.Name == nameof(DbObjectTreeFolderType.Functions) || node.Tag is Function;
+            this.tsmiNewProcedure.Visible = node.Name == nameof(DbObjectTreeFolderType.Procedures) || node.Tag is Procedure;
+            this.tsmiNewTrigger.Visible = node.Name == nameof(DbObjectTreeFolderType.Triggers) || node.Tag is TableTrigger;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
             this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
             this.tsmiConvert.Visible = node.Level == 0;
@@ -850,5 +854,39 @@ namespace DatabaseManager.Controls
                 this.OnShowContent(info);
             }
         }
+
+        private void tsmiNewView_Click(object sender, EventArgs e)
+        {
+            this.DoScript(DatabaseObjectType.View, ScriptAction.CREATE);
+        }
+
+        private void tsmiNewFunction_Click(object sender, EventArgs e)
+        {
+            this.DoScript(DatabaseObjectType.Function, ScriptAction.CREATE);
+        }
+
+        private void tsmiNewProcedure_Click(object sender, EventArgs e)
+        {
+            this.DoScript(DatabaseObjectType.Procedure, ScriptAction.CREATE);
+        }
+
+        private void tsmiNewTrigger_Click(object sender, EventArgs e)
+        {
+            this.DoScript(DatabaseObjectType.TableTrigger, ScriptAction.CREATE);
+        }
+
+        private void DoScript(DatabaseObjectType databaseObjectType, ScriptAction scriptAction)
+        {
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, new ConnectionInfo(), new DbInterpreterOption());
+
+            ScriptTemplate scriptTemplate = new ScriptTemplate(dbInterpreter);          
+
+            DatabaseObjectDisplayInfo displayInfo = this.GetDisplayInfo();
+            displayInfo.IsNew = true;
+            displayInfo.Content = scriptTemplate.GetTemplateContent(databaseObjectType, scriptAction);
+            displayInfo.ScriptAction = scriptAction;
+
+            this.ShowContent(displayInfo);
+        }        
     }
 }

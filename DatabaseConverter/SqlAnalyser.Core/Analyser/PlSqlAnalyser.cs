@@ -173,7 +173,7 @@ namespace SqlAnalyser.Core
 
             string events = string.Join(" OR ", script.Events);
 
-            sb.AppendLine($"CREATE OR TRIGGER {script.FullName}");
+            sb.AppendLine($"CREATE OR REPLACE TRIGGER {script.FullName}");
             sb.AppendLine($"{script.Time} {events} ON {script.TableName}");
             sb.AppendLine($"FOR EACH ROW");
 

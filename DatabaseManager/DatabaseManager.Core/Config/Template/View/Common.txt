@@ -1,0 +1,4 @@
+$ACTION$ VIEW $NAME$ AS
+SELECT *
+FROM 
+;

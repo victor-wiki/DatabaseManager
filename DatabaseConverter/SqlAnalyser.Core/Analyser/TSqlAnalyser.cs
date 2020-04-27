@@ -77,9 +77,13 @@ namespace SqlAnalyser.Core
 
                     string strParameterType = "";
 
-                    if (parameterType.HasFlag(ParameterType.IN) && parameterType.HasFlag(ParameterType.OUT))
+                    if(parameterType== ParameterType.IN)
                     {
-                        strParameterType = "INOUT";
+                        strParameterType = "";
+                    }
+                    else if (parameterType.HasFlag(ParameterType.IN) && parameterType.HasFlag(ParameterType.OUT))
+                    {
+                        strParameterType = "OUT";
                     }
                     else if (parameterType != ParameterType.NONE)
                     {
@@ -88,7 +92,7 @@ namespace SqlAnalyser.Core
 
                     string defaultValue = parameter.DefaultValue == null ? "" : "=" + parameter.DefaultValue;
 
-                    sb.AppendLine($"{strParameterType} {parameter.Name} {parameter.DataType} {defaultValue}{(i == script.Parameters.Count - 1 ? "" : ",")}");
+                    sb.AppendLine($"{parameter.Name} {parameter.DataType} {defaultValue} {strParameterType}{(i == script.Parameters.Count - 1 ? "" : ",")}");
 
                     i++;
                 }
@@ -187,7 +191,7 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            string time = script.Time == TriggerTime.BEFORE ? "INSTEAD OF" : script.Time.ToString();
+            string time = (script.Time == TriggerTime.BEFORE || script.Time == TriggerTime.INSTEAD_OF ) ? "INSTEAD OF" : script.Time.ToString();
             string events = string.Join(",", script.Events);
 
             sb.AppendLine($"CREATE TRIGGER {script.FullName} ON {script.TableName}");

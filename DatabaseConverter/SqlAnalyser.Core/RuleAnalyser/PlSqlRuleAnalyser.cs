@@ -264,12 +264,20 @@ namespace SqlAnalyser.Core
                                     case PlSqlParser.AFTER:
                                         script.Time = TriggerTime.AFTER;
                                         break;
+                                    case PlSqlParser.INSTEAD:
+                                        script.Time = TriggerTime.INSTEAD_OF;
+                                        break;
                                 }
                             }
                         }
                     }
 
-                    script.Condition = new TokenInfo(trigger.trigger_when_clause().condition()) { Type = TokenType.Condition };
+                    ConditionContext condition = trigger.trigger_when_clause()?.condition();
+
+                    if (condition != null)
+                    {
+                        script.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    }
 
                     #region Body
 
@@ -434,6 +442,10 @@ namespace SqlAnalyser.Core
                 else if (child is BodyContext body)
                 {
                     statements.AddRange(this.ParseBody(body));
+                }
+                else if (child is Return_statementContext @return)
+                {
+                    statements.Add(this.ParseReturnStatement(@return));
                 }
             }
 

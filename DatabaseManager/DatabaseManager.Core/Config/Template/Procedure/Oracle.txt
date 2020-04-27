@@ -1,0 +1,13 @@
+﻿CREATE OR REPLACE PROCEDURE $NAME$ 
+(	
+   ParameterName NUMBER
+)
+AS
+VariableName NUMBER; --DECLARE 
+BEGIN	
+
+    VariableName:= 'DEMO'; 
+    
+    DBMS_OUTPUT.PUT_LINE(VariableName);
+
+END $NAME$;

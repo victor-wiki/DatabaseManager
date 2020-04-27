@@ -502,7 +502,16 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                string typeName = dbObjet.GetType() == typeof(UserDefinedType) ? "TYPE" : dbObjet.GetType().Name;
+                string typeName = dbObjet.GetType().Name;
+
+                if (typeName == nameof(UserDefinedType))
+                {
+                    typeName = "TYPE";
+                }
+                else if(typeName == nameof(TableTrigger))
+                {
+                    typeName = "TRIGGER";
+                }
 
                 sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
             }
@@ -895,7 +904,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
         protected override void SubscribeInfoMessage(DbConnection dbConnection)
         {
-            SqlConnection connection = dbConnection as SqlConnection;             
+            SqlConnection connection = dbConnection as SqlConnection;
             connection.InfoMessage += SqlConnection_InfoMessage;
         }
 
@@ -906,8 +915,8 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
         protected override void SubscribeInfoMessage(DbCommand dbCommand)
         {
-            SqlCommand command = dbCommand as SqlCommand;
-            command.StatementCompleted += Command_StatementCompleted;
+            //SqlCommand command = dbCommand as SqlCommand;
+            //command.StatementCompleted += Command_StatementCompleted;
         }
 
         private void Command_StatementCompleted(object sender, StatementCompletedEventArgs e)

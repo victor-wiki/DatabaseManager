@@ -16,7 +16,8 @@ namespace SqlAnalyser.Model
     public enum TriggerTime
     {
         BEFORE,
-        AFTER
+        AFTER,
+        INSTEAD_OF
     }
 
     public enum TriggerEvent

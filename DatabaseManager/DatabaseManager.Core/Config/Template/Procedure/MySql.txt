@@ -1,0 +1,13 @@
+﻿$ACTION$ PROCEDURE $NAME$ 
+(	
+   ParameterName INT
+)
+BEGIN
+	
+	DECLARE VariableName INT;
+    
+	SET VariableName = 'DEMO';
+
+	SELECT VariableName;
+
+END;

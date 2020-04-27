@@ -63,7 +63,7 @@ namespace DatabaseManager.Controls
         {
             this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
 
-            if(this.CheckConnection()==true)
+            if(this.CheckConnection())
             {
                 DbInterpreterOption option = new DbInterpreterOption();
 
@@ -128,24 +128,20 @@ namespace DatabaseManager.Controls
                     selectedTabIndex = 1;
 
                     if (this.resultTextBox.Text.Length == 0)
-                    {
-                        bool appended = false;
-
-                        if (result.Result is int affectedRows)
+                    {  
+                        if(!(this.displayInfo.ScriptAction== ScriptAction.CREATE || this.displayInfo.ScriptAction == ScriptAction.ALTER))
                         {
-                            if (affectedRows >= 0)
+                            if (result.Result is int affectedRows)
                             {
-                                appended = true;
-
-                                this.AppendMessage($"{affectedRows} row(s) affected.");
+                                if (affectedRows >= 0)
+                                {
+                                    this.AppendMessage($"{affectedRows} row(s) affected.");
+                                }
                             }
-                        }
-
-                        if (!appended)
-                        {
-                            this.AppendMessage("command executed.");
-                        }
+                        }                                           
                     }
+
+                    this.AppendMessage("command executed.");
                 }
 
                 if (selectedTabIndex >= 0)
@@ -197,8 +193,7 @@ namespace DatabaseManager.Controls
                 return true;
             }
             else
-            {
-                MessageBox.Show("No database connection established.");
+            {                
                 return false;
             }
         }

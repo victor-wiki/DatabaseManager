@@ -567,6 +567,12 @@ namespace DatabaseInterpreter.Core
             else
             {
                 string typeName = dbObjet.GetType().Name;
+
+                if (typeName == nameof(TableTrigger))
+                {
+                    typeName = "TRIGGER";
+                }
+
                 sql = $"DROP { typeName } {this.GetQuotedObjectName(dbObjet)}";
             }
 

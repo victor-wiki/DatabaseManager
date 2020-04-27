@@ -212,7 +212,9 @@ namespace SqlAnalyser.Core
 
             string events = string.Join(",", script.Events);
 
-            sb.AppendLine($"CREATE TRIGGER {script.FullName} {script.Time} {events} ON {script.TableName}");
+            string time = script.Time == TriggerTime.INSTEAD_OF ? "AFTER" : script.Time.ToString();
+
+            sb.AppendLine($"CREATE TRIGGER {script.FullName} {time} {events} ON {script.TableName}");
             sb.AppendLine($"FOR EACH ROW {script.Behavior} {script.OtherTriggerName}");
 
             int beginIndex = sb.Length - 1;

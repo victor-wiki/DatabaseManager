@@ -264,8 +264,10 @@ namespace SqlAnalyser.Core
                             switch (terminalNode.Symbol.Type)
                             {
                                 case TSqlParser.BEFORE:
-                                case TSqlParser.INSTEAD:
                                     script.Time = TriggerTime.BEFORE;
+                                    break;
+                                case TSqlParser.INSTEAD:
+                                    script.Time = TriggerTime.INSTEAD_OF;
                                     break;
                                 case TSqlParser.AFTER:
                                     script.Time = TriggerTime.AFTER;

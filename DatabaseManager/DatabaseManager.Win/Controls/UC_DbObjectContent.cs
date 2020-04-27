@@ -67,7 +67,7 @@ namespace DatabaseManager.Controls
 
             if (info != null)
             {
-                string database = info.ConnectionInfo == null ? "" : $@"\{info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
+                string database = info.ConnectionInfo == null ? "" : $@": {info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
 
                 string filePath = File.Exists(info.FilePath) ? (info.FilePath + "  -  ") : "";
 
@@ -446,10 +446,10 @@ namespace DatabaseManager.Controls
 
                     if (info.DisplayType == DatabaseObjectDisplayType.Script)
                     {
-                        prefix = "New Query";
+                        prefix = "SQLQuery";
                     }
 
-                    int num = GetNewMaxNameNumber(prefix);
+                    int num = this.GetNewMaxNameNumber(prefix);
 
                     name = prefix + (num + 1);
 
@@ -472,7 +472,7 @@ namespace DatabaseManager.Controls
             {
                 DatabaseObjectDisplayInfo data = page.Tag as DatabaseObjectDisplayInfo;
 
-                if (data.Content == null && data.Name.Trim().StartsWith(prefix))
+                if (data.Name.Trim().StartsWith(prefix))
                 {
                     names.Add(data.Name.Trim());
                 }

@@ -1,0 +1,12 @@
+﻿CREATE OR REPLACE FUNCTION $NAME$ 
+(	
+   ParameterName NUMBER
+)
+RETURN NUMBER
+AS
+VariableName NUMBER; --DECLARE 
+BEGIN	
+    
+	RETURN VariableName;
+
+END $NAME$;

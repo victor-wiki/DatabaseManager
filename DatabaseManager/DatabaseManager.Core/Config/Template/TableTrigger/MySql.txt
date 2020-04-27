@@ -1,0 +1,13 @@
+﻿$ACTION$ TRIGGER $NAME$ 
+BEFORE|AFTER INSERT,UPDATE,DELETE
+ON $TABLE_NAME$
+FOR EACH ROW
+BEGIN
+	
+	DECLARE VariableName INT;
+    
+	SET VariableName = 'DEMO';
+
+	SELECT VariableName;
+
+END;

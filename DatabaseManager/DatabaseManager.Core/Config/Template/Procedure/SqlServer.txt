@@ -1,0 +1,14 @@
+﻿$ACTION$ PROCEDURE $NAME$ 
+(	
+   @ParameterName INT
+)
+AS
+BEGIN
+	
+	DECLARE @VariableName INT
+    
+	SET @VariableName = 'DEMO'
+
+	PRINT @VariableName
+
+END

@@ -37,13 +37,16 @@ namespace DatabaseManager.Helper
         {
             int start = richTextBox.SelectionStart;
 
+            var dataTypes = DataTypeManager.GetDataTypes(databaseType);
             var keywords = KeywordManager.GetKeywords(databaseType);
             var functions = FunctionManager.GetFunctionSpecifications(databaseType).Select(item => item.Name).Except(keywords);
 
+            string dataTypesRegex = $@"\b({string.Join("|", dataTypes)})\b";
             string keywordsRegex = $@"\b({string.Join("|", keywords)})\b";
             string functionsRegex = $@"\b({string.Join("|", functions)})\b";
             string stringRegex = $@"(['][^'^(^)]*['])";
 
+            Highlighting(richTextBox, dataTypesRegex, RegexOptions.IgnoreCase, Color.Blue);
             Highlighting(richTextBox, keywordsRegex, RegexOptions.IgnoreCase, Color.Blue);
             Highlighting(richTextBox, functionsRegex, RegexOptions.IgnoreCase, ColorTranslator.FromHtml("#FF00FF"));
             Highlighting(richTextBox, stringRegex, RegexOptions.IgnoreCase, Color.Red);
