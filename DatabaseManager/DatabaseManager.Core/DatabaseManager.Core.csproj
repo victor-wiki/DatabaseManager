@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
+    <Description>Database manage tool for: SqlServer, MySql and Oracle.</Description>
+    <Authors>victor-wiki</Authors>
   </PropertyGroup>
 
   <ItemGroup>
