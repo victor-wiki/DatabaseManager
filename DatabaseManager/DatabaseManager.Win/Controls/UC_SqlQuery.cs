@@ -53,10 +53,7 @@ namespace DatabaseManager.Controls
                 this.Editor.AppendText(File.ReadAllText(displayInfo.FilePath));
             }
 
-            if (displayInfo.IsNew)
-            {
-                this.SetupIntellisence();
-            }
+            this.SetupIntellisence();
         }
 
         private async void SetupIntellisence()

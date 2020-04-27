@@ -23,6 +23,8 @@ namespace DatabaseManager.Controls
     public partial class UC_QueryEditor : UserControl
     {
         private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
+        private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]+)\b";
+        private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]+)\b";
         private SchemaInfo schemaInfo;
         private IEnumerable<string> keywords;
         private IEnumerable<FunctionSpecification> builtinFunctions;
@@ -41,7 +43,7 @@ namespace DatabaseManager.Controls
         public UC_QueryEditor()
         {
             InitializeComponent();
-          
+
             this.lvWords.MouseWheel += LvWords_MouseWheel;
             this.panelWords.VerticalScroll.Enabled = true;
             this.panelWords.VerticalScroll.Visible = true;
@@ -229,11 +231,11 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if(this.DbInterpreter.CommentString.Contains(token.Text))
+                if (this.DbInterpreter.CommentString.Contains(token.Text))
                 {
                     int start = this.txtEditor.SelectionStart;
                     int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
-                    int stop =  this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
+                    int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
                     RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop);
                 }
             }
@@ -438,6 +440,7 @@ namespace DatabaseManager.Controls
                 if (isInsert)
                 {
                     token.StartIndex = token.StopIndex = this.txtEditor.SelectionStart;
+                    token.Text = ".";
 
                     return token;
                 }
@@ -621,7 +624,12 @@ namespace DatabaseManager.Controls
                 word = new SqlWord() { Text = text };
             }
 
-            Regex regex = new Regex($@"([{this.DbInterpreter.QuotationLeftChar}]?\b([_a-zA-Z][ _0-9a-zA-Z]+)\b[{this.DbInterpreter.QuotationRightChar}]?)?[\s\n\r]+\b({text})\b", RegexOptions.IgnoreCase);
+            char quotationLeftChar = this.DbInterpreter.QuotationLeftChar;
+            char quotationRightChar = this.DbInterpreter.QuotationRightChar;
+
+            string quotationNamePattern = $@"([{quotationLeftChar}]{nameWithSpacePattern}[{quotationRightChar}])";
+
+            Regex regex = new Regex($@"({namePattern}|{quotationNamePattern})[\s\n\r]+\b({text})\b", RegexOptions.IgnoreCase);
 
             var matches = regex.Matches(this.txtEditor.Text);
 
@@ -630,20 +638,14 @@ namespace DatabaseManager.Controls
             {
                 if (match.Value.Trim().ToUpper() != text.ToUpper())
                 {
-                    string[] items = match.Value.Split(' ');
+                    int lastIndexOfSpace = match.Value.LastIndexOf(' ');
 
-                    var reversedItems = items.Reverse().ToArray();
+                    string value = match.Value.Substring(0, lastIndexOfSpace);
 
-                    for (int i = 0; i < reversedItems.Length; i++)
+                    if (!this.keywords.Any(item => item.ToUpper() == value.ToUpper()))
                     {
-                        if (reversedItems[i] == text)
-                        {
-                            if (i + 1 < reversedItems.Length && !this.keywords.Any(item => item.ToUpper() == reversedItems[i + 1].ToUpper()))
-                            {
-                                name = this.TrimQuotationChars(reversedItems[i + 1]);
-                                break;
-                            }
-                        }
+                        name = this.TrimQuotationChars(value);
+                        break;
                     }
                 }
             }
@@ -699,28 +701,39 @@ namespace DatabaseManager.Controls
 
         private void InsertSelectedWord()
         {
-            SqlWordToken token = this.GetLastWordToken(true, true);
-
-            ListViewItem item = this.lvWords.SelectedItems[0];
-            object tag = item.Tag;
-
-            string selectedWord = item.SubItems[1].Text;
-
-            this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
-
-            string quotationValue = selectedWord;
-
-            if (!(tag is FunctionSpecification))
+            try
             {
-                quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
+                SqlWordToken token = this.GetLastWordToken(true, true);
+
+                ListViewItem item = this.lvWords.SelectedItems[0];
+                object tag = item.Tag;
+
+                string selectedWord = item.SubItems[1].Text;
+                bool isSpace = token.StopIndex <= this.txtEditor.Text.Length - 1
+                             && (this.txtEditor.Text[token.StopIndex] == ' ' || this.txtEditor.Text[token.StopIndex] == '\n');
+
+                string spaceChar = isSpace ? this.txtEditor.Text[token.StopIndex].ToString() : "";
+
+                this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
+
+                string quotationValue = selectedWord;
+
+                if (!(tag is FunctionSpecification))
+                {
+                    quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
+                }
+
+                this.txtEditor.SelectedText = quotationValue + (isSpace ? spaceChar : "");
+
+                this.SetWordListViewVisible(false);
+
+                this.txtEditor.SelectionStart = this.txtEditor.SelectionStart - (isSpace ? 1 : 0);
+                this.txtEditor.Focus();
             }
-
-            this.txtEditor.SelectedText = quotationValue;
-
-            this.SetWordListViewVisible(false);
-
-            this.txtEditor.SelectionStart = this.txtEditor.SelectionStart;
-            this.txtEditor.Focus();
+            catch (Exception ex)
+            {
+               
+            }
         }
 
         private void ShowCurrentPosition()
