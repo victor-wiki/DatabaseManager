@@ -152,9 +152,15 @@ namespace DatabaseManager.Controls
 
         private void HandleKeyUpFoIntellisense(KeyEventArgs e)
         {
+            if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue >=112)
+            {
+                this.SetWordListViewVisible(false);
+                return;
+            }
+
             if (e.KeyCode == Keys.Space)
             {
-                this.ClearStypeForSpace();
+                this.ClearStyleForSpace();
                 this.SetWordListViewVisible(false);
             }
 
@@ -231,18 +237,14 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if (this.DbInterpreter.CommentString.Contains(token.Text))
+                if (token.Text.Length > 0 && this.DbInterpreter.CommentString.Contains(token.Text.Last()))
                 {
                     int start = this.txtEditor.SelectionStart;
                     int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
                     int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
                     RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop);
                 }
-            }
-            else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
-            {
-                this.SetWordListViewVisible(false);
-            }
+            }           
             else
             {
                 this.ShowWordListByToken(token);
@@ -367,7 +369,7 @@ namespace DatabaseManager.Controls
             this.txtEditor.SelectionLength = 0;
         }
 
-        private void ClearStypeForSpace()
+        private void ClearStyleForSpace()
         {
             int start = this.txtEditor.SelectionStart;
             this.txtEditor.Select(start - 1, 1);
@@ -513,6 +515,11 @@ namespace DatabaseManager.Controls
 
                 token.StartIndex = i + (exited ? 1 : 0);
 
+                //if (token.StartIndex > token.StopIndex)
+                //{
+                //    token.StartIndex = token.StopIndex;
+                //}
+
                 if (word.Contains("'"))
                 {
                     int singQuotationCount = lineBefore.Count(item => item == '\'');
@@ -561,7 +568,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                int firstIndexOfComment = lineBefore.IndexOf(this.DbInterpreter.CommentString);
+                int firstIndexOfComment = lineFirstCharIndex + lineBefore.IndexOf(this.DbInterpreter.CommentString);
 
                 token.StartIndex = firstIndexOfComment;
                 token.StopIndex = lineFirstCharIndex + this.txtEditor.Lines[lineIndex].Length - 1;
@@ -709,12 +716,10 @@ namespace DatabaseManager.Controls
                 object tag = item.Tag;
 
                 string selectedWord = item.SubItems[1].Text;
-                bool isSpace = token.StopIndex <= this.txtEditor.Text.Length - 1
-                             && (this.txtEditor.Text[token.StopIndex] == ' ' || this.txtEditor.Text[token.StopIndex] == '\n');
 
-                string spaceChar = isSpace ? this.txtEditor.Text[token.StopIndex].ToString() : "";
+                int length = token.StartIndex == token.StopIndex ? 0 : token.StopIndex - token.StartIndex + 1;
 
-                this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
+                this.txtEditor.Select(token.StartIndex, length);               
 
                 string quotationValue = selectedWord;
 
@@ -723,16 +728,16 @@ namespace DatabaseManager.Controls
                     quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
                 }
 
-                this.txtEditor.SelectedText = quotationValue + (isSpace ? spaceChar : "");
+                this.txtEditor.SelectedText = quotationValue;
 
                 this.SetWordListViewVisible(false);
 
-                this.txtEditor.SelectionStart = this.txtEditor.SelectionStart - (isSpace ? 1 : 0);
+                this.txtEditor.SelectionStart = this.txtEditor.SelectionStart;
                 this.txtEditor.Focus();
             }
             catch (Exception ex)
             {
-               
+
             }
         }
 
@@ -785,13 +790,19 @@ namespace DatabaseManager.Controls
 
         private void tsmiDisableIntellisense_Click(object sender, EventArgs e)
         {
-            this.enableIntellisense = !this.enableIntellisense;
-
-            if (this.enableIntellisense && !this.intellisenseSetuped)
+            if (this.enableIntellisense)
             {
-                if (this.SetupIntellisenseRequired != null)
+                this.enableIntellisense = false;
+                this.intellisenseSetuped = false;
+            }
+            else
+            {
+                if (!this.intellisenseSetuped)
                 {
-                    this.SetupIntellisenseRequired(this, null);
+                    if (this.SetupIntellisenseRequired != null)
+                    {
+                        this.SetupIntellisenseRequired(this, null);
+                    }
                 }
             }
         }

@@ -94,19 +94,25 @@ namespace DatabaseManager.Controls
 
         private void SetMenuItemVisible(TreeNode node)
         {
-            this.tsmiNewQuery.Visible = node.Level == 0;
-            this.tsmiNewView.Visible = node.Name == nameof(DbObjectTreeFolderType.Views) || node.Tag is DatabaseInterpreter.Model.View;
+            bool isDatabase = node.Level == 0;
+            bool isView = node.Tag is DatabaseInterpreter.Model.View;
+            bool isTable = node.Tag is Table;
+            bool isScriptObject = node.Tag is ScriptDbObject;
+
+            this.tsmiNewQuery.Visible = isDatabase;
+            this.tsmiNewView.Visible = node.Name == nameof(DbObjectTreeFolderType.Views) || isView;
             this.tsmiNewFunction.Visible = node.Name == nameof(DbObjectTreeFolderType.Functions) || node.Tag is Function;
             this.tsmiNewProcedure.Visible = node.Name == nameof(DbObjectTreeFolderType.Procedures) || node.Tag is Procedure;
             this.tsmiNewTrigger.Visible = node.Name == nameof(DbObjectTreeFolderType.Triggers) || node.Tag is TableTrigger;
+            this.tsmiAlter.Visible = isScriptObject;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
-            this.tsmiGenerateScripts.Visible = node.Level == 0 || node.Level == 2 || (node.Level == 4 && node.Tag is TableTrigger);
-            this.tsmiConvert.Visible = node.Level == 0;
-            this.tsmiClearData.Visible = node.Level == 0;
-            this.tsmiEmptyDatabase.Visible = node.Level == 0;
+            this.tsmiGenerateScripts.Visible = isDatabase || isTable || isScriptObject;
+            this.tsmiConvert.Visible = isDatabase;          
+            this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
-            this.tsmiViewData.Visible = node.Tag is Table;
-            this.tsmiTranslate.Visible = node.Tag is Table || node.Tag is ScriptDbObject;
+            this.tsmiViewData.Visible = isTable;
+            this.tsmiTranslate.Visible = isTable || isScriptObject;
+            this.tsmiMore.Visible = isDatabase;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -447,6 +453,11 @@ namespace DatabaseManager.Controls
 
         private async void tsmiGenerateScripts_Click(object sender, EventArgs e)
         {
+            this.GenerateScripts(ScriptAction.CREATE);
+        }
+
+        private async void GenerateScripts(ScriptAction scriptAction)
+        {
             if (!this.IsValidSelectedNode())
             {
                 return;
@@ -454,10 +465,10 @@ namespace DatabaseManager.Controls
 
             TreeNode node = this.GetSelectedNode();
 
-            await this.GenerateScripts(node);
+            await this.GenerateScripts(node, scriptAction);
         }
 
-        private async Task GenerateScripts(TreeNode node)
+        private async Task GenerateScripts(TreeNode node, ScriptAction scriptAction)
         {
             object tag = node.Tag;
 
@@ -472,29 +483,19 @@ namespace DatabaseManager.Controls
             {
                 string databaseName = this.GetDatabaseNode(node).Name;
 
-                await this.GenerateObjectScript(databaseName, tag as DatabaseObject);
+                await this.GenerateObjectScript(databaseName, tag as DatabaseObject, scriptAction);
             }
         }
 
-        private async Task GenerateObjectScript(string database, DatabaseObject obj)
+        private async Task GenerateObjectScript(string database, DatabaseObject dbObj, ScriptAction scriptAction)
         {
-            string typeName = obj.GetType().Name;
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
 
-            if (obj is Table)
-            {
-                dbInterpreter.Option.GetTableAllObjects = true;
-            }
+            ScriptGenerator scriptGenerator = new ScriptGenerator(dbInterpreter);
 
-            DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
+            string script = await scriptGenerator.Generate(dbObj, scriptAction);          
 
-            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
-            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { obj.Name });
-
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
-            string script = dbInterpreter.GenerateSchemaScripts(schemaInfo).ToString();
-
-            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = obj.Name, DatabaseType = this.databaseType, DatabaseObject = obj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObj.Name, DatabaseType = this.databaseType, DatabaseObject = dbObj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
         }
 
         private void tsmiConvert_Click(object sender, EventArgs e)
@@ -535,9 +536,12 @@ namespace DatabaseManager.Controls
         private async Task ClearData(string database)
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            DbManager dbManager = new DbManager(dbInterpreter);
+
+            dbManager.Subscribe(this);
             dbInterpreter.Subscribe(this);
 
-            await Task.Run(() => dbInterpreter.ClearDataAsync());
+            await Task.Run(() => dbManager.ClearData());
 
             if (!dbInterpreter.HasError)
             {
@@ -585,9 +589,12 @@ namespace DatabaseManager.Controls
         private async Task EmptyDatabase(string database, DatabaseObjectType databaseObjectType)
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
-            dbInterpreter.Subscribe(this);
+            DbManager dbManager = new DbManager(dbInterpreter);
 
-            await dbInterpreter.EmptyDatabaseAsync(databaseObjectType);
+            dbInterpreter.Subscribe(this);
+            dbManager.Subscribe(this);
+
+            await dbManager.EmptyDatabase(databaseObjectType);
 
             if (!dbInterpreter.HasError)
             {
@@ -725,53 +732,8 @@ namespace DatabaseManager.Controls
 
             if (tag is DatabaseObject)
             {
-                DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
-                DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
-
-                targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = true;
-
-                DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, sourceScriptOption) };
-                DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, new ConnectionInfo(), sourceScriptOption) };
-
-                using (DbConverter dbConverter = new DbConverter(source, target))
-                {
-                    dbConverter.Option.OnlyForTranslate = true;
-                    dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
-                    dbConverter.Option.ExecuteScriptOnTargetServer = false;
-
-                    dbConverter.Subscribe(this);
-                    dbConverter.OnTranslated += this.DbConverter_OnTranslated;
-
-                    if (targetDbType == DatabaseType.SqlServer)
-                    {
-                        target.DbOwner = "dbo";
-                    }
-
-                    SchemaInfo schemaInfo = new SchemaInfo();
-
-                    if (tag is Table)
-                    {
-                        schemaInfo.Tables.Add(tag as Table);
-                    }
-                    else if (tag is DatabaseInterpreter.Model.View)
-                    {
-                        schemaInfo.Views.Add(tag as DatabaseInterpreter.Model.View);
-                    }
-                    else if (tag is Function)
-                    {
-                        schemaInfo.Functions.Add(tag as Function);
-                    }
-                    else if (tag is Procedure)
-                    {
-                        schemaInfo.Procedures.Add(tag as Procedure);
-                    }
-                    else if (tag is TableTrigger)
-                    {
-                        schemaInfo.TableTriggers.Add(tag as TableTrigger);
-                    }
-
-                    await dbConverter.Convert(schemaInfo);
-                }
+                DbManager dbManager = new DbManager();
+                await dbManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated);
             }
         }
 
@@ -887,6 +849,11 @@ namespace DatabaseManager.Controls
             displayInfo.ScriptAction = scriptAction;
 
             this.ShowContent(displayInfo);
-        }        
+        }
+
+        private async void tsmiAlter_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.ALTER);
+        }
     }
 }

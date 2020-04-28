@@ -82,7 +82,7 @@
   <item name="REPLICATE" args="EXP,LENGTH"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
-  <item name="ROUND" args="EXP"></item>
+  <item name="ROUND" args="EXP,DECIMAL"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SESSION_USER" args="" noParenthesess="1"></item>
   <item name="SESSIONPROPERTY" args="OPTION" ></item>

@@ -114,6 +114,7 @@
             this.Name = "UC_DbObjectsNavigator";
             this.Size = new System.Drawing.Size(225, 329);
             this.Load += new System.EventHandler(this.UC_DbObjectsNavigator_Load);
+            this.SizeChanged += new System.EventHandler(this.UC_DbObjectsNavigator_SizeChanged);
             this.ResumeLayout(false);
 
         }

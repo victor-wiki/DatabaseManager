@@ -10,7 +10,7 @@ namespace DatabaseManager.Core
     {
         private readonly string selectPattern = "SELECT(.[\n]?)+(FROM)?";
         private readonly string dmlPattern = @"(CREATE|ALTER|INSERT|UPDATE|DELETE|TRUNCATE|INTO)";
-        private readonly string createAlterScriptPattern = "(CREATE|ALTER).+(TABLE|VIEW|FUNCTION|PROCEDURE|TRIGGER)";
+        private readonly string createAlterScriptPattern = "(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)";
         private DbInterpreter dbInterpreter;
         private string script;
 

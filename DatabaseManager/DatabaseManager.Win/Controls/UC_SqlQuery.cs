@@ -53,16 +53,19 @@ namespace DatabaseManager.Controls
                 this.Editor.AppendText(File.ReadAllText(displayInfo.FilePath));
             }
 
-            this.SetupIntellisence();
+            this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
+
+            if (displayInfo.ConnectionInfo!= null && !string.IsNullOrEmpty(displayInfo.ConnectionInfo.Database))
+            {
+                this.SetupIntellisence();
+            }            
         }
 
         private async void SetupIntellisence()
-        {
-            this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
-
+        {           
             if(this.CheckConnection())
             {
-                DbInterpreterOption option = new DbInterpreterOption();
+                DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
 
                 DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.displayInfo.DatabaseType, this.displayInfo.ConnectionInfo, option);
 
@@ -70,7 +73,10 @@ namespace DatabaseManager.Controls
 
                 SchemaInfoFilter filter = new SchemaInfoFilter()
                 {
-                    DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.TableColumn
+                    DatabaseObjectType = DatabaseObjectType.Table 
+                    | DatabaseObjectType.Function 
+                    | DatabaseObjectType.View                   
+                    | DatabaseObjectType.TableColumn
                 };
 
                 SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);

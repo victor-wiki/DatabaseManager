@@ -80,5 +80,43 @@ namespace SqlAnalyser.Core
         {
             return this.sb.ToString();
         }
+
+        protected void BuildSelectStatementFromItems(SelectStatement selectStatement)
+        {
+            int i = 0;
+
+            bool hasJoins = false;
+
+            foreach (FromItem fromItem in selectStatement.FromItems)
+            {
+                if (i == 0)
+                {
+                    this.Append("FROM ");
+                }
+
+                hasJoins = fromItem.JoinItems.Count > 0;
+
+                if (i > 0 && !hasJoins)
+                {
+                    this.Append(",", false);
+                }
+
+                this.Append($"{fromItem.TableName}{(hasJoins ? Environment.NewLine : "")}", false);
+
+                foreach (JoinItem joinItem in fromItem.JoinItems)
+                {
+                    string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                    this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                }
+
+                i++;
+            }
+
+            if (!hasJoins)
+            {
+                this.AppendLine("", false);
+            }
+        }
     }
 }

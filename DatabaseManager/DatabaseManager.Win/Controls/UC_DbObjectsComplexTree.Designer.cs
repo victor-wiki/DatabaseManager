@@ -34,18 +34,20 @@
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiNewQuery = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiNewView = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiNewFunction = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiNewProcedure = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiNewTrigger = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiRefresh = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiNewView = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiNewFunction = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiNewProcedure = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiNewTrigger = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiAlter = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -95,14 +97,14 @@
             this.tsmiNewFunction,
             this.tsmiNewProcedure,
             this.tsmiNewTrigger,
+            this.tsmiAlter,
             this.tsmiRefresh,
             this.tsmiViewData,
             this.tsmiConvert,
             this.tsmiTranslate,
             this.tsmiGenerateScripts,
-            this.tsmiClearData,
-            this.tsmiEmptyDatabase,
-            this.tsmiDelete});
+            this.tsmiDelete,
+            this.tsmiMore});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(181, 312);
             // 
@@ -112,6 +114,34 @@
             this.tsmiNewQuery.Size = new System.Drawing.Size(180, 22);
             this.tsmiNewQuery.Text = "New Query";
             this.tsmiNewQuery.Click += new System.EventHandler(this.tsmiNewQuery_Click);
+            // 
+            // tsmiNewView
+            // 
+            this.tsmiNewView.Name = "tsmiNewView";
+            this.tsmiNewView.Size = new System.Drawing.Size(180, 22);
+            this.tsmiNewView.Text = "New View";
+            this.tsmiNewView.Click += new System.EventHandler(this.tsmiNewView_Click);
+            // 
+            // tsmiNewFunction
+            // 
+            this.tsmiNewFunction.Name = "tsmiNewFunction";
+            this.tsmiNewFunction.Size = new System.Drawing.Size(180, 22);
+            this.tsmiNewFunction.Text = "New Function";
+            this.tsmiNewFunction.Click += new System.EventHandler(this.tsmiNewFunction_Click);
+            // 
+            // tsmiNewProcedure
+            // 
+            this.tsmiNewProcedure.Name = "tsmiNewProcedure";
+            this.tsmiNewProcedure.Size = new System.Drawing.Size(180, 22);
+            this.tsmiNewProcedure.Text = "New Procedure";
+            this.tsmiNewProcedure.Click += new System.EventHandler(this.tsmiNewProcedure_Click);
+            // 
+            // tsmiNewTrigger
+            // 
+            this.tsmiNewTrigger.Name = "tsmiNewTrigger";
+            this.tsmiNewTrigger.Size = new System.Drawing.Size(180, 22);
+            this.tsmiNewTrigger.Text = "New Trigger";
+            this.tsmiNewTrigger.Click += new System.EventHandler(this.tsmiNewTrigger_Click);
             // 
             // tsmiRefresh
             // 
@@ -148,6 +178,22 @@
             this.tsmiGenerateScripts.Text = "Generate Scripts";
             this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
             // 
+            // tsmiDelete
+            // 
+            this.tsmiDelete.Name = "tsmiDelete";
+            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDelete.Text = "Delete";
+            this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
+            // 
+            // tsmiMore
+            // 
+            this.tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiClearData,
+            this.tsmiEmptyDatabase});
+            this.tsmiMore.Name = "tsmiMore";
+            this.tsmiMore.Size = new System.Drawing.Size(180, 22);
+            this.tsmiMore.Text = "More";
+            // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
@@ -162,40 +208,12 @@
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
-            // tsmiDelete
+            // tsmiAlter
             // 
-            this.tsmiDelete.Name = "tsmiDelete";
-            this.tsmiDelete.Size = new System.Drawing.Size(180, 22);
-            this.tsmiDelete.Text = "Delete";
-            this.tsmiDelete.Click += new System.EventHandler(this.tsmiDelete_Click);
-            // 
-            // tsmiNewView
-            // 
-            this.tsmiNewView.Name = "tsmiNewView";
-            this.tsmiNewView.Size = new System.Drawing.Size(180, 22);
-            this.tsmiNewView.Text = "New View";
-            this.tsmiNewView.Click += new System.EventHandler(this.tsmiNewView_Click);
-            // 
-            // tsmiNewFunction
-            // 
-            this.tsmiNewFunction.Name = "tsmiNewFunction";
-            this.tsmiNewFunction.Size = new System.Drawing.Size(180, 22);
-            this.tsmiNewFunction.Text = "New Function";
-            this.tsmiNewFunction.Click += new System.EventHandler(this.tsmiNewFunction_Click);
-            // 
-            // tsmiNewProcedure
-            // 
-            this.tsmiNewProcedure.Name = "tsmiNewProcedure";
-            this.tsmiNewProcedure.Size = new System.Drawing.Size(180, 22);
-            this.tsmiNewProcedure.Text = "New Procedure";
-            this.tsmiNewProcedure.Click += new System.EventHandler(this.tsmiNewProcedure_Click);
-            // 
-            // tsmiNewTrigger
-            // 
-            this.tsmiNewTrigger.Name = "tsmiNewTrigger";
-            this.tsmiNewTrigger.Size = new System.Drawing.Size(180, 22);
-            this.tsmiNewTrigger.Text = "New Trigger";
-            this.tsmiNewTrigger.Click += new System.EventHandler(this.tsmiNewTrigger_Click);
+            this.tsmiAlter.Name = "tsmiAlter";
+            this.tsmiAlter.Size = new System.Drawing.Size(180, 22);
+            this.tsmiAlter.Text = "Alter";
+            this.tsmiAlter.Click += new System.EventHandler(this.tsmiAlter_Click);
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -217,8 +235,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiGenerateScripts;
         private System.Windows.Forms.ToolStripMenuItem tsmiRefresh;
         private System.Windows.Forms.ToolStripMenuItem tsmiConvert;
-        private System.Windows.Forms.ToolStripMenuItem tsmiClearData;
-        private System.Windows.Forms.ToolStripMenuItem tsmiEmptyDatabase;
         private System.Windows.Forms.ToolStripMenuItem tsmiDelete;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewData;
         private System.Windows.Forms.ToolStripMenuItem tsmiTranslate;
@@ -227,5 +243,9 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiNewFunction;
         private System.Windows.Forms.ToolStripMenuItem tsmiNewProcedure;
         private System.Windows.Forms.ToolStripMenuItem tsmiNewTrigger;
+        private System.Windows.Forms.ToolStripMenuItem tsmiMore;
+        private System.Windows.Forms.ToolStripMenuItem tsmiClearData;
+        private System.Windows.Forms.ToolStripMenuItem tsmiEmptyDatabase;
+        private System.Windows.Forms.ToolStripMenuItem tsmiAlter;
     }
 }

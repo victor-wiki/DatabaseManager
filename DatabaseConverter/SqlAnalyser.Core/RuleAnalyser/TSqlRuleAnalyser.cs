@@ -1243,7 +1243,7 @@ namespace SqlAnalyser.Core
 
                     if (alias != null)
                     {
-                        tableName.Alias = new TokenInfo(alias);
+                        tableName.Alias = new TokenInfo(alias.table_alias());
                     }
                 }
                 else if (node is Table_sourcesContext tss)
@@ -1285,7 +1285,7 @@ namespace SqlAnalyser.Core
                 if (columnEle != null)
                 {
                     column.Name = new TokenInfo(columnEle.id());
-                    column.Alias = new TokenInfo(columnEle.as_column_alias());
+                    column.Alias = new TokenInfo(columnEle.as_column_alias()?.column_alias());
                 }
                 if (expEle != null)
                 {

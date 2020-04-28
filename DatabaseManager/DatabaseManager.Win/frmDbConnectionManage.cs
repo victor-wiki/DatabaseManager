@@ -236,7 +236,10 @@ namespace DatabaseManager
 
         private void dgvDbConnection_DoubleClick(object sender, EventArgs e)
         {
-            this.SelectRecord();
+            if(this.IsForSelecting)
+            {
+                this.SelectRecord();
+            }            
         }
     }
 }

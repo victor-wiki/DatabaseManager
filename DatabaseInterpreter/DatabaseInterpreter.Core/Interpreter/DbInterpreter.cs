@@ -93,7 +93,7 @@ namespace DatabaseInterpreter.Core
         }
 
         public abstract DbConnector GetDbConnector();
-        protected string GetQuotedObjectName(DatabaseObject obj)
+        public string GetQuotedObjectName(DatabaseObject obj)
         {
             return this.GetObjectDisplayName(obj, true);
         }
@@ -202,6 +202,7 @@ namespace DatabaseInterpreter.Core
         {
             this.Feedback(FeedbackInfoType.Info, message);
         }
+
         public void FeedbackError(string message, bool skipError = false)
         {
             if (!skipError)
@@ -572,116 +573,14 @@ namespace DatabaseInterpreter.Core
         }
 
         public abstract Task SetConstrainsEnabled(bool enabled);
-        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);
-
-        public virtual async Task ClearDataAsync(List<Table> tables = null)
-        {
-            this.FeedbackInfo("Begin to clear data...");
-
-            if (tables == null)
-            {
-                tables = await this.GetTablesAsync();
-            }
-
-            bool failed = false;
-            try
-            {
-                this.FeedbackInfo("Disable constrains.");
-
-                using (DbConnection dbConnection = this.CreateConnection())
-                {
-                    await this.SetConstrainsEnabled(dbConnection, false);
-
-                    foreach (Table table in tables)
-                    {
-                        string sql = $"DELETE FROM {this.GetQuotedObjectName(table)}";
-
-                        this.FeedbackInfo(sql);
-
-                        await this.ExecuteNonQueryAsync(dbConnection, sql, false);
-                    }
-
-                    await this.SetConstrainsEnabled(dbConnection, true);
-                }
-            }
-            catch (Exception ex)
-            {
-                failed = true;
-                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
-            }
-            finally
-            {
-                if (failed)
-                {
-                    this.FeedbackInfo("Enable constrains.");
-
-                    await this.SetConstrainsEnabled(true);
-                }
-            }
-
-            this.FeedbackInfo("End clear data.");
-        }
+        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);        
 
         public async Task Drop<T>(T dbObjet) where T : DatabaseObject
         {
             await this.Drop<T>(this.CreateConnection(), dbObjet);
         }
 
-        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
-
-        public virtual async Task EmptyDatabaseAsync(DatabaseObjectType databaseObjectType)
-        {
-            bool sortObjectsByReference = this.Option.SortObjectsByReference;
-            DatabaseObjectFetchMode fetchMode = this.Option.ObjectFetchMode;
-
-            this.Option.SortObjectsByReference = true;
-            this.Option.ObjectFetchMode = DatabaseObjectFetchMode.Details;
-
-            this.FeedbackInfo("Begin to empty database...");
-
-            SchemaInfo schemaInfo = await this.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
-
-            try
-            {
-                using (DbConnection connection = this.CreateConnection())
-                {
-                    await this.DropDbObjects(connection, schemaInfo.Procedures);
-                    await this.DropDbObjects(connection, schemaInfo.Views);
-                    await this.DropDbObjects(connection, schemaInfo.TableForeignKeys);
-                    await this.DropDbObjects(connection, schemaInfo.Tables);
-                    await this.DropDbObjects(connection, schemaInfo.Functions);
-                    await this.DropDbObjects(connection, schemaInfo.UserDefinedTypes);
-                }
-            }
-            catch (Exception ex)
-            {
-                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
-            }
-            finally
-            {
-                this.Option.SortObjectsByReference = sortObjectsByReference;
-                this.Option.ObjectFetchMode = fetchMode;
-            }
-
-            this.FeedbackInfo("End empty database.");
-        }
-
-        private async Task DropDbObjects<T>(DbConnection connection, List<T> dbObjects) where T : DatabaseObject
-        {
-            List<string> names = new List<string>();
-
-            foreach (T obj in dbObjects)
-            {
-                if (!names.Contains(obj.Name))
-                {
-                    this.FeedbackInfo($"Drop {obj.GetType().Name} \"{obj.Name}\".");
-
-                    await this.Drop(connection, obj);
-
-                    names.Add(obj.Name);
-                }
-            }
-        }
+        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;       
         #endregion
 
         #region Generate Scripts     

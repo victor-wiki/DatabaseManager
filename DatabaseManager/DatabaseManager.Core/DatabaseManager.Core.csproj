@@ -59,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
   </ItemGroup>
 

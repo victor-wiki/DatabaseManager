@@ -54,8 +54,12 @@ namespace DatabaseConverter.Core
                     {
                         if (targetFunctionName.ToUpper().Trim() != name.ToUpper().Trim())
                         {
-                            fomular.Expression = this.ReplaceValue(token.Symbol, name, targetFunctionName);
-                            token.Symbol = fomular.Expression;
+                            string oldExp = fomular.Expression;
+                            string newExp = this.ReplaceValue(fomular.Expression, name, targetFunctionName);
+
+                            fomular.Expression = newExp;
+
+                            token.Symbol = this.ReplaceValue(token.Symbol, oldExp, newExp);
                         }
                     }                  
 

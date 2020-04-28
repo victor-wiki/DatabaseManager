@@ -32,23 +32,7 @@ namespace SqlAnalyser.Core
 
                 if (select.FromItems != null && select.FromItems.Count > 0)
                 {
-                    int i = 0;
-                    foreach (FromItem fromItem in select.FromItems)
-                    {
-                        if (i == 0)
-                        {
-                            this.AppendLine($"FROM {fromItem.TableName}");
-                        }
-
-                        foreach (JoinItem joinItem in fromItem.JoinItems)
-                        {
-                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
-
-                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
-                        }
-
-                        i++;
-                    }
+                    this.BuildSelectStatementFromItems(select);
                 }
                 else if (select.TableName != null)
                 {
@@ -409,7 +393,7 @@ namespace SqlAnalyser.Core
             }
 
             return this;
-        }       
+        }
 
         private string GetUnionTypeName(UnionType unionType)
         {

@@ -237,5 +237,11 @@ namespace DatabaseManager.Controls
 
             return info;
         }
+
+        private void UC_DbObjectsNavigator_SizeChanged(object sender, EventArgs e)
+        {
+            this.cboDbType.Refresh();
+            this.cboAccount.Refresh();
+        }
     }
 }

@@ -75,6 +75,7 @@ namespace DatabaseManager.Helper
             {
                 richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
                 richTextBox.SelectionLength = m.Length;
+                richTextBox.SelectionFont = richTextBox.Font;
                 richTextBox.SelectionColor = color;
             }
         }

@@ -102,7 +102,7 @@
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
-  <item name="ROUND" args="EXP"></item>
+  <item name="ROUND" args="EXP,DECIMAL"></item>
   <item name="RPAD" args="EXP,LENGTH,EXP"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SEC_TO_TIME" args="SECONDS"></item>
