@@ -6,8 +6,6 @@ BEGIN
 	
 	DECLARE VariableName INT;
     
-	SET VariableName = 'DEMO';
-
-	SELECT VariableName;
+	SET VariableName = 'DEMO';	
 
 END;
