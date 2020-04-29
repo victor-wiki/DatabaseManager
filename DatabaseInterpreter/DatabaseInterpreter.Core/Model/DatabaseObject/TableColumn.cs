@@ -14,5 +14,7 @@
         public string Comment { get; set; }
         public bool IsUserDefined { get; set; }
         public string TypeOwner { get; set; }
+        public bool IsComputed => !string.IsNullOrEmpty(this.ComputeExp);
+        public string ComputeExp { get; set; }
     }
 }

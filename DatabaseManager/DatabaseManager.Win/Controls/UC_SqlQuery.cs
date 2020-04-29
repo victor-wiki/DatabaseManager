@@ -169,7 +169,7 @@ namespace DatabaseManager.Controls
 
             this.ClearResults();
 
-            this.scriptRunner = new ScriptRunner() { DelimiterRelaceChars = "\r" };
+            this.scriptRunner = new ScriptRunner();
             this.scriptRunner.Subscribe(this);
 
             if (this.CheckConnection())

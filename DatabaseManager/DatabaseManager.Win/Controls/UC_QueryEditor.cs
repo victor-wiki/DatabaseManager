@@ -152,7 +152,7 @@ namespace DatabaseManager.Controls
 
         private void HandleKeyUpFoIntellisense(KeyEventArgs e)
         {
-            if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue >=112)
+            if (e.KeyValue >= 112 && e.KeyValue <= 123)
             {
                 this.SetWordListViewVisible(false);
                 return;
@@ -244,7 +244,11 @@ namespace DatabaseManager.Controls
                     int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
                     RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop);
                 }
-            }           
+            }
+            else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
+            {
+                this.SetWordListViewVisible(false);
+            }
             else
             {
                 this.ShowWordListByToken(token);
@@ -636,7 +640,7 @@ namespace DatabaseManager.Controls
 
             string quotationNamePattern = $@"([{quotationLeftChar}]{nameWithSpacePattern}[{quotationRightChar}])";
 
-            Regex regex = new Regex($@"({namePattern}|{quotationNamePattern})[\s\n\r]+\b({text})\b", RegexOptions.IgnoreCase);
+            Regex regex = new Regex($@"({namePattern}|{quotationNamePattern})[\s\n\r]+(AS[\s\n\r]+)?\b({text})\b", RegexOptions.IgnoreCase);
 
             var matches = regex.Matches(this.txtEditor.Text);
 
@@ -647,7 +651,7 @@ namespace DatabaseManager.Controls
                 {
                     int lastIndexOfSpace = match.Value.LastIndexOf(' ');
 
-                    string value = match.Value.Substring(0, lastIndexOfSpace);
+                    string value = Regex.Replace(match.Value.Substring(0, lastIndexOfSpace), @" AS[\s\n\r]?", "", RegexOptions.IgnoreCase).Trim();
 
                     if (!this.keywords.Any(item => item.ToUpper() == value.ToUpper()))
                     {
@@ -719,7 +723,7 @@ namespace DatabaseManager.Controls
 
                 int length = token.StartIndex == token.StopIndex ? 0 : token.StopIndex - token.StartIndex + 1;
 
-                this.txtEditor.Select(token.StartIndex, length);               
+                this.txtEditor.Select(token.StartIndex, length);
 
                 string quotationValue = selectedWord;
 

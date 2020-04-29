@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class ColumnTranslator : DbObjectTranslator
+    public class ColumnTranslator : DbObjectTokenTranslator
     {
         private List<TableColumn> columns;
         private DatabaseType sourceDbType;
@@ -43,16 +43,12 @@ namespace DatabaseConverter.Core
 
                 if (!string.IsNullOrEmpty(column.DefaultValue))
                 {
-                    string defaultValue = this.GetTrimedDefaultValue(column.DefaultValue);
+                    this.ConvertDefaultValue(column);
+                }
 
-                    IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
-
-                    if (funcMappings != null)
-                    {
-                        defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
-                    }
-
-                    column.DefaultValue = defaultValue;
+                if(column.IsComputed)
+                {
+                    this.ConvertComputeExpression(column);
                 }
             }
 
@@ -213,6 +209,20 @@ namespace DatabaseConverter.Core
             return dataType;
         }
 
+        public void ConvertDefaultValue(TableColumn column)
+        {
+            string defaultValue = this.GetTrimedDefaultValue(column.DefaultValue);
+
+            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
+
+            if (funcMappings != null)
+            {
+                defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
+            }
+
+            column.DefaultValue = defaultValue;
+        }
+
         private string GetTrimedDefaultValue(string defaultValue)
         {
             if (!string.IsNullOrEmpty(defaultValue))
@@ -228,6 +238,11 @@ namespace DatabaseConverter.Core
             }
 
             return defaultValue;
+        }
+
+        public void ConvertComputeExpression(TableColumn column)
+        {
+            column.ComputeExp = this.ParseDefinition(column.ComputeExp);
         }
     }
 }

@@ -173,7 +173,7 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT C.TABLE_SCHEMA AS `Owner`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`, COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`,
-                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `TypeOwner`
+                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `TypeOwner`,GENERATION_EXPRESSION AS `ComputeExp`
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
                         WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
@@ -709,12 +709,21 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
                 dataType += $" CHARACTER SET {DbCharset} COLLATE {DbCharsetCollation} ";
             }
 
-            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
-            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
-            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
-            string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+            if (column.IsComputed)
+            {
+                string computeExpression = this.GetColumnComputeExpression(column);
 
-            return $@"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause} {defaultValueClause} {commentClause}";
+                return $"{ this.GetQuotedString(column.Name)} {dataType} AS {computeExpression}";
+            }
+            else
+            {
+                string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
+                string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+                string defaultValueClause = string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column);
+
+                return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {commentClause}";
+            }            
         }
 
         public override string ParseDataType(TableColumn column)

@@ -177,26 +177,50 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
             //Note: MaxLength consider char/nvarchar, ie. it's nvarchar(50), the max length is 100.
-            string sql = @"SELECT schema_name(T.schema_id) AS [Owner], 
-                            T.name AS [TableName],
-                            C.name AS [Name], 
-                            ST.name AS [DataType],
-                            C.is_nullable AS [IsNullable],
-                            C.max_length AS [MaxLength], 
-                            C.precision AS [Precision],
-                            C.column_id as [Order], 
-                            C.scale AS [Scale],
-                            SCO.text As [DefaultValue], 
-                            EXT.value AS [Comment],
-                            C.is_identity AS [IsIdentity],
-                            STY.is_user_defined AS [IsUserDefined],
-                            schema_name(STY.schema_id) AS [TypeOwner]
-                        FROM sys.columns C 
-                        JOIN sys.systypes ST ON C.user_type_id = ST.xusertype
-                        JOIN sys.tables T ON C.object_id=T.object_id
-                        LEFT JOIN sys.syscomments SCO ON C.default_object_id=SCO.id
-                        LEFT JOIN sys.extended_properties EXT on C.column_id=EXT.minor_id AND C.object_id=EXT.major_id AND EXT.class_desc='OBJECT_OR_COLUMN' AND EXT.name='MS_Description'
-						LEFT JOIN sys.types STY on C.user_type_id = STY.user_type_id";
+
+            string sql = "";
+
+            if (this.IsObjectFectchSimpleMode())
+            {
+                sql = @"SELECT schema_name(t.schema_id) AS [Owner], 
+                            t.name AS [TableName],
+                            c.name AS [Name], 
+                            st.name AS [DataType],
+                            c.is_nullable AS [IsNullable],
+                            c.max_length AS [MaxLength], 
+                            c.precision AS [Precision],
+                            c.column_id as [Order], 
+                            c.scale AS [Scale],                           
+                            c.is_identity AS [IsIdentity]                       
+                        FROM sys.columns c 
+                        JOIN sys.systypes st ON c.user_type_id = st.xusertype
+                        JOIN sys.tables t ON c.object_id=t.object_id";
+            }
+            else
+            {
+                sql = @"SELECT schema_name(t.schema_id) AS [Owner], 
+                            t.name AS [TableName],
+                            c.name AS [Name], 
+                            st.name AS [DataType],
+                            c.is_nullable AS [IsNullable],
+                            c.max_length AS [MaxLength], 
+                            c.precision AS [Precision],
+                            c.column_id as [Order], 
+                            c.scale AS [Scale],
+                            sco.text As [DefaultValue], 
+                            ext.value AS [Comment],
+                            c.is_identity AS [IsIdentity],
+                            sty.is_user_defined AS [IsUserDefined],
+                            schema_name(sty.schema_id) AS [TypeOwner],                           
+                            cc.definition as [ComputeExp]
+                        FROM sys.columns c 
+                        JOIN sys.systypes st ON c.user_type_id = st.xusertype
+                        JOIN sys.tables t ON c.object_id=t.object_id
+                        LEFT JOIN sys.syscomments sco ON c.default_object_id=sco.id
+                        LEFT JOIN sys.extended_properties ext on c.column_id=ext.minor_id AND c.object_id=ext.major_id AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'
+						LEFT JOIN sys.types sty on c.user_type_id = sty.user_type_id
+                        LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id";
+            }         
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
@@ -698,7 +722,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                     IEnumerable<TableColumn> defaultValueColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
                     foreach (TableColumn column in defaultValueColumns)
                     {
-                        sb.AppendLine(new AlterDbObjectScript<Table>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($" DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};"));
+                        sb.AppendLine(new AlterDbObjectScript<Table>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($"DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};"));
                     }
                 }
                 #endregion
@@ -746,15 +770,24 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         {
             if (column.IsUserDefined)
             {
-                return $@"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.TypeOwner)}.{this.GetQuotedString(column.DataType)} {(column.IsRequired ? "NOT NULL" : "NULL")}";
+                return $"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.TypeOwner)}.{this.GetQuotedString(column.DataType)} {(column.IsRequired ? "NOT NULL" : "NULL")}";
             }
 
-            string dataType = this.ParseDataType(column);
+            bool isComputed = column.IsComputed;
 
-            string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
-            string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+            if(isComputed)
+            {
+                return $"{this.GetQuotedString(column.Name)} AS {this.GetColumnComputeExpression(column)}";
+            }
+            else
+            {
+                string dataType = this.ParseDataType(column);
 
-            return $@"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}";
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
+                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");             
+
+                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}";
+            }           
         }
 
         public override string ParseDataType(TableColumn column)

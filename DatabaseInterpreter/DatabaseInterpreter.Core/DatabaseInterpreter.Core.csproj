@@ -8,7 +8,7 @@
     <Authors>victor-wiki</Authors>
     <Description>Get database objects meta data, generate schema and insert data scripts, query and bulkcopy data.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="15.0.5" />
     <PackageReference Include="Dapper" Version="2.0.35" />
-    <PackageReference Include="MySqlConnector" Version="0.63.2" />
+    <PackageReference Include="MySqlConnector" Version="0.64.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />

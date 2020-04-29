@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -243,13 +244,15 @@ namespace DatabaseInterpreter.Core
         public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
-        }
+        }       
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
             string sql = $@"SELECT OWNER AS ""Owner"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
-                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", DATA_DEFAULT AS ""DefaultValue"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" , '' AS ""TypeOwner""
-                 FROM ALL_TAB_COLUMNS C
+                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" , '' AS ""TypeOwner"",
+                 CASE WHEN C.VIRTUAL_COLUMN='YES' THEN NULL ELSE DATA_DEFAULT END AS ""DefaultValue"",
+                 CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp""
+                 FROM ALL_TAB_COLS C
                  LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
                  WHERE UPPER(OWNER)=UPPER('{this.GetDbOwner()}')";
 
@@ -355,12 +358,26 @@ namespace DatabaseInterpreter.Core
         #region Table Trigger      
         public override Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null)
         {
-            return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
+            if(this.IsObjectFectchSimpleMode())
+            {
+                return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter));
+            }
+            else
+            {
+                return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
+            }            
         }
 
         public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
+            if(this.IsObjectFectchSimpleMode())
+            {
+                return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter));
+            }
+            else
+            {
+                return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
+            }          
         }
 
         private Task<List<TableTrigger>> SetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
@@ -780,11 +797,20 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
 
         public override string ParseColumn(Table table, TableColumn column)
         {
-            string dataType = this.ParseDataType(column);
-            string defaultValueClause = (string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column));
-            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+            if (column.IsComputed)
+            {
+                string computeExpression = this.GetColumnComputeExpression(column);
 
-            return $@"{ this.GetQuotedString(column.Name)} {dataType} {defaultValueClause} {requiredClause}";
+                return $"{ this.GetQuotedString(column.Name)} AS {computeExpression}";
+            }
+            else
+            {
+                string dataType = this.ParseDataType(column);
+                string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+                string defaultValueClause = string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column);
+
+                return $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}";
+            }         
         }
 
         public override string ParseDataType(TableColumn column)

@@ -876,10 +876,13 @@ namespace DatabaseInterpreter.Core
             bool appendFile = this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile);
 
             List<string> excludeColumnNames = new List<string>();
+
             if (this.Option.TableScriptsGenerateOption.GenerateIdentity && !this.Option.InsertIdentityValue)
             {
-                excludeColumnNames = columns.Where(item => item.IsIdentity).Select(item => item.Name).ToList();
+                excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity).Select(item => item.Name));
             }
+
+            excludeColumnNames.AddRange(columns.Where(item=>item.IsComputed).Select(item=>item.Name));
 
             foreach (var kp in dictPagedData)
             {
@@ -1210,7 +1213,19 @@ namespace DatabaseInterpreter.Core
             {
                 return $"'{column.DefaultValue}'";
             }
-            return column.DefaultValue;
+            return column.DefaultValue?.Trim();
+        }
+
+        protected virtual string GetColumnComputeExpression(TableColumn column)
+        {
+            string computeExpression = column.ComputeExp.Trim();
+
+            if(!computeExpression.StartsWith("(") && !computeExpression.EndsWith(")"))
+            {
+                computeExpression= $"({computeExpression})";
+            }
+           
+            return computeExpression;
         }
         #endregion
     }

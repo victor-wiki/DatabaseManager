@@ -22,8 +22,7 @@ namespace DatabaseManager.Core
 
         public CancellationTokenSource CancellationTokenSource { get; private set; }
         public bool CancelRequested => this.cancelRequested;
-        public bool IsBusy => this.isBusy;
-        public string DelimiterRelaceChars { get; set; }
+        public bool IsBusy => this.isBusy;      
         public int LimitCount { get; set; } = 1000;
 
         public event FeedbackHandler OnFeedback;
@@ -96,12 +95,7 @@ namespace DatabaseManager.Core
                         }
                         else
                         {
-                            string delimiter = dbInterpreter.ScriptsDelimiter;
-
-                            if (this.DelimiterRelaceChars != null)
-                            {
-                                delimiter = delimiter.Replace(this.DelimiterRelaceChars, "");
-                            }
+                            string delimiter = dbInterpreter.ScriptsDelimiter;                         
 
                             commands = script.Split(new string[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
                         }
