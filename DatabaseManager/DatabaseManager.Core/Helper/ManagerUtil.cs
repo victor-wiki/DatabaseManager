@@ -9,7 +9,14 @@ namespace DatabaseManager.Core
     {
         public static DatabaseType GetDatabaseType(string dbType)
         {
-            return (DatabaseType)Enum.Parse(typeof(DatabaseType), dbType);
+            if(!string.IsNullOrEmpty(dbType))
+            {
+                return (DatabaseType)Enum.Parse(typeof(DatabaseType), dbType);
+            }
+            else
+            {
+                return DatabaseType.Unknown;
+            }
         }
 
         public static void OpenInExplorer(string filePath)

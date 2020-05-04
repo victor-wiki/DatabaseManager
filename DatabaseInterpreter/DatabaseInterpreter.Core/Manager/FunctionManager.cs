@@ -1,11 +1,10 @@
-﻿using DatabaseConverter.Model;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace DatabaseConverter.Core
+namespace DatabaseInterpreter.Core
 {
     public class FunctionManager : ConfigManager
     {

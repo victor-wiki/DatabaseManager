@@ -1,11 +1,12 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using System.Linq;
 
 namespace SqlAnalyser.Model
 {
     public class TableName: NameToken
     {
-        public new TokenType Type => TokenType.TableName;
+        public override TokenType Type => TokenType.TableName;      
 
         public TableName(string symbol):base(symbol)
         {                     

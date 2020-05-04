@@ -1,6 +1,6 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
-using System;
+using DatabaseInterpreter.Model;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -176,13 +176,26 @@ namespace DatabaseConverter.Core
                 {
                     case TSQLTokenType.Identifier:
 
+                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
+
+                        if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
+                        {
+                            if ((text == "dbo" || text == "[dbo]") && this.TargetDbOwner?.ToLower() != "dbo")
+                            {
+                                if(nextToken!=null && nextToken.Text==".")
+                                {
+                                    ignoreCount++;
+                                }
+
+                                continue;
+                            }
+                        }
+
                         if (dataTypes.Contains(text))
                         {
                             sb.Append(text);
                             continue;
-                        }
-
-                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
+                        }                       
 
                         //Remove owner name
                         if (nextToken != null && nextToken.Text.Trim() != "(" &&
@@ -222,7 +235,14 @@ namespace DatabaseConverter.Core
                             }
                             else
                             {
-                                sb.Append(text);
+                                if (text.StartsWith(this.sourceDbInterpreter.QuotationLeftChar.ToString()) && text.EndsWith(this.sourceDbInterpreter.QuotationRightChar.ToString()))
+                                {
+                                    sb.Append(this.GetQuotedString(text.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar)));
+                                }
+                                else
+                                {
+                                    sb.Append(text);
+                                }
                             }
                         }
                         else

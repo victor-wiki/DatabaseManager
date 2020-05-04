@@ -1182,7 +1182,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public override TableName ParseTableName(ParserRuleContext node)
+        public override TableName ParseTableName(ParserRuleContext node, bool strict = false)
         {
             TableName tableName = null;
 
@@ -1196,7 +1196,15 @@ namespace SqlAnalyser.Core
 
             if (node != null)
             {
-                if (node is General_table_refContext gtr)
+                if (node is Tableview_nameContext tv)
+                {
+                    tableName = new TableName(tv);
+                }
+                else if (node is Table_ref_aux_internal_oneContext traio)
+                {
+                    tableName = new TableName(traio);
+                }
+                else if (node is General_table_refContext gtr)
                 {
                     tableName = new TableName(gtr);
 
@@ -1221,7 +1229,7 @@ namespace SqlAnalyser.Core
                     return this.ParseTableName(tr.table_ref_aux());
                 }
 
-                if (tableName == null)
+                if (!strict && tableName == null)
                 {
                     tableName = new TableName(node);
                 }
@@ -1230,7 +1238,7 @@ namespace SqlAnalyser.Core
             return tableName;
         }
 
-        public override ColumnName ParseColumnName(ParserRuleContext node)
+        public override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
         {
             ColumnName columnName = null;
 
@@ -1238,15 +1246,25 @@ namespace SqlAnalyser.Core
             {
                 if (node is Column_nameContext cn)
                 {
-                    columnName = new ColumnName(cn);
-                    columnName.Name = new TokenInfo(cn);
+                    Id_expressionContext[] ids = cn.id_expression();
+
+                    if (ids != null && ids.Length > 0)
+                    {
+                        columnName = new ColumnName(ids[0]);
+                    }          
                 }
                 else if (node is Select_list_elementsContext ele)
                 {
                     columnName = new ColumnName(ele);
 
+                    Tableview_nameContext tableName = ele.tableview_name();
                     ExpressionContext expression = ele.expression();
                     Column_aliasContext alias = ele.column_alias();
+
+                    if (tableName != null)
+                    {
+                        columnName.TableName = new TokenInfo(tableName);
+                    }
 
                     if (expression != null)
                     {
@@ -1258,8 +1276,27 @@ namespace SqlAnalyser.Core
                         columnName.Alias = new TokenInfo(alias);
                     }
                 }
+                else if (node is General_element_partContext gele)
+                {
+                    if (this.IsChildOfType<Select_list_elementsContext>(gele))
+                    {
+                        Id_expressionContext[] ids = gele.id_expression();
 
-                if (columnName == null)
+                        if (ids != null && ids.Length > 0)
+                        {
+                            if (ids.Length > 1)
+                            {
+                                columnName = new ColumnName(ids[1]);
+                            }
+                            else
+                            {
+                                columnName = new ColumnName(ids[0]);
+                            }
+                        }
+                    }
+                }
+
+                if (!strict && columnName == null)
                 {
                     columnName = new ColumnName(node);
                 }
@@ -1296,58 +1333,33 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        public override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetTableNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
 
-            if (node is Tableview_nameContext || node is Table_ref_aux_internal_oneContext)
+            TableName tableName = this.ParseTableName(node as ParserRuleContext, true);
+
+            if (tableName != null)
             {
-                parsedNode = node as ParserRuleContext;
-                return true;
+                tokens.Add(tableName);
             }
 
-            return false;
+            return tokens;
         }
 
-        public override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetColumnNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
 
-            if (node is Column_nameContext columnName)
+            ColumnName columnName = this.ParseColumnName(node as ParserRuleContext, true);
+
+            if (columnName != null)
             {
-                Id_expressionContext[] ids = columnName.id_expression();
-
-                if (ids != null && ids.Length > 0)
-                {
-                    parsedNode = ids[0];
-                }
-
-                return true;
-            }
-            else if (node is General_element_partContext ele)
-            {
-                if (this.IsChildOfType<Select_list_elementsContext>(ele))
-                {
-                    Id_expressionContext[] ids = ele.id_expression();
-
-                    if (ids != null && ids.Length > 0)
-                    {
-                        if (ids.Length > 1)
-                        {
-                            parsedNode = ids[1];
-                        }
-                        else
-                        {
-                            parsedNode = ids[0];
-                        }
-
-                        return true;
-                    }
-                }
+                tokens.Add(columnName);
             }
 
-            return false;
-        }
+            return tokens;
+        }        
 
         private bool IsChildOfType<T>(RuleContext node)
         {
@@ -1366,18 +1378,23 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public override bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetRoutineNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
+
+            ParserRuleContext routineName = null;
 
             if (node is General_element_partContext gep && (node as General_element_partContext).children.Any(item => item is Function_argumentContext))
             {
-                parsedNode = gep.id_expression().LastOrDefault();
+                routineName = gep.id_expression().LastOrDefault();
+            }            
 
-                return true;
+            if (routineName != null)
+            {
+                tokens.Add(new TokenInfo(routineName) { Type = TokenType.RoutineName });
             }
 
-            return false;
-        }
+            return tokens;
+        }      
     }
 }

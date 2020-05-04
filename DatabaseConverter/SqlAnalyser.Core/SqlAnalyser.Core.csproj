@@ -6,7 +6,7 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql and PlSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
   </ItemGroup>
 
 </Project>

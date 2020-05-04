@@ -1,34 +1,42 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using System.Linq;
 
 namespace SqlAnalyser.Model
 {
     public class NameToken : TokenInfo
     {
-        private TokenInfo _name;
+        protected TokenInfo name;
+        protected TokenInfo alias;
 
-        public TokenInfo Name
+        public virtual TokenInfo Name
         {
             get
             {
-                if (this._name == null)
-                {
-                    return this;
-                }
-
-                return this._name;
+                return this.name;
             }
-            internal set
+            set
             {
-                if (value == null && this._name != null && this.Equals(this._name))
-                {
-                    return;
-                }
-
-                this._name = value;
+                value.Type = this.Type;
+                this.name = value;
             }
         }
-        public TokenInfo Alias { get; set; }
+        public TokenInfo Alias
+        {
+            get
+            {
+                return this.alias;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    value.Type = TokenType.Alias;
+                }
+
+                this.alias = value;
+            }
+        }
 
         public NameToken(string symbol) : base(symbol)
         {
@@ -36,7 +44,6 @@ namespace SqlAnalyser.Model
 
         public NameToken(ParserRuleContext context) : base(context)
         {
-
         }
 
         public NameToken(string symbol, ParserRuleContext context) : base(symbol, context)

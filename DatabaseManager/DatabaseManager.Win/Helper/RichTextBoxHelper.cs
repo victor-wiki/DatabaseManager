@@ -1,11 +1,12 @@
 ﻿using DatabaseConverter.Core;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using SqlAnalyser.Model;
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Linq;
-using SqlAnalyser.Model;
 
 namespace DatabaseManager.Helper
 {
@@ -37,7 +38,7 @@ namespace DatabaseManager.Helper
         {
             int start = richTextBox.SelectionStart;
 
-            var dataTypes = DataTypeManager.GetDataTypes(databaseType);
+            var dataTypes = DataTypeManager.GetDataTypeSpecifications(databaseType).Select(item=>item.Name);
             var keywords = KeywordManager.GetKeywords(databaseType);
             var functions = FunctionManager.GetFunctionSpecifications(databaseType).Select(item => item.Name).Except(keywords);
 

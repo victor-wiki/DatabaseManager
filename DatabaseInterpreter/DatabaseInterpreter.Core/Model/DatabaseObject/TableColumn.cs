@@ -16,5 +16,6 @@
         public string TypeOwner { get; set; }
         public bool IsComputed => !string.IsNullOrEmpty(this.ComputeExp);
         public string ComputeExp { get; set; }
+        public string ScriptComment { get; set; }
     }
 }

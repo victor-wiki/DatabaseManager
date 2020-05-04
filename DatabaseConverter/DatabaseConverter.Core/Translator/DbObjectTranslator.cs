@@ -23,6 +23,9 @@ namespace DatabaseConverter.Core
 
         public bool SkipError { get; set; }
         public bool HasError => this.hasError;
+        public string TargetDbOwner { get; set; }
+        public SchemaInfo SourceSchemaInfo { get; set; }
+        public DbConverterOption Option { get; set; }
 
         public TranslateHandler OnTranslated;
 
@@ -30,9 +33,10 @@ namespace DatabaseConverter.Core
         {
             this.sourceDbInterpreter = source;
             this.targetDbInterpreter = target;
+
         }
 
-        public DbObjectTranslator LoadMappings()
+        public void LoadMappings()
         {
             if (this.sourceDbInterpreter.DatabaseType != this.targetDbInterpreter.DatabaseType)
             {
@@ -40,8 +44,6 @@ namespace DatabaseConverter.Core
                 this.variableMappings = VariableMappingManager.VariableMappings;
                 this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
             }
-
-            return this;
         }
 
         public abstract void Translate();
@@ -58,7 +60,7 @@ namespace DatabaseConverter.Core
             DatabaseType sourceDbType = this.sourceDbInterpreter.DatabaseType;
             DatabaseType targetDbType = this.targetDbInterpreter.DatabaseType;
 
-            string cleanDataType = dataType.Split('(')[0];
+            string cleanDataType = dataType.Split('(')[0].Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar);
             string newDataType = cleanDataType;
             bool hasPrecisionScale = false;
 
@@ -73,7 +75,7 @@ namespace DatabaseConverter.Core
 
             if (mapping != null)
             {
-                DataTypeMappingTarget targetDataType = mapping.Tareget;
+                DataTypeMappingTarget targetDataType = mapping.Target;
                 newDataType = targetDataType.Type;
 
                 if (usedForFunction)
@@ -91,6 +93,13 @@ namespace DatabaseConverter.Core
                         else if (DataTypeHelper.IsCharType(newDataType))
                         {
                             newDataType = "CHAR";
+                        }
+                    }
+                    else if (targetDbType == DatabaseType.Oracle)
+                    {
+                        if (DataTypeHelper.IsCharType(newDataType) && this.GetType() == typeof(FunctionTranslator))
+                        {
+                            return newDataType;
                         }
                     }
                 }
@@ -192,7 +201,7 @@ namespace DatabaseConverter.Core
                 List<string> fomularArgs = fomular.Args;
 
                 Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec, fomularArgs.Count);
-                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, fomularArgs.Count);               
+                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, fomularArgs.Count);
 
                 bool ignore = false;
 
@@ -262,7 +271,7 @@ namespace DatabaseConverter.Core
 
             if (!spec.Args.EndsWith("..."))
             {
-                string str = Regex.Replace(spec.Args, @"[\[\]]", "");              
+                string str = Regex.Replace(spec.Args, @"[\[\]]", "");
 
                 string[] args = str.Split(new string[] { spec.Delimiter, " " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -312,7 +321,7 @@ namespace DatabaseConverter.Core
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
         {
-            this.observer = observer;            
+            this.observer = observer;
         }
 
         public void Feedback(FeedbackInfoType infoType, string message, bool skipError = false)
@@ -332,6 +341,6 @@ namespace DatabaseConverter.Core
         public void FeedbackError(string message, bool skipError = false)
         {
             this.Feedback(FeedbackInfoType.Error, message, skipError);
-        }       
+        }
     }
 }

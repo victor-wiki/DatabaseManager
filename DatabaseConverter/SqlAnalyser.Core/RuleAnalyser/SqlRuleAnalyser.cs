@@ -39,13 +39,12 @@ namespace SqlAnalyser.Core
             return errorListener;
         }
 
-        public abstract TableName ParseTableName(ParserRuleContext node);
-        public abstract ColumnName ParseColumnName(ParserRuleContext node);
+        public abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
+        public abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
         public abstract bool IsFunction(IParseTree node);
-        public abstract bool IsTableName(IParseTree node, out ParserRuleContext parsedNode);
-        public abstract bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode);
-        public abstract bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode);
-
+        public abstract List<TokenInfo> GetTableNameTokens(IParseTree node);
+        public abstract List<TokenInfo> GetColumnNameTokens(IParseTree node);
+        public abstract List<TokenInfo> GetRoutineNameTokens(IParseTree node);
 
         public virtual AnalyseResult Analyse<T>(string content)
             where T : DatabaseObject
@@ -108,6 +107,8 @@ namespace SqlAnalyser.Core
         {
             TokenInfo tokenInfo = new TokenInfo(node) { Type = tokenType };
 
+            List<TokenInfo> tokens = new List<TokenInfo>();
+
             this.AddTokens(tokenInfo.Tokens, node, tokenType, strict);
 
             return tokenInfo;
@@ -122,23 +123,30 @@ namespace SqlAnalyser.Core
 
             foreach (var child in node.children)
             {
-                ParserRuleContext parsedNode = null;
+                List<TokenInfo> ts = new List<TokenInfo>();
 
-                if (isMatched(TokenType.TableName) && this.IsTableName(child, out parsedNode))
+                if (isMatched(TokenType.ColumnName))
                 {
-                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.TableName });
+                    ts.AddRange(this.GetColumnNameTokens(child));
                 }
-                else if (isMatched(TokenType.ColumnName) && this.IsColumnName(child, out parsedNode))
+
+                if (isMatched(TokenType.TableName))
                 {
-                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.ColumnName });
+                    ts.AddRange(this.GetTableNameTokens(child));
                 }
-                else if (isMatched(TokenType.RoutineName) && this.IsRoutineName(child, out parsedNode))
+
+                if (isMatched(TokenType.RoutineName))
                 {
-                    this.AddToken(tokens, new TokenInfo(parsedNode) { Type = TokenType.RoutineName });
+                    ts.AddRange(this.GetRoutineNameTokens(child));
+                }
+
+                if (ts.Count > 0)
+                {
+                    ts.ForEach(item => this.AddToken(tokens, item));
                 }
                 else if (child is ParserRuleContext)
                 {
-                    this.AddTokens(tokens, child as ParserRuleContext, tokenType);
+                    this.AddTokens(tokens, child as ParserRuleContext, tokenType, strict);
                 }
             }
         }
@@ -147,7 +155,7 @@ namespace SqlAnalyser.Core
         protected void AddToken(List<TokenInfo> tokens, TokenInfo tokenInfo)
         {
             if (!tokens.Any(item => item != null && item.Symbol != null && item.StartIndex == tokenInfo.StartIndex && item.StopIndex == tokenInfo.StopIndex))
-            {
+            {              
                 tokens.Add(tokenInfo);
             }
         }

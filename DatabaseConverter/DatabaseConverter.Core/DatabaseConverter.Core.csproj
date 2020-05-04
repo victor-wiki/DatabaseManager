@@ -7,7 +7,7 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql and Oracle.</Description>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,17 +17,8 @@
     <None Remove="Config\DataTypeMapping\Oracle2SqlServer.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2MySql.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
-    <None Remove="Config\DataType\MySql.txt" />
-    <None Remove="Config\DataType\Oracle.txt" />
-    <None Remove="Config\DataType\SqlServer.txt" />
     <None Remove="Config\FunctionMapping.xml" />
-    <None Remove="Config\FunctionSpecification\MySql.xml" />
-    <None Remove="Config\FunctionSpecification\Oracle.xml" />
-    <None Remove="Config\FunctionSpecification\SqlServer.xml" />
     <None Remove="Config\VariableMapping.xml" />
-    <None Remove="Config\Keyword\MySql.txt" />
-    <None Remove="Config\Keyword\Oracle.txt" />
-    <None Remove="Config\Keyword\SqlServer.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,37 +40,10 @@
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Config\DataType\Oracle.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\DataType\MySql.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\DataType\SqlServer.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\FunctionSpecification\Oracle.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\FunctionSpecification\MySql.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\FunctionSpecification\SqlServer.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Config\VariableMapping.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\FunctionMapping.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Keyword\MySql.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Keyword\Oracle.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Config\Keyword\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

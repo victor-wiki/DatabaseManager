@@ -78,7 +78,7 @@ namespace DatabaseInterpreter.Core
         private bool UploadEverythingInSingleBatch { get { return _batchSize == 0; } }
 
         public bool ColumnNameNeedQuoted { get; set; }
-
+        public bool DetectDateTimeTypeByValues { get; set; }
 
         private void ValidateConnection()
         {
@@ -205,6 +205,27 @@ namespace DatabaseInterpreter.Core
                     ? columnData.ToArray()
                     : columnData.Skip(skipOffset).Take(batchSize).ToArray();
 
+                if(this.DetectDateTimeTypeByValues)
+                {
+                    if (dbType == OracleDbType.Date)
+                    {
+                        if(c.AllowDBNull)
+                        {
+                            if (paramDataArray.Cast<DateTime?>().Any(item => item.HasValue && item.Value.Millisecond > 0))
+                            {
+                                dbType = OracleDbType.TimeStamp;
+                            }
+                        }
+                        else
+                        {
+                            if (paramDataArray.Cast<DateTime>().Any(item => item.Millisecond > 0))
+                            {
+                                dbType = OracleDbType.TimeStamp;
+                            }
+                        }
+                    }
+                }                
+
                 OracleParameter param = new OracleParameter();
                 param.OracleDbType = dbType;
                 param.Value = paramDataArray;
@@ -280,6 +301,7 @@ namespace DatabaseInterpreter.Core
             if (t == typeof(byte[])) return OracleDbType.Blob;
             if (t == typeof(string)) return OracleDbType.Varchar2;
             if (t == typeof(DateTime)) return OracleDbType.Date;
+            if (t == typeof(DateTimeOffset)) return OracleDbType.TimeStampTZ;
             if (t == typeof(decimal)) return OracleDbType.Decimal;
             if (t == typeof(Int32)) return OracleDbType.Int32;
             if (t == typeof(Int64)) return OracleDbType.Int64;
@@ -289,7 +311,7 @@ namespace DatabaseInterpreter.Core
             if (t == typeof(float)) return OracleDbType.Single;
             if (t == typeof(double)) return OracleDbType.Double;
             if (t == typeof(TimeSpan)) return OracleDbType.IntervalDS;
-            if (t == typeof(bool)) return OracleDbType.Int16;
+            if (t == typeof(bool)) return OracleDbType.Int16;            
 
             // Tylers
             //if (o is bool) return OracleDbType.Boolean;

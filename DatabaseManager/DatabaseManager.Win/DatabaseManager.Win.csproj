@@ -51,8 +51,8 @@
     <Reference Include="Microsoft.SqlServer.Types, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.SqlServer.Types.14.0.1016.290\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
     </Reference>
-    <Reference Include="MySqlConnector, Version=0.64.1.0, Culture=neutral, PublicKeyToken=d33d3e53aa5f8c92, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\MySqlConnector.0.64.1\lib\net461\MySqlConnector.dll</HintPath>
+    <Reference Include="MySqlConnector, Version=0.64.2.0, Culture=neutral, PublicKeyToken=d33d3e53aa5f8c92, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MySqlConnector.0.64.2\lib\net461\MySqlConnector.dll</HintPath>
     </Reference>
     <Reference Include="NCalc, Version=3.5.0.2, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\CoreCLR-NCalc.2.2.70\lib\net45\NCalc.dll</HintPath>

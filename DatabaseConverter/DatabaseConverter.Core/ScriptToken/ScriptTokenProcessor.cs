@@ -48,7 +48,7 @@ namespace DatabaseConverter.Core
         private void ProcessTokens()
         {
             ScriptTokenExtracter tokenExtracter = new ScriptTokenExtracter(this.Script);
-            List<TokenInfo> tokens = tokenExtracter.Extract();
+            IEnumerable<TokenInfo> tokens = tokenExtracter.Extract();
 
             IEnumerable<string> keywords = KeywordManager.GetKeywords(this.TargetInterpreter.DatabaseType);
             IEnumerable<string> functions = FunctionManager.GetFunctionSpecifications(this.TargetInterpreter.DatabaseType).Select(item => item.Name);
@@ -99,6 +99,8 @@ namespace DatabaseConverter.Core
                 changeValue(token);
             }
 
+            IEnumerable<string> aliases = tokens.Where(item => item.Symbol != null && item.Type == TokenType.Alias).Select(item => item.Symbol);
+
             foreach (TokenInfo token in tokens)
             {
                 if (token.Symbol == null)
@@ -118,7 +120,9 @@ namespace DatabaseConverter.Core
                 {
                     if (tableName.Name != null && tableName.Name.Symbol != null)
                     {
-                        token.Symbol = $"{ this.GetQuotedName(tableName.Name.ToString(), token.Type)}" + (tableName.Alias == null ? "" : " " + tableName.Alias);
+                        string alias = tableName.Alias == null ? "" : tableName.Alias.ToString();
+
+                        token.Symbol = $"{ this.GetQuotedName(tableName.Name.ToString(), token.Type)}" + (string.IsNullOrEmpty(alias) ? "" : " " + alias);
                     }
                 }
                 else if (token is ColumnName columnName)
@@ -127,20 +131,37 @@ namespace DatabaseConverter.Core
 
                     if (columnName.Name != null)
                     {
-                        columnContent = $"{ this.GetQuotedName(columnName.Name.ToString().Trim('.'), token.Type)}";
-                        columnName.Name.Symbol = columnContent;
-                    }
+                        string strTableName = "";
 
-                    if (columnName.Alias != null && !string.IsNullOrEmpty(columnName.Alias.Symbol))
-                    {
-                        columnContent += $" AS {this.GetQuotedName(columnName.Alias.ToString(), token.Type)}";
-                    }
+                        if (columnName.TableName != null)
+                        {
+                            strTableName = (!aliases.Contains(columnName.TableName.Symbol) ?
+                                           this.GetQuotedName(columnName.TableName.ToString().Trim('.'), token.Type) :
+                                           columnName.TableName.Symbol)
+                                           + ".";
 
-                    token.Symbol = columnContent;
+                        }
+
+                        string strColName = this.GetQuotedName(columnName.Name.ToString().Trim('.'), token.Type);
+
+                        columnContent = $"{strTableName}{strColName}";
+
+                        if (columnName.Alias != null && !string.IsNullOrEmpty(columnName.Alias.Symbol))
+                        {
+                            string alias = columnName.Alias.ToString();
+
+                            columnContent += $" AS {this.GetQuotedName(alias, token.Type)}";
+                        }
+
+                        token.Symbol = columnContent;
+                    }
                 }
                 else if (token.Type == TokenType.TableName || token.Type == TokenType.ColumnName)
                 {
-                    token.Symbol = this.GetQuotedName(token.Symbol.Trim('.'), token.Type);
+                    if (!aliases.Contains(token.Symbol))
+                    {
+                        token.Symbol = this.GetQuotedName(token.Symbol.Trim('.'), token.Type);
+                    }
                 }
                 else if (token.Type == TokenType.RoutineName)
                 {
@@ -151,7 +172,17 @@ namespace DatabaseConverter.Core
                         token.Type == TokenType.GroupBy
                        )
                 {
-                    token.Symbol = this.GetQuotedString(token.Symbol);
+                    if (token.Tokens.Count == 0)
+                    {
+                        token.Symbol = this.GetQuotedString(token.Symbol);
+                    }
+                }
+                else if(token.Type == TokenType.Alias)
+                {
+                    if(token.Symbol!=null && !token.Symbol.Contains(" "))
+                    {
+                        token.Symbol = token.Symbol.Trim(this.TrimChars);
+                    }
                 }
 
                 #region Replace parameter and variable name
@@ -180,10 +211,10 @@ namespace DatabaseConverter.Core
                             }
 
                             string excludePattern = $@"[`""\[]\b({kp.Key})\b[`""\]]";
-                            string pattern = "";                         
+                            string pattern = "";
 
                             if (prefix.Length == 0)
-                            {                               
+                            {
                                 pattern = $@"\b({kp.Key})\b";
                             }
                             else
@@ -191,13 +222,13 @@ namespace DatabaseConverter.Core
                                 pattern = $@"([{prefix}]\b({kp.Key.Substring(prefix.Length)})\b)";
                             }
 
-                            if(!Regex.IsMatch(token.Symbol , excludePattern))
+                            if (!Regex.IsMatch(token.Symbol, excludePattern))
                             {
                                 foreach (Match match in Regex.Matches(token.Symbol, pattern))
                                 {
                                     token.Symbol = Regex.Replace(token.Symbol, pattern, kp.Value);
                                 }
-                            }                           
+                            }
                         }
                     }
                 }
@@ -207,29 +238,58 @@ namespace DatabaseConverter.Core
             #region Nested token handle
             if (this.nameWithQuotation)
             {
-                var nestedTokens = tokens.Where(item => item.Symbol != null && item.Tokens.Count > 0);
+                var nestedTokens = tokens.Where(item => this.IsNestedToken(item));
 
                 foreach (TokenInfo nestedToken in nestedTokens)
                 {
                     List<string> replacedSymbols = new List<string>();
 
-                    foreach (var token in nestedToken.Tokens)
-                    {
-                        string trimedSymbol = token.Symbol.Trim(this.TrimChars);
+                    var childTokens = this.GetNestedTokenChildren(nestedToken);
 
-                        if (replacedSymbols.Contains(trimedSymbol))
+                    foreach (var token in childTokens)
+                    {
+                        if(token.Symbol==null)
                         {
                             continue;
                         }
 
-                        Regex matchRegex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedSymbol})\b[{this.SourceInterpreter.QuotationRightChar}]?");
-                        string quotedValue = $"{this.TargetInterpreter.QuotationLeftChar}{trimedSymbol}{this.TargetInterpreter.QuotationRightChar}";
+                        string[] items = token.Symbol.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
 
-                        if (matchRegex.IsMatch(nestedToken.Symbol) && !nestedToken.Symbol.Contains(quotedValue))
+                        foreach (string item in items)
                         {
-                            nestedToken.Symbol = matchRegex.Replace(nestedToken.Symbol, token.Symbol);
+                            string trimedItem = item.Trim(this.TrimChars);
 
-                            replacedSymbols.Add(trimedSymbol);
+                            if (aliases.Contains(trimedItem))
+                            {
+                                continue;
+                            }
+
+                            if (nameRegex.IsMatch(trimedItem))
+                            {
+                                Regex doubleQuotationRegex = new Regex($@"[""]\b({trimedItem})\b[""]");
+                                Regex matchRegex = new Regex($@"[{this.SourceInterpreter.QuotationLeftChar}]?\b({trimedItem})\b[{this.SourceInterpreter.QuotationRightChar}]?");
+
+                                string quotedValue = $"{this.TargetInterpreter.QuotationLeftChar}{trimedItem}{this.TargetInterpreter.QuotationRightChar}";
+
+                                if (!nestedToken.Symbol.Contains(quotedValue))
+                                {
+                                    bool doubleQuotationMatched = doubleQuotationRegex.IsMatch(nestedToken.Symbol);
+
+                                    if (doubleQuotationMatched)
+                                    {
+                                        nestedToken.Symbol = doubleQuotationRegex.Replace(nestedToken.Symbol, trimedItem);
+                                    }
+
+                                    bool matched = matchRegex.IsMatch(nestedToken.Symbol);
+
+                                    if (matched)
+                                    {
+                                        nestedToken.Symbol = matchRegex.Replace(nestedToken.Symbol, quotedValue);
+
+                                        replacedSymbols.Add(token.Symbol);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -241,8 +301,77 @@ namespace DatabaseConverter.Core
             this.Script.Name.Symbol = this.TargetInterpreter.GetQuotedString(this.DbObject.Name);
         }
 
+        private bool IsNestedToken(TokenInfo token)
+        {
+            if (string.IsNullOrEmpty(token.Symbol))
+            {
+                return false;
+            }
+
+            if (token.Tokens.Count > 0)
+            {
+                return true;
+            }
+
+            if (token is TableName tableName)
+            {
+                if (tableName.Name != null && tableName.Symbol != null && tableName.Name.Length < tableName.Length)
+                {
+                    return true;
+                }
+            }
+
+            if (token is ColumnName columnName)
+            {
+                if ((columnName.Name != null && columnName.Symbol != null && columnName.Name.Length < columnName.Length)
+                    || (columnName.TableName != null && columnName.TableName.Symbol != null && columnName.TableName.Length < columnName.Length))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private IEnumerable<TokenInfo> GetNestedTokenChildren(TokenInfo token)
+        {
+            List<TokenInfo> tokens = new List<TokenInfo>();
+
+            if (token is TableName tableName)
+            {
+                if(tableName.Name.Symbol!=null)
+                {
+                    tokens.Add(tableName.Name);
+                }                
+            }
+            else if (token is ColumnName columnName)
+            {
+                if (columnName.Name != null)
+                {
+                    tokens.Add(columnName.Name);
+                }
+
+                if (columnName.TableName != null)
+                {
+                    tokens.Add(columnName.TableName);
+                }
+            }
+
+            if (token.Tokens.Count > 0)
+            {
+                tokens.AddRange(token.Tokens.Where(item => item.Symbol != null));
+            }
+
+            return tokens;
+        }
+
         private string GetQuotedName(string name, TokenType tokenType)
         {
+            if (!this.nameWithQuotation)
+            {
+                return name;
+            }
+
             name = this.GetQuotedString(name);
 
             List<string> items = name.Split('.').ToList();
@@ -274,6 +403,11 @@ namespace DatabaseConverter.Core
 
         private string GetQuotedString(string value)
         {
+            if (!this.nameWithQuotation)
+            {
+                return value;
+            }
+
             var matches = identifierRegex.Matches(value);
 
             foreach (Match match in matches)
@@ -294,7 +428,7 @@ namespace DatabaseConverter.Core
             return this.DbObject.Definition.Substring(token.StartIndex.Value, token.Length);
         }
 
-        private void ReplaceTokens(List<TokenInfo> tokens)
+        private void ReplaceTokens(IEnumerable<TokenInfo> tokens)
         {
             Action<TokenInfo> changeValue = (token) =>
              {
@@ -354,14 +488,12 @@ namespace DatabaseConverter.Core
 
             if (dataType.IndexOf("(") > 0)
             {
-                column.DataType = this.columnTranslator.GetTrimedDataType(dataType);
+                DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this.SourceInterpreter, dataType);
+                column.DataType = dataTypeInfo.DataType;
 
                 bool isChar = DataTypeHelper.IsCharType(dataType);
 
-                int startIndex = dataType.IndexOf("(");
-                int endIndex = dataType.IndexOf(")");
-
-                string dataLength = dataType.Substring(startIndex + 1, endIndex - startIndex - 1);
+                string dataLength = dataTypeInfo.Args;
 
                 string[] lengthItems = dataLength.Split(',');
 
@@ -372,13 +504,13 @@ namespace DatabaseConverter.Core
                     length = -1;
                 }
 
-                if (isChar)
+                if (isChar || DataTypeHelper.IsBinaryType(dataType))
                 {
                     column.MaxLength = length;
 
-                    if (length != -1)
+                    if (isChar && length != -1)
                     {
-                        if (dataType.ToLower().StartsWith("n"))
+                        if (DataTypeHelper.StartWithN(dataType))
                         {
                             column.MaxLength = length * 2;
                         }

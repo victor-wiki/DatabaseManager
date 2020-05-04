@@ -17,5 +17,7 @@ namespace DatabaseConverter.Core
         /// </summary>
         public bool SkipScriptError { get; set; }
         public bool OnlyForTranslate { get; set; }
+        public bool ConvertComputeColumnExpression { get; set; }
+        public bool OnlyCommentComputeColumnExpressionInScript { get; set; }
     }
 }

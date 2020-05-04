@@ -20,6 +20,7 @@ namespace DatabaseInterpreter.Core
         private IObserver<FeedbackInfo> observer;
         protected DbConnector dbConnector;
         protected bool hasError = false;
+        protected DateTime minDateTime = new DateTime(1970, 1, 1);
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsDelimiter => ";";
@@ -37,7 +38,7 @@ namespace DatabaseInterpreter.Core
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
-        public ConnectionInfo ConnectionInfo { get; protected set; }
+        public ConnectionInfo ConnectionInfo { get; protected set; }       
 
         public delegate Task DataReadHandler(Table table, List<TableColumn> columns, List<Dictionary<string, object>> data, DataTable dataTable);
         public event DataReadHandler OnDataRead;
@@ -59,7 +60,7 @@ namespace DatabaseInterpreter.Core
         {
             DbConnection dbConnection = this.dbConnector.CreateConnection();
 
-            if(this.Option.RequireInfoMessage)
+            if (this.Option.RequireInfoMessage)
             {
                 this.SubscribeInfoMessage(dbConnection);
             }
@@ -176,7 +177,7 @@ namespace DatabaseInterpreter.Core
                 }
             }
 
-            this.FeedbackInfo($"Get {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}{(objects.Count > 1 ? "s" : "")}.");
+            this.FeedbackInfo($"Got {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}(s).");
 
             return objects;
         }
@@ -429,9 +430,9 @@ namespace DatabaseInterpreter.Core
             DbCommand command = dbConnection.CreateCommand();
             command.CommandType = commandInfo.CommandType;
             command.CommandText = commandInfo.CommandText;
-            command.CommandTimeout = SettingManager.Setting.CommandTimeout;  
-            
-            if(this.Option.RequireInfoMessage)
+            command.CommandTimeout = SettingManager.Setting.CommandTimeout;
+
+            if (this.Option.RequireInfoMessage)
             {
                 this.SubscribeInfoMessage(command);
             }
@@ -472,7 +473,7 @@ namespace DatabaseInterpreter.Core
                 {
                     if (!commandInfo.SkipError)
                     {
-                        if (command.Transaction != null)
+                        if (dbConnection.State == ConnectionState.Open && command.Transaction != null)
                         {
                             command.Transaction.Rollback();
                         }
@@ -549,7 +550,7 @@ namespace DatabaseInterpreter.Core
 
             string select = index > 0 ? sql.Substring(index + 1) : sql;
 
-            if(!Regex.IsMatch(select, @"(LIMIT|OFFSET)(.[\n]?)+",  RegexOptions.IgnoreCase))
+            if (!Regex.IsMatch(select, @"(LIMIT|OFFSET)(.[\n]?)+", RegexOptions.IgnoreCase))
             {
                 if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
                 {
@@ -567,20 +568,20 @@ namespace DatabaseInterpreter.Core
                 {
                     sql += Environment.NewLine + this.GetLimitStatement(0, limitCount);
                 }
-            }           
+            }
 
             return sql;
         }
 
         public abstract Task SetConstrainsEnabled(bool enabled);
-        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);        
+        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);
 
         public async Task Drop<T>(T dbObjet) where T : DatabaseObject
         {
             await this.Drop<T>(this.CreateConnection(), dbObjet);
         }
 
-        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;       
+        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
         #endregion
 
         #region Generate Scripts     
@@ -745,7 +746,7 @@ namespace DatabaseInterpreter.Core
 
             var dictPagedData = await this.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize, whereClause);
 
-            List<object> parentValues = dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(QuotationLeftChar, QuotationRightChar)])).ToList();
+            List<object> parentValues = dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.QuotationLeftChar, this.QuotationRightChar)])).ToList();
 
             if (parentValues.Count > 0)
             {
@@ -791,6 +792,7 @@ namespace DatabaseInterpreter.Core
                 DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
 
                 List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+
                 foreach (DataRow row in dataTable.Rows)
                 {
                     var dicField = new Dictionary<string, object>();
@@ -823,7 +825,7 @@ namespace DatabaseInterpreter.Core
                     rows.Add(dicField);
                 }
 
-                dictPagedData.Add(pageNumber, rows);
+                dictPagedData.Add(pageNumber, rows);                
 
                 if (this.OnDataRead != null && !this.CancelRequested && !this.hasError)
                 {
@@ -882,7 +884,7 @@ namespace DatabaseInterpreter.Core
                 excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity).Select(item => item.Name));
             }
 
-            excludeColumnNames.AddRange(columns.Where(item=>item.IsComputed).Select(item=>item.Name));
+            excludeColumnNames.AddRange(columns.Where(item => item.IsComputed).Select(item => item.Name));
 
             foreach (var kp in dictPagedData)
             {
@@ -1142,11 +1144,45 @@ namespace DatabaseInterpreter.Core
                         }
                         break;
                     case nameof(DateTime):
+                    case nameof(DateTimeOffset):
+                    case nameof(MySql.Data.Types.MySqlDateTime):
                         if (this.GetType() == typeof(OracleInterpreter))
                         {
-                            strValue = $"TO_TIMESTAMP('{Convert.ToDateTime(value).ToString("yyyy-MM-dd HH:mm:ss.fff")}','yyyy-MM-dd hh24:mi:ss.ff')";
+                            if (type.Name == nameof(MySql.Data.Types.MySqlDateTime))
+                            {
+                                DateTime dateTime = ((MySql.Data.Types.MySqlDateTime)value).GetDateTime();
+
+                                strValue = this.GetOracleDatetimeConvertString(dateTime);
+                            }
+                            else if (type.Name == nameof(DateTime))
+                            {
+                                DateTime dateTime = Convert.ToDateTime(value);
+
+                                strValue = this.GetOracleDatetimeConvertString(dateTime);
+                            }
+                            else if (type.Name == nameof(DateTimeOffset))
+                            {
+                                DateTimeOffset dtOffset = DateTimeOffset.Parse(value.ToString());
+                                int millisecondLength = dtOffset.Millisecond.ToString().Length;
+                                string strMillisecond = millisecondLength == 0 ? "" : $".{"f".PadLeft(millisecondLength, 'f')}";
+                                string format = $"yyyy-MM-dd HH:mm:ss{strMillisecond}";
+
+                                string strDtOffset = dtOffset.ToString(format) + $"{dtOffset.Offset.Hours}:{dtOffset.Offset.Minutes}";
+
+                                strValue = $@"TO_TIMESTAMP_TZ('{strDtOffset}','yyyy-MM-dd HH24:MI:ssxff TZH:TZM')";
+                            }
                         }
-                        else
+                        else if (this.GetType() == typeof(MySqlInterpreter))
+                        {
+                            if (type.Name == nameof(DateTimeOffset))
+                            {
+                                DateTimeOffset dtOffset = DateTimeOffset.Parse(value.ToString());
+
+                                strValue = $"'{dtOffset.DateTime.Add(dtOffset.Offset).ToString("yyyy-MM-dd HH:mm:ss.ffffff")}'";
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(strValue))
                         {
                             needQuotated = true;
                             strValue = value.ToString();
@@ -1163,11 +1199,22 @@ namespace DatabaseInterpreter.Core
                         else
                         {
                             needQuotated = true;
-                            strValue = value.ToString();
+
+                            if (column.DataType.IndexOf("datetime", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                DateTime dateTime = this.minDateTime.AddSeconds(TimeSpan.Parse(value.ToString()).TotalSeconds);
+
+                                strValue = dateTime.ToString("yyyy-MM-dd HH:mm:ss");
+                            }
+                            else
+                            {
+                                strValue = value.ToString();
+                            }
                         }
                         break;
                     case "SqlHierarchyId":
                     case "SqlGeography":
+                    case "SqlGeometry":
                         needQuotated = true;
                         strValue = value.ToString();
                         break;
@@ -1201,6 +1248,15 @@ namespace DatabaseInterpreter.Core
             }
         }
 
+        private string GetOracleDatetimeConvertString(DateTime dateTime)
+        {
+            int millisecondLength = dateTime.Millisecond.ToString().Length;
+            string strMillisecond = millisecondLength == 0 ? "" : $".{"f".PadLeft(millisecondLength, 'f')}";
+            string format = $"yyyy-MM-dd HH:mm:ss{strMillisecond}";
+
+            return $"TO_TIMESTAMP('{dateTime.ToString(format)}','yyyy-MM-dd hh24:mi:ssxff')";
+        }
+
         protected virtual string GetUnicodeInsertChar()
         {
             return this.UnicodeInsertChar;
@@ -1220,12 +1276,59 @@ namespace DatabaseInterpreter.Core
         {
             string computeExpression = column.ComputeExp.Trim();
 
-            if(!computeExpression.StartsWith("(") && !computeExpression.EndsWith(")"))
+            if (!computeExpression.StartsWith("(") && !computeExpression.EndsWith(")"))
             {
-                computeExpression= $"({computeExpression})";
+                computeExpression = $"({computeExpression})";
             }
-           
+
             return computeExpression;
+        }
+
+        public virtual bool IsNoLengthDataType(string dataType)
+        {
+            IEnumerable<DataTypeSpecification> dataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.DatabaseType);
+
+            return dataTypeSpecs.Any(item => item.Name.ToUpper() == dataType.ToUpper() && string.IsNullOrEmpty(item.Args));
+        }
+
+        public DataTypeSpecification GetDataTypeSpecification(string dataType)
+        {
+            return DataTypeManager.GetDataTypeSpecifications(this.DatabaseType).FirstOrDefault(item => item.Name.ToLower() == dataType.ToLower().Trim());
+        }
+
+        public string GetDataTypePrecisionScale(TableColumn column, string dataType)
+        {
+            DataTypeSpecification dataTypeSpecification = this.GetDataTypeSpecification(dataType);
+
+            if (dataTypeSpecification != null)
+            {
+                long precision = column.Precision.HasValue ? column.Precision.Value : 0;
+                int scale = column.Scale.HasValue ? column.Scale.Value : 0;
+
+                if (dataTypeSpecification.Args.Contains(","))
+                {
+                    if (precision > 0)
+                    {
+                        return $"({precision},{scale})";
+                    }
+                }
+                else if (dataTypeSpecification.Args == "scale")
+                {
+                    ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpecification, "scale");
+
+                    if (range.HasValue)
+                    {
+                        if (scale > range.Value.Max)
+                        {
+                            scale = range.Value.Max;
+                        }
+                    }
+
+                    return $"({scale})";
+                }
+            }
+
+            return string.Empty;
         }
         #endregion
     }

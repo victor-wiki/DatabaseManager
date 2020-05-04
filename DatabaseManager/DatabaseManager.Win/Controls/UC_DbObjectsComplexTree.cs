@@ -733,6 +733,8 @@ namespace DatabaseManager.Controls
             if (tag is DatabaseObject)
             {
                 DbManager dbManager = new DbManager();
+                dbManager.Subscribe(this);
+
                 await dbManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated);
             }
         }

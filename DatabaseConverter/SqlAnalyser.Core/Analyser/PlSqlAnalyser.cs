@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -103,7 +104,22 @@ namespace SqlAnalyser.Core
 
             if (script.Type == RoutineType.FUNCTION)
             {
-                sb.AppendLine($"RETURN {script.ReturnDataType}");
+                if (script.ReturnDataType != null)
+                {
+                    string dataType = script.ReturnDataType.Symbol;
+
+                    if (DataTypeHelper.IsCharType(dataType))
+                    {
+                        DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(dataType);
+                        dataType = dataTypeInfo.DataType;
+                    }
+
+                    sb.AppendLine($"RETURN {dataType}");
+                }
+                else if (script.ReturnTable != null)
+                {
+                    //sb.AppendLine($"RETURN {script.ReturnTable}");
+                }
             }
 
             sb.AppendLine("AS");
@@ -157,8 +173,8 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE VIEW {script.FullName} AS");
-           
+            sb.AppendLine($"CREATE OR REPLACE VIEW {script.FullName} AS");
+
             foreach (Statement statement in script.Statements)
             {
                 sb.AppendLine(this.BuildStatement(statement));
@@ -197,6 +213,6 @@ namespace SqlAnalyser.Core
             sb.AppendLine("END;");
 
             return this.FormatScripts(sb.ToString());
-        }         
+        }
     }
 }

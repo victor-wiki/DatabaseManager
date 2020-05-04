@@ -19,9 +19,6 @@ namespace DatabaseConverter.Core
         private DatabaseType targetDbType;
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
-        public string TargetDbOwner { get; set; }
-
-
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
             this.sourceDbType = sourceDbInterpreter.DatabaseType;
@@ -95,6 +92,8 @@ namespace DatabaseConverter.Core
 
                     CommonScript script = result.Script;
 
+                    bool replaced = false;
+
                     if (result.HasError)
                     {
                         #region Special handle for view
@@ -105,6 +104,8 @@ namespace DatabaseConverter.Core
                             {
                                 ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbOwner) { SkipError = this.SkipError };
                                 viewTranslator.Translate();
+
+                                replaced = true;
                             }
 
                             //Currently, ANTLR can't parse some view correctly, use procedure to parse it temporarily.
@@ -133,6 +134,8 @@ namespace DatabaseConverter.Core
 
                                     dbObj.Definition = Regex.Replace(dbObj.Definition, " PROCEDURE ", " VIEW ", RegexOptions.IgnoreCase);
                                     dbObj.Definition = Regex.Replace(dbObj.Definition, @"(BEGIN[\r][\n])|(END[\r][\n])", "", RegexOptions.IgnoreCase);
+
+                                    replaced = true;
                                 }
                             }
                         }
@@ -162,7 +165,7 @@ namespace DatabaseConverter.Core
 
                     this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: { (result.HasError ? "Error" : "OK") }.");
 
-                    if (result.HasError)
+                    if (!replaced && result.HasError)
                     {
                         this.FeedbackError(this.ParseSqlSyntaxError(result.Error, originalDefinition).ToString(), this.SkipError);
 

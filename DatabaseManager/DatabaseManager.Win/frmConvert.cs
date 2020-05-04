@@ -243,6 +243,8 @@ namespace DatabaseManager
                     dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
                     dbConverter.Option.SkipScriptError = this.chkSkipScriptError.Checked;
                     dbConverter.Option.PickupTable = this.chkPickup.Checked;
+                    dbConverter.Option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
+                    dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
 
                     dbConverter.Subscribe(this);
 
@@ -489,6 +491,16 @@ namespace DatabaseManager
         private void tsmiCopySelection_Click(object sender, EventArgs e)
         {
             Clipboard.SetDataObject(this.txtMessage.SelectedText);
+        }
+
+        private void chkComputeColumn_CheckedChanged(object sender, EventArgs e)
+        {
+            this.chkOnlyCommentComputeExpression.Enabled = !this.chkComputeColumn.Checked;
+
+            if(this.chkComputeColumn.Checked)
+            {
+                this.chkOnlyCommentComputeExpression.Checked = false;
+            }
         }
     }
 }

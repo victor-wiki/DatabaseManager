@@ -144,5 +144,10 @@ namespace DatabaseManager.Controls
 
             this.LoadData(this.displayInfo, 1, false);
         }
+
+        private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+
+        }
     }
 }

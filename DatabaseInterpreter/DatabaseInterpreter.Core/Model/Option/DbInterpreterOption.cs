@@ -20,6 +20,8 @@ namespace DatabaseInterpreter.Model
         public TableScriptsGenerateOption TableScriptsGenerateOption = new TableScriptsGenerateOption();
         public bool ThrowExceptionWhenErrorOccurs { get; set; } = true;
         public bool RequireInfoMessage { get; set; }
+        public bool BulkCopy { get; set; }
+        public bool DetectDateTimeTypeByValues { get; set; }
     }
 
     [Flags]

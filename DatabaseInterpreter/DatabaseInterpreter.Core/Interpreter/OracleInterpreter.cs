@@ -498,6 +498,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
+        #region BulkCopy
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             if (!(connection is OracleConnection conn))
@@ -511,15 +512,117 @@ namespace DatabaseInterpreter.Core
             }
 
             using (var bulkCopy = new OracleBulkCopy(conn, bulkCopyInfo.Transaction as OracleTransaction))
-            {               
+            {
                 bulkCopy.BatchSize = dataTable.Rows.Count;
                 bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
                 bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;
                 bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
+                bulkCopy.DetectDateTimeTypeByValues = bulkCopyInfo.DetectDateTimeTypeByValues;
 
-                await bulkCopy.WriteToServerAsync(dataTable);
+                await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo));
             }
         }
+
+        private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        {
+            var columns = dataTable.Columns.Cast<DataColumn>();
+
+            if (!columns.Any(item => item.DataType == typeof(MySql.Data.Types.MySqlDateTime)))
+            {
+                return dataTable;
+            }
+
+            Dictionary<int, Type> changedColumnTypes = new Dictionary<int, Type>();
+            Dictionary<(int RowIndex, int ColumnIndex), object> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), object>();
+
+            DataTable dtChanged = dataTable.Clone();
+
+            int rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    object value = row[i];
+
+                    if (value != null)
+                    {
+                        Type type = value.GetType();
+
+                        if (type != typeof(DBNull))
+                        {
+                            if (type == typeof(MySql.Data.Types.MySqlDateTime))
+                            {
+                                MySql.Data.Types.MySqlDateTime mySqlDateTime = (MySql.Data.Types.MySqlDateTime)value;
+
+                                TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
+
+                                string dataType = tableColumn.DataType.ToLower();
+
+                                Type columnType = null;
+
+                                if (dataType.Contains("date") || dataType.Contains("timestamp"))
+                                {
+                                    DateTime dateTime = mySqlDateTime.GetDateTime();
+
+                                    columnType = typeof(DateTime);
+
+                                    changedValues.Add((rowIndex, i), dateTime);
+                                }
+
+                                if (columnType != null && !changedColumnTypes.ContainsKey(i))
+                                {
+                                    changedColumnTypes.Add(i, columnType);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                rowIndex++;
+            }
+
+            if (changedColumnTypes.Count == 0)
+            {
+                return dataTable;
+            }
+
+            for (int i = 0; i < dtChanged.Columns.Count; i++)
+            {
+                if (changedColumnTypes.ContainsKey(i))
+                {
+                    dtChanged.Columns[i].DataType = changedColumnTypes[i];
+                }
+            }
+
+            rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                DataRow r = dtChanged.NewRow();
+
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    var value = row[i];
+
+                    if (changedValues.ContainsKey((rowIndex, i)))
+                    {
+                        r[i] = changedValues[(rowIndex, i)];
+                    }
+                    else
+                    {
+                        r[i] = value;
+                    }
+                }
+
+                dtChanged.Rows.Add(r);
+
+                rowIndex++;
+            }
+
+            return dtChanged;
+        } 
+        #endregion
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
@@ -808,22 +911,25 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 string dataType = this.ParseDataType(column);
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string defaultValueClause = string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column);
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                return $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}";
+                return $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
             }         
         }
 
         public override string ParseDataType(TableColumn column)
         {
-            bool isChar = DataTypeHelper.IsCharType(column.DataType.ToLower());
             string dataType = column.DataType;
-            if (column.DataType.IndexOf("(") < 0)
+            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            bool isChar = DataTypeHelper.IsCharType(column.DataType.ToLower());
+
+            if (string.IsNullOrEmpty(dataTypeInfo.Args))
             {
                 if (isChar)
                 {
                     long? dataLength = column.MaxLength;
 
-                    if (dataLength > 0 && dataType.ToLower().StartsWith("n"))
+                    if (dataLength > 0 && DataTypeHelper.StartWithN(dataType))
                     {
                         dataLength = dataLength / 2;
                     }
@@ -831,13 +937,10 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                     dataType = $"{dataType}({dataLength.ToString()})";
                 }
                 else if (!this.IsNoLengthDataType(dataType))
-                {
-                    dataType = $"{dataType}";
-
+                {                  
                     if (!((column.Precision == null || column.Precision == 0) && (column.Scale == null || column.Scale == 0)))
                     {
-                        long precision = column.Precision.HasValue ? column.Precision.Value : column.MaxLength.Value;
-                        int scale = column.Scale.HasValue ? column.Scale.Value : 0;
+                        long precision = (column.Precision!=null && column.Precision.HasValue) ? column.Precision.Value : column.MaxLength.Value;                       
 
                         if (dataType == "raw")
                         {
@@ -845,7 +948,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                         }
                         else
                         {
-                            dataType = $"{dataType}({precision},{scale})";
+                            dataType += this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
                         }
                     }
                     else if (column.MaxLength > 0)
@@ -856,14 +959,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             }
 
             return dataType.Trim();
-        }
-
-        private bool IsNoLengthDataType(string dataType)
-        {
-            string[] flags = { "date", "time", "int", "text", "clob", "blob", "binary_double" };
-
-            return flags.Any(item => dataType.ToLower().Contains(item));
-        }
+        }      
 
         #endregion
 

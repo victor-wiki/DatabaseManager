@@ -13,117 +13,7 @@ namespace SqlAnalyser.Core
 
             if (statement is SelectStatement select)
             {
-                bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
-
-                if (select.TableName == null)
-                {
-                    select.TableName = new TableName("DUAL");
-                }
-
-                string selectColumns = $"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
-
-                if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
-                {
-                    this.AppendLine($"SET {select.Columns.First()}");
-                }
-                else if (!isWith)
-                {
-                    this.AppendLine(selectColumns);
-                }
-
-                if (select.IntoTableName != null)
-                {
-                    this.AppendLine($"INTO {select.IntoTableName.ToString()}");
-                }
-
-                Action appendWith = () =>
-                {
-                    int i = 0;
-
-                    foreach (WithStatement withStatement in select.WithStatements)
-                    {
-                        if (i == 0)
-                        {
-                            this.AppendLine($"WITH {withStatement.Name}");
-                        }
-                        else
-                        {
-                            this.AppendLine($",{withStatement.Name}");
-                        }
-
-                        this.AppendLine("AS(");
-
-                        this.AppendChildStatements(withStatement.SelectStatements, false);
-
-                        this.AppendLine(")");
-
-                        i++;
-                    }
-
-                };
-
-                Action appendFrom = () =>
-                {
-                    if (select.FromItems != null && select.FromItems.Count > 0)
-                    {
-                        this.BuildSelectStatementFromItems(select);
-                    }
-                    else if (select.TableName != null)
-                    {
-                        this.AppendLine($"FROM {select.TableName}");
-                    }
-                };
-
-                if (isWith)
-                {
-                    appendWith();
-                    this.AppendLine(selectColumns);
-                }
-
-                appendFrom();
-
-                if (select.Where != null)
-                {
-                    this.AppendLine($"WHERE {select.Where}");
-                }
-
-                if (select.GroupBy != null && select.GroupBy.Count > 0)
-                {
-                    this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
-                }
-
-                if (select.Having != null)
-                {
-                    this.AppendLine($"HAVING {select.Having}");
-                }
-
-                if (select.OrderBy != null && select.OrderBy.Count > 0)
-                {
-                    this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
-                }
-
-                if (select.TopInfo != null)
-                {
-                    this.AppendLine($"FETCH NEXT {select.TopInfo.TopCount} ROWS ONLY");
-                }
-
-                if (select.LimitInfo != null)
-                {
-                    this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
-                }
-
-                if (select.UnionStatements != null)
-                {
-                    foreach (var union in select.UnionStatements)
-                    {
-                        this.Build(union, false).TrimSeparator();
-                    }
-                }
-
-                if (appendSeparator)
-                {
-                    this.AppendLine(";");
-                }
+                this.BuildSelectStatement(select, appendSeparator);
             }
             else if (statement is UnionStatement union)
             {
@@ -400,6 +290,121 @@ namespace SqlAnalyser.Core
             }
 
             return this;
+        }
+
+        protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
+        {
+            bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
+
+            if (select.TableName == null)
+            {
+                select.TableName = new TableName("DUAL");
+            }
+
+            string selectColumns = $"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
+
+            if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
+            {
+                this.AppendLine($"SET {select.Columns.First()}");
+            }
+            else if (!isWith)
+            {
+                this.AppendLine(selectColumns);
+            }
+
+            if (select.IntoTableName != null)
+            {
+                this.AppendLine($"INTO {select.IntoTableName.ToString()}");
+            }
+
+            Action appendWith = () =>
+            {
+                int i = 0;
+
+                foreach (WithStatement withStatement in select.WithStatements)
+                {
+                    if (i == 0)
+                    {
+                        this.AppendLine($"WITH {withStatement.Name}");
+                    }
+                    else
+                    {
+                        this.AppendLine($",{withStatement.Name}");
+                    }
+
+                    this.AppendLine("AS(");
+
+                    this.AppendChildStatements(withStatement.SelectStatements, false);
+
+                    this.AppendLine(")");
+
+                    i++;
+                }
+
+            };
+
+            Action appendFrom = () =>
+            {
+                if (select.FromItems != null && select.FromItems.Count > 0)
+                {
+                    this.BuildSelectStatementFromItems(select);
+                }
+                else if (select.TableName != null)
+                {
+                    this.AppendLine($"FROM {select.TableName}");
+                }
+            };
+
+            if (isWith)
+            {
+                appendWith();
+                this.AppendLine(selectColumns);
+            }
+
+            appendFrom();
+
+            if (select.Where != null)
+            {
+                this.AppendLine($"WHERE {select.Where}");
+            }
+
+            if (select.GroupBy != null && select.GroupBy.Count > 0)
+            {
+                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+            }
+
+            if (select.Having != null)
+            {
+                this.AppendLine($"HAVING {select.Having}");
+            }
+
+            if (select.OrderBy != null && select.OrderBy.Count > 0)
+            {
+                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+            }
+
+            if (select.TopInfo != null)
+            {
+                this.AppendLine($"FETCH NEXT {select.TopInfo.TopCount} ROWS ONLY");
+            }
+
+            if (select.LimitInfo != null)
+            {
+                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+            }
+
+            if (select.UnionStatements != null)
+            {
+                foreach (var union in select.UnionStatements)
+                {
+                    this.Build(union, false).TrimSeparator();
+                }
+            }
+
+            if (appendSeparator)
+            {
+                this.AppendLine(";");
+            }
         }
 
         private string GetUnionTypeName(UnionType unionType)

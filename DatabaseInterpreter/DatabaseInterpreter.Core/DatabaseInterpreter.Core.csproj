@@ -8,7 +8,7 @@
     <Authors>victor-wiki</Authors>
     <Description>Get database objects meta data, generate schema and insert data scripts, query and bulkcopy data.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +18,51 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Config\DataTypeSpecification\MySql.xml" />
+    <None Remove="Config\DataTypeSpecification\Oracle.xml" />
+    <None Remove="Config\DataTypeSpecification\SqlServer.xml" />
+    <None Remove="Config\FunctionSpecification\MySql.xml" />
+    <None Remove="Config\FunctionSpecification\Oracle.xml" />
+    <None Remove="Config\FunctionSpecification\SqlServer.xml" />
+    <None Remove="Config\Keyword\MySql.txt" />
+    <None Remove="Config\Keyword\Oracle.txt" />
+    <None Remove="Config\Keyword\SqlServer.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\DataTypeSpecification\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\FunctionSpecification\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\FunctionSpecification\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\FunctionSpecification\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Keyword\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Keyword\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\Keyword\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CsvHelper" Version="15.0.5" />
     <PackageReference Include="Dapper" Version="2.0.35" />
-    <PackageReference Include="MySqlConnector" Version="0.64.1" />
+    <PackageReference Include="MySqlConnector" Version="0.64.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />

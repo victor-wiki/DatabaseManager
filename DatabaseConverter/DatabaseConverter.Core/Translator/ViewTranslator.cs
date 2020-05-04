@@ -63,10 +63,25 @@ namespace DatabaseConverter.Core
                                .Replace("<", " < ")
                                .Replace("!=", "<>");
 
+                    StringBuilder sb = new StringBuilder();
 
-                    definition = this.ParseDefinition(definition);
+                    string[] lines = definition.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach(string line in lines)
+                    {
+                        if(line.StartsWith(this.sourceDbInterpreter.CommentString))
+                        {
+                            continue;
+                        }
 
-                    string createAsClause = $"CREATE VIEW {(string.IsNullOrEmpty(targetOwnerName)? "": targetOwnerName + "." )}{viewNameWithQuotation} AS ";
+                        sb.AppendLine(line);
+                    }
+
+                    definition = this.ParseDefinition(sb.ToString());
+
+                    string createClause = this.targetDbInterpreter.DatabaseType == DatabaseType.Oracle ? "CREATE OR REPLACE" : "CREATE";
+
+                    string createAsClause = $"{createClause} VIEW {(string.IsNullOrEmpty(targetOwnerName)? "": targetOwnerName + "." )}{viewNameWithQuotation} AS ";
 
                     if (!definition.Trim().ToLower().StartsWith("create"))
                     {

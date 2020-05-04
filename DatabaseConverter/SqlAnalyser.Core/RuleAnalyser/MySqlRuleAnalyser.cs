@@ -618,22 +618,36 @@ namespace SqlAnalyser.Core
             {
                 if (table is TableSourceBaseContext tb)
                 {
-                    TableSourceItemContext name = tb.tableSourceItem();
-
-                    TableName tableName = this.ParseTableName(name);
-
+                    TableSourceItemContext tsi = tb.tableSourceItem();
                     FromItem fromItem = new FromItem();
-                    fromItem.TableName = tableName;
 
-                    JoinPartContext[] joins = tb.joinPart();
-
-                    if (joins != null && joins.Length > 0)
+                    if (tsi is SubqueryTableItemContext subquery)
                     {
-                        foreach (JoinPartContext join in joins)
-                        {
-                            JoinItem joinItem = this.ParseJoin(join);
+                        fromItem.SubSelectStatement = this.ParseSelectStatement(subquery.selectStatement());
 
-                            fromItem.JoinItems.Add(joinItem);
+                        UidContext uid = subquery.uid();
+
+                        if (uid != null)
+                        {
+                            fromItem.Alias = new TokenInfo(uid) { Type = TokenType.Alias };
+                        }
+                    }
+                    else
+                    {
+                        TableName tableName = this.ParseTableName(tsi);
+
+                        fromItem.TableName = tableName;
+
+                        JoinPartContext[] joins = tb.joinPart();
+
+                        if (joins != null && joins.Length > 0)
+                        {
+                            foreach (JoinPartContext join in joins)
+                            {
+                                JoinItem joinItem = this.ParseJoin(join);
+
+                                fromItem.JoinItems.Add(joinItem);
+                            }
                         }
                     }
 
@@ -677,6 +691,15 @@ namespace SqlAnalyser.Core
                 {
                     statement = this.ParseUnionSelect(union);
                 }
+                else if (child is QueryExpressionContext exp)
+                {
+                    QuerySpecificationContext querySpec = exp.querySpecification();
+
+                    if (querySpec != null)
+                    {
+                        statement = this.ParseQuerySpecification(querySpec);
+                    }
+                }
             }
 
             return statement;
@@ -700,7 +723,7 @@ namespace SqlAnalyser.Core
 
             if (statement != null)
             {
-                UnionStatementContext []unionStatements = node.unionStatement();
+                UnionStatementContext[] unionStatements = node.unionStatement();
 
                 if (unionStatements != null)
                 {
@@ -1141,7 +1164,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public override TableName ParseTableName(ParserRuleContext node)
+        public override TableName ParseTableName(ParserRuleContext node, bool strict = false)
         {
             TableName tableName = null;
 
@@ -1150,7 +1173,7 @@ namespace SqlAnalyser.Core
                 if (node is TableNameContext tn)
                 {
                     tableName = new TableName(tn);
-                    tableName.Name = new TokenInfo(tn.fullId());
+                    tableName.Tokens.Add(new TokenInfo(tn.fullId()) { Type = TokenType.TableName });
                 }
                 else if (node is AtomTableItemContext ati)
                 {
@@ -1187,7 +1210,7 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                if (tableName == null)
+                if (!strict && tableName == null)
                 {
                     tableName = new TableName(node);
                 }
@@ -1195,7 +1218,7 @@ namespace SqlAnalyser.Core
 
             return tableName;
         }
-        public override ColumnName ParseColumnName(ParserRuleContext node)
+        public override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
         {
             ColumnName columnName = null;
 
@@ -1222,7 +1245,16 @@ namespace SqlAnalyser.Core
                         }
                         else if (cc is FullColumnNameContext fullColName)
                         {
-                            columnName.Name = new TokenInfo(fullColName);
+                            DottedIdContext[] dotIds = fullColName.dottedId();
+
+                            if (dotIds == null || dotIds.Length == 0)
+                            {
+                                columnName.Name = new TokenInfo(fullColName);
+                            }
+                            else
+                            {
+                                columnName.Name = new TokenInfo(dotIds.Last());
+                            }
                         }
                         else if (cc is UidContext)
                         {
@@ -1234,7 +1266,7 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                if (columnName == null)
+                if (!strict && columnName == null)
                 {
                     columnName = new ColumnName(node);
                 }
@@ -1308,55 +1340,51 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        public override bool IsTableName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetTableNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
 
-            if (node is TableNameContext tableName)
+            TableName tableName = this.ParseTableName(node as ParserRuleContext, true);
+
+            if (tableName != null)
             {
-                parsedNode = tableName;
-                return true;
+                tokens.Add(tableName);
             }
 
-            return false;
+            return tokens;
         }
 
-        public override bool IsColumnName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetColumnNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
 
-            if (node is FullColumnNameContext columnName)
+            ColumnName columnName = this.ParseColumnName(node as ParserRuleContext, true);
+
+            if (columnName != null)
             {
-                UidContext uid = columnName.uid();
-                DottedIdContext[] ids = columnName.dottedId();
-
-                if (ids != null && ids.Length > 0)
-                {
-                    parsedNode = ids[0];
-                }
-                else if (uid != null)
-                {
-                    parsedNode = uid;
-                }
-
-                return true;
+                tokens.Add(columnName);
             }
 
-            return false;
+            return tokens;
         }
 
-        public override bool IsRoutineName(IParseTree node, out ParserRuleContext parsedNode)
+        public override List<TokenInfo> GetRoutineNameTokens(IParseTree node)
         {
-            parsedNode = null;
+            List<TokenInfo> tokens = new List<TokenInfo>();
+
+            ParserRuleContext routineName = null;
 
             if (node is UdfFunctionCallContext udf)
             {
-                parsedNode = udf.fullId();
-
-                return true;
+                routineName = udf.fullId();
             }
 
-            return false;
+            if (routineName != null)
+            {
+                tokens.Add(new TokenInfo(routineName) { Type = TokenType.RoutineName });
+            }
+
+            return tokens;
         }
     }
 }

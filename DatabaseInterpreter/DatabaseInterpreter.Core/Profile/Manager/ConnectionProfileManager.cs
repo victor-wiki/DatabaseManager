@@ -113,7 +113,7 @@ namespace DatabaseInterpreter.Profile
                 }
             }
 
-            return profiles;
+            return profiles.OrderBy(item=>item.Name);
         }
 
         public static ConnectionInfo GetConnectionInfo(string dbType, string profileName)

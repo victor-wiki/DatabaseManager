@@ -29,7 +29,7 @@ namespace SqlAnalyser.Core
         {
             int childCount = statements.Count();
 
-            if(childCount>0)
+            if (childCount > 0)
             {
                 this.IncreaseLevel();
             }
@@ -81,8 +81,11 @@ namespace SqlAnalyser.Core
             return this.sb.ToString();
         }
 
+        protected virtual void BuildSelectStatement(SelectStatement select, bool appendSeparator = true) { }
+
         protected void BuildSelectStatementFromItems(SelectStatement selectStatement)
         {
+            int count = selectStatement.FromItems.Count;
             int i = 0;
 
             bool hasJoins = false;
@@ -103,12 +106,27 @@ namespace SqlAnalyser.Core
 
                 this.Append($"{fromItem.TableName}{(hasJoins ? Environment.NewLine : "")}", false);
 
-                foreach (JoinItem joinItem in fromItem.JoinItems)
+                if (fromItem.JoinItems.Count > 0)
                 {
-                    string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+                    foreach (JoinItem joinItem in fromItem.JoinItems)
+                    {
+                        string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
 
-                    this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                        this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                    }
                 }
+                else if (fromItem.SubSelectStatement != null)
+                {
+                    this.AppendLine("");
+                    this.AppendLine("(");
+                    this.BuildSelectStatement(fromItem.SubSelectStatement, false);
+                    this.Append(")");
+
+                    if (fromItem.Alias != null)
+                    {
+                        this.Append($"{fromItem.Alias}", false);
+                    }
+                }               
 
                 i++;
             }

@@ -220,12 +220,12 @@ namespace DatabaseInterpreter.Core
                         LEFT JOIN sys.extended_properties ext on c.column_id=ext.minor_id AND c.object_id=ext.major_id AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'
 						LEFT JOIN sys.types sty on c.user_type_id = sty.user_type_id
                         LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id";
-            }         
+            }
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" WHERE T.name IN ({ strTableNames })";
+                sql += $" WHERE t.name IN ({ strTableNames })";
             }
 
             return sql;
@@ -253,7 +253,7 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.tables T ON C.object_id=T.object_id
                          WHERE I.is_primary_key=1";
 
-            if (filter!=null && filter.TableNames != null && filter.TableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
@@ -286,7 +286,7 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.tables RT ON RC.object_id=RT.object_id
                          WHERE 1=1";
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any() )
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(FK.parent_object_id) IN ({ strTableNames })";
@@ -348,15 +348,15 @@ namespace DatabaseInterpreter.Core
                             FROM sys.triggers t
                             WHERE t.parent_id >0";
 
-            if (filter!= null)
+            if (filter != null)
             {
-                if(filter.TableNames != null && filter.TableNames.Any())
+                if (filter.TableNames != null && filter.TableNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                     sql += $" AND object_name(t.parent_id) IN ({ strNames })";
                 }
 
-                if(filter.TableTriggerNames!=null && filter.TableTriggerNames.Any())
+                if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
                     sql += $" AND t.name IN ({ strNames })";
@@ -387,7 +387,7 @@ namespace DatabaseInterpreter.Core
                          inner join sys.columns col on chk.parent_object_id = col.object_id and col.column_id = chk.parent_column_id
                          inner join sys.tables st on chk.parent_object_id = st.object_id";
 
-            if (filter != null && filter.TableNames!=null && filter.TableNames.Any())
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND st.name IN ({ strTableNames })";
@@ -417,7 +417,7 @@ namespace DatabaseInterpreter.Core
                             FROM sys.views v
                             WHERE 1=1";
 
-            if (filter!=null && filter.ViewNames != null && filter.ViewNames.Any())
+            if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
                 sql += $" AND v.name IN ({ strNames })";
@@ -450,7 +450,7 @@ namespace DatabaseInterpreter.Core
                             FROM sys.procedures
                             WHERE 1=1";
 
-            if (filter!= null && filter.ProcedureNames != null && filter.ProcedureNames.Any())
+            if (filter != null && filter.ProcedureNames != null && filter.ProcedureNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ProcedureNames);
                 sql += $" AND name IN ({ strNames })";
@@ -469,16 +469,126 @@ namespace DatabaseInterpreter.Core
             await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}", false);
         }
 
+        #region BulkCopy
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
-                await bulkCopy.WriteToServerAsync(dataTable, bulkCopyInfo.CancellationToken);
+                await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
             }
         }
 
+        private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        {
+            var columns = dataTable.Columns.Cast<DataColumn>();
+
+            if (!columns.Any(item => item.DataType == typeof(TimeSpan)))
+            {
+                return dataTable;
+            }
+
+            Dictionary<int, Type> changedColumnTypes = new Dictionary<int, Type>();
+            Dictionary<(int RowIndex, int ColumnIndex), object> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), object>();
+
+            DataTable dtChanged = dataTable.Clone();
+
+            int rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    object value = row[i];
+
+                    if (value != null)
+                    {
+                        Type type = value.GetType();
+
+                        if (type != typeof(DBNull))
+                        {
+                            if (type == typeof(TimeSpan))
+                            {
+                                TimeSpan ts = TimeSpan.Parse(value.ToString());
+
+                                if (ts.Days > 0)
+                                {
+                                    TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
+
+                                    string dataType = tableColumn.DataType.ToLower();
+
+                                    Type columnType = null;                                   
+
+                                    if(dataType.Contains("datetime"))
+                                    {
+                                        DateTime dateTime = this.minDateTime.AddSeconds(ts.TotalSeconds);
+
+                                        columnType = typeof(DateTime);                                       
+
+                                        changedValues.Add((rowIndex, i), dateTime);
+                                    }
+                                    else if(DataTypeHelper.IsCharType(dataType))
+                                    {
+                                        columnType = typeof(string);                                      
+
+                                        changedValues.Add((rowIndex, i), ts.ToString());
+                                    }
+
+                                    if (columnType!=null && !changedColumnTypes.ContainsKey(i))
+                                    {
+                                        changedColumnTypes.Add(i, columnType);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                rowIndex++;
+            }
+
+            if (changedColumnTypes.Count == 0)
+            {
+                return dataTable;
+            }
+
+            for (int i = 0; i < dtChanged.Columns.Count; i++)
+            {
+                if (changedColumnTypes.ContainsKey(i))
+                {
+                    dtChanged.Columns[i].DataType = changedColumnTypes[i];
+                }
+            }
+
+            rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                DataRow r = dtChanged.NewRow();
+
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    var value = row[i];
+
+                    if (changedValues.ContainsKey((rowIndex, i)))
+                    {
+                        r[i] = changedValues[(rowIndex, i)];
+                    }
+                    else
+                    {
+                        r[i] = value;
+                    }
+                }
+
+                dtChanged.Rows.Add(r);
+
+                rowIndex++;
+            }
+
+            return dtChanged;
+        }
+
         private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
-        {           
+        {
             SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, SqlBulkCopyOptions.Default, bulkCopyInfo.Transaction as SqlTransaction);
 
             await this.OpenConnectionAsync(connection);
@@ -488,7 +598,8 @@ namespace DatabaseInterpreter.Core
             bulkCopy.BatchSize = bulkCopyInfo.BatchSize.HasValue ? bulkCopyInfo.BatchSize.Value : this.DataBatchSize;
 
             return bulkCopy;
-        }
+        } 
+        #endregion
 
         public override Task SetConstrainsEnabled(bool enabled)
         {
@@ -532,7 +643,7 @@ namespace DatabaseInterpreter.Core
                 {
                     typeName = "TYPE";
                 }
-                else if(typeName == nameof(TableTrigger))
+                else if (typeName == nameof(TableTrigger))
                 {
                     typeName = "TRIGGER";
                 }
@@ -558,9 +669,9 @@ namespace DatabaseInterpreter.Core
 
                 string userTypeName = userDefinedType.Name;
 
-                if(userTypeNames.Contains(userTypeName))
+                if (userTypeNames.Contains(userTypeName))
                 {
-                    userTypeName += "_"  + userDefinedType.AttrName;
+                    userTypeName += "_" + userDefinedType.AttrName;
                 }
 
                 TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
@@ -775,7 +886,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
             bool isComputed = column.IsComputed;
 
-            if(isComputed)
+            if (isComputed)
             {
                 return $"{this.GetQuotedString(column.Name)} AS {this.GetColumnComputeExpression(column)}";
             }
@@ -784,10 +895,11 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
                 string dataType = this.ParseDataType(column);
 
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
-                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");             
+                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}";
-            }           
+                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}{scriptComment}";
+            }
         }
 
         public override string ParseDataType(TableColumn column)
@@ -806,56 +918,50 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
         private string GetColumnDataLength(TableColumn column)
         {
-            switch (column.DataType)
+            string dataType = column.DataType;
+            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+
+            DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataTypeInfo.DataType);
+
+            if (dataTypeSpec != null)
             {
-                case "nchar":
-                case "nvarchar":
+                string args = dataTypeSpec.Args.ToLower().Trim();
+
+                if (string.IsNullOrEmpty(args))
+                {
+                    return string.Empty;
+                }
+                else if (DataTypeHelper.IsCharType(dataType) && DataTypeHelper.StartWithN(dataType)) //ie. nchar, nvarchar
+                {
                     if (column.MaxLength == -1)
                     {
                         return "max";
                     }
+
                     return ((column.MaxLength ?? 0) / 2).ToString();
-                case "char":
-                case "varchar":
-                case "binary":
-                case "varbinary":
+                }
+                else if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsBinaryType(dataType))//ie. char, varchar, binary, varbinary
+                {
                     if (column.MaxLength == -1)
                     {
                         return "max";
                     }
+
                     return column.MaxLength?.ToString();
-                case "bit":
-                case "tinyint":
-                case "int":
-                case "smallint":
-                case "bigint":
-                case "float":
-                case "real":
-                case "money":
-                case "smallmoney":
-                case "date":
-                case "smalldatetime":
-                case "datetime":
-                case "timestamp":
-                case "uniqueidentifier":
-                case "xml":
-                case "text":
-                case "ntext":
-                case "image":
-                case "sql_variant":
-                case "geography":
-                case "geometry":
-                case "hierarchyid":
-                    return "";
-                case "datetime2":
-                case "datetitmeoffset":
-                    return column.Scale?.ToString();
-                case "decimal":
-                case "numeric":
-                    return $"{column.Precision},{column.Scale}";
+                }
+                else if (args.ToLower().Contains(","))//ie. numeric,decimal
+                {
+                    int scale = column.Scale == null ? 0 : column.Scale.Value;
+
+                    return $"{column.Precision},{scale}";
+                }
+                else if (args == "precision" || args == "scale") //ie. datetime2,datetimeoffset
+                {
+                    return column.Scale == null ? "0" : column.Scale.ToString();
+                }
             }
 
-            return "";
+            return string.Empty;
         }
 
         private bool IsBigDataType(TableColumn column)
@@ -955,7 +1061,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         private void Command_StatementCompleted(object sender, StatementCompletedEventArgs e)
         {
             this.FeedbackInfo($"{e.RecordCount} row(s) affected.");
-        }      
+        }
         #endregion
     }
 }

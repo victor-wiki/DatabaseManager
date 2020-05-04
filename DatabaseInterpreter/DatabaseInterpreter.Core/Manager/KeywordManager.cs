@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace DatabaseConverter.Core
+namespace DatabaseInterpreter.Core
 {
-    public class DataTypeManager : ConfigManager
+    public class KeywordManager: ConfigManager
     {
-        public static readonly string KeywordFolder = Path.Combine(ConfigRootFolder, "DataType");
+        public static readonly string KeywordFolder = Path.Combine(ConfigRootFolder, "Keyword");
 
-        public static IEnumerable<string> GetDataTypes(DatabaseType databaseType)
+        public static IEnumerable<string> GetKeywords(DatabaseType databaseType)
         {
             string filePath = Path.Combine(KeywordFolder, $"{databaseType}.txt");
 

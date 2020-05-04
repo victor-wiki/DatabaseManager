@@ -12,7 +12,7 @@ namespace DatabaseInterpreter.Core
 {
     public class MySqlInterpreter : DbInterpreter
     {
-        #region Field & Property       
+        #region Field & Property           
         public override string UnicodeInsertChar => "";
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '`'; } }
@@ -415,18 +415,16 @@ namespace DatabaseInterpreter.Core
 
             await this.OpenConnectionAsync(connection);
 
-            await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable), bulkCopyInfo.CancellationToken);
+            await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
         }
 
-        private Dictionary<string, Type> dictSpecialDataType = new Dictionary<string, Type>() { { "SqlHierarchyId", typeof(string) }, { "SqlGeography", typeof(string) } };
-
-        private DataTable ConvertDataTable(DataTable dataTable)
+        private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             bool hasSpecialColumn = false;
 
             foreach (DataColumn column in dataTable.Columns)
             {
-                if (this.dictSpecialDataType.Keys.Contains(column.DataType.Name))
+                if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
                 {
                     hasSpecialColumn = true;
                     break;
@@ -435,13 +433,33 @@ namespace DatabaseInterpreter.Core
 
             if (hasSpecialColumn)
             {
+                Dictionary<string, Type> dictColumnTypes = new Dictionary<string, Type>();
+
                 DataTable dtSpecial = dataTable.Clone();
 
                 foreach (DataColumn column in dtSpecial.Columns)
                 {
-                    if (this.dictSpecialDataType.Keys.Contains(column.DataType.Name))
+                    if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
                     {
-                        column.DataType = this.dictSpecialDataType[column.DataType.Name];
+                        TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
+                        string dataType = tableColumn.DataType.ToLower();
+
+                        Type columnType = null;
+
+                        if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsTextType(dataType))
+                        {
+                            columnType = typeof(string);
+                        }
+                        else if (DataTypeHelper.IsBinaryType(dataType) || dataType.ToLower().Contains("blob"))
+                        {
+                            columnType = typeof(Byte[]);
+                        }                        
+
+                        if (columnType != null)
+                        {
+                            column.DataType = columnType;
+                            dictColumnTypes[column.ColumnName] = columnType;
+                        }
                     }
                 }
 
@@ -453,23 +471,29 @@ namespace DatabaseInterpreter.Core
                     {
                         var value = row[i];
 
-                        if (this.dictSpecialDataType.Keys.Contains(dataTable.Columns[i].DataType.Name))
+                        if (dictColumnTypes.ContainsKey(dataTable.Columns[i].ColumnName))
                         {
-                            Type type = this.dictSpecialDataType[dataTable.Columns[i].DataType.Name];
+                            Type type = dictColumnTypes[dataTable.Columns[i].ColumnName];
 
-                            r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
+                            if (type == typeof(string))
+                            {
+                                r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
+                            }
+                            else
+                            {
+                                r[i] = value;
+                            }
                         }
                         else
                         {
                             r[i] = value;
                         }
-
                     }
 
                     dtSpecial.Rows.Add(r);
-
-                    return dtSpecial;
                 }
+
+                return dtSpecial;
             }
 
             return dataTable;
@@ -721,28 +745,28 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
                 string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
                 string defaultValueClause = string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column);
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {commentClause}";
-            }            
+                return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {scriptComment}{commentClause}";
+            }
         }
 
         public override string ParseDataType(TableColumn column)
         {
             string dataType = column.DataType;
-            bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
+            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            bool isChar = DataTypeHelper.IsCharType(dataType);
+            bool isBinary = DataTypeHelper.IsBinaryType(dataType);
 
-            if (column.DataType.IndexOf("(") < 0)
+            if (string.IsNullOrEmpty(dataTypeInfo.Args))
             {
-                if (isChar)
+                if (isChar || isBinary)
                 {
                     dataType = $"{dataType}({column.MaxLength.ToString()})";
                 }
                 else if (!this.IsNoLengthDataType(dataType))
                 {
-                    long precision = column.Precision.HasValue ? column.Precision.Value : (column.MaxLength.HasValue ? column.MaxLength.Value : 0);
-                    int scale = column.Scale.HasValue ? column.Scale.Value : 0;
-
-                    dataType = $"{dataType}({precision},{scale})";
+                    dataType += this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
                 }
             }
 
@@ -770,13 +794,6 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
             }
 
             return name;
-        }
-
-        private bool IsNoLengthDataType(string dataType)
-        {
-            string[] flags = { "date", "time", "int", "text", "longblob", "longtext", "binary" };
-
-            return flags.Any(item => dataType.ToLower().Contains(item));
         }
 
         #endregion
@@ -827,7 +844,7 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
         {
             string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
             return $"UNHEX('{hex}')";
-        }       
-        #endregion       
+        }
+        #endregion
     }
 }

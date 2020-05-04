@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DatabaseConverter.Model
+namespace DatabaseInterpreter.Model
 {
     public class FunctionSpecification
     {

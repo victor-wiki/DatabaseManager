@@ -1,0 +1,21 @@
+﻿<items>
+  <item name="binary_double" args=""></item>
+  <item name="binary_float" args=""></item>
+  <item name="blob" args="" size="4GB"></item>
+  <item name="clob" args="" size="4GB"></item>
+  <item name="char" args="length" range="1~2000"></item>
+  <item name="date" args=""></item>
+  <item name="interval day to second" format="interval day($dayScale$) to second($scale$)" range="0~9,0~9" args="dayScale,scale" optional="true" default="2,6"></item>
+  <item name="interval year to month" format="interval year($scale$) to month" args="scale" range="0~9" optional="true" default="2"></item>
+  <item name="long" args="" size="2GB"></item>
+  <item name="long raw" args="" size="2GB"></item>
+  <item name="nchar" args="length" range="1~1000"></item>
+  <item name="nclob" args="" size="4GB"></item>
+  <item name="number" args="precision,scale" range="1~38,0~38"></item>
+  <item name="nvarchar2" args="length" range="1~2000"></item>
+  <item name="raw" args="length" range="1~2000"></item>
+  <item name="timestamp" args="scale" range="0~9" optional="true" default="6"></item>
+  <item name="timestamp with local time zone" format="timestamp($scale$) with local time zone" args="scale" range="0~9" default="6"></item>
+  <item name="timestamp with time zone" format="timestamp($scale$) with time zone"  args="scale" range="0~9" default="6"></item>
+  <item name="varchar2" args="length" range="1~4000"></item>  
+</items>

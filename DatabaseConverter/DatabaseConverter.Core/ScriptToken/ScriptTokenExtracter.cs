@@ -17,7 +17,7 @@ namespace DatabaseConverter.Core
             this.Script = script;
         }
 
-        public List<TokenInfo> Extract()
+        public IEnumerable<TokenInfo> Extract()
         {
             this.tokens.Clear();
 
@@ -83,7 +83,7 @@ namespace DatabaseConverter.Core
                 return;
             }
 
-            this.tokens.Add(token);
+            this.tokens.Add(token);           
         }
     }
 }
