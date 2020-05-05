@@ -64,6 +64,7 @@
             this.dgvData.Size = new System.Drawing.Size(564, 232);
             this.dgvData.TabIndex = 6;
             this.dgvData.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvData_DataBindingComplete);
+            this.dgvData.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvData_DataError);
             this.dgvData.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvData_MouseUp);
             // 
             // contextMenuStrip1

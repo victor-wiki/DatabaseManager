@@ -78,5 +78,10 @@ namespace DatabaseManager.Controls
         {
             this.dgvData.ClearSelection();
         }
+
+        private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+
+        }
     }
 }
