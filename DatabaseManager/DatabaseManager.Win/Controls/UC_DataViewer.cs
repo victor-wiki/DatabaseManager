@@ -11,6 +11,7 @@ using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using DatabaseInterpreter.Core;
 using DatabaseManager.Core;
+using DatabaseManager.Helper;
 
 namespace DatabaseManager.Controls
 {
@@ -76,7 +77,7 @@ namespace DatabaseManager.Controls
 
             this.pagination.TotalCount = result.Total;
 
-            this.dgvData.DataSource = result.Data;
+            this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
 
             foreach (DataGridViewColumn column in this.dgvData.Columns)
             {
@@ -148,6 +149,6 @@ namespace DatabaseManager.Controls
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
 
-        }
+        }       
     }
 }

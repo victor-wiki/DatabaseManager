@@ -19,7 +19,7 @@
   <item name="mediumblob" args="" size="16M"></item>
   <item name="mediumint" args="" value="-8388608~8388607"></item>
   <item name="mediumtext" args="" size="16M"></item>
-  <item name="numeric" args="precision,scale" range="1~65,0~30"></item>
+  <item name="numeric" args="precision,scale" range="1~65,0~30" mapTo="decimal"></item>
   <item name="real" args="precision,scale" range="1~255,0~30" mapTo="double"></item>
   <item name="set" args=""></item>
   <item name="smallint" args="" value="-32768~32767"></item>

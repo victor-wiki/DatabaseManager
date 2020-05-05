@@ -10,10 +10,12 @@ namespace DatabaseInterpreter.Demo
     {
         private DbInterpreter interpreter;
         public DbInterpreter Interpreter => interpreter;
+        private DbScriptGenerator dbScriptGenerator;
 
         public InterpreterDemo(DbInterpreter dbInterpreter)
         {
             this.interpreter = dbInterpreter;
+            this.dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.interpreter);
         }
 
         #region SchemaInfo
@@ -30,16 +32,16 @@ namespace DatabaseInterpreter.Demo
             {
                 TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray(),
                 ViewNames = schemaInfo.Views.Select(item => item.Name).ToArray()               
-            };
+            };            
 
-            return this.interpreter.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(filter)).ToString();
+            return this.dbScriptGenerator.GenerateSchemaScripts(await this.Interpreter.GetSchemaInfoAsync(filter)).ToString();
         }
         #endregion
 
         #region Data Scripts
         public async Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
         {
-            return await this.interpreter.GenerateDataScriptsAsync(schemaInfo);
+            return await this.dbScriptGenerator.GenerateDataScriptsAsync(schemaInfo);
         }
         #endregion
     }

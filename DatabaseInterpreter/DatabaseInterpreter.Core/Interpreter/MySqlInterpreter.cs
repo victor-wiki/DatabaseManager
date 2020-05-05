@@ -18,14 +18,16 @@ namespace DatabaseInterpreter.Core
         public override char QuotationLeftChar { get { return '`'; } }
         public override char QuotationRightChar { get { return '`'; } }
         public override string CommentString => "#";
-        public override DatabaseType DatabaseType { get { return DatabaseType.MySql; } }
-        public int NameMaxLength => 64;
-        public int KeyIndexColumnMaxLength => 500;
+        public override DatabaseType DatabaseType { get { return DatabaseType.MySql; } }      
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
+
+        public const int NameMaxLength = 64;
+        public const int KeyIndexColumnMaxLength = 500;
         public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
         public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
-        public string NotCreateIfExistsCluase { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
+        public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
+
         #endregion
 
         #region Constructor
@@ -106,7 +108,7 @@ namespace DatabaseInterpreter.Core
 
                 string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
                 sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
-                        CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsCluase} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
+                        CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsClause} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
                         FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'
                         ";
             }
@@ -302,7 +304,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsCluase} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
 
             string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
                          {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
@@ -396,108 +398,24 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Datbase Operation
+
+        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
+        {
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
+
+            return base.GetTableRecordCountAsync(connection, sql);
+        }
+
         public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
         {
             Table table = new Table() { Name = column.TableName, Owner = column.Owner };
-            await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}", false);
-        }
-
-        public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
-        {
-            if (dataTable == null || dataTable.Rows.Count <= 0)
-            {
-                return;
-            }
-
-            MySqlBulkCopy bulkCopy = new MySqlBulkCopy(connection as MySqlConnection, bulkCopyInfo.Transaction as MySqlTransaction);
-
-            bulkCopy.DestinationTableName = bulkCopyInfo.DestinationTableName;
-
-            await this.OpenConnectionAsync(connection);
-
-            await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
-        }
-
-        private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
-        {
-            bool hasSpecialColumn = false;
-
-            foreach (DataColumn column in dataTable.Columns)
-            {
-                if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
-                {
-                    hasSpecialColumn = true;
-                    break;
-                }
-            }
-
-            if (hasSpecialColumn)
-            {
-                Dictionary<string, Type> dictColumnTypes = new Dictionary<string, Type>();
-
-                DataTable dtSpecial = dataTable.Clone();
-
-                foreach (DataColumn column in dtSpecial.Columns)
-                {
-                    if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
-                    {
-                        TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
-                        string dataType = tableColumn.DataType.ToLower();
-
-                        Type columnType = null;
-
-                        if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsTextType(dataType))
-                        {
-                            columnType = typeof(string);
-                        }
-                        else if (DataTypeHelper.IsBinaryType(dataType) || dataType.ToLower().Contains("blob"))
-                        {
-                            columnType = typeof(Byte[]);
-                        }                        
-
-                        if (columnType != null)
-                        {
-                            column.DataType = columnType;
-                            dictColumnTypes[column.ColumnName] = columnType;
-                        }
-                    }
-                }
-
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    DataRow r = dtSpecial.NewRow();
-
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
-                    {
-                        var value = row[i];
-
-                        if (dictColumnTypes.ContainsKey(dataTable.Columns[i].ColumnName))
-                        {
-                            Type type = dictColumnTypes[dataTable.Columns[i].ColumnName];
-
-                            if (type == typeof(string))
-                            {
-                                r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
-                            }
-                            else
-                            {
-                                r[i] = value;
-                            }
-                        }
-                        else
-                        {
-                            r[i] = value;
-                        }
-                    }
-
-                    dtSpecial.Rows.Add(r);
-                }
-
-                return dtSpecial;
-            }
-
-            return dataTable;
-        }
+            await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {this.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}", false);
+        }       
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
@@ -552,177 +470,131 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
-        #region Generate Schema Scripts 
-
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        #region BulkCopy
+        public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
-            ScriptBuilder sb = new ScriptBuilder();
-
-            #region Function           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
-            #endregion
-
-            #region Create Table
-            foreach (Table table in schemaInfo.Tables)
+            if (dataTable == null || dataTable.Rows.Count <= 0)
             {
-                this.FeedbackInfo(OperationState.Begin, table);
-
-                string tableName = table.Name;
-                string quotedTableName = this.GetQuotedObjectName(table);
-
-                IEnumerable<TableColumn> tableColumns = schemaInfo.TableColumns.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
-
-                string primaryKey = "";
-
-                IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.TableName == tableName);
-                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
-                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
-
-                this.RestrictColumnLength(tableColumns, primaryKeys);
-                this.RestrictColumnLength(tableColumns, foreignKeys);
-                this.RestrictColumnLength(tableColumns, indexes);
-
-                #region Primary Key
-                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    primaryKey =
-$@"
-,PRIMARY KEY
-(
-{string.Join(Environment.NewLine, primaryKeys.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
-)";
-                }
-                #endregion
-
-                List<string> foreignKeysLines = new List<string>();
-
-                #region Foreign Key
-                if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
-                {
-                    if (foreignKeys.Count() > 0)
-                    {
-                        ILookup<string, TableForeignKey> foreignKeyLookup = foreignKeys.ToLookup(item => item.Name);
-
-                        IEnumerable<string> keyNames = foreignKeyLookup.Select(item => item.Key);
-
-                        foreach (string keyName in keyNames)
-                        {
-                            TableForeignKey tableForeignKey = foreignKeyLookup[keyName].First();
-
-                            string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => this.GetQuotedString(item.ColumnName)));
-                            string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
-
-                            string line = $"CONSTRAINT { this.GetQuotedString(this.GetRestrictedLengthName(keyName))} FOREIGN KEY ({columnNames}) REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referenceColumnName})";
-
-                            if (tableForeignKey.UpdateCascade)
-                            {
-                                line += " ON UPDATE CASCADE";
-                            }
-                            else
-                            {
-                                line += " ON UPDATE NO ACTION";
-                            }
-
-                            if (tableForeignKey.DeleteCascade)
-                            {
-                                line += " ON DELETE CASCADE";
-                            }
-                            else
-                            {
-                                line += " ON DELETE NO ACTION";
-                            }
-
-                            foreignKeysLines.Add(line);
-                        }
-                    }
-                }
-
-                string foreignKey = $"{(foreignKeysLines.Count > 0 ? (Environment.NewLine + "," + string.Join("," + Environment.NewLine, foreignKeysLines)) : "")}";
-
-                #endregion
-
-                #region Table
-
-                string tableScript =
-$@"
-CREATE TABLE {this.NotCreateIfExistsCluase} {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}{foreignKey}
-){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
-DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
-
-                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
-
-                #endregion               
-
-                #region Index
-                if (this.Option.TableScriptsGenerateOption.GenerateIndex)
-                {
-                    if (indexes.Count() > 0)
-                    {
-                        sb.AppendLine();
-
-                        List<string> indexColumns = new List<string>();
-
-                        ILookup<string, TableIndex> indexLookup = indexes.ToLookup(item => item.Name);
-                        IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
-
-                        foreach (string indexName in indexNames)
-                        {
-                            TableIndex tableIndex = indexLookup[indexName].First();
-
-                            string columnNames = string.Join(",", indexLookup[indexName].Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
-
-                            if (indexColumns.Contains(columnNames))
-                            {
-                                continue;
-                            }
-
-                            var tempIndexName = tableIndex.Name;
-                            if (tempIndexName.Contains("-"))
-                            {
-                                tempIndexName = tempIndexName.Replace("-", "_");
-                            }
-
-                            tempIndexName = this.GetRestrictedLengthName(tempIndexName);
-
-                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"ALTER TABLE {quotedTableName} ADD {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tempIndexName)} ({columnNames});"));
-
-                            if (!indexColumns.Contains(columnNames))
-                            {
-                                indexColumns.Add(columnNames);
-                            }
-                        }
-                    }
-                }
-                #endregion              
-
-                sb.AppendLine();
-
-                this.FeedbackInfo(OperationState.End, table);
-            }
-            #endregion            
-
-            #region View           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
-
-            #endregion
-
-            #region Trigger           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
-            #endregion
-
-            #region Procedure           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
-            #endregion
-
-            if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
-            {
-                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
+                return;
             }
 
-            return sb;
+            MySqlBulkCopy bulkCopy = new MySqlBulkCopy(connection as MySqlConnection, bulkCopyInfo.Transaction as MySqlTransaction);
+
+            bulkCopy.DestinationTableName = bulkCopyInfo.DestinationTableName;
+
+            await this.OpenConnectionAsync(connection);
+
+            await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
         }
 
+        private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        {
+            bool hasSpecialColumn = false;
+
+            foreach (DataColumn column in dataTable.Columns)
+            {
+                if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
+                {
+                    hasSpecialColumn = true;
+                    break;
+                }
+            }
+
+            if (hasSpecialColumn)
+            {
+                Dictionary<string, Type> dictColumnTypes = new Dictionary<string, Type>();
+
+                DataTable dtSpecial = dataTable.Clone();
+
+                foreach (DataColumn column in dtSpecial.Columns)
+                {
+                    if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
+                    {
+                        TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
+                        string dataType = tableColumn.DataType.ToLower();
+
+                        Type columnType = null;
+
+                        if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsTextType(dataType))
+                        {
+                            columnType = typeof(string);
+                        }
+                        else if (DataTypeHelper.IsBinaryType(dataType) || dataType.ToLower().Contains("blob"))
+                        {
+                            columnType = typeof(Byte[]);
+                        }
+
+                        if (columnType != null)
+                        {
+                            column.DataType = columnType;
+                            dictColumnTypes[column.ColumnName] = columnType;
+                        }
+                    }
+                }
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    DataRow r = dtSpecial.NewRow();
+
+                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    {
+                        var value = row[i];
+
+                        if (dictColumnTypes.ContainsKey(dataTable.Columns[i].ColumnName))
+                        {
+                            Type type = dictColumnTypes[dataTable.Columns[i].ColumnName];
+
+                            if (type == typeof(string))
+                            {
+                                r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
+                            }
+                            else
+                            {
+                                r[i] = value;
+                            }
+                        }
+                        else
+                        {
+                            r[i] = value;
+                        }
+                    }
+
+                    dtSpecial.Rows.Add(r);
+                }
+
+                return dtSpecial;
+            }
+
+            return dataTable;
+        }
+        #endregion
+
+        #region Sql Query Clause
+        protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
+        {
+            var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
+
+            var pagedSql = $@"SELECT {columnNames}
+							  FROM {tableName}
+                             {whereClause} 
+                             ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : this.GetDefaultOrder())}
+                             LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
+
+            return pagedSql;
+        }
+
+        public override string GetDefaultOrder()
+        {
+            return "1";
+        }
+
+        public override string GetLimitStatement(int limitStart, int limitCount)
+        {
+            return $"LIMIT {limitStart}, {limitCount}";
+        }
+        #endregion
+
+        #region Parse Column & DataType 
         public override string ParseColumn(Table table, TableColumn column)
         {
             string dataType = this.ParseDataType(column);
@@ -772,79 +644,6 @@ DEFAULT CHARSET={DbCharset}" + this.ScriptsDelimiter;
 
             return dataType.Trim();
         }
-
-        private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T : TableColumnChild
-        {
-            var childColumns = columns.Where(item => children.Any(t => item.Name == t.ColumnName)).ToList();
-
-            childColumns.ForEach(item =>
-            {
-                if (DataTypeHelper.IsCharType(item.DataType) && item.MaxLength > this.KeyIndexColumnMaxLength)
-                {
-                    item.MaxLength = this.KeyIndexColumnMaxLength;
-                }
-            });
-        }
-
-        private string GetRestrictedLengthName(string name)
-        {
-            if (name.Length > this.NameMaxLength)
-            {
-                return name.Substring(0, this.NameMaxLength);
-            }
-
-            return name;
-        }
-
-        #endregion
-
-        #region Generate Data Script       
-
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
-        {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
-
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                sql += whereClause;
-            }
-
-            return base.GetTableRecordCountAsync(connection, sql);
-        }
-
-        public override Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
-        {
-            return base.GenerateDataScriptsAsync(schemaInfo);
-        }
-
-        protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
-        {
-            var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
-
-            var pagedSql = $@"SELECT {columnNames}
-							  FROM {tableName}
-                             {whereClause} 
-                             ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : this.GetDefaultOrder())}
-                             LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
-
-            return pagedSql;
-        }
-
-        public override string GetDefaultOrder()
-        {
-            return "1";
-        }
-
-        public override string GetLimitStatement(int limitStart, int limitCount)
-        {
-            return $"LIMIT {limitStart}, {limitCount}";
-        }
-
-        protected override string GetBytesConvertHexString(object value, string dataType)
-        {
-            string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
-            return $"UNHEX('{hex}')";
-        }
-        #endregion
+        #endregion     
     }
 }

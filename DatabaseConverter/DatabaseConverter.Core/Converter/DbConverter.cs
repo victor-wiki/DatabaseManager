@@ -199,9 +199,11 @@ namespace DatabaseConverter.Core
 
             ScriptBuilder scriptBuilder = null;
 
+            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
+
             if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
             {
-                scriptBuilder = targetInterpreter.GenerateSchemaScripts(targetSchemaInfo);
+                scriptBuilder = targetDbScriptGenerator.GenerateSchemaScripts(targetSchemaInfo);
 
                 if (targetSchemaInfo.Tables.Any())
                 {
@@ -322,6 +324,7 @@ namespace DatabaseConverter.Core
                 if (!targetInterpreter.HasError && this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Data) && sourceSchemaInfo.Tables.Count > 0)
                 {
                     List<TableColumn> identityTableColumns = new List<TableColumn>();
+
                     if (generateIdentity)
                     {
                         identityTableColumns = targetSchemaInfo.TableColumns.Where(item => item.IsIdentity).ToList();
@@ -335,17 +338,7 @@ namespace DatabaseConverter.Core
                         {
                             sourceSchemaInfo.PickupTable = new Table() { Owner = schemaInfo.Tables.FirstOrDefault()?.Owner, Name = dataErrorProfile.SourceTableName };
                         }
-                    }
-
-                    if (sourceInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
-                    {
-                        sourceInterpreter.AppendScriptsToFile("", GenerateScriptMode.Data, true);
-                    }
-
-                    if (targetInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
-                    {
-                        targetInterpreter.AppendScriptsToFile("", GenerateScriptMode.Data, true);
-                    }
+                    }                 
 
                     foreach (var item in identityTableColumns)
                     {
@@ -363,8 +356,6 @@ namespace DatabaseConverter.Core
                             {
                                 try
                                 {
-                                    StringBuilder sb = new StringBuilder();
-
                                     (Table Table, List<TableColumn> Columns) targetTableAndColumns = this.GetTargetTableColumns(targetSchemaInfo, this.Target.DbOwner, table, columns);
 
                                     if (targetTableAndColumns.Table == null || targetTableAndColumns.Columns == null)
@@ -403,7 +394,9 @@ namespace DatabaseConverter.Core
                                         }
                                         else
                                         {
-                                            Dictionary<string, object> paramters = targetInterpreter.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows } });
+                                            StringBuilder sb = new StringBuilder();                                            
+
+                                            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows } });
 
                                             script = sb.ToString().Trim().Trim(';');
 
@@ -451,7 +444,9 @@ namespace DatabaseConverter.Core
                         };
                     }
 
-                    await sourceInterpreter.GenerateDataScriptsAsync(sourceSchemaInfo);
+                    DbScriptGenerator sourceDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(sourceInterpreter);
+
+                    await sourceDbScriptGenerator.GenerateDataScriptsAsync(sourceSchemaInfo);
 
                     foreach (var item in identityTableColumns)
                     {

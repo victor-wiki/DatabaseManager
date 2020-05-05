@@ -51,7 +51,7 @@
   <mapping>
     <source type="number" />
     <target type="decimal" />
-    <special name="scale" value="0" type="int" substitute="bigint"></special>    
+    <special name="scale" value="0" type="int"></special>    
   </mapping>
   <mapping>
     <source type="nvarchar2" />

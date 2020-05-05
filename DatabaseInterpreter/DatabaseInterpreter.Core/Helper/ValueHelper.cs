@@ -1,7 +1,10 @@
-﻿using System;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using System;
 using System.Data;
+using System.Linq;
 
-namespace  DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Core
 {
     public class ValueHelper
     {
@@ -12,7 +15,7 @@ namespace  DatabaseInterpreter.Core
                 return true;
             }
 
-            if(value.GetType() == typeof(DBNull))
+            if (value.GetType() == typeof(DBNull))
             {
                 return true;
             }
@@ -24,16 +27,21 @@ namespace  DatabaseInterpreter.Core
             return false;
         }
 
+        public static bool IsBytes(object value)
+        {
+            return (value != null && value.GetType() == typeof(byte[]));
+        }
+
         public static string TransferSingleQuotation(string value)
         {
             return value?.Replace("'", "''");
-        }      
-        
+        }
+
         public static bool NeedQuotedForSql(Type type)
         {
             string typeName = type.Name;
 
-            if(type == typeof(string) ||
+            if (type == typeof(string) ||
                type == typeof(DateTime) ||
                type == typeof(Guid) ||
                type == typeof(DateTimeOffset) ||
@@ -45,6 +53,41 @@ namespace  DatabaseInterpreter.Core
             }
 
             return false;
+        }
+
+        public static string ConvertGuidBytesToString(byte[] value, DatabaseType databaseType, string dataType, long? length, bool bytesAsString)
+        {
+            string strValue = null;
+
+            if (value != null && value.Length == 16)
+            {
+                if (databaseType == DatabaseType.SqlServer && dataType.ToLower() == "uniqueidentifier")
+                {
+                    strValue = new Guid((byte[])value).ToString();
+                }
+                else if (databaseType == DatabaseType.MySql && dataType == "char" && length == 36)
+                {
+                    strValue = new Guid((byte[])value).ToString();
+                }
+                else if (bytesAsString && databaseType == DatabaseType.Oracle && dataType.ToLower() == "raw" && length == 16)
+                {
+                    strValue = StringHelper.GuidToRaw(new Guid((byte[])value).ToString());
+                }
+            }
+
+            return strValue;
+        }
+
+        public static string BytesToHexString(byte[] value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            string hex = "0x" + string.Concat(value.Select(item => item.ToString("X2")));
+
+            return hex;
         }
     }
 }

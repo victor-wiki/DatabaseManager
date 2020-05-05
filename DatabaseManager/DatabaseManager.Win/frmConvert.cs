@@ -20,7 +20,7 @@ namespace DatabaseManager
 {
     public partial class frmConvert : Form, IObserver<FeedbackInfo>
     {
-        private const string DONE = "Done";
+        private const string DONE = "Convert finished";
         private DatabaseType sourceDatabaseType;
         private ConnectionInfo sourceDbConnectionInfo;
         private ConnectionInfo targetDbConnectionInfo;
@@ -284,7 +284,7 @@ namespace DatabaseManager
                 if (!this.dbConverter.CancelRequested)
                 {
                     this.txtMessage.AppendText(Environment.NewLine + DONE);
-                    MessageBox.Show(DONE);
+                    MessageBox.Show(DONE, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
@@ -307,7 +307,7 @@ namespace DatabaseManager
             this.btnExecute.Enabled = true;
             this.btnCancel.Enabled = false;
 
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         private void Feedback(FeedbackInfo info)

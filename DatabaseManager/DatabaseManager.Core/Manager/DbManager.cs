@@ -177,6 +177,7 @@ namespace DatabaseManager.Core
                 dbConverter.Option.OnlyForTranslate = true;
                 dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
                 dbConverter.Option.ExecuteScriptOnTargetServer = false;
+                dbConverter.Option.ConvertComputeColumnExpression = true;
 
                 dbConverter.Subscribe(this.observer);
 

@@ -18,7 +18,7 @@ namespace DatabaseManager
 {
     public partial class frmGenerateScripts : Form, IObserver<FeedbackInfo>
     {
-        private const string DONE = "Done";
+        private const string DONE = "Script generated";
         private DatabaseType databaseType;
         private ConnectionInfo connectionInfo;
         private bool isBusy = false;
@@ -200,22 +200,24 @@ namespace DatabaseManager
 
                 GenerateScriptMode mode = GenerateScriptMode.None;
 
+                DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
+
                 if (scriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
                     mode = GenerateScriptMode.Schema;
-                    this.dbInterpreter.GenerateSchemaScripts(schemaInfo);
+                    dbScriptGenerator.GenerateSchemaScripts(schemaInfo);
                 }
 
                 if (scriptMode.HasFlag(GenerateScriptMode.Data))
                 {
                     mode = GenerateScriptMode.Data;
-                    await dbInterpreter.GenerateDataScriptsAsync(schemaInfo);
+                    await dbScriptGenerator.GenerateDataScriptsAsync(schemaInfo);
                 }
 
                 this.isBusy = false;
-                ManagerUtil.OpenInExplorer(dbInterpreter.GetScriptOutputFilePath(mode));
+                ManagerUtil.OpenInExplorer(dbScriptGenerator.GetScriptOutputFilePath(mode));
 
-                MessageBox.Show(DONE);
+                MessageBox.Show(DONE, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -240,7 +242,7 @@ namespace DatabaseManager
 
             this.btnGenerate.Enabled = true;
 
-            MessageBox.Show(ex.Message);
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         private bool Validate(SchemaInfo schemaInfo)

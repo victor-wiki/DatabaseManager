@@ -112,7 +112,7 @@ namespace DatabaseConverter.Core
                                 column.MaxLength *= 2;
                             }
                         }
-                    }                                       
+                    }
 
                     if (dataTypeMapping.Specials != null && dataTypeMapping.Specials.Count > 0)
                     {
@@ -125,7 +125,7 @@ namespace DatabaseConverter.Core
                             if (!string.IsNullOrEmpty(special.TargetMaxLength))
                             {
                                 column.MaxLength = int.Parse(special.TargetMaxLength);
-                            }                           
+                            }
                         }
                     }
 
@@ -249,6 +249,17 @@ namespace DatabaseConverter.Core
                                 if (scaleRange.HasValue && column.Scale > scaleRange.Value.Max)
                                 {
                                     column.Scale = scaleRange.Value.Max;
+                                }
+
+                                if (column.Precision.HasValue)
+                                {
+                                    if (column.DataType.ToLower() == "int")
+                                    {
+                                        if (column.Precision.Value > 10)
+                                        {
+                                            column.DataType = "bigint";
+                                        }
+                                    }
                                 }
                             }
                         }

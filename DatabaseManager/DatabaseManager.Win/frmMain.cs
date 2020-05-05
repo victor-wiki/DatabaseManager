@@ -62,7 +62,7 @@ namespace DatabaseManager
             {
                 if (!info.IgnoreError)
                 {
-                    MessageBox.Show(info.Message);
+                    MessageBox.Show(info.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
                 this.txtMessage.Text = info.Message;

@@ -6,8 +6,6 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
@@ -464,10 +462,77 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
+
+        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
+        {
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
+
+            return base.GetTableRecordCountAsync(connection, sql);
+        }
+
         public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
         {
             await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}", false);
         }
+
+        public override Task SetConstrainsEnabled(bool enabled)
+        {
+            return this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
+        }
+
+        public override Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        {
+            return this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
+        }
+
+        private string GetSqlForSetConstrainsEnabled(bool enabled)
+        {
+            string sql = $@"EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
+                          EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';";
+
+            return sql;
+        }
+
+        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
+        {
+            string sql = "";
+
+            if (dbObjet is TableColumnChild || dbObjet is TableConstraint)
+            {
+                TableChild dbObj = dbObjet as TableChild;
+
+                sql = $"ALTER TABLE {dbObj.Owner}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)};";
+            }
+            else if (dbObjet is TableIndex)
+            {
+                TableIndex index = dbObjet as TableIndex;
+
+                sql = $"DROP INDEX {this.GetQuotedString(index.Name)} ON {index.Owner}.{this.GetQuotedString(index.TableName)};";
+            }
+            else
+            {
+                string typeName = dbObjet.GetType().Name;
+
+                if (typeName == nameof(UserDefinedType))
+                {
+                    typeName = "TYPE";
+                }
+                else if (typeName == nameof(TableTrigger))
+                {
+                    typeName = "TRIGGER";
+                }
+
+                sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
+            }
+
+            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
+        }
+        #endregion
 
         #region BulkCopy
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
@@ -482,7 +547,9 @@ namespace DatabaseInterpreter.Core
         {
             var columns = dataTable.Columns.Cast<DataColumn>();
 
-            if (!columns.Any(item => item.DataType == typeof(TimeSpan)))
+            if (!columns.Any(item => item.DataType == typeof(TimeSpan)
+                   || item.DataType == typeof(byte[])
+                   || item.DataType == typeof(decimal)))
             {
                 return dataTable;
             }
@@ -493,6 +560,11 @@ namespace DatabaseInterpreter.Core
             DataTable dtChanged = dataTable.Clone();
 
             int rowIndex = 0;
+
+            Func<DataColumn, TableColumn> getTableColumn = (column) =>
+            {
+                return bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
+            };
 
             foreach (DataRow row in dataTable.Rows)
             {
@@ -512,31 +584,81 @@ namespace DatabaseInterpreter.Core
 
                                 if (ts.Days > 0)
                                 {
-                                    TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
+                                    TableColumn tableColumn = getTableColumn(dataTable.Columns[i]);
 
                                     string dataType = tableColumn.DataType.ToLower();
 
-                                    Type columnType = null;                                   
+                                    Type columnType = null;
 
-                                    if(dataType.Contains("datetime"))
+                                    if (dataType.Contains("datetime"))
                                     {
-                                        DateTime dateTime = this.minDateTime.AddSeconds(ts.TotalSeconds);
+                                        DateTime dateTime = this.MinDateTime.AddSeconds(ts.TotalSeconds);
 
-                                        columnType = typeof(DateTime);                                       
+                                        columnType = typeof(DateTime);
 
                                         changedValues.Add((rowIndex, i), dateTime);
                                     }
-                                    else if(DataTypeHelper.IsCharType(dataType))
+                                    else if (DataTypeHelper.IsCharType(dataType))
                                     {
-                                        columnType = typeof(string);                                      
+                                        columnType = typeof(string);
 
                                         changedValues.Add((rowIndex, i), ts.ToString());
                                     }
 
-                                    if (columnType!=null && !changedColumnTypes.ContainsKey(i))
+                                    if (columnType != null && !changedColumnTypes.ContainsKey(i))
                                     {
                                         changedColumnTypes.Add(i, columnType);
                                     }
+                                }
+                            }
+                            else if (type == typeof(byte[]))
+                            {
+                                TableColumn tableColumn = getTableColumn(dataTable.Columns[i]);
+
+                                if (tableColumn.DataType.ToLower() == "uniqueidentifier")
+                                {
+                                    changedValues.Add((rowIndex, i), ValueHelper.ConvertGuidBytesToString(value as byte[], this.DatabaseType, tableColumn.DataType, tableColumn.MaxLength, true));
+
+                                    if (!changedColumnTypes.ContainsKey(i))
+                                    {
+                                        changedColumnTypes.Add(i, typeof(Guid));
+                                    }
+                                }
+                            }
+                            else if (type == typeof(decimal))
+                            {
+                                TableColumn tableColumn = getTableColumn(dataTable.Columns[i]);
+
+                                string dataType = tableColumn.DataType.ToLower();
+
+                                Type columnType = null;
+
+                                if (dataType == "bigint")
+                                {
+                                    columnType = typeof(Int64);                                    
+                                }
+                                else if (dataType == "int")
+                                {
+                                    columnType = typeof(Int32);
+
+                                    if ((decimal)value > Int32.MaxValue)
+                                    {
+                                        columnType = typeof(Int64);
+                                    }
+                                }
+                                else if (dataType == "smallint")
+                                {
+                                    columnType = typeof(Int16);
+
+                                    if ((decimal)value > Int16.MaxValue)
+                                    {
+                                        columnType = typeof(Int32);
+                                    }
+                                }
+
+                                if (columnType != null && !changedColumnTypes.ContainsKey(i))
+                                {
+                                    changedColumnTypes.Add(i, columnType);
                                 }
                             }
                         }
@@ -598,285 +720,10 @@ namespace DatabaseInterpreter.Core
             bulkCopy.BatchSize = bulkCopyInfo.BatchSize.HasValue ? bulkCopyInfo.BatchSize.Value : this.DataBatchSize;
 
             return bulkCopy;
-        } 
-        #endregion
-
-        public override Task SetConstrainsEnabled(bool enabled)
-        {
-            return this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
-        }
-
-        public override Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
-        {
-            return this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
-        }
-
-        private string GetSqlForSetConstrainsEnabled(bool enabled)
-        {
-            string sql = $@"EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
-                          EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';";
-
-            return sql;
-        }
-
-        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
-        {
-            string sql = "";
-
-            if (dbObjet is TableColumnChild || dbObjet is TableConstraint)
-            {
-                TableChild dbObj = dbObjet as TableChild;
-
-                sql = $"ALTER TABLE {dbObj.Owner}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)};";
-            }
-            else if (dbObjet is TableIndex)
-            {
-                TableIndex index = dbObjet as TableIndex;
-
-                sql = $"DROP INDEX {this.GetQuotedString(index.Name)} ON {index.Owner}.{this.GetQuotedString(index.TableName)};";
-            }
-            else
-            {
-                string typeName = dbObjet.GetType().Name;
-
-                if (typeName == nameof(UserDefinedType))
-                {
-                    typeName = "TYPE";
-                }
-                else if (typeName == nameof(TableTrigger))
-                {
-                    typeName = "TRIGGER";
-                }
-
-                sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
-            }
-
-            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
         }
         #endregion
 
-        #region Generate Schema Script   
-
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
-        {
-            ScriptBuilder sb = new ScriptBuilder();
-
-            #region User Defined Type
-            List<string> userTypeNames = new List<string>();
-            foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
-            {
-                this.FeedbackInfo(OperationState.Begin, userDefinedType);
-
-                string userTypeName = userDefinedType.Name;
-
-                if (userTypeNames.Contains(userTypeName))
-                {
-                    userTypeName += "_" + userDefinedType.AttrName;
-                }
-
-                TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
-                string dataLength = this.GetColumnDataLength(column);
-
-                string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userTypeName)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
-
-                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
-                sb.AppendLine(new SpliterScript(this.ScriptsDelimiter));
-
-                userTypeNames.Add(userDefinedType.Name);
-
-                this.FeedbackInfo(OperationState.End, userDefinedType);
-            }
-
-            #endregion
-
-            #region Function           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
-            #endregion
-
-            #region Table
-            foreach (Table table in schemaInfo.Tables)
-            {
-                this.FeedbackInfo(OperationState.Begin, table);
-
-                string tableName = table.Name;
-                string quotedTableName = this.GetQuotedObjectName(table);
-                IEnumerable<TableColumn> tableColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
-
-                bool hasBigDataType = tableColumns.Any(item => this.IsBigDataType(item));
-
-                string primaryKey = "";
-
-                IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                #region Primary Key
-                if (this.Option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    primaryKey =
-$@"
-,CONSTRAINT {this.GetQuotedString(primaryKeys.First().Name)} PRIMARY KEY CLUSTERED 
-(
-{string.Join(Environment.NewLine, primaryKeys.Select(item => $"{this.GetQuotedString(item.ColumnName)} {(item.IsDesc ? "DESC" : "ASC")},")).TrimEnd(',')}
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]";
-
-                }
-
-                #endregion
-
-                #region Create Table
-
-                string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
-
-                string tableScript =
-$@"
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
-
-{(this.NotCreateIfExists ? existsClause : "")}
-CREATE TABLE {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.ParseColumn(table, item)))}{primaryKey}
-) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
-
-                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
-
-                #endregion
-
-                sb.AppendLine();
-
-                #region Comment
-                if (!string.IsNullOrEmpty(table.Comment))
-                {
-                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(table.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',NULL,NULL;"));
-                }
-
-                foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
-                {
-                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(column.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',N'column',N'{column.Name}';"));
-                }
-                #endregion               
-
-                #region Foreign Key
-                if (this.Option.TableScriptsGenerateOption.GenerateForeignKey)
-                {
-                    IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-                    if (foreignKeys.Count() > 0)
-                    {
-                        ILookup<string, TableForeignKey> foreignKeyLookup = foreignKeys.ToLookup(item => item.Name);
-
-                        IEnumerable<string> keyNames = foreignKeyLookup.Select(item => item.Key);
-
-                        foreach (string keyName in keyNames)
-                        {
-                            TableForeignKey tableForeignKey = foreignKeyLookup[keyName].First();
-
-                            string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
-                            string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
-
-                            StringBuilder sbForeignKey = new StringBuilder();
-
-                            sbForeignKey.AppendLine(
-$@"
-ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT { this.GetQuotedString(keyName)} FOREIGN KEY({columnNames})
-REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeignKey.ReferencedTableName)} ({referenceColumnName})
-");
-
-                            if (tableForeignKey.UpdateCascade)
-                            {
-                                sbForeignKey.AppendLine("ON UPDATE CASCADE");
-                            }
-
-                            if (tableForeignKey.DeleteCascade)
-                            {
-                                sbForeignKey.AppendLine("ON DELETE CASCADE");
-                            }
-
-                            sbForeignKey.AppendLine($"ALTER TABLE {quotedTableName} CHECK CONSTRAINT { this.GetQuotedString(keyName)};");
-
-                            sb.AppendLine(new CreateDbObjectScript<TableForeignKey>(sbForeignKey.ToString()));
-                        }
-                    }
-                }
-                #endregion
-
-                #region Index
-                if (this.Option.TableScriptsGenerateOption.GenerateIndex)
-                {
-                    IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
-                    if (indices.Count() > 0)
-                    {
-                        List<string> indexColumns = new List<string>();
-                        ILookup<string, TableIndex> indexLookup = indices.ToLookup(item => item.Name);
-                        IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
-                        foreach (string indexName in indexNames)
-                        {
-                            TableIndex tableIndex = indexLookup[indexName].First();
-                            string columnNames = string.Join(",", indexLookup[indexName].Select(item => $"{this.GetQuotedString(item.ColumnName)} {(item.IsDesc ? "DESC" : "ASC")}"));
-
-                            if (indexColumns.Contains(columnNames))
-                            {
-                                continue;
-                            }
-
-                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX {tableIndex.Name} ON {quotedTableName}({columnNames});"));
-
-                            if (!indexColumns.Contains(columnNames))
-                            {
-                                indexColumns.Add(columnNames);
-                            }
-                        }
-                    }
-                }
-                #endregion
-
-                #region Default Value
-                if (this.Option.TableScriptsGenerateOption.GenerateDefaultValue)
-                {
-                    IEnumerable<TableColumn> defaultValueColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
-                    foreach (TableColumn column in defaultValueColumns)
-                    {
-                        sb.AppendLine(new AlterDbObjectScript<Table>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString($"DF_{tableName}_{column.Name}")}  DEFAULT {this.GetColumnDefaultValue(column)} FOR { this.GetQuotedString(column.Name)};"));
-                    }
-                }
-                #endregion
-
-                #region Constraint
-                if (this.Option.TableScriptsGenerateOption.GenerateConstraint)
-                {
-                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                    foreach (TableConstraint constraint in constraints)
-                    {
-                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition});"));
-                    }
-                }
-                #endregion
-
-                sb.Append(new SpliterScript(this.ScriptsDelimiter));
-
-                this.FeedbackInfo(OperationState.End, table);
-            }
-
-            #endregion
-
-            #region View           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
-            #endregion
-
-            #region Trigger           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<TableTrigger>(schemaInfo.TableTriggers));
-            #endregion
-
-            #region Procedure           
-            sb.AppendRange(this.GenerateScriptDbObjectScripts<Procedure>(schemaInfo.Procedures));
-            #endregion
-
-            if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
-            {
-                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
-            }
-
-            return sb;
-        }
-
+        #region Parse Column & DataType
         public override string ParseColumn(Table table, TableColumn column)
         {
             if (column.IsUserDefined)
@@ -916,7 +763,7 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             return dataType.Trim();
         }
 
-        private string GetColumnDataLength(TableColumn column)
+        public override string GetColumnDataLength(TableColumn column)
         {
             string dataType = column.DataType;
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
@@ -963,49 +810,9 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
 
             return string.Empty;
         }
-
-        private bool IsBigDataType(TableColumn column)
-        {
-            switch (column.DataType)
-            {
-                case "text":
-                case "ntext":
-                case "image":
-                case "xml":
-                    return true;
-                case "varchar":
-                case "nvarchar":
-                case "varbinary":
-                    if (column.MaxLength == -1)
-                    {
-                        return true;
-                    }
-                    return false;
-                default:
-                    return false;
-            }
-        }
-
         #endregion
 
-        #region Generate Data Script       
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
-        {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
-
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                sql += whereClause;
-            }
-
-            return base.GetTableRecordCountAsync(connection, sql);
-        }
-
-        public override Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
-        {
-            return base.GenerateDataScriptsAsync(schemaInfo);
-        }
-
+        #region Sql Query Clause
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
@@ -1030,17 +837,13 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
             return "(SELECT 0)";
         }
 
-        protected override string GetBytesConvertHexString(object value, string dataType)
-        {
-            string hex = string.Concat(((byte[])value).Select(item => item.ToString("X2")));
-            return $"CAST({"0x" + hex} AS {dataType})";
-        }
-
         public override string GetLimitStatement(int limitStart, int limitCount)
         {
             return $"OFFSET {limitStart} ROWS FETCH NEXT {limitCount} ROWS ONLY";
         }
+        #endregion      
 
+        #region InfoMessage
         protected override void SubscribeInfoMessage(DbConnection dbConnection)
         {
             SqlConnection connection = dbConnection as SqlConnection;
@@ -1062,6 +865,6 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         {
             this.FeedbackInfo($"{e.RecordCount} row(s) affected.");
         }
-        #endregion
+        #endregion      
     }
 }

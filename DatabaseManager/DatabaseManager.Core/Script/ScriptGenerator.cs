@@ -33,7 +33,9 @@ namespace DatabaseManager.Core
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
-            Script dbObjScript = dbInterpreter.GenerateSchemaScripts(schemaInfo).Scripts.FirstOrDefault(item => item.ObjectType == typeName);
+            DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
+
+            Script dbObjScript = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts.FirstOrDefault(item => item.ObjectType == typeName);
 
             if (dbObjScript != null)
             {

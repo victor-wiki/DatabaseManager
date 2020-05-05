@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Dapper;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using Dapper;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
 
 namespace DatabaseInterpreter.Core
 {
@@ -20,15 +17,15 @@ namespace DatabaseInterpreter.Core
         private IObserver<FeedbackInfo> observer;
         protected DbConnector dbConnector;
         protected bool hasError = false;
-        protected DateTime minDateTime = new DateTime(1970, 1, 1);
+        public readonly DateTime MinDateTime = new DateTime(1970, 1, 1);
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsDelimiter => ";";
         public abstract string CommentString { get; }
         public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
-        public bool NotCreateIfExists => SettingManager.Setting.NotCreateIfExists;
         public DbObjectNameMode DbObjectNameMode => SettingManager.Setting.DbObjectNameMode;
         public int DataBatchSize => SettingManager.Setting.DataBatchSize;
+        public bool NotCreateIfExists => SettingManager.Setting.NotCreateIfExists;
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
@@ -38,7 +35,7 @@ namespace DatabaseInterpreter.Core
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
-        public ConnectionInfo ConnectionInfo { get; protected set; }       
+        public ConnectionInfo ConnectionInfo { get; protected set; }
 
         public delegate Task DataReadHandler(Table table, List<TableColumn> columns, List<Dictionary<string, object>> data, DataTable dataTable);
         public event DataReadHandler OnDataRead;
@@ -52,174 +49,7 @@ namespace DatabaseInterpreter.Core
             this.ConnectionInfo = connectionInfo;
             this.Option = option;
         }
-        #endregion
-
-        #region Common Method    
-
-        public DbConnection CreateConnection()
-        {
-            DbConnection dbConnection = this.dbConnector.CreateConnection();
-
-            if (this.Option.RequireInfoMessage)
-            {
-                this.SubscribeInfoMessage(dbConnection);
-            }
-
-            return dbConnection;
-        }
-
-        protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
-        protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
-
-        public async Task OpenConnectionAsync(DbConnection connection)
-        {
-            if (connection.State == ConnectionState.Closed)
-            {
-                await connection.OpenAsync();
-            }
-        }
-
-        public string GetObjectDisplayName(DatabaseObject obj, bool useQuotedString = false)
-        {
-            if (this.GetType().Name == nameof(SqlServerInterpreter))
-            {
-                return $"{this.GetString(obj.Owner, useQuotedString)}.{this.GetString(obj.Name, useQuotedString)}";
-            }
-            return $"{this.GetString(obj.Name, useQuotedString)}";
-        }
-
-        private string GetString(string str, bool useQuotedString = false)
-        {
-            return useQuotedString ? this.GetQuotedString(str) : str;
-        }
-
-        public abstract DbConnector GetDbConnector();
-        public string GetQuotedObjectName(DatabaseObject obj)
-        {
-            return this.GetObjectDisplayName(obj, true);
-        }
-        protected string GetQuotedColumnNames(IEnumerable<TableColumn> columns)
-        {
-            return string.Join(",", columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.Name)));
-        }
-
-        public string GetQuotedString(string str)
-        {
-            if (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
-            {
-                return $"{ this.QuotationLeftChar}{str}{this.QuotationRightChar}";
-            }
-            else
-            {
-                return str;
-            }
-        }
-
-        protected bool IsObjectFectchSimpleMode()
-        {
-            return this.Option.ObjectFetchMode == DatabaseObjectFetchMode.Simple;
-        }
-
-        protected string ReplaceSplitChar(string value)
-        {
-            return value?.Replace(this.ScriptsDelimiter, ",");
-        }
-
-        protected async Task<List<T>> GetDbObjectsAsync<T>(string sql) where T : DatabaseObject
-        {
-            if (!string.IsNullOrEmpty(sql))
-            {
-                using (DbConnection dbConnection = this.CreateConnection())
-                {
-                    return await this.GetDbObjectsAsync<T>(dbConnection, sql);
-                }
-            }
-
-            return new List<T>();
-        }
-
-        protected async Task<List<T>> GetDbObjectsAsync<T>(DbConnection dbConnection, string sql) where T : DatabaseObject
-        {
-            List<T> objects = new List<T>();
-
-            if (!string.IsNullOrEmpty(sql))
-            {
-                try
-                {
-                    DbCommand dbCommand = dbConnection.CreateCommand();
-
-                    dbCommand.CommandText = sql;
-                    dbCommand.CommandType = CommandType.Text;
-
-                    await this.OpenConnectionAsync(dbConnection);
-
-                    objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
-
-                    bool isAllOrdersIsZero = !objects.Any(item => item.Order != 0);
-
-                    if (isAllOrdersIsZero)
-                    {
-                        int i = 1;
-                        objects.ForEach(item =>
-                        {
-                            item.Order = i++;
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (this.Option.ThrowExceptionWhenErrorOccurs)
-                    {
-                        throw ex;
-                    }
-
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
-                }
-            }
-
-            this.FeedbackInfo($"Got {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}(s).");
-
-            return objects;
-        }
-        #endregion
-
-        #region Feedback
-        public void Subscribe(IObserver<FeedbackInfo> observer)
-        {
-            this.observer = observer;
-        }
-
-        public void Feedback(FeedbackInfoType infoType, string message)
-        {
-            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
-
-            if (this.observer != null)
-            {
-                FeedbackHelper.Feedback(this.observer, info);
-            }
-        }
-
-        public void FeedbackInfo(string message)
-        {
-            this.Feedback(FeedbackInfoType.Info, message);
-        }
-
-        public void FeedbackError(string message, bool skipError = false)
-        {
-            if (!skipError)
-            {
-                this.hasError = true;
-            }
-
-            this.Feedback(FeedbackInfoType.Error, message);
-        }
-
-        public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
-        {
-            string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for { StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower() } \"{dbObject.Name}\".";
-            this.Feedback(FeedbackInfoType.Info, message);
-        }
-        #endregion
+        #endregion     
 
         #region Schema Informatioin
         #region Database
@@ -285,6 +115,63 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region SchemaInfo
+        protected async Task<List<T>> GetDbObjectsAsync<T>(string sql) where T : DatabaseObject
+        {
+            if (!string.IsNullOrEmpty(sql))
+            {
+                using (DbConnection dbConnection = this.CreateConnection())
+                {
+                    return await this.GetDbObjectsAsync<T>(dbConnection, sql);
+                }
+            }
+
+            return new List<T>();
+        }
+
+        protected async Task<List<T>> GetDbObjectsAsync<T>(DbConnection dbConnection, string sql) where T : DatabaseObject
+        {
+            List<T> objects = new List<T>();
+
+            if (!string.IsNullOrEmpty(sql))
+            {
+                try
+                {
+                    DbCommand dbCommand = dbConnection.CreateCommand();
+
+                    dbCommand.CommandText = sql;
+                    dbCommand.CommandType = CommandType.Text;
+
+                    await this.OpenConnectionAsync(dbConnection);
+
+                    objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
+
+                    bool isAllOrdersIsZero = !objects.Any(item => item.Order != 0);
+
+                    if (isAllOrdersIsZero)
+                    {
+                        int i = 1;
+                        objects.ForEach(item =>
+                        {
+                            item.Order = i++;
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (this.Option.ThrowExceptionWhenErrorOccurs)
+                    {
+                        throw ex;
+                    }
+
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+                }
+            }
+
+            this.FeedbackInfo($"Got {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}(s).");
+
+            return objects;
+        }
+
         public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter)
         {
             if (filter == null)
@@ -397,6 +284,28 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
+
+        public abstract DbConnector GetDbConnector();
+
+        public DbConnection CreateConnection()
+        {
+            DbConnection dbConnection = this.dbConnector.CreateConnection();
+
+            if (this.Option.RequireInfoMessage)
+            {
+                this.SubscribeInfoMessage(dbConnection);
+            }
+
+            return dbConnection;
+        }
+
+        public async Task OpenConnectionAsync(DbConnection connection)
+        {
+            if (connection.State == ConnectionState.Closed)
+            {
+                await connection.OpenAsync();
+            }
+        }
 
         public virtual async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled) { await Task.Run(() => { }); }
 
@@ -512,17 +421,24 @@ namespace DatabaseInterpreter.Core
 
         public abstract Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo);
 
-        protected async Task<object> GetScalarAsync(DbConnection dbConnection, string sql)
+        public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "");
+
+        protected async Task<long> GetTableRecordCountAsync(DbConnection connection, string sql)
+        {
+            return await connection.ExecuteScalarAsync<long>(sql);
+        }
+
+        public async Task<object> GetScalarAsync(DbConnection dbConnection, string sql)
         {
             return await dbConnection.ExecuteScalarAsync(sql);
         }
 
-        protected async Task<DbDataReader> GetDataReaderAsync(string sql)
+        public async Task<DbDataReader> GetDataReaderAsync(string sql)
         {
             return await this.CreateConnection().ExecuteReaderAsync(sql);
         }
 
-        protected async Task<DbDataReader> GetDataReaderAsync(DbConnection dbConnection, string sql)
+        public async Task<DbDataReader> GetDataReaderAsync(DbConnection dbConnection, string sql)
         {
             return await dbConnection.ExecuteReaderAsync(sql);
         }
@@ -582,266 +498,58 @@ namespace DatabaseInterpreter.Core
         }
 
         public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
-        #endregion
-
-        #region Generate Scripts     
-        public virtual string GetLimitStatement(int limitStart, int limitCount) { return string.Empty; }
-        public virtual string GetDefaultOrder() { return string.Empty; }
-        public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo);
-        public abstract string ParseColumn(Table table, TableColumn column);
-        public abstract string ParseDataType(TableColumn column);
-
-        protected virtual List<Script> GenerateScriptDbObjectScripts<T>(List<T> dbObjects)
-            where T : ScriptDbObject
-        {
-            List<Script> scripts = new List<Script>();
-
-            foreach (T dbObject in dbObjects)
-            {
-                this.FeedbackInfo(OperationState.Begin, dbObject);
-
-                bool hasNewLine = this.ScriptsDelimiter.Contains(Environment.NewLine);
-
-                scripts.Add(new CreateDbObjectScript<T>(dbObject.Definition.Trim()));
-
-                if (!hasNewLine)
-                {
-                    scripts.Add(new SpliterScript(this.ScriptsDelimiter));
-                }
-                else
-                {
-                    scripts.Add(new NewLineSript());
-                    scripts.Add(new SpliterScript(this.ScriptsDelimiter));
-                }
-
-                scripts.Add(new NewLineSript());
-
-                this.FeedbackInfo(OperationState.End, dbObject);
-            }
-
-            return scripts;
-        }
-
-        public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "");
-
-        protected async Task<long> GetTableRecordCountAsync(DbConnection connection, string sql)
-        {
-            return await connection.ExecuteScalarAsync<long>(sql);
-        }
-
-        public virtual async Task<string> GenerateDataScriptsAsync(SchemaInfo schemaInfo)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            if (this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
-            {
-                this.AppendScriptsToFile("", GenerateScriptMode.Data, true);
-            }
-
-            int i = 0;
-            int pickupIndex = -1;
-            if (schemaInfo.PickupTable != null)
-            {
-                foreach (Table table in schemaInfo.Tables)
-                {
-                    if (table.Owner == schemaInfo.PickupTable.Owner && table.Name == schemaInfo.PickupTable.Name)
-                    {
-                        pickupIndex = i;
-                        break;
-                    }
-                    i++;
-                }
-            }
-
-            i = 0;
-            using (DbConnection connection = this.CreateConnection())
-            {
-                int tableCount = schemaInfo.Tables.Count - (pickupIndex == -1 ? 0 : pickupIndex);
-                int count = 0;
-
-                foreach (Table table in schemaInfo.Tables)
-                {
-                    if (this.CancelRequested)
-                    {
-                        break;
-                    }
-
-                    if (i < pickupIndex)
-                    {
-                        i++;
-                        continue;
-                    }
-
-                    count++;
-
-                    string strTableCount = $"({count}/{tableCount})";
-                    string tableName = table.Name;
-
-                    List<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order).ToList();
-
-                    bool isSelfReference = TableReferenceHelper.IsSelfReference(tableName, schemaInfo.TableForeignKeys);
-
-                    List<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName).ToList();
-                    string primaryKeyColumns = string.Join(",", primaryKeys.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.ColumnName)));
-
-                    long total = await this.GetTableRecordCountAsync(connection, table);
-
-                    if (this.Option.DataGenerateThreshold.HasValue && total > this.Option.DataGenerateThreshold.Value)
-                    {
-                        continue;
-                    }
-
-                    int pageSize = this.DataBatchSize;
-
-                    this.FeedbackInfo($"{strTableCount}Table \"{table.Name}\":record count is {total}.");
-
-                    Dictionary<long, List<Dictionary<string, object>>> dictPagedData;
-
-                    if (isSelfReference)
-                    {
-                        string parentColumnName = schemaInfo.TableForeignKeys.FirstOrDefault(item =>
-                            item.Owner == table.Owner
-                            && item.TableName == tableName
-                            && item.ReferencedTableName == tableName)?.ColumnName;
-
-                        string strWhere = $" WHERE {GetQuotedString(parentColumnName)} IS NULL";
-                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, parentColumnName, columns, strWhere);
-                    }
-                    else
-                    {
-                        dictPagedData = await this.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize);
-                    }
-
-                    this.FeedbackInfo($"{strTableCount}Table \"{table.Name}\":data read finished.");
-
-                    this.AppendDataScripts(sb, table, columns, dictPagedData);
-
-                    i++;
-                }
-            }
-
-            var dataScripts = string.Empty;
-            try
-            {
-                dataScripts = sb.ToString();
-            }
-            catch (OutOfMemoryException ex)
-            {
-                this.FeedbackError("Exception occurs:" + ex.Message);
-            }
-            finally
-            {
-                sb.Clear();
-            }
-            return dataScripts;
-        }
-
-        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string parentColumnName, List<TableColumn> columns, string whereClause = "")
-        {
-            string quotedTableName = this.GetQuotedObjectName(table);
-
-            int pageSize = this.DataBatchSize;
-
-            long total = Convert.ToInt64(await this.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
-
-            var dictPagedData = await this.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize, whereClause);
-
-            List<object> parentValues = dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.QuotationLeftChar, this.QuotationRightChar)])).ToList();
-
-            if (parentValues.Count > 0)
-            {
-                TableColumn parentColumn = columns.FirstOrDefault(item => item.Owner == table.Owner && item.Name == parentColumnName);
-
-                long parentValuesPageCount = PaginationHelper.GetPageCount(parentValues.Count, this.Option.InQueryItemLimitCount);
-
-                for (long parentValuePageNumber = 1; parentValuePageNumber <= parentValuesPageCount; parentValuePageNumber++)
-                {
-                    IEnumerable<object> pagedParentValues = parentValues.Skip((int)(parentValuePageNumber - 1) * pageSize).Take(this.Option.InQueryItemLimitCount);
-                    whereClause = $" WHERE {GetQuotedString(parentColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => ParseValue(parentColumn, item, true)))})";
-                    total = Convert.ToInt64(await this.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
-
-                    if (total > 0)
-                    {
-                        Dictionary<long, List<Dictionary<string, object>>> dictChildPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, parentColumnName, columns, whereClause);
-
-                        foreach (var kp in dictChildPagedData)
-                        {
-                            long pageNumber = dictPagedData.Keys.Max(item => item);
-                            dictPagedData.Add(pageNumber + 1, kp.Value);
-                        }
-                    }
-                }
-            }
-
-            return dictPagedData;
-        }
-
-        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, string whereClause = "")
-        {
-            var dictPagedData = new Dictionary<long, List<Dictionary<string, object>>>();
-
-            long pageCount = PaginationHelper.GetPageCount(total, pageSize);
-
-            for (long pageNumber = 1; pageNumber <= pageCount; pageNumber++)
-            {
-                if (this.CancelRequested)
-                {
-                    break;
-                }
-
-                DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
-
-                List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
-
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    var dicField = new Dictionary<string, object>();
-
-                    for (var i = 0; i < dataTable.Columns.Count; i++)
-                    {
-                        DataColumn column = dataTable.Columns[i];
-                        string columnName = column.ColumnName;
-
-                        if (columnName == RowNumberColumnName)
-                        {
-                            continue;
-                        }
-
-                        TableColumn tableColumn = columns.FirstOrDefault(item => item.Name == columnName);
-
-                        object value = row[i];
-
-                        if (this.IsBytes(value))
-                        {
-                            if (this.Option.TreatBytesAsNullForReading)
-                            {
-                                value = null;
-                            }
-                        }
-
-                        dicField.Add(columnName, value);
-                    }
-
-                    rows.Add(dicField);
-                }
-
-                dictPagedData.Add(pageNumber, rows);                
-
-                if (this.OnDataRead != null && !this.CancelRequested && !this.hasError)
-                {
-                    await this.OnDataRead(table, columns, rows, dataTable);
-                }
-            }
-
-            return dictPagedData;
-        }
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedObjectName(table);
-            string columnNames = this.GetQuotedColumnNames(columns);
 
-            string pagedSql = this.GetSqlForPagination(quotedTableName, columnNames, orderColumns, whereClause, pageNumber, pageSize);
+            List<string> columnNames = new List<string>();
+
+            foreach (TableColumn column in columns)
+            {
+                string columnName = this.GetQuotedString(column.Name);
+
+                #region Convert MySql float to decimal, avoid scientific notation
+                if (this.DatabaseType == DatabaseType.MySql && column.DataType.ToLower().Contains("float"))
+                {
+                    DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(column.DataType);
+
+                    if (!string.IsNullOrEmpty(dataTypeInfo.Args))
+                    {
+                        string strPrecision = dataTypeInfo.Args.Split(',')[0].Trim();
+                        int precision;
+
+                        DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification("decimal");
+
+                        if (dataTypeSpec != null)
+                        {
+                            ArgumentRange? precisionRange = DataTypeManager.GetArgumentRange(dataTypeSpec, "precision");
+
+                            if (precisionRange.HasValue)
+                            {
+                                if (int.TryParse(strPrecision, out precision) && precision > 0 && precision <= precisionRange.Value.Max)
+                                {
+                                    columnName = $"CONVERT({columnName},DECIMAL({dataTypeInfo.Args})) AS {columnName}";
+                                }
+                            }
+                        }
+                    }
+                }
+                #endregion
+
+                #region Convert Oracle number to char
+                else if (this.DatabaseType == DatabaseType.Oracle && column.DataType.ToLower().Contains("number"))
+                {
+                    columnName = $"TO_CHAR({columnName}) AS {columnName}";
+                } 
+                #endregion
+
+                columnNames.Add(columnName);
+            }
+
+            string strColumnNames = string.Join(",", columnNames);
+
+            string pagedSql = this.GetSqlForPagination(quotedTableName, strColumnNames, orderColumns, whereClause, pageNumber, pageSize);
 
             DataTable dt = await this.GetDataTableAsync(connection, pagedSql);
 
@@ -867,408 +575,143 @@ namespace DatabaseInterpreter.Core
             }
         }
 
-        protected abstract string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize);
-
-
-        public virtual Dictionary<string, object> AppendDataScripts(StringBuilder sb, Table table, List<TableColumn> columns, Dictionary<long, List<Dictionary<string, object>>> dictPagedData)
+        public async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, string whereClause = "")
         {
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            var dictPagedData = new Dictionary<long, List<Dictionary<string, object>>>();
 
-            bool appendString = this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToString);
-            bool appendFile = this.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile);
+            long pageCount = PaginationHelper.GetPageCount(total, pageSize);
 
-            List<string> excludeColumnNames = new List<string>();
-
-            if (this.Option.TableScriptsGenerateOption.GenerateIdentity && !this.Option.InsertIdentityValue)
+            for (long pageNumber = 1; pageNumber <= pageCount; pageNumber++)
             {
-                excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity).Select(item => item.Name));
-            }
-
-            excludeColumnNames.AddRange(columns.Where(item => item.IsComputed).Select(item => item.Name));
-
-            foreach (var kp in dictPagedData)
-            {
-                StringBuilder sbFilePage = new StringBuilder(Environment.NewLine);
-
-                string tableName = this.GetQuotedObjectName(table);
-                string insert = $"{this.GetBatchInsertPrefix()} {tableName}({this.GetQuotedColumnNames(columns.Where(item => !excludeColumnNames.Contains(item.Name)))})VALUES";
-
-                if (appendString)
+                if (this.CancelRequested)
                 {
-                    sb.AppendLine(insert);
+                    break;
                 }
 
-                if (appendFile)
+                DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
+
+                List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    sbFilePage.AppendLine(insert);
-                }
+                    var dicField = new Dictionary<string, object>();
 
-                int rowCount = 0;
-                foreach (var row in kp.Value)
-                {
-                    rowCount++;
-
-                    var rowValues = this.GetRowValues(row, rowCount - 1, columns, excludeColumnNames, kp.Key, false, out var insertParameters);
-
-                    string values = $"({string.Join(",", rowValues.Select(item => item))})";
-
-                    if (insertParameters != null)
+                    for (var i = 0; i < dataTable.Columns.Count; i++)
                     {
-                        foreach (var para in insertParameters)
+                        DataColumn column = dataTable.Columns[i];
+                        string columnName = column.ColumnName;
+
+                        if (columnName == DbInterpreter.RowNumberColumnName)
                         {
-                            parameters.Add(para.Key, para.Value);
+                            continue;
                         }
-                    }
 
-                    string beginChar = this.GetBatchInsertItemBefore(tableName, rowCount == 1);
-                    string endChar = this.GetBatchInsertItemEnd(rowCount == kp.Value.Count);
+                        TableColumn tableColumn = columns.FirstOrDefault(item => item.Name == columnName);
 
-                    values = $"{beginChar}{values}{endChar}";
+                        object value = row[i];
 
-                    if (this.Option.RemoveEmoji)
-                    {
-                        values = StringHelper.RemoveEmoji(values);
-                    }
-
-                    if (appendString)
-                    {
-                        sb.AppendLine(values);
-                    }
-
-                    if (appendFile)
-                    {
-                        var fileRowValues = this.GetRowValues(row, rowCount - 1, columns, excludeColumnNames, kp.Key, true, out var _);
-                        string fileValues = $"({string.Join(",", fileRowValues.Select(item => item))})";
-
-                        sbFilePage.AppendLine($"{beginChar}{fileValues}{endChar}");
-                    }
-                }
-
-                if (appendString)
-                {
-                    sb.AppendLine();
-                }
-
-                if (appendFile)
-                {
-                    sbFilePage.AppendLine();
-
-                    this.AppendScriptsToFile(sbFilePage.ToString(), GenerateScriptMode.Data);
-                }
-            }
-
-            return parameters;
-        }
-
-        protected virtual string GetBatchInsertPrefix()
-        {
-            return "INSERT INTO";
-        }
-
-        protected virtual string GetBatchInsertItemBefore(string tableName, bool isFirstRow)
-        {
-            return "";
-        }
-
-        protected virtual string GetBatchInsertItemEnd(bool isAllEnd)
-        {
-            return (isAllEnd ? ";" : ",");
-        }
-
-        public string GetScriptOutputFilePath(GenerateScriptMode generateScriptMode)
-        {
-            string fileName = $"{this.ConnectionInfo.Database}_{this.GetType().Name.Replace("Interpreter", "")}_{DateTime.Today.ToString("yyyyMMdd")}_{generateScriptMode.ToString()}.sql";
-            string filePath = Path.Combine(this.Option.ScriptOutputFolder, fileName);
-            return filePath;
-        }
-
-        public virtual void AppendScriptsToFile(string content, GenerateScriptMode generateScriptMode, bool clearAll = false)
-        {
-            if (generateScriptMode == GenerateScriptMode.Schema)
-            {
-                content = StringHelper.ToSingleEmptyLine(content);
-            }
-
-            string filePath = this.GetScriptOutputFilePath(generateScriptMode);
-
-            string directoryName = Path.GetDirectoryName(filePath);
-
-            if (!Directory.Exists(directoryName))
-            {
-                Directory.CreateDirectory(directoryName);
-            }
-
-            if (!clearAll)
-            {
-                File.AppendAllText(filePath, content, Encoding.UTF8);
-            }
-            else
-            {
-                File.WriteAllText(filePath, content, Encoding.UTF8);
-            }
-        }
-
-        private List<object> GetRowValues(Dictionary<string, object> row, int rowIndex, List<TableColumn> columns, List<string> excludeColumnNames, long pageNumber, bool isAppendToFile, out Dictionary<string, object> parameters)
-        {
-            parameters = new Dictionary<string, object>();
-
-            List<object> values = new List<object>();
-
-            foreach (TableColumn column in columns)
-            {
-                if (!excludeColumnNames.Contains(column.Name))
-                {
-                    object value = this.ParseValue(column, row[column.Name]);
-                    bool isBytes = this.IsBytes(value);
-
-                    if (!isAppendToFile)
-                    {
-                        if ((isBytes && !this.Option.TreatBytesAsNullForExecuting) || this.NeedInsertParameter(column, value))
+                        if (ValueHelper.IsBytes(value))
                         {
-                            string parameterName = $"P{pageNumber}_{rowIndex}_{column.Name}";
-
-                            string parameterPlaceholder = this.CommandParameterChar + parameterName;
-
-                            parameters.Add(parameterPlaceholder, value);
-
-                            value = parameterPlaceholder;
-                        }
-                        else if (isBytes && this.Option.TreatBytesAsNullForExecuting)
-                        {
-                            value = null;
-                        }
-                    }
-                    else
-                    {
-                        if (isBytes)
-                        {
-                            if (this.Option.TreatBytesAsHexStringForFile)
-                            {
-                                value = this.GetBytesConvertHexString(value, column.DataType);
-                            }
-                            else
+                            if (this.Option.TreatBytesAsNullForReading)
                             {
                                 value = null;
                             }
                         }
+
+                        dicField.Add(columnName, value);
                     }
 
-                    values.Add(value);
+                    rows.Add(dicField);
+                }
+
+                dictPagedData.Add(pageNumber, rows);
+
+                if (this.OnDataRead != null && !this.CancelRequested && !this.HasError)
+                {
+                    await this.OnDataRead(table, columns, rows, dataTable);
                 }
             }
 
-            return values;
+            return dictPagedData;
         }
 
-        public bool IsBytes(object value)
-        {
-            return (value != null && value.GetType() == typeof(byte[]));
-        }
+        #endregion       
 
-        protected virtual bool NeedInsertParameter(TableColumn column, object value)
-        {
-            return false;
-        }
+        #region Sql Query Clause
+        public virtual string GetDefaultOrder() { return string.Empty; }
+        public virtual string GetLimitStatement(int limitStart, int limitCount) { return string.Empty; }
 
-        protected virtual string GetBytesConvertHexString(object value, string dataType)
-        {
-            return null;
-        }
+        protected abstract string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize);
+        #endregion
 
-        private object ParseValue(TableColumn column, object value, bool byteAsString = false)
+        #region Common Method 
+
+        public string GetObjectDisplayName(DatabaseObject obj, bool useQuotedString = false)
         {
-            if (value != null)
+            if (this.GetType().Name == nameof(SqlServerInterpreter))
             {
-                Type type = value.GetType();
-                bool needQuotated = false;
-                string strValue = "";
+                return $"{this.GetString(obj.Owner, useQuotedString)}.{this.GetString(obj.Name, useQuotedString)}";
+            }
+            return $"{this.GetString(obj.Name, useQuotedString)}";
+        }
 
-                if (type == typeof(DBNull))
-                {
-                    return "NULL";
-                }
-                else if (type == typeof(Byte[]))
-                {
-                    if (((Byte[])value).Length == 16) //GUID
-                    {
-                        if (this.GetType() == typeof(SqlServerInterpreter) && column.DataType.ToLower() == "uniqueidentifier")
-                        {
-                            needQuotated = true;
-                            strValue = new Guid((byte[])value).ToString();
-                        }
-                        else if (this.GetType() == typeof(MySqlInterpreter) && column.DataType == "char" && column.MaxLength == 36)
-                        {
-                            needQuotated = true;
-                            strValue = new Guid((byte[])value).ToString();
-                        }
-                        else if (byteAsString && this.GetType() == typeof(OracleInterpreter) && column.DataType.ToLower() == "raw" && column.MaxLength == 16)
-                        {
-                            needQuotated = true;
-                            strValue = StringHelper.GuidToRaw(new Guid((byte[])value).ToString());
-                        }
-                        else
-                        {
-                            return value;
-                        }
-                    }
-                    else
-                    {
-                        return value;
-                    }
-                }
+        public string GetString(string str, bool useQuotedString = false)
+        {
+            return useQuotedString ? this.GetQuotedString(str) : str;
+        }
 
-                bool oracleSemicolon = false;
+        public string GetQuotedColumnNames(IEnumerable<TableColumn> columns)
+        {
+            return string.Join(",", columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.Name)));
+        }
 
-                switch (type.Name)
-                {
-                    case nameof(Guid):
-                        needQuotated = true;
-                        if (this.GetType() == typeof(OracleInterpreter) && column.DataType.ToLower() == "raw" && column.MaxLength == 16)
-                        {
-                            strValue = StringHelper.GuidToRaw(value.ToString());
-                        }
-                        else
-                        {
-                            strValue = value.ToString();
-                        }
-                        break;
-                    case nameof(String):
-                        needQuotated = true;
-                        strValue = value.ToString();
-                        if (this.GetType() == typeof(OracleInterpreter))
-                        {
-                            if (strValue.Contains(";"))
-                            {
-                                oracleSemicolon = true;
-                            }
-                        }
-                        break;
-                    case nameof(DateTime):
-                    case nameof(DateTimeOffset):
-                    case nameof(MySql.Data.Types.MySqlDateTime):
-                        if (this.GetType() == typeof(OracleInterpreter))
-                        {
-                            if (type.Name == nameof(MySql.Data.Types.MySqlDateTime))
-                            {
-                                DateTime dateTime = ((MySql.Data.Types.MySqlDateTime)value).GetDateTime();
+        public string GetQuotedObjectName(DatabaseObject obj)
+        {
+            return this.GetObjectDisplayName(obj, true);
+        }
 
-                                strValue = this.GetOracleDatetimeConvertString(dateTime);
-                            }
-                            else if (type.Name == nameof(DateTime))
-                            {
-                                DateTime dateTime = Convert.ToDateTime(value);
-
-                                strValue = this.GetOracleDatetimeConvertString(dateTime);
-                            }
-                            else if (type.Name == nameof(DateTimeOffset))
-                            {
-                                DateTimeOffset dtOffset = DateTimeOffset.Parse(value.ToString());
-                                int millisecondLength = dtOffset.Millisecond.ToString().Length;
-                                string strMillisecond = millisecondLength == 0 ? "" : $".{"f".PadLeft(millisecondLength, 'f')}";
-                                string format = $"yyyy-MM-dd HH:mm:ss{strMillisecond}";
-
-                                string strDtOffset = dtOffset.ToString(format) + $"{dtOffset.Offset.Hours}:{dtOffset.Offset.Minutes}";
-
-                                strValue = $@"TO_TIMESTAMP_TZ('{strDtOffset}','yyyy-MM-dd HH24:MI:ssxff TZH:TZM')";
-                            }
-                        }
-                        else if (this.GetType() == typeof(MySqlInterpreter))
-                        {
-                            if (type.Name == nameof(DateTimeOffset))
-                            {
-                                DateTimeOffset dtOffset = DateTimeOffset.Parse(value.ToString());
-
-                                strValue = $"'{dtOffset.DateTime.Add(dtOffset.Offset).ToString("yyyy-MM-dd HH:mm:ss.ffffff")}'";
-                            }
-                        }
-
-                        if (string.IsNullOrEmpty(strValue))
-                        {
-                            needQuotated = true;
-                            strValue = value.ToString();
-                        }
-                        break;
-                    case nameof(Boolean):
-                        strValue = value.ToString() == "True" ? "1" : "0";
-                        break;
-                    case nameof(TimeSpan):
-                        if (this.GetType() == typeof(OracleInterpreter))
-                        {
-                            return value;
-                        }
-                        else
-                        {
-                            needQuotated = true;
-
-                            if (column.DataType.IndexOf("datetime", StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                DateTime dateTime = this.minDateTime.AddSeconds(TimeSpan.Parse(value.ToString()).TotalSeconds);
-
-                                strValue = dateTime.ToString("yyyy-MM-dd HH:mm:ss");
-                            }
-                            else
-                            {
-                                strValue = value.ToString();
-                            }
-                        }
-                        break;
-                    case "SqlHierarchyId":
-                    case "SqlGeography":
-                    case "SqlGeometry":
-                        needQuotated = true;
-                        strValue = value.ToString();
-                        break;
-                    default:
-                        if (string.IsNullOrEmpty(strValue))
-                        {
-                            strValue = value.ToString();
-                        }
-                        break;
-                }
-
-                if (needQuotated)
-                {
-                    strValue = $"{this.UnicodeInsertChar}'{ValueHelper.TransferSingleQuotation(strValue)}'";
-
-                    if (oracleSemicolon)
-                    {
-                        strValue = strValue.Replace(";", $"'{OracleInterpreter.CONNECT_CHAR}{OracleInterpreter.SEMICOLON_FUNC}{OracleInterpreter.CONNECT_CHAR}'");
-                    }
-
-                    return strValue;
-                }
-                else
-                {
-                    return strValue;
-                }
+        public string GetQuotedString(string str)
+        {
+            if (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
+            {
+                return $"{ this.QuotationLeftChar}{str}{this.QuotationRightChar}";
             }
             else
             {
-                return null;
+                return str;
             }
         }
 
-        private string GetOracleDatetimeConvertString(DateTime dateTime)
+        protected bool IsObjectFectchSimpleMode()
         {
-            int millisecondLength = dateTime.Millisecond.ToString().Length;
-            string strMillisecond = millisecondLength == 0 ? "" : $".{"f".PadLeft(millisecondLength, 'f')}";
-            string format = $"yyyy-MM-dd HH:mm:ss{strMillisecond}";
-
-            return $"TO_TIMESTAMP('{dateTime.ToString(format)}','yyyy-MM-dd hh24:mi:ssxff')";
+            return this.Option.ObjectFetchMode == DatabaseObjectFetchMode.Simple;
         }
 
-        protected virtual string GetUnicodeInsertChar()
+        public string ReplaceSplitChar(string value)
         {
-            return this.UnicodeInsertChar;
+            return value?.Replace(this.ScriptsDelimiter, ",");
         }
 
-        protected virtual string GetColumnDefaultValue(TableColumn column)
+        protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
+        protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
+
+
+        #endregion
+
+        #region Parse Column & DataType 
+        public abstract string ParseColumn(Table table, TableColumn column);
+        public abstract string ParseDataType(TableColumn column);
+        public virtual string GetColumnDataLength(TableColumn column) { return string.Empty; }
+
+        public virtual string GetColumnDefaultValue(TableColumn column)
         {
             bool isChar = DataTypeHelper.IsCharType(column.DataType);
+
             if (isChar && !column.DefaultValue.Trim('(', ')').StartsWith("'"))
             {
                 return $"'{column.DefaultValue}'";
             }
+
             return column.DefaultValue?.Trim();
         }
 
@@ -1284,16 +727,16 @@ namespace DatabaseInterpreter.Core
             return computeExpression;
         }
 
+        public DataTypeSpecification GetDataTypeSpecification(string dataType)
+        {
+            return DataTypeManager.GetDataTypeSpecifications(this.DatabaseType).FirstOrDefault(item => item.Name.ToLower() == dataType.ToLower().Trim());
+        }
+
         public virtual bool IsNoLengthDataType(string dataType)
         {
             IEnumerable<DataTypeSpecification> dataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.DatabaseType);
 
             return dataTypeSpecs.Any(item => item.Name.ToUpper() == dataType.ToUpper() && string.IsNullOrEmpty(item.Args));
-        }
-
-        public DataTypeSpecification GetDataTypeSpecification(string dataType)
-        {
-            return DataTypeManager.GetDataTypeSpecifications(this.DatabaseType).FirstOrDefault(item => item.Name.ToLower() == dataType.ToLower().Trim());
         }
 
         public string GetDataTypePrecisionScale(TableColumn column, string dataType)
@@ -1329,6 +772,44 @@ namespace DatabaseInterpreter.Core
             }
 
             return string.Empty;
+        }
+        #endregion
+
+        #region Feedback
+        public void Subscribe(IObserver<FeedbackInfo> observer)
+        {
+            this.observer = observer;
+        }
+
+        public void Feedback(FeedbackInfoType infoType, string message)
+        {
+            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
+
+            if (this.observer != null)
+            {
+                FeedbackHelper.Feedback(this.observer, info);
+            }
+        }
+
+        public void FeedbackInfo(string message)
+        {
+            this.Feedback(FeedbackInfoType.Info, message);
+        }
+
+        public void FeedbackError(string message, bool skipError = false)
+        {
+            if (!skipError)
+            {
+                this.hasError = true;
+            }
+
+            this.Feedback(FeedbackInfoType.Error, message);
+        }
+
+        public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
+        {
+            string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for { StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower() } \"{dbObject.Name}\".";
+            this.Feedback(FeedbackInfoType.Info, message);
         }
         #endregion
     }
