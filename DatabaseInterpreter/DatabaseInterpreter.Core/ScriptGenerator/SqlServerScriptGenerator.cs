@@ -69,7 +69,7 @@ namespace DatabaseInterpreter.Core
                 {
                     primaryKey =
 $@"
-,CONSTRAINT {this.GetQuotedString(primaryKeys.First().Name)} PRIMARY KEY CLUSTERED 
+,CONSTRAINT {this.GetQuotedString(primaryKeys.First().Name)} PRIMARY KEY {(primaryKeys.First().Clustered ? "CLUSTERED": "NONCLUSTERED")} 
 (
 {string.Join(Environment.NewLine, primaryKeys.Select(item => $"{this.GetQuotedString(item.ColumnName)} {(item.IsDesc ? "DESC" : "ASC")},")).TrimEnd(',')}
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]";
@@ -101,12 +101,12 @@ CREATE TABLE {quotedTableName}(
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(table.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',NULL,NULL;"));
+                    sb.AppendLine(this.SetTableComment(table));
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine(new ExecuteProcedureScript($"EXECUTE sp_addextendedproperty N'MS_Description',N'{ValueHelper.TransferSingleQuotation(column.Comment)}',N'SCHEMA',N'{table.Owner}',N'table',N'{tableName}',N'column',N'{column.Name}';"));
+                    sb.AppendLine(this.SetTableColumnComment(table, column, true));
                 }
                 #endregion               
 
@@ -268,6 +268,49 @@ REFERENCES {this.GetQuotedString(table.Owner)}.{this.GetQuotedString(tableForeig
         {
             string hex = ValueHelper.BytesToHexString(value as byte[]);
             return $"CAST({hex} AS {dataType})";
+        }
+        #endregion
+
+        #region Alter Table
+
+        public override Script RenameTable(Table table, string newName)
+        {
+            return new ExecuteProcedureScript($"EXEC sp_rename '{this.GetQuotedObjectName(table)}', '{newName}'");
+        }
+
+        public override Script SetTableComment(Table table, bool isNew = true)
+        {
+            return new ExecuteProcedureScript($"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}',N'SCHEMA',N'{table.Owner}',N'table',N'{table.Name}',NULL,NULL");
+        }
+
+        public override Script AddTableColumn(Table table, TableColumn column)
+        {            
+            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedObjectName(table)} ADD { this.dbInterpreter.ParseColumn(table, column)}");
+        }
+
+        public override Script RenameTableColumn(Table table, TableColumn column, string newName)
+        {
+            return new ExecuteProcedureScript(this.GetRenameScript(table.Owner, "COLUMN", table.Name, column.Name, newName));
+        }
+
+        public override Script AlterTableColumn(Table table, TableColumn column)
+        {
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedObjectName(table)} ALTER COLUMN {this.dbInterpreter.ParseColumn(table, column)}");
+        }
+
+        private string GetRenameScript(string owner, string type, string tableName, string name, string newName)
+        {
+            return $"EXEC sp_rename N'{owner}.{this.GetQuotedString(tableName)}.{this.GetQuotedString(name)}', N'{newName}', N'{type}'";
+        }
+
+        public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
+        {
+            return new ExecuteProcedureScript($"EXECUTE {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{ValueHelper.TransferSingleQuotation(column.Comment)}',N'SCHEMA',N'{column.Owner}',N'table',N'{column.TableName}',N'column',N'{column.Name}';");
+        }
+
+        public override Script DropTableColumn(TableColumn column)
+        {
+            return new DropDbObjectScript<TableColumn>($"ALTER TABLE {column.Owner}.{this.GetQuotedString(column.TableName)} DROP COLUMN {this.GetQuotedString(column.Name)}");
         }
         #endregion
     }

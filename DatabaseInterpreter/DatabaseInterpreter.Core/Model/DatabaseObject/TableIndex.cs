@@ -4,5 +4,6 @@
     {           
         public bool IsUnique { get; set; }       
         public bool IsDesc { get; set; }
+        public string Type { get; set; }
     }
 }

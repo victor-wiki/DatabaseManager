@@ -75,12 +75,12 @@ TABLESPACE
                 #region Comment
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
-                    sb.AppendLine(new AlterDbObjectScript<Table>($"COMMENT ON TABLE { dbOwner}.{this.GetQuotedString(tableName)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.scriptsDelimiter));
+                    sb.AppendLine(this.SetTableComment(table));
                 }
 
                 foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
                 {
-                    sb.AppendLine(new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {dbOwner}.{this.GetQuotedString(tableName)}.{this.GetQuotedString(column.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.scriptsDelimiter));
+                    sb.AppendLine(this.SetTableColumnComment(table, column, true));
                 }
                 #endregion
 
@@ -261,6 +261,43 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 }
             }
             return false;
+        }
+        #endregion
+
+        #region Alter Table
+        public override Script RenameTable(Table table, string newName)
+        {
+            return new AlterDbObjectScript<Table>($"RENAME TABLE {this.GetQuotedObjectName(table)} TO {this.GetQuotedString(newName)};");
+        }
+
+        public override Script SetTableComment(Table table, bool isNew = true)
+        {
+            return new AlterDbObjectScript<Table>($"COMMENT ON TABLE {table.Owner}.{this.GetQuotedString(table.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.scriptsDelimiter);
+        }
+
+        public override Script AddTableColumn(Table table, TableColumn column)
+        {
+            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} ADD { this.dbInterpreter.ParseColumn(table, column)};");
+        }
+
+        public override Script RenameTableColumn(Table table, TableColumn column, string newName)
+        {
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} RENAME COLUMN {this.GetQuotedString(column.Name)} TO {newName};");
+        }
+
+        public override Script AlterTableColumn(Table table, TableColumn column)
+        {
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY {this.dbInterpreter.ParseColumn(table, column)}");
+        }
+
+        public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
+        {
+            return new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {column.Owner}.{this.GetQuotedString(column.TableName)}.{this.GetQuotedString(column.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.scriptsDelimiter);
+        }
+
+        public override Script DropTableColumn(TableColumn column)
+        {
+            return new DropDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(column.TableName)} DROP COLUMN {this.GetQuotedString(column.Name)};");
         }
         #endregion
     }

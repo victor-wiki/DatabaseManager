@@ -164,7 +164,7 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
-                    if(this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
+                    if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
                         return string.Empty;
                     }
@@ -283,7 +283,7 @@ namespace DatabaseInterpreter.Core
 
                     var rowValues = this.GetRowValues(row, rowCount - 1, columns, excludeColumnNames, kp.Key, false, out var insertParameters);
 
-                    string values = $"({string.Join(",", rowValues.Select(item => item))})";
+                    string values = $"({string.Join(",", rowValues.Select(item => item == null ? "NULL" : item))})";
 
                     if (insertParameters != null)
                     {
@@ -311,7 +311,7 @@ namespace DatabaseInterpreter.Core
                     if (appendFile)
                     {
                         var fileRowValues = this.GetRowValues(row, rowCount - 1, columns, excludeColumnNames, kp.Key, true, out var _);
-                        string fileValues = $"({string.Join(",", fileRowValues.Select(item => item))})";
+                        string fileValues = $"({string.Join(",", fileRowValues.Select(item => item == null ? "NULL" : item))})";
 
                         sbFilePage.AppendLine($"{beginChar}{fileValues}{endChar}");
                     }
@@ -419,9 +419,9 @@ namespace DatabaseInterpreter.Core
                 {
                     if (((Byte[])value).Length == 16) //GUID
                     {
-                        string str =  ValueHelper.ConvertGuidBytesToString((Byte[])value, this.databaseType, column.DataType, column.MaxLength, bytesAsString);
+                        string str = ValueHelper.ConvertGuidBytesToString((Byte[])value, this.databaseType, column.DataType, column.MaxLength, bytesAsString);
 
-                        if(!string.IsNullOrEmpty(str))
+                        if (!string.IsNullOrEmpty(str))
                         {
                             needQuotated = true;
                             strValue = str;
@@ -429,7 +429,7 @@ namespace DatabaseInterpreter.Core
                         else
                         {
                             return value;
-                        }                        
+                        }
                     }
                     else
                     {
@@ -634,7 +634,23 @@ namespace DatabaseInterpreter.Core
                 File.WriteAllText(filePath, "", Encoding.UTF8);
             }
         }
-        #endregion  
+        #endregion
+
+        #region Alter Table
+        public abstract Script RenameTable(Table table, string newName);      
+
+        public abstract Script SetTableComment(Table table, bool isNew = true);
+
+        public abstract Script AddTableColumn(Table table, TableColumn column);       
+
+        public abstract Script RenameTableColumn(Table table, TableColumn column, string newName);
+
+        public abstract Script AlterTableColumn(Table table, TableColumn column);
+
+        public abstract Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true);
+
+        public abstract Script DropTableColumn(TableColumn column);
+        #endregion
 
         #region Common Method
         public string GetQuotedObjectName(DatabaseObject obj)

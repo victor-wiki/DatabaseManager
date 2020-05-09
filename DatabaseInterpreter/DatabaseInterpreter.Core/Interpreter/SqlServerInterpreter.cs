@@ -55,6 +55,16 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
+        #region Database Owner
+        public override Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        {
+            string sql = @"select name as [Name], name as [Owner]  from sys.schemas
+                           where name not in ('guest', 'sys', 'INFORMATION_SCHEMA') and name not like 'db[_]%'";
+
+            return base.GetDbObjectsAsync<DatabaseOwner>(sql);
+        } 
+        #endregion
+
         #region User Defined Type 
 
         public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
@@ -244,7 +254,8 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTablePrimaryKeys(SchemaInfoFilter filter = null)
         {
             string sql = @"SELECT schema_name(T.schema_id) AS [Owner], object_name(IC.object_id) AS TableName,I.name AS [Name], 
-                           C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc]
+                           C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc],
+                           CASE I.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]
                          FROM sys.index_columns IC
                          JOIN sys.columns C ON IC.object_id=C.object_id AND IC.column_id=C.column_id						
                          JOIN sys.indexes I ON IC.object_id=I.object_id AND IC.index_id=I.index_id
@@ -256,6 +267,7 @@ namespace DatabaseInterpreter.Core
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
                 sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
             }
+
             return sql;
         }
         #endregion
@@ -531,7 +543,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }
+        }        
         #endregion
 
         #region BulkCopy

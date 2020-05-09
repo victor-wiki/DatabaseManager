@@ -81,7 +81,16 @@ namespace DatabaseInterpreter.Core
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
-        #endregion        
+        #endregion
+
+        #region Database Owner
+        public override Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        {
+            string owner = this.GetDbOwner();
+
+            return Task.Run(() => new List<DatabaseOwner>() { new DatabaseOwner() { Name = owner, Owner = owner } });
+        }
+        #endregion
 
         #region User Defined Type       
 
@@ -241,7 +250,7 @@ namespace DatabaseInterpreter.Core
         public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
-        }       
+        }
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
@@ -336,7 +345,8 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableIndexes(SchemaInfoFilter filter = null)
         {
             string sql = $@"SELECT UC.owner AS ""Owner"", ui.table_name AS ""TableName"", ui.index_name AS ""Name"", uic.column_name AS ""ColumnName"", uic.column_position AS ""Order"",
-                CASE uic.descend WHEN 'ASC' THEN 0 ELSE 1 END AS ""IsDesc"", CASE ui.uniqueness WHEN 'UNIQUE' THEN 1 ELSE 0 END AS ""IsUnique""
+                CASE uic.descend WHEN 'ASC' THEN 0 ELSE 1 END AS ""IsDesc"", CASE ui.uniqueness WHEN 'UNIQUE' THEN 1 ELSE 0 END AS ""IsUnique"",
+                CASE ui.INDEX_TYPE AS ""Type""
                 FROM user_indexes ui
                 JOIN user_ind_columns uic ON ui.index_name = uic.index_name AND ui.table_name = uic.table_name
                 LEFT JOIN user_constraints uc ON ui.table_name = uc.table_name AND ui.table_owner = uc.owner AND ui.index_name = uc.constraint_name AND uc.constraint_type = 'P'
@@ -355,31 +365,31 @@ namespace DatabaseInterpreter.Core
         #region Table Trigger      
         public override Task<List<TableTrigger>> GetTableTriggersAsync(SchemaInfoFilter filter = null)
         {
-            if(this.IsObjectFectchSimpleMode())
+            if (this.IsObjectFectchSimpleMode())
             {
                 return base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter));
             }
             else
             {
                 return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
-            }            
+            }
         }
 
         public override Task<List<TableTrigger>> GetTableTriggersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            if(this.IsObjectFectchSimpleMode())
+            if (this.IsObjectFectchSimpleMode())
             {
                 return base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter));
             }
             else
             {
                 return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
-            }          
+            }
         }
 
         private Task<List<TableTrigger>> SetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
         {
-            foreach(TableTrigger trigger in tableTriggers.Result)
+            foreach (TableTrigger trigger in tableTriggers.Result)
             {
                 trigger.Definition = trigger.CreateClause + trigger.Definition;
             }
@@ -478,8 +488,8 @@ namespace DatabaseInterpreter.Core
             sql += " ORDER BY VIEW_NAME";
 
             return sql;
-        }       
-        #endregion        
+        }
+        #endregion
 
         #region Procedure     
 
@@ -765,6 +775,22 @@ namespace DatabaseInterpreter.Core
         public override string ParseDataType(TableColumn column)
         {
             string dataType = column.DataType;
+
+            string dataLength = this.GetColumnDataLength(column);
+
+            if (!string.IsNullOrEmpty(dataLength))
+            {
+                dataType += $"({dataLength})";
+            }
+
+            return dataType.Trim();
+        }
+
+        public override string GetColumnDataLength(TableColumn column)
+        {
+            string dataType = column.DataType;
+            string dataLength = string.Empty;
+
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
             bool isChar = DataTypeHelper.IsCharType(column.DataType.ToLower());
 
@@ -772,14 +798,14 @@ namespace DatabaseInterpreter.Core
             {
                 if (isChar)
                 {
-                    long? dataLength = column.MaxLength;
+                    long? length = column.MaxLength;
 
-                    if (dataLength > 0 && DataTypeHelper.StartWithN(dataType))
+                    if (length > 0 && DataTypeHelper.StartWithN(dataType))
                     {
-                        dataLength = dataLength / 2;
+                        length = length / 2;
                     }
 
-                    dataType = $"{dataType}({dataLength.ToString()})";
+                    dataLength = length.ToString();
                 }
                 else if (!this.IsNoLengthDataType(dataType))
                 {
@@ -789,21 +815,23 @@ namespace DatabaseInterpreter.Core
 
                         if (dataType == "raw")
                         {
-                            dataType = $"{dataType}({precision})";
+                            dataLength = precision.ToString();
                         }
                         else
                         {
-                            dataType += this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
+                            string precisionScale = this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
+
+                            dataLength = precisionScale;
                         }
                     }
                     else if (column.MaxLength > 0)
                     {
-                        dataType += $"({column.MaxLength})";
+                        dataLength = column.MaxLength.ToString();
                     }
                 }
             }
 
-            return dataType.Trim();
+            return dataLength;
         }
         #endregion      
     }

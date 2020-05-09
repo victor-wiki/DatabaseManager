@@ -32,6 +32,8 @@ namespace DatabaseManager.Controls
         {
             InitializeComponent();
 
+            FormEventCenter.OnRefreshNavigatorFolder += this.RefreshFolderNode;
+
             TreeView.CheckForIllegalCrossThreadCalls = false;
             Form.CheckForIllegalCrossThreadCalls = false;
         }
@@ -100,14 +102,16 @@ namespace DatabaseManager.Controls
             bool isScriptObject = node.Tag is ScriptDbObject;
 
             this.tsmiNewQuery.Visible = isDatabase;
+            this.tsmiNewTable.Visible = node.Name == nameof(DbObjectTreeFolderType.Tables) || isTable;
             this.tsmiNewView.Visible = node.Name == nameof(DbObjectTreeFolderType.Views) || isView;
             this.tsmiNewFunction.Visible = node.Name == nameof(DbObjectTreeFolderType.Functions) || node.Tag is Function;
             this.tsmiNewProcedure.Visible = node.Name == nameof(DbObjectTreeFolderType.Procedures) || node.Tag is Procedure;
             this.tsmiNewTrigger.Visible = node.Name == nameof(DbObjectTreeFolderType.Triggers) || node.Tag is TableTrigger;
             this.tsmiAlter.Visible = isScriptObject;
+            this.tsmiDesign.Visible = isTable;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
             this.tsmiGenerateScripts.Visible = isDatabase || isTable || isScriptObject;
-            this.tsmiConvert.Visible = isDatabase;          
+            this.tsmiConvert.Visible = isDatabase;
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable;
@@ -160,6 +164,7 @@ namespace DatabaseManager.Controls
             ConnectionInfo connectionInfo = this.GetConnectionInfo(database);
 
             DbInterpreterOption option = isSimpleMode ? simpleInterpreterOption : new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Details };
+
             option.ThrowExceptionWhenErrorOccurs = false;
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, option);
@@ -451,7 +456,7 @@ namespace DatabaseManager.Controls
             return this.tvDbObjects.SelectedNode;
         }
 
-        private async void tsmiGenerateScripts_Click(object sender, EventArgs e)
+        private void tsmiGenerateScripts_Click(object sender, EventArgs e)
         {
             this.GenerateScripts(ScriptAction.CREATE);
         }
@@ -493,7 +498,7 @@ namespace DatabaseManager.Controls
 
             ScriptGenerator scriptGenerator = new ScriptGenerator(dbInterpreter);
 
-            string script = await scriptGenerator.Generate(dbObj, scriptAction);          
+            string script = await scriptGenerator.Generate(dbObj, scriptAction);
 
             this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObj.Name, DatabaseType = this.databaseType, DatabaseObject = dbObj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
         }
@@ -804,11 +809,7 @@ namespace DatabaseManager.Controls
 
         private void tsmiNewQuery_Click(object sender, EventArgs e)
         {
-            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.DatabaseType };
-
-            info.ConnectionInfo = this.GetConnectionInfo(this.tvDbObjects.SelectedNode.Name); ;
-
-            this.ShowContent(info);
+            this.ShowContent(DatabaseObjectDisplayType.Script);
         }
 
         private void ShowContent(DatabaseObjectDisplayInfo info)
@@ -817,6 +818,26 @@ namespace DatabaseManager.Controls
             {
                 this.OnShowContent(info);
             }
+        }
+
+        private void ShowContent(DatabaseObjectDisplayType displayType, bool isNew = true)
+        {
+            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = isNew, DisplayType = displayType, DatabaseType = this.DatabaseType };
+
+            if (!isNew)
+            {
+                DatabaseObject dbObject = this.tvDbObjects.SelectedNode.Tag as DatabaseObject;
+
+                if (dbObject != null)
+                {
+                    info.DatabaseObject = dbObject;
+                    info.Name = dbObject.Name;
+                }
+            }
+
+            info.ConnectionInfo = this.GetConnectionInfo(this.GetDatabaseNode(this.tvDbObjects.SelectedNode).Name);
+
+            this.ShowContent(info);
         }
 
         private void tsmiNewView_Click(object sender, EventArgs e)
@@ -843,7 +864,7 @@ namespace DatabaseManager.Controls
         {
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, new ConnectionInfo(), new DbInterpreterOption());
 
-            ScriptTemplate scriptTemplate = new ScriptTemplate(dbInterpreter);          
+            ScriptTemplate scriptTemplate = new ScriptTemplate(dbInterpreter);
 
             DatabaseObjectDisplayInfo displayInfo = this.GetDisplayInfo();
             displayInfo.IsNew = true;
@@ -853,9 +874,55 @@ namespace DatabaseManager.Controls
             this.ShowContent(displayInfo);
         }
 
-        private async void tsmiAlter_Click(object sender, EventArgs e)
+        private void tsmiAlter_Click(object sender, EventArgs e)
         {
             this.GenerateScripts(ScriptAction.ALTER);
+        }
+
+        private void tsmiNewTable_Click(object sender, EventArgs e)
+        {
+            this.ShowContent(DatabaseObjectDisplayType.TableDesigner);
+        }
+
+        private void tsmiDesign_Click(object sender, EventArgs e)
+        {
+            this.ShowContent(DatabaseObjectDisplayType.TableDesigner, false);
+        }
+
+        private async void RefreshFolderNode()
+        {
+            TreeNode node = this.tvDbObjects.SelectedNode;
+
+            if (node == null)
+            {
+                return;
+            }
+
+            if (node.Tag is DatabaseObject && node.Parent != null && this.CanRefresh(node.Parent))
+            {
+                string selectedName = node.Name;
+
+                TreeNode parentNode = node.Parent;
+
+                await this.LoadChildNodes(parentNode);
+
+                foreach (TreeNode child in parentNode.Nodes)
+                {
+                    if (child.Name == selectedName)
+                    {
+                        this.tvDbObjects.SelectedNode = child;
+                        break;
+                    }
+                }
+
+                this.tvDbObjects.SelectedNode = parentNode;
+            }
+            else if (!(node.Tag is DatabaseObject) && this.CanRefresh(node))
+            {
+                this.tvDbObjects.SelectedNode = node;
+
+                await this.LoadChildNodes(node);
+            }
         }
     }
 }

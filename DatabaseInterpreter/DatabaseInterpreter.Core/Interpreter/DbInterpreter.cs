@@ -56,6 +56,10 @@ namespace DatabaseInterpreter.Core
         public abstract Task<List<Database>> GetDatabasesAsync();
         #endregion
 
+        #region Database Owner
+        public abstract Task<List<DatabaseOwner>> GetDatabaseOwnersAsync(); 
+        #endregion
+
         #region User Defined Type     
         public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null);
         public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
@@ -634,7 +638,7 @@ namespace DatabaseInterpreter.Core
 
             return dictPagedData;
         }
-
+              
         #endregion       
 
         #region Sql Query Clause
@@ -729,7 +733,7 @@ namespace DatabaseInterpreter.Core
 
         public DataTypeSpecification GetDataTypeSpecification(string dataType)
         {
-            return DataTypeManager.GetDataTypeSpecifications(this.DatabaseType).FirstOrDefault(item => item.Name.ToLower() == dataType.ToLower().Trim());
+            return DataTypeManager.GetDataTypeSpecification(this.DatabaseType, dataType);
         }
 
         public virtual bool IsNoLengthDataType(string dataType)
@@ -752,7 +756,7 @@ namespace DatabaseInterpreter.Core
                 {
                     if (precision > 0)
                     {
-                        return $"({precision},{scale})";
+                        return $"{precision},{scale}";
                     }
                 }
                 else if (dataTypeSpecification.Args == "scale")
@@ -767,7 +771,7 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
-                    return $"({scale})";
+                    return $"{scale}";
                 }
             }
 

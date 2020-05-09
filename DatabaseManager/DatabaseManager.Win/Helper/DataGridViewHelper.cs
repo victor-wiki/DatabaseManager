@@ -12,6 +12,15 @@ namespace DatabaseManager.Helper
 {
     public class DataGridViewHelper
     {
+        public static DataGridViewRow GetSelectedRow(DataGridView dgv)
+        {
+            if (dgv.SelectedRows.Count > 0)
+            {
+                return dgv.SelectedRows.OfType<DataGridViewRow>().First();
+            }
+
+            return null;
+        }
         public static DataTable ConvertDataTable(DataTable dataTable)
         {
             DataTable dt = dataTable.Clone();
@@ -32,9 +41,9 @@ namespace DatabaseManager.Helper
                 {
                     var value = row[i];
 
-                    if(value!=null)
+                    if (value != null)
                     {
-                        if(value.GetType()== typeof(byte[]))
+                        if (value.GetType() == typeof(byte[]))
                         {
                             value = ValueHelper.BytesToHexString(value as byte[]);
                         }
@@ -47,6 +56,39 @@ namespace DatabaseManager.Helper
             }
 
             return dt;
-        }      
+        }
+
+        public static void AutoSizeColumn(DataGridView dgv, DataGridViewColumn column)
+        {
+            if (dgv.ColumnCount <= 1)
+            {
+                return;
+            }
+
+            int width = 0;
+
+            foreach (DataGridViewColumn col in dgv.Columns)
+            {
+                if (col.Name != column.Name)
+                {
+                    width += col.Width;
+                }
+            }
+
+            column.Width = dgv.Width - width - (dgv.Columns.Count - 1);
+        }
+
+        public static void SetRowColumnsReadOnly(DataGridView dgv, DataGridViewRow row, bool readony, params DataGridViewColumn[] excludeColumns)
+        {
+            foreach (DataGridViewColumn column in dgv.Columns)
+            {
+                if (excludeColumns != null && excludeColumns.Contains(column))
+                {
+                    continue;
+                }
+
+                row.Cells[column.Name].ReadOnly = readony;
+            }
+        }
     }
 }

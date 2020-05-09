@@ -21,6 +21,11 @@ namespace DatabaseInterpreter.Core
 
             string filePath = Path.Combine(ConfigRootFolder, $"DataTypeSpecification/{databaseType}.xml");
 
+            if (!File.Exists(filePath))
+            {
+                return Enumerable.Empty<DataTypeSpecification>();
+            }
+
             XDocument doc = XDocument.Load(filePath);
 
             var functionSpecs = doc.Root.Elements("item").Select(item => new DataTypeSpecification()
@@ -29,11 +34,13 @@ namespace DatabaseInterpreter.Core
                 Format = item.Attribute("format")?.Value,
                 Args = item.Attribute("args")?.Value,
                 Range = item.Attribute("range")?.Value,
-                Optional = item.Attribute("optional")?.Value == "true",
+                Optional = IsTrueValue(item.Attribute("optional")),
                 Default = item.Attribute("default")?.Value,
                 DisplayDefault = item.Attribute("displayDefault")?.Value,
-                AllowMax = item.Attribute("allowMax")?.Value == "true",
-                MapTo = item.Attribute("mapTo")?.Value
+                AllowMax = IsTrueValue(item.Attribute("allowMax")),
+                MapTo = item.Attribute("mapTo")?.Value,
+                IndexForbidden = IsTrueValue(item.Attribute("indexForbidden")),
+                AllowIdentity = IsTrueValue(item.Attribute("allowIdentity"))
             }).ToList();
 
             functionSpecs.ForEach(item => ParseArgument(item));
@@ -46,6 +53,16 @@ namespace DatabaseInterpreter.Core
             _dataTypeSpecifications.Add(databaseType, functionSpecs);
 
             return functionSpecs;
+        }
+
+        public static DataTypeSpecification GetDataTypeSpecification(DatabaseType databaseType, string dataType)
+        {
+            return DataTypeManager.GetDataTypeSpecifications(databaseType).FirstOrDefault(item => item.Name.ToLower() == dataType.ToLower().Trim());
+        }
+
+        private static bool IsTrueValue(XAttribute attribute)
+        {
+            return attribute?.Value == "true";
         }
 
         public static DataTypeSpecification ParseArgument(DataTypeSpecification dataTypeSpecification)
@@ -69,7 +86,7 @@ namespace DatabaseInterpreter.Core
                     {
                         ArgumentRange range = new ArgumentRange();
 
-                        string[] rangeValues = rangeItems[i].Split(ArugumentRangeValueDelimiter);                       
+                        string[] rangeValues = rangeItems[i].Split(ArugumentRangeValueDelimiter);
 
                         range.Min = int.Parse(rangeValues[0]);
 
@@ -94,11 +111,11 @@ namespace DatabaseInterpreter.Core
             return dataTypeSpecification;
         }
 
-        public static ArgumentRange? GetArgumentRange(DataTypeSpecification dataTypeSpecification, string argumentName)      
+        public static ArgumentRange? GetArgumentRange(DataTypeSpecification dataTypeSpecification, string argumentName)
         {
             ArgumentRange? range = default(ArgumentRange?);
 
-            if (dataTypeSpecification.Arugments.Any(item=>item.Name.ToLower() == argumentName.ToLower()))
+            if (dataTypeSpecification.Arugments.Any(item => item.Name.ToLower() == argumentName.ToLower()))
             {
                 return dataTypeSpecification.Arugments.FirstOrDefault(item => item.Name.ToLower() == argumentName.ToLower()).Range;
             }

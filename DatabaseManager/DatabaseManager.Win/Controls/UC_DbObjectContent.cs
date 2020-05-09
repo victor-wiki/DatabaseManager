@@ -1,4 +1,5 @@
-﻿using DatabaseManager.Core;
+﻿using DatabaseInterpreter.Model;
+using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DatabaseManager.Properties;
@@ -113,6 +114,17 @@ namespace DatabaseManager.Controls
                 }
 
                 dataViewer.Show(info);
+            }
+            else if (info.DisplayType == DatabaseObjectDisplayType.TableDesigner)
+            {
+                UC_TableDesigner tableDesigner = this.GetUcControl<UC_TableDesigner>(tabPage);
+
+                if (tableDesigner == null)
+                {
+                    tableDesigner = this.AddControlToTabPage<UC_TableDesigner>(tabPage);
+                }
+
+                tableDesigner.Show(info);
             }
         }
 
@@ -296,18 +308,18 @@ namespace DatabaseManager.Controls
                     {
                         this.Save();
                     }
-                    else if(result == DialogResult.Cancel)
+                    else if (result == DialogResult.Cancel)
                     {
                         canClose = false;
                     }
                 }
             }
 
-            if(canClose)
+            if (canClose)
             {
                 this.tabControl1.TabPages.RemoveAt(tabPageIndex);
                 this.dictCloseButtonRectangle.Remove(tabPageIndex);
-            }           
+            }
 
             this.SetControlVisible();
 
@@ -369,45 +381,68 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            if (File.Exists(displayInfo.FilePath))
+            DatabaseObjectDisplayType displayType = displayInfo.DisplayType;
+
+            if (displayType == DatabaseObjectDisplayType.Script || displayType == DatabaseObjectDisplayType.Data)
             {
-                this.SaveToFile(tabPage, displayInfo.FilePath);
-                return;
+                if (File.Exists(displayInfo.FilePath))
+                {
+                    this.SaveToFile(tabPage, displayInfo.FilePath);
+                    return;
+                }
+
+                if (this.dlgSave == null)
+                {
+                    this.dlgSave = new SaveFileDialog();
+                }
+
+                this.dlgSave.FileName = tabPage.Text.Trim();
+
+                if (displayType == DatabaseObjectDisplayType.Script)
+                {
+                    this.dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
+                }
+                else if (displayType == DatabaseObjectDisplayType.Data)
+                {
+                    this.dlgSave.Filter = "csv file|*.csv|txt file|*.txt";
+                }
+
+                DialogResult result = this.dlgSave.ShowDialog();
+
+                if (result == DialogResult.OK)
+                {
+                    string filePath = this.dlgSave.FileName;
+
+                    this.SaveToFile(tabPage, filePath);
+
+                    displayInfo.FilePath = filePath;
+
+                    string name = Path.GetFileNameWithoutExtension(filePath);
+
+                    displayInfo.IsNew = false;
+                    displayInfo.Name = name;
+
+                    tabPage.Text = this.GetFormatTabHeaderText(name);
+
+                    this.SetTabPageTooltip(tabPage);
+                }
             }
-
-            if (this.dlgSave == null)
+            else if (displayType == DatabaseObjectDisplayType.TableDesigner)
             {
-                this.dlgSave = new SaveFileDialog();
-            }
+                UC_TableDesigner tableDesigner = this.GetUcControl<UC_TableDesigner>(tabPage);
+                ContentSaveResult result = tableDesigner.Save(new ContentSaveInfo() { });
 
-            this.dlgSave.FileName = tabPage.Text.Trim();
+                if (result.IsOK)
+                {
+                    Table table = result.ResultData as Table;
 
-            if (displayInfo.DisplayType == DatabaseObjectDisplayType.Script)
-            {
-                this.dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
-            }
-            else if (displayInfo.DisplayType == DatabaseObjectDisplayType.Data)
-            {
-                this.dlgSave.Filter = "csv file|*.csv|txt file|*.txt";
-            }
+                    displayInfo.IsNew = false;
+                    displayInfo.Name = table.Name;
 
-            DialogResult result = this.dlgSave.ShowDialog();
-            if (result == DialogResult.OK)
-            {
-                string filePath = this.dlgSave.FileName;
+                    tabPage.Text = this.GetFormatTabHeaderText(displayInfo.Name);
 
-                this.SaveToFile(tabPage, filePath);
-
-                displayInfo.FilePath = filePath;
-
-                string name = Path.GetFileNameWithoutExtension(filePath);
-
-                displayInfo.IsNew = false;
-                displayInfo.Name = name;
-
-                tabPage.Text = this.GetFormatTabHeaderText(name);
-
-                this.SetTabPageTooltip(tabPage);
+                    this.SetTabPageTooltip(tabPage);
+                }
             }
         }
 
@@ -417,7 +452,7 @@ namespace DatabaseManager.Controls
 
             if (control != null)
             {
-                control.Save(filePath);
+                control.Save(new ContentSaveInfo() { FilePath = filePath });
             }
         }
 
@@ -447,6 +482,10 @@ namespace DatabaseManager.Controls
                     if (info.DisplayType == DatabaseObjectDisplayType.Script)
                     {
                         prefix = "SQLQuery";
+                    }
+                    else if (info.DisplayType == DatabaseObjectDisplayType.TableDesigner)
+                    {
+                        prefix = "Table";
                     }
 
                     int num = this.GetNewMaxNameNumber(prefix);

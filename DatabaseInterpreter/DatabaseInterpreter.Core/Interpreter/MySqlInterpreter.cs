@@ -62,6 +62,13 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
+        #region Database Owner
+        public override Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        {
+            return Task.Run(()=> new List<DatabaseOwner>() { new DatabaseOwner() { Name = this.ConnectionInfo.Database, Owner = this.ConnectionInfo.Database } });
+        }
+        #endregion
+
         #region User Defined Type       
 
         public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
@@ -273,7 +280,8 @@ namespace DatabaseInterpreter.Core
 	                        INDEX_NAME AS `Name`,
 	                        COLUMN_NAME AS `ColumnName`,
 	                        CASE  NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
-	                        SEQ_IN_INDEX  AS `Order`,
+                            INDEX_TYPE AS `Type`,
+	                        SEQ_IN_INDEX  AS `Order`,    
 	                        0 AS `IsDesc`
 	                        FROM INFORMATION_SCHEMA.STATISTICS 
 	                        WHERE INDEX_NAME NOT IN('PRIMARY', 'FOREIGN')
@@ -467,7 +475,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }
+        }       
         #endregion
 
         #region BulkCopy
@@ -626,6 +634,22 @@ namespace DatabaseInterpreter.Core
         public override string ParseDataType(TableColumn column)
         {
             string dataType = column.DataType;
+
+            string dataLength = this.GetColumnDataLength(column);
+
+            if(!string.IsNullOrEmpty(dataLength))
+            {
+                dataType += $"({dataLength})";
+            }
+
+            return dataType.Trim();
+        }
+
+        public override string GetColumnDataLength(TableColumn column)
+        {
+            string dataType = column.DataType;
+            string dataLength=string.Empty;
+
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
             bool isChar = DataTypeHelper.IsCharType(dataType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataType);
@@ -634,15 +658,15 @@ namespace DatabaseInterpreter.Core
             {
                 if (isChar || isBinary)
                 {
-                    dataType = $"{dataType}({column.MaxLength.ToString()})";
+                    dataLength = column.MaxLength.ToString();
                 }
                 else if (!this.IsNoLengthDataType(dataType))
                 {
-                    dataType += this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
+                    dataLength = this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
                 }
             }
 
-            return dataType.Trim();
+            return dataLength;
         }
         #endregion     
     }

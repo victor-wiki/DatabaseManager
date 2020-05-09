@@ -224,6 +224,7 @@ namespace DatabaseManager
             targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
+
             if (scriptMode == GenerateScriptMode.None)
             {
                 MessageBox.Show("Please specify the script mode.");

@@ -111,11 +111,13 @@ namespace DatabaseManager.Controls
         private void pagination_OnPageNumberChanged(long pageNum)
         {
             this.LoadData(this.displayInfo, pageNum);
-        }
+        }       
 
-        public void Save(string filePath)
+        public ContentSaveResult Save(ContentSaveInfo info)
         {
-            DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, filePath);
+            DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, info.FilePath);
+
+            return new ContentSaveResult() { IsOK = true };
         }
 
         private void dgvData_Sorted(object sender, EventArgs e)

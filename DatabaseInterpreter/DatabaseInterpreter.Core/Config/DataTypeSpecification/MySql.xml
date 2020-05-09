@@ -2,7 +2,7 @@
   <item name="bigint" args="" value="-9223372036854775808~9223372036854775807"></item>
   <item name="binary" args="length" range="1~255"></item>
   <item name="bit" args=""></item>
-  <item name="blob" args="" size="64K"></item>
+  <item name="blob" args="" size="64K" indexForbidden="true"></item>
   <item name="bool" args="" mapTo="tinyint(1)"></item>
   <item name="boolean" args="" mapTo="tinyint(1)"></item>
   <item name="char" args="length" range="1~255"></item>
@@ -13,22 +13,22 @@
   <item name="enum" args=""></item>
   <item name="float" args="precision,scale" range="1~255,0~30" optional="true"></item>
   <item name="int" args="" value="-2147483648~2147483647"></item>
-  <item name="json" args="4GB"></item>
-  <item name="longblob" args="" size="4GB"></item>
-  <item name="longtext" args="" size="4GB"></item>
-  <item name="mediumblob" args="" size="16M"></item>
-  <item name="mediumint" args="" value="-8388608~8388607"></item>
-  <item name="mediumtext" args="" size="16M"></item>
+  <item name="json" args="4GB" indexForbidden="true"></item>
+  <item name="longblob" args="" size="4GB" indexForbidden="true"></item>
+  <item name="longtext" args="" size="4GB" indexForbidden="true"></item>
+  <item name="mediumblob" args="" size="16M" indexForbidden="true"></item>
+  <item name="mediumint" args="" value="-8388608~8388607" indexForbidden="true"></item>
+  <item name="mediumtext" args="" size="16M" indexForbidden="true"></item>
   <item name="numeric" args="precision,scale" range="1~65,0~30" mapTo="decimal"></item>
   <item name="real" args="precision,scale" range="1~255,0~30" mapTo="double"></item>
   <item name="set" args=""></item>
   <item name="smallint" args="" value="-32768~32767"></item>
-  <item name="text" args="" size="65535B"></item>
+  <item name="text" args="" size="65535B" indexForbidden="true"></item>
   <item name="time" args="length" range="0~6"></item>
   <item name="timestamp" args="scale" range="0~6" optional="true"></item>
-  <item name="tinyblob" args="" maxLength="255"></item>
+  <item name="tinyblob" args="" maxLength="255" indexForbidden="true"></item>
   <item name="tinyint" args="" value="-128~127"></item>
-  <item name="tinytext" args="" maxLength="255"></item>
+  <item name="tinytext" args="" maxLength="255" indexForbidden="true"></item>
   <item name="varbinary" args="length" range="1~65535"></item>
   <item name="varchar" args="length" range="1~21845"></item>
   <item name="year" args="length" range="4~4"></item>

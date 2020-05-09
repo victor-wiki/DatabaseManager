@@ -87,9 +87,11 @@ namespace DatabaseManager.Controls
             }           
         }
 
-        public void Save(string filePath)
+        public ContentSaveResult Save(ContentSaveInfo info)
         {
-            File.WriteAllText(filePath, this.Editor.Text);
+            File.WriteAllText(info.FilePath, this.Editor.Text);
+
+            return new ContentSaveResult() { IsOK = true };
         }
 
         public void ShowResult(QueryResult result)

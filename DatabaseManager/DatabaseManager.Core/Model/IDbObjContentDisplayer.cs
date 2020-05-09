@@ -1,10 +1,10 @@
 ﻿using DatabaseManager.Model;
 
-namespace DatabaseManager.Core
+namespace DatabaseManager.Model
 {
     public interface IDbObjContentDisplayer
     {
         void Show(DatabaseObjectDisplayInfo displayInfo);
-        void Save(string filePath);
+        ContentSaveResult Save(ContentSaveInfo saveInfo);
     }
 }

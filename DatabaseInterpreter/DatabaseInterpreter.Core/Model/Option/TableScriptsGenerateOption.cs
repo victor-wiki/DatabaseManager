@@ -2,7 +2,7 @@
 {
     public class TableScriptsGenerateOption
     {
-        public bool GenerateIdentity { get; set; } = false;
+        public bool GenerateIdentity { get; set; } = true;
         public bool GeneratePrimaryKey { get; set; } = true;
         public bool GenerateForeignKey { get; set; } = true;
         public bool GenerateIndex { get; set; } = true;
