@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
@@ -18,6 +19,7 @@ namespace DatabaseManager.Controls
         private Dictionary<int, Rectangle> dictCloseButtonRectangle = new Dictionary<int, Rectangle>();
 
         public DataFilterHandler OnDataFilter;
+        public FeedbackHandler OnFeedback;
 
         public UC_DbObjectContent()
         {
@@ -122,6 +124,7 @@ namespace DatabaseManager.Controls
                 if (tableDesigner == null)
                 {
                     tableDesigner = this.AddControlToTabPage<UC_TableDesigner>(tabPage);
+                    tableDesigner.OnFeedback += this.Feedback;
                 }
 
                 tableDesigner.Show(info);
@@ -566,6 +569,14 @@ namespace DatabaseManager.Controls
             if (tabPage != null)
             {
                 this.SetTabPageTooltip(tabPage);
+            }
+        }
+
+        private void Feedback(FeedbackInfo info)
+        {
+            if (this.OnFeedback != null)
+            {
+                this.OnFeedback(info);
             }
         }
     }

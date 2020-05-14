@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
 {
-    public class OracleScriptGenerator:DbScriptGenerator
+    public class OracleScriptGenerator : DbScriptGenerator
     {
         public OracleScriptGenerator(DbInterpreter dbInterpreter) : base(dbInterpreter) { }
 
@@ -87,17 +87,7 @@ TABLESPACE
                 #region Primary Key
                 if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
                 {
-                    string primaryKey =
-$@"
-ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(primaryKeys.FirstOrDefault().Name)} PRIMARY KEY 
-(
-{string.Join(Environment.NewLine, primaryKeys.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
-)
-USING INDEX 
-TABLESPACE
-{this.dbInterpreter.ConnectionInfo.Database}{this.scriptsDelimiter}";
-
-                    sb.AppendLine(new CreateDbObjectScript<TablePrimaryKey>(primaryKey));
+                    sb.AppendLine(this.AddPrimaryKey(primaryKeys.First()));
                 }
                 #endregion
 
@@ -105,36 +95,10 @@ TABLESPACE
                 if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey)
                 {
                     IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
-                    if (foreignKeys.Count() > 0)
+
+                    foreach (TableForeignKey foreignKey in foreignKeys)
                     {
-                        sb.AppendLine();
-                        ILookup<string, TableForeignKey> foreignKeyLookup = foreignKeys.ToLookup(item => item.Name);
-
-                        IEnumerable<string> keyNames = foreignKeyLookup.Select(item => item.Key);
-
-                        foreach (string keyName in keyNames)
-                        {
-                            TableForeignKey tableForeignKey = foreignKeyLookup[keyName].First();
-
-                            string columnNames = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
-                            string referenceColumnName = string.Join(",", foreignKeyLookup[keyName].Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
-
-                            StringBuilder foreignKeyScript = new StringBuilder();
-
-                            foreignKeyScript.AppendLine(
-$@"
-ALTER TABLE {quotedTableName} ADD CONSTRAINT { this.GetQuotedString(keyName)} FOREIGN KEY ({columnNames})
-REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referenceColumnName})");
-
-                            if (tableForeignKey.DeleteCascade)
-                            {
-                                foreignKeyScript.AppendLine("ON DELETE CASCADE");
-                            }
-
-                            foreignKeyScript.Append(this.scriptsDelimiter);
-
-                            sb.AppendLine(new CreateDbObjectScript<TableForeignKey>(foreignKeyScript.ToString()));
-                        }
+                        sb.AppendLine(this.AddForeignKey(foreignKey));
                     }
                 }
                 #endregion
@@ -142,34 +106,11 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                 #region Index
                 if (this.option.TableScriptsGenerateOption.GenerateIndex)
                 {
-                    IEnumerable<TableIndex> indices = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+                    IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
 
-                    if (indices.Count() > 0)
+                    foreach (TableIndex index in indexes)
                     {
-                        sb.AppendLine();
-
-                        List<string> indexColumns = new List<string>();
-
-                        ILookup<string, TableIndex> indexLookup = indices.ToLookup(item => item.Name);
-                        IEnumerable<string> indexNames = indexLookup.Select(item => item.Key);
-                        foreach (string indexName in indexNames)
-                        {
-                            TableIndex tableIndex = indexLookup[indexName].First();
-
-                            string columnNames = string.Join(",", indexLookup[indexName].Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
-
-                            if (indexColumns.Contains(columnNames))
-                            {
-                                continue;
-                            }
-
-                            sb.AppendLine(new CreateDbObjectScript<TableIndex>($"CREATE {(tableIndex.IsUnique ? "UNIQUE" : "")} INDEX { this.GetQuotedString(tableIndex.Name)} ON { this.GetQuotedString(tableName)} ({columnNames})" + this.scriptsDelimiter));
-
-                            if (!indexColumns.Contains(columnNames))
-                            {
-                                indexColumns.Add(columnNames);
-                            }
-                        }
+                        sb.AppendLine(this.AddIndex(index));
                     }
                 }
                 #endregion               
@@ -180,9 +121,8 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
                     var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
 
                     foreach (TableConstraint constraint in constraints)
-                    {
-                        sb.AppendLine();
-                        sb.AppendLine(new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {quotedTableName} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition})" + this.scriptsDelimiter));
+                    {                       
+                        sb.AppendLine(this.AddConstraint(constraint));
                     }
                 }
                 #endregion
@@ -209,8 +149,8 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
             }
 
             return sb;
-        }     
-        
+        }
+
         private string GetDbOwner()
         {
             return (this.dbInterpreter as OracleInterpreter).GetDbOwner();
@@ -237,7 +177,7 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
         protected override string GetBatchInsertItemEnd(bool isAllEnd)
         {
             return (isAllEnd ? $"{Environment.NewLine}SELECT 1 FROM DUAL;" : "");
-        }       
+        }
 
         protected override bool NeedInsertParameter(TableColumn column, object value)
         {
@@ -298,6 +238,131 @@ REFERENCES { this.GetQuotedString(tableForeignKey.ReferencedTableName)}({referen
         public override Script DropTableColumn(TableColumn column)
         {
             return new DropDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(column.TableName)} DROP COLUMN {this.GetQuotedString(column.Name)};");
+        }
+
+        public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
+        {
+            string sql =
+$@"
+ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQuotedString(primaryKey.Name)} PRIMARY KEY 
+(
+{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+)
+USING INDEX 
+TABLESPACE
+{this.dbInterpreter.ConnectionInfo.Database}{this.scriptsDelimiter}";
+
+            return new Script(sql);
+        }
+
+        public override Script DropPrimaryKey(TablePrimaryKey primaryKey)
+        {
+            return new DropDbObjectScript<TablePrimaryKey>(this.GetDropConstraintSql(primaryKey));
+        }
+
+        public override Script AddForeignKey(TableForeignKey foreignKey)
+        {
+            string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
+            string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine(
+$@"
+ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT { this.GetQuotedString(foreignKey.Name)} FOREIGN KEY ({columnNames})
+REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})");
+
+            if (foreignKey.DeleteCascade)
+            {
+                sb.AppendLine("ON DELETE CASCADE");
+            }
+
+            sb.Append(this.scriptsDelimiter);
+
+            return new CreateDbObjectScript<TableForeignKey>(sb.ToString());
+        }
+
+        public override Script DropForeignKey(TableForeignKey foreignKey)
+        {
+            return new DropDbObjectScript<TableForeignKey>(this.GetDropConstraintSql(foreignKey));
+        }
+
+        private string GetDropConstraintSql(TableChild tableChild)
+        {
+            return $"ALTER TABLE {this.GetQuotedFullTableName(tableChild)} DROP CONSTRAINT {this.GetQuotedString(tableChild.Name)};";
+        }
+
+        public override Script AddIndex(TableIndex index)
+        {
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
+
+            string type = "";
+
+            if (index.Type == IndexType.Unique.ToString())
+            {
+                type = "UNIQUE";
+            }
+            else if (index.Type == IndexType.Bitmap.ToString())
+            {
+                type = "BITMAP";
+            }
+
+            string reverse = index.Type == IndexType.Reverse.ToString() ? "REVERSE" : "";
+
+            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX { this.GetQuotedString(index.Name)} ON { this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
+        }
+
+        public override Script DropIndex(TableIndex index)
+        {
+            return new DropDbObjectScript<TableIndex>($"DROP INDEX {this.GetQuotedString(index.Name)};");
+        }
+
+        public override Script AddConstraint(TableConstraint constraint)
+        {
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
+        }
+
+        public override Script DropConstraint(TableConstraint constraint)
+        {
+            return new DropDbObjectScript<TableConstraint>(this.GetDropConstraintSql(constraint));
+        }
+        #endregion
+
+        #region Database Operation
+
+        public override Script DropUserDefinedType(UserDefinedType userDefinedType)
+        {
+            return new Script("");
+        }
+
+        public override Script DropTable(Table table)
+        {
+            return new DropDbObjectScript<Table>(this.GetDropSql(nameof(Table), table));
+        }
+
+        public override Script DropView(View view)
+        {
+            return new DropDbObjectScript<View>(this.GetDropSql(nameof(View), view));
+        }
+
+        public override Script DropTrigger(TableTrigger trigger)
+        {
+            return new DropDbObjectScript<View>(this.GetDropSql("trigger", trigger));
+        }
+
+        public override Script DropFunction(Function function)
+        {
+            return new DropDbObjectScript<Function>(this.GetDropSql(nameof(Function), function));
+        }
+
+        public override Script DropProcedure(Procedure procedure)
+        {
+            return new DropDbObjectScript<Procedure>(this.GetDropSql(nameof(Procedure), procedure));
+        }
+
+        private string GetDropSql(string typeName, DatabaseObject dbObject)
+        {
+            return $"DROP {typeName.ToUpper()} {this.GetQuotedObjectName(dbObject)};";
         }
         #endregion
     }

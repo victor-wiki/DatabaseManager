@@ -64,4 +64,10 @@
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Model\TableDesigner\TableDesignerGenerateScriptsData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
 </Project>

@@ -36,6 +36,7 @@ namespace DatabaseManager
             this.navigator.OnShowContent += this.ShowDbObjectContent;
             this.navigator.OnFeedback += this.Feedback;
             this.ucContent.OnDataFilter += this.DataFilter;
+            this.ucContent.OnFeedback += this.Feedback;
         }
 
         private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)

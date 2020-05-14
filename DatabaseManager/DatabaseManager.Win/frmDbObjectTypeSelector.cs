@@ -15,6 +15,7 @@ namespace DatabaseManager
     public partial class frmDbObjectTypeSelector : Form
     {
         private bool isChecking = false;
+        public DatabaseType DatabaseType { get; set; }
         public DatabaseObjectType DatabaseObjectType { get; private set; }
 
         public frmDbObjectTypeSelector()
@@ -38,6 +39,11 @@ namespace DatabaseManager
                 DatabaseObjectType.Function,
                 DatabaseObjectType.Procedure
             };
+
+            if(this.DatabaseType== DatabaseType.SqlServer)
+            {
+                dbObjTypes.Insert(0, DatabaseObjectType.UserDefinedType);
+            }
 
             foreach(DatabaseObjectType type in dbObjTypes)
             {

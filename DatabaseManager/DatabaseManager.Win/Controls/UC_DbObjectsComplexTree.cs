@@ -59,6 +59,7 @@ namespace DatabaseManager.Controls
             if (this.tvDbObjects.Nodes.Count == 1)
             {
                 this.tvDbObjects.SelectedNode = this.tvDbObjects.Nodes[0];
+                this.tvDbObjects.Nodes[0].Expand();
             }
         }
 
@@ -253,8 +254,8 @@ namespace DatabaseManager.Controls
                 foreach (TableColumn column in schemaInfo.TableColumns)
                 {
                     string text = this.GetColumnText(dbInterpreter, table, column);
-                    bool isPrimaryKey = schemaInfo.TablePrimaryKeys.Any(item => item.ColumnName == column.Name);
-                    bool isForeignKey = schemaInfo.TableForeignKeys.Any(item => item.ColumnName == column.Name);
+                    bool isPrimaryKey = schemaInfo.TablePrimaryKeys.Any(item => item.Columns.Any(t => t.ColumnName == column.Name));
+                    bool isForeignKey = schemaInfo.TableForeignKeys.Any(item => item.Columns.Any(t => t.ColumnName == column.Name));
                     string imageKeyName = isPrimaryKey ? nameof(TablePrimaryKey) : (isForeignKey ? nameof(TableForeignKey) : nameof(TableColumn));
 
                     TreeNode node = DbObjectsTreeHelper.CreateTreeNode(column.Name, text, imageKeyName);
@@ -273,20 +274,17 @@ namespace DatabaseManager.Controls
             #region Indexes
             if (nodeName == nameof(DbObjectTreeFolderType.Indexes) && schemaInfo.TableIndexes.Any())
             {
-                ILookup<string, TableIndex> indexLookup = schemaInfo.TableIndexes.ToLookup(item => item.Name);
-
-                foreach (var kp in indexLookup)
+                foreach (TableIndex index in schemaInfo.TableIndexes)
                 {
-                    string indexName = kp.Key;
-                    bool isUnique = kp.Any(item => item.IsUnique);
-                    string strColumns = string.Join(",", kp.Select(item => item.ColumnName));
+                    bool isUnique = index.IsUnique;
+                    string strColumns = string.Join(",", index.Columns.OrderBy(item => item.Order).Select(item => item.ColumnName));
                     string content = isUnique ? $"(Unique, {strColumns})" : $"({strColumns})";
 
-                    string text = $"{indexName}{content}";
+                    string text = $"{index.Name}{content}";
                     string imageKeyName = nameof(TableIndex);
 
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(indexName, text, imageKeyName);
-                    node.Tag = kp.First();
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(index.Name, text, imageKeyName);
+                    node.Tag = index;
 
                     treeNode.Nodes.Add(node);
                 }
@@ -294,19 +292,16 @@ namespace DatabaseManager.Controls
             #endregion
             if (nodeName == nameof(DbObjectTreeFolderType.Keys))
             {
-                if (schemaInfo.TablePrimaryKeys.Any() || schemaInfo.TablePrimaryKeys.Any())
+                foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
                 {
-                    foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
-                    {
-                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                        treeNode.Nodes.Add(node);
-                    }
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                    treeNode.Nodes.Add(node);
+                }
 
-                    foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
-                    {
-                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                        treeNode.Nodes.Add(node);
-                    }
+                foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
+                {
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                    treeNode.Nodes.Add(node);
                 }
             }
 
@@ -328,7 +323,7 @@ namespace DatabaseManager.Controls
         {
             string text = dbInterpreter.ParseColumn(table, column).Replace(dbInterpreter.QuotationLeftChar.ToString(), "").Replace(dbInterpreter.QuotationRightChar.ToString(), "");
 
-            return $"{column.Name} ({text.Replace(column.Name + " ", "").ToLower()})";
+            return $"{column.Name} ({text.Replace(column.Name + " ", "").ToLower().Trim()})";
         }
 
         private async void tvDbObjects_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -576,7 +571,7 @@ namespace DatabaseManager.Controls
 
             if (MessageBox.Show("Are you sure to delelte all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector();
+                frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector() { DatabaseType = this.databaseType };
 
                 if (selector.ShowDialog() == DialogResult.OK)
                 {
@@ -632,7 +627,7 @@ namespace DatabaseManager.Controls
             {
                 if (MessageBox.Show("Are you sure to delete this object?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    this.DropDbObject(node);
+                    Task.Run(()=> this.DropDbObject(node));
                 }
             }
         }
@@ -645,7 +640,12 @@ namespace DatabaseManager.Controls
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
             dbInterpreter.Subscribe(this);
 
-            await dbInterpreter.Drop(dbObject);
+            DbManager dbManager = new DbManager(dbInterpreter);
+
+            dbInterpreter.Subscribe(this);
+            dbManager.Subscribe(this);
+
+            await dbManager.DropDbObject(dbObject);
 
             if (!dbInterpreter.HasError)
             {

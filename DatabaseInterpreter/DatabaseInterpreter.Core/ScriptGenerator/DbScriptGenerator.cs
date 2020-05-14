@@ -117,9 +117,9 @@ namespace DatabaseInterpreter.Core
 
                     bool isSelfReference = TableReferenceHelper.IsSelfReference(tableName, schemaInfo.TableForeignKeys);
 
-                    List<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName).ToList();
+                    TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Owner == table.Owner && item.TableName == tableName);
 
-                    string primaryKeyColumns = string.Join(",", primaryKeys.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.ColumnName)));
+                    string primaryKeyColumns = primaryKey == null ? "" : string.Join(",", primaryKey.Columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.ColumnName)));
 
                     long total = await this.dbInterpreter.GetTableRecordCountAsync(connection, table);
 
@@ -139,7 +139,7 @@ namespace DatabaseInterpreter.Core
                         string parentColumnName = schemaInfo.TableForeignKeys.FirstOrDefault(item =>
                             item.Owner == table.Owner
                             && item.TableName == tableName
-                            && item.ReferencedTableName == tableName)?.ColumnName;
+                            && item.ReferencedTableName == tableName)?.Columns?.FirstOrDefault()?.ColumnName;
 
                         string strWhere = $" WHERE { this.GetQuotedString(parentColumnName)} IS NULL";
 
@@ -277,6 +277,7 @@ namespace DatabaseInterpreter.Core
                 }
 
                 int rowCount = 0;
+
                 foreach (var row in kp.Value)
                 {
                     rowCount++;
@@ -637,11 +638,11 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Alter Table
-        public abstract Script RenameTable(Table table, string newName);      
+        public abstract Script RenameTable(Table table, string newName);
 
         public abstract Script SetTableComment(Table table, bool isNew = true);
 
-        public abstract Script AddTableColumn(Table table, TableColumn column);       
+        public abstract Script AddTableColumn(Table table, TableColumn column);
 
         public abstract Script RenameTableColumn(Table table, TableColumn column, string newName);
 
@@ -650,6 +651,31 @@ namespace DatabaseInterpreter.Core
         public abstract Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true);
 
         public abstract Script DropTableColumn(TableColumn column);
+
+        public abstract Script DropPrimaryKey(TablePrimaryKey primaryKey);
+
+        public abstract Script DropForeignKey(TableForeignKey foreignKey);
+
+        public abstract Script AddPrimaryKey(TablePrimaryKey primaryKey);
+
+        public abstract Script AddForeignKey(TableForeignKey foreignKey);
+
+        public abstract Script AddIndex(TableIndex index);
+
+        public abstract Script DropIndex(TableIndex index);
+
+        public abstract Script AddConstraint(TableConstraint constraint);
+
+        public abstract Script DropConstraint(TableConstraint constraint);
+        #endregion
+
+        #region Database Operation  
+        public abstract Script DropUserDefinedType(UserDefinedType userDefinedType);
+        public abstract Script DropTable(Table table);
+        public abstract Script DropView(View view);
+        public abstract Script DropTrigger(TableTrigger trigger);
+        public abstract Script DropFunction(Function function);
+        public abstract Script DropProcedure(Procedure procedure);
         #endregion
 
         #region Common Method
@@ -666,6 +692,11 @@ namespace DatabaseInterpreter.Core
         public string GetQuotedColumnNames(IEnumerable<TableColumn> columns)
         {
             return this.dbInterpreter.GetQuotedColumnNames(columns);
+        }
+
+        public string GetQuotedFullTableName(TableChild tableChild)
+        {
+            return $"{tableChild.Owner}.{this.GetQuotedString(tableChild.TableName)}";
         }
         #endregion
 

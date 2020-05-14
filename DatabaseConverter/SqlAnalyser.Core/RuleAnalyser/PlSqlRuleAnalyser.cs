@@ -1273,7 +1273,7 @@ namespace SqlAnalyser.Core
 
                     if (alias != null)
                     {
-                        columnName.Alias = new TokenInfo(alias);
+                        columnName.Alias = new TokenInfo(alias.identifier());
                     }
                 }
                 else if (node is General_element_partContext gele)

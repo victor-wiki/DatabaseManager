@@ -80,6 +80,13 @@ namespace DatabaseConverter.Core
                 {
                     column.Scale = int.Parse(dataTypeInfo.Args);
                 }
+                else if (sourceDataTypeSpec.Args == "length")
+                {
+                    if (column.MaxLength == null)
+                    {
+                        column.MaxLength = int.Parse(dataTypeInfo.Args);
+                    }
+                }
             }
 
             DataTypeMapping dataTypeMapping = this.dataTypeMappings.FirstOrDefault(item => item.Source.Type?.ToLower() == column.DataType?.ToLower()
@@ -423,7 +430,7 @@ namespace DatabaseConverter.Core
 
         public void ConvertDefaultValue(TableColumn column)
         {
-            string defaultValue = this.GetTrimedDefaultValue(column.DefaultValue);
+            string defaultValue = ValueHelper.GetTrimedDefaultValue(column.DefaultValue);
 
             IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
 
@@ -433,23 +440,6 @@ namespace DatabaseConverter.Core
             }
 
             column.DefaultValue = defaultValue;
-        }
-
-        private string GetTrimedDefaultValue(string defaultValue)
-        {
-            if (!string.IsNullOrEmpty(defaultValue))
-            {
-                defaultValue = defaultValue.TrimStart('(').TrimEnd(')');
-
-                if (defaultValue.EndsWith("("))
-                {
-                    defaultValue += ")";
-                }
-
-                return defaultValue;
-            }
-
-            return defaultValue;
         }
 
         public void ConvertComputeExpression(TableColumn column)

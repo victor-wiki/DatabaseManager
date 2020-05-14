@@ -1,5 +1,5 @@
 ﻿<items>
-  <item name="bigint" args="" value="-9223372036854775808~9223372036854775807"></item>
+  <item name="bigint" args="" value="-9223372036854775808~9223372036854775807" allowIdentity="true"></item>
   <item name="binary" args="length" range="1~255"></item>
   <item name="bit" args=""></item>
   <item name="blob" args="" size="64K" indexForbidden="true"></item>
@@ -9,10 +9,10 @@
   <item name="date" args=""></item>
   <item name="datetime" args=""></item>
   <item name="decimal" args="precision,scale" range="1~65,0~30"></item>
-  <item name="double" args="precision,scale" range="1~255,0~30"></item>
+  <item name="double" args="precision,scale" range="1~255,0~30" allowIdentity="true"></item>
   <item name="enum" args=""></item>
-  <item name="float" args="precision,scale" range="1~255,0~30" optional="true"></item>
-  <item name="int" args="" value="-2147483648~2147483647"></item>
+  <item name="float" args="precision,scale" range="1~255,0~30" optional="true" allowIdentity="true"></item>
+  <item name="int" args="" value="-2147483648~2147483647" allowIdentity="true"></item>
   <item name="json" args="4GB" indexForbidden="true"></item>
   <item name="longblob" args="" size="4GB" indexForbidden="true"></item>
   <item name="longtext" args="" size="4GB" indexForbidden="true"></item>
@@ -24,10 +24,10 @@
   <item name="set" args=""></item>
   <item name="smallint" args="" value="-32768~32767"></item>
   <item name="text" args="" size="65535B" indexForbidden="true"></item>
-  <item name="time" args="length" range="0~6"></item>
+  <item name="time" args="scale" range="0~6"></item>
   <item name="timestamp" args="scale" range="0~6" optional="true"></item>
   <item name="tinyblob" args="" maxLength="255" indexForbidden="true"></item>
-  <item name="tinyint" args="" value="-128~127"></item>
+  <item name="tinyint" args="" value="-128~127" allowIdentity="true"></item>
   <item name="tinytext" args="" maxLength="255" indexForbidden="true"></item>
   <item name="varbinary" args="length" range="1~65535"></item>
   <item name="varchar" args="length" range="1~21845"></item>

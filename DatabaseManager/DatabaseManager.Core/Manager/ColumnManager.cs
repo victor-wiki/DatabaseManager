@@ -46,7 +46,7 @@ namespace DatabaseManager.Core
 
             if (!string.IsNullOrEmpty(dataTypeSpec.Args))
             {
-                string length = columnDesingerInfo.Length?.Trim();
+                string length = columnDesingerInfo?.Length?.Trim();
 
                 if (string.IsNullOrEmpty(length) && dataTypeSpec.Optional)
                 {
@@ -63,10 +63,17 @@ namespace DatabaseManager.Core
                 string[] argsNames = args.Split(',');
                 string[] lengthItems = length?.Split(',');
 
-                if (argsNames.Length != lengthItems.Length)
+                if (argsNames.Length != lengthItems?.Length)
                 {
-                    message = $"Length is invalid for column \"{columName}\", it's format should be:{args}";
-                    return false;
+                    if (argsNames.Length == 2 && lengthItems?.Length == 1)
+                    {
+                        lengthItems = new string[] { lengthItems[0], "0" };
+                    }
+                    else
+                    {
+                        message = $"Length is invalid for column \"{columName}\", it's format should be:{args}";
+                        return false;
+                    }
                 }
 
                 int i = 0;
@@ -106,6 +113,12 @@ namespace DatabaseManager.Core
             string dataType = column.DataType;
             DataTypeSpecification dataTypeSpec = DataTypeManager.GetDataTypeSpecification(databaseType, dataType);
 
+            if (!string.IsNullOrEmpty(dataTypeSpec.MapTo))
+            {
+                column.DataType = dataTypeSpec.MapTo;
+                return;
+            }
+
             string args = dataTypeSpec.Args;
 
             if (string.IsNullOrEmpty(args))
@@ -114,12 +127,17 @@ namespace DatabaseManager.Core
             }
 
             string[] argsNames = args.Split(',');
-            string[] lengthItems = length.Split(',');
+            string[] lengthItems = length?.Split(',');
 
             int i = 0;
 
             foreach (string argName in argsNames)
             {
+                if (lengthItems == null || i > lengthItems.Length - 1)
+                {
+                    continue;
+                }
+
                 string lengthItem = lengthItems[i];
 
                 if (argName == "length")

@@ -214,11 +214,23 @@
     <Compile Include="Controls\UC_TableColumns.Designer.cs">
       <DependentUpon>UC_TableColumns.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\UC_TableConstraints.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\UC_TableConstraints.Designer.cs">
+      <DependentUpon>UC_TableConstraints.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\UC_TableDesigner.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Controls\UC_TableDesigner.Designer.cs">
       <DependentUpon>UC_TableDesigner.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\UC_TableForeignKeys.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\UC_TableForeignKeys.Designer.cs">
+      <DependentUpon>UC_TableForeignKeys.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\UC_TableIndexes.cs">
       <SubType>UserControl</SubType>
@@ -227,6 +239,24 @@
       <DependentUpon>UC_TableIndexes.cs</DependentUpon>
     </Compile>
     <Compile Include="Data\DataStore.cs" />
+    <Compile Include="frmColumnMapping.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmColumnMapping.Designer.cs">
+      <DependentUpon>frmColumnMapping.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmColumSelect.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmColumSelect.Designer.cs">
+      <DependentUpon>frmColumSelect.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmScriptsViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmScriptsViewer.Designer.cs">
+      <DependentUpon>frmScriptsViewer.cs</DependentUpon>
+    </Compile>
     <Compile Include="Helper\DataGridViewHelper.cs" />
     <Compile Include="Helper\SqlWordFinder.cs" />
     <Compile Include="frmAccountInfo.cs">
@@ -332,14 +362,26 @@
     <EmbeddedResource Include="Controls\UC_TableColumns.resx">
       <DependentUpon>UC_TableColumns.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\UC_TableConstraints.resx">
+      <DependentUpon>UC_TableConstraints.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\UC_TableDesigner.resx">
       <DependentUpon>UC_TableDesigner.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\UC_TableForeignKeys.resx">
+      <DependentUpon>UC_TableForeignKeys.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\UC_TableIndexes.resx">
       <DependentUpon>UC_TableIndexes.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmAccountInfo.resx">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmColumnMapping.resx">
+      <DependentUpon>frmColumnMapping.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmColumSelect.resx">
+      <DependentUpon>frmColumSelect.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
@@ -364,6 +406,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmScriptsViewer.resx">
+      <DependentUpon>frmScriptsViewer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmSetting.resx">
       <DependentUpon>frmSetting.cs</DependentUpon>

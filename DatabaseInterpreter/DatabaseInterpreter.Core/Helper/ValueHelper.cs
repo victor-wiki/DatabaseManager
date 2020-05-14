@@ -89,5 +89,32 @@ namespace DatabaseInterpreter.Core
 
             return hex;
         }
+
+        public static string GetTrimedDefaultValue(string defaultValue)
+        {
+            if (!string.IsNullOrEmpty(defaultValue))
+            {
+                defaultValue = defaultValue.TrimStart('(').TrimEnd(')');
+
+                if (defaultValue.EndsWith("("))
+                {
+                    defaultValue += ")";
+                }
+
+                return defaultValue;
+            }
+
+            return defaultValue;
+        }
+
+        public static bool IsStringEquals(string str1, string str2)
+        {
+            if (string.IsNullOrEmpty(str1) && string.IsNullOrEmpty(str2))
+            {
+                return true;
+            }
+
+            return str1 == str2;
+        }
     }
 }

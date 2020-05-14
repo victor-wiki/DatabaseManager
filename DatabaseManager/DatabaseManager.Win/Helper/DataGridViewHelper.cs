@@ -58,24 +58,52 @@ namespace DatabaseManager.Helper
             return dt;
         }
 
-        public static void AutoSizeColumn(DataGridView dgv, DataGridViewColumn column)
+        public static void AutoSizeLastColumn(DataGridView dgv)
         {
-            if (dgv.ColumnCount <= 1)
+            if (dgv.Columns.OfType<DataGridViewColumn>().Where(item => item.Visible).Count() <= 1)
             {
                 return;
             }
 
+            DataGridViewColumn column = dgv.Columns.OfType<DataGridViewColumn>().LastOrDefault(item => item.Visible);
+
+            int gridWidth = dgv.Width;
+            int totalWidth = 0;
+            int rowHeadersWidth = (dgv.RowHeadersVisible ? dgv.RowHeadersWidth : 0);
             int width = 0;
+
+            totalWidth += rowHeadersWidth;
 
             foreach (DataGridViewColumn col in dgv.Columns)
             {
-                if (col.Name != column.Name)
+                if (col.Visible)
                 {
-                    width += col.Width;
+                    totalWidth += col.Width;
+
+                    if (col.Name != column.Name)
+                    {
+                        width += col.Width;
+                    }
                 }
             }
 
-            column.Width = dgv.Width - width - (dgv.Columns.Count - 1);
+            if (totalWidth < gridWidth)
+            {
+                column.Width = gridWidth - width - dgv.RowHeadersWidth;
+            }
+
+            var vScrollBar = dgv.Controls.OfType<VScrollBar>().FirstOrDefault();
+            int scrollBarWidth = 0;
+
+            if (vScrollBar != null && vScrollBar.Visible)
+            {
+                scrollBarWidth = vScrollBar.Width;
+            }
+
+            if (scrollBarWidth > 0)
+            {
+                column.Width -= scrollBarWidth;
+            }
         }
 
         public static void SetRowColumnsReadOnly(DataGridView dgv, DataGridViewRow row, bool readony, params DataGridViewColumn[] excludeColumns)
@@ -88,6 +116,75 @@ namespace DatabaseManager.Helper
                 }
 
                 row.Cells[column.Name].ReadOnly = readony;
+            }
+        }
+
+        public static string GetCellStringValue(DataGridViewRow row, string columnName)
+        {
+            if (row == null)
+            {
+                return null;
+            }
+
+            return GetCellStringValue(row.Cells[columnName]);
+        }
+
+        public static string GetCellStringValue(DataGridViewCell cell)
+        {
+            return cell.Value?.ToString()?.Trim();
+        }
+
+        public static bool GetCellBoolValue(DataGridViewRow row, string columnName)
+        {
+            return GetCellBoolValue(row.Cells[columnName]);
+        }
+
+        public static bool GetCellBoolValue(DataGridViewCell cell)
+        {
+            return IsTrueValue(cell.Value);
+        }
+
+        public static bool IsTrueValue(object value)
+        {
+            return value?.ToString() == "True";
+        }
+
+        public static bool IsEmptyRow(DataGridViewRow row)
+        {
+            if(row == null)
+            {
+                return true;
+            }
+
+            int visibleCount = 0;
+            int emptyCount = 0;
+
+            foreach(DataGridViewCell cell in row.Cells)
+            {
+                if(cell.Visible)
+                {
+                    visibleCount++;
+
+                    if(string.IsNullOrEmpty(cell.Value?.ToString()))
+                    {
+                        emptyCount++;
+                    }
+                }
+            }
+
+            return visibleCount == emptyCount;
+        }
+
+        public static void SetRowCellsReadOnly(DataGridViewRow row, bool readOnly)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            foreach (DataGridViewCell cell in row.Cells)
+            {
+                cell.ReadOnly = readOnly;
             }
         }
     }

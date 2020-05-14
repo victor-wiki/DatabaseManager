@@ -221,6 +221,12 @@ namespace DatabaseManager
                 targetScriptOption.ScriptOutputMode = targetScriptOption.ScriptOutputMode | GenerateScriptOutputMode.WriteToFile;
             }
 
+            if(this.chkTreatBytesAsNull.Checked)
+            {
+                sourceScriptOption.TreatBytesAsNullForReading = true;
+                targetScriptOption.TreatBytesAsNullForExecuting = true;
+            }           
+
             targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();

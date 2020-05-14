@@ -14,6 +14,7 @@ namespace DatabaseManager.Core
     {
         private IObserver<FeedbackInfo> observer;
         private DbInterpreter dbInterpreter;
+        private DbScriptGenerator scriptGenerator;
 
         public DbManager()
         {
@@ -23,6 +24,7 @@ namespace DatabaseManager.Core
         public DbManager(DbInterpreter dbInterpreter)
         {
             this.dbInterpreter = dbInterpreter;
+            this.scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -153,12 +155,78 @@ namespace DatabaseManager.Core
             {
                 if (!names.Contains(obj.Name))
                 {
-                    this.FeedbackInfo($"Drop {obj.GetType().Name} \"{obj.Name}\".");
-
-                    await this.dbInterpreter.Drop(connection, obj);
+                    await this.DropDbObject(obj, connection);
 
                     names.Add(obj.Name);
                 }
+            }
+        }
+
+        private async Task DropDbObject(DatabaseObject dbObject, DbConnection connection = null)
+        {
+            string typeName = dbObject.GetType().Name;
+
+            this.FeedbackInfo($"Drop {typeName} \"{dbObject.Name}\".");
+
+            Script script = null;
+
+            switch (typeName)
+            {
+                case nameof(UserDefinedType):
+                    script = this.scriptGenerator.DropUserDefinedType(dbObject as UserDefinedType);
+                    break;
+                case nameof(Table):
+                    script = this.scriptGenerator.DropTable(dbObject as Table);
+                    break;
+                case nameof(View):
+                    script = this.scriptGenerator.DropView(dbObject as View);
+                    break;
+                case nameof(Function):
+                    script = this.scriptGenerator.DropFunction(dbObject as Function);
+                    break;
+                case nameof(Procedure):
+                    script = this.scriptGenerator.DropProcedure(dbObject as Procedure);
+                    break;
+                case nameof(TablePrimaryKey):
+                    script = this.scriptGenerator.DropPrimaryKey(dbObject as TablePrimaryKey);
+                    break;
+                case nameof(TableForeignKey):
+                    script = this.scriptGenerator.DropForeignKey(dbObject as TableForeignKey);
+                    break;
+                case nameof(TableIndex):
+                    script = this.scriptGenerator.DropIndex(dbObject as TableIndex);
+                    break;
+            }
+
+            if (script != null && !string.IsNullOrEmpty(script.Content))
+            {
+                string sql = script.Content;
+
+                if (this.dbInterpreter.ScriptsDelimiter.Length == 1)
+                {
+                    sql = sql.TrimEnd(this.dbInterpreter.ScriptsDelimiter.ToCharArray());
+                }
+
+                if (connection != null)
+                {
+                    await this.dbInterpreter.ExecuteNonQueryAsync(connection, sql);
+                }
+                else
+                {
+                    await this.dbInterpreter.ExecuteNonQueryAsync(sql);
+                }
+            }
+        }
+
+        public async Task DropDbObject(DatabaseObject dbObject)
+        {
+            try
+            {
+                await this.DropDbObject(dbObject, null);
+            }
+            catch (Exception ex)
+            {
+                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
             }
         }
 

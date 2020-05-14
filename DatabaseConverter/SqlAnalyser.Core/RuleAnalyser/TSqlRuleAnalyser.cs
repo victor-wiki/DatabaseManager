@@ -587,7 +587,7 @@ namespace SqlAnalyser.Core
         {
             DeleteStatement statement = new DeleteStatement();
 
-            statement.TableName = new TableName(node.delete_statement_from());
+            statement.TableName = this.ParseTableName(node.delete_statement_from().ddl_object());
             statement.Condition = this.ParseCondition(node.search_condition());
 
             return statement;
@@ -1315,6 +1315,13 @@ namespace SqlAnalyser.Core
                 {
                     tableName = new TableName(tn);
                 }
+                else if(node is Full_table_nameContext fullName)
+                {
+                    tableName = new TableName(fullName);
+
+                    tableName.Name = new TokenInfo(fullName.table);
+                    
+                }
                 else if (node is Table_source_itemContext tsi)
                 {
                     tableName = new TableName(tsi);
@@ -1335,6 +1342,10 @@ namespace SqlAnalyser.Core
                 else if (node is Table_sourceContext ts)
                 {
                     tableName = this.ParseTableName(ts.table_source_item_joined()?.table_source_item());
+                }
+                else if (node is Ddl_objectContext ddl)
+                {
+                    return this.ParseTableName(ddl.full_table_name(), strict);
                 }
 
                 if (!strict && tableName == null)

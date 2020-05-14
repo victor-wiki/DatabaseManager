@@ -17,6 +17,7 @@ namespace DatabaseInterpreter.Core
         private IObserver<FeedbackInfo> observer;
         protected DbConnector dbConnector;
         protected bool hasError = false;
+
         public readonly DateTime MinDateTime = new DateTime(1970, 1, 1);
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
@@ -29,6 +30,7 @@ namespace DatabaseInterpreter.Core
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
+        public virtual IndexType IndexType => IndexType.Normal;
         public abstract DatabaseType DatabaseType { get; }
         public abstract bool SupportBulkCopy { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
@@ -82,19 +84,54 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Primary Key
-        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        public abstract Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+
+        public virtual async Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null)
+        {
+            List<TablePrimaryKeyItem> primaryKeyItems = await this.GetTablePrimaryKeyItemsAsync(filter);
+            return SchemaInfoHelper.GetTablePrimaryKeys(primaryKeyItems);
+        }
+
+        public virtual async Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            List<TablePrimaryKeyItem> primaryKeyItems = await this.GetTablePrimaryKeyItemsAsync(dbConnection, filter);
+            return SchemaInfoHelper.GetTablePrimaryKeys(primaryKeyItems);
+        }       
         #endregion
 
-        #region Table Foreign Key
-        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        #region Table Foreign Key       
+        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+
+        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
+        {
+            List<TableForeignKeyItem> foreignKeyItems =await this.GetTableForeignKeyItemsAsync(filter);
+            return SchemaInfoHelper.GetTableForeignKeys(foreignKeyItems);
+        }
+
+        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(dbConnection, filter);
+            return SchemaInfoHelper.GetTableForeignKeys(foreignKeyItems);
+        }
         #endregion
 
         #region Table Index
-        public abstract Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        public abstract Task<List<TableIndexItem>> GetTableIndexItemsAsync(SchemaInfoFilter filter = null, bool includePrimaryKey = false);
+        public abstract Task<List<TableIndexItem>> GetTableIndexItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool includePrimaryKey = false);
 
+        public virtual async Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
+        {
+            List<TableIndexItem> indexItems = await this.GetTableIndexItemsAsync(filter, includePrimaryKey);
+            return SchemaInfoHelper.GetTableIndexes(indexItems);
+        }
+
+        public virtual async Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool includePrimaryKey = false)
+        {
+            List<TableIndexItem> indexItems = await this.GetTableIndexItemsAsync(dbConnection, filter, includePrimaryKey);
+            return SchemaInfoHelper.GetTableIndexes(indexItems);
+        }
         #endregion
 
         #region Table Trigger        
@@ -233,7 +270,7 @@ namespace DatabaseInterpreter.Core
 
                 if (this.NeedFetchTableObjects(DatabaseObjectType.TableIndex, filter, null))
                 {
-                    schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter);
+                    schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter, this.Option.IncludePrimaryKeyWhenGetTableIndex);
                 }
 
                 if (this.NeedFetchTableObjects(DatabaseObjectType.TableConstraint, filter, null))
@@ -496,13 +533,6 @@ namespace DatabaseInterpreter.Core
         public abstract Task SetConstrainsEnabled(bool enabled);
         public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);
 
-        public async Task Drop<T>(T dbObjet) where T : DatabaseObject
-        {
-            await this.Drop<T>(this.CreateConnection(), dbObjet);
-        }
-
-        public abstract Task Drop<T>(DbConnection dbConnection, T dbObjet) where T : DatabaseObject;
-
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedObjectName(table);
@@ -618,7 +648,17 @@ namespace DatabaseInterpreter.Core
                         {
                             if (this.Option.TreatBytesAsNullForReading)
                             {
-                                value = null;
+                                if (!(((Byte[])value).Length == 16) && this.DatabaseType == DatabaseType.Oracle)
+                                {
+                                    value = null;
+
+                                    if (dataTable.Columns[i].ReadOnly)
+                                    {
+                                        dataTable.Columns[i].ReadOnly = false;
+                                    }                                  
+
+                                    row[i] = null;
+                                }                                   
                             }
                         }
 

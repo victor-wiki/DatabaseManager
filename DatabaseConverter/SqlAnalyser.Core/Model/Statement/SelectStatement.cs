@@ -37,7 +37,7 @@ namespace SqlAnalyser.Model
         public TokenInfo Alias { get; set; }
         public SelectStatement SubSelectStatement { get; set; }
         public List<JoinItem> JoinItems { get; set; } = new List<JoinItem>();
-    } 
+    }
 
     public class JoinItem
     {
@@ -52,6 +52,8 @@ namespace SqlAnalyser.Model
         LEFT = 1,
         RIGHT = 2,
         FULL = 3,
-        CROSS = 4
+        CROSS = 4,
+        PIVOT = 5,
+        UNPIVOT = 6
     }
 }

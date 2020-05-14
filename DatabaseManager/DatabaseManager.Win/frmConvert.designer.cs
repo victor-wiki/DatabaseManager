@@ -42,6 +42,7 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
             this.gbOption = new System.Windows.Forms.GroupBox();
+            this.chkOnlyCommentComputeExpression = new System.Windows.Forms.CheckBox();
             this.chkComputeColumn = new System.Windows.Forms.CheckBox();
             this.chkSkipScriptError = new System.Windows.Forms.CheckBox();
             this.chkUseTransaction = new System.Windows.Forms.CheckBox();
@@ -63,7 +64,7 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
-            this.chkOnlyCommentComputeExpression = new System.Windows.Forms.CheckBox();
+            this.chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -106,7 +107,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 80);
+            this.txtMessage.Size = new System.Drawing.Size(731, 86);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);
@@ -135,8 +136,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.btnSaveMessage);
             this.splitContainer1.Panel2.Controls.Add(this.txtMessage);
             this.splitContainer1.Panel2.Controls.Add(this.btnCopyMessage);
-            this.splitContainer1.Size = new System.Drawing.Size(770, 517);
-            this.splitContainer1.SplitterDistance = 432;
+            this.splitContainer1.Size = new System.Drawing.Size(770, 542);
+            this.splitContainer1.SplitterDistance = 452;
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 21;
             // 
@@ -146,7 +147,7 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.tvDbObjects.Location = new System.Drawing.Point(11, 58);
             this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(269, 339);
+            this.tvDbObjects.Size = new System.Drawing.Size(269, 359);
             this.tvDbObjects.TabIndex = 38;
             // 
             // targetDbProfile
@@ -189,7 +190,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.Enabled = false;
-            this.btnCancel.Location = new System.Drawing.Point(415, 403);
+            this.btnCancel.Location = new System.Drawing.Point(415, 423);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 22;
@@ -201,7 +202,7 @@
             // 
             this.btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnExecute.Enabled = false;
-            this.btnExecute.Location = new System.Drawing.Point(318, 403);
+            this.btnExecute.Location = new System.Drawing.Point(318, 423);
             this.btnExecute.Name = "btnExecute";
             this.btnExecute.Size = new System.Drawing.Size(75, 23);
             this.btnExecute.TabIndex = 21;
@@ -214,6 +215,7 @@
             this.gbOption.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbOption.Controls.Add(this.chkTreatBytesAsNull);
             this.gbOption.Controls.Add(this.chkOnlyCommentComputeExpression);
             this.gbOption.Controls.Add(this.chkComputeColumn);
             this.gbOption.Controls.Add(this.chkSkipScriptError);
@@ -234,17 +236,28 @@
             this.gbOption.Controls.Add(this.chkOutputScripts);
             this.gbOption.Location = new System.Drawing.Point(286, 54);
             this.gbOption.Name = "gbOption";
-            this.gbOption.Size = new System.Drawing.Size(475, 343);
+            this.gbOption.Size = new System.Drawing.Size(475, 363);
             this.gbOption.TabIndex = 20;
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
+            // 
+            // chkOnlyCommentComputeExpression
+            // 
+            this.chkOnlyCommentComputeExpression.AutoSize = true;
+            this.chkOnlyCommentComputeExpression.Enabled = false;
+            this.chkOnlyCommentComputeExpression.Location = new System.Drawing.Point(250, 203);
+            this.chkOnlyCommentComputeExpression.Name = "chkOnlyCommentComputeExpression";
+            this.chkOnlyCommentComputeExpression.Size = new System.Drawing.Size(222, 16);
+            this.chkOnlyCommentComputeExpression.TabIndex = 22;
+            this.chkOnlyCommentComputeExpression.Text = "Only comment expression in script";
+            this.chkOnlyCommentComputeExpression.UseVisualStyleBackColor = true;
             // 
             // chkComputeColumn
             // 
             this.chkComputeColumn.AutoSize = true;
             this.chkComputeColumn.Checked = true;
             this.chkComputeColumn.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkComputeColumn.Location = new System.Drawing.Point(8, 185);
+            this.chkComputeColumn.Location = new System.Drawing.Point(8, 203);
             this.chkComputeColumn.Name = "chkComputeColumn";
             this.chkComputeColumn.Size = new System.Drawing.Size(234, 16);
             this.chkComputeColumn.TabIndex = 18;
@@ -255,7 +268,7 @@
             // chkSkipScriptError
             // 
             this.chkSkipScriptError.AutoSize = true;
-            this.chkSkipScriptError.Location = new System.Drawing.Point(8, 236);
+            this.chkSkipScriptError.Location = new System.Drawing.Point(8, 254);
             this.chkSkipScriptError.Name = "chkSkipScriptError";
             this.chkSkipScriptError.Size = new System.Drawing.Size(336, 16);
             this.chkSkipScriptError.TabIndex = 17;
@@ -289,7 +302,7 @@
             // chkGenerateIdentity
             // 
             this.chkGenerateIdentity.AutoSize = true;
-            this.chkGenerateIdentity.Location = new System.Drawing.Point(8, 208);
+            this.chkGenerateIdentity.Location = new System.Drawing.Point(8, 226);
             this.chkGenerateIdentity.Name = "chkGenerateIdentity";
             this.chkGenerateIdentity.Size = new System.Drawing.Size(126, 16);
             this.chkGenerateIdentity.TabIndex = 14;
@@ -299,7 +312,7 @@
             // chkPickup
             // 
             this.chkPickup.AutoSize = true;
-            this.chkPickup.Location = new System.Drawing.Point(8, 162);
+            this.chkPickup.Location = new System.Drawing.Point(8, 180);
             this.chkPickup.Name = "chkPickup";
             this.chkPickup.Size = new System.Drawing.Size(294, 16);
             this.chkPickup.TabIndex = 13;
@@ -349,7 +362,7 @@
             // chkGenerateSourceScripts
             // 
             this.chkGenerateSourceScripts.AutoSize = true;
-            this.chkGenerateSourceScripts.Location = new System.Drawing.Point(8, 292);
+            this.chkGenerateSourceScripts.Location = new System.Drawing.Point(8, 310);
             this.chkGenerateSourceScripts.Name = "chkGenerateSourceScripts";
             this.chkGenerateSourceScripts.Size = new System.Drawing.Size(270, 16);
             this.chkGenerateSourceScripts.TabIndex = 8;
@@ -371,7 +384,7 @@
             // lblOutputFolder
             // 
             this.lblOutputFolder.AutoSize = true;
-            this.lblOutputFolder.Location = new System.Drawing.Point(8, 321);
+            this.lblOutputFolder.Location = new System.Drawing.Point(8, 339);
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(137, 12);
             this.lblOutputFolder.TabIndex = 6;
@@ -379,7 +392,7 @@
             // 
             // btnOutputFolder
             // 
-            this.btnOutputFolder.Location = new System.Drawing.Point(397, 317);
+            this.btnOutputFolder.Location = new System.Drawing.Point(397, 335);
             this.btnOutputFolder.Name = "btnOutputFolder";
             this.btnOutputFolder.Size = new System.Drawing.Size(36, 23);
             this.btnOutputFolder.TabIndex = 4;
@@ -389,7 +402,7 @@
             // 
             // txtOutputFolder
             // 
-            this.txtOutputFolder.Location = new System.Drawing.Point(154, 318);
+            this.txtOutputFolder.Location = new System.Drawing.Point(154, 336);
             this.txtOutputFolder.Name = "txtOutputFolder";
             this.txtOutputFolder.Size = new System.Drawing.Size(238, 21);
             this.txtOutputFolder.TabIndex = 3;
@@ -406,7 +419,7 @@
             // chkOutputScripts
             // 
             this.chkOutputScripts.AutoSize = true;
-            this.chkOutputScripts.Location = new System.Drawing.Point(8, 263);
+            this.chkOutputScripts.Location = new System.Drawing.Point(8, 281);
             this.chkOutputScripts.Name = "chkOutputScripts";
             this.chkOutputScripts.Size = new System.Drawing.Size(156, 16);
             this.chkOutputScripts.TabIndex = 0;
@@ -427,22 +440,21 @@
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
-            // chkOnlyCommentComputeExpression
+            // chkTreatBytesAsNull
             // 
-            this.chkOnlyCommentComputeExpression.AutoSize = true;
-            this.chkOnlyCommentComputeExpression.Enabled = false;
-            this.chkOnlyCommentComputeExpression.Location = new System.Drawing.Point(250, 185);
-            this.chkOnlyCommentComputeExpression.Name = "chkOnlyCommentComputeExpression";
-            this.chkOnlyCommentComputeExpression.Size = new System.Drawing.Size(222, 16);
-            this.chkOnlyCommentComputeExpression.TabIndex = 22;
-            this.chkOnlyCommentComputeExpression.Text = "Only comment expression in script";
-            this.chkOnlyCommentComputeExpression.UseVisualStyleBackColor = true;
+            this.chkTreatBytesAsNull.AutoSize = true;
+            this.chkTreatBytesAsNull.Location = new System.Drawing.Point(8, 155);
+            this.chkTreatBytesAsNull.Name = "chkTreatBytesAsNull";
+            this.chkTreatBytesAsNull.Size = new System.Drawing.Size(276, 16);
+            this.chkTreatBytesAsNull.TabIndex = 55;
+            this.chkTreatBytesAsNull.Text = "Treat bytes data as null for data transfer";
+            this.chkTreatBytesAsNull.UseVisualStyleBackColor = true;
             // 
             // frmConvert
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(771, 524);
+            this.ClientSize = new System.Drawing.Size(771, 549);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmConvert";
@@ -496,6 +508,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCopySelection;
         private System.Windows.Forms.CheckBox chkComputeColumn;
         private System.Windows.Forms.CheckBox chkOnlyCommentComputeExpression;
+        private System.Windows.Forms.CheckBox chkTreatBytesAsNull;
     }
 }
 

@@ -13,8 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseConverter.Core
-{
-    public delegate void FeedbackHandler(FeedbackInfo info);
+{   
     public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result);
 
     public class DbConverter : IDisposable

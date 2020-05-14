@@ -18,7 +18,8 @@ namespace DatabaseInterpreter.Core
         public override char QuotationLeftChar { get { return '`'; } }
         public override char QuotationRightChar { get { return '`'; } }
         public override string CommentString => "#";
-        public override DatabaseType DatabaseType { get { return DatabaseType.MySql; } }      
+        public override DatabaseType DatabaseType => DatabaseType.MySql;
+        public override IndexType IndexType => IndexType.Normal | IndexType.FullText | IndexType.Primary;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
 
@@ -63,9 +64,11 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Owner
-        public override Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        public override async Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
         {
-            return Task.Run(()=> new List<DatabaseOwner>() { new DatabaseOwner() { Name = this.ConnectionInfo.Database, Owner = this.ConnectionInfo.Database } });
+            List<Database> databases = await this.GetDatabasesAsync();
+
+            return databases.Select(item => new DatabaseOwner() { Owner = item.Owner, Name = item.Name, Order = item.Order }).ToList();
         }
         #endregion
 
@@ -198,24 +201,29 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Primary Key
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(filter));
+            return base.GetDbObjectsAsync<TablePrimaryKeyItem>(this.GetSqlForTablePrimaryKeyItems(filter));
         }
 
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(filter));
+            return base.GetDbObjectsAsync<TablePrimaryKeyItem>(dbConnection, this.GetSqlForTablePrimaryKeyItems(filter));
         }
 
-        private string GetSqlForTablePrimaryKeys(SchemaInfoFilter filter = null)
+        private string GetSqlForTablePrimaryKeyItems(SchemaInfoFilter filter = null)
         {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.`STATISTICS` AS S ON K.`TABLE_SCHEMA`=S.`TABLE_SCHEMA` AND K.`TABLE_NAME`=S.`TABLE_NAME` AND K.`CONSTRAINT_NAME`=S.`INDEX_NAME`";
+
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
 
             string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
-                            K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`
+                            K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`{commentColumn}
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
                         JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
+                        {commentJoin}
                         WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
                         AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
@@ -230,25 +238,30 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
         }
 
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
         }
 
-        private string GetSqlForTableForeignKeys(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
         {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.`STATISTICS` AS S ON K.`TABLE_SCHEMA`=S.`TABLE_SCHEMA` AND K.`TABLE_NAME`=S.`TABLE_NAME` AND K.`CONSTRAINT_NAME`=S.`INDEX_NAME`";
+
             string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
                         CASE RC.UPDATE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS `UpdateCascade`, 
-                        CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`
+                        CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`{commentColumn}
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
                         JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
                         JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC ON RC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND RC.CONSTRAINT_NAME=C.CONSTRAINT_NAME AND C.TABLE_NAME=RC.TABLE_NAME                        
+                        {commentJoin}
                         WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
                         AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
 
@@ -263,28 +276,32 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Index
-        public override Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableIndexItem>> GetTableIndexItemsAsync(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(filter));
+            return base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForTableIndexItems(filter, includePrimaryKey));
         }
 
-        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableIndexItem>> GetTableIndexItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(filter));
+            return base.GetDbObjectsAsync<TableIndexItem>(dbConnection, this.GetSqlForTableIndexItems(filter, includePrimaryKey));
         }
 
-        private string GetSqlForTableIndexes(SchemaInfoFilter filter = null)
+        private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";          
+
             string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,
 	                        TABLE_NAME AS `TableName`,
 	                        INDEX_NAME AS `Name`,
 	                        COLUMN_NAME AS `ColumnName`,
+                            CASE INDEX_NAME WHEN 'PRIMARY' THEN 1 ELSE 0 END AS `IsPrimary`,
 	                        CASE  NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
                             INDEX_TYPE AS `Type`,
 	                        SEQ_IN_INDEX  AS `Order`,    
-	                        0 AS `IsDesc`
-	                        FROM INFORMATION_SCHEMA.STATISTICS 
-	                        WHERE INDEX_NAME NOT IN('PRIMARY', 'FOREIGN')
+	                        0 AS `IsDesc`{commentColumn}
+	                        FROM INFORMATION_SCHEMA.STATISTICS                           
+	                        WHERE INDEX_NAME NOT IN({(includePrimaryKey ? "" : "'PRIMARY',")} 'FOREIGN')                          
 	                        AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
@@ -423,7 +440,7 @@ namespace DatabaseInterpreter.Core
         {
             Table table = new Table() { Name = column.TableName, Owner = column.Owner };
             await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {this.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}", false);
-        }       
+        }
 
         public override async Task SetConstrainsEnabled(bool enabled)
         {
@@ -439,43 +456,6 @@ namespace DatabaseInterpreter.Core
         {
             return $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";
         }
-
-        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
-        {
-            string sql = "";
-
-            if (dbObjet is TablePrimaryKey)
-            {
-                TablePrimaryKey primaryKey = dbObjet as TablePrimaryKey;
-
-                sql = $"ALTER TABLE {this.GetQuotedString(primaryKey.Owner)}.{this.GetQuotedString(primaryKey.TableName)} DROP PRIMARY KEY;";
-            }
-            if (dbObjet is TableForeignKey)
-            {
-                TableForeignKey foreignKey = dbObjet as TableForeignKey;
-
-                sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreignKey.TableName)} DROP FOREIGN KEY {this.GetQuotedString(foreignKey.Name)};";
-            }
-            else if (dbObjet is TableIndex)
-            {
-                TableIndex index = dbObjet as TableIndex;
-
-                sql = $"ALTER TABLE {index.Owner}.{this.GetQuotedString(index.TableName)} DROP INDEX {this.GetQuotedString(index.Name)};";
-            }
-            else
-            {
-                string typeName = dbObjet.GetType().Name;
-
-                if (typeName == nameof(TableTrigger))
-                {
-                    typeName = "TRIGGER";
-                }
-
-                sql = $"DROP { typeName } IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
-            }
-
-            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }       
         #endregion
 
         #region BulkCopy
@@ -623,8 +603,8 @@ namespace DatabaseInterpreter.Core
             {
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
-                string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"comment '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
-                string defaultValueClause = string.IsNullOrEmpty(column.DefaultValue) ? "" : " DEFAULT " + this.GetColumnDefaultValue(column);
+                string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {scriptComment}{commentClause}";
@@ -637,7 +617,7 @@ namespace DatabaseInterpreter.Core
 
             string dataLength = this.GetColumnDataLength(column);
 
-            if(!string.IsNullOrEmpty(dataLength))
+            if (!string.IsNullOrEmpty(dataLength))
             {
                 dataType += $"({dataLength})";
             }
@@ -648,23 +628,35 @@ namespace DatabaseInterpreter.Core
         public override string GetColumnDataLength(TableColumn column)
         {
             string dataType = column.DataType;
-            string dataLength=string.Empty;
+            string dataLength = string.Empty;
 
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
             bool isChar = DataTypeHelper.IsCharType(dataType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataType);
 
-            if (string.IsNullOrEmpty(dataTypeInfo.Args))
+            DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataTypeInfo.DataType);
+
+            if (dataTypeSpec != null)
             {
-                if (isChar || isBinary)
+                if(!string.IsNullOrEmpty(dataTypeSpec.Args))
                 {
-                    dataLength = column.MaxLength.ToString();
-                }
-                else if (!this.IsNoLengthDataType(dataType))
-                {
-                    dataLength = this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
-                }
-            }
+                    if (string.IsNullOrEmpty(dataTypeInfo.Args))
+                    {
+                        if (isChar || isBinary)
+                        {
+                            dataLength = column.MaxLength.ToString();
+                        }
+                        else if (!this.IsNoLengthDataType(dataType))
+                        {
+                            dataLength = this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
+                        }
+                    }
+                    else
+                    {
+                        dataLength = dataTypeInfo.Args;
+                    }
+                }               
+            }           
 
             return dataLength;
         }

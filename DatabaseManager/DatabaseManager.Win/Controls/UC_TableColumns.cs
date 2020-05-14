@@ -20,8 +20,11 @@ namespace DatabaseManager.Controls
         private Rectangle dragBoxFromMouseDown;
         private int rowIndexFromMouseDown;
         private int rowIndexOfItemUnderMouseToDrop;
+        private bool defaultNullable = false;
         private IEnumerable<DataTypeSpecification> dataTypeSpecifications;
         public DatabaseType DatabaseType { get; set; }
+
+        public GeneateChangeScriptsHandler OnGenerateChangeScripts;
 
         public UC_TableColumns()
         {
@@ -44,7 +47,12 @@ namespace DatabaseManager.Controls
             {
                 if (row.Tag == null)
                 {
-                    row.Tag = new TableColumnDesingerInfo();
+                    if (row.IsNewRow)
+                    {
+                        row.Cells[this.colNullable.Name].Value = this.defaultNullable;
+                    }
+
+                    row.Tag = new TableColumnDesingerInfo() { IsNullable = this.defaultNullable };
                 }
 
                 string columnName = row.Cells[nameof(colColumnName)].Value?.ToString();
@@ -56,7 +64,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        public void LoadColumns(Table table, IEnumerable<TableColumnDesingerInfo> columns, IEnumerable<TablePrimaryKey> primaryKeys)
+        public void LoadColumns(Table table, IEnumerable<TableColumnDesingerInfo> columns)
         {
             this.dgvColumns.Rows.Clear();
 
@@ -66,20 +74,18 @@ namespace DatabaseManager.Controls
 
                 DataGridViewRow row = this.dgvColumns.Rows[rowIndex];
 
-                bool isPrimary = primaryKeys.Any(item => item.ColumnName == column.Name);
-
                 row.Cells[this.colColumnName.Name].Value = column.Name;
                 row.Cells[this.colDataType.Name].Value = column.DataType;
                 row.Cells[this.colLength.Name].Value = column.Length;
                 row.Cells[this.colNullable.Name].Value = column.IsNullable;
                 row.Cells[this.colIdentity.Name].Value = column.IsIdentity;
                 row.Cells[this.colPrimary.Name].Value = column.IsPrimary;
-                row.Cells[this.colDefaultValue.Name].Value = column.DefaultValue?.Trim('(', ')');
-                row.Cells[this.colComment.Name].Value = column.Comment;               
+                row.Cells[this.colDefaultValue.Name].Value = ValueHelper.GetTrimedDefaultValue(column.DefaultValue);
+                row.Cells[this.colComment.Name].Value = column.Comment;
 
-                row.Tag = colLength;
+                row.Tag = column;
 
-                TableColumnExtraPropertyInfo extraPropertyInfo = new TableColumnExtraPropertyInfo();              
+                TableColumnExtraPropertyInfo extraPropertyInfo = new TableColumnExtraPropertyInfo();
 
                 if (column.IsComputed)
                 {
@@ -92,6 +98,9 @@ namespace DatabaseManager.Controls
                     extraPropertyInfo.Increment = table.IdentityIncrement.Value;
                 }
             }
+
+            this.AutoSizeColumns();
+            this.dgvColumns.ClearSelection();
         }
 
         public void OnSaved()
@@ -100,14 +109,11 @@ namespace DatabaseManager.Controls
             {
                 DataGridViewRow row = this.dgvColumns.Rows[i];
 
-                if(!row.IsNewRow)
-                {
-                    TableColumnDesingerInfo columnDesingerInfo = row.Tag as TableColumnDesingerInfo;
+                TableColumnDesingerInfo columnDesingerInfo = row.Tag as TableColumnDesingerInfo;
 
-                    if(columnDesingerInfo!=null)
-                    {
-                        columnDesingerInfo.OldName = columnDesingerInfo.Name;
-                    }
+                if (columnDesingerInfo != null && !string.IsNullOrEmpty(columnDesingerInfo.Name))
+                {
+                    columnDesingerInfo.OldName = columnDesingerInfo.Name;
                 }
             }
         }
@@ -125,6 +131,7 @@ namespace DatabaseManager.Controls
         public void EndEdit()
         {
             this.dgvColumns.EndEdit();
+            this.dgvColumns.CurrentCell = null;
         }
 
         public List<TableColumnDesingerInfo> GetColumns()
@@ -134,56 +141,50 @@ namespace DatabaseManager.Controls
             int order = 1;
             foreach (DataGridViewRow row in this.dgvColumns.Rows)
             {
-                if (row.IsNewRow)
-                {
-                    break;
-                }
-
                 TableColumnDesingerInfo col = new TableColumnDesingerInfo() { Order = order };
 
-                string colName = row.Cells["colColumnName"].Value?.ToString();
+                string colName = row.Cells[this.colColumnName.Name].Value?.ToString();
 
-                col.Name = colName;
-                col.DataType = this.GetCellStringValue(row, this.colDataType.Name);
-                col.Length = this.GetCellStringValue(row, this.colLength.Name);
-                col.IsNullable = this.GetCellBoolValue(row, this.colNullable.Name);
-                col.IsPrimary = this.GetCellBoolValue(row, this.colPrimary.Name);
-                col.IsIdentity = this.GetCellBoolValue(row, this.colIdentity.Name);
-                col.DefaultValue = this.GetCellStringValue(row, this.colDefaultValue.Name);
-                col.Comment = this.GetCellStringValue(row, this.colComment.Name);
-                col.ExtraPropertyInfo = (row.Tag as TableColumnDesingerInfo)?.ExtraPropertyInfo;
+                if (!string.IsNullOrEmpty(colName))
+                {
+                    TableColumnDesingerInfo tag = row.Tag as TableColumnDesingerInfo;
 
-                columnDesingerInfos.Add(col);
+                    col.OldName = tag?.OldName;
+                    col.Name = colName;
+                    col.DataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
+                    col.Length = DataGridViewHelper.GetCellStringValue(row, this.colLength.Name);
+                    col.IsNullable = DataGridViewHelper.GetCellBoolValue(row, this.colNullable.Name);
+                    col.IsPrimary = DataGridViewHelper.GetCellBoolValue(row, this.colPrimary.Name);
+                    col.IsIdentity = DataGridViewHelper.GetCellBoolValue(row, this.colIdentity.Name);
+                    col.DefaultValue = DataGridViewHelper.GetCellStringValue(row, this.colDefaultValue.Name);
+                    col.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
+                    col.ExtraPropertyInfo = tag?.ExtraPropertyInfo;
 
-                order++;
+                    row.Tag = col;
+
+                    columnDesingerInfos.Add(col);
+
+                    order++;
+                }
             }
 
             return columnDesingerInfos;
         }
 
-        private string GetCellStringValue(DataGridViewRow row, string columnName)
-        {
-            return row.Cells[columnName].Value?.ToString()?.Trim();
-        }
-
-        private bool GetCellBoolValue(DataGridViewRow row, string columnName)
-        {
-            return this.IsTrueValue(row.Cells[columnName].Value);
-        }
-
-        private bool IsTrueValue(object value)
-        {
-            return value?.ToString() == "True";
-        }
-
         private void UC_TableColumns_SizeChanged(object sender, EventArgs e)
         {
-            DataGridViewHelper.AutoSizeColumn(this.dgvColumns, colComment);
+            this.AutoSizeColumns();
+        }
+
+        private void AutoSizeColumns()
+        {
+            DataGridViewHelper.AutoSizeLastColumn(this.dgvColumns);
         }
 
         private void dgvColumns_UserAddedRow(object sender, DataGridViewRowEventArgs e)
         {
-            e.Row.Tag = new TableColumnDesingerInfo();
+            e.Row.Cells[this.colNullable.Name].Value = this.defaultNullable;
+            e.Row.Tag = new TableColumnDesingerInfo() { IsNullable = defaultNullable };
 
             DataGridViewHelper.SetRowColumnsReadOnly(this.dgvColumns, e.Row, true, this.colColumnName);
         }
@@ -211,14 +212,14 @@ namespace DatabaseManager.Controls
                     DataGridViewCell primaryCell = row.Cells[this.colPrimary.Name];
                     DataGridViewCell nullableCell = row.Cells[this.colNullable.Name];
 
-                    if (this.IsTrueValue(primaryCell.Value) && this.IsTrueValue(nullableCell.Value))
+                    if (DataGridViewHelper.IsTrueValue(primaryCell.Value) && DataGridViewHelper.IsTrueValue(nullableCell.Value))
                     {
                         nullableCell.Value = false;
                     }
                 }
                 else if (e.ColumnIndex == this.colIdentity.Index)
                 {
-                    if (this.IsTrueValue(cell.Value))
+                    if (DataGridViewHelper.IsTrueValue(cell.Value))
                     {
                         foreach (DataGridViewRow r in this.dgvColumns.Rows)
                         {
@@ -240,7 +241,7 @@ namespace DatabaseManager.Controls
             DataGridViewCell primaryCell = row.Cells[this.colPrimary.Name];
             DataGridViewCell identityCell = row.Cells[this.colIdentity.Name];
 
-            string dataType = this.GetCellStringValue(row, this.colDataType.Name);
+            string dataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
 
             if (!string.IsNullOrEmpty(dataType))
             {
@@ -292,12 +293,10 @@ namespace DatabaseManager.Controls
 
         private void ShowColumnExtraPropertites()
         {
-            var selectedRows = this.dgvColumns.SelectedRows.OfType<DataGridViewRow>();
+            var row = DataGridViewHelper.GetSelectedRow(this.dgvColumns);
 
-            if (selectedRows.Count() > 0)
+            if (row != null)
             {
-                DataGridViewRow row = selectedRows.FirstOrDefault();
-
                 TableColumnDesingerInfo column = row.Tag as TableColumnDesingerInfo;
 
                 if (column == null)
@@ -316,7 +315,7 @@ namespace DatabaseManager.Controls
 
                 DataGridViewCell identityCell = row.Cells[this.colIdentity.Name];
 
-                if (!this.IsTrueValue(identityCell.Value))
+                if (!DataGridViewHelper.IsTrueValue(identityCell.Value))
                 {
                     this.columnPropertites.HiddenProperties = new string[] { nameof(extralProperty.Seed), nameof(extralProperty.Increment) };
                 }
@@ -371,7 +370,7 @@ namespace DatabaseManager.Controls
                     this.dgvColumns.Rows.RemoveAt(rowIndexFromMouseDown);
                     this.dgvColumns.Rows.Insert(rowIndexOfItemUnderMouseToDrop, rowToMove);
 
-                    string columnName = this.GetCellStringValue(rowToMove, this.colColumnName.Name);
+                    string columnName = DataGridViewHelper.GetCellStringValue(rowToMove, this.colColumnName.Name);
 
                     DataGridViewHelper.SetRowColumnsReadOnly(this.dgvColumns, rowToMove, string.IsNullOrEmpty(columnName), this.colColumnName);
                     this.SetColumnCellsReadonly(rowToMove);
@@ -440,9 +439,16 @@ namespace DatabaseManager.Controls
             {
                 DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvColumns);
 
-                bool isNewRow = row != null && row.IsNewRow;
+                if (row != null)
+                {
+                    bool isEmptyNewRow = row.IsNewRow && DataGridViewHelper.IsEmptyRow(row);
 
-                this.tsmiDeleteColumn.Enabled = !isNewRow;
+                    this.tsmiDeleteColumn.Enabled = !isEmptyNewRow;
+                }
+                else
+                {
+                    this.tsmiDeleteColumn.Enabled = false;
+                }
 
                 this.contextMenuStrip1.Show(this.dgvColumns, e.Location);
             }
@@ -471,6 +477,20 @@ namespace DatabaseManager.Controls
             this.dgvColumns.EndEdit();
             this.dgvColumns.CurrentCell = null;
             this.dgvColumns.Rows[e.RowIndex].Selected = true;
+        }
+
+        private void dgvColumns_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            this.AutoSizeColumns();
+            this.dgvColumns.ClearSelection();
+        }
+
+        private void tsmiGenerateChangeScripts_Click(object sender, EventArgs e)
+        {
+            if (this.OnGenerateChangeScripts != null)
+            {
+                this.OnGenerateChangeScripts();
+            }
         }
     }
 }

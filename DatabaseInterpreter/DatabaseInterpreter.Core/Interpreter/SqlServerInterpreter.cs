@@ -16,7 +16,8 @@ namespace DatabaseInterpreter.Core
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '['; } }
         public override char QuotationRightChar { get { return ']'; } }
-        public override DatabaseType DatabaseType { get { return DatabaseType.SqlServer; } }
+        public override DatabaseType DatabaseType => DatabaseType.SqlServer;
+        public override IndexType IndexType => IndexType.Normal | IndexType.Unique | IndexType.ColumnStore | IndexType.Primary;
         public override bool SupportBulkCopy { get { return true; } }
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
@@ -62,7 +63,7 @@ namespace DatabaseInterpreter.Core
                            where name not in ('guest', 'sys', 'INFORMATION_SCHEMA') and name not like 'db[_]%'";
 
             return base.GetDbObjectsAsync<DatabaseOwner>(sql);
-        } 
+        }
         #endregion
 
         #region User Defined Type 
@@ -240,97 +241,123 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
-        #region Table Primary Key
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(SchemaInfoFilter filter = null)
+        #region Table Primary Key      
+
+        public override Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(this.GetSqlForTablePrimaryKeys(filter));
+            return base.GetDbObjectsAsync<TablePrimaryKeyItem>(this.GetSqlForTablePrimaryKeyItems(filter));
         }
 
-        public override Task<List<TablePrimaryKey>> GetTablePrimaryKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TablePrimaryKey>(dbConnection, this.GetSqlForTablePrimaryKeys(filter));
+            return base.GetDbObjectsAsync<TablePrimaryKeyItem>(dbConnection, this.GetSqlForTablePrimaryKeyItems(filter));
         }
 
-        private string GetSqlForTablePrimaryKeys(SchemaInfoFilter filter = null)
+        private string GetSqlForTablePrimaryKeyItems(SchemaInfoFilter filter = null)
         {
-            string sql = @"SELECT schema_name(T.schema_id) AS [Owner], object_name(IC.object_id) AS TableName,I.name AS [Name], 
-                           C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc],
-                           CASE I.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]
-                         FROM sys.index_columns IC
-                         JOIN sys.columns C ON IC.object_id=C.object_id AND IC.column_id=C.column_id						
-                         JOIN sys.indexes I ON IC.object_id=I.object_id AND IC.index_id=I.index_id
-                         JOIN sys.tables T ON C.object_id=T.object_id
-                         WHERE I.is_primary_key=1";
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+
+            string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(i.name, 'PK')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
+
+            string sql = $@"SELECT schema_name(t.schema_id) AS [Owner], t.name AS [TableName],i.name AS [Name], 
+                           c.name AS [ColumnName], ic.key_ordinal AS [Order],ic.is_descending_key AS [IsDesc],
+                           CASE i.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]{commentColumn}
+                         FROM sys.index_columns ic
+                         JOIN sys.columns c ON ic.object_id=c.object_id AND ic.column_id=c.column_id						
+                         JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
+                         JOIN sys.tables t ON c.object_id=t.object_id
+                         {commentJoin}
+                         WHERE i.is_primary_key=1";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
+                sql += $" AND t.name IN ({ strTableNames })";
             }
 
             return sql;
         }
         #endregion
 
-        #region Table Foreign Key
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
+        #region Table Foreign Key      
+
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(this.GetSqlForTableForeignKeys(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
         }
 
-        public override Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableForeignKey>(dbConnection, this.GetSqlForTableForeignKeys(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
         }
 
-        private string GetSqlForTableForeignKeys(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
         {
-            string sql = @"SELECT schema_name(T.schema_id) AS [Owner],object_name(FK.parent_object_id) AS TableName,FK.name AS [Name],C.name AS [ColumnName],
-                         object_name(FKC.referenced_object_id) AS [ReferencedTableName],RC.name AS [ReferencedColumnName],
-                         FK.update_referential_action AS [UpdateCascade],FK.delete_referential_action AS [DeleteCascade]
-                         FROM sys.foreign_keys FK
-                         JOIN sys.foreign_key_columns FKC ON FK.object_id=FKC.constraint_object_id
-                         JOIN sys.columns C ON FK.parent_object_id=C.object_id AND  FKC.parent_column_id=C.column_id
-                         JOIN sys.columns RC ON FKC.referenced_object_id= RC.object_id AND RC.column_id=FKC.referenced_column_id
-                         JOIN sys.tables T ON C.object_id=T.object_id
-                         JOIN sys.tables RT ON RC.object_id=RT.object_id
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(fk.name, 'F')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
+
+            string sql = $@"SELECT schema_name(t.schema_id) AS [Owner],object_name(fk.parent_object_id) AS TableName,fk.name AS [Name],c.name AS [ColumnName],
+                         object_name(fck.referenced_object_id) AS [ReferencedTableName],rc.name AS [ReferencedColumnName],
+                         fk.update_referential_action AS [UpdateCascade],fk.delete_referential_action AS [DeleteCascade]{commentColumn}
+                         FROM sys.foreign_keys fk
+                         JOIN sys.foreign_key_columns fck ON fk.object_id=fck.constraint_object_id
+                         JOIN sys.columns c ON fk.parent_object_id=c.object_id AND  fck.parent_column_id=c.column_id
+                         JOIN sys.columns rc ON fck.referenced_object_id= rc.object_id AND rc.column_id=fck.referenced_column_id
+                         JOIN sys.tables t ON c.object_id=t.object_id
+                         JOIN sys.tables rt ON rc.object_id=rt.object_id
+                         {commentJoin}
                          WHERE 1=1";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND object_name(FK.parent_object_id) IN ({ strTableNames })";
+                sql += $" AND object_name(fk.parent_object_id) IN ({ strTableNames })";
             }
 
             return sql;
         }
         #endregion
 
-        #region Table Index
-        public override Task<List<TableIndex>> GetTableIndexesAsync(SchemaInfoFilter filter = null)
+        #region Table Index       
+
+        public override Task<List<TableIndexItem>> GetTableIndexItemsAsync(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            return base.GetDbObjectsAsync<TableIndex>(this.GetSqlForTableIndexes(filter));
+            return base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForTableIndexItems(filter, includePrimaryKey));
         }
 
-        public override Task<List<TableIndex>> GetTableIndexesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableIndexItem>> GetTableIndexItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            return base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForTableIndexes(filter));
+            return base.GetDbObjectsAsync<TableIndexItem>(dbConnection, this.GetSqlForTableIndexItems(filter, includePrimaryKey));
         }
 
-        private string GetSqlForTableIndexes(SchemaInfoFilter filter = null)
+        private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            string sql = @"SELECT schema_name(T.schema_id) AS [Owner],object_name(IC.object_id) AS TableName,I.name AS [Name], 
-                           I.is_unique AS [IsUnique], C.name AS [ColumnName], IC.key_ordinal AS [Order],IC.is_descending_key AS [IsDesc]
-                        FROM sys.index_columns IC
-                        JOIN sys.columns C ON IC.object_id=C.object_id AND IC.column_id=C.column_id
-                        JOIN sys.indexes I ON IC.object_id=I.object_id AND IC.index_id=I.index_id
-                        JOIN sys.tables T ON C.object_id=T.object_id
-                        WHERE I.is_primary_key=0 and I.type_desc<>'XML' AND IC.key_ordinal > 0 ";
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ("," + (includePrimaryKey ? "ISNULL(ext.value,ext2.value)" : "ext.value")) + " AS [Comment]";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext on i.object_id=ext.major_id AND i.index_id= ext.minor_id AND ext.class_desc='INDEX' AND ext.name='MS_Description'";
+
+            if (!isSimpleMode && includePrimaryKey)
+            {
+                commentJoin += Environment.NewLine + " LEFT JOIN sys.extended_properties ext2 on object_id(i.name, 'PK')=ext2.major_id  AND ext2.class_desc='OBJECT_OR_COLUMN' AND ext2.name='MS_Description'";
+            }
+
+            string sql = $@"SELECT schema_name(t.schema_id) AS [Owner],object_name(ic.object_id) AS TableName,i.name AS [Name], 
+                          i.is_primary_key AS [IsPrimary], i.is_unique AS [IsUnique], c.name AS [ColumnName], ic.key_ordinal AS [Order],ic.is_descending_key AS [IsDesc],
+                          CASE i.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]{commentColumn},
+                          CASE WHEN i.is_primary_key=1 THEN 'Primary' WHEN i.is_unique=1 THEN 'Unique' WHEN i.type=6 THEN 'ColumnStore' ELSE 'Normal' END AS [Type]
+                        FROM sys.index_columns ic
+                        JOIN sys.columns c ON ic.object_id=c.object_id AND ic.column_id=c.column_id
+                        JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
+                        JOIN sys.tables t ON c.object_id=t.object_id
+                        {commentJoin}
+                        WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0)) ";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND object_name(IC.object_id) IN ({ strTableNames })";
+                sql += $" AND t.name IN ({ strTableNames })";
             }
 
             return sql;
@@ -392,15 +419,22 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
-            string sql = @"select  schema_name(st.schema_id) AS [Owner], st.name as [TableName], col.name as [ColumnName], chk.name as [Name], chk.definition as [Definition]
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(chk.name, 'C')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
+
+            string sql = $@"select schema_name(t.schema_id) as [Owner], t.name as [TableName], col.name as [ColumnName], chk.name as [Name], 
+                         chk.definition as [Definition] {commentColumn}
                          from sys.check_constraints chk
                          inner join sys.columns col on chk.parent_object_id = col.object_id and col.column_id = chk.parent_column_id
-                         inner join sys.tables st on chk.parent_object_id = st.object_id";
+                         inner join sys.tables t on chk.parent_object_id = t.object_id
+                         {commentJoin}
+                         WHERE 1=1";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND st.name IN ({ strTableNames })";
+                sql += $" AND t.name IN ({ strTableNames })";
             }
 
             return sql;
@@ -471,6 +505,34 @@ namespace DatabaseInterpreter.Core
             return sql;
         }
         #endregion
+
+        #region Table Constraint
+        public Task<List<TableDefaultValueConstraint>> GetTableDefautValueConstraintsAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<TableDefaultValueConstraint>(this.GetSqlForTableDefaultValueConstraints(filter));
+        }
+
+        public Task<List<TableDefaultValueConstraint>> GetTableDefautValueConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<TableDefaultValueConstraint>(dbConnection, this.GetSqlForTableDefaultValueConstraints(filter));
+        }
+
+        private string GetSqlForTableDefaultValueConstraints(SchemaInfoFilter filter = null)
+        {
+            string sql = $@"select schema_name(t.schema_id) as [Owner], t.name as [TableName], col.name as [ColumnName], c.name as [Name]
+                        from sys.default_constraints c
+                        inner join sys.columns col on c.parent_object_id = col.object_id and col.column_id = c.parent_column_id
+                        inner join sys.tables t on c.parent_object_id = t.object_id";
+
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
+            {
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
+                sql += $" AND t.name IN ({ strTableNames })";
+            }
+
+            return sql;
+        }
+        #endregion
         #endregion
 
         #region Database Operation
@@ -509,41 +571,6 @@ namespace DatabaseInterpreter.Core
 
             return sql;
         }
-
-        public override Task Drop<T>(DbConnection dbConnection, T dbObjet)
-        {
-            string sql = "";
-
-            if (dbObjet is TableColumnChild || dbObjet is TableConstraint)
-            {
-                TableChild dbObj = dbObjet as TableChild;
-
-                sql = $"ALTER TABLE {dbObj.Owner}.{this.GetQuotedString(dbObj.TableName)} DROP CONSTRAINT {this.GetQuotedString(dbObj.Name)};";
-            }
-            else if (dbObjet is TableIndex)
-            {
-                TableIndex index = dbObjet as TableIndex;
-
-                sql = $"DROP INDEX {this.GetQuotedString(index.Name)} ON {index.Owner}.{this.GetQuotedString(index.TableName)};";
-            }
-            else
-            {
-                string typeName = dbObjet.GetType().Name;
-
-                if (typeName == nameof(UserDefinedType))
-                {
-                    typeName = "TYPE";
-                }
-                else if (typeName == nameof(TableTrigger))
-                {
-                    typeName = "TRIGGER";
-                }
-
-                sql = $"DROP {typeName} IF EXISTS {this.GetQuotedObjectName(dbObjet)};";
-            }
-
-            return this.ExecuteNonQueryAsync(dbConnection, sql, false);
-        }        
         #endregion
 
         #region BulkCopy
@@ -647,7 +674,7 @@ namespace DatabaseInterpreter.Core
 
                                 if (dataType == "bigint")
                                 {
-                                    columnType = typeof(Int64);                                    
+                                    columnType = typeof(Int64);
                                 }
                                 else if (dataType == "int")
                                 {
@@ -755,6 +782,7 @@ namespace DatabaseInterpreter.Core
 
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
                 string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
+                //string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}{scriptComment}";
@@ -817,6 +845,10 @@ namespace DatabaseInterpreter.Core
                 else if (args == "precision" || args == "scale") //ie. datetime2,datetimeoffset
                 {
                     return column.Scale == null ? "0" : column.Scale.ToString();
+                }
+                else if (args == "length")
+                {
+                    return column.MaxLength == null ? "0" : column.MaxLength.ToString();
                 }
             }
 

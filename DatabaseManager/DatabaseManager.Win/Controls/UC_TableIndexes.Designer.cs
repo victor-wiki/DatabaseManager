@@ -28,14 +28,27 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvIndexes = new System.Windows.Forms.DataGridView();
-            this.colColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colPrimary = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.Type = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.Columns = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiDeleteIndex = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.lbIndexType = new System.Windows.Forms.ListBox();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.indexPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
+            this.colType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.colIndexName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvIndexes)).BeginInit();
+            this.contextMenuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // dgvIndexes
@@ -52,63 +65,151 @@
             this.dgvIndexes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvIndexes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvIndexes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colColumnName,
-            this.colPrimary,
-            this.Type,
-            this.Columns});
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.GradientActiveCaption;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvIndexes.DefaultCellStyle = dataGridViewCellStyle2;
+            this.colType,
+            this.colIndexName,
+            this.colColumns,
+            this.colComment});
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvIndexes.DefaultCellStyle = dataGridViewCellStyle3;
             this.dgvIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvIndexes.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvIndexes.Location = new System.Drawing.Point(0, 0);
             this.dgvIndexes.MultiSelect = false;
             this.dgvIndexes.Name = "dgvIndexes";
+            this.dgvIndexes.RowHeadersWidth = 25;
             this.dgvIndexes.RowTemplate.Height = 23;
             this.dgvIndexes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvIndexes.Size = new System.Drawing.Size(758, 331);
+            this.dgvIndexes.Size = new System.Drawing.Size(758, 280);
             this.dgvIndexes.TabIndex = 8;
+            this.dgvIndexes.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellClick);
+            this.dgvIndexes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellContentClick);
+            this.dgvIndexes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellValueChanged);
+            this.dgvIndexes.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvIndexes_DataError);
+            this.dgvIndexes.RowHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvIndexes_RowHeaderMouseClick);
+            this.dgvIndexes.SelectionChanged += new System.EventHandler(this.dgvIndexes_SelectionChanged);
+            this.dgvIndexes.UserAddedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dgvIndexes_UserAddedRow);
+            this.dgvIndexes.SizeChanged += new System.EventHandler(this.dgvIndexes_SizeChanged);
+            this.dgvIndexes.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvIndexes_KeyDown);
+            this.dgvIndexes.MouseClick += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseClick);
+            this.dgvIndexes.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseUp);
             // 
-            // colColumnName
+            // contextMenuStrip1
             // 
-            this.colColumnName.DataPropertyName = "Name";
-            this.colColumnName.HeaderText = "Name";
-            this.colColumnName.Name = "colColumnName";
-            this.colColumnName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.colColumnName.Width = 200;
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiDeleteIndex,
+            this.tsmiGenerateChangeScripts});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
             // 
-            // colPrimary
+            // tsmiDeleteIndex
             // 
-            this.colPrimary.DataPropertyName = "IsUnique";
-            this.colPrimary.HeaderText = "Unique";
-            this.colPrimary.Name = "colPrimary";
-            this.colPrimary.Width = 60;
+            this.tsmiDeleteIndex.Name = "tsmiDeleteIndex";
+            this.tsmiDeleteIndex.Size = new System.Drawing.Size(228, 22);
+            this.tsmiDeleteIndex.Text = "Delete Index";
+            this.tsmiDeleteIndex.Click += new System.EventHandler(this.tsmiDeleteIndex_Click);
             // 
-            // Type
+            // tsmiGenerateChangeScripts
             // 
-            this.Type.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.Type.HeaderText = "Type";
-            this.Type.Name = "Type";
+            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
+            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
+            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
+            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
             // 
-            // Columns
+            // lbIndexType
             // 
-            this.Columns.HeaderText = "Columns";
-            this.Columns.Name = "Columns";
-            this.Columns.Width = 300;
+            this.lbIndexType.FormattingEnabled = true;
+            this.lbIndexType.ItemHeight = 12;
+            this.lbIndexType.Location = new System.Drawing.Point(3, 170);
+            this.lbIndexType.Name = "lbIndexType";
+            this.lbIndexType.Size = new System.Drawing.Size(120, 88);
+            this.lbIndexType.TabIndex = 10;
+            this.lbIndexType.Visible = false;
+            this.lbIndexType.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lbIndexType_MouseClick);
+            this.lbIndexType.VisibleChanged += new System.EventHandler(this.lbIndexType_VisibleChanged);
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.lbIndexType);
+            this.splitContainer1.Panel1.Controls.Add(this.dgvIndexes);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.indexPropertites);
+            this.splitContainer1.Size = new System.Drawing.Size(758, 331);
+            this.splitContainer1.SplitterDistance = 280;
+            this.splitContainer1.TabIndex = 11;
+            // 
+            // indexPropertites
+            // 
+            this.indexPropertites.BrowsableProperties = null;
+            this.indexPropertites.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.indexPropertites.HelpVisible = false;
+            this.indexPropertites.HiddenAttributes = null;
+            this.indexPropertites.HiddenProperties = null;
+            this.indexPropertites.Location = new System.Drawing.Point(0, 0);
+            this.indexPropertites.Name = "indexPropertites";
+            this.indexPropertites.Size = new System.Drawing.Size(758, 47);
+            this.indexPropertites.TabIndex = 1;
+            // 
+            // colType
+            // 
+            this.colType.DataPropertyName = "Comment";
+            this.colType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.colType.HeaderText = "Type";
+            this.colType.Name = "colType";
+            this.colType.ReadOnly = true;
+            this.colType.Width = 180;
+            // 
+            // colIndexName
+            // 
+            this.colIndexName.DataPropertyName = "Name";
+            this.colIndexName.HeaderText = "Name";
+            this.colIndexName.Name = "colIndexName";
+            this.colIndexName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.colIndexName.Width = 200;
+            // 
+            // colColumns
+            // 
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.colColumns.DefaultCellStyle = dataGridViewCellStyle2;
+            this.colColumns.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.colColumns.HeaderText = "Columns";
+            this.colColumns.Name = "colColumns";
+            this.colColumns.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colColumns.Width = 200;
+            // 
+            // colComment
+            // 
+            this.colComment.HeaderText = "Comment";
+            this.colComment.Name = "colComment";
+            this.colComment.Width = 150;
             // 
             // UC_TableIndexes
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.dgvIndexes);
+            this.Controls.Add(this.splitContainer1);
             this.Name = "UC_TableIndexes";
             this.Size = new System.Drawing.Size(758, 331);
             ((System.ComponentModel.ISupportInitialize)(this.dgvIndexes)).EndInit();
+            this.contextMenuStrip1.ResumeLayout(false);
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -116,9 +217,15 @@
         #endregion
 
         private System.Windows.Forms.DataGridView dgvIndexes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colColumnName;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn colPrimary;
-        private System.Windows.Forms.DataGridViewComboBoxColumn Type;
-        private System.Windows.Forms.DataGridViewButtonColumn Columns;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiDeleteIndex;
+        private System.Windows.Forms.ListBox lbIndexType;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private FilteredPropertyGrid indexPropertites;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colType;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colIndexName;
+        private System.Windows.Forms.DataGridViewButtonColumn colColumns;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colComment;
     }
 }

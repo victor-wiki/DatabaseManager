@@ -36,13 +36,19 @@
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabColumns = new System.Windows.Forms.TabPage();
             this.tabForeignKeys = new System.Windows.Forms.TabPage();
+            this.tabIndexes = new System.Windows.Forms.TabPage();
+            this.tabConstraints = new System.Windows.Forms.TabPage();
             this.dataGridViewComboBoxColumn1 = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.ucColumns = new DatabaseManager.Controls.UC_TableColumns();
             this.cboOwner = new System.Windows.Forms.ComboBox();
-            this.tabIndex = new System.Windows.Forms.TabPage();
-            this.tabConstraint = new System.Windows.Forms.TabPage();
+            this.ucColumns = new DatabaseManager.Controls.UC_TableColumns();
+            this.ucForeignKeys = new DatabaseManager.Controls.UC_TableForeignKeys();
+            this.ucIndexes = new DatabaseManager.Controls.UC_TableIndexes();
+            this.ucConstraints = new DatabaseManager.Controls.UC_TableConstraints();
             this.tabControl1.SuspendLayout();
             this.tabColumns.SuspendLayout();
+            this.tabForeignKeys.SuspendLayout();
+            this.tabIndexes.SuspendLayout();
+            this.tabConstraints.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -95,13 +101,14 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabColumns);
             this.tabControl1.Controls.Add(this.tabForeignKeys);
-            this.tabControl1.Controls.Add(this.tabIndex);
-            this.tabControl1.Controls.Add(this.tabConstraint);
+            this.tabControl1.Controls.Add(this.tabIndexes);
+            this.tabControl1.Controls.Add(this.tabConstraints);
             this.tabControl1.Location = new System.Drawing.Point(6, 63);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(695, 372);
             this.tabControl1.TabIndex = 8;
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
             // tabColumns
             // 
@@ -116,6 +123,7 @@
             // 
             // tabForeignKeys
             // 
+            this.tabForeignKeys.Controls.Add(this.ucForeignKeys);
             this.tabForeignKeys.Location = new System.Drawing.Point(4, 22);
             this.tabForeignKeys.Name = "tabForeignKeys";
             this.tabForeignKeys.Padding = new System.Windows.Forms.Padding(3);
@@ -124,6 +132,26 @@
             this.tabForeignKeys.Text = "Foreign Keys";
             this.tabForeignKeys.UseVisualStyleBackColor = true;
             // 
+            // tabIndexes
+            // 
+            this.tabIndexes.Controls.Add(this.ucIndexes);
+            this.tabIndexes.Location = new System.Drawing.Point(4, 22);
+            this.tabIndexes.Name = "tabIndexes";
+            this.tabIndexes.Size = new System.Drawing.Size(687, 346);
+            this.tabIndexes.TabIndex = 2;
+            this.tabIndexes.Text = "Indexes";
+            this.tabIndexes.UseVisualStyleBackColor = true;
+            // 
+            // tabConstraint
+            // 
+            this.tabConstraints.Controls.Add(this.ucConstraints);
+            this.tabConstraints.Location = new System.Drawing.Point(4, 22);
+            this.tabConstraints.Name = "tabConstraint";
+            this.tabConstraints.Size = new System.Drawing.Size(687, 346);
+            this.tabConstraints.TabIndex = 3;
+            this.tabConstraints.Text = "Constraints";
+            this.tabConstraints.UseVisualStyleBackColor = true;
+            // 
             // dataGridViewComboBoxColumn1
             // 
             this.dataGridViewComboBoxColumn1.DataPropertyName = "DataType";
@@ -131,6 +159,14 @@
             this.dataGridViewComboBoxColumn1.Name = "dataGridViewComboBoxColumn1";
             this.dataGridViewComboBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridViewComboBoxColumn1.Width = 120;
+            // 
+            // cboOwner
+            // 
+            this.cboOwner.FormattingEnabled = true;
+            this.cboOwner.Location = new System.Drawing.Point(562, 5);
+            this.cboOwner.Name = "cboOwner";
+            this.cboOwner.Size = new System.Drawing.Size(132, 20);
+            this.cboOwner.TabIndex = 9;
             // 
             // ucColumns
             // 
@@ -142,31 +178,32 @@
             this.ucColumns.Size = new System.Drawing.Size(681, 340);
             this.ucColumns.TabIndex = 0;
             // 
-            // cboOwner
+            // ucForeignKeys
             // 
-            this.cboOwner.FormattingEnabled = true;
-            this.cboOwner.Location = new System.Drawing.Point(562, 5);
-            this.cboOwner.Name = "cboOwner";
-            this.cboOwner.Size = new System.Drawing.Size(132, 20);
-            this.cboOwner.TabIndex = 9;
+            this.ucForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucForeignKeys.Location = new System.Drawing.Point(3, 3);
+            this.ucForeignKeys.Name = "ucForeignKeys";
+            this.ucForeignKeys.Size = new System.Drawing.Size(681, 340);
+            this.ucForeignKeys.TabIndex = 0;
+            this.ucForeignKeys.Table = null;
             // 
-            // tabIndex
+            // ucIndexes
             // 
-            this.tabIndex.Location = new System.Drawing.Point(4, 22);
-            this.tabIndex.Name = "tabIndex";
-            this.tabIndex.Size = new System.Drawing.Size(687, 346);
-            this.tabIndex.TabIndex = 2;
-            this.tabIndex.Text = "Indexes";
-            this.tabIndex.UseVisualStyleBackColor = true;
+            this.ucIndexes.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucIndexes.Location = new System.Drawing.Point(0, 0);
+            this.ucIndexes.Name = "ucIndexes";
+            this.ucIndexes.Size = new System.Drawing.Size(687, 346);
+            this.ucIndexes.TabIndex = 0;
+            this.ucIndexes.Table = null;
             // 
-            // tabConstraint
+            // ucConstraints
             // 
-            this.tabConstraint.Location = new System.Drawing.Point(4, 22);
-            this.tabConstraint.Name = "tabConstraint";
-            this.tabConstraint.Size = new System.Drawing.Size(687, 346);
-            this.tabConstraint.TabIndex = 3;
-            this.tabConstraint.Text = "Constraints";
-            this.tabConstraint.UseVisualStyleBackColor = true;
+            this.ucConstraints.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucConstraints.Location = new System.Drawing.Point(0, 0);
+            this.ucConstraints.Name = "ucConstraints";
+            this.ucConstraints.Size = new System.Drawing.Size(687, 346);
+            this.ucConstraints.TabIndex = 0;
             // 
             // UC_TableDesigner
             // 
@@ -185,6 +222,9 @@
             this.Load += new System.EventHandler(this.UC_TableDesigner_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabColumns.ResumeLayout(false);
+            this.tabForeignKeys.ResumeLayout(false);
+            this.tabIndexes.ResumeLayout(false);
+            this.tabConstraints.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -202,7 +242,10 @@
         private System.Windows.Forms.TabPage tabColumns;
         private UC_TableColumns ucColumns;
         private System.Windows.Forms.ComboBox cboOwner;
-        private System.Windows.Forms.TabPage tabIndex;
-        private System.Windows.Forms.TabPage tabConstraint;
+        private System.Windows.Forms.TabPage tabIndexes;
+        private System.Windows.Forms.TabPage tabConstraints;
+        private UC_TableIndexes ucIndexes;
+        private UC_TableForeignKeys ucForeignKeys;
+        private UC_TableConstraints ucConstraints;
     }
 }

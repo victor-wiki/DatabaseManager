@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DatabaseManager.Core;
+using DatabaseManager.Helper;
 
 namespace DatabaseManager.Controls
 {
@@ -20,7 +21,7 @@ namespace DatabaseManager.Controls
 
         public void LoadData(DataTable dataTable)
         {
-            this.dgvData.DataSource = dataTable;
+            this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(dataTable);
         }
 
         public void ClearData()

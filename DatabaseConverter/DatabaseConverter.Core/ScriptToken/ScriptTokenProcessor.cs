@@ -177,9 +177,9 @@ namespace DatabaseConverter.Core
                         token.Symbol = this.GetQuotedString(token.Symbol);
                     }
                 }
-                else if(token.Type == TokenType.Alias)
+                else if (token.Type == TokenType.Alias)
                 {
-                    if(token.Symbol!=null && !token.Symbol.Contains(" "))
+                    if (token.Symbol != null && !token.Symbol.Contains(" "))
                     {
                         token.Symbol = token.Symbol.Trim(this.TrimChars);
                     }
@@ -248,7 +248,7 @@ namespace DatabaseConverter.Core
 
                     foreach (var token in childTokens)
                     {
-                        if(token.Symbol==null)
+                        if (token.Symbol == null)
                         {
                             continue;
                         }
@@ -339,10 +339,10 @@ namespace DatabaseConverter.Core
 
             if (token is TableName tableName)
             {
-                if(tableName.Name.Symbol!=null)
+                if (tableName.Name?.Symbol != null)
                 {
                     tokens.Add(tableName.Name);
-                }                
+                }
             }
             else if (token is ColumnName columnName)
             {

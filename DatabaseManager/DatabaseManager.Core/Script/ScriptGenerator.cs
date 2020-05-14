@@ -2,7 +2,9 @@
 using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -35,11 +37,13 @@ namespace DatabaseManager.Core
 
             DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
 
-            Script dbObjScript = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts.FirstOrDefault(item => item.ObjectType == typeName);
+            List<Script> scripts = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts;
 
-            if (dbObjScript != null)
+            StringBuilder sbContent = new StringBuilder();
+
+            foreach(Script script in scripts)
             {
-                string script = dbObjScript.Content;
+                string content = script.Content;
 
                 if (scriptAction == ScriptAction.ALTER && typeName != nameof(Table))
                 {
@@ -51,7 +55,7 @@ namespace DatabaseManager.Core
                     }
 
                     string createFlag = "CREATE ";
-                    int createFlagIndex = this.GetCreateIndex(script, createFlag);
+                    int createFlagIndex = this.GetCreateIndex(content, createFlag);
 
                     if (createFlagIndex >= 0)
                     {
@@ -60,25 +64,25 @@ namespace DatabaseManager.Core
                         switch (databaseType)
                         {
                             case DatabaseType.SqlServer:
-                                script = script.Substring(0, createFlagIndex) + "ALTER " + script.Substring(createFlagIndex + createFlag.Length);
+                                content = content.Substring(0, createFlagIndex) + "ALTER " + content.Substring(createFlagIndex + createFlag.Length);
                                 break;
                             case DatabaseType.MySql:
-                                script = $"DROP {objType} IF EXISTS {this.dbInterpreter.GetQuotedString(dbObject.Name)};" + Environment.NewLine + script;
+                                content = $"DROP {objType} IF EXISTS {this.dbInterpreter.GetQuotedString(dbObject.Name)};" + Environment.NewLine + content;
                                 break;
                             case DatabaseType.Oracle:
-                                if (!Regex.IsMatch(script, @"^(CREATE[\s]+OR[\s]+REPLACE[\s]+)", RegexOptions.IgnoreCase))
+                                if (!Regex.IsMatch(content, @"^(CREATE[\s]+OR[\s]+REPLACE[\s]+)", RegexOptions.IgnoreCase))
                                 {
-                                    script = script.Substring(0, createFlagIndex) + "CREATE OR REPLACE " + script.Substring(createFlagIndex + createFlag.Length);
+                                    content = content.Substring(0, createFlagIndex) + "CREATE OR REPLACE " + content.Substring(createFlagIndex + createFlag.Length);
                                 }
                                 break;
                         }
                     }
                 }
 
-                return script;
+                sbContent.AppendLine(content);
             }
 
-            return string.Empty;           
+            return sbContent.ToString();     
         }
 
         private int GetCreateIndex(string script, string createFlag)
