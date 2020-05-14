@@ -468,39 +468,39 @@ namespace SqlAnalyser.Core
                     else
                     {
                         fromItem.TableName = this.ParseTableName(fromTable);
+                    }
 
-                        Join_partContext[] joins = tsi.join_part();
+                    Join_partContext[] joins = tsi.join_part();
 
-                        if (joins != null && joins.Length > 0)
+                    if (joins != null && joins.Length > 0)
+                    {
+                        foreach (Join_partContext join in joins)
                         {
-                            foreach (Join_partContext join in joins)
+                            List<JoinItem> joinItems = this.ParseJoin(join);
+
+                            if (joinItems.Count > 1)
                             {
-                                List<JoinItem> joinItems = this.ParseJoin(join);
-
-                                if (joinItems.Count > 1)
+                                for (int i = joinItems.Count - 1; i > 0; i--)
                                 {
-                                    for (int i = joinItems.Count - 1; i > 0; i--)
+                                    JoinItem currentJoinItem = joinItems[i];
+
+                                    if (i - 1 > 0)
                                     {
-                                        JoinItem currentJoinItem = joinItems[i];
+                                        JoinItem previousJoinItem = joinItems[i - 1];
 
-                                        if (i - 1 > 0)
-                                        {
-                                            JoinItem previousJoinItem = joinItems[i - 1];
+                                        TableName previousJoinTableName = new TableName(previousJoinItem.TableName.Symbol);
+                                        ObjectHelper.CopyProperties(previousJoinItem.TableName, previousJoinTableName);
 
-                                            TableName previousJoinTableName = new TableName(previousJoinItem.TableName.Symbol);
-                                            ObjectHelper.CopyProperties(previousJoinItem.TableName, previousJoinTableName);
+                                        TableName currentJoinTableName = new TableName(currentJoinItem.TableName.Symbol);
+                                        ObjectHelper.CopyProperties(currentJoinItem.TableName, currentJoinTableName);
 
-                                            TableName currentJoinTableName = new TableName(currentJoinItem.TableName.Symbol);
-                                            ObjectHelper.CopyProperties(currentJoinItem.TableName, currentJoinTableName);
-
-                                            joinItems[i - 1].TableName = currentJoinTableName;
-                                            joinItems[i].TableName = previousJoinTableName;
-                                        }
+                                        joinItems[i - 1].TableName = currentJoinTableName;
+                                        joinItems[i].TableName = previousJoinTableName;
                                     }
                                 }
-
-                                fromItem.JoinItems.AddRange(joinItems);
                             }
+
+                            fromItem.JoinItems.AddRange(joinItems);
                         }
                     }
 
@@ -540,19 +540,34 @@ namespace SqlAnalyser.Core
                         case TSqlParser.CROSS:
                             joinItem.Type = JoinType.CROSS;
                             break;
+                        case TSqlParser.PIVOT:
+                            joinItem.Type = JoinType.PIVOT;
+                            break;
+                        case TSqlParser.UNPIVOT:
+                            joinItem.Type = JoinType.UNPIVOT;
+                            break;
                     }
                 }
             }
 
             Table_sourceContext tableSoure = node.table_source();
+            Pivot_clauseContext pivot = node.pivot_clause();
+            Unpivot_clauseContext unpivot = node.unpivot_clause();
 
-            joinItem.TableName = this.ParseTableName(tableSoure);
-            joinItem.Condition = this.ParseCondition(node.search_condition());
+            As_table_aliasContext alias = node.as_table_alias();
+
+            if (alias != null)
+            {
+                joinItem.Alias = new TokenInfo(alias.table_alias());
+            }
 
             joinItems.Add(joinItem);
 
             if (tableSoure != null)
             {
+                joinItem.TableName = this.ParseTableName(tableSoure);
+                joinItem.Condition = this.ParseCondition(node.search_condition());
+
                 Table_source_item_joinedContext join = tableSoure.table_source_item_joined();
 
                 if (join != null)
@@ -563,6 +578,14 @@ namespace SqlAnalyser.Core
 
                     joinItems.AddRange(childJoinItems);
                 }
+            }
+            else if (pivot != null)
+            {
+                joinItem.Special = this.ParseToken(pivot, TokenType.Pivot);
+            }
+            else if (unpivot != null)
+            {
+                joinItem.Special = this.ParseToken(unpivot, TokenType.UnPivot);
             }
 
             return joinItems;
@@ -1315,12 +1338,12 @@ namespace SqlAnalyser.Core
                 {
                     tableName = new TableName(tn);
                 }
-                else if(node is Full_table_nameContext fullName)
+                else if (node is Full_table_nameContext fullName)
                 {
                     tableName = new TableName(fullName);
 
                     tableName.Name = new TokenInfo(fullName.table);
-                    
+
                 }
                 else if (node is Table_source_itemContext tsi)
                 {

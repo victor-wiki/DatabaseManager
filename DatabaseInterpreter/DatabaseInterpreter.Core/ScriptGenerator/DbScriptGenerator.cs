@@ -696,7 +696,14 @@ namespace DatabaseInterpreter.Core
 
         public string GetQuotedFullTableName(TableChild tableChild)
         {
-            return $"{tableChild.Owner}.{this.GetQuotedString(tableChild.TableName)}";
+            if(string.IsNullOrEmpty(tableChild.Owner))
+            {
+                return this.GetQuotedString(tableChild.TableName);
+            }
+            else
+            {
+                return $"{tableChild.Owner}.{this.GetQuotedString(tableChild.TableName)}";
+            }            
         }
         #endregion
 

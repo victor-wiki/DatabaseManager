@@ -106,17 +106,12 @@ namespace SqlAnalyser.Core
 
                 this.Append($"{fromItem.TableName}{(hasJoins ? Environment.NewLine : "")}", false);
 
-                if (fromItem.JoinItems.Count > 0)
-                {
-                    foreach (JoinItem joinItem in fromItem.JoinItems)
-                    {
-                        string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+                bool hasSubSelect = false;
 
-                        this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
-                    }
-                }
-                else if (fromItem.SubSelectStatement != null)
+                if (fromItem.SubSelectStatement != null)
                 {
+                    hasSubSelect = true;
+
                     this.AppendLine("");
                     this.AppendLine("(");
                     this.BuildSelectStatement(fromItem.SubSelectStatement, false);
@@ -126,7 +121,63 @@ namespace SqlAnalyser.Core
                     {
                         this.Append($"{fromItem.Alias}", false);
                     }
-                }               
+                }
+
+                if (fromItem.JoinItems.Count > 0)
+                {
+                    if (hasSubSelect)
+                    {
+                        this.AppendLine("");
+                    }
+
+                    foreach (JoinItem joinItem in fromItem.JoinItems)
+                    {
+                        if (joinItem.Special != null)
+                        {
+                            if (joinItem.Type == JoinType.PIVOT || joinItem.Type == JoinType.UNPIVOT)
+                            {
+                                string symbol = joinItem.Special.Symbol;
+
+                                if (symbol.Contains(joinItem.Type.ToString()))
+                                {
+                                    this.AppendLine(symbol);
+                                }
+                                else
+                                {
+                                    bool hasBracket = joinItem.Special.Symbol.StartsWith("(") && joinItem.Special.Symbol.EndsWith(")");
+                                    this.AppendLine($"{joinItem.Type}");
+
+                                    if (!hasBracket)
+                                    {
+                                        this.AppendLine("(");
+                                    }
+
+                                    this.AppendLine(symbol);
+
+                                    if (!hasBracket)
+                                    {
+                                        this.AppendLine(")");
+                                    }
+                                }
+
+                                if (joinItem.Alias != null)
+                                {
+                                    this.AppendLine(joinItem.Alias.Symbol);
+                                }
+                                else
+                                {
+                                    this.AppendLine(joinItem.Type.ToString() + "_");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
+
+                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                        }
+                    }
+                }
 
                 i++;
             }

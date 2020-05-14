@@ -44,6 +44,8 @@ namespace SqlAnalyser.Model
         public JoinType Type { get; set; }
         public TableName TableName { get; set; }
         public TokenInfo Condition { get; set; }
+        public TokenInfo Special { get; set; }
+        public TokenInfo Alias { get; set; }
     }
 
     public enum JoinType

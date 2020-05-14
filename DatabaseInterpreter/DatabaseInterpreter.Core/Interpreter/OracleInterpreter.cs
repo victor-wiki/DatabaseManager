@@ -53,7 +53,7 @@ namespace DatabaseInterpreter.Core
 
         public string GetDbOwner()
         {
-            if (this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbOwner) || this.dbOwner == "/"))
+            if (this.ConnectionInfo != null && this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbOwner) || this.dbOwner == "/"))
             {
                 try
                 {
@@ -345,14 +345,14 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            
+
             string sql = $@"SELECT UI.TABLE_OWNER AS ""Owner"", UI.TABLE_NAME AS ""TableName"", UI.INDEX_NAME AS ""Name"", UIC.COLUMN_NAME AS ""ColumnName"", UIC.COLUMN_POSITION AS ""Order"",
                 CASE UIC.DESCEND WHEN 'ASC' THEN 0 ELSE 1 END AS ""IsDesc"", CASE UI.UNIQUENESS WHEN 'UNIQUE' THEN 1 ELSE 0 END AS ""IsUnique"",
                 UI.INDEX_TYPE AS ""Type"", CASE WHEN UC.CONSTRAINT_NAME IS NOT NULL THEN 1 ELSE 0 END AS ""IsPrimary"", CASE WHEN UC.CONSTRAINT_NAME IS NOT NULL THEN 1 ELSE 0 END AS ""Clustered""
                 FROM USER_INDEXES UI
                 JOIN USER_IND_COLUMNS UIC ON UI.INDEX_NAME = UIC.INDEX_NAME AND UI.TABLE_NAME = UIC.TABLE_NAME
                 LEFT JOIN USER_CONSTRAINTS UC ON UI.TABLE_NAME = UC.TABLE_NAME AND UI.TABLE_OWNER = UC.OWNER AND UI.INDEX_NAME = UC.CONSTRAINT_NAME AND UC.CONSTRAINT_TYPE = 'P'
-                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbOwner()}'){(includePrimaryKey? "": " AND UC.CONSTRAINT_NAME IS NULL")}";
+                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbOwner()}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
@@ -813,8 +813,8 @@ namespace DatabaseInterpreter.Core
                     {
                         dataLength = dataTypeInfo.Args;
                     }
-                }               
-            }            
+                }
+            }
 
             return dataLength;
         }

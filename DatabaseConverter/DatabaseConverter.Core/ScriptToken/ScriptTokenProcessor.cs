@@ -13,7 +13,7 @@ namespace DatabaseConverter.Core
     {
         private ColumnTranslator columnTranslator;
         private Regex identifierRegex = new Regex($@"([`""\[][ _0-9a-zA-Z]+[`""\]])");
-        private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
+        private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]*$)\b");
         private bool removeDbOwner => this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer;
         private bool nameWithQuotation = SettingManager.Setting.DbObjectNameMode == DbObjectNameMode.WithQuotation;
         public CommonScript Script { get; set; }

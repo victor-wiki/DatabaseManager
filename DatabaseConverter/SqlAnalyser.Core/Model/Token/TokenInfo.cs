@@ -9,11 +9,11 @@ namespace SqlAnalyser.Model
         public virtual TokenType Type { get; set; }
         public string Symbol { get; set; }
         public int? StartIndex { get; set; }
-        public int? StopIndex { get; set; }      
+        public int? StopIndex { get; set; }
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
 
-        public List<TokenInfo> Tokens { get; set; } = new List<TokenInfo>();       
+        public List<TokenInfo> Tokens { get; set; } = new List<TokenInfo>();
 
         public TokenInfo(string symbol)
         {
@@ -81,6 +81,8 @@ namespace SqlAnalyser.Model
         Option = 10,
         JoinOn = 11,
         CursorName = 12,
-        Alias = 13
+        Alias = 13,
+        Pivot = 14,
+        UnPivot = 15
     }
 }

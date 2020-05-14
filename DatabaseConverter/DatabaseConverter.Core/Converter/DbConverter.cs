@@ -78,16 +78,19 @@ namespace DatabaseConverter.Core
         {
             DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
             sourceInterpreter.Option.BulkCopy = this.Option.BulkCopy;
-            sourceInterpreter.Subscribe(this.observer);
-
-            if (sourceInterpreter.DatabaseType == DatabaseType.Oracle)
-            {
-                sourceInterpreter.Option.TreatBytesAsNullForExecuting = true;
-            }
+            sourceInterpreter.Subscribe(this.observer);           
 
             sourceInterpreter.Option.GetTableAllObjects = false;
             sourceInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
             this.Target.DbInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
+
+            if(string.IsNullOrEmpty(this.Target.DbOwner))
+            {
+                if(this.Target.DbInterpreter.DatabaseType == DatabaseType.Oracle)
+                {
+                    this.Target.DbOwner = (this.Target.DbInterpreter as OracleInterpreter).GetDbOwner();
+                }
+            }
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
 

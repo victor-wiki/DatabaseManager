@@ -935,6 +935,8 @@ namespace SqlAnalyser.Core
                 fromItem.TableName = this.ParseTableName(table);
 
                 Join_clauseContext[] joins = table.join_clause();
+                Pivot_clauseContext pivot = table.pivot_clause();
+                Unpivot_clauseContext unpivot = table.unpivot_clause();
 
                 if (joins != null && joins.Length > 0)
                 {
@@ -965,6 +967,18 @@ namespace SqlAnalyser.Core
 
                         fromItem.JoinItems.Add(joinItem);
                     }
+                }
+                else if (pivot != null)
+                {
+                    JoinItem joinItem = new JoinItem() { Type = JoinType.PIVOT };
+                    joinItem.Special = this.ParseToken(pivot, TokenType.Pivot);
+                    fromItem.JoinItems.Add(joinItem);
+                }
+                else if (unpivot != null)
+                {
+                    JoinItem joinItem = new JoinItem() { Type = JoinType.UNPIVOT };
+                    joinItem.Special = this.ParseToken(unpivot, TokenType.UnPivot);
+                    fromItem.JoinItems.Add(joinItem);
                 }
 
                 fromItems.Add(fromItem);
@@ -1251,7 +1265,7 @@ namespace SqlAnalyser.Core
                     if (ids != null && ids.Length > 0)
                     {
                         columnName = new ColumnName(ids[0]);
-                    }          
+                    }
                 }
                 else if (node is Select_list_elementsContext ele)
                 {
@@ -1359,7 +1373,7 @@ namespace SqlAnalyser.Core
             }
 
             return tokens;
-        }        
+        }
 
         private bool IsChildOfType<T>(RuleContext node)
         {
@@ -1387,7 +1401,7 @@ namespace SqlAnalyser.Core
             if (node is General_element_partContext gep && (node as General_element_partContext).children.Any(item => item is Function_argumentContext))
             {
                 routineName = gep.id_expression().LastOrDefault();
-            }            
+            }
 
             if (routineName != null)
             {
@@ -1395,6 +1409,6 @@ namespace SqlAnalyser.Core
             }
 
             return tokens;
-        }      
+        }
     }
 }

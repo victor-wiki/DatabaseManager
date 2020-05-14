@@ -118,20 +118,17 @@ namespace DatabaseConverter.Core
 
         private void TranslateOwner()
         {
-            if (!string.IsNullOrEmpty(this.targetDbOwner))
-            {
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.UserDefinedTypes);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Functions);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Tables);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableColumns);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TablePrimaryKeys);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableForeignKeys);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableIndexes);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableTriggers);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableConstraints);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Views);
-                this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Procedures);
-            }
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.UserDefinedTypes);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Functions);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Tables);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableColumns);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TablePrimaryKeys);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableForeignKeys);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableIndexes);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableTriggers);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.TableConstraints);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Views);
+            this.SetDatabaseObjectsOwner(this.targetSchemaInfo.Procedures);
         }
 
         private void SetDatabaseObjectsOwner<T>(List<T> dbObjects) where T : DatabaseObject
