@@ -6,7 +6,7 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql and PlSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
