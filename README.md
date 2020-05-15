@@ -4,6 +4,9 @@
 ### Convert Database
  * Convert database objects (table, function, view, procedure, trigger).
  * Copy table data (support bulkcopy).
+ 
+### Table Designer
+  Create table to add columns, primary key, foreign key, index, and check constraint visually.
 
 ### SQL Query Editor
   Create new query or open existing sql file to execute select, insert, update, delete, create and alter statements. It supports input intellisense.
@@ -32,6 +35,9 @@
 
 ## UI - Generate Scripts
 ![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=1)
+
+## UI - Table Designer
+![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=1)
 
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=1)
