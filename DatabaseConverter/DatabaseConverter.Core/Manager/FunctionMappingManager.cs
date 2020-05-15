@@ -37,9 +37,17 @@ namespace DatabaseConverter.Core
             {
                 DbType = t.Name.ToString(),
                 Function = t.Value,
-                Direction = string.IsNullOrEmpty(t.Attribute("direction")?.Value) ? FunctionMappingDirection.INOUT : (FunctionMappingDirection)Enum.Parse(typeof(FunctionMappingDirection), t.Attribute("direction").Value.ToUpper())
+                Direction = ParseDirection(t),
+                Args = t.Attribute("args")?.Value
             }))
             .ToList();
+        }
+
+        private static FunctionMappingDirection ParseDirection(XElement element)
+        {
+            return string.IsNullOrEmpty(element.Attribute("direction")?.Value) ?
+                FunctionMappingDirection.INOUT :
+               (FunctionMappingDirection)Enum.Parse(typeof(FunctionMappingDirection), element.Attribute("direction").Value.ToUpper());
         }
     }
 }

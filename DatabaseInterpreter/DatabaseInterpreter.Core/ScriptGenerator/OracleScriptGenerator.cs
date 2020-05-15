@@ -108,9 +108,24 @@ TABLESPACE
                 {
                     IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
 
+                    List<string> indexColumns = new List<string>();
+                   
                     foreach (TableIndex index in indexes)
                     {
+                        string columnNames = string.Join(",", index.Columns.OrderBy(item=>item.ColumnName).Select(item=>item.ColumnName));
+
+                        //Avoid duplicated indexes for one index.
+                        if (indexColumns.Contains(columnNames))
+                        {
+                            continue;
+                        }
+
                         sb.AppendLine(this.AddIndex(index));
+
+                        if (!indexColumns.Contains(columnNames))
+                        {
+                            indexColumns.Add(columnNames);
+                        }
                     }
                 }
                 #endregion               
@@ -122,7 +137,7 @@ TABLESPACE
 
                     foreach (TableConstraint constraint in constraints)
                     {                       
-                        sb.AppendLine(this.AddConstraint(constraint));
+                        sb.AppendLine(this.AddCheckConstraint(constraint));
                     }
                 }
                 #endregion
@@ -212,7 +227,7 @@ TABLESPACE
 
         public override Script SetTableComment(Table table, bool isNew = true)
         {
-            return new AlterDbObjectScript<Table>($"COMMENT ON TABLE {table.Owner}.{this.GetQuotedString(table.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'" + this.scriptsDelimiter);
+            return new AlterDbObjectScript<Table>($"COMMENT ON TABLE {table.Owner}.{this.GetQuotedString(table.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(table.Comment))}'" + this.scriptsDelimiter);
         }
 
         public override Script AddTableColumn(Table table, TableColumn column)
@@ -232,7 +247,7 @@ TABLESPACE
 
         public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
         {
-            return new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {column.Owner}.{this.GetQuotedString(column.TableName)}.{this.GetQuotedString(column.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" + this.scriptsDelimiter);
+            return new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {column.Owner}.{this.GetQuotedString(column.TableName)}.{this.GetQuotedString(column.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(column.Comment))}'" + this.scriptsDelimiter);
         }
 
         public override Script DropTableColumn(TableColumn column)
@@ -317,12 +332,12 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
             return new DropDbObjectScript<TableIndex>($"DROP INDEX {this.GetQuotedString(index.Name)};");
         }
 
-        public override Script AddConstraint(TableConstraint constraint)
+        public override Script AddCheckConstraint(TableConstraint constraint)
         {
             return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
         }
 
-        public override Script DropConstraint(TableConstraint constraint)
+        public override Script DropCheckConstraint(TableConstraint constraint)
         {
             return new DropDbObjectScript<TableConstraint>(this.GetDropConstraintSql(constraint));
         }

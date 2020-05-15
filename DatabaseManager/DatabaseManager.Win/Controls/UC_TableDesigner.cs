@@ -248,7 +248,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.Feedback("Saved table.");
+                this.Feedback("Table saved.");
 
                 Table table = result.ResultData as Table;
 

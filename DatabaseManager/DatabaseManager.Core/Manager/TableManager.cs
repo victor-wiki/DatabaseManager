@@ -417,10 +417,10 @@ namespace DatabaseManager.Core
 
                             if (oldConstraint != null)
                             {
-                                scripts.Add(scriptGenerator.DropConstraint(oldConstraint));
+                                scripts.Add(scriptGenerator.DropCheckConstraint(oldConstraint));
                             }
 
-                            scripts.Add(scriptGenerator.AddConstraint(newConstraint));
+                            scripts.Add(scriptGenerator.AddCheckConstraint(newConstraint));
 
                             if (!string.IsNullOrEmpty(newConstraint.Comment))
                             {
@@ -432,7 +432,7 @@ namespace DatabaseManager.Core
                         {
                             if (!constraintDesignerInfos.Any(item => item.Name == oldConstraint.Name))
                             {
-                                scripts.Add(scriptGenerator.DropConstraint(oldConstraint));
+                                scripts.Add(scriptGenerator.DropCheckConstraint(oldConstraint));
                             }
                         }
                     }

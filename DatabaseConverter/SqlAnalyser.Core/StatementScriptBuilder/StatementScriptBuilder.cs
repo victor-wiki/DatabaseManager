@@ -132,42 +132,24 @@ namespace SqlAnalyser.Core
 
                     foreach (JoinItem joinItem in fromItem.JoinItems)
                     {
-                        if (joinItem.Special != null)
+                        if (joinItem.Type == JoinType.PIVOT || joinItem.Type == JoinType.UNPIVOT)
                         {
-                            if (joinItem.Type == JoinType.PIVOT || joinItem.Type == JoinType.UNPIVOT)
+                            if (joinItem.PivotItem != null)
                             {
-                                string symbol = joinItem.Special.Symbol;
+                                this.BuildPivotItem(joinItem.PivotItem);
+                            }
+                            else if (joinItem.UnPivotItem != null)
+                            {
+                                this.BuildUnPivotItem(joinItem.UnPivotItem);
+                            }
 
-                                if (symbol.Contains(joinItem.Type.ToString()))
-                                {
-                                    this.AppendLine(symbol);
-                                }
-                                else
-                                {
-                                    bool hasBracket = joinItem.Special.Symbol.StartsWith("(") && joinItem.Special.Symbol.EndsWith(")");
-                                    this.AppendLine($"{joinItem.Type}");
-
-                                    if (!hasBracket)
-                                    {
-                                        this.AppendLine("(");
-                                    }
-
-                                    this.AppendLine(symbol);
-
-                                    if (!hasBracket)
-                                    {
-                                        this.AppendLine(")");
-                                    }
-                                }
-
-                                if (joinItem.Alias != null)
-                                {
-                                    this.AppendLine(joinItem.Alias.Symbol);
-                                }
-                                else
-                                {
-                                    this.AppendLine(joinItem.Type.ToString() + "_");
-                                }
+                            if (joinItem.Alias != null)
+                            {
+                                this.AppendLine(joinItem.Alias.Symbol);
+                            }
+                            else
+                            {
+                                this.AppendLine(joinItem.Type.ToString() + "_");
                             }
                         }
                         else
@@ -186,6 +168,34 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine("", false);
             }
+        }
+
+        public string GetTrimedQuotationValue(string value)
+        {
+            return value?.Trim('[', ']', '"', '`');
+        }
+
+        protected virtual string GetPivotInItem(TokenInfo token)
+        {
+            return this.GetTrimedQuotationValue(token.Symbol);
+        }
+
+        public void BuildPivotItem(PivotItem pivotItem)
+        {
+            this.AppendLine("PIVOT");
+            this.AppendLine("(");
+            this.AppendLine($"{pivotItem.AggregationFunctionName}({pivotItem.AggregatedColumnName})");
+            this.AppendLine($"FOR {pivotItem.ColumnName} IN ({(string.Join(",", pivotItem.Values.Select(item => this.GetPivotInItem(item))))})");
+            this.AppendLine(")");
+        }
+
+        public void BuildUnPivotItem(UnPivotItem unpivotItem)
+        {
+            this.AppendLine("UNPIVOT");
+            this.AppendLine("(");
+            this.AppendLine($"{unpivotItem.ValueColumnName}");
+            this.AppendLine($"FOR {unpivotItem.ForColumnName} IN ({(string.Join(",", unpivotItem.InColumnNames.Select(item => $"{item}")))})");
+            this.AppendLine(")");
         }
     }
 }

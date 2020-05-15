@@ -185,23 +185,28 @@ namespace DatabaseConverter.Core
         }
 
         public string ParseFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,
-            FunctionFomular fomular, string targetFunctionName, out Dictionary<string, string> dictDataType)
+            FunctionFomular fomular, MappingFunctionInfo targetFunctionInfo, out Dictionary<string, string> dictDataType)
         {
             dictDataType = new Dictionary<string, string>();
 
             string name = fomular.Name;
 
             FunctionSpecification sourceFuncSpec = sourceFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == name.ToUpper());
-            FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionName.ToUpper());
+            FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionInfo.Name.ToUpper());
 
             string newExpression = fomular.Expression;
 
             if (sourceFuncSpec != null && targetFuncSpec != null)
             {
+                string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
+                fomular.Delimiter = delimiter;
+
                 List<string> fomularArgs = fomular.Args;
 
-                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec, fomularArgs.Count);
-                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, fomularArgs.Count);
+                int fetchCount = string.IsNullOrEmpty(targetFunctionInfo.Args) ? fomularArgs.Count : -1;
+
+                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec, null, fetchCount);
+                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args, fetchCount);
 
                 bool ignore = false;
 
@@ -212,10 +217,6 @@ namespace DatabaseConverter.Core
 
                 if (!ignore)
                 {
-                    string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
-
-                    fomular.Delimiter = delimiter;
-
                     List<string> args = new List<string>();
 
                     foreach (var kp in targetTokens)
@@ -252,26 +253,32 @@ namespace DatabaseConverter.Core
                                 args.Add(newArg);
                             }
                         }
+                        else if (!string.IsNullOrEmpty(targetFunctionInfo.Args))
+                        {
+                            args.Add(token);
+                        }
                     }
 
                     string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
 
                     string strArgs = string.Join(targetDelimiter, args);
 
-                    newExpression = $"{targetFunctionName}{ (targetFuncSpec.NoParenthesess ? "" : $"({strArgs})") }";
+                    newExpression = $"{targetFunctionInfo.Name}{ (targetFuncSpec.NoParenthesess ? "" : $"({strArgs})") }";
                 }
             }
 
             return newExpression;
         }
 
-        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, int fetchCount = -1)
+        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, string functionArgs, int fetchCount = -1)
         {
             Dictionary<int, string> dictTokenIndex = new Dictionary<int, string>();
 
-            if (!spec.Args.EndsWith("..."))
+            string specArgs = string.IsNullOrEmpty(functionArgs) ? spec.Args : functionArgs;
+
+            if (!specArgs.EndsWith("..."))
             {
-                string str = Regex.Replace(spec.Args, @"[\[\]]", "");
+                string str = Regex.Replace(specArgs, @"[\[\]]", "");
 
                 string[] args = str.Split(new string[] { spec.Delimiter, " " }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -288,17 +295,22 @@ namespace DatabaseConverter.Core
             return dictTokenIndex;
         }
 
-        public string GetMappedFunctionName(string name)
+        public MappingFunctionInfo GetMappingFunctionInfo(string name, out bool useBrackets)
         {
+            useBrackets = false;
+
             string text = name;
             string textWithBrackets = name.ToLower() + "()";
 
             if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
             {
                 text = textWithBrackets;
+                useBrackets = true;
             }
 
             string targetFunctionName = name;
+
+            MappingFunctionInfo functionInfo = new MappingFunctionInfo() { Name = name };
 
             IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t =>
              (t.Direction == FunctionMappingDirection.OUT || t.Direction == FunctionMappingDirection.INOUT)
@@ -306,17 +318,18 @@ namespace DatabaseConverter.Core
 
             if (funcMappings != null)
             {
-                targetFunctionName = funcMappings.FirstOrDefault(item =>
+                FunctionMapping mapping = funcMappings.FirstOrDefault(item =>
                         (item.Direction == FunctionMappingDirection.IN || item.Direction == FunctionMappingDirection.INOUT)
-                        && item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
+                        && item.DbType == targetDbInterpreter.DatabaseType.ToString());
 
-                if (string.IsNullOrEmpty(targetFunctionName))
+                if (mapping != null)
                 {
-                    targetFunctionName = name;
+                    functionInfo.Name = mapping.Function.Split(',')?.FirstOrDefault();
+                    functionInfo.Args = mapping.Args;
                 }
             }
 
-            return targetFunctionName;
+            return functionInfo;
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

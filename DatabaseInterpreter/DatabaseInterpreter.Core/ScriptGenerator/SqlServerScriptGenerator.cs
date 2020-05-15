@@ -157,7 +157,7 @@ CREATE TABLE {quotedTableName}(
 
                     foreach (TableConstraint constraint in constraints)
                     {
-                        sb.AppendLine(this.AddConstraint(constraint));
+                        sb.AppendLine(this.AddCheckConstraint(constraint));
 
                         if(!string.IsNullOrEmpty(constraint.Comment))
                         {
@@ -241,7 +241,7 @@ CREATE TABLE {quotedTableName}(
 
         public override Script SetTableComment(Table table, bool isNew = true)
         {
-            return new ExecuteProcedureScript($"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}',N'SCHEMA',N'{table.Owner}',N'table',N'{table.Name}',NULL,NULL");
+            return new ExecuteProcedureScript($"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(table.Comment))}',N'SCHEMA',N'{table.Owner}',N'table',N'{table.Name}',NULL,NULL");
         }
 
         public override Script AddTableColumn(Table table, TableColumn column)
@@ -347,12 +347,12 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
             return $"ALTER TABLE {this.GetQuotedString(tableChild.TableName)} DROP CONSTRAINT {this.GetQuotedString(tableChild.Name)}";
         }
 
-        public override Script AddConstraint(TableConstraint constraint)
+        public override Script AddCheckConstraint(TableConstraint constraint)
         {
             return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {constraint.Owner}.{this.GetQuotedString(constraint.TableName)}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition})");
         }
 
-        public override Script DropConstraint(TableConstraint constraint)
+        public override Script DropCheckConstraint(TableConstraint constraint)
         {
             return new DropDbObjectScript<TableConstraint>(this.GetDropConstraintSql(constraint));
         }
@@ -376,7 +376,7 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
                 type = "INDEX";
             }
 
-            string sql = $"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{ValueHelper.TransferSingleQuotation(tableChild.Comment)}',N'SCHEMA',N'{tableChild.Owner}',N'table',N'{tableChild.TableName}',N'{type}',N'{tableChild.Name}'";
+            string sql = $"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.TransferSingleQuotationString(tableChild.Comment)}',N'SCHEMA',N'{tableChild.Owner}',N'table',N'{tableChild.TableName}',N'{type}',N'{tableChild.Name}'";
             return new ExecuteProcedureScript(sql);
         }
 

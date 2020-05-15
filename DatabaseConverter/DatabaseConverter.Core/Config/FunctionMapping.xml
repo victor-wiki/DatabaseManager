@@ -123,4 +123,9 @@
     <MySql>TRUNCATE</MySql>
     <Oracle>TRUNC</Oracle>
   </mapping>
+  <mapping>
+    <SqlServer direction="IN" args="EXP AS INT">CAST</SqlServer>
+    <MySql direction="IN" args="EXP AS UNSIGNED">CAST</MySql>
+    <Oracle>TO_NUMBER</Oracle>
+  </mapping>
 </mappings>

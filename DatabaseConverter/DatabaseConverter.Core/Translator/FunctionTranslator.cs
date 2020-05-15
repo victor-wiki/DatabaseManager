@@ -48,23 +48,25 @@ namespace DatabaseConverter.Core
                 {
                     string name = fomular.Name;
 
-                    string targetFunctionName = this.GetMappedFunctionName(name);
+                    bool useBrackets = false;
+                  
+                    MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(name, out useBrackets);
 
-                    if (!string.IsNullOrEmpty(targetFunctionName))
+                    if (!string.IsNullOrEmpty(targetFunctionInfo.Name))
                     {
-                        if (targetFunctionName.ToUpper().Trim() != name.ToUpper().Trim())
+                        if (targetFunctionInfo.Name.ToUpper().Trim() != name.ToUpper().Trim())
                         {
                             string oldExp = fomular.Expression;
-                            string newExp = this.ReplaceValue(fomular.Expression, name, targetFunctionName);
+                            string newExp = this.ReplaceValue(fomular.Expression, name, targetFunctionInfo.Name);
 
                             fomular.Expression = newExp;
 
                             token.Symbol = this.ReplaceValue(token.Symbol, oldExp, newExp);
                         }
-                    }                  
+                    }
 
                     Dictionary<string, string> dictDataType = null;
-                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
+                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
 
                     if (newExpression != fomular.Expression)
                     {
@@ -72,7 +74,7 @@ namespace DatabaseConverter.Core
                     }
                 }
             }
-        }       
+        }
 
         private List<FunctionFomular> GetFunctionFomulars(string value)
         {
@@ -128,7 +130,7 @@ namespace DatabaseConverter.Core
                     string expression = innerContent.Substring(startIndex, length);
 
                     FunctionFomular func = new FunctionFomular(name, expression)
-                    {                       
+                    {
                         StartIndex = startIndex,
                         StopIndex = lastRightParenthesesIndex
                     };
@@ -139,6 +141,19 @@ namespace DatabaseConverter.Core
                 }
                 else
                 {
+                    if (functions.Count == 0 && !leftContent.Contains("("))
+                    {
+                        string name = value.Substring(0, firstLeftParenthesesIndex);
+
+                        FunctionFomular func = new FunctionFomular(name, value)
+                        {
+                            StartIndex = 0,
+                            StopIndex = value.Length - 1
+                        };
+
+                        functions.Add(func);
+                    }
+
                     break;
                 }
             }

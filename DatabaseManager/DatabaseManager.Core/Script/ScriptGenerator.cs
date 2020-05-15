@@ -41,8 +41,18 @@ namespace DatabaseManager.Core
 
             StringBuilder sbContent = new StringBuilder();
 
-            foreach(Script script in scripts)
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+
+            foreach (Script script in scripts)
             {
+                if(dbObject is ScriptDbObject)
+                {
+                    if(databaseType == DatabaseType.SqlServer && script is SpliterScript)
+                    {
+                        continue;
+                    }
+                }
+
                 string content = script.Content;
 
                 if (scriptAction == ScriptAction.ALTER && typeName != nameof(Table))
@@ -59,8 +69,6 @@ namespace DatabaseManager.Core
 
                     if (createFlagIndex >= 0)
                     {
-                        DatabaseType databaseType = this.dbInterpreter.DatabaseType;
-
                         switch (databaseType)
                         {
                             case DatabaseType.SqlServer:

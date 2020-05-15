@@ -40,11 +40,16 @@ namespace DatabaseInterpreter.Core
 
                 bool hasNewLine = this.scriptsDelimiter.Contains(Environment.NewLine);
 
-                scripts.Add(new CreateDbObjectScript<T>(dbObject.Definition.Trim()));
+                string definition = dbObject.Definition.Trim();
+
+                scripts.Add(new CreateDbObjectScript<T>(definition));
 
                 if (!hasNewLine)
                 {
-                    scripts.Add(new SpliterScript(this.scriptsDelimiter));
+                    if (!definition.EndsWith(this.scriptsDelimiter))
+                    {
+                        scripts.Add(new SpliterScript(this.scriptsDelimiter));
+                    }
                 }
                 else
                 {
@@ -164,14 +169,16 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
+                    i++;
+
                     if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
-                        return string.Empty;
+                        continue;
                     }
-
-                    this.AppendDataScripts(sb, table, columns, dictPagedData);
-
-                    i++;
+                    else
+                    {
+                        this.AppendDataScripts(sb, table, columns, dictPagedData);
+                    }
                 }
             }
 
@@ -664,9 +671,9 @@ namespace DatabaseInterpreter.Core
 
         public abstract Script DropIndex(TableIndex index);
 
-        public abstract Script AddConstraint(TableConstraint constraint);
+        public abstract Script AddCheckConstraint(TableConstraint constraint);
 
-        public abstract Script DropConstraint(TableConstraint constraint);
+        public abstract Script DropCheckConstraint(TableConstraint constraint);
         #endregion
 
         #region Database Operation  
@@ -696,14 +703,24 @@ namespace DatabaseInterpreter.Core
 
         public string GetQuotedFullTableName(TableChild tableChild)
         {
-            if(string.IsNullOrEmpty(tableChild.Owner))
+            if (string.IsNullOrEmpty(tableChild.Owner))
             {
                 return this.GetQuotedString(tableChild.TableName);
             }
             else
             {
                 return $"{tableChild.Owner}.{this.GetQuotedString(tableChild.TableName)}";
-            }            
+            }
+        }
+
+        public string TransferSingleQuotationString(string comment)
+        {
+            if (string.IsNullOrEmpty(comment))
+            {
+                return comment;
+            }
+
+            return ValueHelper.TransferSingleQuotation(comment);
         }
         #endregion
 

@@ -111,6 +111,8 @@ namespace DatabaseConverter.Core
                 return;
             }
 
+            sourceSchemaInfo.TableColumns = DbObjectHelper.ResortTableColumns(sourceSchemaInfo.Tables, sourceSchemaInfo.TableColumns);
+
             if (SettingManager.Setting.NotCreateIfExists)
             {
                 this.Target.DbInterpreter.Option.GetTableAllObjects = false;

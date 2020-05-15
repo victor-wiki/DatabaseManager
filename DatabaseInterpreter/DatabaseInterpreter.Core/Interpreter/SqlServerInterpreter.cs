@@ -492,7 +492,7 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT name AS [Name], SCHEMA_NAME(schema_id) AS [Owner], 
                             {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
                             FROM sys.procedures
-                            WHERE 1=1";
+                            WHERE name not like 'sp[_]%'";
 
             if (filter != null && filter.ProcedureNames != null && filter.ProcedureNames.Any())
             {
@@ -820,7 +820,7 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (DataTypeHelper.IsCharType(dataType) && DataTypeHelper.StartWithN(dataType)) //ie. nchar, nvarchar
                 {
-                    if (column.MaxLength == -1)
+                    if (column.MaxLength == -1 || column.MaxLength == null)
                     {
                         return "max";
                     }
@@ -829,7 +829,7 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsBinaryType(dataType))//ie. char, varchar, binary, varbinary
                 {
-                    if (column.MaxLength == -1)
+                    if (column.MaxLength == -1 || column.MaxLength == null)
                     {
                         return "max";
                     }

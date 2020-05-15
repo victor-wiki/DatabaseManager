@@ -581,14 +581,38 @@ namespace SqlAnalyser.Core
             }
             else if (pivot != null)
             {
-                joinItem.Special = this.ParseToken(pivot, TokenType.Pivot);
+                joinItem.PivotItem = this.ParsePivot(pivot);
             }
             else if (unpivot != null)
             {
-                joinItem.Special = this.ParseToken(unpivot, TokenType.UnPivot);
+                joinItem.UnPivotItem = this.ParseUnPivot(unpivot);
             }
 
             return joinItems;
+        }
+
+        public PivotItem ParsePivot(Pivot_clauseContext node)
+        {
+            PivotItem pivotItem = new PivotItem();
+
+            Aggregate_windowed_functionContext function = node.aggregate_windowed_function();
+
+            pivotItem.AggregationFunctionName = new TokenInfo(function.children[0] as TerminalNodeImpl);
+            pivotItem.AggregatedColumnName = this.ParseColumnName(function.all_distinct_expression()?.expression());
+            pivotItem.ColumnName = this.ParseColumnName(node.full_column_name());
+            pivotItem.Values = node.column_alias_list().column_alias().Select(item => new TokenInfo(item)).ToList();
+
+            return pivotItem;
+        }
+
+        public UnPivotItem ParseUnPivot(Unpivot_clauseContext node)
+        {
+            UnPivotItem unpivotItem = new UnPivotItem();
+            unpivotItem.ValueColumnName = this.ParseColumnName(node.expression().full_column_name());
+            unpivotItem.ForColumnName = this.ParseColumnName(node.full_column_name());
+            unpivotItem.InColumnNames = node.full_column_name_list().full_column_name().Select(item => this.ParseColumnName(item)).ToList();
+
+            return unpivotItem;
         }
 
         public SelectStatement ParseDerivedTable(Derived_tableContext node)
@@ -1473,7 +1497,7 @@ namespace SqlAnalyser.Core
 
                     columnName.Tokens.AddRange(this.ParseToken(expElem, TokenType.ColumnName, true).Tokens);
 
-                    var alias = expElem.as_column_alias()?.column_alias();
+                    Column_aliasContext alias = expElem.as_column_alias()?.column_alias();
 
                     if (alias != null)
                     {
@@ -1489,6 +1513,14 @@ namespace SqlAnalyser.Core
                         return this.ParseColumnName(fullColName, strict);
                     }
                 }
+                //else if(node is Column_aliasContext colAlias)
+                //{
+                //    if(colAlias.Parent!=null && colAlias.Parent is Column_alias_listContext)
+                //    {
+                //        columnName = new ColumnName(colAlias);
+                //        columnName.Name = new TokenInfo(colAlias.id());
+                //    }
+                //}
 
                 if (!strict && columnName == null)
                 {

@@ -44,8 +44,24 @@ namespace SqlAnalyser.Model
         public JoinType Type { get; set; }
         public TableName TableName { get; set; }
         public TokenInfo Condition { get; set; }
-        public TokenInfo Special { get; set; }
+        public PivotItem PivotItem { get; set; }
+        public UnPivotItem UnPivotItem { get; set; }
         public TokenInfo Alias { get; set; }
+    }
+
+    public class PivotItem : StatementItem
+    {
+        public TokenInfo AggregationFunctionName { get; set; }
+        public TokenInfo AggregatedColumnName { get; set; }
+        public ColumnName ColumnName { get; set; }
+        public List<TokenInfo> Values { get; set; } = new List<TokenInfo>();
+    }
+
+    public class UnPivotItem : StatementItem
+    {
+        public ColumnName ValueColumnName { get; set; }
+        public ColumnName ForColumnName { get; set; }
+        public List<ColumnName> InColumnNames { get; set; } = new List<ColumnName>();
     }
 
     public enum JoinType

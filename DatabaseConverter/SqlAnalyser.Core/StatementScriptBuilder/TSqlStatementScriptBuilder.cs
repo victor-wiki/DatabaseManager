@@ -484,5 +484,10 @@ namespace SqlAnalyser.Core
                     return unionType.ToString();
             }
         }
+
+        protected override string GetPivotInItem(TokenInfo token)
+        {
+            return $"[{this.GetTrimedQuotationValue(token.Symbol)}]";
+        }
     }
 }

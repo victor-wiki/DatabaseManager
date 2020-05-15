@@ -11,7 +11,8 @@ namespace DatabaseConverter.Core
 {
     public class DbObjectTokenTranslator : DbObjectTranslator
     {
-        private List<string> dataTypes = new List<string>();
+        private List<string> convertedDataTypes = new List<string>();
+        private List<string> convertedFunctions = new List<string>();
 
         private List<FunctionSpecification> sourceFuncSpecs;
         private List<FunctionSpecification> targetFuncSpecs;
@@ -67,7 +68,7 @@ namespace DatabaseConverter.Core
                         switch (text.ToUpper())
                         {
                             case "CAST":
-
+                            case "TO_NUMBER":
                                 functionExpression = this.GetFunctionExpression(token, definition);
 
                                 break;
@@ -81,13 +82,14 @@ namespace DatabaseConverter.Core
 
                 if (!string.IsNullOrEmpty(functionExpression))
                 {
-                    string targetFunctionName = this.GetMappedFunctionName(text);
+                    bool useBrackets = false;
+                    MappingFunctionInfo targetFunctionInfo= this.GetMappingFunctionInfo(text, out useBrackets);
 
                     FunctionFomular fomular = new FunctionFomular(functionExpression);
 
                     Dictionary<string, string> dictDataType = null;
 
-                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionName, out dictDataType);
+                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
 
                     if (newExpression != fomular.Expression)
                     {
@@ -98,7 +100,15 @@ namespace DatabaseConverter.Core
 
                     if (dictDataType != null)
                     {
-                        this.dataTypes.AddRange(dictDataType.Values);
+                        this.convertedDataTypes.AddRange(dictDataType.Values);
+                    }
+
+                    if(!string.IsNullOrEmpty(targetFunctionInfo.Args) && changed)
+                    {
+                        if(!this.convertedFunctions.Contains(targetFunctionInfo.Name))
+                        {
+                            this.convertedFunctions.Add(targetFunctionInfo.Name);
+                        }                        
                     }
                 }
             }
@@ -191,7 +201,7 @@ namespace DatabaseConverter.Core
                             }
                         }
 
-                        if (dataTypes.Contains(text))
+                        if (convertedDataTypes.Contains(text))
                         {
                             sb.Append(text);
                             continue;
@@ -207,21 +217,21 @@ namespace DatabaseConverter.Core
                         }
                         else if (nextToken != null && nextToken.Text.Trim() == "(") //function handle
                         {
-                            string textWithBrackets = text.ToLower() + "()";
-
-                            bool useBrackets = false;
-
-                            if (this.functionMappings.Any(item => item.Any(t => t.Function.ToLower() == textWithBrackets)))
+                            if (this.convertedFunctions.Contains(text))
                             {
-                                useBrackets = true;
-                                text = textWithBrackets;
+                                sb.Append(text);
+                                continue;
                             }
 
-                            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
+                            string textWithBrackets = text.ToLower() + "()";
 
-                            if (funcMappings != null)
+                            bool useBrackets = false;                           
+
+                            MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(text, out useBrackets);                          
+
+                            if (targetFunctionInfo.Name.ToLower() !=text.ToLower())
                             {
-                                string targetFunction = funcMappings.FirstOrDefault(item => item.DbType == targetDbInterpreter.DatabaseType.ToString())?.Function.Split(',')?.FirstOrDefault();
+                                string targetFunction = targetFunctionInfo.Name;
 
                                 if (!string.IsNullOrEmpty(targetFunction))
                                 {

@@ -78,7 +78,7 @@ namespace DatabaseConverter.Core
 
                     if (keywords.Contains(token.Symbol.ToUpper()) || functions.Contains(token.Symbol.ToUpper()))
                     {
-                        token.Symbol = "_" + token.Symbol;
+                        token.Symbol = token.Symbol + "_";
                     }
 
                     hasChanged = true;
@@ -226,6 +226,11 @@ namespace DatabaseConverter.Core
                             {
                                 foreach (Match match in Regex.Matches(token.Symbol, pattern))
                                 {
+                                    if (kp.Value.StartsWith("@") && token.Symbol.Contains(kp.Value))
+                                    {
+                                        continue;
+                                    }
+
                                     token.Symbol = Regex.Replace(token.Symbol, pattern, kp.Value);
                                 }
                             }

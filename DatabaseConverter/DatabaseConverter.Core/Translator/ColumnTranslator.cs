@@ -444,10 +444,19 @@ namespace DatabaseConverter.Core
 
         public void ConvertComputeExpression(TableColumn column)
         {
+            if (this.sourceDbType == DatabaseType.Oracle)
+            {
+                column.ComputeExp = column.ComputeExp.Replace("U'", "'");
+            }
+            else if (this.sourceDbType == DatabaseType.SqlServer)
+            {
+                column.ComputeExp = column.ComputeExp.Replace("N'", "'");
+            }
+
             column.ComputeExp = this.ParseDefinition(column.ComputeExp);
         }
 
-        private async void CheckComputeExpression()
+        private void CheckComputeExpression()
         {
             IEnumerable<Function> customFunctions = this.SourceSchemaInfo?.Functions;
 
@@ -468,7 +477,9 @@ namespace DatabaseConverter.Core
 
                     bool setToNull = false;
 
-                    bool isReferToSpecialDataType = this.columns.Any(item => item != column
+                    var tableColumns = this.columns.Where(item => item.TableName == column.TableName);
+
+                    bool isReferToSpecialDataType = tableColumns.Any(item => item.Name != column.Name
                                             && DataTypeHelper.SpecialDataTypes.Any(t => t.ToLower().Contains(item.DataType.ToLower()))
                                             && Regex.IsMatch(column.ComputeExp, $@"\b({item.Name})\b", RegexOptions.IgnoreCase));
 
@@ -481,7 +492,7 @@ namespace DatabaseConverter.Core
                     {
                         if (customFunctions == null || customFunctions.Count() == 0)
                         {
-                            customFunctions = await this.sourceDbInterpreter.GetFunctionsAsync();
+                            customFunctions = this.sourceDbInterpreter.GetFunctionsAsync().Result;
                         }
 
                         if (customFunctions != null)

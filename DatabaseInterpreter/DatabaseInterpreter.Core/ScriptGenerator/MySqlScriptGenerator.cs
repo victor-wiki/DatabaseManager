@@ -199,7 +199,7 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
             if (!string.IsNullOrEmpty(primaryKey.Comment))
             {
-                sql += $" COMMENT '{primaryKey.Comment}'";
+                sql += $" COMMENT '{this.TransferSingleQuotationString(primaryKey.Comment)}'";
             }
 
             return new CreateDbObjectScript<TablePrimaryKey>(sql + this.scriptsDelimiter);
@@ -261,7 +261,7 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
             if (!string.IsNullOrEmpty(index.Comment))
             {
-                sql += $" COMMENT('{index.Comment}')";
+                sql += $" COMMENT '{this.TransferSingleQuotationString(index.Comment)}'";
             }
 
             return new CreateDbObjectScript<TableIndex>(sql + this.scriptsDelimiter);
@@ -272,12 +272,12 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
             return new DropDbObjectScript<TableIndex>($"ALTER TABLE {this.GetQuotedString(index.TableName)} DROP INDEX {this.GetQuotedString(index.Name)}");
         }
 
-        public override Script AddConstraint(TableConstraint constraint)
+        public override Script AddCheckConstraint(TableConstraint constraint)
         {
             return new Script("");
         }
 
-        public override Script DropConstraint(TableConstraint constraint)
+        public override Script DropCheckConstraint(TableConstraint constraint)
         {
             return new Script("");
         }

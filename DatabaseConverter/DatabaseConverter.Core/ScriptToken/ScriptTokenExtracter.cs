@@ -57,7 +57,7 @@ namespace DatabaseConverter.Core
                             this.ExtractTokens(v);
                         }
                     }
-                    else if (value is Statement || value is TemporaryTable)
+                    else if (value is Statement || value is TemporaryTable || value is StatementItem)
                     {
                         this.ExtractTokens(value);
                     }

@@ -730,7 +730,7 @@ namespace DatabaseInterpreter.Core
         {
             if (column.IsComputed)
             {
-                string computeExpression = this.GetColumnComputeExpression(column);
+                string computeExpression = this.GetColumnComputeExpression(column);              
 
                 return $"{ this.GetQuotedString(column.Name)} AS {computeExpression}";
             }
@@ -741,7 +741,14 @@ namespace DatabaseInterpreter.Core
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                return $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
+                string content = $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}"; 
+
+                if (table.Name == "Employee" && column.Name == "OrganizationLevel")
+                {
+                    Console.WriteLine("####:" + content);
+                }
+
+                return content;
             }
         }
 

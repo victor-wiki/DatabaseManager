@@ -138,6 +138,15 @@ namespace SqlAnalyser.Core
                     this.SetRoutineParameters(script, func.parameter());
                     #endregion
 
+                    #region Declare
+                    var declare = func.seq_of_declare_specs();
+
+                    if (declare != null)
+                    {
+                        script.Statements.AddRange(declare.declare_spec().Select(item => this.ParseDeclareStatement(item)));
+                    }
+                    #endregion
+
                     script.ReturnDataType = new TokenInfo(func.type_spec().GetText()) { Type = TokenType.DataType };
 
                     #region Body
@@ -971,13 +980,13 @@ namespace SqlAnalyser.Core
                 else if (pivot != null)
                 {
                     JoinItem joinItem = new JoinItem() { Type = JoinType.PIVOT };
-                    joinItem.Special = this.ParseToken(pivot, TokenType.Pivot);
+                    joinItem.PivotItem = this.ParsePivot(pivot);
                     fromItem.JoinItems.Add(joinItem);
                 }
                 else if (unpivot != null)
                 {
                     JoinItem joinItem = new JoinItem() { Type = JoinType.UNPIVOT };
-                    joinItem.Special = this.ParseToken(unpivot, TokenType.UnPivot);
+                    joinItem.UnPivotItem = this.ParseUnPivot(unpivot);
                     fromItem.JoinItems.Add(joinItem);
                 }
 
@@ -985,6 +994,32 @@ namespace SqlAnalyser.Core
             }
 
             return fromItems;
+        }
+
+        public PivotItem ParsePivot(Pivot_clauseContext node)
+        {
+            PivotItem pivotItem = new PivotItem();
+
+            Pivot_elementContext pm = node.pivot_element().FirstOrDefault();
+
+            Aggregate_function_nameContext function = pm.aggregate_function_name();
+
+            pivotItem.AggregationFunctionName = new TokenInfo(function.identifier());
+            pivotItem.AggregatedColumnName = this.ParseToken(pm.expression(), TokenType.ColumnName);
+            pivotItem.ColumnName = this.ParseColumnName(node.pivot_for_clause().column_name());
+            pivotItem.Values = node.pivot_in_clause().pivot_in_clause_element().Select(item => new TokenInfo(item)).ToList();
+
+            return pivotItem;
+        }
+
+        public UnPivotItem ParseUnPivot(Unpivot_clauseContext node)
+        {
+            UnPivotItem unpivotItem = new UnPivotItem();
+            unpivotItem.ValueColumnName = this.ParseColumnName(node.column_name());
+            unpivotItem.ForColumnName = this.ParseColumnName(node.pivot_for_clause().column_name());
+            unpivotItem.InColumnNames = node.unpivot_in_clause().unpivot_in_elements().Select(item => this.ParseColumnName(item.column_name())).ToList();
+
+            return unpivotItem;
         }
 
         public List<SetStatement> ParseSetStatement(Assignment_statementContext node)
@@ -1261,10 +1296,16 @@ namespace SqlAnalyser.Core
                 if (node is Column_nameContext cn)
                 {
                     Id_expressionContext[] ids = cn.id_expression();
-
+                    IdentifierContext id = cn.identifier();
                     if (ids != null && ids.Length > 0)
                     {
                         columnName = new ColumnName(ids[0]);
+                        columnName.Name = new TokenInfo(ids[0]);
+                    }
+                    else if (id != null)
+                    {
+                        columnName = new ColumnName(id);
+                        columnName.Name = new ColumnName(id);
                     }
                 }
                 else if (node is Select_list_elementsContext ele)
