@@ -6,7 +6,7 @@
  * Copy table data (support bulkcopy).
  
 ### Table Designer
-  Create table to add columns, primary key, foreign key, index, and check constraint visually.
+  Design table to add columns, primary key, foreign keys, indexes, and check constraints, and it can generate table schema changed scripts from context menu.
 
 ### SQL Query Editor
   Create new query or open existing sql file to execute select, insert, update, delete, create and alter statements. It supports input intellisense.
