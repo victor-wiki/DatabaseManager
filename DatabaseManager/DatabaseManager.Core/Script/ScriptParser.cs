@@ -12,23 +12,29 @@ namespace DatabaseManager.Core
         private readonly string dmlPattern = @"(CREATE|ALTER|INSERT|UPDATE|DELETE|TRUNCATE|INTO)";
         private readonly string createAlterScriptPattern = "(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)";
         private DbInterpreter dbInterpreter;
-        private string script;
+        private string originalScript;
+        private string cleanScript;
+
+        public string Script => this.originalScript;
+        public string CleanScript => this.cleanScript;
 
         public ScriptParser(DbInterpreter dbInterpreter, string script)
         {
             this.dbInterpreter = dbInterpreter;
-            this.script = script;
+            this.originalScript = script;
+
+            this.Parse();
         }
 
-        public string Parse()
+        private string Parse()
         {
             StringBuilder sb = new StringBuilder();
 
-            string []lines = this.script.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            string []lines = this.originalScript.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach(string line in lines)
             {
-                if(line.StartsWith(this.dbInterpreter.CommentString))
+                if (line.Trim().StartsWith(this.dbInterpreter.CommentString))
                 {
                     continue;
                 }
@@ -36,14 +42,14 @@ namespace DatabaseManager.Core
                 sb.AppendLine(line);
             }
 
-            this.script = sb.ToString();
+            this.cleanScript = sb.ToString();
 
-            return this.script;
+            return this.cleanScript;
         }
 
         public bool IsSelect()
         {
-            if (Regex.IsMatch(this.script, selectPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) && !Regex.IsMatch(this.script, dmlPattern, RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(this.cleanScript, selectPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline) && !Regex.IsMatch(this.originalScript, dmlPattern, RegexOptions.IgnoreCase))
             {
                 return true;
             }
@@ -53,7 +59,7 @@ namespace DatabaseManager.Core
 
         public bool IsCreateOrAlterScript()
         {
-            return Regex.IsMatch(this.script, this.createAlterScriptPattern);
+            return Regex.IsMatch(this.cleanScript, this.createAlterScriptPattern);
         }
     }
 }

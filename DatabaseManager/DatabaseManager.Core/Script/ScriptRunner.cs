@@ -54,9 +54,9 @@ namespace DatabaseManager.Core
             {
                 ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);
 
-                script = scriptParser.Parse();
+                string cleanScript = scriptParser.CleanScript;
 
-                if (string.IsNullOrEmpty(script))
+                if (string.IsNullOrEmpty(cleanScript))
                 {
                     result.DoNothing = true;
                     return result;
@@ -71,7 +71,7 @@ namespace DatabaseManager.Core
 
                         if (!scriptParser.IsCreateOrAlterScript() && dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
-                            script = script.TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                            cleanScript = script.TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
                         }
 
                         DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, this.LimitCount);
