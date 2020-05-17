@@ -32,6 +32,7 @@ namespace DatabaseManager.Controls
             {
                 this.lblPort.Visible = this.txtPort.Visible = true;
                 this.txtPort.Text = "3306";
+                this.chkUseSsl.Visible = true;
             }
 
             var authTypes = Enum.GetNames(typeof(AuthenticationType));
@@ -62,6 +63,7 @@ namespace DatabaseManager.Controls
             this.txtUserId.Text = info.UserId;
             this.txtPassword.Text = info.Password;
             this.chkAsDba.Checked = info.IsDba;
+            this.chkUseSsl.Checked = info.UseSsl;
 
             if (info.IntegratedSecurity)
             {
@@ -149,7 +151,8 @@ namespace DatabaseManager.Controls
                 IntegratedSecurity = this.cboAuthentication.Text != AuthenticationType.Password.ToString(),
                 UserId = this.txtUserId.Text.Trim(),
                 Password = this.txtPassword.Text.Trim(),
-                IsDba = this.chkAsDba.Checked
+                IsDba = this.chkAsDba.Checked,
+                UseSsl = this.chkUseSsl.Checked
             };
         }
 

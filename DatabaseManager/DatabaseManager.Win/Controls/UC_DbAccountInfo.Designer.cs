@@ -41,6 +41,7 @@
             this.cboServer = new System.Windows.Forms.ComboBox();
             this.chkAsDba = new System.Windows.Forms.CheckBox();
             this.btnTest = new System.Windows.Forms.Button();
+            this.chkUseSsl = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // txtPort
@@ -161,10 +162,22 @@
             this.btnTest.UseVisualStyleBackColor = true;
             this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
+            // chkUseSsl
+            // 
+            this.chkUseSsl.AutoSize = true;
+            this.chkUseSsl.Location = new System.Drawing.Point(250, 141);
+            this.chkUseSsl.Name = "chkUseSsl";
+            this.chkUseSsl.Size = new System.Drawing.Size(66, 16);
+            this.chkUseSsl.TabIndex = 32;
+            this.chkUseSsl.Text = "Use ssl";
+            this.chkUseSsl.UseVisualStyleBackColor = true;
+            this.chkUseSsl.Visible = false;
+            // 
             // UC_DbAccountInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.chkUseSsl);
             this.Controls.Add(this.btnTest);
             this.Controls.Add(this.chkAsDba);
             this.Controls.Add(this.cboServer);
@@ -199,5 +212,6 @@
         private System.Windows.Forms.ComboBox cboServer;
         private System.Windows.Forms.CheckBox chkAsDba;
         private System.Windows.Forms.Button btnTest;
+        private System.Windows.Forms.CheckBox chkUseSsl;
     }
 }

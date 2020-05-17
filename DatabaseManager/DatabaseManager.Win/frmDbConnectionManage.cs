@@ -186,9 +186,14 @@ namespace DatabaseManager
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
+            this.Edit();
+        }
+
+        private void Edit()
+        {
             AccountProfileInfo profile = this.GetSelectRecord();
 
-            if(profile!=null)
+            if (profile != null)
             {
                 frmAccountInfo frmAccountInfo = new frmAccountInfo(ManagerUtil.GetDatabaseType(this.cboDbType.Text), true) { AccountProfileInfo = profile };
 
@@ -196,7 +201,7 @@ namespace DatabaseManager
                 {
                     this.LoadAccounts();
                 }
-            }           
+            }
         }
 
         private AccountProfileInfo GetSelectRecord()
@@ -239,7 +244,11 @@ namespace DatabaseManager
             if(this.IsForSelecting)
             {
                 this.SelectRecord();
-            }            
+            }    
+            else
+            {
+                this.Edit();
+            }
         }
     }
 }

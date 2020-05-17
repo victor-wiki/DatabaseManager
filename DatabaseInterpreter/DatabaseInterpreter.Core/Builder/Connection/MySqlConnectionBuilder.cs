@@ -15,7 +15,7 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                sb.Append($"user id={connectionInfo.UserId};password={connectionInfo.Password};SslMode=none;");
+                sb.Append($"user id={connectionInfo.UserId};password={connectionInfo.Password};SslMode={(connectionInfo.UseSsl? "Preferred" : "none")};");
             }
 
             return sb.ToString();
