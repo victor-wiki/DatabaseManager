@@ -38,6 +38,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.chkLogError = new System.Windows.Forms.CheckBox();
             this.chkLogInfo = new System.Windows.Forms.CheckBox();
             this.lblLogType = new System.Windows.Forms.Label();
@@ -51,8 +53,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
-            this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
-            this.label5 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -192,6 +192,24 @@
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
             // 
+            // cboPreferredDatabase
+            // 
+            this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPreferredDatabase.FormattingEnabled = true;
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(132, 196);
+            this.cboPreferredDatabase.Name = "cboPreferredDatabase";
+            this.cboPreferredDatabase.Size = new System.Drawing.Size(109, 20);
+            this.cboPreferredDatabase.TabIndex = 24;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(9, 199);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(119, 12);
+            this.label5.TabIndex = 23;
+            this.label5.Text = "Preferred database:";
+            // 
             // chkLogError
             // 
             this.chkLogError.AutoSize = true;
@@ -283,7 +301,7 @@
             this.tabMySql.Location = new System.Drawing.Point(4, 22);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(3);
-            this.tabMySql.Size = new System.Drawing.Size(421, 228);
+            this.tabMySql.Size = new System.Drawing.Size(421, 233);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
@@ -318,24 +336,6 @@
             this.lblMySqlCharset.Size = new System.Drawing.Size(53, 12);
             this.lblMySqlCharset.TabIndex = 0;
             this.lblMySqlCharset.Text = "Charset:";
-            // 
-            // cboPreferredDatabase
-            // 
-            this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(132, 196);
-            this.cboPreferredDatabase.Name = "cboPreferredDatabase";
-            this.cboPreferredDatabase.Size = new System.Drawing.Size(109, 20);
-            this.cboPreferredDatabase.TabIndex = 24;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(9, 199);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(119, 12);
-            this.label5.TabIndex = 23;
-            this.label5.Text = "Preferred database:";
             // 
             // frmSetting
             // 

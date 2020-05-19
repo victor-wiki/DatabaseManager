@@ -13,6 +13,7 @@ namespace DatabaseInterpreter.Core
     public class SqlServerInterpreter : DbInterpreter
     {
         #region Field & Property
+        private readonly string azureSQLFlag = "SQL Azure";
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '['; } }
         public override char QuotationRightChar { get { return ']'; } }
@@ -555,21 +556,57 @@ namespace DatabaseInterpreter.Core
         }
 
         public override Task SetConstrainsEnabled(bool enabled)
-        {
+        {      
             return this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
         }
 
         public override Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
         {
             return this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
-        }
+        }      
 
         private string GetSqlForSetConstrainsEnabled(bool enabled)
         {
-            string sql = $@"EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
-                          EXEC sp_MSForEachTable 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';";
+            string procName = "sp_MSForEachTable";
+
+            string sql = 
+$@"
+IF ServerProperty('Edition') != '{this.azureSQLFlag}'
+BEGIN
+  EXEC {procName} 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
+  EXEC {procName} 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';
+END
+ELSE 
+BEGIN
+    DECLARE @owner NVARCHAR(50)
+	DECLARE @tableName NVARCHAR(256)
+
+	DECLARE table_cursor CURSOR  
+    FOR SELECT SCHEMA_NAME(schema_id),name FROM sys.tables  
+	OPEN table_cursor  
+
+    FETCH NEXT FROM table_cursor INTO @owner,@tableName
+  
+    WHILE @@FETCH_STATUS = 0  
+    BEGIN  
+        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL');
+        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL');
+
+        FETCH NEXT FROM table_cursor INTO @owner,@tableName  
+    END  
+  
+    CLOSE table_cursor  
+    DEALLOCATE table_cursor   
+END";           
 
             return sql;
+        }
+
+        private async Task<bool> IsProcedureExisted(DbConnection dbConnection, string procedureName)
+        {
+            object result = await this.GetScalarAsync(dbConnection, $"SELECT name FROM master.dbo.sysobjects WHERE name = '{procedureName}' AND type='P'");
+
+            return result != null && result.ToString().ToLower() == procedureName.ToLower();
         }
         #endregion
 

@@ -469,6 +469,11 @@ namespace DatabaseInterpreter.Core
             return await connection.ExecuteScalarAsync<long>(sql);
         }
 
+        public async Task<object> GetScalarAsync(string sql)
+        {
+            return await this.GetScalarAsync(this.CreateConnection(), sql);
+        }
+
         public async Task<object> GetScalarAsync(DbConnection dbConnection, string sql)
         {
             return await dbConnection.ExecuteScalarAsync(sql);
@@ -476,7 +481,7 @@ namespace DatabaseInterpreter.Core
 
         public async Task<DbDataReader> GetDataReaderAsync(string sql)
         {
-            return await this.CreateConnection().ExecuteReaderAsync(sql);
+            return await this.GetDataReaderAsync(this.CreateConnection(), sql);
         }
 
         public async Task<DbDataReader> GetDataReaderAsync(DbConnection dbConnection, string sql)
