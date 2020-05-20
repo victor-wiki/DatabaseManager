@@ -13,6 +13,7 @@ namespace DatabaseInterpreter.Core
     public class MySqlInterpreter : DbInterpreter
     {
         #region Field & Property           
+        public const int DEFAULT_PORT = 3306;
         public override string UnicodeInsertChar => "";
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '`'; } }
@@ -289,7 +290,7 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";          
+            string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";
 
             string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,
 	                        TABLE_NAME AS `TableName`,
@@ -615,11 +616,14 @@ namespace DatabaseInterpreter.Core
         {
             string dataType = column.DataType;
 
-            string dataLength = this.GetColumnDataLength(column);
-
-            if (!string.IsNullOrEmpty(dataLength))
+            if (dataType.IndexOf("(") < 0)
             {
-                dataType += $"({dataLength})";
+                string dataLength = this.GetColumnDataLength(column);
+
+                if (!string.IsNullOrEmpty(dataLength))
+                {
+                    dataType += $"({dataLength})";
+                }
             }
 
             return dataType.Trim();
@@ -638,7 +642,7 @@ namespace DatabaseInterpreter.Core
 
             if (dataTypeSpec != null)
             {
-                if(!string.IsNullOrEmpty(dataTypeSpec.Args))
+                if (!string.IsNullOrEmpty(dataTypeSpec.Args))
                 {
                     if (string.IsNullOrEmpty(dataTypeInfo.Args))
                     {
@@ -655,8 +659,8 @@ namespace DatabaseInterpreter.Core
                     {
                         dataLength = dataTypeInfo.Args;
                     }
-                }               
-            }           
+                }
+            }
 
             return dataLength;
         }

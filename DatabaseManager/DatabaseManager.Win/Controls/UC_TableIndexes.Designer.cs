@@ -166,7 +166,7 @@
             // 
             // colType
             // 
-            this.colType.DataPropertyName = "Comment";
+            this.colType.DataPropertyName = "Type";
             this.colType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.colType.HeaderText = "Type";
             this.colType.Name = "colType";
@@ -193,6 +193,7 @@
             // 
             // colComment
             // 
+            this.colComment.DataPropertyName = "Comment";
             this.colComment.HeaderText = "Comment";
             this.colComment.Name = "colComment";
             this.colComment.Width = 150;

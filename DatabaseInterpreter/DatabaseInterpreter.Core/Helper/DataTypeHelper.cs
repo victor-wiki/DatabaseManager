@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace DatabaseInterpreter.Core
 {
@@ -43,10 +44,10 @@ namespace DatabaseInterpreter.Core
         {
             DataTypeInfo dataTypeInfo = new DataTypeInfo();
 
-            if(dbInterpreter!=null)
+            if (dbInterpreter != null)
             {
                 dataType = dataType.Trim(dbInterpreter.QuotationLeftChar, dbInterpreter.QuotationRightChar);
-            }           
+            }
 
             int index = dataType.IndexOf("(");
 
@@ -73,6 +74,35 @@ namespace DatabaseInterpreter.Core
         public static DataTypeInfo GetDataTypeInfo(string dataType)
         {
             return GetDataTypeInfo(null, dataType);
+        }
+
+        public static DataTypeInfo GetSpecialDataTypeInfo(string dataType)
+        {
+            DataTypeInfo dataTypeInfo = new DataTypeInfo();
+
+            Regex regex = new Regex("([(][0-9]+[)])");
+
+            var matches = regex.Matches(dataType);
+
+            List<string> args = new List<string>();
+
+            if (matches.Count > 0)
+            {
+                foreach (Match match in matches)
+                {
+                    dataType = dataType.Replace(match.Value, "");
+                    args.Add(match.Value.Trim('(', ')'));
+                }
+            }
+
+            dataTypeInfo.DataType = dataType;
+
+            if (args.Count > 0)
+            {
+                dataTypeInfo.Args = string.Join(",", args);
+            }
+
+            return dataTypeInfo;
         }
     }
 }

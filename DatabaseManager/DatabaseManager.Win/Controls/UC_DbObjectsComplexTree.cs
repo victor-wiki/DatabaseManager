@@ -118,6 +118,7 @@ namespace DatabaseManager.Controls
             this.tsmiViewData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
+            this.tsmiBackup.Visible = isDatabase;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -627,7 +628,7 @@ namespace DatabaseManager.Controls
             {
                 if (MessageBox.Show("Are you sure to delete this object?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    Task.Run(()=> this.DropDbObject(node));
+                    Task.Run(() => this.DropDbObject(node));
                 }
             }
         }
@@ -922,6 +923,32 @@ namespace DatabaseManager.Controls
                 this.tvDbObjects.SelectedNode = node;
 
                 await this.LoadChildNodes(node);
+            }
+        }
+
+        private async void tsmiBackup_Click(object sender, EventArgs e)
+        {
+            ConnectionInfo connectionInfo = this.GetConnectionInfo(this.GetDatabaseNode(this.tvDbObjects.SelectedNode).Name);
+
+            DbManager dbManager = new DbManager();
+
+            dbManager.Subscribe(this);
+
+            Action<BackupSetting> backup = (setting) =>
+              {
+                  bool success = dbManager.Backup(setting, connectionInfo);
+
+                  if (success)
+                  {
+                      MessageBox.Show("Backup finished.");
+                  }
+              };
+
+            frmBackupSettingRedefine frm = new frmBackupSettingRedefine() { DatabaseType = this.databaseType };
+
+            if (frm.ShowDialog() == DialogResult.OK)
+            {
+                await Task.Run(() => backup(frm.Setting));
             }
         }
     }

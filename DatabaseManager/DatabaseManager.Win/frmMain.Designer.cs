@@ -34,9 +34,12 @@
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiBackupSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
+            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
             this.tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
@@ -46,8 +49,6 @@
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
-            this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
-            this.ucContent = new DatabaseManager.Controls.UC_DbObjectContent();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -74,7 +75,8 @@
             this.toolStripMenuItem1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.toolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiSetting,
-            this.tsmiDbConnection});
+            this.tsmiDbConnection,
+            this.tsmiBackupSetting});
             this.toolStripMenuItem1.Image = global::DatabaseManager.Properties.Resources.Tool16;
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
             this.toolStripMenuItem1.Size = new System.Drawing.Size(68, 21);
@@ -84,7 +86,7 @@
             // 
             this.tsmiSetting.Image = global::DatabaseManager.Properties.Resources.Config;
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(141, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -92,9 +94,17 @@
             // 
             this.tsmiDbConnection.Image = global::DatabaseManager.Properties.Resources.DbConnect16;
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(141, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
+            // 
+            // tsmiBackupSetting
+            // 
+            this.tsmiBackupSetting.Image = global::DatabaseManager.Properties.Resources.DbBackup;
+            this.tsmiBackupSetting.Name = "tsmiBackupSetting";
+            this.tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiBackupSetting.Text = "Backup Setting";
+            this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
             // 
             // splitContainer1
             // 
@@ -117,6 +127,14 @@
             this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 8;
             // 
+            // navigator
+            // 
+            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.navigator.Location = new System.Drawing.Point(0, 0);
+            this.navigator.Name = "navigator";
+            this.navigator.Size = new System.Drawing.Size(150, 374);
+            this.navigator.TabIndex = 0;
+            // 
             // panelContent
             // 
             this.panelContent.Controls.Add(this.ucContent);
@@ -125,6 +143,16 @@
             this.panelContent.Name = "panelContent";
             this.panelContent.Size = new System.Drawing.Size(633, 374);
             this.panelContent.TabIndex = 0;
+            // 
+            // ucContent
+            // 
+            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
+            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ucContent.Location = new System.Drawing.Point(0, 0);
+            this.ucContent.Name = "ucContent";
+            this.ucContent.Size = new System.Drawing.Size(633, 374);
+            this.ucContent.TabIndex = 0;
+            this.ucContent.Visible = false;
             // 
             // toolStrip1
             // 
@@ -235,24 +263,6 @@
             // 
             this.dlgOpenFile.Filter = "sql file|*.sql|all files|*.*";
             // 
-            // navigator
-            // 
-            this.navigator.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.navigator.Location = new System.Drawing.Point(0, 0);
-            this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(150, 374);
-            this.navigator.TabIndex = 0;
-            // 
-            // ucContent
-            // 
-            this.ucContent.BackColor = System.Drawing.SystemColors.Control;
-            this.ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucContent.Location = new System.Drawing.Point(0, 0);
-            this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(633, 374);
-            this.ucContent.TabIndex = 0;
-            this.ucContent.Visible = false;
-            // 
             // frmMain
             // 
             this.AllowDrop = true;
@@ -308,6 +318,7 @@
         private System.Windows.Forms.ToolStripButton tsBtnSave;
         private System.Windows.Forms.ToolStripButton tsBtnOpenFile;
         private System.Windows.Forms.OpenFileDialog dlgOpenFile;
+        private System.Windows.Forms.ToolStripMenuItem tsmiBackupSetting;
     }
 }
 

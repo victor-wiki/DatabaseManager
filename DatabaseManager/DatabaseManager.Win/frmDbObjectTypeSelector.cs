@@ -1,5 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
-using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

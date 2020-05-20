@@ -11,6 +11,54 @@ namespace DatabaseManager.Core
 {
     public class ColumnManager
     {
+        public static List<TableColumnDesingerInfo> GetTableColumnDesingerInfos(DbInterpreter dbInterpreter, Table table, List<TableColumn> columns, List<TablePrimaryKey> primaryKeys)
+        {
+            List<TableColumnDesingerInfo> columnDesingerInfos = new List<TableColumnDesingerInfo>();
+            IEnumerable<string> dataTypes = DataTypeManager.GetDataTypeSpecifications(dbInterpreter.DatabaseType).Select(item => item.Name);
+
+            foreach (TableColumn column in columns)
+            {
+                DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(column.DataType);
+
+                TableColumnDesingerInfo columnDesingerInfo = new TableColumnDesingerInfo()
+                {
+                    OldName = column.Name,
+                    IsPrimary = primaryKeys.Any(item => item.Columns.Any(t => t.ColumnName == column.Name)),
+                    Length = dbInterpreter.GetColumnDataLength(column)
+                };
+
+                ObjectHelper.CopyProperties(column, columnDesingerInfo);
+
+                string dataType = dataTypeInfo.DataType.ToLower();
+
+                if (!dataTypes.Contains(dataType))
+                {
+                    dataTypeInfo = DataTypeHelper.GetSpecialDataTypeInfo(dataType);
+                    dataType = dataTypeInfo.DataType;
+                    columnDesingerInfo.Length = dataTypeInfo.Args;
+                }
+
+                columnDesingerInfo.DataType = dataType;
+
+                columnDesingerInfo.ExtraPropertyInfo = new TableColumnExtraPropertyInfo();
+
+                if (column.IsComputed)
+                {
+                    columnDesingerInfo.ExtraPropertyInfo.Expression = column.ComputeExp;
+                }
+
+                if (table.IdentitySeed.HasValue)
+                {
+                    columnDesingerInfo.ExtraPropertyInfo.Seed = table.IdentitySeed.Value;
+                    columnDesingerInfo.ExtraPropertyInfo.Increment = table.IdentityIncrement.Value;
+                }
+
+                columnDesingerInfos.Add(columnDesingerInfo);
+            }
+
+            return columnDesingerInfos;
+        }
+
         public static IEnumerable<DataTypeDesignerInfo> GetDataTypeInfos(DatabaseType databaseType)
         {
             List<DataTypeDesignerInfo> dataTypeDesignerInfos = new List<DataTypeDesignerInfo>();
@@ -160,7 +208,7 @@ namespace DatabaseManager.Core
                         column.MaxLength = long.Parse(lengthItem);
                     }
                 }
-                else if (argName == "precision")
+                else if (argName == "precision" || argName == "dayScale")
                 {
                     column.Precision = int.Parse(lengthItem);
                 }

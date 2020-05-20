@@ -33,6 +33,11 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.columnSpliter = new System.Windows.Forms.SplitContainer();
             this.dgvColumns = new System.Windows.Forms.DataGridView();
+            this.columnPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiInsertColumn = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiDeleteColumn = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.colColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colDataType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colLength = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -41,11 +46,6 @@
             this.colDefaultValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colIdentity = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.columnPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiInsertColumn = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiDeleteColumn = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.columnSpliter)).BeginInit();
             this.columnSpliter.Panel1.SuspendLayout();
             this.columnSpliter.Panel2.SuspendLayout();
@@ -68,7 +68,7 @@
             // columnSpliter.Panel2
             // 
             this.columnSpliter.Panel2.Controls.Add(this.columnPropertites);
-            this.columnSpliter.Size = new System.Drawing.Size(603, 429);
+            this.columnSpliter.Size = new System.Drawing.Size(971, 429);
             this.columnSpliter.SplitterDistance = 312;
             this.columnSpliter.TabIndex = 1;
             // 
@@ -110,7 +110,7 @@
             this.dgvColumns.RowHeadersWidth = 25;
             this.dgvColumns.RowTemplate.Height = 23;
             this.dgvColumns.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvColumns.Size = new System.Drawing.Size(603, 312);
+            this.dgvColumns.Size = new System.Drawing.Size(971, 312);
             this.dgvColumns.TabIndex = 7;
             this.dgvColumns.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellContentClick);
             this.dgvColumns.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellValueChanged);
@@ -127,6 +127,48 @@
             this.dgvColumns.MouseMove += new System.Windows.Forms.MouseEventHandler(this.dgvColumns_MouseMove);
             this.dgvColumns.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvColumns_MouseUp);
             // 
+            // columnPropertites
+            // 
+            this.columnPropertites.BrowsableProperties = null;
+            this.columnPropertites.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.columnPropertites.HelpVisible = false;
+            this.columnPropertites.HiddenAttributes = null;
+            this.columnPropertites.HiddenProperties = null;
+            this.columnPropertites.Location = new System.Drawing.Point(0, 0);
+            this.columnPropertites.Name = "columnPropertites";
+            this.columnPropertites.Size = new System.Drawing.Size(971, 113);
+            this.columnPropertites.TabIndex = 0;
+            // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiInsertColumn,
+            this.tsmiDeleteColumn,
+            this.tsmiGenerateChangeScripts});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(221, 70);
+            // 
+            // tsmiInsertColumn
+            // 
+            this.tsmiInsertColumn.Name = "tsmiInsertColumn";
+            this.tsmiInsertColumn.Size = new System.Drawing.Size(220, 22);
+            this.tsmiInsertColumn.Text = "Insert Column";
+            this.tsmiInsertColumn.Click += new System.EventHandler(this.tsmiInsertColumn_Click);
+            // 
+            // tsmiDeleteColumn
+            // 
+            this.tsmiDeleteColumn.Name = "tsmiDeleteColumn";
+            this.tsmiDeleteColumn.Size = new System.Drawing.Size(220, 22);
+            this.tsmiDeleteColumn.Text = "Delete Column";
+            this.tsmiDeleteColumn.Click += new System.EventHandler(this.tsmiDeleteColumn_Click);
+            // 
+            // tsmiGenerateChangeScripts
+            // 
+            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
+            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(220, 22);
+            this.tsmiGenerateChangeScripts.Text = "Generate Change Scripts";
+            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
+            // 
             // colColumnName
             // 
             this.colColumnName.DataPropertyName = "Name";
@@ -142,10 +184,11 @@
             this.colDataType.HeaderText = "Data Type";
             this.colDataType.Name = "colDataType";
             this.colDataType.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colDataType.Width = 130;
+            this.colDataType.Width = 150;
             // 
             // colLength
             // 
+            this.colLength.DataPropertyName = "Length";
             this.colLength.HeaderText = "Length";
             this.colLength.Name = "colLength";
             this.colLength.Width = 60;
@@ -159,6 +202,7 @@
             // 
             // colNullable
             // 
+            this.colNullable.DataPropertyName = "IsNullable";
             this.colNullable.HeaderText = "Nullable";
             this.colNullable.Name = "colNullable";
             this.colNullable.Width = 60;
@@ -187,48 +231,6 @@
             this.colComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colComment.Width = 200;
             // 
-            // columnPropertites
-            // 
-            this.columnPropertites.BrowsableProperties = null;
-            this.columnPropertites.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.columnPropertites.HelpVisible = false;
-            this.columnPropertites.HiddenAttributes = null;
-            this.columnPropertites.HiddenProperties = null;
-            this.columnPropertites.Location = new System.Drawing.Point(0, 0);
-            this.columnPropertites.Name = "columnPropertites";
-            this.columnPropertites.Size = new System.Drawing.Size(603, 113);
-            this.columnPropertites.TabIndex = 0;
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiInsertColumn,
-            this.tsmiDeleteColumn,
-            this.tsmiGenerateChangeScripts});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(221, 92);
-            // 
-            // tsmiInsertColumn
-            // 
-            this.tsmiInsertColumn.Name = "tsmiInsertColumn";
-            this.tsmiInsertColumn.Size = new System.Drawing.Size(220, 22);
-            this.tsmiInsertColumn.Text = "Insert Column";
-            this.tsmiInsertColumn.Click += new System.EventHandler(this.tsmiInsertColumn_Click);
-            // 
-            // tsmiDeleteColumn
-            // 
-            this.tsmiDeleteColumn.Name = "tsmiDeleteColumn";
-            this.tsmiDeleteColumn.Size = new System.Drawing.Size(220, 22);
-            this.tsmiDeleteColumn.Text = "Delete Column";
-            this.tsmiDeleteColumn.Click += new System.EventHandler(this.tsmiDeleteColumn_Click);
-            // 
-            // tsmiGenerateChangeScripts
-            // 
-            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
-            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(220, 22);
-            this.tsmiGenerateChangeScripts.Text = "Generate Change Scripts";
-            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
-            // 
             // UC_TableColumns
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -236,7 +238,7 @@
             this.BackColor = System.Drawing.Color.White;
             this.Controls.Add(this.columnSpliter);
             this.Name = "UC_TableColumns";
-            this.Size = new System.Drawing.Size(603, 429);
+            this.Size = new System.Drawing.Size(971, 429);
             this.Load += new System.EventHandler(this.UC_TableColumns_Load);
             this.columnSpliter.Panel1.ResumeLayout(false);
             this.columnSpliter.Panel2.ResumeLayout(false);
@@ -256,6 +258,7 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiInsertColumn;
         private System.Windows.Forms.ToolStripMenuItem tsmiDeleteColumn;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;
         private System.Windows.Forms.DataGridViewTextBoxColumn colColumnName;
         private System.Windows.Forms.DataGridViewComboBoxColumn colDataType;
         private System.Windows.Forms.DataGridViewTextBoxColumn colLength;
@@ -264,6 +267,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colDefaultValue;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colIdentity;
         private System.Windows.Forms.DataGridViewTextBoxColumn colComment;
-        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;
     }
 }

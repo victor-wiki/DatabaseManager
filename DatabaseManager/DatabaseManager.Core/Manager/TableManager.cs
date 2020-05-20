@@ -243,6 +243,10 @@ namespace DatabaseManager.Core
                                     {
                                         alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
                                     }
+                                    else if(oldColumn.IsNullable && newColumn.IsNullable)
+                                    {
+                                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
+                                    }
                                 }
 
                                 scripts.Add(alterColumnScript);

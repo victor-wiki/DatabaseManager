@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Profile;
-using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

@@ -83,6 +83,16 @@ namespace DatabaseManager.Properties {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _dbBackup {
+            get {
+                object obj = ResourceManager.GetObject("_dbBackup", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _dbConvert {
             get {
                 object obj = ResourceManager.GetObject("_dbConvert", resourceCulture);
@@ -156,6 +166,16 @@ namespace DatabaseManager.Properties {
         internal static System.Drawing.Bitmap Copy {
             get {
                 object obj = ResourceManager.GetObject("Copy", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap DbBackup {
+            get {
+                object obj = ResourceManager.GetObject("DbBackup", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

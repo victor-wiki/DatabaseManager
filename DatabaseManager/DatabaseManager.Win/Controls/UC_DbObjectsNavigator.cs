@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using DatabaseInterpreter.Profile;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;

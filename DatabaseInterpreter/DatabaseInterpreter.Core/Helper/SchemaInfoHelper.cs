@@ -329,16 +329,31 @@ namespace DatabaseInterpreter.Core
             DataTypeInfo dataTypeInfo1 = DataTypeHelper.GetDataTypeInfo(column1.DataType);
             DataTypeInfo dataTypeInfo2 = DataTypeHelper.GetDataTypeInfo(column2.DataType);
 
+            var dataTypeSpecs1 = DataTypeManager.GetDataTypeSpecifications(databaseType);
+            var dataTypeSpecs2 = DataTypeManager.GetDataTypeSpecifications(databaseType);
+
             string dataType1 = dataTypeInfo1.DataType;
             string dataType2 = dataTypeInfo2.DataType;
+
+            if (!dataTypeSpecs1.Any(item => item.Name == dataType1))
+            {
+                dataTypeInfo1 = DataTypeHelper.GetSpecialDataTypeInfo(column1.DataType.ToLower());
+                dataType1 = dataTypeInfo1.DataType;
+            }
+
+            if (!dataTypeSpecs2.Any(item => item.Name == dataType2))
+            {
+                dataTypeInfo2 = DataTypeHelper.GetSpecialDataTypeInfo(column2.DataType.ToLower());
+                dataType2 = dataTypeInfo2.DataType;
+            }
 
             if (dataType1.ToLower() != dataType2.ToLower())
             {
                 return false;
             }
 
-            DataTypeSpecification dataTypeSpec1 = DataTypeManager.GetDataTypeSpecification(databaseType, dataType1);
-            DataTypeSpecification dataTypeSpec2 = DataTypeManager.GetDataTypeSpecification(databaseType, dataType2);
+            DataTypeSpecification dataTypeSpec1 = dataTypeSpecs1.FirstOrDefault(item => item.Name == dataType1);
+            DataTypeSpecification dataTypeSpec2 = dataTypeSpecs2.FirstOrDefault(item => item.Name == dataType2);
 
             if (dataTypeInfo1.DataType == dataTypeInfo2.DataType && string.IsNullOrEmpty(dataTypeSpec1.Args) && string.IsNullOrEmpty(dataTypeSpec2.Args))
             {
@@ -363,6 +378,15 @@ namespace DatabaseInterpreter.Core
               || (column2.Precision == null && column2.Scale == null && column2.MaxLength == column1.Precision))
             {
                 return true;
+            }
+
+            if (dataTypeSpec1.Name == dataTypeSpec2.Name 
+                && (dataTypeSpec1.Args?.Contains("scale") == true || (dataTypeSpec1.Args?.Contains("precision") == true))
+                && dataTypeSpec1.Args?.Contains("length") == false
+               )
+            {
+                return IsPrecisionScaleEquals(column1.Precision, column2.Precision)
+                       && IsPrecisionScaleEquals(column1.Scale, column2.Scale);
             }
 
             return column1.MaxLength == column2.MaxLength

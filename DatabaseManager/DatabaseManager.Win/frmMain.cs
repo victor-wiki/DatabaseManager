@@ -232,5 +232,11 @@ namespace DatabaseManager
                 }
             }
         }
+
+        private void tsmiBackupSetting_Click(object sender, EventArgs e)
+        {
+            frmBackupSetting frm = new frmBackupSetting();
+            frm.ShowDialog();
+        }
     }
 }

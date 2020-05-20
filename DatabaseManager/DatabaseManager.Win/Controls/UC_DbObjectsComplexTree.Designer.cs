@@ -50,6 +50,7 @@
             this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiBackup = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -213,6 +214,7 @@
             // tsmiMore
             // 
             this.tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiBackup,
             this.tsmiClearData,
             this.tsmiEmptyDatabase});
             this.tsmiMore.Name = "tsmiMore";
@@ -222,16 +224,23 @@
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(137, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
             this.tsmiClearData.Text = "Clear Data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
+            // 
+            // tsmiBackup
+            // 
+            this.tsmiBackup.Name = "tsmiBackup";
+            this.tsmiBackup.Size = new System.Drawing.Size(180, 22);
+            this.tsmiBackup.Text = "Backup";
+            this.tsmiBackup.Click += new System.EventHandler(this.tsmiBackup_Click);
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -267,5 +276,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiAlter;
         private System.Windows.Forms.ToolStripMenuItem tsmiNewTable;
         private System.Windows.Forms.ToolStripMenuItem tsmiDesign;
+        private System.Windows.Forms.ToolStripMenuItem tsmiBackup;
     }
 }

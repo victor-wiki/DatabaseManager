@@ -8,12 +8,12 @@ namespace DatabaseInterpreter.Core
         public string BuildConntionString(ConnectionInfo connectionInfo)
         {
             string server = connectionInfo.Server;
-            string serviceName = "ORCL";
+            string serviceName = OracleInterpreter.DEFAULT_SERVICE_NAME;
             string port = connectionInfo.Port;
 
             if (string.IsNullOrEmpty(port))
             {
-                port = "1521";
+                port = OracleInterpreter.DEFAULT_PORT.ToString();
             }
 
             if (server != null && server.Contains("/"))

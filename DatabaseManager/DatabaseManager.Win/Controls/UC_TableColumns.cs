@@ -39,6 +39,12 @@ namespace DatabaseManager.Controls
         public void InitControls()
         {
             this.LoadDataTypes();
+
+            if(this.DatabaseType == DatabaseType.Oracle)
+            {
+                this.colIdentity.Visible = false;
+                this.colDataType.Width = 200;
+            }
         }
 
         private void InitColumnsGrid()

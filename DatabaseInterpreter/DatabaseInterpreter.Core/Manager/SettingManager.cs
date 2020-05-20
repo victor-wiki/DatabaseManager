@@ -3,39 +3,31 @@ using DatabaseInterpreter.Utility;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace  DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Core
 {
-    public class SettingManager
+    public class SettingManager : ConfigManager
     {
         public static Setting Setting { get; private set; } = new Setting();
 
         static SettingManager()
         {
             LoadConfig();
-        }
-            
-        public static string ConfigFolder
-        {
-            get
-            {
-                return Path.Combine(PathHelper.GetAssemblyFolder(), "Config");
-            }
-        }
+        }       
 
         public static string ConfigFilePath
         {
             get
-            {                               
-                return Path.Combine(ConfigFolder, "Setting.json");
+            {
+                return Path.Combine(ConfigRootFolder, "Setting.json");
             }
         }
 
         public static void LoadConfig()
         {
-            if(File.Exists(ConfigFilePath))
+            if (File.Exists(ConfigFilePath))
             {
                 Setting = (Setting)JsonConvert.DeserializeObject(File.ReadAllText(ConfigFilePath), typeof(Setting));
-            }            
+            }
         }
 
         public static void SaveConfig(Setting setting)

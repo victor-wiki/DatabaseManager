@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using System.Linq;
+using DatabaseManager.Model;
+using System.IO;
+using DatabaseManager.Helper;
 
 namespace DatabaseManager.Core
 {
@@ -282,6 +286,37 @@ namespace DatabaseManager.Core
 
                 await dbConverter.Convert(schemaInfo);
             }
+        }
+
+        public bool Backup(BackupSetting setting, ConnectionInfo connectionInfo)
+        {
+            try
+            {
+                DbBackup backup = DbBackup.GetInstance(ManagerUtil.GetDatabaseType(setting.DatabaseType));
+                backup.Setting = setting;
+                backup.ConnectionInfo = connectionInfo;                
+
+                this.FeedbackInfo("Begin to backup...");
+
+                string saveFilePath = backup.Backup();
+
+                if(File.Exists(saveFilePath))
+                {
+                    this.FeedbackInfo($"Database has been backuped to {saveFilePath}.");                   
+                }
+                else
+                {
+                    this.FeedbackInfo($"Database has been backuped.");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+            }
+
+            return false;
         }
 
         public void Feedback(FeedbackInfoType infoType, string message)

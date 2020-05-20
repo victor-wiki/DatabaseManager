@@ -152,7 +152,7 @@
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(89, 12);
             this.lblOutputFolder.TabIndex = 52;
-            this.lblOutputFolder.Text = "Output folder:";
+            this.lblOutputFolder.Text = "Output Folder:";
             // 
             // btnOutputFolder
             // 

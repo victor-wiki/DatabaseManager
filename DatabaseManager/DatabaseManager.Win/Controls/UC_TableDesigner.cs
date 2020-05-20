@@ -38,11 +38,11 @@ namespace DatabaseManager.Controls
             this.ucIndexes.OnGenerateChangeScripts += this.GeneateChangeScripts;
             this.ucForeignKeys.OnGenerateChangeScripts += this.GeneateChangeScripts;
             this.ucConstraints.OnGenerateChangeScripts += this.GeneateChangeScripts;
-        }     
+        }
 
         private async void InitControls()
         {
-            if(this.displayInfo.DatabaseType == DatabaseType.MySql)
+            if (this.displayInfo.DatabaseType == DatabaseType.MySql)
             {
                 this.tabControl1.TabPages.Remove(this.tabConstraints);
             }
@@ -73,39 +73,9 @@ namespace DatabaseManager.Controls
                     this.txtTableComment.Text = table.Comment;
 
                     #region Load Columns
-                    List<TableColumnDesingerInfo> columnDesingerInfos = new List<TableColumnDesingerInfo>();
+                    List<TableColumnDesingerInfo> columnDesingerInfos = ColumnManager.GetTableColumnDesingerInfos(dbInterpreter, table, schemaInfo.TableColumns, schemaInfo.TablePrimaryKeys);
 
-                    foreach (TableColumn column in schemaInfo.TableColumns)
-                    {
-                        DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(column.DataType);
-
-                        TableColumnDesingerInfo columnDesingerInfo = new TableColumnDesingerInfo()
-                        {
-                            OldName = column.Name,
-                            IsPrimary = schemaInfo.TablePrimaryKeys.Any(item => item.Columns.Any(t => t.ColumnName == column.Name)),
-                            Length = dbInterpreter.GetColumnDataLength(column)
-                        };
-
-                        ObjectHelper.CopyProperties(column, columnDesingerInfo);
-                        columnDesingerInfo.DataType = dataTypeInfo.DataType.ToLower();
-
-                        columnDesingerInfo.ExtraPropertyInfo = new TableColumnExtraPropertyInfo();
-
-                        if (column.IsComputed)
-                        {
-                            columnDesingerInfo.ExtraPropertyInfo.Expression = column.ComputeExp;
-                        }
-
-                        if(table.IdentitySeed.HasValue)
-                        {
-                            columnDesingerInfo.ExtraPropertyInfo.Seed = table.IdentitySeed.Value;
-                            columnDesingerInfo.ExtraPropertyInfo.Increment = table.IdentityIncrement.Value;
-                        }
-
-                        columnDesingerInfos.Add(columnDesingerInfo);
-                    }
-
-                    this.ucColumns.LoadColumns(schemaInfo.Tables.First(), columnDesingerInfos);
+                    this.ucColumns.LoadColumns(table, columnDesingerInfos);
                     #endregion
                 }
                 else
@@ -220,7 +190,7 @@ namespace DatabaseManager.Controls
                 schemaDesingerInfo.TableForeignKeyDesignerInfos.AddRange(foreignKeys);
             }
 
-            if(this.tabConstraints.Tag == null)
+            if (this.tabConstraints.Tag == null)
             {
                 schemaDesingerInfo.IgnoreTableConstraint = true;
             }
@@ -234,7 +204,7 @@ namespace DatabaseManager.Controls
             }
 
             return schemaDesingerInfo;
-        }       
+        }
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
@@ -313,7 +283,7 @@ namespace DatabaseManager.Controls
             this.Feedback("End generate changed scripts.");
 
             if (!result.IsOK)
-            {               
+            {
                 MessageBox.Show(result.Message);
             }
             else
@@ -326,7 +296,7 @@ namespace DatabaseManager.Controls
                 scriptsViewer.LoadScripts(StringHelper.ToSingleEmptyLine(scripts).Trim());
 
                 scriptsViewer.ShowDialog();
-            }            
+            }
         }
 
         private async void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -402,7 +372,7 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
-            else if(tabPage.Name == this.tabConstraints.Name)
+            else if (tabPage.Name == this.tabConstraints.Name)
             {
                 tabPage.Tag = 1;
 
@@ -511,7 +481,7 @@ namespace DatabaseManager.Controls
 
         private void Feedback(FeedbackInfo info)
         {
-            if(this.OnFeedback!=null)
+            if (this.OnFeedback != null)
             {
                 this.OnFeedback(info);
             }

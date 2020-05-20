@@ -6,7 +6,7 @@
   <item name="char" args="length" range="1~2000"></item>
   <item name="date" args=""></item>
   <item name="interval day to second" format="interval day($dayScale$) to second($scale$)" range="0~9,0~9" args="dayScale,scale" optional="true" default="2,6"></item>
-  <item name="interval year to month" format="interval year($scale$) to month" args="scale" range="0~9" optional="true" default="2"></item>
+  <item name="interval year to month" format="interval year($precision$) to month" args="precision" range="0~9" optional="true" default="2"></item>
   <item name="long" args="" size="2GB" indexForbidden="true"></item>
   <item name="long raw" args="" size="2GB" indexForbidden="true"></item>
   <item name="nchar" args="length" range="1~1000"></item>

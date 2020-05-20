@@ -14,6 +14,8 @@ namespace DatabaseInterpreter.Core
     {
         #region Field & Property
         private string dbOwner;
+        public const int DEFAULT_PORT = 1521;
+        public const string DEFAULT_SERVICE_NAME = "ORCL";
         public const string SEMICOLON_FUNC = "CHR(59)";
         public const string CONNECT_CHAR = "||";
         public override string UnicodeInsertChar => "";
@@ -730,7 +732,7 @@ namespace DatabaseInterpreter.Core
         {
             if (column.IsComputed)
             {
-                string computeExpression = this.GetColumnComputeExpression(column);              
+                string computeExpression = this.GetColumnComputeExpression(column);
 
                 return $"{ this.GetQuotedString(column.Name)} AS {computeExpression}";
             }
@@ -741,7 +743,7 @@ namespace DatabaseInterpreter.Core
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                string content = $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}"; 
+                string content = $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
 
                 if (table.Name == "Employee" && column.Name == "OrganizationLevel")
                 {
@@ -756,12 +758,48 @@ namespace DatabaseInterpreter.Core
         {
             string dataType = column.DataType;
 
-            string dataLength = this.GetColumnDataLength(column);
-
-            if (!string.IsNullOrEmpty(dataLength))
+            if (dataType.IndexOf("(") < 0)
             {
-                dataType += $"({dataLength})";
-            }
+                DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataType.ToLower());
+
+                if (dataTypeSpec != null && !string.IsNullOrEmpty(dataTypeSpec.Format))
+                {
+                    string format = dataTypeSpec.Format;
+                    string args = dataTypeSpec.Args;
+
+                    if (!string.IsNullOrEmpty(args))
+                    {
+                        string[] argItems = args.Split(',');
+
+                        foreach (string argItem in argItems)
+                        {
+                            if (argItem == "dayScale")
+                            {
+                                format = format.Replace("$dayScale$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
+                            }
+                            else if (argItem == "precision")
+                            {
+                                format = format.Replace("$precision$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
+                            }
+                            else if (argItem == "scale")
+                            {
+                                format = format.Replace("$scale$", (column.Scale.HasValue ? column.Scale.Value : 0).ToString());
+                            }
+                        }
+
+                        dataType = format;
+                    }
+                }
+                else
+                {
+                    string dataLength = this.GetColumnDataLength(column);
+
+                    if (!string.IsNullOrEmpty(dataLength))
+                    {
+                        dataType += $"({dataLength})";
+                    }
+                }
+            }           
 
             return dataType.Trim();
         }
@@ -797,13 +835,13 @@ namespace DatabaseInterpreter.Core
                         {
                             if (!((column.Precision == null || column.Precision == 0) && (column.Scale == null || column.Scale == 0)))
                             {
-                                long precision = (column.Precision != null && column.Precision.HasValue) ? column.Precision.Value : column.MaxLength.Value;
+                                long? precision = (column.Precision != null && column.Precision.HasValue) ? column.Precision.Value : column.MaxLength;
 
                                 if (dataType == "raw")
                                 {
                                     dataLength = precision.ToString();
                                 }
-                                else
+                                else if (string.IsNullOrEmpty(dataTypeSpec.Format))
                                 {
                                     string precisionScale = this.GetDataTypePrecisionScale(column, dataTypeInfo.DataType);
 

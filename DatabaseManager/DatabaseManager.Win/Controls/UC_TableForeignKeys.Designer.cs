@@ -29,19 +29,19 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvForeignKeys = new System.Windows.Forms.DataGridView();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiDeleteForeignKey = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.colReferenceTable = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colKeyName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
             this.colUpdateCascade = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colDeleteCascade = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiDeleteForeignKey = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dgvForeignKeys)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -51,13 +51,13 @@
             this.dgvForeignKeys.AllowDrop = true;
             this.dgvForeignKeys.BackgroundColor = System.Drawing.Color.White;
             this.dgvForeignKeys.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvForeignKeys.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvForeignKeys.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvForeignKeys.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvForeignKeys.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colReferenceTable,
@@ -66,14 +66,14 @@
             this.colUpdateCascade,
             this.colDeleteCascade,
             this.colComment});
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.GradientActiveCaption;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvForeignKeys.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvForeignKeys.DefaultCellStyle = dataGridViewCellStyle3;
             this.dgvForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvForeignKeys.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvForeignKeys.Location = new System.Drawing.Point(0, 0);
@@ -92,8 +92,31 @@
             this.dgvForeignKeys.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvForeignKeys_KeyDown);
             this.dgvForeignKeys.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvForeignKeys_MouseUp);
             // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiDeleteForeignKey,
+            this.tsmiGenerateChangeScripts});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
+            // 
+            // tsmiDeleteForeignKey
+            // 
+            this.tsmiDeleteForeignKey.Name = "tsmiDeleteForeignKey";
+            this.tsmiDeleteForeignKey.Size = new System.Drawing.Size(228, 22);
+            this.tsmiDeleteForeignKey.Text = "Delete Foreign Key";
+            this.tsmiDeleteForeignKey.Click += new System.EventHandler(this.tsmiDeleteForeignKey_Click);
+            // 
+            // tsmiGenerateChangeScripts
+            // 
+            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
+            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
+            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
+            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
+            // 
             // colReferenceTable
             // 
+            this.colReferenceTable.DataPropertyName = "ReferencedTableName";
             this.colReferenceTable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.colReferenceTable.HeaderText = "Reference Table";
             this.colReferenceTable.Name = "colReferenceTable";
@@ -109,8 +132,8 @@
             // 
             // colColumns
             // 
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.colColumns.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.colColumns.DefaultCellStyle = dataGridViewCellStyle2;
             this.colColumns.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.colColumns.HeaderText = "Column Mapping";
             this.colColumns.Name = "colColumns";
@@ -120,11 +143,13 @@
             // 
             // colUpdateCascade
             // 
+            this.colUpdateCascade.DataPropertyName = "UpdateCascade";
             this.colUpdateCascade.HeaderText = "Update Cascade";
             this.colUpdateCascade.Name = "colUpdateCascade";
             // 
             // colDeleteCascade
             // 
+            this.colDeleteCascade.DataPropertyName = "DeleteCascade";
             this.colDeleteCascade.HeaderText = "Delete Cascade";
             this.colDeleteCascade.Name = "colDeleteCascade";
             // 
@@ -133,28 +158,6 @@
             this.colComment.DataPropertyName = "Comment";
             this.colComment.HeaderText = "Comment";
             this.colComment.Name = "colComment";
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiDeleteForeignKey,
-            this.tsmiGenerateChangeScripts});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 70);
-            // 
-            // tsmiDeleteForeignKey
-            // 
-            this.tsmiDeleteForeignKey.Name = "tsmiDeleteForeignKey";
-            this.tsmiDeleteForeignKey.Size = new System.Drawing.Size(220, 22);
-            this.tsmiDeleteForeignKey.Text = "Delete Foreign Key";
-            this.tsmiDeleteForeignKey.Click += new System.EventHandler(this.tsmiDeleteForeignKey_Click);
-            // 
-            // tsmiGenerateChangeScripts
-            // 
-            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
-            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
-            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
-            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
             // 
             // UC_TableForeignKeys
             // 
@@ -175,12 +178,12 @@
         private System.Windows.Forms.DataGridView dgvForeignKeys;  
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiDeleteForeignKey;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;
         private System.Windows.Forms.DataGridViewComboBoxColumn colReferenceTable;
         private System.Windows.Forms.DataGridViewTextBoxColumn colKeyName;
         private System.Windows.Forms.DataGridViewButtonColumn colColumns;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colUpdateCascade;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colDeleteCascade;
         private System.Windows.Forms.DataGridViewTextBoxColumn colComment;
-        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;
     }
 }

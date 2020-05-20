@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using Humanizer;
 
-namespace DatabaseManager.Core
+namespace DatabaseManager.Helper
 {
     public class ManagerUtil
     {

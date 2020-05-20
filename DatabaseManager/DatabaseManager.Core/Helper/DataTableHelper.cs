@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using CsvHelper;
 
-namespace DatabaseManager.Core
+namespace DatabaseManager.Helper
 {
     public class DataTableHelper
     {

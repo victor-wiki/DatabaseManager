@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Profile;
-using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using DatabaseInterpreter.Core;
 
 namespace DatabaseManager.Controls

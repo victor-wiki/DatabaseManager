@@ -31,8 +31,13 @@ namespace DatabaseManager.Controls
             if (this.DatabaseType == DatabaseType.MySql)
             {
                 this.lblPort.Visible = this.txtPort.Visible = true;
-                this.txtPort.Text = "3306";
+                this.txtPort.Text = MySqlInterpreter.DEFAULT_PORT.ToString();
                 this.chkUseSsl.Visible = true;
+            }
+            else if(this.DatabaseType == DatabaseType.Oracle)
+            {
+                this.lblPort.Visible = this.txtPort.Visible = true;
+                this.txtPort.Text = OracleInterpreter.DEFAULT_PORT.ToString();
             }
 
             var authTypes = Enum.GetNames(typeof(AuthenticationType));
