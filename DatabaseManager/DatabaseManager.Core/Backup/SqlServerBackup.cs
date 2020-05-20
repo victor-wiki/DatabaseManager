@@ -1,0 +1,44 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using DatabaseInterpreter.Model;
+using DatabaseManager.Model;
+using DatabaseInterpreter.Core;
+using DatabaseManager.Helper;
+using System.Data.Common;
+
+namespace DatabaseManager.Core
+{
+    public class SqlServerBackup : DbBackup
+    {
+        public SqlServerBackup() : base() { }
+
+        public SqlServerBackup(BackupSetting setting, ConnectionInfo connectionInfo) : base(setting, connectionInfo)
+        {
+        }
+
+        public override string Backup()
+        {
+            if(this.Setting==null)
+            {
+                throw new ArgumentException($"There is no backup setting for SqlServer.");
+            }                
+
+            string fileNameWithoutExt = this.ConnectionInfo.Database + "_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+            string fileName = fileNameWithoutExt + ".bak";
+
+            string saveFolder = this.CheckSaveFolder();
+
+            string saveFilePath = Path.Combine(saveFolder, fileName);
+
+            SqlServerInterpreter interpreter = new SqlServerInterpreter(this.ConnectionInfo, new DbInterpreterOption());
+
+            string sql = $@"use master; backup database {this.ConnectionInfo.Database} to disk='{saveFilePath}';";
+
+            interpreter.ExecuteNonQueryAsync(sql);
+
+            return saveFilePath;
+        }
+    }
+}
