@@ -24,6 +24,9 @@
 ### Clear Data
   Delete data of all tables.
   
+### Backup Database
+  For Oracle and MySql, it uses client tool exp and mysqldump to do that, and it can also zip file.
+  
 ### Empty Database
   Delete all objects of a database, including table, view, function, procedure, and table trigger.
 
