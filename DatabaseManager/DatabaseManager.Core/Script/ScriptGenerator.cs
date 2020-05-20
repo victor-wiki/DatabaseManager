@@ -41,16 +41,13 @@ namespace DatabaseManager.Core
 
             StringBuilder sbContent = new StringBuilder();
 
-            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;           
 
             foreach (Script script in scripts)
             {
-                if(dbObject is ScriptDbObject)
+                if (databaseType == DatabaseType.SqlServer && script is SpliterScript)
                 {
-                    if(databaseType == DatabaseType.SqlServer && script is SpliterScript)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 string content = script.Content;
@@ -90,7 +87,7 @@ namespace DatabaseManager.Core
                 sbContent.AppendLine(content);
             }
 
-            return sbContent.ToString();     
+            return sbContent.ToString();
         }
 
         private int GetCreateIndex(string script, string createFlag)

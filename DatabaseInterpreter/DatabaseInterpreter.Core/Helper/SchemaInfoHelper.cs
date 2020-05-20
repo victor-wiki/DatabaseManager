@@ -380,13 +380,21 @@ namespace DatabaseInterpreter.Core
                 return true;
             }
 
-            if (dataTypeSpec1.Name == dataTypeSpec2.Name 
-                && (dataTypeSpec1.Args?.Contains("scale") == true || (dataTypeSpec1.Args?.Contains("precision") == true))
-                && dataTypeSpec1.Args?.Contains("length") == false
-               )
+            if (dataTypeSpec1.Name == dataTypeSpec2.Name && dataTypeSpec1.Args?.Contains("length") == false)
             {
-                return IsPrecisionScaleEquals(column1.Precision, column2.Precision)
-                       && IsPrecisionScaleEquals(column1.Scale, column2.Scale);
+                if (dataTypeSpec1.Args == "scale")
+                {
+                    return IsPrecisionScaleEquals(column1.Scale, column2.Scale);
+                }
+                else if (dataTypeSpec1.Args == "precision")
+                {
+                    return IsPrecisionScaleEquals(column1.Precision, column2.Precision);
+                }
+                else if (dataTypeSpec1.Args?.Contains("scale") == true || dataTypeSpec1.Args?.Contains("precision") == true)
+                {
+                    return IsPrecisionScaleEquals(column1.Precision, column2.Precision)
+                           && IsPrecisionScaleEquals(column1.Scale, column2.Scale);
+                }
             }
 
             return column1.MaxLength == column2.MaxLength

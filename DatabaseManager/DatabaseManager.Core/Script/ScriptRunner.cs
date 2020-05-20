@@ -97,7 +97,7 @@ namespace DatabaseManager.Core
                         {
                             string delimiter = dbInterpreter.ScriptsDelimiter;                         
 
-                            commands = script.Split(new string[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
+                            commands = script.Split(new string[] { delimiter, delimiter.Replace("\r", "\n") }, StringSplitOptions.RemoveEmptyEntries);
                         }
 
                         int affectedRows = 0;

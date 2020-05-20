@@ -835,7 +835,7 @@ END";
                 dataLength = $"({dataLength})";
             }
 
-            string dataType = $"{this.GetQuotedString(column.DataType)} {dataLength}";
+            string dataType = $"{column.DataType} {dataLength}";
 
             return dataType.Trim();
         }

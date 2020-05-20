@@ -38,7 +38,7 @@ namespace DatabaseManager.Helper
         {
             int start = richTextBox.SelectionStart;
 
-            var dataTypes = DataTypeManager.GetDataTypeSpecifications(databaseType).Select(item=>item.Name);
+            var dataTypes = DataTypeManager.GetDataTypeSpecifications(databaseType).Select(item => item.Name);
             var keywords = KeywordManager.GetKeywords(databaseType);
             var functions = FunctionManager.GetFunctionSpecifications(databaseType).Select(item => item.Name).Except(keywords);
 
@@ -74,6 +74,18 @@ namespace DatabaseManager.Helper
 
             foreach (Match m in matches)
             {
+                int index = m.Index;
+
+                string leftChar = index > 0 ? text[index - 1].ToString() : "";
+                string rightChar = index + m.Value.Length < text.Length ? text[index + m.Value.Length].ToString() : "";
+
+                string quotationValuePattern = $@"[""\[`]({m.Value})[""\]`]";
+
+                if (leftChar.Length > 0 && rightChar.Length > 0 && Regex.IsMatch($"{leftChar}{m.Value}{rightChar}", quotationValuePattern))
+                {
+                    continue;
+                }
+
                 richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
                 richTextBox.SelectionLength = m.Length;
                 richTextBox.SelectionFont = richTextBox.Font;
