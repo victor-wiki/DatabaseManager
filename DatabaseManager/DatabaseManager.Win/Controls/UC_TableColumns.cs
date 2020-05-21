@@ -23,6 +23,7 @@ namespace DatabaseManager.Controls
         private bool defaultNullable = false;
         private IEnumerable<DataTypeSpecification> dataTypeSpecifications;
         public DatabaseType DatabaseType { get; set; }
+        public List<UserDefinedType> UserDefinedTypes { get; set; }
 
         public GeneateChangeScriptsHandler OnGenerateChangeScripts;
 
@@ -40,7 +41,7 @@ namespace DatabaseManager.Controls
         {
             this.LoadDataTypes();
 
-            if(this.DatabaseType == DatabaseType.Oracle)
+            if (this.DatabaseType == DatabaseType.Oracle)
             {
                 this.colIdentity.Visible = false;
                 this.colDataType.Width = 200;
@@ -103,6 +104,8 @@ namespace DatabaseManager.Controls
                     extraPropertyInfo.Seed = table.IdentitySeed.Value;
                     extraPropertyInfo.Increment = table.IdentityIncrement.Value;
                 }
+
+                this.SetColumnCellsReadonly(row);
             }
 
             this.AutoSizeColumns();
@@ -128,10 +131,24 @@ namespace DatabaseManager.Controls
         {
             dataTypeSpecifications = DataTypeManager.GetDataTypeSpecifications(this.DatabaseType);
 
-            this.colDataType.DataSource = dataTypeSpecifications;
+            List<DatabaseObject> dbObjects = new List<DatabaseObject>();
+
+            dbObjects.AddRange(dataTypeSpecifications.Select(item => new DatabaseObject { Name = item.Name }));
+
+            if (this.UserDefinedTypes != null)
+            {
+                dbObjects.AddRange(this.UserDefinedTypes);
+            }
+
+            this.colDataType.DataSource = dbObjects;
             this.colDataType.DisplayMember = "Name";
             this.colDataType.ValueMember = "Name";
             this.colDataType.AutoComplete = true;
+        }
+
+        private UserDefinedType GetUserDefinedType(string dataType)
+        {
+            return this.UserDefinedTypes?.FirstOrDefault(item => item.Name == dataType);
         }
 
         public void EndEdit()
@@ -155,9 +172,11 @@ namespace DatabaseManager.Controls
                 {
                     TableColumnDesingerInfo tag = row.Tag as TableColumnDesingerInfo;
 
+                    string dataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
+
                     col.OldName = tag?.OldName;
                     col.Name = colName;
-                    col.DataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
+                    col.DataType = dataType;
                     col.Length = DataGridViewHelper.GetCellStringValue(row, this.colLength.Name);
                     col.IsNullable = DataGridViewHelper.GetCellBoolValue(row, this.colNullable.Name);
                     col.IsPrimary = DataGridViewHelper.GetCellBoolValue(row, this.colPrimary.Name);
@@ -165,6 +184,14 @@ namespace DatabaseManager.Controls
                     col.DefaultValue = DataGridViewHelper.GetCellStringValue(row, this.colDefaultValue.Name);
                     col.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
                     col.ExtraPropertyInfo = tag?.ExtraPropertyInfo;
+
+                    UserDefinedType userDefinedType = this.GetUserDefinedType(dataType);
+
+                    if (userDefinedType != null)
+                    {
+                        col.IsUserDefined = true;
+                        col.TypeOwner = userDefinedType.Owner;
+                    }
 
                     row.Tag = col;
 
@@ -251,11 +278,18 @@ namespace DatabaseManager.Controls
 
             if (!string.IsNullOrEmpty(dataType))
             {
+                UserDefinedType userDefindedType = this.GetUserDefinedType(dataType);
+
+                if (userDefindedType != null)
+                {
+                    dataType = userDefindedType.Type;
+                }
+
                 DataTypeSpecification dataTypeSpec = this.dataTypeSpecifications.FirstOrDefault(item => item.Name == dataType);
 
                 if (dataTypeSpec != null)
                 {
-                    bool isLengthReadOnly = string.IsNullOrEmpty(dataTypeSpec.Args);
+                    bool isLengthReadOnly = userDefindedType != null || string.IsNullOrEmpty(dataTypeSpec.Args);
                     bool isPrimaryReadOnly = dataTypeSpec.IndexForbidden;
                     bool isIdentityReadOnly = !dataTypeSpec.AllowIdentity;
 

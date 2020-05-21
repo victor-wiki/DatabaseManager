@@ -9,6 +9,7 @@ using System.IO;
 using System.Windows.Forms;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Data;
+using System.Drawing;
 
 namespace DatabaseManager.Controls
 {
@@ -16,14 +17,58 @@ namespace DatabaseManager.Controls
     {
         private DatabaseObjectDisplayInfo displayInfo;
         private ScriptRunner scriptRunner;
+        private bool readOnly;
+        private bool showEditorMessage =true;
+
+        public bool ReadOnly
+        {
+            get { return this.readOnly; }
+            set
+            {
+                this.readOnly = value;
+                this.Editor.ReadOnly = value;
+                this.Editor.BackColor = Color.White;
+            }
+        }
+
+        public int SplitterDistance
+        {
+            get { return this.splitContainer1.SplitterDistance; }
+            set { this.splitContainer1.SplitterDistance = value; }
+        }
+
+        public bool ShowEditorMessage
+        {
+            get { return this.showEditorMessage; }
+            set
+            {
+                this.showEditorMessage = value;
+                this.statusStrip1.Visible = value;                
+            }
+        }
 
         public UC_SqlQuery()
         {
             InitializeComponent();
 
-            this.SetResultPanelVisible(false);
-            this.queryEditor.OnQueryEditorInfoMessage += this.ShowEditorInfoMessage;
-            this.queryEditor.SetupIntellisenseRequired += QueryEditor_SetupIntellisenseRequired;
+            this.SetResultPanelVisible(false);           
+        }
+
+        private void queryEditor_Load(object sender, EventArgs e)
+        {
+            if(this.showEditorMessage)
+            {
+                this.queryEditor.OnQueryEditorInfoMessage += this.ShowEditorInfoMessage;
+            }     
+            else
+            {
+                this.splitContainer1.Height += this.statusStrip1.Height;
+            }
+
+            if(!this.readOnly)
+            {
+                this.queryEditor.SetupIntellisenseRequired += QueryEditor_SetupIntellisenseRequired;
+            }            
         }
 
         private void QueryEditor_SetupIntellisenseRequired(object sender, EventArgs e)
@@ -259,5 +304,7 @@ namespace DatabaseManager.Controls
             this.splitContainer1.Panel2Collapsed = !visible;
             this.splitContainer1.SplitterWidth = visible ? 3 : 1;
         }
+
+       
     }
 }

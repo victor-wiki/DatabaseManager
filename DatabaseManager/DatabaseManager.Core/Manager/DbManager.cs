@@ -319,10 +319,26 @@ namespace DatabaseManager.Core
             return false;
         }
 
+        public async Task<DiagnoseResult> Diagnose(DatabaseType databaseType, ConnectionInfo connectionInfo, DiagnoseType diagnoseType)
+        {
+            DbDiagnosis dbDiagnosis = DbDiagnosis.GetInstance(databaseType, connectionInfo);
+
+            dbDiagnosis.OnFeedback += this.Feedback;
+
+            DiagnoseResult result = await dbDiagnosis.Diagnose(diagnoseType);
+
+            return result;
+        }
+
         public void Feedback(FeedbackInfoType infoType, string message)
         {
             FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
 
+            this.Feedback(info);
+        }
+
+        public void Feedback(FeedbackInfo info)
+        {
             if (this.observer != null)
             {
                 FeedbackHelper.Feedback(this.observer, info);

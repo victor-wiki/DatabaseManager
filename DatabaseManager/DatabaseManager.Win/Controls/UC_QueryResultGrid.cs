@@ -36,6 +36,11 @@ namespace DatabaseManager.Controls
 
         private void Save()
         {
+            if (this.dlgSave == null)
+            {
+                this.dlgSave = new SaveFileDialog();
+            }
+
             this.dlgSave.FileName = "";
 
             DialogResult result = this.dlgSave.ShowDialog();

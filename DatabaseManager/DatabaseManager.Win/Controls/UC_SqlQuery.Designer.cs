@@ -96,7 +96,7 @@
             this.tabPageMessage.Location = new System.Drawing.Point(4, 22);
             this.tabPageMessage.Margin = new System.Windows.Forms.Padding(0);
             this.tabPageMessage.Name = "tabPageMessage";
-            this.tabPageMessage.Size = new System.Drawing.Size(424, 48);
+            this.tabPageMessage.Size = new System.Drawing.Size(424, 129);
             this.tabPageMessage.TabIndex = 0;
             this.tabPageMessage.Text = "Message";
             this.tabPageMessage.UseVisualStyleBackColor = true;
@@ -110,7 +110,7 @@
             this.resultTextBox.Margin = new System.Windows.Forms.Padding(0);
             this.resultTextBox.Name = "resultTextBox";
             this.resultTextBox.ReadOnly = true;
-            this.resultTextBox.Size = new System.Drawing.Size(424, 48);
+            this.resultTextBox.Size = new System.Drawing.Size(424, 129);
             this.resultTextBox.TabIndex = 0;
             this.resultTextBox.Text = "";
             // 
@@ -134,12 +134,14 @@
             // 
             // queryEditor
             // 
+            this.queryEditor.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.queryEditor.DbInterpreter = null;
             this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             this.queryEditor.Location = new System.Drawing.Point(0, 0);
             this.queryEditor.Name = "queryEditor";
             this.queryEditor.Size = new System.Drawing.Size(432, 250);
             this.queryEditor.TabIndex = 0;
+            this.queryEditor.Load += new System.EventHandler(this.queryEditor_Load);
             // 
             // resultGridView
             // 

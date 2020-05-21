@@ -119,6 +119,7 @@ namespace DatabaseManager.Controls
             this.tsmiTranslate.Visible = isTable || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
+            this.tsmiDiagnose.Visible = isDatabase;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -836,7 +837,7 @@ namespace DatabaseManager.Controls
                 }
             }
 
-            info.ConnectionInfo = this.GetConnectionInfo(this.GetDatabaseNode(this.tvDbObjects.SelectedNode).Name);
+            info.ConnectionInfo = this.GetCurrentConnectionInfo();
 
             this.ShowContent(info);
         }
@@ -924,11 +925,11 @@ namespace DatabaseManager.Controls
 
                 await this.LoadChildNodes(node);
             }
-        }
+        }       
 
         private async void tsmiBackup_Click(object sender, EventArgs e)
         {
-            ConnectionInfo connectionInfo = this.GetConnectionInfo(this.GetDatabaseNode(this.tvDbObjects.SelectedNode).Name);
+            ConnectionInfo connectionInfo = this.GetCurrentConnectionInfo();
 
             DbManager dbManager = new DbManager();
 
@@ -944,12 +945,24 @@ namespace DatabaseManager.Controls
                   }
               };
 
-            frmBackupSettingRedefine frm = new frmBackupSettingRedefine() { DatabaseType = this.databaseType };
+            frmBackupSettingRedefine form = new frmBackupSettingRedefine() { DatabaseType = this.databaseType };
 
-            if (frm.ShowDialog() == DialogResult.OK)
+            if (form.ShowDialog() == DialogResult.OK)
             {
-                await Task.Run(() => backup(frm.Setting));
+                await Task.Run(() => backup(form.Setting));
             }
+        }
+
+        private void tsmiDiagnose_Click(object sender, EventArgs e)
+        {
+            ConnectionInfo connectionInfo = this.GetCurrentConnectionInfo();
+
+            frmDiagnose form = new frmDiagnose();
+            form.DatabaseType = this.databaseType;
+            form.ConnectionInfo = connectionInfo;
+
+            form.Init(this);
+            form.ShowDialog();
         }
     }
 }

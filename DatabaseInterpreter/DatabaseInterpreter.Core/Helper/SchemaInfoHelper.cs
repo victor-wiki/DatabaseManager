@@ -326,6 +326,15 @@ namespace DatabaseInterpreter.Core
 
         private static bool IsTableColumnDataTypeAndLengthEquals(DatabaseType databaseType, TableColumn column1, TableColumn column2)
         {
+            if (column1.IsUserDefined != column2.IsUserDefined)
+            {
+                return false;
+            }
+            else if (column1.IsUserDefined && column2.IsUserDefined)
+            {
+                return column1.DataType == column2.DataType;
+            }
+
             DataTypeInfo dataTypeInfo1 = DataTypeHelper.GetDataTypeInfo(column1.DataType);
             DataTypeInfo dataTypeInfo2 = DataTypeHelper.GetDataTypeInfo(column2.DataType);
 

@@ -48,9 +48,10 @@
             this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiBackup = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiBackup = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiDiagnose = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -215,11 +216,19 @@
             // 
             this.tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiBackup,
+            this.tsmiDiagnose,
             this.tsmiClearData,
             this.tsmiEmptyDatabase});
             this.tsmiMore.Name = "tsmiMore";
             this.tsmiMore.Size = new System.Drawing.Size(180, 22);
             this.tsmiMore.Text = "More";
+            // 
+            // tsmiBackup
+            // 
+            this.tsmiBackup.Name = "tsmiBackup";
+            this.tsmiBackup.Size = new System.Drawing.Size(180, 22);
+            this.tsmiBackup.Text = "Backup";
+            this.tsmiBackup.Click += new System.EventHandler(this.tsmiBackup_Click);
             // 
             // tsmiClearData
             // 
@@ -235,12 +244,12 @@
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
-            // tsmiBackup
+            // tsmiDiagnose
             // 
-            this.tsmiBackup.Name = "tsmiBackup";
-            this.tsmiBackup.Size = new System.Drawing.Size(180, 22);
-            this.tsmiBackup.Text = "Backup";
-            this.tsmiBackup.Click += new System.EventHandler(this.tsmiBackup_Click);
+            this.tsmiDiagnose.Name = "tsmiDiagnose";
+            this.tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDiagnose.Text = "Diagnose";
+            this.tsmiDiagnose.Click += new System.EventHandler(this.tsmiDiagnose_Click);
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -277,5 +286,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiNewTable;
         private System.Windows.Forms.ToolStripMenuItem tsmiDesign;
         private System.Windows.Forms.ToolStripMenuItem tsmiBackup;
+        private System.Windows.Forms.ToolStripMenuItem tsmiDiagnose;
     }
 }

@@ -29,7 +29,7 @@ namespace DatabaseManager.Core
 
                 ObjectHelper.CopyProperties(column, columnDesingerInfo);
 
-                string dataType = dataTypeInfo.DataType.ToLower();
+                string dataType = column.IsUserDefined ? column.DataType : dataTypeInfo.DataType.ToLower();
 
                 if (!dataTypes.Contains(dataType))
                 {
@@ -80,6 +80,11 @@ namespace DatabaseManager.Core
         public static bool ValidateDataType(DatabaseType databaseType, TableColumnDesingerInfo columnDesingerInfo, out string message)
         {
             message = "";
+
+            if(columnDesingerInfo.IsUserDefined)
+            {
+                return true;
+            }
 
             string columName = columnDesingerInfo.Name;
             string dataType = columnDesingerInfo.DataType;

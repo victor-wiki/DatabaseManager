@@ -266,11 +266,29 @@
     <Compile Include="frmColumSelect.Designer.cs">
       <DependentUpon>frmColumSelect.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmDiagnose.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDiagnose.Designer.cs">
+      <DependentUpon>frmDiagnose.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmDiagnoseResult.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDiagnoseResult.Designer.cs">
+      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmScriptsViewer.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="frmScriptsViewer.Designer.cs">
       <DependentUpon>frmScriptsViewer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmSqlQuery.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmSqlQuery.Designer.cs">
+      <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </Compile>
     <Compile Include="Helper\DataGridViewHelper.cs" />
     <Compile Include="Helper\SqlWordFinder.cs" />
@@ -422,6 +440,12 @@
     <EmbeddedResource Include="frmDbConnectionManage.resx">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="frmDiagnose.resx">
+      <DependentUpon>frmDiagnose.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDiagnoseResult.resx">
+      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmGenerateScripts.resx">
       <DependentUpon>frmGenerateScripts.cs</DependentUpon>
     </EmbeddedResource>
@@ -433,6 +457,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmSetting.resx">
       <DependentUpon>frmSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmSqlQuery.resx">
+      <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -162,7 +162,7 @@ namespace DatabaseManager.Core
                         | DatabaseObjectType.TableIndex
                         | DatabaseObjectType.TableConstraint;
 
-                    if(this.dbInterpreter.DatabaseType == DatabaseType.Oracle)
+                    if (this.dbInterpreter.DatabaseType == DatabaseType.Oracle)
                     {
                         this.dbInterpreter.Option.IncludePrimaryKeyWhenGetTableIndex = true;
                     }
@@ -243,7 +243,7 @@ namespace DatabaseManager.Core
                                     {
                                         alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
                                     }
-                                    else if(oldColumn.IsNullable && newColumn.IsNullable)
+                                    else if (oldColumn.IsNullable && newColumn.IsNullable)
                                     {
                                         alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
                                     }
@@ -495,7 +495,10 @@ namespace DatabaseManager.Core
                 TableColumn tableColumn = new TableColumn();
                 ObjectHelper.CopyProperties(column, tableColumn);
 
-                ColumnManager.SetColumnLength(this.dbInterpreter.DatabaseType, tableColumn, column.Length);
+                if (!tableColumn.IsUserDefined)
+                {
+                    ColumnManager.SetColumnLength(this.dbInterpreter.DatabaseType, tableColumn, column.Length);
+                }
 
                 if (column.IsPrimary)
                 {

@@ -19,8 +19,9 @@ namespace DatabaseManager.Controls
     public delegate void GeneateChangeScriptsHandler();
     public partial class UC_TableDesigner : UserControl, IDbObjContentDisplayer, IObserver<FeedbackInfo>
     {
+        private readonly string selfTableName = "<self>";
+
         private DatabaseObjectDisplayInfo displayInfo;
-        private DbInterpreter dbInterpreter;
 
         public FeedbackHandler OnFeedback;
 
@@ -47,6 +48,11 @@ namespace DatabaseManager.Controls
                 this.tabControl1.TabPages.Remove(this.tabConstraints);
             }
 
+            DbInterpreter dbInterpreter = this.GetDbInterpreter();
+
+            List<UserDefinedType> userDefinedTypes = await dbInterpreter.GetUserDefinedTypesAsync();
+
+            this.ucColumns.UserDefinedTypes = userDefinedTypes;
             this.ucColumns.InitControls();
 
             if (this.displayInfo.IsNew)
@@ -55,9 +61,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.cboOwner.Enabled = false;
-
-                this.dbInterpreter = this.GetDbInterpreter();
+                this.cboOwner.Enabled = false;               
 
                 SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, TableNames = new string[] { this.displayInfo.Name } };
                 filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey;
@@ -185,7 +189,16 @@ namespace DatabaseManager.Controls
             {
                 List<TableForeignKeyDesignerInfo> foreignKeys = this.ucForeignKeys.GetForeignKeys();
 
-                foreignKeys.ForEach(item => { item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name; });
+                foreignKeys.ForEach(item =>
+                {
+                    item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name;
+
+                    if (item.ReferencedTableName == this.selfTableName)
+                    {
+                        item.ReferencedTableName = tableDesignerInfo.Name;
+                        item.Name = item.Name.Replace(this.selfTableName, tableDesignerInfo.Name);
+                    }
+                });
 
                 schemaDesingerInfo.TableForeignKeyDesignerInfos.AddRange(foreignKeys);
             }
@@ -310,6 +323,8 @@ namespace DatabaseManager.Controls
 
             Table table = new Table() { Owner = this.cboOwner.Text, Name = this.txtTableName.Text.Trim() };
 
+            DbInterpreter dbInterpreter = this.GetDbInterpreter();
+
             if (tabPage.Name == this.tabIndexes.Name)
             {
                 tabPage.Tag = 1;
@@ -318,12 +333,7 @@ namespace DatabaseManager.Controls
 
                 if (!this.ucIndexes.Inited)
                 {
-                    if (this.dbInterpreter == null)
-                    {
-                        this.dbInterpreter = this.GetDbInterpreter();
-                    }
-
-                    this.ucIndexes.InitControls(this.dbInterpreter);
+                    this.ucIndexes.InitControls(dbInterpreter);
                 }
 
                 if (!this.displayInfo.IsNew)
@@ -333,7 +343,7 @@ namespace DatabaseManager.Controls
                         SchemaInfoFilter filter = new SchemaInfoFilter();
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
-                        List<TableIndex> tableIndexes = await this.dbInterpreter.GetTableIndexesAsync(filter, true);
+                        List<TableIndex> tableIndexes = await dbInterpreter.GetTableIndexesAsync(filter, true);
 
                         this.ucIndexes.LoadIndexes(IndexManager.GetIndexDesignerInfos(this.displayInfo.DatabaseType, tableIndexes));
                     }
@@ -351,10 +361,14 @@ namespace DatabaseManager.Controls
 
                 if (!this.ucForeignKeys.Inited)
                 {
-                    DbInterpreter dbInterpreter = this.GetDbInterpreter();
                     dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
-                    var tables = await dbInterpreter.GetTablesAsync();
+                    List<Table> tables = await dbInterpreter.GetTablesAsync();
+
+                    if (this.displayInfo.IsNew)
+                    {
+                        tables.Add(new Table() { Name = "<self>" });
+                    }
 
                     this.ucForeignKeys.InitControls(tables);
                 }
@@ -366,7 +380,9 @@ namespace DatabaseManager.Controls
                         SchemaInfoFilter filter = new SchemaInfoFilter();
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
-                        List<TableForeignKey> foreignKeys = await this.dbInterpreter.GetTableForeignKeysAsync(filter);
+                        dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Details;
+
+                        List<TableForeignKey> foreignKeys = await dbInterpreter.GetTableForeignKeysAsync(filter);
 
                         this.ucForeignKeys.LoadForeignKeys(IndexManager.GetForeignKeyDesignerInfos(foreignKeys));
                     }
@@ -388,7 +404,7 @@ namespace DatabaseManager.Controls
                         SchemaInfoFilter filter = new SchemaInfoFilter();
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
-                        List<TableConstraint> constraints = await this.dbInterpreter.GetTableConstraintsAsync(filter);
+                        List<TableConstraint> constraints = await dbInterpreter.GetTableConstraintsAsync(filter);
 
                         this.ucConstraints.LoadConstraints(IndexManager.GetConstraintDesignerInfos(constraints));
                     }
@@ -434,11 +450,11 @@ namespace DatabaseManager.Controls
 
         private async void ShowColumnMappingSelector(string referenceTableName, List<ForeignKeyColumn> mappings)
         {
-            frmColumnMapping frm = new frmColumnMapping() { ReferenceTableName = referenceTableName, TableName = this.txtTableName.Text.Trim(), Mappings = mappings };
+            frmColumnMapping form = new frmColumnMapping() { ReferenceTableName = referenceTableName, TableName = this.txtTableName.Text.Trim(), Mappings = mappings };
 
             IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name));
 
-            frm.TableColumns = columns.OrderBy(item => item.Name).Select(item => item.Name).ToList();
+            form.TableColumns = columns.OrderBy(item => item.Name).Select(item => item.Name).ToList();           
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
             dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
@@ -446,11 +462,18 @@ namespace DatabaseManager.Controls
             SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { referenceTableName } };
             List<TableColumn> referenceTableColumns = await dbInterpreter.GetTableColumnsAsync(filter);
 
-            frm.ReferenceTableColumns = referenceTableColumns.Select(item => item.Name).ToList();
-
-            if (frm.ShowDialog() == DialogResult.OK)
+            if (referenceTableName == this.selfTableName)
             {
-                this.ucForeignKeys.SetRowColumns(frm.Mappings);
+                form.ReferenceTableColumns = this.ucColumns.GetColumns().Select(item => item.Name).ToList();
+            }
+            else
+            {
+                form.ReferenceTableColumns = referenceTableColumns.Select(item => item.Name).ToList();
+            }           
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                this.ucForeignKeys.SetRowColumns(form.Mappings);
             }
         }
 
