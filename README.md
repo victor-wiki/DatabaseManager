@@ -27,6 +27,9 @@
 ### Backup Database
   For Oracle and MySql, it uses client tool exp and mysqldump to do that, and it can also zip file.
   
+### Diagnose Database
+  Diagnose invalid records of table that values are empty but columns definded as not null, and that referenced values are as same as themselves.
+  
 ### Empty Database
   Delete all objects of a database, including table, view, function, procedure, and table trigger.
 
