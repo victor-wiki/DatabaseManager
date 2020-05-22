@@ -247,4 +247,22 @@
   <data name="_dbBackup" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\_dbBackup.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Check" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Check.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_columnMapping" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\_columnMapping.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_diagnose" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\_diagnose.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_sqlQuery" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\_sqlQuery.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_table" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\_table.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_tableCopy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\_tableCopy.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

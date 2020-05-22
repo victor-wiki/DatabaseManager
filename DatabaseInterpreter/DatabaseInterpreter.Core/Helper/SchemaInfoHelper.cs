@@ -13,6 +13,44 @@ namespace DatabaseInterpreter.Core
             return cloneSchemaInfo;
         }
 
+        public static void MapTableNames(SchemaInfo schemaInfo, Dictionary<string,string> tableNameMappings)
+        {
+            schemaInfo.Tables.ForEach(item => item.Name = GetMappedTableName(item.Name, tableNameMappings));
+            schemaInfo.TableColumns.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
+            schemaInfo.TablePrimaryKeys.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
+            schemaInfo.TableIndexes.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
+            schemaInfo.TableConstraints.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
+            schemaInfo.TableForeignKeys.ForEach(item =>
+                {
+                    item.TableName = GetMappedTableName(item.TableName, tableNameMappings);
+                    item.ReferencedTableName = GetMappedTableName(item.ReferencedTableName, tableNameMappings);
+                }           
+            );          
+        }
+
+        public static void RenameTableChildren(SchemaInfo schemaInfo)
+        {            
+            schemaInfo.TablePrimaryKeys.ForEach(item => item.Name = Rename(item.Name));
+            schemaInfo.TableIndexes.ForEach(item => item.Name = Rename(item.Name));
+            schemaInfo.TableConstraints.ForEach(item => item.Name = Rename(item.Name));
+            schemaInfo.TableForeignKeys.ForEach(item => item.Name = Rename(item.Name));
+        }
+
+        public static string Rename(string name)
+        {
+            return name + "1";
+        }
+
+        public static string GetMappedTableName(string tableName, Dictionary<string, string> tableNameMappings)
+        {
+            if (tableNameMappings != null && tableNameMappings.ContainsKey(tableName))
+            {
+                return tableNameMappings[tableName];
+            }
+
+            return tableName;
+        }
+
         public static void EnsurePrimaryKeyNameUnique(SchemaInfo schemaInfo)
         {
             List<string> keyNames = new List<string>();

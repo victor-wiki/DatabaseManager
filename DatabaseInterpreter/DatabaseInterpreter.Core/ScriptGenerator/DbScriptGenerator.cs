@@ -674,6 +674,8 @@ namespace DatabaseInterpreter.Core
         public abstract Script AddCheckConstraint(TableConstraint constraint);
 
         public abstract Script DropCheckConstraint(TableConstraint constraint);
+
+        public abstract Script SetIdentityEnabled(TableColumn column, bool enabled);
         #endregion
 
         #region Database Operation  
@@ -683,6 +685,7 @@ namespace DatabaseInterpreter.Core
         public abstract Script DropTrigger(TableTrigger trigger);
         public abstract Script DropFunction(Function function);
         public abstract Script DropProcedure(Procedure procedure);
+        public abstract IEnumerable<Script> SetConstrainsEnabled(bool enabled);
         #endregion
 
         #region Common Method

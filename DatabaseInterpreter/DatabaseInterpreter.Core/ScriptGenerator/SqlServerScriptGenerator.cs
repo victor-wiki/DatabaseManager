@@ -390,6 +390,11 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
             return new DropDbObjectScript<TableDefaultValueConstraint>(this.GetDropConstraintSql(defaultValueConstraint));
         }
 
+        public override Script SetIdentityEnabled(TableColumn column, bool enabled)
+        {
+            return new AlterDbObjectScript<Table>($"SET IDENTITY_INSERT { this.GetQuotedFullTableName(column) } {(enabled ? "OFF" : "ON")}");
+        }
+
         #endregion
 
         #region Database Operation
@@ -427,7 +432,44 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedObjectName(dbObject)};";
-        }      
+        }       
+
+        public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
+        {
+            string procName = "sp_MSForEachTable";
+
+            string sql =
+$@"
+IF ServerProperty('Edition') != '{SqlServerInterpreter.AzureSQLFlag}'
+BEGIN
+  EXEC {procName} 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
+  EXEC {procName} 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';
+END
+ELSE 
+BEGIN
+    DECLARE @owner NVARCHAR(50)
+	DECLARE @tableName NVARCHAR(256)
+
+	DECLARE table_cursor CURSOR  
+    FOR SELECT SCHEMA_NAME(schema_id),name FROM sys.tables  
+	OPEN table_cursor  
+
+    FETCH NEXT FROM table_cursor INTO @owner,@tableName
+  
+    WHILE @@FETCH_STATUS = 0  
+    BEGIN  
+        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL');
+        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL');
+
+        FETCH NEXT FROM table_cursor INTO @owner,@tableName  
+    END  
+  
+    CLOSE table_cursor  
+    DEALLOCATE table_cursor   
+END";
+          
+           yield return new ExecuteProcedureScript(sql);
+        }    
 
         #endregion
     }

@@ -13,14 +13,14 @@ namespace DatabaseManager
 {
     public partial class frmDbConnect : Form
     {
+        private bool requriePassword = false;
+        private bool isAdd = true;
+
         public DatabaseType DatabaseType { get; set; }
         public string ProflieName { get; set; }
         public bool NotUseProfile { get; set; }
 
         public ConnectionInfo ConnectionInfo { get; set; }
-
-        private bool requriePassword = false;
-        private bool isAdd = true;
 
         public frmDbConnect(DatabaseType dbType)
         {
@@ -50,7 +50,7 @@ namespace DatabaseManager
             this.ucDbAccountInfo.DatabaseType = this.DatabaseType;
             this.ucDbAccountInfo.InitControls();
 
-            if(!this.NotUseProfile)
+            if (!this.NotUseProfile)
             {
                 if (string.IsNullOrEmpty(this.ProflieName))
                 {
@@ -66,14 +66,14 @@ namespace DatabaseManager
             {
                 this.lblProfileName.Visible = false;
                 this.txtProfileName.Visible = false;
-            }           
+            }
         }
 
         private void LoadProfile()
         {
-            ConnectionInfo connectionInfo = ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);
+            ConnectionInfo connectionInfo = ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);          
 
-            this.ucDbAccountInfo.LoadData(connectionInfo);
+            this.ucDbAccountInfo.LoadData(connectionInfo, this.ConnectionInfo?.Password);
 
             this.cboDatabase.Text = connectionInfo.Database;
         }
@@ -129,13 +129,16 @@ namespace DatabaseManager
 
             this.ConnectionInfo = this.GetConnectionInfo();
 
-            if(!this.NotUseProfile)
+            if (!this.NotUseProfile)
             {
                 IEnumerable<ConnectionProfileInfo> profiles = ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
+
+                Guid? oldAccountProfileId = null;
 
                 if (!string.IsNullOrEmpty(profileName) && profiles.Any(item => item.Name == profileName))
                 {
                     string msg = $"The profile name \"{profileName}\" has been existed";
+
                     if (this.isAdd)
                     {
                         DialogResult dialogResult = MessageBox.Show(msg + ", are you sure to override it.", "Confirm", MessageBoxButtons.YesNo);
@@ -151,16 +154,25 @@ namespace DatabaseManager
                         MessageBox.Show(msg + ", please edit that.");
                         return;
                     }
+                    else //edit
+                    {
+                        oldAccountProfileId = profiles.FirstOrDefault(item => item.Name == profileName).AccountProfileId;
+                    }
                 }
 
                 ConnectionProfileInfo profile = new ConnectionProfileInfo() { ConnectionInfo = this.ConnectionInfo };
+
+                if (oldAccountProfileId.HasValue)
+                {
+                    profile.AccountProfileId = oldAccountProfileId.Value;
+                }
 
                 profile.Name = profileName;
                 profile.DatabaseType = this.DatabaseType.ToString();
 
                 this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
             }
-            
+
             this.DialogResult = DialogResult.OK;
         }
 
@@ -175,11 +187,11 @@ namespace DatabaseManager
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
-        }     
+        }
 
         private void cboDatabase_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if(string.IsNullOrEmpty(this.txtProfileName.Text) && !string.IsNullOrEmpty(this.cboDatabase.Text))
+            if (string.IsNullOrEmpty(this.txtProfileName.Text) && !string.IsNullOrEmpty(this.cboDatabase.Text))
             {
                 this.txtProfileName.Text = this.cboDatabase.Text;
             }
@@ -187,7 +199,7 @@ namespace DatabaseManager
 
         private void rbChoose_CheckedChanged(object sender, EventArgs e)
         {
-            if(this.rbChoose.Checked)
+            if (this.rbChoose.Checked)
             {
                 frmDbConnectionManage frm = new frmDbConnectionManage(this.DatabaseType) { IsForSelecting = true };
 

@@ -28,11 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmColumnMapping));
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnOK = new System.Windows.Forms.Button();
             this.gbReferenceTable = new System.Windows.Forms.GroupBox();
-            this.gbTable = new System.Windows.Forms.GroupBox();
             this.panelReferenceTable = new System.Windows.Forms.Panel();
+            this.gbTable = new System.Windows.Forms.GroupBox();
             this.panelTable = new System.Windows.Forms.Panel();
             this.gbReferenceTable.SuspendLayout();
             this.gbTable.SuspendLayout();
@@ -72,6 +73,14 @@
             this.gbReferenceTable.TabStop = false;
             this.gbReferenceTable.Text = "Reference Table";
             // 
+            // panelReferenceTable
+            // 
+            this.panelReferenceTable.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelReferenceTable.Location = new System.Drawing.Point(3, 17);
+            this.panelReferenceTable.Name = "panelReferenceTable";
+            this.panelReferenceTable.Size = new System.Drawing.Size(209, 316);
+            this.panelReferenceTable.TabIndex = 0;
+            // 
             // gbTable
             // 
             this.gbTable.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -83,14 +92,6 @@
             this.gbTable.TabIndex = 6;
             this.gbTable.TabStop = false;
             this.gbTable.Text = "Table";
-            // 
-            // panelReferenceTable
-            // 
-            this.panelReferenceTable.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelReferenceTable.Location = new System.Drawing.Point(3, 17);
-            this.panelReferenceTable.Name = "panelReferenceTable";
-            this.panelReferenceTable.Size = new System.Drawing.Size(209, 316);
-            this.panelReferenceTable.TabIndex = 0;
             // 
             // panelTable
             // 
@@ -110,6 +111,7 @@
             this.Controls.Add(this.gbReferenceTable);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "frmColumnMapping";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

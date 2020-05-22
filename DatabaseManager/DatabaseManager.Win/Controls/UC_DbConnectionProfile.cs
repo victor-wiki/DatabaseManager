@@ -183,6 +183,7 @@ namespace DatabaseManager.Controls
         private bool SetConnectionInfo(frmDbConnect frmDbConnect)
         {
             DialogResult dialogResult = frmDbConnect.ShowDialog();
+
             if (dialogResult == DialogResult.OK)
             {
                 ConnectionInfo connectionInfo = frmDbConnect.ConnectionInfo;
@@ -207,7 +208,9 @@ namespace DatabaseManager.Controls
         {
             string type = this.cboDbType.Text;
             object selectedItem = this.cboDbProfile.SelectedItem;
-            string profileName = selectedItem == null ? string.Empty : (selectedItem as ConnectionProfileInfo)?.Name;
+            ConnectionProfileInfo profile = selectedItem as ConnectionProfileInfo;
+            string profileName = selectedItem == null ? string.Empty : profile?.Name;
+
             if (string.IsNullOrEmpty(type))
             {
                 MessageBox.Show("Please select database type.");
@@ -221,17 +224,19 @@ namespace DatabaseManager.Controls
             }
 
             DatabaseType dbType = this.DatabaseType;
-            frmDbConnect frmDbConnect = new frmDbConnect(dbType, profileName, requriePassword);
-            this.SetConnectionInfo(frmDbConnect);
+            frmDbConnect from = new frmDbConnect(dbType, profileName, requriePassword);
+            from.ConnectionInfo = profile?.ConnectionInfo;
 
-            if (profileName != frmDbConnect.ProflieName)
+            this.SetConnectionInfo(from);
+
+            if (profileName != from.ProflieName)
             {
-                this.LoadProfileNames(frmDbConnect.ProflieName);
+                this.LoadProfileNames(from.ProflieName);                
+            }
 
-                if (this.cboDbProfile.SelectedItem != null)
-                {
-                    (this.cboDbProfile.SelectedItem as ConnectionProfileInfo).ConnectionInfo = frmDbConnect.ConnectionInfo;
-                }
+            if (this.cboDbProfile.SelectedItem != null)
+            {
+                (this.cboDbProfile.SelectedItem as ConnectionProfileInfo).ConnectionInfo = from.ConnectionInfo;
             }
         }
 

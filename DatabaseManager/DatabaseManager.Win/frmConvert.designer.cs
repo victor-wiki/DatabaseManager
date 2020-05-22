@@ -42,6 +42,7 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnExecute = new System.Windows.Forms.Button();
             this.gbOption = new System.Windows.Forms.GroupBox();
+            this.chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
             this.chkOnlyCommentComputeExpression = new System.Windows.Forms.CheckBox();
             this.chkComputeColumn = new System.Windows.Forms.CheckBox();
             this.chkSkipScriptError = new System.Windows.Forms.CheckBox();
@@ -64,7 +65,6 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
-            this.chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -107,7 +107,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 86);
+            this.txtMessage.Size = new System.Drawing.Size(731, 87);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);
@@ -240,6 +240,16 @@
             this.gbOption.TabIndex = 20;
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
+            // 
+            // chkTreatBytesAsNull
+            // 
+            this.chkTreatBytesAsNull.AutoSize = true;
+            this.chkTreatBytesAsNull.Location = new System.Drawing.Point(8, 155);
+            this.chkTreatBytesAsNull.Name = "chkTreatBytesAsNull";
+            this.chkTreatBytesAsNull.Size = new System.Drawing.Size(276, 16);
+            this.chkTreatBytesAsNull.TabIndex = 55;
+            this.chkTreatBytesAsNull.Text = "Treat bytes data as null for data transfer";
+            this.chkTreatBytesAsNull.UseVisualStyleBackColor = true;
             // 
             // chkOnlyCommentComputeExpression
             // 
@@ -439,16 +449,6 @@
             this.tsmiCopySelection.Size = new System.Drawing.Size(161, 22);
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
-            // 
-            // chkTreatBytesAsNull
-            // 
-            this.chkTreatBytesAsNull.AutoSize = true;
-            this.chkTreatBytesAsNull.Location = new System.Drawing.Point(8, 155);
-            this.chkTreatBytesAsNull.Name = "chkTreatBytesAsNull";
-            this.chkTreatBytesAsNull.Size = new System.Drawing.Size(276, 16);
-            this.chkTreatBytesAsNull.TabIndex = 55;
-            this.chkTreatBytesAsNull.Text = "Treat bytes data as null for data transfer";
-            this.chkTreatBytesAsNull.UseVisualStyleBackColor = true;
             // 
             // frmConvert
             // 

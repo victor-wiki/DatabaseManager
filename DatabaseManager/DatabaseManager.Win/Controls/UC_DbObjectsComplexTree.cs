@@ -110,6 +110,7 @@ namespace DatabaseManager.Controls
             this.tsmiNewTrigger.Visible = node.Name == nameof(DbObjectTreeFolderType.Triggers) || node.Tag is TableTrigger;
             this.tsmiAlter.Visible = isScriptObject;
             this.tsmiDesign.Visible = isTable;
+            this.tsmiCopy.Visible = isTable;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
             this.tsmiGenerateScripts.Visible = isDatabase || isTable || isScriptObject;
             this.tsmiConvert.Visible = isDatabase;
@@ -246,7 +247,7 @@ namespace DatabaseManager.Controls
 
             dbInterpreter.Subscribe(this);
 
-            SchemaInfo schemaInfo = await Task.Run(() => dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } }));
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } });
 
             this.ClearNodes(treeNode);
 
@@ -543,7 +544,7 @@ namespace DatabaseManager.Controls
             dbManager.Subscribe(this);
             dbInterpreter.Subscribe(this);
 
-            await Task.Run(() => dbManager.ClearData());
+            await dbManager.ClearData();
 
             if (!dbInterpreter.HasError)
             {
@@ -579,7 +580,7 @@ namespace DatabaseManager.Controls
                 {
                     TreeNode node = this.GetSelectedNode();
 
-                    await Task.Run(() => this.EmptyDatabase(node.Name, selector.DatabaseObjectType));
+                    await this.EmptyDatabase(node.Name, selector.DatabaseObjectType);
 
                     await this.LoadChildNodes(node);
 
@@ -962,6 +963,20 @@ namespace DatabaseManager.Controls
             form.ConnectionInfo = connectionInfo;
 
             form.Init(this);
+            form.ShowDialog();
+        }
+
+        private void tsmiCopy_Click(object sender, EventArgs e)
+        {
+            frmTableCopy form = new frmTableCopy()
+            {               
+                DatabaseType = this.databaseType,
+                ConnectionInfo = this.GetCurrentConnectionInfo(),
+                Table = this.tvDbObjects.SelectedNode.Tag as Table
+            };
+
+            form.OnFeedback += this.Feedback;
+
             form.ShowDialog();
         }
     }

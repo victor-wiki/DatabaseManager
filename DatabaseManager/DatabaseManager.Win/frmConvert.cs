@@ -221,11 +221,11 @@ namespace DatabaseManager
                 targetScriptOption.ScriptOutputMode = targetScriptOption.ScriptOutputMode | GenerateScriptOutputMode.WriteToFile;
             }
 
-            if(this.chkTreatBytesAsNull.Checked)
+            if (this.chkTreatBytesAsNull.Checked)
             {
                 sourceScriptOption.TreatBytesAsNullForReading = true;
                 targetScriptOption.TreatBytesAsNullForExecuting = true;
-            }           
+            }
 
             targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
 
@@ -242,18 +242,18 @@ namespace DatabaseManager
 
             try
             {
-                using (dbConverter = new DbConverter(source, target))
+                using (this.dbConverter = new DbConverter(source, target))
                 {
-                    dbConverter.Option.GenerateScriptMode = scriptMode;
-                    dbConverter.Option.BulkCopy = this.chkBulkCopy.Checked;
-                    dbConverter.Option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
-                    dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
-                    dbConverter.Option.SkipScriptError = this.chkSkipScriptError.Checked;
-                    dbConverter.Option.PickupTable = this.chkPickup.Checked;
-                    dbConverter.Option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
-                    dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
+                    this.dbConverter.Option.GenerateScriptMode = scriptMode;
+                    this.dbConverter.Option.BulkCopy = this.chkBulkCopy.Checked;
+                    this.dbConverter.Option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
+                    this.dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
+                    this.dbConverter.Option.SkipScriptError = this.chkSkipScriptError.Checked;
+                    this.dbConverter.Option.PickupTable = this.chkPickup.Checked;
+                    this.dbConverter.Option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
+                    this.dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
 
-                    dbConverter.Subscribe(this);
+                    this.dbConverter.Subscribe(this);
 
                     if (sourceDbType == DatabaseType.MySql)
                     {
@@ -269,34 +269,34 @@ namespace DatabaseManager
                         target.DbInterpreter.Option.RemoveEmoji = true;
                     }
 
-                    dbConverter.Option.SplitScriptsToExecute = true;
+                    this.dbConverter.Option.SplitScriptsToExecute = true;
 
                     this.btnExecute.Enabled = false;
                     this.btnCancel.Enabled = true;
 
-                    await dbConverter.Convert(schemaInfo);
+                    await this.dbConverter.Convert(schemaInfo);
+
+                    if (!this.hasError && !this.dbConverter.HasError && !source.DbInterpreter.HasError && !target.DbInterpreter.HasError)
+                    {
+                        this.btnExecute.Enabled = true;
+                        this.btnCancel.Enabled = false;
+
+                        if (!this.dbConverter.CancelRequested)
+                        {
+                            this.txtMessage.AppendText(Environment.NewLine + DONE);
+                            MessageBox.Show(DONE, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Task has been canceled.");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
                 this.hasError = true;
                 this.HandleException(ex);
-            }
-
-            if (!this.hasError)
-            {
-                this.btnExecute.Enabled = true;
-                this.btnCancel.Enabled = false;
-
-                if (!this.dbConverter.CancelRequested)
-                {
-                    this.txtMessage.AppendText(Environment.NewLine + DONE);
-                    MessageBox.Show(DONE, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Task has been canceled.");
-                }
             }
         }
 
@@ -504,7 +504,7 @@ namespace DatabaseManager
         {
             this.chkOnlyCommentComputeExpression.Enabled = !this.chkComputeColumn.Checked;
 
-            if(this.chkComputeColumn.Checked)
+            if (this.chkComputeColumn.Checked)
             {
                 this.chkOnlyCommentComputeExpression.Checked = false;
             }

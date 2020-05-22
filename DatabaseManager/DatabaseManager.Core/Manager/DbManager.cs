@@ -53,11 +53,13 @@ namespace DatabaseManager.Core
             {
                 this.FeedbackInfo("Disable constrains.");
 
+                DbScriptGenerator scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
+
                 using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
                 {
                     dbConnection.Open();
 
-                    await this.dbInterpreter.SetConstrainsEnabled(dbConnection, false);
+                    await this.SetConstrainsEnabled(dbConnection, false);                   
 
                     transaction = dbConnection.BeginTransaction();
 
@@ -82,7 +84,7 @@ namespace DatabaseManager.Core
                         transaction.Commit();
                     }
 
-                    await this.dbInterpreter.SetConstrainsEnabled(dbConnection, true);
+                    await this.SetConstrainsEnabled(dbConnection, true);
                 }
             }
             catch (Exception ex)
@@ -107,11 +109,34 @@ namespace DatabaseManager.Core
                 {
                     this.FeedbackInfo("Enable constrains.");
 
-                    await this.dbInterpreter.SetConstrainsEnabled(true);
+                    await this.SetConstrainsEnabled(null, true);                    
                 }
             }
 
             this.FeedbackInfo("End clear data.");
+        }
+
+        private async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        {
+            bool needDispose = false;
+
+            if(dbConnection == null)
+            {
+                needDispose = true;
+                dbConnection = this.dbInterpreter.CreateConnection();
+            }           
+
+            IEnumerable<Script> scripts = this.scriptGenerator.SetConstrainsEnabled(enabled);
+
+            foreach (Script script in scripts)
+            {
+                await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, script.Content);
+            }
+
+            if(needDispose)
+            {
+                using (dbConnection) { };
+            }
         }
 
         public async Task EmptyDatabase(DatabaseObjectType databaseObjectType)
@@ -294,15 +319,15 @@ namespace DatabaseManager.Core
             {
                 DbBackup backup = DbBackup.GetInstance(ManagerUtil.GetDatabaseType(setting.DatabaseType));
                 backup.Setting = setting;
-                backup.ConnectionInfo = connectionInfo;                
+                backup.ConnectionInfo = connectionInfo;
 
                 this.FeedbackInfo("Begin to backup...");
 
                 string saveFilePath = backup.Backup();
 
-                if(File.Exists(saveFilePath))
+                if (File.Exists(saveFilePath))
                 {
-                    this.FeedbackInfo($"Database has been backuped to {saveFilePath}.");                   
+                    this.FeedbackInfo($"Database has been backuped to {saveFilePath}.");
                 }
                 else
                 {

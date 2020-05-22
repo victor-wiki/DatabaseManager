@@ -19,5 +19,7 @@ namespace DatabaseConverter.Core
         public bool OnlyForTranslate { get; set; }
         public bool ConvertComputeColumnExpression { get; set; }
         public bool OnlyCommentComputeColumnExpressionInScript { get; set; }
+        public bool RenameTableChildren { get; set; }
+        public bool IgnoreNotSelfForeignKey { get; set; }
     }
 }

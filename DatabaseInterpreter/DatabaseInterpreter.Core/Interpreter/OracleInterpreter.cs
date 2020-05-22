@@ -521,53 +521,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return base.GetTableRecordCountAsync(connection, sql);
-        }
-
-        public override async Task SetConstrainsEnabled(bool enabled)
-        {
-            using (DbConnection connection = this.CreateConnection())
-            {
-                await this.SetConstrainsEnabled(connection, enabled);
-            }
-        }
-
-        public override async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
-        {
-            List<string> sqls = new List<string>() { this.GetSqlForEnableConstraints(enabled), this.GetSqlForEnableTrigger(enabled) };
-            List<string> cmds = new List<string>();
-
-            foreach (string sql in sqls)
-            {
-                DbDataReader reader = await this.GetDataReaderAsync(dbConnection, sql);
-
-                while (reader.Read())
-                {
-                    string cmd = reader[0].ToString();
-                    cmds.Add(cmd);
-                }
-            }
-
-            foreach (string cmd in cmds)
-            {
-                await this.ExecuteNonQueryAsync(dbConnection, cmd, false);
-            }
-        }
-
-        private string GetSqlForEnableConstraints(bool enabled)
-        {
-            return $@"SELECT 'ALTER TABLE ""'|| T.TABLE_NAME ||'"" {(enabled ? "ENABLE" : "DISABLE")} CONSTRAINT ""'||T.CONSTRAINT_NAME || '""' AS ""SQL""  
-                            FROM USER_CONSTRAINTS T 
-                            WHERE T.CONSTRAINT_TYPE = 'R'
-                            AND UPPER(OWNER)= UPPER('{this.GetDbOwner()}')
-                           ";
-        }
-
-        private string GetSqlForEnableTrigger(bool enabled)
-        {
-            return $@"SELECT 'ALTER TRIGGER ""'|| TRIGGER_NAME || '"" {(enabled ? "ENABLE" : "DISABLE")} '
-                         FROM USER_TRIGGERS
-                         WHERE UPPER(TABLE_OWNER)= UPPER('{this.GetDbOwner()}')";
-        }
+        }      
         #endregion
 
         #region BulkCopy

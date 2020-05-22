@@ -1,6 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -341,6 +342,11 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
         {
             return new DropDbObjectScript<TableConstraint>(this.GetDropConstraintSql(constraint));
         }
+
+        public override Script SetIdentityEnabled(TableColumn column, bool enabled)
+        {
+            return new Script("");
+        }
         #endregion
 
         #region Database Operation
@@ -378,6 +384,47 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} {this.GetQuotedObjectName(dbObject)};";
+        }      
+
+        public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
+        {
+            List<string> sqls = new List<string>() { this.GetSqlForEnableConstraints(enabled), this.GetSqlForEnableTrigger(enabled) };
+            List<string> cmds = new List<string>();
+
+            using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
+            {
+                foreach (string sql in sqls)
+                {
+                    DbDataReader reader = this.dbInterpreter.GetDataReaderAsync(dbConnection, sql).Result;
+
+                    while (reader.Read())
+                    {
+                        string cmd = reader[0].ToString();
+                        cmds.Add(cmd);
+                    }
+                }
+
+                foreach(string cmd in cmds)
+                {
+                    yield return new Script(cmd);
+                }
+            }    
+        }
+
+        private string GetSqlForEnableConstraints(bool enabled)
+        {
+            return $@"SELECT 'ALTER TABLE ""'|| T.TABLE_NAME ||'"" {(enabled ? "ENABLE" : "DISABLE")} CONSTRAINT ""'||T.CONSTRAINT_NAME || '""' AS ""SQL""  
+                            FROM USER_CONSTRAINTS T 
+                            WHERE T.CONSTRAINT_TYPE = 'R'
+                            AND UPPER(OWNER)= UPPER('{this.GetDbOwner()}')
+                           ";
+        }
+
+        private string GetSqlForEnableTrigger(bool enabled)
+        {
+            return $@"SELECT 'ALTER TRIGGER ""'|| TRIGGER_NAME || '"" {(enabled ? "ENABLE" : "DISABLE")} '
+                         FROM USER_TRIGGERS
+                         WHERE UPPER(TABLE_OWNER)= UPPER('{this.GetDbOwner()}')";
         }
         #endregion
     }

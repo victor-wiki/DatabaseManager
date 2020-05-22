@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmBackupSettingRedefine));
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnConfirm = new System.Windows.Forms.Button();
@@ -125,6 +126,7 @@
             this.Controls.Add(this.txtSaveFolder);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "frmBackupSettingRedefine";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

@@ -24,7 +24,7 @@ namespace DatabaseManager.Controls
         public UC_DbAccountInfo()
         {
             InitializeComponent();
-        }       
+        }
 
         public void InitControls()
         {
@@ -34,7 +34,7 @@ namespace DatabaseManager.Controls
                 this.txtPort.Text = MySqlInterpreter.DEFAULT_PORT.ToString();
                 this.chkUseSsl.Visible = true;
             }
-            else if(this.DatabaseType == DatabaseType.Oracle)
+            else if (this.DatabaseType == DatabaseType.Oracle)
             {
                 this.lblPort.Visible = this.txtPort.Visible = true;
                 this.txtPort.Text = OracleInterpreter.DEFAULT_PORT.ToString();
@@ -56,11 +56,11 @@ namespace DatabaseManager.Controls
             this.chkAsDba.Visible = this.DatabaseType == DatabaseType.Oracle;
 
             var profiles = AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
-            var serverNames = profiles.Select(item => item.Server).Distinct().OrderBy(item=>item).ToArray();
+            var serverNames = profiles.Select(item => item.Server).Distinct().OrderBy(item => item).ToArray();
             this.cboServer.Items.AddRange(serverNames);
         }
 
-        public void LoadData(DatabaseAccountInfo info)
+        public void LoadData(DatabaseAccountInfo info, string password = null)
         {
             this.cboServer.Text = info.Server;
             this.txtPort.Text = info.Port;
@@ -75,39 +75,43 @@ namespace DatabaseManager.Controls
                 this.cboAuthentication.Text = AuthenticationType.IntegratedSecurity.ToString();
             }
             else
-            {                
+            {
                 if (!string.IsNullOrEmpty(info.Password))
                 {
                     this.chkRememberPassword.Checked = true;
+                }
+                else if(!string.IsNullOrEmpty(password))
+                {
+                    this.txtPassword.Text = password;
                 }
             }
         }
 
         public bool ValidateInfo()
         {
-            if(string.IsNullOrEmpty(this.cboServer.Text))
+            if (string.IsNullOrEmpty(this.cboServer.Text))
             {
                 MessageBox.Show("Server name can't be empty.");
                 return false;
             }
 
-            if(string.IsNullOrEmpty(this.cboAuthentication.Text))
+            if (string.IsNullOrEmpty(this.cboAuthentication.Text))
             {
                 MessageBox.Show("Please select a authentication type.");
                 return false;
             }
-            else if(this.cboAuthentication.Text == AuthenticationType.Password.ToString())
+            else if (this.cboAuthentication.Text == AuthenticationType.Password.ToString())
             {
-                if(string.IsNullOrEmpty(this.txtUserId.Text))
+                if (string.IsNullOrEmpty(this.txtUserId.Text))
                 {
                     MessageBox.Show("User name can't be empty.");
                     return false;
                 }
-                else if(string.IsNullOrEmpty(this.txtPassword.Text))
+                else if (string.IsNullOrEmpty(this.txtPassword.Text))
                 {
                     MessageBox.Show("Password can't be empty.");
                     return false;
-                }               
+                }
             }
 
             return true;
@@ -115,14 +119,14 @@ namespace DatabaseManager.Controls
 
         public async Task<bool> TestConnect()
         {
-            if(!this.ValidateInfo())
+            if (!this.ValidateInfo())
             {
                 return false;
             }
 
             ConnectionInfo connectionInfo = this.GetConnectionInfo();
 
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, connectionInfo, new DbInterpreterOption());           
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, connectionInfo, new DbInterpreterOption());
 
             try
             {
@@ -132,7 +136,7 @@ namespace DatabaseManager.Controls
 
                     MessageBox.Show("Success.");
 
-                    if(this.OnTestConnect!=null)
+                    if (this.OnTestConnect != null)
                     {
                         this.OnTestConnect();
                     }
@@ -144,7 +148,7 @@ namespace DatabaseManager.Controls
             {
                 MessageBox.Show("Failed:" + ex.Message);
                 return false;
-            }            
+            }
         }
 
         public ConnectionInfo GetConnectionInfo()

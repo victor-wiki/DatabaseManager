@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSqlQuery));
             this.btnClose = new System.Windows.Forms.Button();
             this.ucSqlQuery = new DatabaseManager.Controls.UC_SqlQuery();
             this.SuspendLayout();
@@ -64,6 +65,7 @@
             this.ClientSize = new System.Drawing.Size(723, 370);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.ucSqlQuery);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmSqlQuery";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Sql Query";

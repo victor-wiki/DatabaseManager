@@ -6,6 +6,7 @@ namespace DatabaseInterpreter.Model
 {
     public class BulkCopyInfo
     {
+        public string DestinationTableOwner { get; set; }
         public string DestinationTableName { get; set; }
         public int? Timeout { get; set; }
         public int? BatchSize { get; set; }
@@ -13,5 +14,6 @@ namespace DatabaseInterpreter.Model
         public CancellationToken CancellationToken { get; set; }
         public bool DetectDateTimeTypeByValues { get; set; }
         public IEnumerable<TableColumn> Columns { get; set; }
+        public bool KeepIdentity { get; set; }
     }
 }

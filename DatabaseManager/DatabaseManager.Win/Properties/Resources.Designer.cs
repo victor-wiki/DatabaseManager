@@ -73,6 +73,16 @@ namespace DatabaseManager.Properties {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _columnMapping {
+            get {
+                object obj = ResourceManager.GetObject("_columnMapping", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _config {
             get {
                 object obj = ResourceManager.GetObject("_config", resourceCulture);
@@ -121,6 +131,46 @@ namespace DatabaseManager.Properties {
         }
         
         /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _diagnose {
+            get {
+                object obj = ResourceManager.GetObject("_diagnose", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _sqlQuery {
+            get {
+                object obj = ResourceManager.GetObject("_sqlQuery", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _table {
+            get {
+                object obj = ResourceManager.GetObject("_table", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _tableCopy {
+            get {
+                object obj = ResourceManager.GetObject("_tableCopy", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   查找 System.Drawing.Bitmap 类型的本地化资源。
         /// </summary>
         internal static System.Drawing.Bitmap Add {
@@ -136,6 +186,16 @@ namespace DatabaseManager.Properties {
         internal static System.Drawing.Bitmap AddQuery {
             get {
                 object obj = ResourceManager.GetObject("AddQuery", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap Check {
+            get {
+                object obj = ResourceManager.GetObject("Check", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

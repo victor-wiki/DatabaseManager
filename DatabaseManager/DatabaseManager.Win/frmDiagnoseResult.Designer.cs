@@ -32,15 +32,16 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDiagnoseResult));
             this.dgvResult = new System.Windows.Forms.DataGridView();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
             this.colTableName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colObjectType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colObjectName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colInvalidRecordCount = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.btnClose = new System.Windows.Forms.Button();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             this.dlgSave = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).BeginInit();
@@ -90,40 +91,6 @@
             this.dgvResult.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvResult_RowsAdded);
             this.dgvResult.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvResult_MouseUp);
             // 
-            // btnClose
-            // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClose.Location = new System.Drawing.Point(291, 304);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(75, 23);
-            this.btnClose.TabIndex = 9;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCopy,
-            this.tsmiCopyWithHeader,
-            this.tsmiSave});
-            this.contextMenuStrip1.Name = "contextMenuStrip2";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 70);
-            // 
-            // tsmiCopy
-            // 
-            this.tsmiCopy.Name = "tsmiCopy";
-            this.tsmiCopy.Size = new System.Drawing.Size(178, 22);
-            this.tsmiCopy.Text = "Copy";
-            this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
-            // 
-            // tsmiCopyWithHeader
-            // 
-            this.tsmiCopyWithHeader.Name = "tsmiCopyWithHeader";
-            this.tsmiCopyWithHeader.Size = new System.Drawing.Size(178, 22);
-            this.tsmiCopyWithHeader.Text = "Copy with header";
-            this.tsmiCopyWithHeader.Click += new System.EventHandler(this.tsmiCopyWithHeader_Click);
-            // 
             // colTableName
             // 
             this.colTableName.DataPropertyName = "TableName";
@@ -158,6 +125,40 @@
             this.colInvalidRecordCount.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             this.colInvalidRecordCount.Width = 150;
             // 
+            // btnClose
+            // 
+            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnClose.Location = new System.Drawing.Point(291, 304);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(75, 23);
+            this.btnClose.TabIndex = 9;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiCopy,
+            this.tsmiCopyWithHeader,
+            this.tsmiSave});
+            this.contextMenuStrip1.Name = "contextMenuStrip2";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 70);
+            // 
+            // tsmiCopy
+            // 
+            this.tsmiCopy.Name = "tsmiCopy";
+            this.tsmiCopy.Size = new System.Drawing.Size(178, 22);
+            this.tsmiCopy.Text = "Copy";
+            this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
+            // 
+            // tsmiCopyWithHeader
+            // 
+            this.tsmiCopyWithHeader.Name = "tsmiCopyWithHeader";
+            this.tsmiCopyWithHeader.Size = new System.Drawing.Size(178, 22);
+            this.tsmiCopyWithHeader.Text = "Copy with header";
+            this.tsmiCopyWithHeader.Click += new System.EventHandler(this.tsmiCopyWithHeader_Click);
+            // 
             // tsmiSave
             // 
             this.tsmiSave.Name = "tsmiSave";
@@ -176,6 +177,7 @@
             this.ClientSize = new System.Drawing.Size(694, 336);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.dgvResult);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmDiagnoseResult";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Database Diagnose Result";

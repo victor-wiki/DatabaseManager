@@ -266,6 +266,12 @@
     <Compile Include="frmColumSelect.Designer.cs">
       <DependentUpon>frmColumSelect.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmTableCopy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmTableCopy.Designer.cs">
+      <DependentUpon>frmTableCopy.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmDiagnose.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -430,6 +436,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmDataFilterCondition.resx">
       <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmTableCopy.resx">
+      <DependentUpon>frmTableCopy.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDbObjectTypeSelector.resx">
       <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
@@ -645,6 +654,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\DbBackup.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Check.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\TableCopy.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_tableCopy.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_columnMapping.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_sqlQuery.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_diagnose.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_table.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

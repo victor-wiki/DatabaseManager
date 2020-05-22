@@ -41,12 +41,26 @@ namespace DatabaseInterpreter.Core
                 this.RestrictColumnLength(tableColumns, foreignKeys.SelectMany(item => item.Columns));
                 this.RestrictColumnLength(tableColumns, indexes.SelectMany(item => item.Columns));
 
+                string primaryKeyColumns = "";
+
+                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
+                {
+                    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
+
+                    primaryKeyColumns =
+$@"
+,PRIMARY KEY
+(
+{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+)";
+                }
+
                 #region Table
 
                 string tableScript =
 $@"
 CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}
+{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
 ){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
 DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
@@ -54,17 +68,17 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
                 #endregion
 
-                #region Primary Key
-                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
+                //#region Primary Key
+                //if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
+                //{
+                //    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
 
-                    if (primaryKey != null)
-                    {
-                        sb.AppendLine(this.AddPrimaryKey(primaryKey));
-                    }
-                }
-                #endregion
+                //    if (primaryKey != null)
+                //    {
+                //        sb.AppendLine(this.AddPrimaryKey(primaryKey));
+                //    }
+                //}
+                //#endregion
 
                 List<string> foreignKeysLines = new List<string>();
 
@@ -282,6 +296,13 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
             return new Script("");
         }
 
+        public override Script SetIdentityEnabled(TableColumn column, bool enabled)
+        {
+            Table table = new Table() { Owner = column.Owner, Name = column.TableName };
+
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE { this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
+        }
+
         #endregion
 
         #region Database Operation
@@ -319,7 +340,12 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedObjectName(dbObject)};";
-        }
+        }       
+
+        public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
+        {
+            yield return new ExecuteProcedureScript($"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};");
+        }        
 
         #endregion
     }

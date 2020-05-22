@@ -346,9 +346,7 @@ namespace DatabaseInterpreter.Core
             {
                 await connection.OpenAsync();
             }
-        }
-
-        public virtual async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled) { await Task.Run(() => { }); }
+        }       
 
         public Task<int> ExecuteNonQueryAsync(string sql)
         {
@@ -533,10 +531,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return sql;
-        }
-
-        public abstract Task SetConstrainsEnabled(bool enabled);
-        public abstract Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled);
+        }       
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {

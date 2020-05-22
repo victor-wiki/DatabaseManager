@@ -13,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseConverter.Core
-{   
+{
     public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result);
 
     public class DbConverter : IDisposable
@@ -78,15 +78,15 @@ namespace DatabaseConverter.Core
         {
             DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
             sourceInterpreter.Option.BulkCopy = this.Option.BulkCopy;
-            sourceInterpreter.Subscribe(this.observer);           
+            sourceInterpreter.Subscribe(this.observer);
 
             sourceInterpreter.Option.GetTableAllObjects = false;
             sourceInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
             this.Target.DbInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
 
-            if(string.IsNullOrEmpty(this.Target.DbOwner))
+            if (string.IsNullOrEmpty(this.Target.DbOwner))
             {
-                if(this.Target.DbInterpreter.DatabaseType == DatabaseType.Oracle)
+                if (this.Target.DbInterpreter.DatabaseType == DatabaseType.Oracle)
                 {
                     this.Target.DbOwner = (this.Target.DbInterpreter as OracleInterpreter).GetDbOwner();
                 }
@@ -147,6 +147,21 @@ namespace DatabaseConverter.Core
             #endregion
 
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
+
+            if (this.Source.TableNameMappings != null && this.Source.TableNameMappings.Count > 0)
+            {
+                SchemaInfoHelper.MapTableNames(targetSchemaInfo, this.Source.TableNameMappings);
+            }
+
+            if(this.Option.RenameTableChildren)
+            {
+                SchemaInfoHelper.RenameTableChildren(targetSchemaInfo);
+            }
+
+            if(this.Option.IgnoreNotSelfForeignKey)
+            {
+                targetSchemaInfo.TableForeignKeys = targetSchemaInfo.TableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).ToList();
+            }
 
             #region Translate
             TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Option, this.Target.DbOwner);
@@ -267,6 +282,11 @@ namespace DatabaseConverter.Core
 
                             foreach (Script s in scripts)
                             {
+                                if(targetInterpreter.HasError)
+                                {
+                                    break;
+                                }
+
                                 if (!isValidScript(s))
                                 {
                                     continue;
@@ -342,15 +362,9 @@ namespace DatabaseConverter.Core
                         {
                             sourceSchemaInfo.PickupTable = new Table() { Owner = schemaInfo.Tables.FirstOrDefault()?.Owner, Name = dataErrorProfile.SourceTableName };
                         }
-                    }                 
-
-                    foreach (var item in identityTableColumns)
-                    {
-                        if (targetInterpreter.DatabaseType == DatabaseType.SqlServer)
-                        {
-                            await targetInterpreter.SetIdentityEnabled(dbConnection, item, false);
-                        }
                     }
+
+                    await this.SetIdentityEnabled(identityTableColumns, targetInterpreter, targetDbScriptGenerator, dbConnection, transaction, false);
 
                     if (this.Option.ExecuteScriptOnTargetServer || targetInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
@@ -398,7 +412,7 @@ namespace DatabaseConverter.Core
                                         }
                                         else
                                         {
-                                            StringBuilder sb = new StringBuilder();                                            
+                                            StringBuilder sb = new StringBuilder();
 
                                             Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows } });
 
@@ -419,6 +433,8 @@ namespace DatabaseConverter.Core
                                     ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
                                     ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
 
+                                    string mappedTableName = this.GetMappedTableName(table.Name);
+
                                     DataTransferException dataTransferException = new DataTransferException(ex)
                                     {
                                         SourceServer = sourceConnectionInfo.Server,
@@ -426,7 +442,7 @@ namespace DatabaseConverter.Core
                                         SourceObject = table.Name,
                                         TargetServer = targetConnectionInfo.Server,
                                         TargetDatabase = targetConnectionInfo.Database,
-                                        TargetObject = table.Name
+                                        TargetObject = mappedTableName
                                     };
 
                                     this.HandleError(dataTransferException);
@@ -440,7 +456,7 @@ namespace DatabaseConverter.Core
                                             SourceTableName = table.Name,
                                             TargetServer = targetConnectionInfo.Server,
                                             TargetDatabase = targetConnectionInfo.Database,
-                                            TargetTableName = table.Name
+                                            TargetTableName = mappedTableName
                                         });
                                     }
                                 }
@@ -452,17 +468,11 @@ namespace DatabaseConverter.Core
 
                     await sourceDbScriptGenerator.GenerateDataScriptsAsync(sourceSchemaInfo);
 
-                    foreach (var item in identityTableColumns)
-                    {
-                        if (targetInterpreter.DatabaseType == DatabaseType.SqlServer)
-                        {
-                            await targetInterpreter.SetIdentityEnabled(dbConnection, item, true);
-                        }
-                    }
+                    await this.SetIdentityEnabled(identityTableColumns, targetInterpreter, targetDbScriptGenerator, dbConnection, transaction, true);
                 }
                 #endregion
 
-                if (this.transaction != null && !this.cancelRequested)
+                if (this.transaction != null && this.transaction.Connection != null && !this.cancelRequested)
                 {
                     this.transaction.Commit();
                 }
@@ -473,6 +483,23 @@ namespace DatabaseConverter.Core
             if (dataErrorProfile != null && !this.hasError && !this.cancelRequested)
             {
                 DataTransferErrorProfileManager.Remove(dataErrorProfile);
+            }
+        }
+
+        private async Task SetIdentityEnabled(IEnumerable<TableColumn> identityTableColumns, DbInterpreter dbInterpreter, DbScriptGenerator scriptGenerator, 
+                                              DbConnection dbConnection, DbTransaction transaction, bool enabled)
+        {
+            foreach (var item in identityTableColumns)
+            {
+                if (dbInterpreter.DatabaseType == DatabaseType.SqlServer)
+                {
+                    string sql = scriptGenerator.SetIdentityEnabled(item, enabled).Content;
+
+                    CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
+                    commandInfo.SkipError = true;
+
+                    await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                }
             }
         }
 
@@ -509,15 +536,24 @@ namespace DatabaseConverter.Core
 
         private BulkCopyInfo GetBulkCopyInfo(Table table, SchemaInfo schemaInfo, DbTransaction transaction = null)
         {
+            string tableName = this.GetMappedTableName(table.Name);
+
             BulkCopyInfo bulkCopyInfo = new BulkCopyInfo()
             {
-                DestinationTableName = table.Name,
-                Columns = schemaInfo.TableColumns.Where(item => item.TableName == table.Name),
+                KeepIdentity = this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity,
+                DestinationTableOwner = this.Target.DbOwner,
+                DestinationTableName = tableName,
+                Columns = schemaInfo.TableColumns.Where(item => item.TableName == tableName),
                 Transaction = transaction,
                 CancellationToken = this.CancellationTokenSource.Token
             };
 
             return bulkCopyInfo;
+        }
+
+        private string GetMappedTableName(string tableName)
+        {
+            return SchemaInfoHelper.GetMappedTableName(tableName, this.Source.TableNameMappings);
         }
 
         private void HandleError(ConvertException ex)
@@ -553,7 +589,9 @@ namespace DatabaseConverter.Core
 
         private (Table Table, List<TableColumn> Columns) GetTargetTableColumns(SchemaInfo targetSchemaInfo, string targetOwner, Table sourceTable, List<TableColumn> sourceColumns)
         {
-            Table targetTable = targetSchemaInfo.Tables.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.Name == sourceTable.Name);
+            string mappedTableName = this.GetMappedTableName(sourceTable.Name);
+
+            Table targetTable = targetSchemaInfo.Tables.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.Name == mappedTableName);
 
             if (targetTable == null)
             {
@@ -565,7 +603,7 @@ namespace DatabaseConverter.Core
 
             foreach (TableColumn sourceColumn in sourceColumns)
             {
-                TableColumn targetTableColumn = targetSchemaInfo.TableColumns.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.TableName == sourceColumn.TableName && item.Name == sourceColumn.Name);
+                TableColumn targetTableColumn = targetSchemaInfo.TableColumns.FirstOrDefault(item => (item.Owner == targetOwner || string.IsNullOrEmpty(targetOwner)) && item.TableName == mappedTableName && item.Name == sourceColumn.Name);
                 if (targetTableColumn == null)
                 {
                     this.Feedback(this, $"Source column {sourceColumn.TableName} of table {sourceColumn.TableName} cannot get a target column.", FeedbackInfoType.Error);

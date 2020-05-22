@@ -13,7 +13,7 @@ namespace DatabaseInterpreter.Core
     public class SqlServerInterpreter : DbInterpreter
     {
         #region Field & Property
-        private readonly string azureSQLFlag = "SQL Azure";
+        public const string AzureSQLFlag = "SQL Azure";
         public override string CommandParameterChar { get { return "@"; } }
         public override char QuotationLeftChar { get { return '['; } }
         public override char QuotationRightChar { get { return ']'; } }
@@ -550,57 +550,6 @@ namespace DatabaseInterpreter.Core
             return base.GetTableRecordCountAsync(connection, sql);
         }
 
-        public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
-        {
-            await this.ExecuteNonQueryAsync(dbConnection, $"SET IDENTITY_INSERT { this.GetQuotedObjectName(new Table() { Name = column.TableName, Owner = column.Owner })} {(enabled ? "OFF" : "ON")}", false);
-        }
-
-        public override Task SetConstrainsEnabled(bool enabled)
-        {      
-            return this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
-        }
-
-        public override Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
-        {
-            return this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
-        }      
-
-        private string GetSqlForSetConstrainsEnabled(bool enabled)
-        {
-            string procName = "sp_MSForEachTable";
-
-            string sql = 
-$@"
-IF ServerProperty('Edition') != '{this.azureSQLFlag}'
-BEGIN
-  EXEC {procName} 'ALTER TABLE ? {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL';
-  EXEC {procName} 'ALTER TABLE ? {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL';
-END
-ELSE 
-BEGIN
-    DECLARE @owner NVARCHAR(50)
-	DECLARE @tableName NVARCHAR(256)
-
-	DECLARE table_cursor CURSOR  
-    FOR SELECT SCHEMA_NAME(schema_id),name FROM sys.tables  
-	OPEN table_cursor  
-
-    FETCH NEXT FROM table_cursor INTO @owner,@tableName
-  
-    WHILE @@FETCH_STATUS = 0  
-    BEGIN  
-        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "CHECK" : "NOCHECK")} CONSTRAINT ALL');
-        EXEC('ALTER TABLE ['+ @owner + '].[' + @tableName +'] {(enabled ? "ENABLE" : "DISABLE")} TRIGGER ALL');
-
-        FETCH NEXT FROM table_cursor INTO @owner,@tableName  
-    END  
-  
-    CLOSE table_cursor  
-    DEALLOCATE table_cursor   
-END";           
-
-            return sql;
-        }
 
         private async Task<bool> IsProcedureExisted(DbConnection dbConnection, string procedureName)
         {
@@ -614,7 +563,7 @@ END";
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
-            {
+            {               
                 await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
             }
         }
@@ -787,11 +736,25 @@ END";
 
         private async Task<SqlBulkCopy> GetBulkCopy(DbConnection connection, BulkCopyInfo bulkCopyInfo)
         {
-            SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, SqlBulkCopyOptions.Default, bulkCopyInfo.Transaction as SqlTransaction);
+            SqlBulkCopyOptions option = SqlBulkCopyOptions.Default;
+
+            if(bulkCopyInfo.KeepIdentity)
+            {
+                option = SqlBulkCopyOptions.KeepIdentity;
+            }
+
+            SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, option , bulkCopyInfo.Transaction as SqlTransaction);
 
             await this.OpenConnectionAsync(connection);
 
-            bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+            string tableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+
+            if (!string.IsNullOrEmpty(bulkCopyInfo.DestinationTableOwner) && bulkCopyInfo.DestinationTableOwner != "dbo")
+            {
+                tableName = bulkCopyInfo.DestinationTableOwner + "." + tableName;
+            }
+
+            bulkCopy.DestinationTableName = tableName;
             bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout;
             bulkCopy.BatchSize = bulkCopyInfo.BatchSize.HasValue ? bulkCopyInfo.BatchSize.Value : this.DataBatchSize;
 

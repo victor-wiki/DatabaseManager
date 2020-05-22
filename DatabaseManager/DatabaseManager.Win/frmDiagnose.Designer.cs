@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDiagnose));
             this.rbNotNullWithEmpty = new System.Windows.Forms.RadioButton();
             this.rbSelfReferenceSame = new System.Windows.Forms.RadioButton();
             this.label1 = new System.Windows.Forms.Label();
@@ -96,6 +97,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.rbSelfReferenceSame);
             this.Controls.Add(this.rbNotNullWithEmpty);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "frmDiagnose";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

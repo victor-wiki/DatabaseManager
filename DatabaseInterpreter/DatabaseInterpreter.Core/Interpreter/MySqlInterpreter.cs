@@ -435,28 +435,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return base.GetTableRecordCountAsync(connection, sql);
-        }
-
-        public override async Task SetIdentityEnabled(DbConnection dbConnection, TableColumn column, bool enabled)
-        {
-            Table table = new Table() { Name = column.TableName, Owner = column.Owner };
-            await this.ExecuteNonQueryAsync(dbConnection, $"ALTER TABLE {GetQuotedObjectName(table)} MODIFY COLUMN {this.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}", false);
-        }
-
-        public override async Task SetConstrainsEnabled(bool enabled)
-        {
-            await this.ExecuteNonQueryAsync(this.GetSqlForSetConstrainsEnabled(enabled));
-        }
-
-        public override async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
-        {
-            await this.ExecuteNonQueryAsync(dbConnection, this.GetSqlForSetConstrainsEnabled(enabled), false);
-        }
-
-        private string GetSqlForSetConstrainsEnabled(bool enabled)
-        {
-            return $"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};";
-        }
+        }    
         #endregion
 
         #region BulkCopy
