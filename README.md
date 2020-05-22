@@ -21,6 +21,9 @@
 ### View Data
   It supports pagination, sort and filter for single table.
   
+### Table Copy
+  Clone table schema and copy data to same or different database.
+  
 ### Clear Data
   Delete data of all tables.
   
