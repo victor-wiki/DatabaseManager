@@ -5,6 +5,9 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>DatabaseManager</RootNamespace>
+    <Authors>victor-wiki</Authors>
+    <Description>Database manage tool for: SqlServer, MySql and Oracle.</Description>
+    <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
