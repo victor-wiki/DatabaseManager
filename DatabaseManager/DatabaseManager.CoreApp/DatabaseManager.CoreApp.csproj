@@ -1,0 +1,354 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>DatabaseManager</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseConverter\SqlAnalyser.Core\SqlAnalyser.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
+    <ProjectReference Include="..\DatabaseManager.Core\DatabaseManager.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\PropertyGrid\FilteredPropertyGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="Controls\PropertyGrid\FilteredPropertyGrid.designer.cs">
+      <DependentUpon>FilteredPropertyGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DataViewer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DataViewer.Designer.cs">
+      <DependentUpon>UC_DataViewer.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbAccountInfo.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbAccountInfo.Designer.cs">
+      <DependentUpon>UC_DbAccountInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbConnectionProfile.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbConnectionProfile.Designer.cs">
+      <DependentUpon>UC_DbConnectionProfile.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectContent.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectContent.Designer.cs">
+      <DependentUpon>UC_DbObjectContent.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsComplexTree.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsComplexTree.Designer.cs">
+      <DependentUpon>UC_DbObjectsComplexTree.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsNavigator.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsNavigator.Designer.cs">
+      <DependentUpon>UC_DbObjectsNavigator.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsSimpleTree.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_DbObjectsSimpleTree.Designer.cs">
+      <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_Pagination.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_Pagination.designer.cs">
+      <DependentUpon>UC_Pagination.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_QueryEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_QueryEditor.Designer.cs">
+      <DependentUpon>UC_QueryEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_QueryResultGrid.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_QueryResultGrid.Designer.cs">
+      <DependentUpon>UC_QueryResultGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_SqlQuery.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_SqlQuery.Designer.cs">
+      <DependentUpon>UC_SqlQuery.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_TableColumns.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_TableColumns.Designer.cs">
+      <DependentUpon>UC_TableColumns.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_TableConstraints.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_TableConstraints.Designer.cs">
+      <DependentUpon>UC_TableConstraints.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_TableDesigner.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_TableDesigner.Designer.cs">
+      <DependentUpon>UC_TableDesigner.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_TableForeignKeys.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_TableForeignKeys.Designer.cs">
+      <DependentUpon>UC_TableForeignKeys.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\UC_TableIndexes.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\UC_TableIndexes.Designer.cs">
+      <DependentUpon>UC_TableIndexes.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmAccountInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmAccountInfo.Designer.cs">
+      <DependentUpon>frmAccountInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmBackupSetting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmBackupSetting.Designer.cs">
+      <DependentUpon>frmBackupSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmBackupSettingRedefine.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmBackupSettingRedefine.Designer.cs">
+      <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmColumnMapping.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmColumnMapping.Designer.cs">
+      <DependentUpon>frmColumnMapping.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmColumSelect.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmColumSelect.Designer.cs">
+      <DependentUpon>frmColumSelect.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmConvert.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmConvert.designer.cs">
+      <DependentUpon>frmConvert.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDataFilter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDataFilter.Designer.cs">
+      <DependentUpon>frmDataFilter.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDataFilterCondition.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDataFilterCondition.Designer.cs">
+      <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDbConnect.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDbConnect.designer.cs">
+      <DependentUpon>frmDbConnect.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDbConnectionManage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDbConnectionManage.Designer.cs">
+      <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDbObjectTypeSelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDbObjectTypeSelector.Designer.cs">
+      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDiagnose.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDiagnose.Designer.cs">
+      <DependentUpon>frmDiagnose.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmDiagnoseResult.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmDiagnoseResult.Designer.cs">
+      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmGenerateScripts.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmGenerateScripts.Designer.cs">
+      <DependentUpon>frmGenerateScripts.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmMain.Designer.cs">
+      <DependentUpon>frmMain.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmScriptsViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmScriptsViewer.Designer.cs">
+      <DependentUpon>frmScriptsViewer.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmSetting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmSetting.designer.cs">
+      <DependentUpon>frmSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmSqlQuery.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmSqlQuery.Designer.cs">
+      <DependentUpon>frmSqlQuery.cs</DependentUpon>
+    </Compile>
+    <Compile Update="frmTableCopy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="frmTableCopy.Designer.cs">
+      <DependentUpon>frmTableCopy.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Controls\UC_DataViewer.resx">
+      <DependentUpon>UC_DataViewer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbAccountInfo.resx">
+      <DependentUpon>UC_DbAccountInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbConnectionProfile.resx">
+      <DependentUpon>UC_DbConnectionProfile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbObjectContent.resx">
+      <DependentUpon>UC_DbObjectContent.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbObjectsComplexTree.resx">
+      <DependentUpon>UC_DbObjectsComplexTree.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbObjectsNavigator.resx">
+      <DependentUpon>UC_DbObjectsNavigator.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_DbObjectsSimpleTree.resx">
+      <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_Pagination.resx">
+      <DependentUpon>UC_Pagination.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_QueryEditor.resx">
+      <DependentUpon>UC_QueryEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_QueryResultGrid.resx">
+      <DependentUpon>UC_QueryResultGrid.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_SqlQuery.resx">
+      <DependentUpon>UC_SqlQuery.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_TableColumns.resx">
+      <DependentUpon>UC_TableColumns.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_TableConstraints.resx">
+      <DependentUpon>UC_TableConstraints.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_TableDesigner.resx">
+      <DependentUpon>UC_TableDesigner.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_TableForeignKeys.resx">
+      <DependentUpon>UC_TableForeignKeys.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Controls\UC_TableIndexes.resx">
+      <DependentUpon>UC_TableIndexes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmAccountInfo.resx">
+      <DependentUpon>frmAccountInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmBackupSetting.resx">
+      <DependentUpon>frmBackupSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmBackupSettingRedefine.resx">
+      <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmColumnMapping.resx">
+      <DependentUpon>frmColumnMapping.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmColumSelect.resx">
+      <DependentUpon>frmColumSelect.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmConvert.resx">
+      <DependentUpon>frmConvert.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDataFilter.resx">
+      <DependentUpon>frmDataFilter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDataFilterCondition.resx">
+      <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDbConnect.resx">
+      <DependentUpon>frmDbConnect.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDbConnectionManage.resx">
+      <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDbObjectTypeSelector.resx">
+      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDiagnose.resx">
+      <DependentUpon>frmDiagnose.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmDiagnoseResult.resx">
+      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmGenerateScripts.resx">
+      <DependentUpon>frmGenerateScripts.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmMain.resx">
+      <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmScriptsViewer.resx">
+      <DependentUpon>frmScriptsViewer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmSetting.resx">
+      <DependentUpon>frmSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmSqlQuery.resx">
+      <DependentUpon>frmSqlQuery.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="frmTableCopy.resx">
+      <DependentUpon>frmTableCopy.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

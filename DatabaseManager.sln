@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1022
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Core", "DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj", "{79096163-1F82-46F2-B2D9-6BD7F9015C05}"
 EndProject
@@ -28,6 +28,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseConverter.Test", "DatabaseConverter\DatabaseConverter.Test\DatabaseConverter.Test.csproj", "{014E5F8E-0404-4764-9E10-B44F3FA84B09}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlAnalyser.Core", "DatabaseConverter\SqlAnalyser.Core\SqlAnalyser.Core.csproj", "{F4623EC9-5292-4CC0-B46D-FB919717B01B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseManager.CoreApp", "DatabaseManager\DatabaseManager.CoreApp\DatabaseManager.CoreApp.csproj", "{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -159,6 +161,18 @@ Global
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x64.Build.0 = Release|Any CPU
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x86.ActiveCfg = Release|Any CPU
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B}.Release|x86.Build.0 = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|x64.Build.0 = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Debug|x86.Build.0 = Debug|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|x64.ActiveCfg = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|x64.Build.0 = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|x86.ActiveCfg = Release|Any CPU
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -174,6 +188,7 @@ Global
 		{557AC416-FD90-4268-B0D0-A079DA28503A} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
 		{014E5F8E-0404-4764-9E10-B44F3FA84B09} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
 		{F4623EC9-5292-4CC0-B46D-FB919717B01B} = {84B1F7AC-FCAC-4522-AC86-306FB83F8F50}
+		{917EFB97-5F37-4AA2-A7DE-F98C5C11E3C7} = {F1D2AB01-8D46-4491-A941-36A78817B47A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {25A155A8-4316-42C2-881F-CC951DBD2CE8}

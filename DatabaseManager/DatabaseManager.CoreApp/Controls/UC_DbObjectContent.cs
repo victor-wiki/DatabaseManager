@@ -3,7 +3,6 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
-using DatabaseManager.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
