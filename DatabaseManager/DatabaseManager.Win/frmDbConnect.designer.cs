@@ -79,7 +79,7 @@
             // 
             // txtProfileName
             // 
-            this.txtProfileName.Location = new System.Drawing.Point(122, 235);
+            this.txtProfileName.Location = new System.Drawing.Point(123, 235);
             this.txtProfileName.Name = "txtProfileName";
             this.txtProfileName.Size = new System.Drawing.Size(166, 21);
             this.txtProfileName.TabIndex = 0;

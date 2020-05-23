@@ -174,6 +174,8 @@ namespace DatabaseManager
                     row.Cells[this.colZipBackupFile.Name].ReadOnly = true;
                 }
             }
+
+            this.dgvSettings.ClearSelection();
         }
     }
 }

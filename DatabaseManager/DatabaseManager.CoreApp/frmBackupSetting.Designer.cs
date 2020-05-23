@@ -49,8 +49,8 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnCancel.Location = new System.Drawing.Point(461, 382);
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnCancel.Location = new System.Drawing.Point(398, 382);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -63,7 +63,7 @@
             // 
             this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnSave.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnSave.Location = new System.Drawing.Point(340, 382);
+            this.btnSave.Location = new System.Drawing.Point(277, 382);
             this.btnSave.Margin = new System.Windows.Forms.Padding(4);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(88, 33);
@@ -104,14 +104,14 @@
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.dgvSettings.DefaultCellStyle = dataGridViewCellStyle3;
             this.dgvSettings.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgvSettings.Location = new System.Drawing.Point(0, 0);
+            this.dgvSettings.Location = new System.Drawing.Point(1, 0);
             this.dgvSettings.Margin = new System.Windows.Forms.Padding(4);
             this.dgvSettings.MultiSelect = false;
             this.dgvSettings.Name = "dgvSettings";
             this.dgvSettings.RowHeadersVisible = false;
             this.dgvSettings.RowHeadersWidth = 25;
             this.dgvSettings.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSettings.Size = new System.Drawing.Size(888, 286);
+            this.dgvSettings.Size = new System.Drawing.Size(760, 286);
             this.dgvSettings.TabIndex = 14;
             this.dgvSettings.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSettings_CellDoubleClick);
             this.dgvSettings.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvSettings_DataBindingComplete);
@@ -165,7 +165,7 @@
             this.label1.Location = new System.Drawing.Point(69, 296);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(805, 62);
+            this.label1.Size = new System.Drawing.Size(615, 62);
             this.label1.TabIndex = 15;
             this.label1.Text = "1. It should use mysqldump.exe for MySql\r\n2. It should use exp.exe for Oracle\r\n3." +
     " For SqlServer, if it\'s remote backup, the save folder should be a shared networ" +
@@ -186,7 +186,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(888, 424);
+            this.ClientSize = new System.Drawing.Size(763, 424);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dgvSettings);

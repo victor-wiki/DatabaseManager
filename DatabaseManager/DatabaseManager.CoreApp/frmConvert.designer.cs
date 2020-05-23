@@ -195,7 +195,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.Enabled = false;
-            this.btnCancel.Location = new System.Drawing.Point(479, 483);
+            this.btnCancel.Location = new System.Drawing.Point(479, 484);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -208,7 +208,7 @@
             // 
             this.btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnExecute.Enabled = false;
-            this.btnExecute.Location = new System.Drawing.Point(366, 482);
+            this.btnExecute.Location = new System.Drawing.Point(366, 484);
             this.btnExecute.Margin = new System.Windows.Forms.Padding(4);
             this.btnExecute.Name = "btnExecute";
             this.btnExecute.Size = new System.Drawing.Size(88, 33);

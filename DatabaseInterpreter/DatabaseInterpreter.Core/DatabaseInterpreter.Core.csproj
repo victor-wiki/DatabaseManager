@@ -74,10 +74,4 @@
     <ProjectReference Include="..\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Config\Setting.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

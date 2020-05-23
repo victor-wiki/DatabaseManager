@@ -35,21 +35,21 @@
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
             this.dgvSettings = new System.Windows.Forms.DataGridView();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.colDatabaseType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colClientToolFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colSaveFolder = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colZipBackupFile = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvSettings)).BeginInit();
             this.SuspendLayout();
             // 
             // btnCancel
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.Location = new System.Drawing.Point(395, 270);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
@@ -102,44 +102,17 @@
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.dgvSettings.DefaultCellStyle = dataGridViewCellStyle3;
             this.dgvSettings.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgvSettings.Location = new System.Drawing.Point(0, 0);
+            this.dgvSettings.Location = new System.Drawing.Point(1, 0);
             this.dgvSettings.MultiSelect = false;
             this.dgvSettings.Name = "dgvSettings";
             this.dgvSettings.RowHeadersVisible = false;
             this.dgvSettings.RowHeadersWidth = 25;
             this.dgvSettings.RowTemplate.Height = 23;
             this.dgvSettings.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSettings.Size = new System.Drawing.Size(761, 202);
+            this.dgvSettings.Size = new System.Drawing.Size(759, 202);
             this.dgvSettings.TabIndex = 14;
             this.dgvSettings.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSettings_CellDoubleClick);
             this.dgvSettings.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvSettings_DataBindingComplete);
-            // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "exe file|*.exe|all files|*.*";
-            this.openFileDialog1.RestoreDirectory = true;
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.Location = new System.Drawing.Point(59, 209);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(690, 44);
-            this.label1.TabIndex = 15;
-            this.label1.Text = "1. It should use mysqldump.exe for MySql\r\n2. It should use exp.exe for Oracle\r\n3." +
-    " For SqlServer, if it\'s remote backup, the save folder should be a shared networ" +
-    "k folder";
-            // 
-            // label2
-            // 
-            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 209);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(35, 12);
-            this.label2.TabIndex = 16;
-            this.label2.Text = "Note:";
             // 
             // colDatabaseType
             // 
@@ -177,6 +150,33 @@
             this.colZipBackupFile.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.colZipBackupFile.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             this.colZipBackupFile.Width = 150;
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.Filter = "exe file|*.exe|all files|*.*";
+            this.openFileDialog1.RestoreDirectory = true;
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.Location = new System.Drawing.Point(59, 209);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(690, 44);
+            this.label1.TabIndex = 15;
+            this.label1.Text = "1. It should use mysqldump.exe for MySql\r\n2. It should use exp.exe for Oracle\r\n3." +
+    " For SqlServer, if it\'s remote backup, the save folder should be a shared networ" +
+    "k folder";
+            // 
+            // label2
+            // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(12, 209);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 12);
+            this.label2.TabIndex = 16;
+            this.label2.Text = "Note:";
             // 
             // frmBackupSetting
             // 

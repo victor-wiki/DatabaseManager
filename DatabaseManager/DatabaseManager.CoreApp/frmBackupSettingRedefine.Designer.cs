@@ -83,7 +83,7 @@
             this.btnSaveFolder.Location = new System.Drawing.Point(469, 11);
             this.btnSaveFolder.Margin = new System.Windows.Forms.Padding(4);
             this.btnSaveFolder.Name = "btnSaveFolder";
-            this.btnSaveFolder.Size = new System.Drawing.Size(42, 30);
+            this.btnSaveFolder.Size = new System.Drawing.Size(42, 23);
             this.btnSaveFolder.TabIndex = 54;
             this.btnSaveFolder.Text = "...";
             this.btnSaveFolder.UseVisualStyleBackColor = true;

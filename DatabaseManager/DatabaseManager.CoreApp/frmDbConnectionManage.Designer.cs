@@ -51,9 +51,10 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(485, 253);
+            this.btnCancel.Location = new System.Drawing.Point(566, 358);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 19;
             this.btnCancel.Text = "Close";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -72,13 +73,13 @@
             this.Word,
             this.UseCodeTemplate});
             this.dgvDbConnection.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgvDbConnection.Location = new System.Drawing.Point(4, 32);
+            this.dgvDbConnection.Location = new System.Drawing.Point(5, 45);
+            this.dgvDbConnection.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.dgvDbConnection.Name = "dgvDbConnection";
             this.dgvDbConnection.RowHeadersVisible = false;
             this.dgvDbConnection.RowHeadersWidth = 20;
-            this.dgvDbConnection.RowTemplate.Height = 23;
             this.dgvDbConnection.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvDbConnection.Size = new System.Drawing.Size(564, 213);
+            this.dgvDbConnection.Size = new System.Drawing.Size(658, 302);
             this.dgvDbConnection.TabIndex = 20;
             this.dgvDbConnection.DoubleClick += new System.EventHandler(this.dgvDbConnection_DoubleClick);
             // 
@@ -119,9 +120,10 @@
             // btnClear
             // 
             this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClear.Location = new System.Drawing.Point(291, 3);
+            this.btnClear.Location = new System.Drawing.Point(340, 4);
+            this.btnClear.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(75, 23);
+            this.btnClear.Size = new System.Drawing.Size(88, 33);
             this.btnClear.TabIndex = 23;
             this.btnClear.Text = "Clear";
             this.btnClear.UseVisualStyleBackColor = true;
@@ -130,9 +132,10 @@
             // btnDelete
             // 
             this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnDelete.Location = new System.Drawing.Point(197, 3);
+            this.btnDelete.Location = new System.Drawing.Point(230, 4);
+            this.btnDelete.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(75, 23);
+            this.btnDelete.Size = new System.Drawing.Size(88, 33);
             this.btnDelete.TabIndex = 22;
             this.btnDelete.Text = "Delete";
             this.btnDelete.UseVisualStyleBackColor = true;
@@ -141,9 +144,10 @@
             // btnAdd
             // 
             this.btnAdd.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnAdd.Location = new System.Drawing.Point(9, 3);
+            this.btnAdd.Location = new System.Drawing.Point(10, 4);
+            this.btnAdd.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnAdd.Name = "btnAdd";
-            this.btnAdd.Size = new System.Drawing.Size(75, 23);
+            this.btnAdd.Size = new System.Drawing.Size(88, 33);
             this.btnAdd.TabIndex = 21;
             this.btnAdd.Text = "Add";
             this.btnAdd.UseVisualStyleBackColor = true;
@@ -152,9 +156,10 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(5, 6);
+            this.label1.Location = new System.Drawing.Point(6, 8);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(89, 12);
+            this.label1.Size = new System.Drawing.Size(98, 17);
             this.label1.TabIndex = 24;
             this.label1.Text = "Database Type:";
             // 
@@ -164,18 +169,20 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.cboDbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboDbType.FormattingEnabled = true;
-            this.cboDbType.Location = new System.Drawing.Point(102, 2);
+            this.cboDbType.Location = new System.Drawing.Point(119, 3);
+            this.cboDbType.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.cboDbType.Name = "cboDbType";
-            this.cboDbType.Size = new System.Drawing.Size(91, 20);
+            this.cboDbType.Size = new System.Drawing.Size(106, 25);
             this.cboDbType.TabIndex = 37;
             this.cboDbType.SelectedIndexChanged += new System.EventHandler(this.cboDbType_SelectedIndexChanged);
             // 
             // btnEdit
             // 
             this.btnEdit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnEdit.Location = new System.Drawing.Point(103, 3);
+            this.btnEdit.Location = new System.Drawing.Point(120, 4);
+            this.btnEdit.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnEdit.Name = "btnEdit";
-            this.btnEdit.Size = new System.Drawing.Size(75, 23);
+            this.btnEdit.Size = new System.Drawing.Size(88, 33);
             this.btnEdit.TabIndex = 38;
             this.btnEdit.Text = "Edit";
             this.btnEdit.UseVisualStyleBackColor = true;
@@ -184,9 +191,10 @@
             // btnSelect
             // 
             this.btnSelect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSelect.Location = new System.Drawing.Point(404, 253);
+            this.btnSelect.Location = new System.Drawing.Point(471, 358);
+            this.btnSelect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnSelect.Name = "btnSelect";
-            this.btnSelect.Size = new System.Drawing.Size(75, 23);
+            this.btnSelect.Size = new System.Drawing.Size(88, 33);
             this.btnSelect.TabIndex = 39;
             this.btnSelect.Text = "Select";
             this.btnSelect.UseVisualStyleBackColor = true;
@@ -200,30 +208,33 @@
             this.panelOperation.Controls.Add(this.btnAdd);
             this.panelOperation.Controls.Add(this.btnDelete);
             this.panelOperation.Controls.Add(this.btnClear);
-            this.panelOperation.Location = new System.Drawing.Point(4, 250);
+            this.panelOperation.Location = new System.Drawing.Point(5, 354);
+            this.panelOperation.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panelOperation.Name = "panelOperation";
-            this.panelOperation.Size = new System.Drawing.Size(382, 31);
+            this.panelOperation.Size = new System.Drawing.Size(446, 44);
             this.panelOperation.TabIndex = 40;
             // 
             // panelDbType
             // 
             this.panelDbType.Controls.Add(this.label1);
             this.panelDbType.Controls.Add(this.cboDbType);
-            this.panelDbType.Location = new System.Drawing.Point(4, 2);
+            this.panelDbType.Location = new System.Drawing.Point(5, 3);
+            this.panelDbType.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panelDbType.Name = "panelDbType";
-            this.panelDbType.Size = new System.Drawing.Size(362, 24);
+            this.panelDbType.Size = new System.Drawing.Size(422, 34);
             this.panelDbType.TabIndex = 41;
             // 
             // frmDbConnectionManage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(572, 288);
+            this.ClientSize = new System.Drawing.Size(667, 408);
             this.Controls.Add(this.panelDbType);
             this.Controls.Add(this.panelOperation);
             this.Controls.Add(this.btnSelect);
             this.Controls.Add(this.dgvDbConnection);
             this.Controls.Add(this.btnCancel);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "frmDbConnectionManage";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

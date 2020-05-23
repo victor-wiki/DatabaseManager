@@ -37,18 +37,20 @@
             this.txtScripts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtScripts.Location = new System.Drawing.Point(2, 2);
+            this.txtScripts.Location = new System.Drawing.Point(2, 3);
+            this.txtScripts.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtScripts.Name = "txtScripts";
-            this.txtScripts.Size = new System.Drawing.Size(726, 341);
+            this.txtScripts.Size = new System.Drawing.Size(707, 316);
             this.txtScripts.TabIndex = 0;
             this.txtScripts.Text = "";
             // 
             // btnClose
             // 
             this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClose.Location = new System.Drawing.Point(643, 349);
+            this.btnClose.Location = new System.Drawing.Point(611, 329);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(75, 23);
+            this.btnClose.Size = new System.Drawing.Size(88, 33);
             this.btnClose.TabIndex = 1;
             this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = true;
@@ -56,11 +58,12 @@
             // 
             // frmScriptsViewer
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(730, 375);
+            this.ClientSize = new System.Drawing.Size(713, 366);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.txtScripts);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "frmScriptsViewer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Scripts Viewer";

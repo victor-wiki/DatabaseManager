@@ -56,7 +56,7 @@
             this.dgvColumns.Name = "dgvColumns";
             this.dgvColumns.RowHeadersWidth = 25;
             this.dgvColumns.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvColumns.Size = new System.Drawing.Size(443, 387);
+            this.dgvColumns.Size = new System.Drawing.Size(390, 340);
             this.dgvColumns.TabIndex = 1;
             this.dgvColumns.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvColumns_DataBindingComplete);
             this.dgvColumns.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvColumns_DataError);
@@ -84,7 +84,7 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(236, 400);
+            this.btnOK.Location = new System.Drawing.Point(183, 353);
             this.btnOK.Margin = new System.Windows.Forms.Padding(4);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(88, 33);
@@ -96,7 +96,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(348, 400);
+            this.btnCancel.Location = new System.Drawing.Point(295, 353);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -134,7 +134,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(449, 438);
+            this.ClientSize = new System.Drawing.Size(396, 391);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);

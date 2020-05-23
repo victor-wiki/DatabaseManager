@@ -42,9 +42,10 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(365, 360);
+            this.btnCancel.Location = new System.Drawing.Point(426, 415);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 4;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -53,9 +54,10 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(269, 360);
+            this.btnOK.Location = new System.Drawing.Point(314, 415);
+            this.btnOK.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(75, 23);
+            this.btnOK.Size = new System.Drawing.Size(88, 33);
             this.btnOK.TabIndex = 3;
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = true;
@@ -66,9 +68,11 @@
             this.gbReferenceTable.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.gbReferenceTable.Controls.Add(this.panelReferenceTable);
-            this.gbReferenceTable.Location = new System.Drawing.Point(6, 12);
+            this.gbReferenceTable.Location = new System.Drawing.Point(7, 17);
+            this.gbReferenceTable.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gbReferenceTable.Name = "gbReferenceTable";
-            this.gbReferenceTable.Size = new System.Drawing.Size(215, 336);
+            this.gbReferenceTable.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.gbReferenceTable.Size = new System.Drawing.Size(251, 381);
             this.gbReferenceTable.TabIndex = 5;
             this.gbReferenceTable.TabStop = false;
             this.gbReferenceTable.Text = "Reference Table";
@@ -76,9 +80,10 @@
             // panelReferenceTable
             // 
             this.panelReferenceTable.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelReferenceTable.Location = new System.Drawing.Point(3, 17);
+            this.panelReferenceTable.Location = new System.Drawing.Point(4, 20);
+            this.panelReferenceTable.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panelReferenceTable.Name = "panelReferenceTable";
-            this.panelReferenceTable.Size = new System.Drawing.Size(209, 316);
+            this.panelReferenceTable.Size = new System.Drawing.Size(243, 357);
             this.panelReferenceTable.TabIndex = 0;
             // 
             // gbTable
@@ -86,9 +91,11 @@
             this.gbTable.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gbTable.Controls.Add(this.panelTable);
-            this.gbTable.Location = new System.Drawing.Point(227, 12);
+            this.gbTable.Location = new System.Drawing.Point(265, 17);
+            this.gbTable.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.gbTable.Name = "gbTable";
-            this.gbTable.Size = new System.Drawing.Size(218, 336);
+            this.gbTable.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.gbTable.Size = new System.Drawing.Size(254, 381);
             this.gbTable.TabIndex = 6;
             this.gbTable.TabStop = false;
             this.gbTable.Text = "Table";
@@ -96,22 +103,24 @@
             // panelTable
             // 
             this.panelTable.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelTable.Location = new System.Drawing.Point(3, 17);
+            this.panelTable.Location = new System.Drawing.Point(4, 20);
+            this.panelTable.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panelTable.Name = "panelTable";
-            this.panelTable.Size = new System.Drawing.Size(212, 316);
+            this.panelTable.Size = new System.Drawing.Size(246, 357);
             this.panelTable.TabIndex = 1;
             // 
             // frmColumnMapping
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(452, 392);
+            this.ClientSize = new System.Drawing.Size(527, 460);
             this.Controls.Add(this.gbTable);
             this.Controls.Add(this.gbReferenceTable);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "frmColumnMapping";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

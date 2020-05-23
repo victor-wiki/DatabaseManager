@@ -126,10 +126,10 @@
             this.btnConnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnConnect.Image = ((System.Drawing.Image)(resources.GetObject("btnConnect.Image")));
             this.btnConnect.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnConnect.Location = new System.Drawing.Point(664, 7);
+            this.btnConnect.Location = new System.Drawing.Point(664, 6);
             this.btnConnect.Margin = new System.Windows.Forms.Padding(4);
             this.btnConnect.Name = "btnConnect";
-            this.btnConnect.Size = new System.Drawing.Size(83, 28);
+            this.btnConnect.Size = new System.Drawing.Size(83, 26);
             this.btnConnect.TabIndex = 44;
             this.btnConnect.Text = "Connect";
             this.btnConnect.TextAlign = System.Drawing.ContentAlignment.MiddleRight;

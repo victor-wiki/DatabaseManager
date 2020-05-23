@@ -63,15 +63,17 @@
             // lblCommandTimeout
             // 
             this.lblCommandTimeout.AutoSize = true;
-            this.lblCommandTimeout.Location = new System.Drawing.Point(9, 12);
+            this.lblCommandTimeout.Location = new System.Drawing.Point(10, 17);
+            this.lblCommandTimeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblCommandTimeout.Name = "lblCommandTimeout";
-            this.lblCommandTimeout.Size = new System.Drawing.Size(101, 12);
+            this.lblCommandTimeout.Size = new System.Drawing.Size(119, 17);
             this.lblCommandTimeout.TabIndex = 0;
             this.lblCommandTimeout.Text = "Command timeout:";
             // 
             // numCommandTimeout
             // 
-            this.numCommandTimeout.Location = new System.Drawing.Point(116, 10);
+            this.numCommandTimeout.Location = new System.Drawing.Point(135, 14);
+            this.numCommandTimeout.Margin = new System.Windows.Forms.Padding(4);
             this.numCommandTimeout.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -83,7 +85,7 @@
             0,
             0});
             this.numCommandTimeout.Name = "numCommandTimeout";
-            this.numCommandTimeout.Size = new System.Drawing.Size(91, 21);
+            this.numCommandTimeout.Size = new System.Drawing.Size(106, 23);
             this.numCommandTimeout.TabIndex = 1;
             this.numCommandTimeout.Value = new decimal(new int[] {
             600,
@@ -95,9 +97,10 @@
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(148, 267);
+            this.btnConfirm.Location = new System.Drawing.Point(168, 381);
+            this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
-            this.btnConfirm.Size = new System.Drawing.Size(75, 23);
+            this.btnConfirm.Size = new System.Drawing.Size(88, 33);
             this.btnConfirm.TabIndex = 10;
             this.btnConfirm.Text = "OK";
             this.btnConfirm.UseVisualStyleBackColor = true;
@@ -106,10 +109,11 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnCancel.Location = new System.Drawing.Point(252, 267);
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.btnCancel.Location = new System.Drawing.Point(289, 381);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 11;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -117,15 +121,17 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(213, 12);
+            this.label1.Location = new System.Drawing.Point(248, 17);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(53, 12);
+            this.label1.Size = new System.Drawing.Size(58, 17);
             this.label1.TabIndex = 12;
             this.label1.Text = "(second)";
             // 
             // numDataBatchSize
             // 
-            this.numDataBatchSize.Location = new System.Drawing.Point(116, 39);
+            this.numDataBatchSize.Location = new System.Drawing.Point(135, 55);
+            this.numDataBatchSize.Margin = new System.Windows.Forms.Padding(4);
             this.numDataBatchSize.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -137,7 +143,7 @@
             0,
             0});
             this.numDataBatchSize.Name = "numDataBatchSize";
-            this.numDataBatchSize.Size = new System.Drawing.Size(91, 21);
+            this.numDataBatchSize.Size = new System.Drawing.Size(106, 23);
             this.numDataBatchSize.TabIndex = 14;
             this.numDataBatchSize.Value = new decimal(new int[] {
             500,
@@ -148,9 +154,10 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(9, 41);
+            this.label2.Location = new System.Drawing.Point(10, 58);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(101, 12);
+            this.label2.Size = new System.Drawing.Size(100, 17);
             this.label2.TabIndex = 13;
             this.label2.Text = "Data batch size:";
             // 
@@ -161,10 +168,11 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabGeneral);
             this.tabControl1.Controls.Add(this.tabMySql);
-            this.tabControl1.Location = new System.Drawing.Point(1, 2);
+            this.tabControl1.Location = new System.Drawing.Point(1, 3);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(429, 259);
+            this.tabControl1.Size = new System.Drawing.Size(501, 367);
             this.tabControl1.TabIndex = 15;
             // 
             // tabGeneral
@@ -185,10 +193,11 @@
             this.tabGeneral.Controls.Add(this.lblCommandTimeout);
             this.tabGeneral.Controls.Add(this.numCommandTimeout);
             this.tabGeneral.Controls.Add(this.label1);
-            this.tabGeneral.Location = new System.Drawing.Point(4, 22);
+            this.tabGeneral.Location = new System.Drawing.Point(4, 26);
+            this.tabGeneral.Margin = new System.Windows.Forms.Padding(4);
             this.tabGeneral.Name = "tabGeneral";
-            this.tabGeneral.Padding = new System.Windows.Forms.Padding(3);
-            this.tabGeneral.Size = new System.Drawing.Size(421, 233);
+            this.tabGeneral.Padding = new System.Windows.Forms.Padding(4);
+            this.tabGeneral.Size = new System.Drawing.Size(493, 337);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
             // 
@@ -196,17 +205,19 @@
             // 
             this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(132, 196);
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(154, 278);
+            this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboPreferredDatabase.Name = "cboPreferredDatabase";
-            this.cboPreferredDatabase.Size = new System.Drawing.Size(109, 20);
+            this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
             this.cboPreferredDatabase.TabIndex = 24;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(9, 199);
+            this.label5.Location = new System.Drawing.Point(10, 282);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(119, 12);
+            this.label5.Size = new System.Drawing.Size(124, 17);
             this.label5.TabIndex = 23;
             this.label5.Text = "Preferred database:";
             // 
@@ -215,9 +226,10 @@
             this.chkLogError.AutoSize = true;
             this.chkLogError.Checked = true;
             this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(177, 170);
+            this.chkLogError.Location = new System.Drawing.Point(206, 241);
+            this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogError.Name = "chkLogError";
-            this.chkLogError.Size = new System.Drawing.Size(54, 16);
+            this.chkLogError.Size = new System.Drawing.Size(57, 21);
             this.chkLogError.TabIndex = 22;
             this.chkLogError.Text = "Error";
             this.chkLogError.UseVisualStyleBackColor = true;
@@ -227,9 +239,10 @@
             this.chkLogInfo.AutoSize = true;
             this.chkLogInfo.Checked = true;
             this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(83, 170);
+            this.chkLogInfo.Location = new System.Drawing.Point(92, 241);
+            this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogInfo.Name = "chkLogInfo";
-            this.chkLogInfo.Size = new System.Drawing.Size(84, 16);
+            this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
             this.chkLogInfo.TabIndex = 21;
             this.chkLogInfo.Text = "Infomation";
             this.chkLogInfo.UseVisualStyleBackColor = true;
@@ -237,9 +250,10 @@
             // lblLogType
             // 
             this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(10, 170);
+            this.lblLogType.Location = new System.Drawing.Point(11, 241);
+            this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogType.Name = "lblLogType";
-            this.lblLogType.Size = new System.Drawing.Size(59, 12);
+            this.lblLogType.Size = new System.Drawing.Size(62, 17);
             this.lblLogType.TabIndex = 20;
             this.lblLogType.Text = "Log type:";
             // 
@@ -247,26 +261,29 @@
             // 
             this.cboDbObjectNameMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboDbObjectNameMode.FormattingEnabled = true;
-            this.cboDbObjectNameMode.Location = new System.Drawing.Point(175, 66);
+            this.cboDbObjectNameMode.Location = new System.Drawing.Point(204, 94);
+            this.cboDbObjectNameMode.Margin = new System.Windows.Forms.Padding(4);
             this.cboDbObjectNameMode.Name = "cboDbObjectNameMode";
-            this.cboDbObjectNameMode.Size = new System.Drawing.Size(119, 20);
+            this.cboDbObjectNameMode.Size = new System.Drawing.Size(138, 25);
             this.cboDbObjectNameMode.TabIndex = 19;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(9, 70);
+            this.label4.Location = new System.Drawing.Point(10, 99);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(161, 12);
+            this.label4.Size = new System.Drawing.Size(180, 17);
             this.label4.TabIndex = 18;
             this.label4.Text = "Database object name mode:";
             // 
             // chkNotCreateIfExists
             // 
             this.chkNotCreateIfExists.AutoSize = true;
-            this.chkNotCreateIfExists.Location = new System.Drawing.Point(11, 121);
+            this.chkNotCreateIfExists.Location = new System.Drawing.Point(13, 171);
+            this.chkNotCreateIfExists.Margin = new System.Windows.Forms.Padding(4);
             this.chkNotCreateIfExists.Name = "chkNotCreateIfExists";
-            this.chkNotCreateIfExists.Size = new System.Drawing.Size(186, 16);
+            this.chkNotCreateIfExists.Size = new System.Drawing.Size(176, 21);
             this.chkNotCreateIfExists.TabIndex = 17;
             this.chkNotCreateIfExists.Text = "Not create if object exists";
             this.chkNotCreateIfExists.UseVisualStyleBackColor = true;
@@ -274,9 +291,10 @@
             // chkShowBuiltinDatabase
             // 
             this.chkShowBuiltinDatabase.AutoSize = true;
-            this.chkShowBuiltinDatabase.Location = new System.Drawing.Point(11, 95);
+            this.chkShowBuiltinDatabase.Location = new System.Drawing.Point(13, 135);
+            this.chkShowBuiltinDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.chkShowBuiltinDatabase.Name = "chkShowBuiltinDatabase";
-            this.chkShowBuiltinDatabase.Size = new System.Drawing.Size(150, 16);
+            this.chkShowBuiltinDatabase.Size = new System.Drawing.Size(155, 21);
             this.chkShowBuiltinDatabase.TabIndex = 16;
             this.chkShowBuiltinDatabase.Text = "Show builtin database";
             this.chkShowBuiltinDatabase.UseVisualStyleBackColor = true;
@@ -284,9 +302,10 @@
             // chkEnableLog
             // 
             this.chkEnableLog.AutoSize = true;
-            this.chkEnableLog.Location = new System.Drawing.Point(11, 145);
+            this.chkEnableLog.Location = new System.Drawing.Point(13, 205);
+            this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
             this.chkEnableLog.Name = "chkEnableLog";
-            this.chkEnableLog.Size = new System.Drawing.Size(84, 16);
+            this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
             this.chkEnableLog.TabIndex = 15;
             this.chkEnableLog.Text = "Enable log";
             this.chkEnableLog.UseVisualStyleBackColor = true;
@@ -298,55 +317,61 @@
             this.tabMySql.Controls.Add(this.label3);
             this.tabMySql.Controls.Add(this.txtMySqlCharset);
             this.tabMySql.Controls.Add(this.lblMySqlCharset);
-            this.tabMySql.Location = new System.Drawing.Point(4, 22);
+            this.tabMySql.Location = new System.Drawing.Point(4, 26);
+            this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
-            this.tabMySql.Padding = new System.Windows.Forms.Padding(3);
-            this.tabMySql.Size = new System.Drawing.Size(421, 233);
+            this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
+            this.tabMySql.Size = new System.Drawing.Size(493, 337);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
             // txtMySqlCharsetCollation
             // 
-            this.txtMySqlCharsetCollation.Location = new System.Drawing.Point(134, 50);
+            this.txtMySqlCharsetCollation.Location = new System.Drawing.Point(156, 71);
+            this.txtMySqlCharsetCollation.Margin = new System.Windows.Forms.Padding(4);
             this.txtMySqlCharsetCollation.Name = "txtMySqlCharsetCollation";
-            this.txtMySqlCharsetCollation.Size = new System.Drawing.Size(100, 21);
+            this.txtMySqlCharsetCollation.Size = new System.Drawing.Size(116, 23);
             this.txtMySqlCharsetCollation.TabIndex = 3;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(15, 53);
+            this.label3.Location = new System.Drawing.Point(18, 75);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(113, 12);
+            this.label3.Size = new System.Drawing.Size(110, 17);
             this.label3.TabIndex = 2;
             this.label3.Text = "Charset Collation:";
             // 
             // txtMySqlCharset
             // 
-            this.txtMySqlCharset.Location = new System.Drawing.Point(134, 19);
+            this.txtMySqlCharset.Location = new System.Drawing.Point(156, 27);
+            this.txtMySqlCharset.Margin = new System.Windows.Forms.Padding(4);
             this.txtMySqlCharset.Name = "txtMySqlCharset";
-            this.txtMySqlCharset.Size = new System.Drawing.Size(100, 21);
+            this.txtMySqlCharset.Size = new System.Drawing.Size(116, 23);
             this.txtMySqlCharset.TabIndex = 1;
             // 
             // lblMySqlCharset
             // 
             this.lblMySqlCharset.AutoSize = true;
-            this.lblMySqlCharset.Location = new System.Drawing.Point(15, 22);
+            this.lblMySqlCharset.Location = new System.Drawing.Point(18, 31);
+            this.lblMySqlCharset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMySqlCharset.Name = "lblMySqlCharset";
-            this.lblMySqlCharset.Size = new System.Drawing.Size(53, 12);
+            this.lblMySqlCharset.Size = new System.Drawing.Size(55, 17);
             this.lblMySqlCharset.TabIndex = 0;
             this.lblMySqlCharset.Text = "Charset:";
             // 
             // frmSetting
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(442, 302);
+            this.ClientSize = new System.Drawing.Size(507, 428);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "frmSetting";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Setting";

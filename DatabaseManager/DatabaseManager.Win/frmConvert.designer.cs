@@ -107,7 +107,7 @@
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtMessage.Size = new System.Drawing.Size(731, 87);
+            this.txtMessage.Size = new System.Drawing.Size(731, 88);
             this.txtMessage.TabIndex = 0;
             this.txtMessage.Text = "";
             this.txtMessage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtMessage_MouseUp);

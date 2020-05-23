@@ -106,7 +106,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.Location = new System.Drawing.Point(252, 267);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
@@ -196,7 +196,7 @@
             // 
             this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(132, 196);
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(136, 196);
             this.cboPreferredDatabase.Name = "cboPreferredDatabase";
             this.cboPreferredDatabase.Size = new System.Drawing.Size(109, 20);
             this.cboPreferredDatabase.TabIndex = 24;
@@ -204,7 +204,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(9, 199);
+            this.label5.Location = new System.Drawing.Point(10, 199);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(119, 12);
             this.label5.TabIndex = 23;
