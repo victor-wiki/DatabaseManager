@@ -8,6 +8,7 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql and Oracle.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
