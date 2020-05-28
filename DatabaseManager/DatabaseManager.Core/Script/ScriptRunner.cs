@@ -147,6 +147,59 @@ namespace DatabaseManager.Core
             return result;
         }
 
+        public async Task Run(DbInterpreter dbInterpreter, IEnumerable<Script> scripts)
+        {
+            using (DbConnection dbConnection = dbInterpreter.CreateConnection())
+            {
+                dbConnection.Open();
+
+                DbTransaction transaction = dbConnection.BeginTransaction();
+
+                Func<Script, bool> isValidScript = (s) =>
+                {
+                    return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == dbInterpreter.ScriptsDelimiter);
+                };
+
+                int count = scripts.Where(item => isValidScript(item)).Count();
+                int i = 0;
+
+                foreach (Script s in scripts)
+                {
+                    if (!isValidScript(s))
+                    {
+                        continue;
+                    }
+
+                    string sql = s.Content?.Trim();
+
+                    if (!string.IsNullOrEmpty(sql) && sql != dbInterpreter.ScriptsDelimiter)
+                    {
+                        i++;
+
+                        if (dbInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(dbInterpreter.ScriptsDelimiter))
+                        {
+                            sql = sql.TrimEnd(dbInterpreter.ScriptsDelimiter.ToArray());
+                        }
+
+                        if (!dbInterpreter.HasError)
+                        {
+                            CommandInfo commandInfo = new CommandInfo()
+                            {
+                                CommandType = CommandType.Text,
+                                CommandText = sql,
+                                Transaction = transaction,
+                                CancellationToken = this.CancellationTokenSource.Token
+                            };
+
+                            await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                        }
+                    }
+                }
+
+                transaction.Commit();
+            }
+        }
+
         private void HandleError(Exception ex)
         {
             this.isBusy = false;

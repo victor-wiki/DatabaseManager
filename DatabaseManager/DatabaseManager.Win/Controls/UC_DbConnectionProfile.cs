@@ -41,6 +41,13 @@ namespace DatabaseManager.Controls
         public DatabaseType DatabaseType
         {
             get { return ManagerUtil.GetDatabaseType(this.cboDbType.Text); }
+            set { this.cboDbType.Text = value.ToString(); }
+        }
+
+        public bool EnableDatabaseType
+        {
+            get { return this.cboDbType.Enabled; }
+            set { this.cboDbType.Enabled = value; }
         }
 
         public UC_DbConnectionProfile()
@@ -66,7 +73,8 @@ namespace DatabaseManager.Controls
             {
                 this.cboDbType.Items.Add(value.ToString());
             }
-        }      
+        }   
+      
 
         public bool IsDbTypeSelected()
         {

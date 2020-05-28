@@ -45,6 +45,7 @@
             this.tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
             this.tsBtnSave = new System.Windows.Forms.ToolStripButton();
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
+            this.tsBtnCompare = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
@@ -86,7 +87,7 @@
             // 
             this.tsmiSetting.Image = global::DatabaseManager.Properties.Resources.Config;
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(163, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -94,7 +95,7 @@
             // 
             this.tsmiDbConnection.Image = global::DatabaseManager.Properties.Resources.DbConnect16;
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(163, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -102,7 +103,7 @@
             // 
             this.tsmiBackupSetting.Image = global::DatabaseManager.Properties.Resources.DbBackup;
             this.tsmiBackupSetting.Name = "tsmiBackupSetting";
-            this.tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiBackupSetting.Size = new System.Drawing.Size(163, 22);
             this.tsmiBackupSetting.Text = "Backup Setting";
             this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
             // 
@@ -161,6 +162,7 @@
             this.tsBtnOpenFile,
             this.tsBtnSave,
             this.tsBtnGenerateScripts,
+            this.tsBtnCompare,
             this.tsBtnConvert,
             this.tsBtnRun});
             this.toolStrip1.Location = new System.Drawing.Point(0, 25);
@@ -221,6 +223,19 @@
             this.tsBtnGenerateScripts.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tsBtnGenerateScripts.ToolTipText = "Generate Scripts";
             this.tsBtnGenerateScripts.Click += new System.EventHandler(this.tsBtnGenerateScripts_Click);
+            // 
+            // tsBtnCompare
+            // 
+            this.tsBtnCompare.AutoSize = false;
+            this.tsBtnCompare.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnCompare.Image = global::DatabaseManager.Properties.Resources.Compare32;
+            this.tsBtnCompare.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnCompare.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnCompare.Name = "tsBtnCompare";
+            this.tsBtnCompare.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnCompare.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnCompare.ToolTipText = "Compare";
+            this.tsBtnCompare.Click += new System.EventHandler(this.tsBtnCompare_Click);
             // 
             // tsBtnConvert
             // 
@@ -319,6 +334,7 @@
         private System.Windows.Forms.ToolStripButton tsBtnOpenFile;
         private System.Windows.Forms.OpenFileDialog dlgOpenFile;
         private System.Windows.Forms.ToolStripMenuItem tsmiBackupSetting;
+        private System.Windows.Forms.ToolStripButton tsBtnCompare;
     }
 }
 

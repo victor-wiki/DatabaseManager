@@ -50,98 +50,15 @@ namespace DatabaseInterpreter.Core
             {
                 this.FeedbackInfo(OperationState.Begin, table);
 
-                string tableName = table.Name;
-                string quotedTableName = this.GetQuotedObjectName(table);
+                IEnumerable<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
+                TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.TableName == table.Name);
+                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == table.Name);
+                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
+                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
 
-                IEnumerable<TableColumn> tableColumns = schemaInfo.TableColumns.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
-                IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.TableName == tableName);
-
-                #region Create Table
-
-                string tableScript =
-$@"
-CREATE TABLE {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-)
-TABLESPACE
-{this.dbInterpreter.ConnectionInfo.Database}" + this.scriptsDelimiter;
-
-                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
-
-                #endregion
-
-                sb.AppendLine();
-
-                #region Comment
-                if (!string.IsNullOrEmpty(table.Comment))
-                {
-                    sb.AppendLine(this.SetTableComment(table));
-                }
-
-                foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
-                {
-                    sb.AppendLine(this.SetTableColumnComment(table, column, true));
-                }
-                #endregion
-
-                #region Primary Key
-                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    sb.AppendLine(this.AddPrimaryKey(primaryKeys.First()));
-                }
-                #endregion
-
-                #region Foreign Key
-                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey)
-                {
-                    IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
-
-                    foreach (TableForeignKey foreignKey in foreignKeys)
-                    {
-                        sb.AppendLine(this.AddForeignKey(foreignKey));
-                    }
-                }
-                #endregion
-
-                #region Index
-                if (this.option.TableScriptsGenerateOption.GenerateIndex)
-                {
-                    IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
-
-                    List<string> indexColumns = new List<string>();
-                   
-                    foreach (TableIndex index in indexes)
-                    {
-                        string columnNames = string.Join(",", index.Columns.OrderBy(item=>item.ColumnName).Select(item=>item.ColumnName));
-
-                        //Avoid duplicated indexes for one index.
-                        if (indexColumns.Contains(columnNames))
-                        {
-                            continue;
-                        }
-
-                        sb.AppendLine(this.AddIndex(index));
-
-                        if (!indexColumns.Contains(columnNames))
-                        {
-                            indexColumns.Add(columnNames);
-                        }
-                    }
-                }
-                #endregion               
-
-                #region Constraint
-                if (this.option.TableScriptsGenerateOption.GenerateConstraint)
-                {
-                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                    foreach (TableConstraint constraint in constraints)
-                    {                       
-                        sb.AppendLine(this.AddCheckConstraint(constraint));
-                    }
-                }
-                #endregion
+                sb.AppendRange(sbTable.Scripts);
 
                 this.FeedbackInfo(OperationState.End, table);
             }
@@ -351,6 +268,99 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
 
         #region Database Operation
 
+        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+         TablePrimaryKey primaryKey,
+         IEnumerable<TableForeignKey> foreignKeys,
+         IEnumerable<TableIndex> indexes,
+         IEnumerable<TableConstraint> constraints)
+        {
+            ScriptBuilder sb = new ScriptBuilder();
+
+            string tableName = table.Name;
+            string quotedTableName = this.GetQuotedObjectName(table);
+
+            #region Create Table
+
+            string tableScript =
+$@"
+CREATE TABLE {quotedTableName}(
+{string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
+)
+TABLESPACE
+{this.dbInterpreter.ConnectionInfo.Database}" + this.scriptsDelimiter;
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
+            #endregion
+
+            sb.AppendLine();
+
+            #region Comment
+            if (!string.IsNullOrEmpty(table.Comment))
+            {
+                sb.AppendLine(this.SetTableComment(table));
+            }
+
+            foreach (TableColumn column in columns.Where(item => !string.IsNullOrEmpty(item.Comment)))
+            {
+                sb.AppendLine(this.SetTableColumnComment(table, column, true));
+            }
+            #endregion
+
+            #region Primary Key
+            if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
+            {
+                sb.AppendLine(this.AddPrimaryKey(primaryKey));
+            }
+            #endregion
+
+            #region Foreign Key
+            if (this.option.TableScriptsGenerateOption.GenerateForeignKey && foreignKeys != null)
+            {
+                foreach (TableForeignKey foreignKey in foreignKeys)
+                {
+                    sb.AppendLine(this.AddForeignKey(foreignKey));
+                }
+            }
+            #endregion
+
+            #region Index
+            if (this.option.TableScriptsGenerateOption.GenerateIndex && indexes != null)
+            {
+                List<string> indexColumns = new List<string>();
+
+                foreach (TableIndex index in indexes)
+                {
+                    string columnNames = string.Join(",", index.Columns.OrderBy(item => item.ColumnName).Select(item => item.ColumnName));
+
+                    //Avoid duplicated indexes for one index.
+                    if (indexColumns.Contains(columnNames))
+                    {
+                        continue;
+                    }
+
+                    sb.AppendLine(this.AddIndex(index));
+
+                    if (!indexColumns.Contains(columnNames))
+                    {
+                        indexColumns.Add(columnNames);
+                    }
+                }
+            }
+            #endregion
+
+            #region Constraint
+            if (this.option.TableScriptsGenerateOption.GenerateConstraint && constraints != null)
+            {
+                foreach (TableConstraint constraint in constraints)
+                {
+                    sb.AppendLine(this.AddCheckConstraint(constraint));
+                }
+            }
+            #endregion
+
+            return sb;
+        }
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
             return new Script("");
@@ -384,7 +394,7 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} {this.GetQuotedObjectName(dbObject)};";
-        }      
+        }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
         {
@@ -404,11 +414,11 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
                     }
                 }
 
-                foreach(string cmd in cmds)
+                foreach (string cmd in cmds)
                 {
                     yield return new Script(cmd);
                 }
-            }    
+            }
         }
 
         private string GetSqlForEnableConstraints(bool enabled)

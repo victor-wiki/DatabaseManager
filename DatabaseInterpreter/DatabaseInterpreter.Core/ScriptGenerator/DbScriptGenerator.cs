@@ -679,6 +679,11 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation  
+        public abstract ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+           TablePrimaryKey primaryKey,
+           IEnumerable<TableForeignKey> foreignKeys,
+           IEnumerable<TableIndex> indexes,
+           IEnumerable<TableConstraint> constraints);
         public abstract Script DropUserDefinedType(UserDefinedType userDefinedType);
         public abstract Script DropTable(Table table);
         public abstract Script DropView(View view);
@@ -686,6 +691,86 @@ namespace DatabaseInterpreter.Core
         public abstract Script DropFunction(Function function);
         public abstract Script DropProcedure(Procedure procedure);
         public abstract IEnumerable<Script> SetConstrainsEnabled(bool enabled);
+
+        public virtual Script Add(DatabaseObject dbObject)
+        {
+            if (dbObject is TableColumn column)
+            {
+                return this.AddTableColumn(new Table() { Owner = column.Owner, Name = column.TableName }, column);
+            }
+            else if (dbObject is TablePrimaryKey primaryKey)
+            {
+                return this.AddPrimaryKey(primaryKey);
+            }
+            else if (dbObject is TableForeignKey foreignKey)
+            {
+                return this.AddForeignKey(foreignKey);
+            }
+            else if (dbObject is TableIndex index)
+            {
+                return this.AddIndex(index);
+            }
+            else if (dbObject is TableConstraint constraint)
+            {
+                return this.AddCheckConstraint(constraint);
+            }           
+            else if (dbObject is ScriptDbObject scriptDbObject)
+            {
+                return new CreateDbObjectScript<ScriptDbObject>(scriptDbObject.Definition);
+            }            
+
+            throw new NotSupportedException($"Not support to drop {dbObject.GetType().Name}.");
+        }
+
+        public virtual Script Drop(DatabaseObject dbObject)
+        {
+            if (dbObject is TableColumn column)
+            {
+                return this.DropTableColumn(column);
+            }
+            else if (dbObject is TablePrimaryKey primaryKey)
+            {
+                return this.DropPrimaryKey(primaryKey);
+            }
+            else if (dbObject is TableForeignKey foreignKey)
+            {
+                return this.DropForeignKey(foreignKey);
+            }
+            else if (dbObject is TableIndex index)
+            {
+                return this.Drop(index);
+            }
+            else if (dbObject is TableConstraint constraint)
+            {
+                return this.DropCheckConstraint(constraint);
+            }
+            else if (dbObject is TableTrigger trigger)
+            {
+                return this.DropTrigger(trigger);
+            }
+            else if (dbObject is View view)
+            {
+                return this.DropView(view);
+            }
+            else if (dbObject is Function function)
+            {
+                return this.DropFunction(function);
+            }
+            else if (dbObject is Procedure procedure)
+            {
+                return this.DropProcedure(procedure);
+            }
+            else if (dbObject is Table table)
+            {
+                return this.DropTable(table);
+            }
+            else if (dbObject is UserDefinedType userDefinedType)
+            {
+                return this.DropUserDefinedType(userDefinedType);
+            }
+
+            throw new NotSupportedException($"Not support to drop {dbObject.GetType().Name}.");
+        }
         #endregion
 
         #region Common Method

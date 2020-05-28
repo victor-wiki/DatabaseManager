@@ -979,5 +979,25 @@ namespace DatabaseManager.Controls
 
             form.ShowDialog();
         }
+
+        private void tsmiCompare_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            this.CompareDatabase(node);
+        }
+
+        private void CompareDatabase(TreeNode node)
+        {
+            Database database = node.Tag as Database;
+
+            frmCompare frmCompare = new frmCompare(this.databaseType, this.GetConnectionInfo(database.Name));
+            frmCompare.ShowDialog();
+        }
     }
 }

@@ -197,35 +197,7 @@ namespace DatabaseManager.Core
 
             this.FeedbackInfo($"Drop {typeName} \"{dbObject.Name}\".");
 
-            Script script = null;
-
-            switch (typeName)
-            {
-                case nameof(UserDefinedType):
-                    script = this.scriptGenerator.DropUserDefinedType(dbObject as UserDefinedType);
-                    break;
-                case nameof(Table):
-                    script = this.scriptGenerator.DropTable(dbObject as Table);
-                    break;
-                case nameof(View):
-                    script = this.scriptGenerator.DropView(dbObject as View);
-                    break;
-                case nameof(Function):
-                    script = this.scriptGenerator.DropFunction(dbObject as Function);
-                    break;
-                case nameof(Procedure):
-                    script = this.scriptGenerator.DropProcedure(dbObject as Procedure);
-                    break;
-                case nameof(TablePrimaryKey):
-                    script = this.scriptGenerator.DropPrimaryKey(dbObject as TablePrimaryKey);
-                    break;
-                case nameof(TableForeignKey):
-                    script = this.scriptGenerator.DropForeignKey(dbObject as TableForeignKey);
-                    break;
-                case nameof(TableIndex):
-                    script = this.scriptGenerator.DropIndex(dbObject as TableIndex);
-                    break;
-            }
+            Script script = this.scriptGenerator.Drop(dbObject);
 
             if (script != null && !string.IsNullOrEmpty(script.Content))
             {

@@ -59,7 +59,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Owner
-        public abstract Task<List<DatabaseOwner>> GetDatabaseOwnersAsync(); 
+        public abstract Task<List<DatabaseOwner>> GetDatabaseOwnersAsync();
         #endregion
 
         #region User Defined Type     
@@ -97,7 +97,7 @@ namespace DatabaseInterpreter.Core
         {
             List<TablePrimaryKeyItem> primaryKeyItems = await this.GetTablePrimaryKeyItemsAsync(dbConnection, filter);
             return SchemaInfoHelper.GetTablePrimaryKeys(primaryKeyItems);
-        }       
+        }
         #endregion
 
         #region Table Foreign Key       
@@ -106,7 +106,7 @@ namespace DatabaseInterpreter.Core
 
         public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
         {
-            List<TableForeignKeyItem> foreignKeyItems =await this.GetTableForeignKeyItemsAsync(filter);
+            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(filter);
             return SchemaInfoHelper.GetTableForeignKeys(foreignKeyItems);
         }
 
@@ -213,7 +213,7 @@ namespace DatabaseInterpreter.Core
             return objects;
         }
 
-        public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter)
+        public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter = null)
         {
             if (filter == null)
             {
@@ -346,7 +346,7 @@ namespace DatabaseInterpreter.Core
             {
                 await connection.OpenAsync();
             }
-        }       
+        }
 
         public Task<int> ExecuteNonQueryAsync(string sql)
         {
@@ -531,7 +531,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return sql;
-        }       
+        }
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {
@@ -575,7 +575,7 @@ namespace DatabaseInterpreter.Core
                 else if (this.DatabaseType == DatabaseType.Oracle && column.DataType.ToLower().Contains("number"))
                 {
                     columnName = $"TO_CHAR({columnName}) AS {columnName}";
-                } 
+                }
                 #endregion
 
                 columnNames.Add(columnName);
@@ -655,10 +655,10 @@ namespace DatabaseInterpreter.Core
                                     if (dataTable.Columns[i].ReadOnly)
                                     {
                                         dataTable.Columns[i].ReadOnly = false;
-                                    }                                  
+                                    }
 
                                     row[i] = null;
-                                }                                   
+                                }
                             }
                         }
 
@@ -678,8 +678,8 @@ namespace DatabaseInterpreter.Core
 
             return dictPagedData;
         }
-              
-        #endregion       
+
+        #endregion
 
         #region Sql Query Clause
         public virtual string GetDefaultOrder() { return string.Empty; }

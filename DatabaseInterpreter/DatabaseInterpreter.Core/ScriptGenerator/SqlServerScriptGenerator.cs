@@ -54,120 +54,15 @@ namespace DatabaseInterpreter.Core
             {
                 this.FeedbackInfo(OperationState.Begin, table);
 
-                string tableName = table.Name;
-                string quotedTableName = this.GetQuotedObjectName(table);
-                IEnumerable<TableColumn> tableColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
+                IEnumerable<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == table.Name).OrderBy(item => item.Order);
+                TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Owner == table.Owner && item.TableName == table.Name);
+                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
+                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == table.Name).OrderBy(item => item.Order);
+                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
 
-                bool hasBigDataType = tableColumns.Any(item => this.IsBigDataType(item));
+                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
-                #region Create Table
-
-                string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
-
-                string tableScript =
-$@"
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
-
-{(this.dbInterpreter.NotCreateIfExists ? existsClause : "")}
-CREATE TABLE {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}
-) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
-
-                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
-
-                #endregion
-
-                #region Comment
-                if (!string.IsNullOrEmpty(table.Comment))
-                {
-                    sb.AppendLine(this.SetTableComment(table));
-                }
-
-                foreach (TableColumn column in tableColumns.Where(item => !string.IsNullOrEmpty(item.Comment)))
-                {
-                    sb.AppendLine(this.SetTableColumnComment(table, column, true));
-                }
-                #endregion
-
-                #region Default Value
-                if (this.option.TableScriptsGenerateOption.GenerateDefaultValue)
-                {
-                    IEnumerable<TableColumn> defaultValueColumns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
-
-                    foreach (TableColumn column in defaultValueColumns)
-                    {
-                        sb.AppendLine(this.AddDefaultValueConstraint(column));
-                    }
-                }
-                #endregion
-
-                TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                #region Primary Key
-                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
-                {
-                    sb.AppendLine(this.AddPrimaryKey(primaryKey));
-
-                    if(!string.IsNullOrEmpty(primaryKey.Comment))
-                    {
-                        sb.AppendLine(this.SetTableChildComment(primaryKey, true));
-                    }
-                }
-                #endregion                    
-
-                #region Foreign Key
-                if (this.option.TableScriptsGenerateOption.GenerateForeignKey)
-                {
-                    IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                    foreach (TableForeignKey foreignKey in foreignKeys)
-                    {
-                        sb.AppendLine(this.AddForeignKey(foreignKey));
-
-                        if(!string.IsNullOrEmpty(foreignKey.Comment))
-                        {
-                            sb.AppendLine(this.SetTableChildComment(foreignKey, true));
-                        }
-                    }
-                }
-                #endregion
-
-                #region Index
-                if (this.option.TableScriptsGenerateOption.GenerateIndex)
-                {
-                    IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order);
-
-                    foreach (TableIndex index in indexes)
-                    {
-                        sb.AppendLine(this.AddIndex(index));
-
-                        if(!string.IsNullOrEmpty(index.Comment))
-                        {
-                            sb.AppendLine(this.SetTableChildComment(index, true));
-                        }
-                    }
-                }
-                #endregion              
-
-                #region Constraint
-                if (this.option.TableScriptsGenerateOption.GenerateConstraint)
-                {
-                    var constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == tableName);
-
-                    foreach (TableConstraint constraint in constraints)
-                    {
-                        sb.AppendLine(this.AddCheckConstraint(constraint));
-
-                        if(!string.IsNullOrEmpty(constraint.Comment))
-                        {
-                            sb.AppendLine(this.SetTableChildComment(constraint, true));
-                        }
-                    }
-                }
-                #endregion
-
-                sb.Append(new SpliterScript(this.scriptsDelimiter));
+                sb.AppendRange(sbTable.Scripts);
 
                 this.FeedbackInfo(OperationState.End, table);
             }
@@ -363,15 +258,15 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
 
             string type = "";
 
-            if(typeName == nameof(TableColumn))
+            if (typeName == nameof(TableColumn))
             {
                 type = "COLUMN";
             }
-            else if(typeName == nameof(TablePrimaryKey) || typeName == nameof(TableForeignKey) || typeName== nameof(TableConstraint))
+            else if (typeName == nameof(TablePrimaryKey) || typeName == nameof(TableForeignKey) || typeName == nameof(TableConstraint))
             {
                 type = "CONSTRAINT";
             }
-            else if(typeName == nameof(TableIndex))
+            else if (typeName == nameof(TableIndex))
             {
                 type = "INDEX";
             }
@@ -398,6 +293,123 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
         #endregion
 
         #region Database Operation
+
+        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+            TablePrimaryKey primaryKey,
+            IEnumerable<TableForeignKey> foreignKeys,
+            IEnumerable<TableIndex> indexes,
+            IEnumerable<TableConstraint> constraints)
+        {
+            ScriptBuilder sb = new ScriptBuilder();
+
+            string tableName = table.Name;
+            string quotedTableName = this.GetQuotedObjectName(table);
+
+            bool hasBigDataType = columns.Any(item => this.IsBigDataType(item));
+
+            #region Create Table
+
+            string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
+
+            string tableScript =
+$@"
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+
+{(this.dbInterpreter.NotCreateIfExists ? existsClause : "")}
+CREATE TABLE {quotedTableName}(
+{string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}
+) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
+            #endregion
+
+            #region Comment
+            if (!string.IsNullOrEmpty(table.Comment))
+            {
+                sb.AppendLine(this.SetTableComment(table));
+            }
+
+            foreach (TableColumn column in columns.Where(item => !string.IsNullOrEmpty(item.Comment)))
+            {
+                sb.AppendLine(this.SetTableColumnComment(table, column, true));
+            }
+            #endregion
+
+            #region Default Value
+            if (this.option.TableScriptsGenerateOption.GenerateDefaultValue)
+            {
+                IEnumerable<TableColumn> defaultValueColumns = columns.Where(item => item.Owner == table.Owner && item.TableName == tableName && !string.IsNullOrEmpty(item.DefaultValue));
+
+                foreach (TableColumn column in defaultValueColumns)
+                {
+                    sb.AppendLine(this.AddDefaultValueConstraint(column));
+                }
+            }
+            #endregion            
+
+            #region Primary Key
+            if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
+            {
+                sb.AppendLine(this.AddPrimaryKey(primaryKey));
+
+                if (!string.IsNullOrEmpty(primaryKey.Comment))
+                {
+                    sb.AppendLine(this.SetTableChildComment(primaryKey, true));
+                }
+            }
+            #endregion
+
+            #region Foreign Key
+            if (this.option.TableScriptsGenerateOption.GenerateForeignKey && foreignKeys != null)
+            {
+                foreach (TableForeignKey foreignKey in foreignKeys)
+                {
+                    sb.AppendLine(this.AddForeignKey(foreignKey));
+
+                    if (!string.IsNullOrEmpty(foreignKey.Comment))
+                    {
+                        sb.AppendLine(this.SetTableChildComment(foreignKey, true));
+                    }
+                }
+            }
+            #endregion
+
+            #region Index
+            if (this.option.TableScriptsGenerateOption.GenerateIndex && indexes != null)
+            {
+                foreach (TableIndex index in indexes)
+                {
+                    sb.AppendLine(this.AddIndex(index));
+
+                    if (!string.IsNullOrEmpty(index.Comment))
+                    {
+                        sb.AppendLine(this.SetTableChildComment(index, true));
+                    }
+                }
+            }
+            #endregion
+
+            #region Constraint
+            if (this.option.TableScriptsGenerateOption.GenerateConstraint && constraints != null)
+            {
+                foreach (TableConstraint constraint in constraints)
+                {
+                    sb.AppendLine(this.AddCheckConstraint(constraint));
+
+                    if (!string.IsNullOrEmpty(constraint.Comment))
+                    {
+                        sb.AppendLine(this.SetTableChildComment(constraint, true));
+                    }
+                }
+            }
+            #endregion
+
+            sb.Append(new SpliterScript(this.scriptsDelimiter));
+
+            return sb;
+        }
 
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
@@ -432,7 +444,7 @@ REFERENCES {this.GetQuotedString(foreignKey.Owner)}.{this.GetQuotedString(foreig
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedObjectName(dbObject)};";
-        }       
+        }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
         {
@@ -467,9 +479,9 @@ BEGIN
     CLOSE table_cursor  
     DEALLOCATE table_cursor   
 END";
-          
-           yield return new ExecuteProcedureScript(sql);
-        }    
+
+            yield return new ExecuteProcedureScript(sql);
+        }
 
         #endregion
     }

@@ -15,95 +15,25 @@ namespace DatabaseInterpreter.Core
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
             ScriptBuilder sb = new ScriptBuilder();
-            MySqlInterpreter mySqlInterpreter = this.dbInterpreter as MySqlInterpreter;
-            string dbCharSet = mySqlInterpreter.DbCharset;
-            string notCreateIfExistsClause = mySqlInterpreter.NotCreateIfExistsClause;
 
             #region Function           
             sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
             #endregion
 
-            #region Create Table
+            #region Table
             foreach (Table table in schemaInfo.Tables)
             {
                 this.FeedbackInfo(OperationState.Begin, table);
 
-                string tableName = table.Name;
-                string quotedTableName = this.GetQuotedObjectName(table);
+                IEnumerable<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
 
-                IEnumerable<TableColumn> tableColumns = schemaInfo.TableColumns.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+                TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.TableName == table.Name);
+                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == table.Name);
+                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
 
-                IEnumerable<TablePrimaryKey> primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.TableName == tableName);
-                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == tableName);
-                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == tableName).OrderBy(item => item.Order);
+                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, null);
 
-                this.RestrictColumnLength(tableColumns, primaryKeys.SelectMany(item => item.Columns));
-                this.RestrictColumnLength(tableColumns, foreignKeys.SelectMany(item => item.Columns));
-                this.RestrictColumnLength(tableColumns, indexes.SelectMany(item => item.Columns));
-
-                string primaryKeyColumns = "";
-
-                if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                {
-                    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
-
-                    primaryKeyColumns =
-$@"
-,PRIMARY KEY
-(
-{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
-)";
-                }
-
-                #region Table
-
-                string tableScript =
-$@"
-CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
-{string.Join("," + Environment.NewLine, tableColumns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
-){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
-DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
-
-                sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
-
-                #endregion
-
-                //#region Primary Key
-                //if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
-                //{
-                //    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
-
-                //    if (primaryKey != null)
-                //    {
-                //        sb.AppendLine(this.AddPrimaryKey(primaryKey));
-                //    }
-                //}
-                //#endregion
-
-                List<string> foreignKeysLines = new List<string>();
-
-                #region Foreign Key
-                if (this.option.TableScriptsGenerateOption.GenerateForeignKey)
-                {
-                    foreach (TableForeignKey foreignKey in foreignKeys)
-                    {
-                        sb.AppendLine(this.AddForeignKey(foreignKey));
-                    }
-                }
-
-                #endregion
-
-                #region Index
-                if (this.option.TableScriptsGenerateOption.GenerateIndex)
-                {
-                    foreach (TableIndex index in indexes)
-                    {
-                        sb.AppendLine(this.AddIndex(index));
-                    }
-                }
-                #endregion              
-
-                sb.AppendLine();
+                sb.AppendRange(sbTable.Scripts);
 
                 this.FeedbackInfo(OperationState.End, table);
             }
@@ -132,6 +62,11 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
         private void RestrictColumnLength<T>(IEnumerable<TableColumn> columns, IEnumerable<T> children) where T : SimpleColumn
         {
+            if (children == null)
+            {
+                return;
+            }
+
             var childColumns = columns.Where(item => children.Any(t => item.Name == t.ColumnName)).ToList();
 
             childColumns.ForEach(item =>
@@ -307,6 +242,90 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
         #region Database Operation
 
+        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+            TablePrimaryKey primaryKey,
+            IEnumerable<TableForeignKey> foreignKeys,
+            IEnumerable<TableIndex> indexes,
+            IEnumerable<TableConstraint> constraints)
+        {
+            ScriptBuilder sb = new ScriptBuilder();
+
+            MySqlInterpreter mySqlInterpreter = this.dbInterpreter as MySqlInterpreter;
+            string dbCharSet = mySqlInterpreter.DbCharset;
+            string notCreateIfExistsClause = mySqlInterpreter.NotCreateIfExistsClause;
+
+            string tableName = table.Name;
+            string quotedTableName = this.GetQuotedObjectName(table);
+
+            this.RestrictColumnLength(columns, primaryKey?.Columns);
+            this.RestrictColumnLength(columns, foreignKeys.SelectMany(item => item.Columns));
+            this.RestrictColumnLength(columns, indexes.SelectMany(item => item.Columns));
+
+            string primaryKeyColumns = "";
+
+            if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey!=null)
+            {
+                primaryKeyColumns =
+$@"
+,PRIMARY KEY
+(
+{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+)";
+            }
+
+            #region Table
+
+            string tableScript =
+$@"
+CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
+{string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
+){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
+DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
+            #endregion
+
+            //#region Primary Key
+            //if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKeys.Count() > 0)
+            //{
+            //    TablePrimaryKey primaryKey = primaryKeys.FirstOrDefault();
+
+            //    if (primaryKey != null)
+            //    {
+            //        sb.AppendLine(this.AddPrimaryKey(primaryKey));
+            //    }
+            //}
+            //#endregion
+
+            List<string> foreignKeysLines = new List<string>();
+
+            #region Foreign Key
+            if (this.option.TableScriptsGenerateOption.GenerateForeignKey)
+            {
+                foreach (TableForeignKey foreignKey in foreignKeys)
+                {
+                    sb.AppendLine(this.AddForeignKey(foreignKey));
+                }
+            }
+
+            #endregion
+
+            #region Index
+            if (this.option.TableScriptsGenerateOption.GenerateIndex)
+            {
+                foreach (TableIndex index in indexes)
+                {
+                    sb.AppendLine(this.AddIndex(index));
+                }
+            }
+            #endregion
+
+            sb.AppendLine();
+
+            return sb;
+        }
+
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
             return new Script("");
@@ -340,12 +359,12 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
             return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedObjectName(dbObject)};";
-        }       
+        }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
         {
             yield return new ExecuteProcedureScript($"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};");
-        }        
+        }
 
         #endregion
     }

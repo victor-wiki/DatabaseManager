@@ -55,6 +55,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CompareNETObjects" Version="4.66.0" />
     <PackageReference Include="CsvHelper" Version="15.0.5" />
     <PackageReference Include="Humanizer.Core" Version="2.7.9" />
     <PackageReference Include="SharpZipLib.NETStandard" Version="1.0.7" />

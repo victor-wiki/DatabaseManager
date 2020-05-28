@@ -17,10 +17,13 @@ namespace DatabaseManager.Core
     {
         private IObserver<FeedbackInfo> observer;
         private DbInterpreter dbInterpreter;
+        private DbScriptGenerator scriptGenerator;
 
         public TableManager(DbInterpreter dbInterpreter)
         {
             this.dbInterpreter = dbInterpreter;
+
+            this.scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -34,72 +37,27 @@ namespace DatabaseManager.Core
 
             try
             {
-                using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
+                ContentSaveResult result = await this.GenerateChangeScripts(schemaDesignerInfo, isNew);
+
+                if (!result.IsOK)
                 {
-                    dbConnection.Open();
-
-                    DbTransaction transaction = dbConnection.BeginTransaction();
-
-                    ContentSaveResult result = await this.GenerateChangeScripts(schemaDesignerInfo, isNew);
-
-                    if (!result.IsOK)
-                    {
-                        return result;
-                    }
-
-                    TableDesignerGenerateScriptsData scriptsData = result.ResultData as TableDesignerGenerateScriptsData;
-
-                    List<Script> scripts = scriptsData.Scripts;
-
-                    table = scriptsData.Table;
-
-                    if (scripts == null || scripts.Count == 0)
-                    {
-                        return this.GetFaultSaveResult("No change need to save.");
-                    }
-
-                    Func<Script, bool> isValidScript = (s) =>
-                    {
-                        return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == this.dbInterpreter.ScriptsDelimiter);
-                    };
-
-                    int count = scripts.Where(item => isValidScript(item)).Count();
-                    int i = 0;
-
-                    foreach (Script s in scripts)
-                    {
-                        if (!isValidScript(s))
-                        {
-                            continue;
-                        }
-
-                        string sql = s.Content?.Trim();
-
-                        if (!string.IsNullOrEmpty(sql) && sql != this.dbInterpreter.ScriptsDelimiter)
-                        {
-                            i++;
-
-                            if (this.dbInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(this.dbInterpreter.ScriptsDelimiter))
-                            {
-                                sql = sql.TrimEnd(this.dbInterpreter.ScriptsDelimiter.ToArray());
-                            }
-
-                            if (!this.dbInterpreter.HasError)
-                            {
-                                CommandInfo commandInfo = new CommandInfo()
-                                {
-                                    CommandType = CommandType.Text,
-                                    CommandText = sql,
-                                    Transaction = transaction
-                                };
-
-                                await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
-                            }
-                        }
-                    }
-
-                    transaction.Commit();
+                    return result;
                 }
+
+                TableDesignerGenerateScriptsData scriptsData = result.ResultData as TableDesignerGenerateScriptsData;
+
+                List<Script> scripts = scriptsData.Scripts;
+
+                table = scriptsData.Table;
+
+                if (scripts == null || scripts.Count == 0)
+                {
+                    return this.GetFaultSaveResult("No changes need to save.");
+                }
+
+                ScriptRunner scriptRunner = new ScriptRunner();
+
+                await scriptRunner.Run(this.dbInterpreter, scripts);
             }
             catch (Exception ex)
             {
@@ -134,22 +92,19 @@ namespace DatabaseManager.Core
 
                 table = schemaInfo.Tables.First();
 
-                scriptsData.Table = table;
-
-                DbScriptGenerator scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
+                scriptsData.Table = table;               
 
                 List<Script> scripts = new List<Script>();
 
                 if (isNew)
                 {
-                    ScriptBuilder scriptBuilder = scriptGenerator.GenerateSchemaScripts(schemaInfo);
+                    ScriptBuilder scriptBuilder = this.scriptGenerator.GenerateSchemaScripts(schemaInfo);
 
-                    scripts = scriptBuilder.Scripts;
+                    scripts.AddRange(scriptBuilder.Scripts);
                 }
                 else
                 {
-                    #region Alter Table
-                    scripts = new List<Script>();
+                    #region Alter Table                   
 
                     TableDesignerInfo tableDesignerInfo = schemaDesignerInfo.TableDesignerInfo;
 
@@ -177,25 +132,20 @@ namespace DatabaseManager.Core
 
                     if (tableDesignerInfo.OldName != tableDesignerInfo.Name)
                     {
-                        scripts.Add(scriptGenerator.RenameTable(new Table() { Owner = tableDesignerInfo.Owner, Name = tableDesignerInfo.OldName }, tableDesignerInfo.Name));
+                        scripts.Add(this.scriptGenerator.RenameTable(new Table() { Owner = tableDesignerInfo.Owner, Name = tableDesignerInfo.OldName }, tableDesignerInfo.Name));
                     }
 
                     if (!this.IsStringEquals(tableDesignerInfo.Comment, oldTable.Comment))
                     {
                         oldTable.Comment = tableDesignerInfo.Comment;
-                        scripts.Add(scriptGenerator.SetTableComment(oldTable, string.IsNullOrEmpty(oldTable.Comment)));
+                        scripts.Add(this.scriptGenerator.SetTableComment(oldTable, string.IsNullOrEmpty(oldTable.Comment)));
                     }
 
                     #region Columns
                     List<TableColumnDesingerInfo> columnDesingerInfos = schemaDesignerInfo.TableColumnDesingerInfos;
                     List<TableColumn> oldColumns = oldSchemaInfo.TableColumns;
 
-                    List<TableDefaultValueConstraint> defaultValueConstraints = null;
-
-                    if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
-                    {
-                        defaultValueConstraints = await (this.dbInterpreter as SqlServerInterpreter).GetTableDefautValueConstraintsAsync(filter);
-                    }
+                    List<TableDefaultValueConstraint> defaultValueConstraints = await this.GetTableDefaultConstraints(filter);
 
                     foreach (TableColumnDesingerInfo columnDesignerInfo in columnDesingerInfos)
                     {
@@ -204,57 +154,16 @@ namespace DatabaseManager.Core
 
                         if (oldColumn == null)
                         {
-                            scripts.Add(scriptGenerator.AddTableColumn(table, newColumn));
+                            scripts.Add(this.scriptGenerator.AddTableColumn(table, newColumn));
                         }
                         else
                         {
                             if (!this.IsValueEqualsIgnoreCase(columnDesignerInfo.OldName, columnDesignerInfo.Name))
                             {
-                                scripts.Add(scriptGenerator.RenameTableColumn(table, oldColumn, newColumn.Name));
+                                scripts.Add(this.scriptGenerator.RenameTableColumn(table, oldColumn, newColumn.Name));
                             }
 
-                            bool isDefaultValueEquals = this.IsStringEquals(ValueHelper.GetTrimedDefaultValue(oldColumn.DefaultValue), newColumn.DefaultValue);
-
-                            if (!SchemaInfoHelper.IsTableColumnEquals(this.dbInterpreter.DatabaseType, oldColumn, newColumn)
-                                || !isDefaultValueEquals)
-                            {
-                                if (!isDefaultValueEquals)
-                                {
-                                    if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
-                                    {
-                                        SqlServerScriptGenerator sqlServerScriptGenerator = scriptGenerator as SqlServerScriptGenerator;
-
-                                        TableDefaultValueConstraint defaultValueConstraint = defaultValueConstraints?.FirstOrDefault(item => item.Owner == oldTable.Owner && item.TableName == oldTable.Name && item.ColumnName == oldColumn.Name);
-
-                                        if (defaultValueConstraint != null)
-                                        {
-                                            scripts.Add(sqlServerScriptGenerator.DropDefaultValueConstraint(defaultValueConstraint));
-                                        }
-
-                                        scripts.Add(sqlServerScriptGenerator.AddDefaultValueConstraint(newColumn));
-                                    }
-                                }
-
-                                Script alterColumnScript = scriptGenerator.AlterTableColumn(table, newColumn);
-
-                                if (this.dbInterpreter.DatabaseType == DatabaseType.Oracle)
-                                {
-                                    if (!oldColumn.IsNullable && !newColumn.IsNullable)
-                                    {
-                                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
-                                    }
-                                    else if (oldColumn.IsNullable && newColumn.IsNullable)
-                                    {
-                                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
-                                    }
-                                }
-
-                                scripts.Add(alterColumnScript);
-                            }
-                            else if (!this.IsStringEquals(columnDesignerInfo.Comment, oldColumn.Comment))
-                            {
-                                scripts.Add(scriptGenerator.SetTableColumnComment(table, newColumn, string.IsNullOrEmpty(oldColumn.Comment)));
-                            }
+                            scripts.AddRange(this.GetColumnAlterScripts(oldTable, table, oldColumn, newColumn, defaultValueConstraints));
                         }
                     }
 
@@ -262,7 +171,7 @@ namespace DatabaseManager.Core
                     {
                         if (!columnDesingerInfos.Any(item => item.Name == oldColumn.Name))
                         {
-                            scripts.Add(scriptGenerator.DropTableColumn(oldColumn));
+                            scripts.Add(this.scriptGenerator.DropTableColumn(oldColumn));
                         }
                     }
                     #endregion
@@ -271,38 +180,7 @@ namespace DatabaseManager.Core
                     TablePrimaryKey oldPrimaryKey = oldSchemaInfo.TablePrimaryKeys.FirstOrDefault();
                     TablePrimaryKey newPrimaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault();
 
-                    bool primaryKeyChanged = !SchemaInfoHelper.IsPrimaryKeyEquals(oldPrimaryKey, newPrimaryKey, schemaDesignerInfo.IgnoreTableIndex, true);
-
-                    Action alterPrimaryKey = () =>
-                    {
-                        if (oldPrimaryKey != null)
-                        {
-                            scripts.Add(scriptGenerator.DropPrimaryKey(oldPrimaryKey));
-                        }
-
-                        scripts.Add(scriptGenerator.AddPrimaryKey(newPrimaryKey));
-
-                        if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
-                        {
-                            this.SetTableChildComment(scripts, scriptGenerator, newPrimaryKey, true);
-                        }
-                    };
-
-                    if (primaryKeyChanged)
-                    {
-                        alterPrimaryKey();
-                    }
-                    else if (!ValueHelper.IsStringEquals(oldPrimaryKey?.Comment, newPrimaryKey?.Comment))
-                    {
-                        if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
-                        {
-                            this.SetTableChildComment(scripts, scriptGenerator, newPrimaryKey, string.IsNullOrEmpty(oldPrimaryKey?.Comment));
-                        }
-                        else
-                        {
-                            alterPrimaryKey();
-                        }
-                    }
+                    scripts.AddRange(this.GetPrimaryKeyAlterScripts(oldPrimaryKey, newPrimaryKey, schemaDesignerInfo.IgnoreTableIndex));
                     #endregion
 
                     #region Index
@@ -328,24 +206,14 @@ namespace DatabaseManager.Core
                                 }
                             }
 
-                            if (oldIndex != null)
-                            {
-                                scripts.Add(scriptGenerator.DropIndex(oldIndex));
-                            }
-
-                            scripts.Add(scriptGenerator.AddIndex(newIndex));
-
-                            if (!string.IsNullOrEmpty(newIndex.Comment))
-                            {
-                                this.SetTableChildComment(scripts, scriptGenerator, newIndex, true);
-                            }
+                            scripts.AddRange(this.GetIndexAlterScripts(oldIndex, newIndex));
                         }
 
                         foreach (TableIndex oldIndex in oldIndexes)
                         {
                             if (!indexDesignerInfos.Any(item => item.Name == oldIndex.Name))
                             {
-                                scripts.Add(scriptGenerator.DropIndex(oldIndex));
+                                scripts.Add(this.scriptGenerator.DropIndex(oldIndex));
                             }
                         }
                     }
@@ -375,24 +243,14 @@ namespace DatabaseManager.Core
                                 }
                             }
 
-                            if (oldForeignKey != null)
-                            {
-                                scripts.Add(scriptGenerator.DropForeignKey(oldForeignKey));
-                            }
-
-                            scripts.Add(scriptGenerator.AddForeignKey(newForeignKey));
-
-                            if (!string.IsNullOrEmpty(newForeignKey.Comment))
-                            {
-                                this.SetTableChildComment(scripts, scriptGenerator, newForeignKey, true);
-                            }
+                            scripts.AddRange(this.GetForeignKeyAlterScripts(oldForeignKey, newForeignKey));
                         }
 
                         foreach (TableForeignKey oldForeignKey in oldForeignKeys)
                         {
                             if (!foreignKeyDesignerInfos.Any(item => item.Name == oldForeignKey.Name))
                             {
-                                scripts.Add(scriptGenerator.DropForeignKey(oldForeignKey));
+                                scripts.Add(this.scriptGenerator.DropForeignKey(oldForeignKey));
                             }
                         }
                     }
@@ -419,24 +277,14 @@ namespace DatabaseManager.Core
                                 }
                             }
 
-                            if (oldConstraint != null)
-                            {
-                                scripts.Add(scriptGenerator.DropCheckConstraint(oldConstraint));
-                            }
-
-                            scripts.Add(scriptGenerator.AddCheckConstraint(newConstraint));
-
-                            if (!string.IsNullOrEmpty(newConstraint.Comment))
-                            {
-                                this.SetTableChildComment(scripts, scriptGenerator, newConstraint, true);
-                            }
+                            scripts.AddRange(this.GetConstraintAlterScripts(oldConstraint, newConstraint));
                         }
 
                         foreach (TableConstraint oldConstraint in oldConstraints)
                         {
                             if (!constraintDesignerInfos.Any(item => item.Name == oldConstraint.Name))
                             {
-                                scripts.Add(scriptGenerator.DropCheckConstraint(oldConstraint));
+                                scripts.Add(this.scriptGenerator.DropCheckConstraint(oldConstraint));
                             }
                         }
                     }
@@ -453,6 +301,167 @@ namespace DatabaseManager.Core
             {
                 return this.GetFaultSaveResult(ExceptionHelper.GetExceptionDetails(ex));
             }
+        }
+
+        public async Task<List<TableDefaultValueConstraint>> GetTableDefaultConstraints( SchemaInfoFilter filter)
+        {
+            List<TableDefaultValueConstraint> defaultValueConstraints = null;
+
+            if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
+            {
+                defaultValueConstraints = await(this.dbInterpreter as SqlServerInterpreter).GetTableDefautValueConstraintsAsync(filter);
+            }
+
+            return defaultValueConstraints;
+        }
+
+        public List<Script> GetColumnAlterScripts(Table oldTable, Table newTable, TableColumn oldColumn, TableColumn newColumn, List<TableDefaultValueConstraint> defaultValueConstraints)
+        {
+            List<Script> scripts = new List<Script>();
+
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+
+            bool isDefaultValueEquals = ValueHelper.IsStringEquals(ValueHelper.GetTrimedDefaultValue(oldColumn.DefaultValue), newColumn.DefaultValue);
+
+            if (!SchemaInfoHelper.IsTableColumnEquals(databaseType, oldColumn, newColumn)
+                || !isDefaultValueEquals)
+            {
+                if (!isDefaultValueEquals)
+                {
+                    if (databaseType == DatabaseType.SqlServer)
+                    {
+                        SqlServerScriptGenerator sqlServerScriptGenerator = scriptGenerator as SqlServerScriptGenerator;
+
+                        TableDefaultValueConstraint defaultValueConstraint = defaultValueConstraints?.FirstOrDefault(item => item.Owner == oldTable.Owner && item.TableName == oldTable.Name && item.ColumnName == oldColumn.Name);
+
+                        if (defaultValueConstraint != null)
+                        {
+                            scripts.Add(sqlServerScriptGenerator.DropDefaultValueConstraint(defaultValueConstraint));
+                        }
+
+                        scripts.Add(sqlServerScriptGenerator.AddDefaultValueConstraint(newColumn));
+                    }
+                }
+
+                Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn);
+
+                if (databaseType == DatabaseType.Oracle)
+                {
+                    if (!oldColumn.IsNullable && !newColumn.IsNullable)
+                    {
+                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
+                    }
+                    else if (oldColumn.IsNullable && newColumn.IsNullable)
+                    {
+                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
+                    }
+                }
+
+                scripts.Add(alterColumnScript);
+            }
+            else if (!ValueHelper.IsStringEquals(newColumn.Comment, oldColumn.Comment))
+            {
+                scripts.Add(scriptGenerator.SetTableColumnComment(newTable, newColumn, string.IsNullOrEmpty(oldColumn.Comment)));
+            }
+
+            return scripts;
+        }
+
+        public List<Script> GetPrimaryKeyAlterScripts(TablePrimaryKey oldPrimaryKey, TablePrimaryKey newPrimaryKey, bool onlyCompareColumns)
+        {
+            List<Script> scripts = new List<Script>();
+
+            bool primaryKeyChanged = !SchemaInfoHelper.IsPrimaryKeyEquals(oldPrimaryKey, newPrimaryKey, onlyCompareColumns, true);
+
+            Action alterPrimaryKey = () =>
+            {
+                if (oldPrimaryKey != null)
+                {
+                    scripts.Add(this.scriptGenerator.DropPrimaryKey(oldPrimaryKey));
+                }
+
+                scripts.Add(this.scriptGenerator.AddPrimaryKey(newPrimaryKey));
+
+                if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
+                {
+                    this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
+                }
+            };
+
+            if (primaryKeyChanged)
+            {
+                alterPrimaryKey();
+            }
+            else if (!ValueHelper.IsStringEquals(oldPrimaryKey?.Comment, newPrimaryKey?.Comment))
+            {
+                if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
+                {
+                    this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, string.IsNullOrEmpty(oldPrimaryKey?.Comment));
+                }
+                else
+                {
+                    alterPrimaryKey();
+                }
+            }
+
+            return scripts;
+        }
+
+        public List<Script> GetForeignKeyAlterScripts(TableForeignKey oldForeignKey, TableForeignKey newForeignKey)
+        {
+            List<Script> scripts = new List<Script>();
+
+            if (oldForeignKey != null)
+            {
+                scripts.Add(this.scriptGenerator.DropForeignKey(oldForeignKey));
+            }
+
+            scripts.Add(this.scriptGenerator.AddForeignKey(newForeignKey));
+
+            if (!string.IsNullOrEmpty(newForeignKey.Comment))
+            {
+                this.SetTableChildComment(scripts, this.scriptGenerator, newForeignKey, true);
+            }
+
+            return scripts;
+        }
+
+        public List<Script> GetIndexAlterScripts(TableIndex oldIndex, TableIndex newIndex)
+        {
+            List<Script> scripts = new List<Script>();
+
+            if (oldIndex != null)
+            {
+                scripts.Add(this.scriptGenerator.DropIndex(oldIndex));
+            }
+
+            scripts.Add(this.scriptGenerator.AddIndex(newIndex));
+
+            if (!string.IsNullOrEmpty(newIndex.Comment))
+            {
+                this.SetTableChildComment(scripts, this.scriptGenerator, newIndex, true);
+            }
+
+            return scripts;
+        }
+
+        public List<Script> GetConstraintAlterScripts(TableConstraint oldConstraint, TableConstraint newConstraint)
+        {
+            List<Script> scripts = new List<Script>();
+
+            if (oldConstraint != null)
+            {
+                scripts.Add(this.scriptGenerator.DropCheckConstraint(oldConstraint));
+            }
+
+            scripts.Add(this.scriptGenerator.AddCheckConstraint(newConstraint));
+
+            if (!string.IsNullOrEmpty(newConstraint.Comment))
+            {
+                this.SetTableChildComment(scripts, this.scriptGenerator, newConstraint, true);
+            }
+
+            return scripts;
         }
 
         private bool IsValueEqualsIgnoreCase(string value1, string value2)
