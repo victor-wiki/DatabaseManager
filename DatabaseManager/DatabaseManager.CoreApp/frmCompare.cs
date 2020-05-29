@@ -784,6 +784,7 @@ namespace DatabaseManager
                 if (info.InfoType == FeedbackInfoType.Error)
                 {
                     this.txtMessage.ForeColor = Color.Red;
+                    this.toolTip1.SetToolTip(this.txtMessage, info.Message);
                 }
                 else
                 {

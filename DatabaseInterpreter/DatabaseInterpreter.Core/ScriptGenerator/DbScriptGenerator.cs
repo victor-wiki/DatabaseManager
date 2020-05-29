@@ -743,7 +743,7 @@ namespace DatabaseInterpreter.Core
             }
             else if (dbObject is TableIndex index)
             {
-                return this.Drop(index);
+                return this.DropIndex(index);
             }
             else if (dbObject is TableConstraint constraint)
             {

@@ -80,17 +80,13 @@ namespace DatabaseManager.Core
 
                 switch (difference.DatabaseObjectType)
                 {
-                    #region Table
                     case DatabaseObjectType.Table:
                         tableScripts.AddRange(await this.GenerateTableChangedScripts(schemaInfo, difference, targetDbOwner));
                         break;
-                    #endregion
-
                     case DatabaseObjectType.View:
                     case DatabaseObjectType.Function:
                     case DatabaseObjectType.Procedure:
-
-                       
+                        tableScripts.AddRange(this.GenereateScriptDbObjectChangedScripts(difference, targetDbOwner));
                         break;
                 }
             }
@@ -111,7 +107,7 @@ namespace DatabaseManager.Core
 
             if (diffType == DbDifferenceType.Added)
             {
-                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Owner);
+                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetDbOwner);
                 scripts.Add(new CreateDbObjectScript<ScriptDbObject>(cloneObj.Definition));
             }
             else if (diffType == DbDifferenceType.Deleted)
@@ -139,7 +135,7 @@ namespace DatabaseManager.Core
 
             if (diffType == DbDifferenceType.Added)
             {
-                var cloneObj = this.CloneDbObject(source, target.Owner);
+                var cloneObj = this.CloneDbObject(source, targetDbOwner);
                 scripts.Add(this.targetScriptGenerator.AddUserDefinedType(cloneObj));
             }
             else if (diffType == DbDifferenceType.Deleted)
@@ -214,7 +210,7 @@ namespace DatabaseManager.Core
                             break;
 
                         case DatabaseObjectType.TableTrigger:
-                            scripts.AddRange(this.GenereateUserDefinedTypeChangedScripts(subDiff, targetDbOwner));
+                            scripts.AddRange(this.GenereateScriptDbObjectChangedScripts(subDiff, targetDbOwner));
                             break;
                     }
                 }
@@ -236,7 +232,7 @@ namespace DatabaseManager.Core
 
             if (diffType == DbDifferenceType.Added)
             {
-                scripts.Add(this.targetScriptGenerator.Add(this.CloneDbObject(source, targetTable.Owner)));
+                scripts.Add(this.targetScriptGenerator.Add(this.CloneTableChild(source, difference.DatabaseObjectType, targetTable.Owner)));
             }
             else if (diffType == DbDifferenceType.Deleted)
             {
@@ -255,9 +251,9 @@ namespace DatabaseManager.Core
                 }
                 else
                 {
-                    var clonedSource = this.CloneDbObject(source, targetTable.Owner);                  
+                    var clonedSource = this.CloneTableChild(difference.Source, difference.DatabaseObjectType, targetTable.Owner);
 
-                    if(difference.DatabaseObjectType == DatabaseObjectType.TablePrimaryKey)
+                    if (difference.DatabaseObjectType == DatabaseObjectType.TablePrimaryKey)
                     {
                         scripts.AddRange(this.tableManager.GetPrimaryKeyAlterScripts(target as TablePrimaryKey, clonedSource as TablePrimaryKey, false));
                     }
@@ -278,9 +274,36 @@ namespace DatabaseManager.Core
 
             return scripts;
         }    
+
+        private DatabaseObject CloneTableChild(DatabaseObject tableChild, DatabaseObjectType databaseObjectType, string targetOwner)
+        {
+            if (databaseObjectType == DatabaseObjectType.TablePrimaryKey)
+            {
+                return this.CloneDbObject(tableChild as TablePrimaryKey, targetOwner);                
+            }
+            else if (databaseObjectType == DatabaseObjectType.TableForeignKey)
+            {
+                return this.CloneDbObject(tableChild as TableForeignKey, targetOwner);
+            }
+            else if (databaseObjectType == DatabaseObjectType.TableIndex)
+            {
+                return this.CloneDbObject(tableChild as TableIndex, targetOwner);
+            }
+            else if (databaseObjectType == DatabaseObjectType.TableConstraint)
+            {
+                return this.CloneDbObject(tableChild as TableConstraint, targetOwner);
+            }
+
+            return tableChild;
+        }
         
         private T CloneDbObject<T>(T dbObject, string owner) where T:DatabaseObject
         {
+            if(dbObject == null)
+            {
+                return null;
+            }
+
             T clonedObj = ObjectHelper.CloneObject<T>(dbObject);
             clonedObj.Owner = owner;
 

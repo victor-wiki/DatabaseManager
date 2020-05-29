@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -49,6 +50,7 @@ namespace DatabaseManager
             UC_DataViewer dataViewer = sender as UC_DataViewer;
 
             frmDataFilter filter = new frmDataFilter() { Columns = dataViewer.Columns.ToList(), ConditionBuilder = dataViewer.ConditionBuilder };
+
             if (filter.ShowDialog() == DialogResult.OK)
             {
                 dataViewer.FilterData(filter.ConditionBuilder);
@@ -57,7 +59,7 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            this.Invoke(new Action(() =>
+            Task.Run(new Action(() =>
             {
                 this.txtMessage.ForeColor = Color.Black;
 
@@ -77,7 +79,7 @@ namespace DatabaseManager
                 {
                     this.txtMessage.Text = info.Message;
                 }
-            }));            
+            }));
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)

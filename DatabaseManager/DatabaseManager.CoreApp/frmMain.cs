@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -57,7 +58,7 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            this.Invoke(new Action(() =>
+            Task.Run(new Action(() =>
             {
                 this.txtMessage.ForeColor = Color.Black;
 

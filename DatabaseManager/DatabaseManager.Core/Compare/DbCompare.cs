@@ -236,8 +236,6 @@ namespace DatabaseManager.Core
             return differences;
         }
 
-
-
         private bool IsNameEquals(string name1, string name2)
         {
             return name1.ToLower() == name2.ToLower();
@@ -248,6 +246,8 @@ namespace DatabaseManager.Core
             ComparisonConfig config = new ComparisonConfig();
             config.MembersToIgnore = new List<string>() { nameof(DatabaseObject.Owner), nameof(DatabaseObject.Order) };
             config.CaseSensitive = false;
+            config.IgnoreStringLeadingTrailingWhitespace = true;
+            config.TreatStringEmptyAndNullTheSame = true;
 
             CompareLogic compareLogic = new CompareLogic(config);
 
