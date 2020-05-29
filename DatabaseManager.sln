@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1145
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseInterpreter.Core", "DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj", "{79096163-1F82-46F2-B2D9-6BD7F9015C05}"
 EndProject

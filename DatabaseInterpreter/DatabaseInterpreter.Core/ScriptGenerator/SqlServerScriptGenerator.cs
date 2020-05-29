@@ -30,12 +30,9 @@ namespace DatabaseInterpreter.Core
                     userTypeName += "_" + userDefinedType.AttrName;
                 }
 
-                TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
-                string dataLength = this.dbInterpreter.GetColumnDataLength(column);
+                userDefinedType.Name = userTypeName;
 
-                string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userTypeName)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
-
-                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
+                sb.AppendLine(this.AddUserDefinedType(userDefinedType));
                 sb.AppendLine(new SpliterScript(this.scriptsDelimiter));
 
                 userTypeNames.Add(userDefinedType.Name);
@@ -409,6 +406,18 @@ CREATE TABLE {quotedTableName}(
             sb.Append(new SpliterScript(this.scriptsDelimiter));
 
             return sb;
+        }
+
+        public override Script AddUserDefinedType(UserDefinedType userDefinedType)
+        {
+            string userTypeName = userDefinedType.Name;           
+
+            TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
+            string dataLength = this.dbInterpreter.GetColumnDataLength(column);
+
+            string script = $@"CREATE TYPE {this.GetQuotedString(userDefinedType.Owner)}.{this.GetQuotedString(userTypeName)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
+
+            return new CreateDbObjectScript<UserDefinedType>(script);
         }
 
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)

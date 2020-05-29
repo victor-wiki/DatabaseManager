@@ -79,11 +79,14 @@ namespace DatabaseManager.Helper
                 string leftChar = index > 0 ? text[index - 1].ToString() : "";
                 string rightChar = index + m.Value.Length < text.Length ? text[index + m.Value.Length].ToString() : "";
 
-                string quotationValuePattern = $@"[""\[`]({m.Value})[""\]`]";
-
-                if (leftChar.Length > 0 && rightChar.Length > 0 && Regex.IsMatch($"{leftChar}{m.Value}{rightChar}", quotationValuePattern))
+                if (!m.Value.Contains("\n"))
                 {
-                    continue;
+                    string quotationValuePattern = $@"[""\[`]({m.Value})[""\]`]";
+
+                    if (leftChar.Length > 0 && rightChar.Length > 0 && Regex.IsMatch($"{leftChar}{m.Value}{rightChar}", quotationValuePattern))
+                    {
+                        continue;
+                    }
                 }
 
                 richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);

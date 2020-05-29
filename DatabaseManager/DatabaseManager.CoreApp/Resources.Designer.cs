@@ -73,6 +73,16 @@ namespace DatabaseManager {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _category {
+            get {
+                object obj = ResourceManager.GetObject("_category", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _columnMapping {
             get {
                 object obj = ResourceManager.GetObject("_columnMapping", resourceCulture);
@@ -96,6 +106,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Icon _dbBackup {
             get {
                 object obj = ResourceManager.GetObject("_dbBackup", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _dbCompare {
+            get {
+                object obj = ResourceManager.GetObject("_dbCompare", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -213,6 +233,16 @@ namespace DatabaseManager {
         /// <summary>
         ///   查找 System.Drawing.Bitmap 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Bitmap Compare32 {
+            get {
+                object obj = ResourceManager.GetObject("Compare32", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Bitmap Config {
             get {
                 object obj = ResourceManager.GetObject("Config", resourceCulture);
@@ -276,6 +306,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap DbScripts {
             get {
                 object obj = ResourceManager.GetObject("DbScripts", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap Edit {
+            get {
+                object obj = ResourceManager.GetObject("Edit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -576,6 +616,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap tree_TableTrigger {
             get {
                 object obj = ResourceManager.GetObject("tree_TableTrigger", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap tree_UserDefinedType {
+            get {
+                object obj = ResourceManager.GetObject("tree_UserDefinedType", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

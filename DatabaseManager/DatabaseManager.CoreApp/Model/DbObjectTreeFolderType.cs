@@ -2,14 +2,16 @@
 {
     public enum DbObjectTreeFolderType
     {
-        Tables,
-        Views,
-        Functions,
-        Procedures,
-        Columns,
-        Triggers,
-        Keys,
-        Constraints,
-        Indexes
-    }    
+        None = 0,
+        Types = 1,
+        Tables = 2,
+        Views = 3,
+        Functions = 4,
+        Procedures = 5,
+        Columns = 6,
+        Triggers = 7,
+        Keys = 8,
+        Constraints = 9,
+        Indexes = 10
+    }
 }

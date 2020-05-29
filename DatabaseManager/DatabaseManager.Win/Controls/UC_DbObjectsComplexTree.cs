@@ -121,6 +121,7 @@ namespace DatabaseManager.Controls
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
+            this.tsmiCompare.Visible = isDatabase;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -188,6 +189,18 @@ namespace DatabaseManager.Controls
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Function, schemaInfo.Functions, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
+
+            foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
+            {
+                string text = $"{userDefinedType.Name}({userDefinedType.Type})";
+             
+                string imageKeyName = nameof(userDefinedType);
+
+                TreeNode node = DbObjectsTreeHelper.CreateTreeNode(userDefinedType.Name, text, imageKeyName);
+                node.Tag = userDefinedType;
+
+                parentNode.Nodes.Add(node);
+            }            
         }
 
         private TreeNodeCollection AddTreeNodes<T>(TreeNode node, DatabaseObjectType types, DatabaseObjectType type, List<T> dbObjects, bool createFolderNode = true, bool createFakeNode = false)
@@ -237,6 +250,11 @@ namespace DatabaseManager.Controls
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Views), nameof(DbObjectTreeFolderType.Views), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));
+
+            if(this.databaseType == DatabaseType.SqlServer)
+            {
+                databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
+            }            
         }
 
         private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
@@ -388,8 +406,8 @@ namespace DatabaseManager.Controls
                 if (parentNode.Tag is Database)
                 {
                     string databaseName = parentNode.Name;
-                    DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
-
+                    DatabaseObjectType databaseObjectType =  DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
+               
                     if (databaseObjectType != DatabaseObjectType.None)
                     {
                         await this.AddDbObjectNodes(node, databaseName, databaseObjectType, false);

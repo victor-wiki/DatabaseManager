@@ -130,6 +130,9 @@
   <data name="Column" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Column.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Compare32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Compare32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Config" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Config.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -150,6 +153,9 @@
   </data>
   <data name="DbScripts" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\DbScripts.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Edit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Edit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Filter" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Filter.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -241,11 +247,17 @@
   <data name="tree_TableTrigger" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\tree_TableTrigger.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="tree_UserDefinedType" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\tree_UserDefinedType.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="tree_View" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\tree_View.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="_account" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\_account.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_category" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\_category.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="_columnMapping" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\_columnMapping.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -255,6 +267,9 @@
   </data>
   <data name="_dbBackup" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\_dbBackup.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="_dbCompare" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\_dbCompare.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="_dbConvert" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\_dbConvert.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

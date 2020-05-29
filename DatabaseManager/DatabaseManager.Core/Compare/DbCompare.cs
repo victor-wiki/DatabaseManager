@@ -23,7 +23,9 @@ namespace DatabaseManager.Core
 
         public List<DbDifference> Compare()
         {
-            List<DbDifference> differences = new List<DbDifference>();            
+            List<DbDifference> differences = new List<DbDifference>();
+
+            differences.AddRange(this.CompareDatabaseObjects<UserDefinedType>(nameof(UserDefinedType), DatabaseObjectType.UserDefinedType, this.sourceShemaInfo.UserDefinedTypes, targetSchemaInfo.UserDefinedTypes));
 
             #region Table
             foreach (Table target in targetSchemaInfo.Tables)
@@ -64,7 +66,7 @@ namespace DatabaseManager.Core
                         IEnumerable<TableTrigger> sourceTriggers = this.sourceShemaInfo.TableTriggers.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
                         IEnumerable<TableTrigger> targetTriggers = this.targetSchemaInfo.TableTriggers.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
 
-                        var triggerDifferences = this.CompareScriptObjects<TableTrigger>("Trigger", DatabaseObjectType.TableTrigger, sourceTriggers, targetTriggers);
+                        var triggerDifferences = this.CompareDatabaseObjects<TableTrigger>("Trigger", DatabaseObjectType.TableTrigger, sourceTriggers, targetTriggers);
 
                         foreach(var triggerDiff in triggerDifferences)
                         {
@@ -132,10 +134,10 @@ namespace DatabaseManager.Core
                 }
             }
             #endregion
-
-            differences.AddRange(this.CompareScriptObjects<View>(nameof(View), DatabaseObjectType.View, this.sourceShemaInfo.Views, targetSchemaInfo.Views));
-            differences.AddRange(this.CompareScriptObjects<Function>(nameof(View), DatabaseObjectType.Function, this.sourceShemaInfo.Functions, targetSchemaInfo.Functions));
-            differences.AddRange(this.CompareScriptObjects<Procedure>(nameof(Procedure), DatabaseObjectType.Procedure, this.sourceShemaInfo.Procedures, targetSchemaInfo.Procedures));
+           
+            differences.AddRange(this.CompareDatabaseObjects<View>(nameof(View), DatabaseObjectType.View, this.sourceShemaInfo.Views, targetSchemaInfo.Views));
+            differences.AddRange(this.CompareDatabaseObjects<Function>(nameof(Function), DatabaseObjectType.Function, this.sourceShemaInfo.Functions, targetSchemaInfo.Functions));
+            differences.AddRange(this.CompareDatabaseObjects<Procedure>(nameof(Procedure), DatabaseObjectType.Procedure, this.sourceShemaInfo.Procedures, targetSchemaInfo.Procedures));
 
             return differences;
         }
@@ -187,8 +189,8 @@ namespace DatabaseManager.Core
             return differences;
         }
 
-        private List<DbDifference> CompareScriptObjects<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
-            where T : ScriptDbObject
+        private List<DbDifference> CompareDatabaseObjects<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
+            where T : DatabaseObject
         {
             List<DbDifference> differences = new List<DbDifference>();
 
@@ -210,7 +212,7 @@ namespace DatabaseManager.Core
                     difference.Source = source;
                     difference.Target = target;
 
-                    if (source.Definition?.Trim() != target.Definition?.Trim())
+                    if (!this.IsDbObjectEquals(source, target))
                     {
                         difference.DifferenceType = DbDifferenceType.Modified;
                     }
@@ -233,6 +235,8 @@ namespace DatabaseManager.Core
 
             return differences;
         }
+
+
 
         private bool IsNameEquals(string name1, string name2)
         {

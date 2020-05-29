@@ -73,6 +73,16 @@ namespace DatabaseManager.Properties {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _category {
+            get {
+                object obj = ResourceManager.GetObject("_category", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _columnMapping {
             get {
                 object obj = ResourceManager.GetObject("_columnMapping", resourceCulture);
@@ -576,6 +586,16 @@ namespace DatabaseManager.Properties {
         internal static System.Drawing.Bitmap tree_TableTrigger {
             get {
                 object obj = ResourceManager.GetObject("tree_TableTrigger", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap tree_UserDefinedType {
+            get {
+                object obj = ResourceManager.GetObject("tree_UserDefinedType", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

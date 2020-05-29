@@ -45,6 +45,7 @@
             this.tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
             this.tsBtnSave = new System.Windows.Forms.ToolStripButton();
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
+            this.tsBtnCompare = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
@@ -165,6 +166,7 @@
             this.tsBtnOpenFile,
             this.tsBtnSave,
             this.tsBtnGenerateScripts,
+            this.tsBtnCompare,
             this.tsBtnConvert,
             this.tsBtnRun});
             this.toolStrip1.Location = new System.Drawing.Point(0, 27);
@@ -225,6 +227,18 @@
             this.tsBtnGenerateScripts.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tsBtnGenerateScripts.ToolTipText = "Generate Scripts";
             this.tsBtnGenerateScripts.Click += new System.EventHandler(this.tsBtnGenerateScripts_Click);
+            // 
+            // tsBtnCompare
+            // 
+            this.tsBtnCompare.AutoSize = false;
+            this.tsBtnCompare.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnCompare.Image = ((System.Drawing.Image)(resources.GetObject("tsBtnCompare.Image")));
+            this.tsBtnCompare.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnCompare.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnCompare.Name = "tsBtnCompare";
+            this.tsBtnCompare.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnCompare.ToolTipText = "Compare Database";
+            this.tsBtnCompare.Click += new System.EventHandler(this.tsBtnCompare_Click);
             // 
             // tsBtnConvert
             // 
@@ -325,6 +339,7 @@
         private System.Windows.Forms.ToolStripButton tsBtnOpenFile;
         private System.Windows.Forms.OpenFileDialog dlgOpenFile;
         private System.Windows.Forms.ToolStripMenuItem tsmiBackupSetting;
+        private System.Windows.Forms.ToolStripButton tsBtnCompare;
     }
 }
 

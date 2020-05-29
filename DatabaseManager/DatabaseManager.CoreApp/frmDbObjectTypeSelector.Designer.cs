@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDbObjectTypeSelector));
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.chkDbObjectTypes = new System.Windows.Forms.CheckedListBox();
@@ -38,7 +39,7 @@
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOK.Location = new System.Drawing.Point(177, 278);
-            this.btnOK.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnOK.Margin = new System.Windows.Forms.Padding(4);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(88, 33);
             this.btnOK.TabIndex = 1;
@@ -50,7 +51,7 @@
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.Location = new System.Drawing.Point(285, 278);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 2;
@@ -63,7 +64,7 @@
             this.chkDbObjectTypes.CheckOnClick = true;
             this.chkDbObjectTypes.FormattingEnabled = true;
             this.chkDbObjectTypes.Location = new System.Drawing.Point(14, 45);
-            this.chkDbObjectTypes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkDbObjectTypes.Margin = new System.Windows.Forms.Padding(4);
             this.chkDbObjectTypes.Name = "chkDbObjectTypes";
             this.chkDbObjectTypes.Size = new System.Drawing.Size(358, 220);
             this.chkDbObjectTypes.TabIndex = 3;
@@ -74,7 +75,7 @@
             // 
             this.chkSelectAll.AutoSize = true;
             this.chkSelectAll.Location = new System.Drawing.Point(16, 11);
-            this.chkSelectAll.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chkSelectAll.Margin = new System.Windows.Forms.Padding(4);
             this.chkSelectAll.Name = "chkSelectAll";
             this.chkSelectAll.Size = new System.Drawing.Size(78, 21);
             this.chkSelectAll.TabIndex = 4;
@@ -91,7 +92,8 @@
             this.Controls.Add(this.chkDbObjectTypes);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "frmDbObjectTypeSelector";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

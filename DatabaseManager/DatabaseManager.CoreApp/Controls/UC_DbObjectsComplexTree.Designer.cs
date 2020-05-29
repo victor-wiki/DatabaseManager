@@ -46,6 +46,7 @@
             this.tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiCompare = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
@@ -88,13 +89,14 @@
             this.imageList1.Images.SetKeyName(4, "tree_Procedure.png");
             this.imageList1.Images.SetKeyName(5, "tree_View.png");
             this.imageList1.Images.SetKeyName(6, "tree_TableIndex.png");
-            this.imageList1.Images.SetKeyName(7, "tree_TableColumn.png");
-            this.imageList1.Images.SetKeyName(8, "tree_TablePrimaryKey.png");
-            this.imageList1.Images.SetKeyName(9, "tree_Table.png");
-            this.imageList1.Images.SetKeyName(10, "tree_TableConstraint.png");
-            this.imageList1.Images.SetKeyName(11, "tree_TableTrigger.png");
-            this.imageList1.Images.SetKeyName(12, "Loading.gif");
-            this.imageList1.Images.SetKeyName(13, "tree_Function.png");
+            this.imageList1.Images.SetKeyName(7, "tree_TablePrimaryKey.png");
+            this.imageList1.Images.SetKeyName(8, "tree_Table.png");
+            this.imageList1.Images.SetKeyName(9, "tree_TableConstraint.png");
+            this.imageList1.Images.SetKeyName(10, "tree_TableTrigger.png");
+            this.imageList1.Images.SetKeyName(11, "Loading.gif");
+            this.imageList1.Images.SetKeyName(12, "tree_Function.png");
+            this.imageList1.Images.SetKeyName(13, "tree_TableColumn.png");
+            this.imageList1.Images.SetKeyName(14, "tree_UserDefinedType.png");
             // 
             // contextMenuStrip1
             // 
@@ -112,11 +114,12 @@
             this.tsmiViewData,
             this.tsmiConvert,
             this.tsmiTranslate,
+            this.tsmiCompare,
             this.tsmiGenerateScripts,
             this.tsmiDelete,
             this.tsmiMore});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(173, 356);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(173, 378);
             // 
             // tsmiNewQuery
             // 
@@ -209,6 +212,13 @@
             this.tsmiTranslate.Text = "Translate to";
             this.tsmiTranslate.MouseEnter += new System.EventHandler(this.tsmiTranslate_MouseEnter);
             // 
+            // tsmiCompare
+            // 
+            this.tsmiCompare.Name = "tsmiCompare";
+            this.tsmiCompare.Size = new System.Drawing.Size(172, 22);
+            this.tsmiCompare.Text = "Compare";
+            this.tsmiCompare.Click += new System.EventHandler(this.tsmiCompare_Click);
+            // 
             // tsmiGenerateScripts
             // 
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
@@ -300,5 +310,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiBackup;
         private System.Windows.Forms.ToolStripMenuItem tsmiDiagnose;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCompare;
     }
 }

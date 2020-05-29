@@ -705,6 +705,12 @@
   <ItemGroup>
     <None Include="Resources\Edit.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\_category.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\tree_UserDefinedType.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\packages\jnm2.ReferenceAssemblies.net35.1.0.0\build\jnm2.ReferenceAssemblies.net35.targets" Condition="Exists('..\..\packages\jnm2.ReferenceAssemblies.net35.1.0.0\build\jnm2.ReferenceAssemblies.net35.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

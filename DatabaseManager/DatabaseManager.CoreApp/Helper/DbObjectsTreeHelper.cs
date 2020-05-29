@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
+using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,11 @@ namespace DatabaseManager.Helper
 
         public static DatabaseObjectType GetDbObjectTypeByFolderName(string folderName)
         {
+            if (folderName == DbObjectTreeFolderType.Types.ToString())
+            {
+                return DatabaseObjectType.UserDefinedType;
+            }
+
             string value = ManagerUtil.GetSingularString(folderName);
             DatabaseObjectType type = DatabaseObjectType.None;
 
@@ -132,7 +138,7 @@ namespace DatabaseManager.Helper
         {
             bool isUniqueDbOwner = dbObjects.GroupBy(item => item.Owner).Count() == 1;
 
-            if(!isUniqueDbOwner)
+            if (!isUniqueDbOwner)
             {
                 dbObjects = dbObjects.OrderBy(item => item.Owner).ThenBy(item => item.Name);
             }

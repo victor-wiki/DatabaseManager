@@ -679,6 +679,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation  
+        public abstract Script AddUserDefinedType(UserDefinedType userDefinedType);
         public abstract ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
            TablePrimaryKey primaryKey,
            IEnumerable<TableForeignKey> foreignKeys,
@@ -713,13 +714,17 @@ namespace DatabaseInterpreter.Core
             else if (dbObject is TableConstraint constraint)
             {
                 return this.AddCheckConstraint(constraint);
-            }           
+            } 
+            else if(dbObject is UserDefinedType userDefinedType)
+            {
+                return this.AddUserDefinedType(userDefinedType);
+            }
             else if (dbObject is ScriptDbObject scriptDbObject)
             {
                 return new CreateDbObjectScript<ScriptDbObject>(scriptDbObject.Definition);
             }            
 
-            throw new NotSupportedException($"Not support to drop {dbObject.GetType().Name}.");
+            throw new NotSupportedException($"Not support to add {dbObject.GetType().Name} using this method.");
         }
 
         public virtual Script Drop(DatabaseObject dbObject)

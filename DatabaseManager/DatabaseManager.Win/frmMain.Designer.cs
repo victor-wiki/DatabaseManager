@@ -234,7 +234,7 @@
             this.tsBtnCompare.Name = "tsBtnCompare";
             this.tsBtnCompare.Size = new System.Drawing.Size(40, 40);
             this.tsBtnCompare.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.tsBtnCompare.ToolTipText = "Compare";
+            this.tsBtnCompare.ToolTipText = "Compare Database";
             this.tsBtnCompare.Click += new System.EventHandler(this.tsBtnCompare_Click);
             // 
             // tsBtnConvert

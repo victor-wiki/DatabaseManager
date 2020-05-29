@@ -241,5 +241,11 @@ namespace DatabaseManager
             frmBackupSetting frm = new frmBackupSetting();
             frm.ShowDialog();
         }
+
+        private void tsBtnCompare_Click(object sender, EventArgs e)
+        {
+            frmCompare form = new frmCompare();
+            form.ShowDialog();
+        }
     }
 }

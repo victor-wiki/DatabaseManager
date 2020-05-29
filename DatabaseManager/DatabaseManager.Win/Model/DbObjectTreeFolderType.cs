@@ -3,14 +3,15 @@
     public enum DbObjectTreeFolderType
     {
         None = 0,
-        Tables = 1,
-        Views = 2,
-        Functions = 3,
-        Procedures = 4,
-        Columns = 5,
-        Triggers = 6,
-        Keys = 7,
-        Constraints = 8,
-        Indexes = 9
+        Types = 1,
+        Tables = 2,
+        Views = 3,
+        Functions = 4,
+        Procedures = 5,
+        Columns = 6,
+        Triggers = 7,
+        Keys = 8,
+        Constraints = 9,
+        Indexes = 10
     }
 }

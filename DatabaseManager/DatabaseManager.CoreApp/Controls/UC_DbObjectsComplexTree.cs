@@ -121,6 +121,7 @@ namespace DatabaseManager.Controls
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
+            this.tsmiCompare.Visible = isDatabase;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -188,6 +189,18 @@ namespace DatabaseManager.Controls
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Function, schemaInfo.Functions, createFolderNode);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
+
+            foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
+            {
+                string text = $"{userDefinedType.Name}({userDefinedType.Type})";
+
+                string imageKeyName = nameof(userDefinedType);
+
+                TreeNode node = DbObjectsTreeHelper.CreateTreeNode(userDefinedType.Name, text, imageKeyName);
+                node.Tag = userDefinedType;
+
+                parentNode.Nodes.Add(node);
+            }
         }
 
         private TreeNodeCollection AddTreeNodes<T>(TreeNode node, DatabaseObjectType types, DatabaseObjectType type, List<T> dbObjects, bool createFolderNode = true, bool createFakeNode = false)
@@ -237,6 +250,11 @@ namespace DatabaseManager.Controls
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Views), nameof(DbObjectTreeFolderType.Views), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));
+
+            if (this.databaseType == DatabaseType.SqlServer)
+            {
+                databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
+            }
         }
 
         private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
@@ -926,7 +944,7 @@ namespace DatabaseManager.Controls
 
                 await this.LoadChildNodes(node);
             }
-        }       
+        }
 
         private async void tsmiBackup_Click(object sender, EventArgs e)
         {
@@ -937,14 +955,14 @@ namespace DatabaseManager.Controls
             dbManager.Subscribe(this);
 
             Action<BackupSetting> backup = (setting) =>
-              {
-                  bool success = dbManager.Backup(setting, connectionInfo);
+            {
+                bool success = dbManager.Backup(setting, connectionInfo);
 
-                  if (success)
-                  {
-                      MessageBox.Show("Backup finished.");
-                  }
-              };
+                if (success)
+                {
+                    MessageBox.Show("Backup finished.");
+                }
+            };
 
             frmBackupSettingRedefine form = new frmBackupSettingRedefine() { DatabaseType = this.databaseType };
 
@@ -969,7 +987,7 @@ namespace DatabaseManager.Controls
         private void tsmiCopy_Click(object sender, EventArgs e)
         {
             frmTableCopy form = new frmTableCopy()
-            {               
+            {
                 DatabaseType = this.databaseType,
                 ConnectionInfo = this.GetCurrentConnectionInfo(),
                 Table = this.tvDbObjects.SelectedNode.Tag as Table
@@ -978,6 +996,26 @@ namespace DatabaseManager.Controls
             form.OnFeedback += this.Feedback;
 
             form.ShowDialog();
+        }
+
+        private void tsmiCompare_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            this.CompareDatabase(node);
+        }
+
+        private void CompareDatabase(TreeNode node)
+        {
+            Database database = node.Tag as Database;
+
+            frmCompare frmCompare = new frmCompare(this.databaseType, this.GetConnectionInfo(database.Name));
+            frmCompare.ShowDialog();
         }
     }
 }

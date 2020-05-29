@@ -242,6 +242,8 @@ namespace DatabaseInterpreter.Core
 
         #region Database Operation
 
+        public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
+
         public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
             TablePrimaryKey primaryKey,
             IEnumerable<TableForeignKey> foreignKeys,

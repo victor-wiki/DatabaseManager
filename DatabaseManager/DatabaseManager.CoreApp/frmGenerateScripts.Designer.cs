@@ -113,6 +113,8 @@
             // 
             this.dbConnectionProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.dbConnectionProfile.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.dbConnectionProfile.EnableDatabaseType = true;
             this.dbConnectionProfile.Location = new System.Drawing.Point(7, 5);
             this.dbConnectionProfile.Margin = new System.Windows.Forms.Padding(0);
             this.dbConnectionProfile.Name = "dbConnectionProfile";

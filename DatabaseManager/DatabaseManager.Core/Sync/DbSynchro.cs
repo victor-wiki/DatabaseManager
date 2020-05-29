@@ -100,7 +100,7 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        public List<Script> GenereateScriptDbObjectScripts(DbDifference difference, string targetDbOwner)
+        public List<Script> GenereateScriptDbObjectChangedScripts(DbDifference difference, string targetDbOwner)
         {
             List<Script> scripts = new List<Script>();
 
@@ -111,8 +111,8 @@ namespace DatabaseManager.Core
 
             if (diffType == DbDifferenceType.Added)
             {
-                sourceScriptDbObject.Owner = targetDbOwner;
-                scripts.Add(new CreateDbObjectScript<ScriptDbObject>(sourceScriptDbObject.Definition));
+                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Owner);
+                scripts.Add(new CreateDbObjectScript<ScriptDbObject>(cloneObj.Definition));
             }
             else if (diffType == DbDifferenceType.Deleted)
             {
@@ -120,9 +120,37 @@ namespace DatabaseManager.Core
             }
             else if (diffType == DbDifferenceType.Modified)
             {
-                sourceScriptDbObject.Owner = targetScriptDbObject.Owner;
+                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Owner);
                 scripts.Add(this.targetScriptGenerator.Drop(targetScriptDbObject));
-                scripts.Add(this.targetScriptGenerator.Add(sourceScriptDbObject));
+                scripts.Add(this.targetScriptGenerator.Add(cloneObj));
+            }
+
+            return scripts;
+        }
+
+        public List<Script> GenereateUserDefinedTypeChangedScripts(DbDifference difference, string targetDbOwner)
+        {
+            List<Script> scripts = new List<Script>();
+
+            DbDifferenceType diffType = difference.DifferenceType;
+
+            UserDefinedType source = difference.Source as UserDefinedType;
+            UserDefinedType target = difference.Target as UserDefinedType;
+
+            if (diffType == DbDifferenceType.Added)
+            {
+                var cloneObj = this.CloneDbObject(source, target.Owner);
+                scripts.Add(this.targetScriptGenerator.AddUserDefinedType(cloneObj));
+            }
+            else if (diffType == DbDifferenceType.Deleted)
+            {
+                scripts.Add(this.targetScriptGenerator.DropUserDefinedType(source));
+            }
+            else if (diffType == DbDifferenceType.Modified)
+            {
+                var cloneObj = this.CloneDbObject(source, target.Owner);
+                scripts.Add(this.targetScriptGenerator.DropUserDefinedType(target));
+                scripts.Add(this.targetScriptGenerator.AddUserDefinedType(cloneObj));
             }
 
             return scripts;
@@ -186,7 +214,7 @@ namespace DatabaseManager.Core
                             break;
 
                         case DatabaseObjectType.TableTrigger:
-                            scripts.AddRange(this.GenereateScriptDbObjectScripts(subDiff, targetDbOwner));
+                            scripts.AddRange(this.GenereateUserDefinedTypeChangedScripts(subDiff, targetDbOwner));
                             break;
                     }
                 }

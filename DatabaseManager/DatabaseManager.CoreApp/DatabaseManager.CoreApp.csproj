@@ -13,6 +13,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DiffPlex" Version="1.6.2" />
+    <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseConverter\SqlAnalyser.Core\SqlAnalyser.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />

@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
 
             string dbOwner = this.GetDbOwner();
 
-            #region User Defined Type
+            //#region User Defined Type
 
             //List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
 
@@ -30,16 +30,16 @@ namespace DatabaseInterpreter.Core
 
             //    this.FeedbackInfo(OperationState.Begin, userTypes.First());
 
-            //    string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
+            //    string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
 
-            //    string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.ScriptsSplitString;
+            //    string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
 
             //    sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
 
             //    this.FeedbackInfo(OperationState.End, userTypes.First());
             //}
 
-            #endregion
+            //#endregion
 
             #region Function           
             sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
@@ -267,6 +267,8 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
         #endregion
 
         #region Database Operation
+
+        public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
 
         public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
          TablePrimaryKey primaryKey,

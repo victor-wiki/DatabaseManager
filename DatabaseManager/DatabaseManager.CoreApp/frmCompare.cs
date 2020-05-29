@@ -858,7 +858,7 @@ namespace DatabaseManager
                         catch (Exception ex)
                         {
                         }
-                    });                   
+                    });
                 }
             }
         }

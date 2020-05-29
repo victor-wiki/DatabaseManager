@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmColumSelect));
             this.dgvColumns = new System.Windows.Forms.DataGridView();
             this.colColumName = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colSort = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -139,6 +140,7 @@
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.dgvColumns);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "frmColumSelect";
