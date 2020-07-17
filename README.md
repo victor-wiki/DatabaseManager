@@ -5,6 +5,9 @@
  * Convert database objects (table, function, view, procedure, trigger).
  * Copy table data (support bulkcopy).
  
+### Compare Database
+  Compare schema of two databases, generate changed scripts and sync changes to traget database.
+ 
 ### Table Designer
   Design table to add columns, primary key, foreign keys, indexes, and check constraints, and it can generate table schema changed scripts from context menu.
 
@@ -37,17 +40,20 @@
   Delete all objects of a database, including table, view, function, procedure, and table trigger.
 
 ## UI - Main
-![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=1)
+![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=2)
 
 ## UI - Convert Database
-![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
+![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=2)
+
+## UI - Compare Database
+![Compare Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Compare.png?raw=true&rid=1)
 
 ## UI - Generate Scripts
-![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=1)
+![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=2)
 
 ## UI - Table Designer
-![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=1)
+![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=2)
 
 ## UI - SQL Query Editor
-![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=1)
+![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=2)
 
