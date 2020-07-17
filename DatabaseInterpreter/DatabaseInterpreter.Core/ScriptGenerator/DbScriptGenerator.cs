@@ -130,6 +130,7 @@ namespace DatabaseInterpreter.Core
 
                     if (this.option.DataGenerateThreshold.HasValue && total > this.option.DataGenerateThreshold.Value)
                     {
+                        this.FeedbackInfo($"Record count of table \"{table.Name}\" exceeds {this.option.DataGenerateThreshold.Value},ignore it.");
                         continue;
                     }
 

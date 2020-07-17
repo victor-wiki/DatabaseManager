@@ -153,12 +153,12 @@ namespace DatabaseConverter.Core
                 SchemaInfoHelper.MapTableNames(targetSchemaInfo, this.Source.TableNameMappings);
             }
 
-            if(this.Option.RenameTableChildren)
+            if (this.Option.RenameTableChildren)
             {
                 SchemaInfoHelper.RenameTableChildren(targetSchemaInfo);
             }
 
-            if(this.Option.IgnoreNotSelfForeignKey)
+            if (this.Option.IgnoreNotSelfForeignKey)
             {
                 targetSchemaInfo.TableForeignKeys = targetSchemaInfo.TableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).ToList();
             }
@@ -282,7 +282,7 @@ namespace DatabaseConverter.Core
 
                             foreach (Script s in scripts)
                             {
-                                if(targetInterpreter.HasError)
+                                if (targetInterpreter.HasError)
                                 {
                                     break;
                                 }
@@ -368,10 +368,15 @@ namespace DatabaseConverter.Core
 
                     if (this.Option.ExecuteScriptOnTargetServer || targetInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
-                        sourceInterpreter.OnDataRead += async (table, columns, rows, dataTable) =>
+                        Dictionary<Table, long> dictTableDataTransferredCount = new Dictionary<Table, long>();
+
+                        sourceInterpreter.OnDataRead += async (TableDataReadInfo tableDataReadInfo) =>
                         {
                             if (!this.hasError)
                             {
+                                Table table = tableDataReadInfo.Table;
+                                List<TableColumn> columns = tableDataReadInfo.Columns;
+
                                 try
                                 {
                                     (Table Table, List<TableColumn> Columns) targetTableAndColumns = this.GetTargetTableColumns(targetSchemaInfo, this.Target.DbOwner, table, columns);
@@ -383,6 +388,9 @@ namespace DatabaseConverter.Core
 
                                     if (this.Option.ExecuteScriptOnTargetServer)
                                     {
+                                        DataTable dataTable = tableDataReadInfo.DataTable;
+                                        List<Dictionary<string, object>> data = tableDataReadInfo.Data;
+
                                         if (this.Option.BulkCopy && targetInterpreter.SupportBulkCopy)
                                         {
                                             BulkCopyInfo bulkCopyInfo = this.GetBulkCopyInfo(table, targetSchemaInfo, this.transaction);
@@ -414,14 +422,29 @@ namespace DatabaseConverter.Core
                                         {
                                             StringBuilder sb = new StringBuilder();
 
-                                            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows } });
+                                            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
 
                                             script = sb.ToString().Trim().Trim(';');
 
                                             await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, paramters, this.transaction));
                                         }
 
-                                        targetInterpreter.FeedbackInfo($"Table \"{table.Name}\":{dataTable.Rows.Count} records transferred.");
+                                        if (!dictTableDataTransferredCount.ContainsKey(table))
+                                        {
+                                            dictTableDataTransferredCount.Add(table, dataTable.Rows.Count);
+                                        }
+                                        else
+                                        {
+                                            dictTableDataTransferredCount[table] += dataTable.Rows.Count;
+                                        }
+
+                                        long transferredCount = dictTableDataTransferredCount[table];
+
+                                        double percent = (transferredCount * 1.0 / tableDataReadInfo.TotalCount) * 100;
+
+                                        string strPercent = (percent == (int)percent) ? (percent + "%") : (percent / 100).ToString("P2");
+
+                                        targetInterpreter.FeedbackInfo($"Table \"{table.Name}\":{dataTable.Rows.Count} records transferred.({transferredCount}/{tableDataReadInfo.TotalCount},{strPercent})");
                                     }
                                 }
                                 catch (Exception ex)
@@ -486,7 +509,7 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private async Task SetIdentityEnabled(IEnumerable<TableColumn> identityTableColumns, DbInterpreter dbInterpreter, DbScriptGenerator scriptGenerator, 
+        private async Task SetIdentityEnabled(IEnumerable<TableColumn> identityTableColumns, DbInterpreter dbInterpreter, DbScriptGenerator scriptGenerator,
                                               DbConnection dbConnection, DbTransaction transaction, bool enabled)
         {
             foreach (var item in identityTableColumns)

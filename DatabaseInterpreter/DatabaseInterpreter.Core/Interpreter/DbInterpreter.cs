@@ -39,7 +39,7 @@ namespace DatabaseInterpreter.Core
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
         public ConnectionInfo ConnectionInfo { get; protected set; }
 
-        public delegate Task DataReadHandler(Table table, List<TableColumn> columns, List<Dictionary<string, object>> data, DataTable dataTable);
+        public delegate Task DataReadHandler(TableDataReadInfo tableDataReadInfo);
         public event DataReadHandler OnDataRead;
 
         #endregion
@@ -672,7 +672,14 @@ namespace DatabaseInterpreter.Core
 
                 if (this.OnDataRead != null && !this.CancelRequested && !this.HasError)
                 {
-                    await this.OnDataRead(table, columns, rows, dataTable);
+                    await this.OnDataRead(new TableDataReadInfo()
+                    {
+                        Table = table,
+                        Columns = columns,
+                        TotalCount = total,
+                        Data = rows,
+                        DataTable = dataTable
+                    });
                 }
             }
 
