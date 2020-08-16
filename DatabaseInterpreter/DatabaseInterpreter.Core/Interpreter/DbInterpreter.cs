@@ -526,7 +526,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else
                 {
-                    sql += Environment.NewLine + this.GetLimitStatement(0, limitCount);
+                    sql = $@"SELECT * FROM
+                       (
+                         {sql}
+                       ) TEMP"
+                      + Environment.NewLine + this.GetLimitStatement(0, limitCount);
                 }
             }
 
