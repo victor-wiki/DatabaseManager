@@ -6,20 +6,20 @@
  * Copy table data (support bulkcopy).
  
 ### Compare Database
-  Compare schema of two databases, generate changed scripts and sync changes to traget database.
+  Compare database schemas, generate changed scripts and sync changes to target database.
  
 ### Table Designer
-  Design table to add columns, primary key, foreign keys, indexes, and check constraints, and it can generate table schema changed scripts from context menu.
+  Design table with columns, primary key, foreign keys, indexes, and check constraints, and it can generate table schema changed scripts from context menu.
 
 ### SQL Query Editor
-  Create new query or open existing sql file to execute select, insert, update, delete, create and alter statements. It supports input intellisense.
+  Create new query or open existing sql file to execute select, insert, update, delete, create and alter statements. It supports intellisense.
  
 ### Generate Scripts
   * Generate database objects create scripts.
   * Generate table insert data scripts.
   
 ### Translate
-   Translate scripts of one database object to another. Compared to convert, this doesn't need connection to target databse.
+   Translate scripts from one database object to another. Compared to convert, this doesn't need connection to target databse.
    
 ### View Data
   It supports pagination, sort and filter for single table.
