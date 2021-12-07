@@ -813,8 +813,6 @@ namespace DatabaseManager.Controls
 
         private void txtEditor_SelectionChanged(object sender, EventArgs e)
         {
-            this.txtEditor.SelectionFont = this.txtEditor.Font;
-
             if (this.isPasting)
             {
                 this.isPasting = false;
