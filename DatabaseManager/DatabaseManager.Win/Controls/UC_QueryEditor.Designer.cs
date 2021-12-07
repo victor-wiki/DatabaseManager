@@ -35,13 +35,13 @@
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiPaste = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDisableIntellisense = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiUpdateIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.lvWords = new System.Windows.Forms.ListView();
             this.Icon = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Word = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.txtToolTip = new System.Windows.Forms.TextBox();
             this.panelWords = new System.Windows.Forms.Panel();
-            this.tsmiUpdateIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.editorContexMenu.SuspendLayout();
             this.panelWords.SuspendLayout();
             this.SuspendLayout();
@@ -50,7 +50,7 @@
             // 
             this.txtEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtEditor.EnableAutoDragDrop = true;
-            this.txtEditor.Font = new System.Drawing.Font("新宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtEditor.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.txtEditor.HideSelection = false;
             this.txtEditor.Location = new System.Drawing.Point(0, 0);
             this.txtEditor.Name = "txtEditor";
@@ -94,6 +94,13 @@
             this.tsmiDisableIntellisense.Size = new System.Drawing.Size(187, 22);
             this.tsmiDisableIntellisense.Text = "Disable Intellisense";
             this.tsmiDisableIntellisense.Click += new System.EventHandler(this.tsmiDisableIntellisense_Click);
+            // 
+            // tsmiUpdateIntellisense
+            // 
+            this.tsmiUpdateIntellisense.Name = "tsmiUpdateIntellisense";
+            this.tsmiUpdateIntellisense.Size = new System.Drawing.Size(187, 22);
+            this.tsmiUpdateIntellisense.Text = "Update Intellisense";
+            this.tsmiUpdateIntellisense.Click += new System.EventHandler(this.tsmiUpdateIntellisense_Click);
             // 
             // lvWords
             // 
@@ -160,13 +167,6 @@
             this.panelWords.Size = new System.Drawing.Size(290, 119);
             this.panelWords.TabIndex = 7;
             this.panelWords.Visible = false;
-            // 
-            // tsmiUpdateIntellisense
-            // 
-            this.tsmiUpdateIntellisense.Name = "tsmiUpdateIntellisense";
-            this.tsmiUpdateIntellisense.Size = new System.Drawing.Size(187, 22);
-            this.tsmiUpdateIntellisense.Text = "Update Intellisense";
-            this.tsmiUpdateIntellisense.Click += new System.EventHandler(this.tsmiUpdateIntellisense_Click);
             // 
             // UC_QueryEditor
             // 
