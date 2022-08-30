@@ -7,7 +7,7 @@ namespace DatabaseInterpreter.Core
     {
         public string BuildConntionString(ConnectionInfo connectionInfo)
         {
-            StringBuilder sb = new StringBuilder($"Data Source={connectionInfo.Server};Initial Catalog={connectionInfo.Database};");
+            StringBuilder sb = new StringBuilder($"Data Source={connectionInfo.Server};Initial Catalog={connectionInfo.Database};TrustServerCertificate=true;");
 
             if(connectionInfo.IntegratedSecurity)
             {
