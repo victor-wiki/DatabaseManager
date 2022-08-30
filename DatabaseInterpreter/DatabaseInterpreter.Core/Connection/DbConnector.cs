@@ -2,7 +2,7 @@
 using MySql.Data.MySqlClient;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
-using Westwind.Utilities;
+using System.Data.SqlClient;
 
 namespace  DatabaseInterpreter.Core
 {
@@ -38,7 +38,7 @@ namespace  DatabaseInterpreter.Core
             }            
             else
             {
-                factory = DataUtils.GetDbProviderFactory(this._dbProvider.ProviderName);
+                factory = SqlClientFactory.Instance;
             }            
            
             DbConnection connection = factory.CreateConnection();

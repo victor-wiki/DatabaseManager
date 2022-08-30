@@ -68,7 +68,6 @@
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="2.19.60" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
-    <PackageReference Include="Westwind.Utilities" Version="3.0.37" />
   </ItemGroup>
 
   <ItemGroup>
