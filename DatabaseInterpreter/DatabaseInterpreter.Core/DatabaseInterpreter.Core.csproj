@@ -8,8 +8,8 @@
     <Authors>victor-wiki</Authors>
     <Description>Get database objects meta data, generate schema and insert data scripts, query and bulkcopy data.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.15</Version>
-    <PackageReleaseNotes>add "TrustServerCertificate=true" to  connection string of sqlserver</PackageReleaseNotes>
+    <Version>1.0.16</Version>
+    <PackageReleaseNotes>add "AllowPublicKeyRetrieval=True" to the connection string of mysql</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
