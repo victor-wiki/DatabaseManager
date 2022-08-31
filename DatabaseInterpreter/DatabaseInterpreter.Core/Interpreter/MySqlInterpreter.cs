@@ -29,8 +29,7 @@ namespace DatabaseInterpreter.Core
         public const int KeyIndexColumnMaxLength = 500;
         public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
         public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
-        public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
-        protected string dbVersion = "";
+        public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }       
         #endregion
 
         #region Constructor
@@ -102,21 +101,11 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
         {
-            if (filter != null && filter.NeedCheckDatabaseVersion)
-            {
-                this.dbVersion = this.GetDatabaseVersion();
-            }
-
             return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines("FUNCTION", filter));
         }
 
         public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            if (filter != null && filter.NeedCheckDatabaseVersion)
-            {
-                this.dbVersion = this.GetDatabaseVersion(dbConnection);
-            }
-
             return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines("FUNCTION", filter));
         }
 
@@ -129,9 +118,7 @@ namespace DatabaseInterpreter.Core
             string sql = "";
             bool isFunction = type.ToUpper() == "FUNCTION";
             string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
-            string strNames = "";
-            bool needCondition = true;
-            bool needOrderby = true;
+            string strNames = "";           
 
             if (objectNames != null && objectNames.Any())
             {
@@ -144,47 +131,31 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`ROUTINES`
                         WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'
                        ";
+
+                if (strNames != "")
+                {
+                    sql += $" AND {nameColumn} IN ({ strNames })";
+                }
+
+                sql += $" ORDER BY {nameColumn}";
             }
             else
             {
-                if (int.Parse(this.dbVersion.Split('.')[0]) < 8)
-                {
-                    string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
+                string functionReturns = isFunction ? ", 'RETURNS ',IFNULL(r.DATA_TYPE,''), ' '" : "";
+                string procParameterMode = isFunction ? "" : "IFNULL(p.PARAMETER_MODE,''),' ',";
 
-                    sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
-                        CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsClause} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
-                        FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'";
-                }
-                else
-                {
-                    string functionReturns = isFunction ? ", 'RETURNS ',IFNULL(r.DATA_TYPE,''), ' '" : "";
+                string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
 
-                    string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
-
-                    sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
+                sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
                              CONVERT(CONCAT('CREATE PROCEDURE  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
-                            IFNULL(TRIM(TRAILING ',' FROM GROUP_CONCAT(CONCAT(p.PARAMETER_NAME, ' ', p.`DATA_TYPE`), ',')),''), 
+                            IFNULL(TRIM(TRAILING ',' FROM GROUP_CONCAT(CONCAT({procParameterMode}p.PARAMETER_NAME, ' ', p.`DATA_TYPE`), ',')),''), 
                             ') ' {functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
                             FROM information_schema.Routines r
                             LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
                             WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
-                            GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME";
-
-                    needCondition = false;
-                    needOrderby = false;
-                }
-            }
-
-
-            if (needCondition && strNames != "")
-            {
-                sql += $" AND {nameColumn} IN ({ strNames })";
-            }
-
-            if (needOrderby)
-            {
-                sql += $" ORDER BY {nameColumn}";
-            }
+                            GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
+                            ORDER BY r.ROUTINE_NAME";
+            }           
 
             return sql;
         }
@@ -465,21 +436,11 @@ namespace DatabaseInterpreter.Core
         #region Procedure    
         public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
-            if (filter != null && filter.NeedCheckDatabaseVersion)
-            {
-                this.dbVersion = this.GetDatabaseVersion();
-            }
-
             return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines("PROCEDURE", filter));
         }
 
         public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            if (filter != null && filter.NeedCheckDatabaseVersion)
-            {
-                this.dbVersion = this.GetDatabaseVersion(dbConnection);
-            }
-
             return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines("PROCEDURE", filter));
         }
         #endregion

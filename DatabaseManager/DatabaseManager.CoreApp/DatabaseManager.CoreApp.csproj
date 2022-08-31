@@ -8,8 +8,10 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql and Oracle.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
+    <PackageReleaseNotes>allow different ports on same host for mysql;
+fix treenode refresh issue</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

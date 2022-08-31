@@ -33,11 +33,6 @@ namespace DatabaseManager.Core
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
             filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });
 
-            if (dbInterpreter.DatabaseType == DatabaseType.MySql)
-            {
-                filter.NeedCheckDatabaseVersion = true;
-            }
-
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
             DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);

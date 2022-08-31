@@ -11,8 +11,7 @@ namespace DatabaseInterpreter.Model
         public string[] TableNames { get; set; }       
         public string[] ViewNames { get; set; }       
         public string[] ProcedureNames { get; set; }
-        public string[] TableTriggerNames { get; set; }
-        public bool NeedCheckDatabaseVersion { get; set; }
+        public string[] TableTriggerNames { get; set; }        
     }
 
     [Flags]
