@@ -87,7 +87,9 @@ namespace DatabaseManager.Controls
 
         private bool CanRefresh(TreeNode node)
         {
-            return (node.Level <= 3) && !this.IsOnlyHasFakeChild(node);
+            return (node.Level <= 3) && !this.IsOnlyHasFakeChild(node) 
+                && !(node.Tag is ScriptDbObject)
+                && !(node.Tag is UserDefinedType);
         }
 
         private bool CanDelete(TreeNode node)
@@ -347,7 +349,9 @@ namespace DatabaseManager.Controls
             return $"{column.Name} ({text.Replace(column.Name + " ", "").ToLower().Trim()})";
         }
 
+#pragma warning disable CS1998 // 此异步方法缺少 "await" 运算符，将以同步方式运行。请考虑使用 "await" 运算符等待非阻止的 API 调用，或者使用 "await Task.Run(...)" 在后台线程上执行占用大量 CPU 的工作。
         private async void tvDbObjects_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+#pragma warning restore CS1998 // 此异步方法缺少 "await" 运算符，将以同步方式运行。请考虑使用 "await" 运算符等待非阻止的 API 调用，或者使用 "await Task.Run(...)" 在后台线程上执行占用大量 CPU 的工作。
         {
             TreeNode node = e.Node;
 
@@ -356,7 +360,9 @@ namespace DatabaseManager.Controls
                 return;
             }
 
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在此调用完成之前将会继续执行当前方法。请考虑将 "await" 运算符应用于调用结果。
             this.tvDbObjects.BeginInvoke(new Action(() => this.LoadChildNodes(node)));
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在此调用完成之前将会继续执行当前方法。请考虑将 "await" 运算符应用于调用结果。
         }
 
         private void ClearNodes(TreeNode node)

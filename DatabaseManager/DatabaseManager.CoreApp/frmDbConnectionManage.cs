@@ -178,7 +178,7 @@ namespace DatabaseManager
 
             foreach (AccountProfileInfo profile in profiles)
             {
-                this.dgvDbConnection.Rows.Add(profile.Id, profile.Server, profile.IntegratedSecurity, profile.UserId);
+                this.dgvDbConnection.Rows.Add(profile.Id, profile.Server, profile.IntegratedSecurity, profile.UserId, profile.Port);
             }
 
             this.dgvDbConnection.Tag = profiles;

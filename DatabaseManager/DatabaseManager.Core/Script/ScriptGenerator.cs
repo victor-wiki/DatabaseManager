@@ -33,6 +33,11 @@ namespace DatabaseManager.Core
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
             filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });
 
+            if (dbInterpreter.DatabaseType == DatabaseType.MySql)
+            {
+                filter.NeedCheckDatabaseVersion = true;
+            }
+
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
             DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
@@ -41,7 +46,7 @@ namespace DatabaseManager.Core
 
             StringBuilder sbContent = new StringBuilder();
 
-            DatabaseType databaseType = this.dbInterpreter.DatabaseType;           
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
             foreach (Script script in scripts)
             {
@@ -107,7 +112,7 @@ namespace DatabaseManager.Core
             }
 
             return -1;
-        }       
+        }
 
 
     }

@@ -87,7 +87,9 @@ namespace DatabaseManager.Controls
 
         private bool CanRefresh(TreeNode node)
         {
-            return (node.Level <= 3) && !this.IsOnlyHasFakeChild(node);
+            return (node.Level <= 3) && !this.IsOnlyHasFakeChild(node)
+               && !(node.Tag is ScriptDbObject)
+               && !(node.Tag is UserDefinedType);
         }
 
         private bool CanDelete(TreeNode node)

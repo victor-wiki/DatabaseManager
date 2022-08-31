@@ -62,7 +62,7 @@ namespace DatabaseManager.Helper
         }
 
         public static void Highlighting(RichTextBox richTextBox, string regex, RegexOptions option, Color color, int? startIndex = null, int? stopIndex = null)
-        {
+        {            
             string text = richTextBox.Text;
 
             if (startIndex.HasValue && stopIndex.HasValue)
@@ -70,30 +70,37 @@ namespace DatabaseManager.Helper
                 text = text.Substring(startIndex.Value, stopIndex.Value - startIndex.Value + 1);
             }
 
-            MatchCollection matches = Regex.Matches(text, regex, option);
-
-            foreach (Match m in matches)
+            try
             {
-                int index = m.Index;
+                MatchCollection matches = Regex.Matches(text, regex, option);
 
-                string leftChar = index > 0 ? text[index - 1].ToString() : "";
-                string rightChar = index + m.Value.Length < text.Length ? text[index + m.Value.Length].ToString() : "";
-
-                if(!m.Value.Contains("\n"))
+                foreach (Match m in matches)
                 {
-                    string quotationValuePattern = $@"[""\[`]({m.Value})[""\]`]";
+                    int index = m.Index;
 
-                    if (leftChar.Length > 0 && rightChar.Length > 0 && Regex.IsMatch($"{leftChar}{m.Value}{rightChar}", quotationValuePattern))
+                    string leftChar = index > 0 ? text[index - 1].ToString() : "";
+                    string rightChar = index + m.Value.Length < text.Length ? text[index + m.Value.Length].ToString() : "";
+
+                    if (!m.Value.Contains("\n"))
                     {
-                        continue;
-                    }
-                }               
+                        string quotationValuePattern = $@"[""\[`]({m.Value})[""\]`]";
 
-                richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
-                richTextBox.SelectionLength = m.Length;
-                richTextBox.SelectionFont = richTextBox.Font;
-                richTextBox.SelectionColor = color;
+                        if (leftChar.Length > 0 && rightChar.Length > 0 && Regex.IsMatch($"{leftChar}{m.Value}{rightChar}", quotationValuePattern))
+                        {
+                            continue;
+                        }
+                    }
+
+                    richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
+                    richTextBox.SelectionLength = m.Length;
+                    richTextBox.SelectionFont = richTextBox.Font;
+                    richTextBox.SelectionColor = color;
+                }
             }
+            catch(Exception ex)
+            {
+
+            }            
         }
 
         public static void HighlightingError(RichTextBox richTextBox, object error)

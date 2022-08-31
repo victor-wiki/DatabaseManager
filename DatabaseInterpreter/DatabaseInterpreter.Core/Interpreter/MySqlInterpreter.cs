@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Model;
+﻿using Dapper;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using MySql.Data.MySqlClient;
 using System;
@@ -29,7 +30,7 @@ namespace DatabaseInterpreter.Core
         public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
         public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
         public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
-
+        protected string dbVersion = "";
         #endregion
 
         #region Constructor
@@ -62,6 +63,17 @@ namespace DatabaseInterpreter.Core
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
+
+        public string GetDatabaseVersion()
+        {            
+            return this.GetDatabaseVersion(this.dbConnector.CreateConnection());
+        }
+
+        public string GetDatabaseVersion(DbConnection dbConnection)
+        {
+            string sql = "select version() as version";
+            return dbConnection.QuerySingleOrDefault(sql).version;
+        }       
         #endregion
 
         #region Database Owner
@@ -90,11 +102,21 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
         {
+            if (filter != null && filter.NeedCheckDatabaseVersion)
+            {
+                this.dbVersion = this.GetDatabaseVersion();
+            }
+
             return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines("FUNCTION", filter));
         }
 
         public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
+            if (filter != null && filter.NeedCheckDatabaseVersion)
+            {
+                this.dbVersion = this.GetDatabaseVersion(dbConnection);
+            }
+
             return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines("FUNCTION", filter));
         }
 
@@ -106,6 +128,15 @@ namespace DatabaseInterpreter.Core
 
             string sql = "";
             bool isFunction = type.ToUpper() == "FUNCTION";
+            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
+            string strNames = "";
+            bool needCondition = true;
+            bool needOrderby = true;
+
+            if (objectNames != null && objectNames.Any())
+            {
+                strNames = StringHelper.GetSingleQuotedString(objectNames);
+            }
 
             if (isSimpleMode)
             {
@@ -116,23 +147,44 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
+                if (int.Parse(this.dbVersion.Split('.')[0]) < 8)
+                {
+                    string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
 
-                string functionReturns = isFunction ? ",' RETURNS ', returns " : "";
-                sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
+                    sql = $@"SELECT db AS `Owner`, NAME AS `Name`,
                         CONVERT(CONCAT('CREATE {type} {this.NotCreateIfExistsClause} `', db , '`.`' , name, '`(' , param_list, ')' {functionReturns} ,'{Environment.NewLine}', body) USING utf8)  AS `Definition`
-                        FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'
-                        ";
+                        FROM mysql.proc WHERE db='{this.ConnectionInfo.Database}' AND TYPE='{type}'";
+                }
+                else
+                {
+                    string functionReturns = isFunction ? ", 'RETURNS ',IFNULL(r.DATA_TYPE,''), ' '" : "";
+
+                    string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
+
+                    sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
+                             CONVERT(CONCAT('CREATE PROCEDURE  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
+                            IFNULL(TRIM(TRAILING ',' FROM GROUP_CONCAT(CONCAT(p.PARAMETER_NAME, ' ', p.`DATA_TYPE`), ',')),''), 
+                            ') ' {functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
+                            FROM information_schema.Routines r
+                            LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
+                            WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
+                            GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME";
+
+                    needCondition = false;
+                    needOrderby = false;
+                }
             }
 
-            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
 
-            if (objectNames != null && objectNames.Any())
+            if (needCondition && strNames != "")
             {
-                string strNames = StringHelper.GetSingleQuotedString(objectNames);
                 sql += $" AND {nameColumn} IN ({ strNames })";
             }
 
-            sql += $" ORDER BY {nameColumn}";
+            if (needOrderby)
+            {
+                sql += $" ORDER BY {nameColumn}";
+            }
 
             return sql;
         }
@@ -413,11 +465,21 @@ namespace DatabaseInterpreter.Core
         #region Procedure    
         public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
+            if (filter != null && filter.NeedCheckDatabaseVersion)
+            {
+                this.dbVersion = this.GetDatabaseVersion();
+            }
+
             return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines("PROCEDURE", filter));
         }
 
         public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
+            if (filter != null && filter.NeedCheckDatabaseVersion)
+            {
+                this.dbVersion = this.GetDatabaseVersion(dbConnection);
+            }
+
             return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines("PROCEDURE", filter));
         }
         #endregion
@@ -435,7 +497,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return base.GetTableRecordCountAsync(connection, sql);
-        }    
+        }
         #endregion
 
         #region BulkCopy

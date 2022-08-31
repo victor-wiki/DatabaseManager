@@ -15,7 +15,7 @@ namespace DatabaseInterpreter.Profile
         public ConnectionInfo ConnectionInfo { get; set; }
 
         [JsonIgnore]
-        public string ConnectionDescription => $"server={this.ConnectionInfo?.Server};database={this.ConnectionInfo?.Database}";
+        public string ConnectionDescription => $"server={this.ConnectionInfo?.Server}{(string.IsNullOrEmpty(this.ConnectionInfo?.Port)?"":(":"+ this.ConnectionInfo?.Port))};database={this.ConnectionInfo?.Database}";
 
         [JsonIgnore]
         public string Description
@@ -23,6 +23,7 @@ namespace DatabaseInterpreter.Profile
             get
             {
                 string connectionDescription = this.ConnectionDescription;
+
                 if (this.Name == connectionDescription)
                 {
                     return this.Name;

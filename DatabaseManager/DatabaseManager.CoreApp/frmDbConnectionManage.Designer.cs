@@ -30,10 +30,6 @@
         {
             this.btnCancel = new System.Windows.Forms.Button();
             this.dgvDbConnection = new System.Windows.Forms.DataGridView();
-            this.Id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Control = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Word = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.UseCodeTemplate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnClear = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnAdd = new System.Windows.Forms.Button();
@@ -43,6 +39,11 @@
             this.btnSelect = new System.Windows.Forms.Button();
             this.panelOperation = new System.Windows.Forms.Panel();
             this.panelDbType = new System.Windows.Forms.Panel();
+            this.Id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Control = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Word = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.UseCodeTemplate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Port = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDbConnection)).BeginInit();
             this.panelOperation.SuspendLayout();
             this.panelDbType.SuspendLayout();
@@ -51,7 +52,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(566, 358);
+            this.btnCancel.Location = new System.Drawing.Point(624, 358);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -71,51 +72,20 @@
             this.Id,
             this.Control,
             this.Word,
-            this.UseCodeTemplate});
+            this.UseCodeTemplate,
+            this.Port});
             this.dgvDbConnection.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvDbConnection.Location = new System.Drawing.Point(5, 45);
             this.dgvDbConnection.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.dgvDbConnection.Name = "dgvDbConnection";
+            this.dgvDbConnection.ReadOnly = true;
             this.dgvDbConnection.RowHeadersVisible = false;
             this.dgvDbConnection.RowHeadersWidth = 20;
+            this.dgvDbConnection.RowTemplate.Height = 23;
             this.dgvDbConnection.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvDbConnection.Size = new System.Drawing.Size(658, 302);
+            this.dgvDbConnection.Size = new System.Drawing.Size(716, 302);
             this.dgvDbConnection.TabIndex = 20;
             this.dgvDbConnection.DoubleClick += new System.EventHandler(this.dgvDbConnection_DoubleClick);
-            // 
-            // Id
-            // 
-            this.Id.DataPropertyName = "Id";
-            this.Id.HeaderText = "Id";
-            this.Id.Name = "Id";
-            this.Id.Visible = false;
-            // 
-            // Control
-            // 
-            this.Control.DataPropertyName = "Server";
-            this.Control.HeaderText = "Server";
-            this.Control.Name = "Control";
-            this.Control.ReadOnly = true;
-            this.Control.Width = 250;
-            // 
-            // Word
-            // 
-            this.Word.DataPropertyName = "IntegratedSecurity";
-            this.Word.HeaderText = "Integrated Security";
-            this.Word.Name = "Word";
-            this.Word.ReadOnly = true;
-            this.Word.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.Word.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            this.Word.Width = 150;
-            // 
-            // UseCodeTemplate
-            // 
-            this.UseCodeTemplate.DataPropertyName = "UserId";
-            this.UseCodeTemplate.HeaderText = "User Name";
-            this.UseCodeTemplate.Name = "UseCodeTemplate";
-            this.UseCodeTemplate.ReadOnly = true;
-            this.UseCodeTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.UseCodeTemplate.Width = 150;
             // 
             // btnClear
             // 
@@ -191,7 +161,7 @@
             // btnSelect
             // 
             this.btnSelect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSelect.Location = new System.Drawing.Point(471, 358);
+            this.btnSelect.Location = new System.Drawing.Point(530, 358);
             this.btnSelect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnSelect.Name = "btnSelect";
             this.btnSelect.Size = new System.Drawing.Size(88, 33);
@@ -224,11 +194,52 @@
             this.panelDbType.Size = new System.Drawing.Size(422, 34);
             this.panelDbType.TabIndex = 41;
             // 
+            // Id
+            // 
+            this.Id.DataPropertyName = "Id";
+            this.Id.HeaderText = "Id";
+            this.Id.Name = "Id";
+            this.Id.ReadOnly = true;
+            this.Id.Visible = false;
+            // 
+            // Control
+            // 
+            this.Control.DataPropertyName = "Server";
+            this.Control.HeaderText = "Server";
+            this.Control.Name = "Control";
+            this.Control.ReadOnly = true;
+            this.Control.Width = 250;
+            // 
+            // Word
+            // 
+            this.Word.DataPropertyName = "IntegratedSecurity";
+            this.Word.HeaderText = "Integrated Security";
+            this.Word.Name = "Word";
+            this.Word.ReadOnly = true;
+            this.Word.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.Word.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.Word.Width = 150;
+            // 
+            // UseCodeTemplate
+            // 
+            this.UseCodeTemplate.DataPropertyName = "UserId";
+            this.UseCodeTemplate.HeaderText = "User Name";
+            this.UseCodeTemplate.Name = "UseCodeTemplate";
+            this.UseCodeTemplate.ReadOnly = true;
+            this.UseCodeTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.UseCodeTemplate.Width = 150;
+            // 
+            // Port
+            // 
+            this.Port.HeaderText = "Port";
+            this.Port.Name = "Port";
+            this.Port.ReadOnly = true;
+            // 
             // frmDbConnectionManage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(667, 408);
+            this.ClientSize = new System.Drawing.Size(726, 408);
             this.Controls.Add(this.panelDbType);
             this.Controls.Add(this.panelOperation);
             this.Controls.Add(this.btnSelect);
@@ -257,13 +268,14 @@
         private System.Windows.Forms.Button btnAdd;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox cboDbType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Id;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Control;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Word;
-        private System.Windows.Forms.DataGridViewTextBoxColumn UseCodeTemplate;
         private System.Windows.Forms.Button btnEdit;
         private System.Windows.Forms.Button btnSelect;
         private System.Windows.Forms.Panel panelOperation;
         private System.Windows.Forms.Panel panelDbType;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Id;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Control;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Word;
+        private System.Windows.Forms.DataGridViewTextBoxColumn UseCodeTemplate;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Port;
     }
 }

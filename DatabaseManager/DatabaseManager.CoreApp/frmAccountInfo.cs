@@ -71,7 +71,8 @@ namespace DatabaseManager
             {
                 if (profiles.Any(item => item.Server == accountProfileInfo.Server
                                                      && item.IntegratedSecurity == accountProfileInfo.IntegratedSecurity
-                                                     && item.UserId == accountProfileInfo.UserId))
+                                                     && item.UserId == accountProfileInfo.UserId
+                                                     && item.Port == accountProfileInfo.Port))
                 {
                     MessageBox.Show($"The record has already existed:{accountProfileInfo.Description}");
                     return;
@@ -81,7 +82,8 @@ namespace DatabaseManager
             {
                 if (profiles.Where(item => item.Id != this.AccountProfileInfo.Id).Any(item => item.Server == accountProfileInfo.Server
                                                        && item.IntegratedSecurity == accountProfileInfo.IntegratedSecurity
-                                                       && item.UserId == accountProfileInfo.UserId))
+                                                       && item.UserId == accountProfileInfo.UserId
+                                                       && item.Port == accountProfileInfo.Port))
                 {
                     MessageBox.Show($"The record has already existed:{accountProfileInfo.Description}");
                     return;

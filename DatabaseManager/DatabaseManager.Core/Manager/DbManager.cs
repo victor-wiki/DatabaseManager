@@ -100,6 +100,7 @@ namespace DatabaseManager.Core
                     }
                     catch (Exception iex)
                     {
+                        LogHelper.LogError(iex.Message);
                     }
                 }
             }
