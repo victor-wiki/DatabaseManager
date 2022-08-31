@@ -8,8 +8,8 @@
     <Authors>victor-wiki</Authors>
     <Description>Get database objects meta data, generate schema and insert data scripts, query and bulkcopy data.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.19</Version>
-    <PackageReleaseNotes>don't check mysql version</PackageReleaseNotes>
+    <Version>1.0.20</Version>
+    <PackageReleaseNotes>include parameter mode in sql query for mysql procedure</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
