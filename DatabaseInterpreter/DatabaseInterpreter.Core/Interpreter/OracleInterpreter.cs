@@ -698,13 +698,8 @@ namespace DatabaseInterpreter.Core
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 string content = $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
-
-                if (table.Name == "Employee" && column.Name == "OrganizationLevel")
-                {
-                    Console.WriteLine("####:" + content);
-                }
-
-                return content;
+				
+				return content;
             }
         }
 
