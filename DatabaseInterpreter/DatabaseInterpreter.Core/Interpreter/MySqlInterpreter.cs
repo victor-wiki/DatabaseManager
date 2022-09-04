@@ -147,7 +147,7 @@ namespace DatabaseInterpreter.Core
                 string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
 
                 sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
-                             CONVERT(CONCAT('CREATE PROCEDURE  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
+                             CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
                             IFNULL(TRIM(TRAILING ',' FROM GROUP_CONCAT(CONCAT({procParameterMode}p.PARAMETER_NAME, ' ', p.`DATA_TYPE`), ',')),''), 
                             ') ' {functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
                             FROM information_schema.Routines r
