@@ -386,10 +386,11 @@ namespace DatabaseConverter.Core
                                         return;
                                     }
 
+                                    List<Dictionary<string, object>> data = tableDataReadInfo.Data;
+
                                     if (this.Option.ExecuteScriptOnTargetServer)
                                     {
-                                        DataTable dataTable = tableDataReadInfo.DataTable;
-                                        List<Dictionary<string, object>> data = tableDataReadInfo.Data;
+                                        DataTable dataTable = tableDataReadInfo.DataTable;                                      
 
                                         if (this.Option.BulkCopy && targetInterpreter.SupportBulkCopy)
                                         {
@@ -420,13 +421,9 @@ namespace DatabaseConverter.Core
                                         }
                                         else
                                         {
-                                            StringBuilder sb = new StringBuilder();
+                                            (Dictionary<string, object> Paramters, string Script) result = this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
 
-                                            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
-
-                                            script = sb.ToString().Trim().Trim(';');
-
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, paramters, this.transaction));
+                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(result.Script, result.Paramters, this.transaction));
                                         }
 
                                         if (!dictTableDataTransferredCount.ContainsKey(table))
@@ -445,6 +442,10 @@ namespace DatabaseConverter.Core
                                         string strPercent = (percent == (int)percent) ? (percent + "%") : (percent / 100).ToString("P2");
 
                                         targetInterpreter.FeedbackInfo($"Table \"{table.Name}\":{dataTable.Rows.Count} records transferred.({transferredCount}/{tableDataReadInfo.TotalCount},{strPercent})");
+                                    }
+                                    else
+                                    {
+                                        this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
                                     }
                                 }
                                 catch (Exception ex)
@@ -507,6 +508,17 @@ namespace DatabaseConverter.Core
             {
                 DataTransferErrorProfileManager.Remove(dataErrorProfile);
             }
+        }
+
+        private (Dictionary<string, object> Paramters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
+
+            string script = sb.ToString().Trim().Trim(';');
+
+            return (paramters, script);
         }
 
         private async Task SetIdentityEnabled(IEnumerable<TableColumn> identityTableColumns, DbInterpreter dbInterpreter, DbScriptGenerator scriptGenerator,
