@@ -18,7 +18,6 @@ namespace DatabaseManager
 {
     public partial class frmGenerateScripts : Form, IObserver<FeedbackInfo>
     {
-        private const string DONE = "Script generated";
         private DatabaseType databaseType;
         private ConnectionInfo connectionInfo;
         private bool isBusy = false;
@@ -174,7 +173,7 @@ namespace DatabaseManager
                 {
                     option.TreatBytesAsHexStringForFile = true;
                 }
-            }           
+            }
 
             this.SetGenerateScriptOption(option);
 
@@ -188,7 +187,7 @@ namespace DatabaseManager
 
             this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, this.connectionInfo, option);
 
-            SchemaInfoFilter filter = new SchemaInfoFilter();           
+            SchemaInfoFilter filter = new SchemaInfoFilter();
 
             SchemaInfoHelper.SetSchemaInfoFilterValues(filter, schemaInfo);
 
@@ -215,9 +214,11 @@ namespace DatabaseManager
                 }
 
                 this.isBusy = false;
-                ManagerUtil.OpenInExplorer(dbScriptGenerator.GetScriptOutputFilePath(mode));
 
-                MessageBox.Show(DONE, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string filePath = Path.GetFullPath(dbScriptGenerator.GetScriptOutputFilePath(mode));
+                string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text) ? ($", the file path is:{Environment.NewLine}{filePath}") : "";
+
+                MessageBox.Show($"Scripts have been generated{tip}", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -247,7 +248,7 @@ namespace DatabaseManager
 
         private bool Validate(SchemaInfo schemaInfo)
         {
-            if (schemaInfo.UserDefinedTypes.Count == 0 && schemaInfo.Tables.Count == 0 && schemaInfo.Views.Count == 0)
+            if (!this.tvDbObjects.HasDbObjectNodeSelected())
             {
                 MessageBox.Show("Please select objects from tree.");
                 return false;
