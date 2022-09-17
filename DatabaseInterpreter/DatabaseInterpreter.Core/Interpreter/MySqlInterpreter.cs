@@ -147,14 +147,14 @@ namespace DatabaseInterpreter.Core
                 string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
 
                 sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
-                             CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
-                            IFNULL(TRIM(TRAILING ',' FROM GROUP_CONCAT(CONCAT({procParameterMode}p.PARAMETER_NAME, ' ', p.`DATA_TYPE`), ',')),''), 
-                            ') ' {functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
-                            FROM information_schema.Routines r
-                            LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
-                            WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
-                            GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
-                            ORDER BY r.ROUTINE_NAME";
+                         CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
+                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DATA_TYPE`)),''), 
+                         ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
+                          FROM information_schema.Routines r
+                          LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
+                          WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
+                          GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
+                          ORDER BY r.ROUTINE_NAME";
             }           
 
             return sql;
