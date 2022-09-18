@@ -592,7 +592,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            if (MessageBox.Show("Are you sure to delelte all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show("Are you sure to delete all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector() { DatabaseType = this.databaseType };
 
