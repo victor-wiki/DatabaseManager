@@ -239,7 +239,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
-            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.`STATISTICS` AS S ON K.`TABLE_SCHEMA`=S.`TABLE_SCHEMA` AND K.`TABLE_NAME`=S.`TABLE_NAME` AND K.`CONSTRAINT_NAME`=S.`INDEX_NAME`";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
 
@@ -276,7 +276,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
-            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.`STATISTICS` AS S ON K.`TABLE_SCHEMA`=S.`TABLE_SCHEMA` AND K.`TABLE_NAME`=S.`TABLE_NAME` AND K.`CONSTRAINT_NAME`=S.`INDEX_NAME`";
+            string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
             string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
