@@ -148,7 +148,7 @@ namespace DatabaseInterpreter.Core
 
                 sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
                          CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
-                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DATA_TYPE`)),''), 
+                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
                          ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
                           FROM information_schema.Routines r
                           LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`

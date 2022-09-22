@@ -8,8 +8,8 @@
     <Authors>victor-wiki</Authors>
     <Description>Get database objects meta data, generate schema and insert data scripts, query and bulkcopy data.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.23</Version>
-    <PackageReleaseNotes>fix issue:sql of querying mysql union primary or foreign key</PackageReleaseNotes>
+    <Version>1.0.24</Version>
+    <PackageReleaseNotes>fix issue:sql of querying mysql procedure or function, use DTD_IDENTIFIER instead of DATA_TYPE</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
