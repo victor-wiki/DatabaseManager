@@ -577,15 +577,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else if(this.DatabaseType == DatabaseType.Oracle)
                 {
-                    int fromIndex = sql.ToLower().IndexOf("from");
-
-                    sql = sql.Substring(0, fromIndex) + $" ,ROW_NUMBER() OVER (ORDER BY {this.GetDefaultOrder()}) {RowNumberColumnName} " + sql.Substring(fromIndex);
-
                     sql = $@"SELECT * FROM
                        (
                          {sql}
                        ) TEMP
-                       WHERE {RowNumberColumnName} BETWEEN 1 AND {limitCount}";                          
+                       WHERE ROWNUM BETWEEN 1 AND {limitCount}";                          
                 }
             }
 
