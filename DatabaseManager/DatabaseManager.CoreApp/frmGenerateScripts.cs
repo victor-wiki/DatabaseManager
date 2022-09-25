@@ -177,6 +177,9 @@ namespace DatabaseManager
 
             this.SetGenerateScriptOption(option);
 
+            option.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
+            option.TableScriptsGenerateOption.GenerateComment = this.chkGenerateComment.Checked;
+
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
 
             if (scriptMode == GenerateScriptMode.None)
@@ -216,7 +219,7 @@ namespace DatabaseManager
                 this.isBusy = false;
 
                 string filePath = Path.GetFullPath(dbScriptGenerator.GetScriptOutputFilePath(mode));
-                string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text) ? ($", the file path is:{Environment.NewLine}{filePath}") : "";
+                string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text)? ($", the file path is:{Environment.NewLine}{filePath}"):"";
 
                 MessageBox.Show($"Scripts have been generated{tip}", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -283,6 +286,7 @@ namespace DatabaseManager
             if (options != null)
             {
                 string outputFolder = this.txtOutputFolder.Text.Trim();
+
                 foreach (DbInterpreterOption option in options)
                 {
                     if (Directory.Exists(outputFolder))

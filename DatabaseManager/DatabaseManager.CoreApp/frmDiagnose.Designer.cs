@@ -34,6 +34,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.btnStart = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.rbWithLeadingOrTrailingWhitespace = new System.Windows.Forms.RadioButton();
             this.SuspendLayout();
             // 
             // rbNotNullWithEmpty
@@ -41,7 +42,7 @@
             this.rbNotNullWithEmpty.AutoSize = true;
             this.rbNotNullWithEmpty.Checked = true;
             this.rbNotNullWithEmpty.Location = new System.Drawing.Point(78, 17);
-            this.rbNotNullWithEmpty.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.rbNotNullWithEmpty.Margin = new System.Windows.Forms.Padding(4);
             this.rbNotNullWithEmpty.Name = "rbNotNullWithEmpty";
             this.rbNotNullWithEmpty.Size = new System.Drawing.Size(199, 21);
             this.rbNotNullWithEmpty.TabIndex = 0;
@@ -52,8 +53,8 @@
             // rbSelfReferenceSame
             // 
             this.rbSelfReferenceSame.AutoSize = true;
-            this.rbSelfReferenceSame.Location = new System.Drawing.Point(78, 48);
-            this.rbSelfReferenceSame.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.rbSelfReferenceSame.Location = new System.Drawing.Point(78, 74);
+            this.rbSelfReferenceSame.Margin = new System.Windows.Forms.Padding(4);
             this.rbSelfReferenceSame.Name = "rbSelfReferenceSame";
             this.rbSelfReferenceSame.Size = new System.Drawing.Size(196, 21);
             this.rbSelfReferenceSame.TabIndex = 1;
@@ -72,8 +73,8 @@
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(83, 106);
-            this.btnStart.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnStart.Location = new System.Drawing.Point(110, 125);
+            this.btnStart.Margin = new System.Windows.Forms.Padding(4);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(88, 33);
             this.btnStart.TabIndex = 3;
@@ -83,8 +84,8 @@
             // 
             // btnClose
             // 
-            this.btnClose.Location = new System.Drawing.Point(190, 106);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnClose.Location = new System.Drawing.Point(217, 125);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(88, 33);
             this.btnClose.TabIndex = 4;
@@ -92,18 +93,30 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // rbWithLeadingOrTrailingWhitespace
+            // 
+            this.rbWithLeadingOrTrailingWhitespace.AutoSize = true;
+            this.rbWithLeadingOrTrailingWhitespace.Location = new System.Drawing.Point(78, 46);
+            this.rbWithLeadingOrTrailingWhitespace.Margin = new System.Windows.Forms.Padding(4);
+            this.rbWithLeadingOrTrailingWhitespace.Name = "rbWithLeadingOrTrailingWhitespace";
+            this.rbWithLeadingOrTrailingWhitespace.Size = new System.Drawing.Size(225, 21);
+            this.rbWithLeadingOrTrailingWhitespace.TabIndex = 5;
+            this.rbWithLeadingOrTrailingWhitespace.Text = "with leading or trailing whitespace";
+            this.rbWithLeadingOrTrailingWhitespace.UseVisualStyleBackColor = true;
+            // 
             // frmDiagnose
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(351, 149);
+            this.ClientSize = new System.Drawing.Size(404, 171);
+            this.Controls.Add(this.rbWithLeadingOrTrailingWhitespace);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.rbSelfReferenceSame);
             this.Controls.Add(this.rbNotNullWithEmpty);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "frmDiagnose";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -121,5 +134,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.RadioButton rbWithLeadingOrTrailingWhitespace;
     }
 }

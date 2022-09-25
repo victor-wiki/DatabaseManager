@@ -90,21 +90,21 @@ namespace DatabaseInterpreter.Core
             return hex;
         }
 
-        public static string GetTrimedDefaultValue(string defaultValue)
+        public static string GetTrimedParenthesisValue(string value)
         {
-            if (!string.IsNullOrEmpty(defaultValue))
+            if (!string.IsNullOrEmpty(value))
             {
-                defaultValue = defaultValue.TrimStart('(').TrimEnd(')');
+                value = value.TrimStart('(').TrimEnd(')');
 
-                if (defaultValue.EndsWith("("))
+                if (value.EndsWith("("))
                 {
-                    defaultValue += ")";
+                    value += ")";
                 }
 
-                return defaultValue;
+                return value;
             }
 
-            return defaultValue;
+            return value;
         }
 
         public static bool IsStringEquals(string str1, string str2)

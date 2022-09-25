@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using DatabaseManager.Core;
 using DatabaseInterpreter.Utility;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager
 {
@@ -54,7 +54,20 @@ namespace DatabaseManager
 
         private async void Diagnose()
         {
-            DiagnoseType diagnoseType = this.rbNotNullWithEmpty.Checked ? DiagnoseType.NotNullWithEmpty : DiagnoseType.SelfReferenceSame;
+            DiagnoseType diagnoseType = DiagnoseType.None;
+            
+            if(this.rbNotNullWithEmpty.Checked)
+            {
+                diagnoseType = DiagnoseType.NotNullWithEmpty;
+            }
+            else if(this.rbWithLeadingOrTrailingWhitespace.Checked)
+            {
+                diagnoseType = DiagnoseType.WithLeadingOrTrailingWhitespace;
+            }
+            else if(this.rbSelfReferenceSame.Checked)
+            {
+                diagnoseType = DiagnoseType.SelfReferenceSame;
+            }         
 
             try
             {

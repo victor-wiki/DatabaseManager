@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.Threading.Tasks;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using KellermanSoftware.CompareNetObjects;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DatabaseManager.Core
 {
@@ -54,8 +50,8 @@ namespace DatabaseManager.Core
                     if (isTableEquals)
                     {
                         #region Column
-                        IEnumerable<TableColumn> sourceColumns = this.sourceShemaInfo.TableColumns.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TableColumn> targetColumns = this.targetSchemaInfo.TableColumns.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TableColumn> sourceColumns = this.sourceShemaInfo.TableColumns.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TableColumn> targetColumns = this.targetSchemaInfo.TableColumns.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var columnDifferences = this.CompareTableChildren<TableColumn>("Column", DatabaseObjectType.TableColumn, sourceColumns, targetColumns);
 
@@ -63,8 +59,8 @@ namespace DatabaseManager.Core
                         #endregion
 
                         #region Trigger
-                        IEnumerable<TableTrigger> sourceTriggers = this.sourceShemaInfo.TableTriggers.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TableTrigger> targetTriggers = this.targetSchemaInfo.TableTriggers.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TableTrigger> sourceTriggers = this.sourceShemaInfo.TableTriggers.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TableTrigger> targetTriggers = this.targetSchemaInfo.TableTriggers.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var triggerDifferences = this.CompareDatabaseObjects<TableTrigger>("Trigger", DatabaseObjectType.TableTrigger, sourceTriggers, targetTriggers);
 
@@ -77,8 +73,8 @@ namespace DatabaseManager.Core
                         #endregion
 
                         #region Index
-                        IEnumerable<TableIndex> sourceIndexes = this.sourceShemaInfo.TableIndexes.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TableIndex> targetIndexes = this.targetSchemaInfo.TableIndexes.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TableIndex> sourceIndexes = this.sourceShemaInfo.TableIndexes.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TableIndex> targetIndexes = this.targetSchemaInfo.TableIndexes.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var indexDifferences = this.CompareTableChildren<TableIndex>("Index", DatabaseObjectType.TableIndex, sourceIndexes, targetIndexes);
 
@@ -86,8 +82,8 @@ namespace DatabaseManager.Core
                         #endregion
 
                         #region Primary Key
-                        IEnumerable<TablePrimaryKey> sourcePrimaryKeys = this.sourceShemaInfo.TablePrimaryKeys.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TablePrimaryKey> targetPrimaryKeys = this.targetSchemaInfo.TablePrimaryKeys.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TablePrimaryKey> sourcePrimaryKeys = this.sourceShemaInfo.TablePrimaryKeys.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TablePrimaryKey> targetPrimaryKeys = this.targetSchemaInfo.TablePrimaryKeys.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var primaryKeyDifferences = this.CompareTableChildren<TablePrimaryKey>("Primary Key", DatabaseObjectType.TablePrimaryKey, sourcePrimaryKeys, targetPrimaryKeys);
 
@@ -95,8 +91,8 @@ namespace DatabaseManager.Core
                         #endregion
 
                         #region Foreign Key
-                        IEnumerable<TableForeignKey> sourceForeignKeys = this.sourceShemaInfo.TableForeignKeys.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TableForeignKey> targetForeignKeys = this.targetSchemaInfo.TableForeignKeys.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TableForeignKey> sourceForeignKeys = this.sourceShemaInfo.TableForeignKeys.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TableForeignKey> targetForeignKeys = this.targetSchemaInfo.TableForeignKeys.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var foreignKeyDifferences = this.CompareTableChildren<TableForeignKey>("Foreign Key", DatabaseObjectType.TableForeignKey, sourceForeignKeys, targetForeignKeys);
 
@@ -104,8 +100,8 @@ namespace DatabaseManager.Core
                         #endregion
 
                         #region Constraint
-                        IEnumerable<TableConstraint> sourceConstraints= this.sourceShemaInfo.TableConstraints.Where(item => item.Owner == source.Owner && item.TableName == source.Name);
-                        IEnumerable<TableConstraint> targetConstraints = this.targetSchemaInfo.TableConstraints.Where(item => item.Owner == target.Owner && item.TableName == source.Name);
+                        IEnumerable<TableConstraint> sourceConstraints= this.sourceShemaInfo.TableConstraints.Where(item => item.Schema == source.Schema && item.TableName == source.Name);
+                        IEnumerable<TableConstraint> targetConstraints = this.targetSchemaInfo.TableConstraints.Where(item => item.Schema == target.Schema && item.TableName == source.Name);
 
                         var constraintDifferences = this.CompareTableChildren<TableConstraint>("Constraint", DatabaseObjectType.TableConstraint, sourceConstraints, targetConstraints);
 
@@ -244,7 +240,7 @@ namespace DatabaseManager.Core
         private bool IsDbObjectEquals(DatabaseObject source, DatabaseObject target)
         {
             ComparisonConfig config = new ComparisonConfig();
-            config.MembersToIgnore = new List<string>() { nameof(DatabaseObject.Owner), nameof(DatabaseObject.Order) };
+            config.MembersToIgnore = new List<string>() { nameof(DatabaseObject.Schema), nameof(DatabaseObject.Order) };
             config.CaseSensitive = false;
             config.IgnoreStringLeadingTrailingWhitespace = true;
             config.TreatStringEmptyAndNullTheSame = true;

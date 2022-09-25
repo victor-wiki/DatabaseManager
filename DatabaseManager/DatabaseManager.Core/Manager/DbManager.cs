@@ -1,16 +1,17 @@
 ﻿using DatabaseConverter.Core;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Helper;
+using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Threading.Tasks;
-using System.Linq;
-using DatabaseManager.Model;
 using System.IO;
-using DatabaseManager.Helper;
+using System.Threading.Tasks;
+
 
 namespace DatabaseManager.Core
 {
@@ -65,7 +66,7 @@ namespace DatabaseManager.Core
 
                     foreach (Table table in tables)
                     {
-                        string sql = $"DELETE FROM {this.dbInterpreter.GetQuotedObjectName(table)}";
+                        string sql = $"DELETE FROM {this.dbInterpreter.GetQuotedDbObjectNameWithSchema(table)}";
 
                         this.FeedbackInfo(sql);
 
@@ -146,7 +147,7 @@ namespace DatabaseManager.Core
             DatabaseObjectFetchMode fetchMode = this.dbInterpreter.Option.ObjectFetchMode;
 
             this.dbInterpreter.Option.SortObjectsByReference = true;
-            this.dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Details;
+            this.dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
             this.FeedbackInfo("Begin to empty database...");
 
@@ -252,12 +253,7 @@ namespace DatabaseManager.Core
                 if (translateHandler != null)
                 {
                     dbConverter.OnTranslated += translateHandler;
-                }
-
-                if (targetDbType == DatabaseType.SqlServer)
-                {
-                    target.DbOwner = "dbo";
-                }
+                }               
 
                 SchemaInfo schemaInfo = new SchemaInfo();
 

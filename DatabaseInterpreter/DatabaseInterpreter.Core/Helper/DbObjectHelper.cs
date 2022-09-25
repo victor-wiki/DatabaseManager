@@ -40,7 +40,7 @@ namespace DatabaseInterpreter.Core
 
             foreach (Table table in tables)
             {
-                sortedColumns.AddRange(columns.Where(item => item.Owner == table.Owner && item.TableName == table.Name).OrderBy(item => item.Order));
+                sortedColumns.AddRange(columns.Where(item => item.Schema == table.Schema && item.TableName == table.Name).OrderBy(item => item.Order));
             }
 
             if (sortedColumns.Count < columns.Count)

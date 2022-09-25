@@ -74,7 +74,6 @@
             this.dgvConstraints.MultiSelect = false;
             this.dgvConstraints.Name = "dgvConstraints";
             this.dgvConstraints.RowHeadersWidth = 25;
-            this.dgvConstraints.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvConstraints.Size = new System.Drawing.Size(845, 547);
             this.dgvConstraints.TabIndex = 10;
             this.dgvConstraints.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvConstraints_DataError);

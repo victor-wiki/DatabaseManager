@@ -1,10 +1,10 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Model;
+using SqlAnalyser.Core.Model;
+using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DatabaseInterpreter.Model;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
@@ -22,25 +22,25 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseView(string content)
         {
             return this.ruleAnalyser.AnalyseView(content);
-         
+
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
         {
-            return this.ruleAnalyser.AnalyseProcedure(content);   
+            return this.ruleAnalyser.AnalyseProcedure(content);
         }
 
         public override AnalyseResult AnalyseFunction(string content)
         {
-            return this.ruleAnalyser.AnalyseFunction(content);   
+            return this.ruleAnalyser.AnalyseFunction(content);
         }
 
         public override AnalyseResult AnalyseTrigger(string content)
         {
-            return this.ruleAnalyser.AnalyseTrigger(content);            
+            return this.ruleAnalyser.AnalyseTrigger(content);
         }
 
-        public override string GenerateScripts(CommonScript script)
+        public override ScriptBuildResult GenerateScripts(CommonScript script)
         {
             if (script is RoutineScript routineScript)
             {
@@ -60,11 +60,13 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public string GenerateRoutineScripts(RoutineScript script)
+        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
+            ScriptBuildResult result = new ScriptBuildResult();
+
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE {script.Type.ToString()} {script.FullName}");
+            sb.AppendLine($"CREATE {script.Type.ToString()} {script.NameWithSchema}");
 
             if (script.Parameters.Count > 0)
             {
@@ -77,7 +79,7 @@ namespace SqlAnalyser.Core
 
                     string strParameterType = "";
 
-                    if(parameterType== ParameterType.IN)
+                    if (parameterType == ParameterType.IN)
                     {
                         strParameterType = "";
                     }
@@ -121,6 +123,8 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
+            StringBuilder sbBody = new StringBuilder();
+
             Action<IEnumerable<Statement>> appendStatements = (statements) =>
             {
                 foreach (Statement statement in statements)
@@ -131,13 +135,25 @@ namespace SqlAnalyser.Core
 
                         if (fetchCursorStatement != null && !statements.Any(item => item is FetchCursorStatement))
                         {
+                            string condition = @while.Condition?.Symbol;
+
+                            if (condition == null)
+                            {
+                                @while.Condition = new TokenInfo("");
+                            }
+
                             @while.Condition.Symbol = "@@FETCH_STATUS = 0";
 
-                            sb.AppendLine(this.BuildStatement(fetchCursorStatement));
+                            if (condition != null)
+                            {
+                                @while.Condition.Symbol += " AND " + condition;
+                            }
+
+                            sbBody.AppendLine(this.BuildStatement(fetchCursorStatement));
                         }
                     }
 
-                    sb.AppendLine(this.BuildStatement(statement));
+                    sbBody.AppendLine(this.BuildStatement(statement));
                 }
             };
 
@@ -145,56 +161,73 @@ namespace SqlAnalyser.Core
 
             if (exceptionStatement != null)
             {
-                sb.AppendLine("BEGIN TRY");
+                sbBody.AppendLine("BEGIN TRY");
                 appendStatements(script.Statements.Where(item => !(item is ExceptionStatement)));
-                sb.AppendLine("END TRY");
+                sbBody.AppendLine("END TRY");
 
-                sb.AppendLine("BEGIN CATCH");
+                sbBody.AppendLine("BEGIN CATCH");
 
                 foreach (ExceptionItem exceptionItem in exceptionStatement.Items)
                 {
-                    sb.AppendLine($"IF {exceptionItem.Name} = ERROR_PROCEDURE() OR {exceptionItem.Name} = ERROR_NUMBER()");
-                    sb.AppendLine("BEGIN");
+                    sbBody.AppendLine($"IF {exceptionItem.Name} = ERROR_PROCEDURE() OR {exceptionItem.Name} = ERROR_NUMBER()");
+                    sbBody.AppendLine("BEGIN");
 
                     appendStatements(exceptionItem.Statements);
 
-                    sb.AppendLine("END");
+                    sbBody.AppendLine("END");
                 }
 
-                sb.AppendLine("END CATCH");
+                sbBody.AppendLine("END CATCH");
             }
             else
             {
                 appendStatements(script.Statements);
             }
 
+            result.Body = sbBody.ToString();
+
+            sb.Append(sbBody);
+
             sb.AppendLine("END");
 
-            return this.FormatScripts(sb.ToString());
+            result.Script = sb.ToString();
+
+            return result;
         }
 
-        public string GenearteViewScripts(ViewScript script)
+        public ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            sb.AppendLine($"CREATE VIEW {script.FullName} AS");
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
             foreach (Statement statement in script.Statements)
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
-            return this.FormatScripts(sb.ToString());
+            sb.Append(sbBody);
+
+            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();
+
+            return result;
         }
 
-        public string GenearteTriggerScripts(TriggerScript script)
+        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            string time = (script.Time == TriggerTime.BEFORE || script.Time == TriggerTime.INSTEAD_OF ) ? "INSTEAD OF" : script.Time.ToString();
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            string time = (script.Time == TriggerTime.BEFORE || script.Time == TriggerTime.INSTEAD_OF) ? "INSTEAD OF" : script.Time.ToString();
             string events = string.Join(",", script.Events);
 
-            sb.AppendLine($"CREATE TRIGGER {script.FullName} ON {script.TableName}");
+            sb.AppendLine($"CREATE TRIGGER {script.NameWithSchema} ON {script.TableName}");
             sb.AppendLine($"{time} {events} NOT FOR REPLICATION ");
 
             sb.AppendLine("AS");
@@ -202,12 +235,17 @@ namespace SqlAnalyser.Core
 
             foreach (Statement statement in script.Statements)
             {
-                sb.Append(this.BuildStatement(statement));
+                sbBody.Append(this.BuildStatement(statement));
             }
 
-            sb.AppendLine("END");
+            sb.Append(sbBody);
 
-            return this.FormatScripts(sb.ToString());
-        }       
+            sb.AppendLine("END");            
+
+            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();
+
+            return result;
+        }
     }
 }

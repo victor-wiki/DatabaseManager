@@ -22,7 +22,7 @@ namespace SqlAnalyser.Core
 
                 if (insert.Columns.Count > 0)
                 {
-                    this.AppendLine($"({ string.Join(",", insert.Columns.Select(item => item.ToString()))})");
+                    this.AppendLine($"({string.Join(",", insert.Columns.Select(item => item))})");
                 }
 
                 if (insert.SelectStatements != null && insert.SelectStatements.Count > 0)
@@ -101,7 +101,7 @@ namespace SqlAnalyser.Core
                     tableNames.AddRange(update.TableNames);
                 }
 
-                this.AppendLine($"UPDATE {string.Join(",", tableNames)} SET");
+                this.AppendLine($"UPDATE {string.Join(",", tableNames.Select(item => item))} SET");
 
                 this.AppendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
 
@@ -183,7 +183,7 @@ namespace SqlAnalyser.Core
                         }
                         else
                         {
-                            TokenInfo child = valueToken.Tokens.FirstOrDefault(item => item.Type == TokenType.RoutineName);
+                            TokenInfo child = valueToken.Children.FirstOrDefault(item => item.Type == TokenType.RoutineName);
 
                             if (child != null)
                             {
@@ -192,7 +192,7 @@ namespace SqlAnalyser.Core
                         }
                     }
 
-                    this.AppendLine($"SET {set.Key } = {set.Value };");
+                    this.AppendLine($"SET {set.Key} = {set.Value};");
                 }
             }
             if (statement is IfStatement @if)
@@ -220,6 +220,7 @@ namespace SqlAnalyser.Core
                     }
 
                     this.AppendLine("END");
+                    this.AppendLine(Environment.NewLine);
                 }
             }
             else if (statement is CaseStatement @case)
@@ -256,19 +257,23 @@ namespace SqlAnalyser.Core
             }
             else if (statement is WhileStatement @while)
             {
-                this.AppendLine($"WHILE { @while.Condition }");
+                this.AppendLine($"WHILE {@while.Condition}");
                 this.AppendLine("BEGIN");
 
                 this.AppendChildStatements(@while.Statements, true);
 
                 this.AppendLine("END");
+                this.AppendLine(Environment.NewLine);
             }
             else if (statement is LoopExitStatement whileExit)
             {
-                this.AppendLine($"IF {whileExit.Condition}");
-                this.AppendLine("BEGIN");
-                this.AppendLine("BREAK");
-                this.AppendLine("END");
+                if (!whileExit.IsCursorLoopExit)
+                {
+                    this.AppendLine($"IF {whileExit.Condition}");
+                    this.AppendLine("BEGIN");
+                    this.AppendLine("BREAK");
+                    this.AppendLine("END");
+                }
             }
             else if (statement is TryCatchStatement tryCatch)
             {
@@ -318,6 +323,7 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
                 this.Build(declareCursor.SelectStatement);
+                this.AppendLine(Environment.NewLine);
             }
             else if (statement is OpenCursorStatement openCursor)
             {
@@ -357,7 +363,7 @@ namespace SqlAnalyser.Core
             string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : "")}";
             string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
 
-            string selectColumns = $"SELECT {top}{intoVariable}{string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
+            string selectColumns = $"SELECT {top}{intoVariable}{string.Join(",", select.Columns.Select(item => item))}";
 
             if (!isWith)
             {
@@ -426,7 +432,7 @@ namespace SqlAnalyser.Core
 
             if (select.GroupBy != null && select.GroupBy.Count > 0)
             {
-                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy.Select(item => item))}");
             }
 
             if (select.Having != null)
@@ -436,12 +442,12 @@ namespace SqlAnalyser.Core
 
             if (select.OrderBy != null && select.OrderBy.Count > 0)
             {
-                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy.Select(item => item))}");
             }
 
             if (select.LimitInfo != null)
             {
-                //NOTE: "OFFSET X ROWS FETCH NEXT Y ROWS ONLY" ony available for SQLServer 2012 and above.
+                //NOTE: "OFFSET X ROWS FETCH NEXT Y ROWS ONLY" only available for SQLServer 2012 and above.
                 this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
             }
 

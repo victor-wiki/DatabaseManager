@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DatabaseInterpreter.Model;
+using System;
 
 namespace DatabaseInterpreter.Utility
 {

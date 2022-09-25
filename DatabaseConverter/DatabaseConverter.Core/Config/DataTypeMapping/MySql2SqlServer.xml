@@ -1,127 +1,159 @@
 <mappings>
-  <mapping>
-    <source type="bigint" />
-    <target type="bigint" />
-  </mapping>
-  <mapping>
-    <source type="binary" />
-    <target type="binary" />
-  </mapping>
-  <mapping>
-    <source type="bit" />
-    <target type="bit" />
-  </mapping>
-  <mapping>
-    <source type="blob" />
-    <target type="image" />
-  </mapping>
-  <mapping>
-    <source type="char" />
-    <target type="char" />
-    <special name="maxLength" value="36" type="uniqueidentifier"></special>
-  </mapping> 
-  <mapping>
-    <source type="date" />
-    <target type="date" />
-  </mapping>
-  <mapping>
-    <source type="datetime" />
-    <target type="datetime" />
-  </mapping> 
-  <mapping>
-    <source type="decimal" />
-    <target type="decimal" />
-  </mapping> 
-  <mapping>
-    <source type="double" />
-    <target type="float" />
-  </mapping>
-  <mapping>
-    <source type="enum" />
-    <target type="varchar" length="50" />
-  </mapping>
-  <mapping>
-    <source type="float" />
-    <target type="float" />
-  </mapping>
-  <mapping>
-    <source type="int" />
-    <target type="int" />
-  </mapping>
-  <mapping>
-    <source type="json" />
-    <target type="text" />
-  </mapping>
-  <mapping>
-    <source type="longblob" />
-    <target type="image" />
-  </mapping>
-  <mapping>
-    <source type="longtext" />
-    <target type="text" />
-  </mapping>
-  <mapping>
-    <source type="mediumblob" />
-    <target type="image" />
-  </mapping>
-  <mapping>
-    <source type="mediumint" />
-    <target type="int" />
-  </mapping>  
-  <mapping>
-    <source type="mediumtext" />
-    <target type="text" />
-  </mapping>
-  <mapping>
-    <source type="numeric" />
-    <target type="decimal" />
-  </mapping>
-  <mapping>
-    <source type="real" />
-    <target type="real" />
-  </mapping>
-  <mapping>
-    <source type="set" />
-    <target type="varchar" length="1000"/>
-  </mapping>  
-  <mapping>
-    <source type="smallint" />
-    <target type="int" />
-  </mapping> 
-  <mapping>
-    <source type="text" />
-    <target type="text" />
-  </mapping>  
-  <mapping>
-    <source type="time" />
-    <target type="time" />
-  </mapping>
-  <mapping>
-    <source type="timestamp" />
-    <target type="datetime2" />
-  </mapping>
-  <mapping>
-    <source type="tinyblob" />
-    <target type="varbinary" />
-  </mapping>
-  <mapping>
-    <source type="tinyint" />
-    <target type="int" />
-  </mapping>
-  <mapping>
-    <source type="tinytext" />
-    <target type="varchar" length="255" />
-  </mapping>
-  <mapping>
-    <source type="varbinary" />
-    <target type="varbinary" substitute="image" />
-  </mapping>
-  <mapping>
-    <source type="varchar" />
-    <target type="varchar" substitute="text"/>
-  </mapping>
-  <mapping>
-    <source type="year" />
-    <target type="int" />
-  </mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="bigint" />
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="binary" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="bit" />
+	</mapping>
+	<mapping>
+		<source type="blob" />
+		<target type="image" />
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="char" />
+		<special name="maxLength" value="36" type="uniqueidentifier"></special>
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="datetime" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="decimal" />
+	</mapping>
+	<mapping>
+		<source type="double" />
+		<target type="decimal" />
+	</mapping>
+	<mapping>
+		<source type="enum" />
+		<target type="varchar" length="50" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="float" />
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="geomcollection" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="int" />
+	</mapping>
+	<mapping>
+		<source type="json" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="linestring" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="longblob" />
+		<target type="image" />
+	</mapping>
+	<mapping>
+		<source type="longtext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="mediumblob" />
+		<target type="image" />
+	</mapping>
+	<mapping>
+		<source type="mediumint" />
+		<target type="int" />
+	</mapping>
+	<mapping>
+		<source type="mediumtext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="multilinestring" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipoint" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipolygon" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="decimal" />
+	</mapping>	
+	<mapping>
+		<source type="point" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="polygon" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="set" />
+		<target type="varchar" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="time" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="datetime2" />
+	</mapping>
+	<mapping>
+		<source type="tinyblob" />
+		<target type="varbinary" />
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="tinytext" />
+		<target type="varchar" length="255" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="varbinary" substitute="image" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="varchar" substitute="text"/>
+	</mapping>
+	<mapping>
+		<source type="year" />
+		<target type="int" />
+	</mapping>
 </mappings>

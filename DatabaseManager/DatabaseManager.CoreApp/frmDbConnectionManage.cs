@@ -1,6 +1,5 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Profile;
+using DatabaseManager.Profile;
 using DatabaseManager.Helper;
 using System;
 using System.Collections.Generic;
@@ -11,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager
 {

@@ -13,12 +13,12 @@ namespace DatabaseConverter.Core
     {
         private List<View> views;     
        
-        private string targetOwnerName;              
+        private string targetSchemaName;              
 
-        public ViewTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<View> views, string targetOwnerName = null): base(sourceDbInterpreter, targetDbInterpreter)
+        public ViewTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<View> views, string targetSchemaName = null): base(sourceDbInterpreter, targetDbInterpreter)
         {
             this.views = views;           
-            this.targetOwnerName = targetOwnerName;
+            this.targetSchemaName = targetSchemaName;
         }
 
         public override void Translate()
@@ -35,15 +35,15 @@ namespace DatabaseConverter.Core
 
             this.LoadMappings();
 
-            if (string.IsNullOrEmpty(targetOwnerName))
+            if (string.IsNullOrEmpty(targetSchemaName))
             {
                 if (targetDbInterpreter is SqlServerInterpreter)
                 {
-                    targetOwnerName = "dbo";
+                    targetSchemaName = "dbo";
                 }
                 else
                 {
-                    targetOwnerName = DbInterpreterHelper.GetOwnerName(targetDbInterpreter);
+                    targetSchemaName = targetDbInterpreter.DefaultSchema;
                 }
             }
 
@@ -81,7 +81,7 @@ namespace DatabaseConverter.Core
 
                     string createClause = this.targetDbInterpreter.DatabaseType == DatabaseType.Oracle ? "CREATE OR REPLACE" : "CREATE";
 
-                    string createAsClause = $"{createClause} VIEW {(string.IsNullOrEmpty(targetOwnerName)? "": targetOwnerName + "." )}{viewNameWithQuotation} AS ";
+                    string createAsClause = $"{createClause} VIEW {(string.IsNullOrEmpty(targetSchemaName)? "": targetSchemaName + "." )}{viewNameWithQuotation} AS ";
 
                     if (!definition.Trim().ToLower().StartsWith("create"))
                     {
@@ -112,13 +112,13 @@ namespace DatabaseConverter.Core
                         TargetObject = view.Name
                     };
 
-                    if (!this.SkipError)
+                    if (!this.ContinueWhenErrorOccurs)
                     {
                         throw vce;
                     }
                     else
                     {
-                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.SkipError);
+                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.ContinueWhenErrorOccurs);
                     }                   
                 }
             }           

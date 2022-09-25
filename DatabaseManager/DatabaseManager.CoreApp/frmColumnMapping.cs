@@ -16,7 +16,6 @@ namespace DatabaseManager
         private const string EmptyItem = "<None>";
         public string ReferenceTableName { get; set; }
         public string TableName { get; set; }
-
         public List<string> ReferenceTableColumns { get; set; } = new List<string>();
         public List<string> TableColumns { get; set; } = new List<string>();
 

@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Text.RegularExpressions;
-using DatabaseManager.Model;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Helper;
-using DatabaseConverter.Core;
-using DatabaseConverter.Model;
 using DatabaseManager.Data;
-using DatabaseInterpreter.Core;
+using DatabaseManager.Helper;
+using DatabaseManager.Model;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -32,7 +27,7 @@ namespace DatabaseManager.Controls
         private bool intellisenseSetuped;
         private bool enableIntellisense;
         private bool isPasting = false;
-        private List<string> dbOwners;
+        private List<string> dbSchemas;
         private const int WordListMinWidth = 160;
 
         public DatabaseType DatabaseType { get; set; }
@@ -67,7 +62,7 @@ namespace DatabaseManager.Controls
             this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
             this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
             this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
-            this.dbOwners = this.allWords.Where(item => item.Type == SqlWordTokenType.Owner).Select(item => item.Text).ToList();
+            this.dbSchemas = this.allWords.Where(item => item.Type == SqlWordTokenType.Schema).Select(item => item.Text).ToList();
         }
 
         private void tsmiCopy_Click(object sender, EventArgs e)
@@ -199,7 +194,7 @@ namespace DatabaseManager.Controls
 
                         this.ShowTableColumns(word.Text, columnName);
                     }
-                    else if (word.Type == SqlWordTokenType.Owner)
+                    else if (word.Type == SqlWordTokenType.Schema)
                     {
                         this.ShowDbObjects(token.Text);
                     }
@@ -217,7 +212,7 @@ namespace DatabaseManager.Controls
                     this.ShowTableColumns(word.Text);
                     this.lvWords.Tag = word;
                 }
-                else if (word.Type == SqlWordTokenType.Owner)
+                else if (word.Type == SqlWordTokenType.Schema)
                 {
                     this.ShowDbObjects(null, word.Text);
                     this.lvWords.Tag = word;
@@ -324,7 +319,7 @@ namespace DatabaseManager.Controls
                         case SqlWordTokenType.TableColumn:
                             item.ImageIndex = 4;
                             break;
-                        case SqlWordTokenType.Owner:
+                        case SqlWordTokenType.Schema:
                             item.ImageIndex = 5;
                             break;
                     }
@@ -616,9 +611,9 @@ namespace DatabaseManager.Controls
 
             SqlWord word = null;
 
-            if (this.dbOwners.Count > 0 && this.dbOwners.Any(item => text.ToUpper() == item.ToUpper()))
+            if (this.dbSchemas.Count > 0 && this.dbSchemas.Any(item => text.ToUpper() == item.ToUpper()))
             {
-                word = new SqlWord() { Type = SqlWordTokenType.Owner, Text = text };
+                word = new SqlWord() { Type = SqlWordTokenType.Schema, Text = text };
 
                 return word;
             }

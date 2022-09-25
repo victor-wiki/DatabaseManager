@@ -1,6 +1,7 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,6 +23,11 @@ namespace DatabaseConverter.Core
             }
 
             string dataTypeMappingFilePath = Path.Combine(ConfigRootFolder, $"DataTypeMapping/{sourceDatabaseType}2{targetDatabaseType}.xml");
+
+            if(!File.Exists(dataTypeMappingFilePath))
+            {
+                throw new Exception($"No such file:{dataTypeMappingFilePath}");
+            }
 
             XDocument dataTypeMappingDoc = XDocument.Load(dataTypeMappingFilePath);
 

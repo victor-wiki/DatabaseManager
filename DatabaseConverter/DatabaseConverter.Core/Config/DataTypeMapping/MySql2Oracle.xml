@@ -1,131 +1,163 @@
 <mappings>
-  <mapping>
-    <source type="bigint" />
-    <target type="number"/>
-  </mapping>
-  <mapping>
-    <source type="binary" />
-    <target type="raw" />
-  </mapping>
-  <mapping>
-    <source type="bit" />
-    <target type="number"/>
-  </mapping>
-  <mapping>
-    <source type="blob" />
-    <target type="blob"/>
-  </mapping> 
-  <mapping>
-    <source type="char" />
-    <target type="char" />
-    <special name="maxLength" value="36" type="raw" targetMaxLength="16"></special>
-  </mapping> 
-  <mapping>
-    <source type="date" />
-    <target type="date" />
-  </mapping>
-  <mapping>
-    <source type="datetime" />
-    <target type="date" />
-  </mapping>
-  <mapping>
-    <source type="decimal" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="double" />
-    <target type="binary_double"/>
-  </mapping>
-  <mapping>
-    <source type="enum" />
-    <target type="varchar2" length="50" />
-  </mapping>
-  <mapping>
-    <source type="float" />
-    <target type="binary_float"/>
-  </mapping>
-  <mapping>
-    <source type="int" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="json" />
-    <target type="clob" />
-  </mapping>
-  <mapping>
-    <source type="longblob" />
-    <target type="blob" />
-  </mapping>
-  <mapping>
-    <source type="longtext" />
-    <target type="clob" />
-  </mapping>
-  <mapping>
-    <source type="mediumblob" />
-    <target type="blob" />
-  </mapping>
-  <mapping>
-    <source type="mediumint" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="mediumtext" />
-    <target type="clob" />
-  </mapping> 
-  <mapping>
-    <source type="numeric" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="real" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="set" />
-    <target type="varchar2" length="1000"/>
-  </mapping>
-  <mapping>
-    <source type="smallint" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="text" />
-    <target type="clob" />
-  </mapping>
-  <mapping>
-    <source type="text" />
-    <target type="clob" />
-  </mapping>
-  <mapping>
-    <source type="time" />
-    <target type="interval day to second"/>
-  </mapping>
-  <mapping>
-    <source type="timestamp" />
-    <target type="timestamp" />
-  </mapping> 
-  <mapping>
-    <source type="tinyblob" />
-    <target type="raw" />
-  </mapping>
-  <mapping>
-    <source type="tinyint" />
-    <target type="number" />
-  </mapping>
-  <mapping>
-    <source type="tinytext" />
-    <target type="varchar2" length="255" />
-  </mapping>
-  <mapping>
-    <source type="varbinary" />
-    <target type="blob" />
-  </mapping>
-  <mapping>
-    <source type="varchar" />
-    <target type="varchar2" substitute="clob" />
-  </mapping>
-  <mapping>
-    <source type="year" />
-    <target type="number" />
-  </mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="number"/>
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="raw" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="raw"/>
+	</mapping>
+	<mapping>
+		<source type="blob" />
+		<target type="blob"/>
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="char" />
+		<special name="maxLength" value="36" type="raw" targetMaxLength="16"></special>
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="double" />
+		<target type="binary_double"/>
+	</mapping>
+	<mapping>
+		<source type="enum" />
+		<target type="varchar2" length="50" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="binary_float"/>
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="geomcollection" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="json" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="linestring" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="longblob" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="longtext" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="mediumblob" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="mediumint" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="mediumtext" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="multilinestring" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipoint" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipolygon" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="point" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="polygon" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="set" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="interval day to second"/>
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="timestamp" />
+	</mapping>
+	<mapping>
+		<source type="tinyblob" />
+		<target type="raw" />
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="tinytext" />
+		<target type="varchar2" length="255" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="varchar2" substitute="clob" />
+	</mapping>
+	<mapping>
+		<source type="year" />
+		<target type="number" />
+	</mapping>
 </mappings>

@@ -2,9 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
-namespace  DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Core
 {
     public class DbInterpreterHelper
     {
@@ -23,27 +22,14 @@ namespace  DatabaseInterpreter.Core
             else if(dbType == DatabaseType.Oracle)
             {
                 dbInterpreter = new OracleInterpreter(connectionInfo, option);
-            }           
+            }    
+            else if(dbType == DatabaseType.Postgres)
+            {
+                dbInterpreter = new PostgresInterpreter(connectionInfo, option);
+            }
 
             return dbInterpreter;
-        }
-
-        public static string GetOwnerName(DbInterpreter dbInterpreter)
-        {
-            if (dbInterpreter.DatabaseType == DatabaseType.Oracle)
-            {
-                return dbInterpreter.ConnectionInfo.UserId;
-            }
-            else
-            {
-                if(dbInterpreter.DatabaseType==DatabaseType.SqlServer)
-                {
-                    return "dbo";
-                }
-
-                return dbInterpreter.ConnectionInfo.Database;
-            }
-        }
+        }      
 
         public static IEnumerable<DatabaseType> GetDisplayDatabaseTypes()
         {

@@ -1,12 +1,10 @@
-﻿using Antlr4.Runtime.Tree;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 using static PlSqlParser;
-using Antlr4.Runtime;
-using DatabaseInterpreter.Model;
 
 namespace SqlAnalyser.Core
 {
@@ -69,7 +67,7 @@ namespace SqlAnalyser.Core
 
                     if (name.id_expression() != null)
                     {
-                        script.Owner = new TokenInfo(name.identifier());
+                        script.Schema = name.identifier().GetText();
                         script.Name = new TokenInfo(name.id_expression());
                     }
                     else
@@ -125,7 +123,7 @@ namespace SqlAnalyser.Core
 
                     if (name.id_expression() != null)
                     {
-                        script.Owner = new TokenInfo(name.identifier());
+                        script.Schema = name.identifier().GetText();
                         script.Name = new TokenInfo(name.id_expression());
                     }
                     else
@@ -183,7 +181,7 @@ namespace SqlAnalyser.Core
 
                     if (name.id_expression() != null)
                     {
-                        script.Owner = new TokenInfo(name.identifier());
+                        script.Schema = name.identifier().GetText();
                         script.Name = new TokenInfo(name.id_expression());
                     }
                     else
@@ -235,7 +233,7 @@ namespace SqlAnalyser.Core
 
                     if (name.id_expression() != null)
                     {
-                        script.Owner = new TokenInfo(name.identifier());
+                        script.Schema = name.identifier().GetText();
                         script.Name = new TokenInfo(name.id_expression());
                     }
                     else
@@ -250,7 +248,7 @@ namespace SqlAnalyser.Core
                     if (simpleDml != null)
                     {
                         Tableview_nameContext tableName = simpleDml.dml_event_clause().tableview_name();
-                        script.TableName = new TokenInfo(tableName) { Type = TokenType.TableName };
+                        script.TableName = new TableName(tableName);
 
                         Dml_event_elementContext[] events = simpleDml.dml_event_clause().dml_event_element();
 
@@ -465,7 +463,11 @@ namespace SqlAnalyser.Core
         {
             LoopExitStatement statement = new LoopExitStatement();
 
-            statement.Condition = new TokenInfo(node.condition()) { Type = TokenType.Condition };
+            string condition = node.condition().GetText(); 
+
+            statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+
+            statement.IsCursorLoopExit = condition.Contains("%NOTFOUND");
 
             return statement;
         }
@@ -850,7 +852,20 @@ namespace SqlAnalyser.Core
 
             if (into != null)
             {
-                statement.IntoTableName = new TokenInfo(into.variable_name().First()) { Type = TokenType.TableName };
+                var variables = into.bind_variable();
+
+                ParserRuleContext intoTable = null;
+
+                if (variables.Length>0)
+                {
+                    intoTable = variables.First();
+                }
+                else
+                {
+                    intoTable = into.general_element().First();
+                }
+
+                statement.IntoTableName = new TokenInfo(intoTable) { Type = TokenType.TableName };
             }
 
             Where_clauseContext where = block.where_clause();
@@ -968,6 +983,9 @@ namespace SqlAnalyser.Core
                                 break;
                             case nameof(PlSqlParser.CROSS):
                                 joinItem.Type = JoinType.CROSS;
+                                break;
+                            default:
+                                joinItem.Type = JoinType.INNER;
                                 break;
                         }
 
@@ -1257,7 +1275,7 @@ namespace SqlAnalyser.Core
                 {
                     tableName = new TableName(gtr);
 
-                    tableName.Name = new TokenInfo(gtr.dml_table_expression_clause().tableview_name()) { Type = TokenType.TableName };
+                    tableName.Name = gtr.dml_table_expression_clause().tableview_name().GetText();
 
                     setAlias(gtr.table_alias());
                 }
@@ -1265,7 +1283,7 @@ namespace SqlAnalyser.Core
                 {
                     tableName = new TableName(tra);
 
-                    tableName.Name = new TokenInfo(tra.table_ref_aux_internal()) { Type = TokenType.TableName };
+                    tableName.Name = tra.table_ref_aux_internal().GetText();
 
                     setAlias(tra.table_alias());
                 }
@@ -1300,12 +1318,12 @@ namespace SqlAnalyser.Core
                     if (ids != null && ids.Length > 0)
                     {
                         columnName = new ColumnName(ids[0]);
-                        columnName.Name = new TokenInfo(ids[0]);
+                        columnName.Name = ids[0].GetText();
                     }
                     else if (id != null)
                     {
                         columnName = new ColumnName(id);
-                        columnName.Name = new ColumnName(id);
+                        columnName.Name = id.GetText();
                     }
                 }
                 else if (node is Select_list_elementsContext ele)
@@ -1323,7 +1341,7 @@ namespace SqlAnalyser.Core
 
                     if (expression != null)
                     {
-                        columnName.Name = new TokenInfo(expression);
+                        columnName.Name = expression.GetText();
                     }
 
                     if (alias != null)
@@ -1388,34 +1406,6 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        public override List<TokenInfo> GetTableNameTokens(IParseTree node)
-        {
-            List<TokenInfo> tokens = new List<TokenInfo>();
-
-            TableName tableName = this.ParseTableName(node as ParserRuleContext, true);
-
-            if (tableName != null)
-            {
-                tokens.Add(tableName);
-            }
-
-            return tokens;
-        }
-
-        public override List<TokenInfo> GetColumnNameTokens(IParseTree node)
-        {
-            List<TokenInfo> tokens = new List<TokenInfo>();
-
-            ColumnName columnName = this.ParseColumnName(node as ParserRuleContext, true);
-
-            if (columnName != null)
-            {
-                tokens.Add(columnName);
-            }
-
-            return tokens;
-        }
-
         private bool IsChildOfType<T>(RuleContext node)
         {
             if (node == null || node.Parent == null)
@@ -1431,25 +1421,6 @@ namespace SqlAnalyser.Core
             {
                 return this.IsChildOfType<T>(node.Parent as RuleContext);
             }
-        }
-
-        public override List<TokenInfo> GetRoutineNameTokens(IParseTree node)
-        {
-            List<TokenInfo> tokens = new List<TokenInfo>();
-
-            ParserRuleContext routineName = null;
-
-            if (node is General_element_partContext gep && (node as General_element_partContext).children.Any(item => item is Function_argumentContext))
-            {
-                routineName = gep.id_expression().LastOrDefault();
-            }
-
-            if (routineName != null)
-            {
-                tokens.Add(new TokenInfo(routineName) { Type = TokenType.RoutineName });
-            }
-
-            return tokens;
         }
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace  DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Core
 {
     public class TableReferenceHelper
     {

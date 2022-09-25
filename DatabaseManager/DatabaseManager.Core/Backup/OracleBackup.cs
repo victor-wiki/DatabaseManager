@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
-using DatabaseInterpreter.Core;
 using DatabaseManager.Helper;
+using DatabaseManager.Model;
+using System;
+using System.IO;
 
 namespace DatabaseManager.Core
 {

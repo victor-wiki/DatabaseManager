@@ -6,6 +6,7 @@ using DatabaseManager.Model;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 
+
 namespace DatabaseManager.Core
 {
     public class IndexManager

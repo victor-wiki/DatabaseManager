@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+﻿using DatabaseConverter.Core;
+using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Core;
-using DatabaseConverter.Core;
-using DatabaseInterpreter.Utility;
 
 namespace DatabaseManager
 {
@@ -45,7 +41,7 @@ namespace DatabaseManager
         {
             this.hasError = false;
 
-            await Task.Run(() => this.CopyTable());
+            await this.CopyTable();
         }
 
         private async Task CopyTable()
@@ -79,15 +75,20 @@ namespace DatabaseManager
                 DatabaseType targetDatabaseType = this.rbAnotherDatabase.Checked ? this.ucConnection.DatabaseType : this.DatabaseType;
                 ConnectionInfo targetConnectionInfo = this.rbAnotherDatabase.Checked ? this.targetDbConnectionInfo : this.ConnectionInfo;
 
-                DbInterpreterOption sourceOption = new DbInterpreterOption();
-                DbInterpreterOption targetOption = new DbInterpreterOption();
+                DbInterpreterOption sourceOption = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs= true };
+                DbInterpreterOption targetOption = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs = true };
 
                 targetOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
 
                 DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, this.ConnectionInfo, sourceOption) };
                 DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDatabaseType, targetConnectionInfo, targetOption) };
 
-                source.TableNameMappings.Add(this.Table.Name, name);
+                if(this.chkOnlyCopyTable.Checked)
+                {
+                    source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn;
+                }
+
+                source.TableNameMappings.Add(this.Table.Name, name);              
 
                 this.btnExecute.Enabled = false;
 
@@ -100,6 +101,13 @@ namespace DatabaseManager
                     this.dbConverter.Option.ConvertComputeColumnExpression = true;
                     this.dbConverter.Option.IgnoreNotSelfForeignKey = true;
 
+                    var targetDbSchemas = await target.DbInterpreter.GetDatabaseSchemasAsync();
+
+                    if (targetDbSchemas.Any(item => item.Schema == this.Table.Schema))
+                    {
+                        this.dbConverter.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = this.Table.Schema, TargetSchema = this.Table.Schema });
+                    }
+
                     this.dbConverter.Subscribe(this);
 
                     if (this.DatabaseType == DatabaseType.MySql)
@@ -107,37 +115,31 @@ namespace DatabaseManager
                         source.DbInterpreter.Option.InQueryItemLimitCount = 2000;
                     }
 
-                    if (this.DatabaseType != targetDatabaseType)
-                    {
-                        if (targetDatabaseType == DatabaseType.SqlServer)
-                        {
-                            target.DbOwner = "dbo";
-                        }
-                        else if (targetDatabaseType == DatabaseType.MySql)
-                        {
-                            target.DbInterpreter.Option.RemoveEmoji = true;
-                        }
-                    }
-                    else
-                    {
-                        target.DbOwner = this.Table.Owner;
-                    }
+                    
 
                     this.dbConverter.Option.SplitScriptsToExecute = true;
 
-                    await this.dbConverter.Convert(schemaInfo);
+                    DbConverterResult result = await this.dbConverter.Convert(schemaInfo);
 
-                    if (!this.hasError && !this.dbConverter.HasError && !source.DbInterpreter.HasError && !target.DbInterpreter.HasError)
+                    if (result.InfoType == DbConverterResultInfoType.Information)
                     {
                         if (!this.dbConverter.CancelRequested)
-                        {
-                            MessageBox.Show("Copy finished", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        {                           
+                            MessageBox.Show("Table copied.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             MessageBox.Show("Task has been canceled.");
                         }
                     }
+                    else if (result.InfoType == DbConverterResultInfoType.Warnning)
+                    {
+                        MessageBox.Show(result.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else if (result.InfoType == DbConverterResultInfoType.Error) //message shows in main form because it uses Subscribe above
+                    {
+                       // MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }                   
                 }
             }
             catch (Exception ex)
@@ -233,7 +235,7 @@ namespace DatabaseManager
             return true;
         }
 
-        private async Task<bool> IsNameExisted()
+        private DbInterpreter GetTargetDbInterpreter()
         {
             DatabaseType databaseType = this.rbAnotherDatabase.Checked ? this.ucConnection.DatabaseType : this.DatabaseType;
 
@@ -242,6 +244,13 @@ namespace DatabaseManager
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(databaseType, connectionInfo, option);
+
+            return dbInterpreter;
+        }
+
+        private async Task<bool> IsNameExisted()
+        {
+            DbInterpreter dbInterpreter = this.GetTargetDbInterpreter();
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { this.txtName.Text.Trim() } };
 

@@ -419,19 +419,19 @@ namespace DatabaseManager
                 {
                     List<Script> scripts = null;
 
-                    string targetDbOwner = this.GetTargetDbOwner();
+                    string targetDbSchema = this.GetTargetDbSchema();
 
                     if (difference == null)
                     {
-                        scripts = await dbSynchro.GenerateChangedScripts(this.sourceSchemaInfo, targetDbOwner, this.differences);
+                        scripts = await dbSynchro.GenerateChangedScripts(this.sourceSchemaInfo, targetDbSchema, this.differences);
                     }
                     else if (difference.Source is ScriptDbObject || difference.Target is ScriptDbObject)
                     {
-                        scripts = dbSynchro.GenereateUserDefinedTypeChangedScripts(difference, targetDbOwner);
+                        scripts = dbSynchro.GenereateUserDefinedTypeChangedScripts(difference, targetDbSchema);
                     }
                     else if (difference.DatabaseObjectType == DatabaseObjectType.Table)
                     {
-                        scripts = await dbSynchro.GenerateTableChangedScripts(this.sourceSchemaInfo, difference, targetDbOwner);
+                        scripts = await dbSynchro.GenerateTableChangedScripts(this.sourceSchemaInfo, difference, targetDbSchema);
                     }
                     else if (difference.Source is TableChild || difference.Target is TableChild)
                     {
@@ -439,7 +439,7 @@ namespace DatabaseManager
                     }
                     else if (difference.Source is UserDefinedType || difference.Target is UserDefinedType)
                     {
-                        scripts = dbSynchro.GenereateUserDefinedTypeChangedScripts(difference, targetDbOwner);
+                        scripts = dbSynchro.GenereateUserDefinedTypeChangedScripts(difference, targetDbSchema);
                     }
 
                     if (scripts != null)
@@ -456,7 +456,7 @@ namespace DatabaseManager
                 {
                     if (MessageBox.Show("Are you sure to sync changes to target database?", "Confirm", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
                     {
-                        ContentSaveResult result = await dbSynchro.Sync(this.sourceSchemaInfo, this.GetTargetDbOwner(), this.differences);
+                        ContentSaveResult result = await dbSynchro.Sync(this.sourceSchemaInfo, this.GetTargetDbSchema(), this.differences);
 
                         if (result.IsOK)
                         {
@@ -486,11 +486,11 @@ namespace DatabaseManager
             MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        private string GetTargetDbOwner()
+        private string GetTargetDbSchema()
         {
             if (this.targetInterpreter.DatabaseType == DatabaseType.Oracle)
             {
-                return (this.targetInterpreter as OracleInterpreter).GetDbOwner();
+                return (this.targetInterpreter as OracleInterpreter).GetDbSchema();
             }
             else if (this.targetInterpreter.DatabaseType == DatabaseType.MySql)
             {
@@ -560,11 +560,11 @@ namespace DatabaseManager
             {
                 SchemaInfo schemaInfo = isSource ? this.sourceSchemaInfo : this.targetSchemaInfo;
 
-                IEnumerable<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == table.Name).OrderBy(item => item.Name);
-                TablePrimaryKey tablePrimaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Owner == table.Owner && item.TableName == table.Name);
-                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
-                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Owner == table.Owner && item.TableName == table.Name).OrderBy(item => item.Name);
-                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
+                IEnumerable<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Schema == table.Schema && item.TableName == table.Name).OrderBy(item => item.Name);
+                TablePrimaryKey tablePrimaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Schema == table.Schema && item.TableName == table.Name);
+                IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
+                IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Schema == table.Schema && item.TableName == table.Name).OrderBy(item => item.Name);
+                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
 
                 return scriptGenerator.AddTable(table, columns, tablePrimaryKey, foreignKeys, indexes, constraints).ToString();
             }

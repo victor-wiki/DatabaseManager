@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -32,6 +33,8 @@ namespace DatabaseInterpreter.Core
         public abstract char QuotationRightChar { get; }
         public virtual IndexType IndexType => IndexType.Normal;
         public abstract DatabaseType DatabaseType { get; }
+        public abstract string DefaultDataType { get; }
+        public abstract string DefaultSchema { get; }
         public abstract bool SupportBulkCopy { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
@@ -58,13 +61,19 @@ namespace DatabaseInterpreter.Core
         public abstract Task<List<Database>> GetDatabasesAsync();
         #endregion
 
-        #region Database Owner
-        public abstract Task<List<DatabaseOwner>> GetDatabaseOwnersAsync();
+        #region Database Schema
+        public abstract Task<List<DatabaseSchema>> GetDatabaseSchemasAsync();
         #endregion
 
         #region User Defined Type     
         public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null);
         public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+
+        #endregion
+
+        #region Sequence     
+        public abstract Task<List<Sequence>> GetSequencesAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<Sequence>> GetSequencesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
         #endregion
 
@@ -191,6 +200,7 @@ namespace DatabaseInterpreter.Core
                     if (isAllOrdersIsZero)
                     {
                         int i = 1;
+
                         objects.ForEach(item =>
                         {
                             item.Order = i++;
@@ -231,6 +241,11 @@ namespace DatabaseInterpreter.Core
                 if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, filter))
                 {
                     schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter);
+                }
+
+                if (this.NeedFetchObjects(DatabaseObjectType.Sequence, filter.SequenceNames, filter))
+                {
+                    schemaInfo.Sequences = await this.GetSequencesAsync(connection, filter);
                 }
 
                 if (this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, filter))
@@ -419,11 +434,14 @@ namespace DatabaseInterpreter.Core
                 }
                 catch (Exception ex)
                 {
-                    if (!commandInfo.SkipError)
+                    commandInfo.HasError = true;
+
+                    if (!commandInfo.ContinueWhenErrorOccurs)
                     {
                         if (dbConnection.State == ConnectionState.Open && command.Transaction != null)
                         {
                             command.Transaction.Rollback();
+                            commandInfo.TransactionRollbacked = true;
                         }
                     }
 
@@ -432,7 +450,7 @@ namespace DatabaseInterpreter.Core
                         throw ex;
                     }
 
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.SkipError);
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.ContinueWhenErrorOccurs);
 
                     return 0;
                 }
@@ -467,6 +485,16 @@ namespace DatabaseInterpreter.Core
             return await connection.ExecuteScalarAsync<long>(sql);
         }
 
+        public object GetScalar(string sql)
+        {
+            return this.GetScalar(this.CreateConnection(), sql);
+        }
+
+        public object GetScalar(DbConnection dbConnection, string sql)
+        {
+            return dbConnection.ExecuteScalar(sql);
+        }
+
         public async Task<object> GetScalarAsync(string sql)
         {
             return await this.GetScalarAsync(this.CreateConnection(), sql);
@@ -487,11 +515,21 @@ namespace DatabaseInterpreter.Core
             return await dbConnection.ExecuteReaderAsync(sql);
         }
 
+        public IDataReader GetDataReader(DbConnection dbConnection, string sql)
+        {
+            return dbConnection.ExecuteReader(sql);
+        }
+
         public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, int? limitCount = null)
         {
             if (limitCount > 0)
             {
                 sql = this.AppendLimitClause(sql, limitCount.Value);
+            }
+
+            if(this.DatabaseType == DatabaseType.Postgres)
+            {
+                NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();               
             }
 
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
@@ -514,7 +552,12 @@ namespace DatabaseInterpreter.Core
             {
                 if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
                 {
-                    sql += Environment.NewLine + "ORDER BY " + this.GetDefaultOrder();
+                    string orderBy = this.GetDefaultOrder();
+
+                    if(!string.IsNullOrEmpty(orderBy))
+                    {
+                        sql += Environment.NewLine + "ORDER BY " + orderBy;
+                    }                    
                 }
 
                 if (this.DatabaseType == DatabaseType.SqlServer)
@@ -524,13 +567,25 @@ namespace DatabaseInterpreter.Core
                         sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
                     }
                 }
-                else
+                else if(this.DatabaseType == DatabaseType.MySql || this.DatabaseType == DatabaseType.Postgres)
                 {
                     sql = $@"SELECT * FROM
                        (
                          {sql}
                        ) TEMP"
                       + Environment.NewLine + this.GetLimitStatement(0, limitCount);
+                }
+                else if(this.DatabaseType == DatabaseType.Oracle)
+                {
+                    int fromIndex = sql.ToLower().IndexOf("from");
+
+                    sql = sql.Substring(0, fromIndex) + $" ,ROW_NUMBER() OVER (ORDER BY {this.GetDefaultOrder()}) {RowNumberColumnName} " + sql.Substring(fromIndex);
+
+                    sql = $@"SELECT * FROM
+                       (
+                         {sql}
+                       ) TEMP
+                       WHERE {RowNumberColumnName} BETWEEN 1 AND {limitCount}";                          
                 }
             }
 
@@ -539,46 +594,63 @@ namespace DatabaseInterpreter.Core
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
         {
-            string quotedTableName = this.GetQuotedObjectName(table);
+            string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
 
             List<string> columnNames = new List<string>();
 
             foreach (TableColumn column in columns)
             {
                 string columnName = this.GetQuotedString(column.Name);
-
-                #region Convert MySql float to decimal, avoid scientific notation
-                if (this.DatabaseType == DatabaseType.MySql && column.DataType.ToLower().Contains("float"))
+                string dataType = column.DataType.ToLower(); 
+                #region MySql
+                if (this.DatabaseType == DatabaseType.MySql)
                 {
-                    DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(column.DataType);
-
-                    if (!string.IsNullOrEmpty(dataTypeInfo.Args))
+                    // Convert float to decimal, avoid scientific notation
+                    if (dataType.Contains("float"))
                     {
-                        string strPrecision = dataTypeInfo.Args.Split(',')[0].Trim();
-                        int precision;
+                        DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(column.DataType);
 
-                        DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification("decimal");
-
-                        if (dataTypeSpec != null)
+                        if (!string.IsNullOrEmpty(dataTypeInfo.Args))
                         {
-                            ArgumentRange? precisionRange = DataTypeManager.GetArgumentRange(dataTypeSpec, "precision");
+                            string strPrecision = dataTypeInfo.Args.Split(',')[0].Trim();
+                            int precision;
 
-                            if (precisionRange.HasValue)
+                            DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification("decimal");
+
+                            if (dataTypeSpec != null)
                             {
-                                if (int.TryParse(strPrecision, out precision) && precision > 0 && precision <= precisionRange.Value.Max)
+                                ArgumentRange? precisionRange = DataTypeManager.GetArgumentRange(dataTypeSpec, "precision");
+
+                                if (precisionRange.HasValue)
                                 {
-                                    columnName = $"CONVERT({columnName},DECIMAL({dataTypeInfo.Args})) AS {columnName}";
+                                    if (int.TryParse(strPrecision, out precision) && precision > 0 && precision <= precisionRange.Value.Max)
+                                    {
+                                        columnName = $"CONVERT({columnName},DECIMAL({dataTypeInfo.Args})) AS {columnName}";
+                                    }
                                 }
                             }
                         }
-                    }
+                    }                    
                 }
                 #endregion
 
-                #region Convert Oracle number to char
-                else if (this.DatabaseType == DatabaseType.Oracle && column.DataType.ToLower().Contains("number"))
-                {
-                    columnName = $"TO_CHAR({columnName}) AS {columnName}";
+                #region Oralce
+                else if (this.DatabaseType == DatabaseType.Oracle)
+                {                   
+                    if(dataType=="st_geometry")
+                    {
+                        string geometryMode = SettingManager.Setting.OracleGeometryMode;
+                       
+                        if(string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                        {
+                            quotedTableName += " t"; //must use alias
+                            columnName = $"t.{columnName}.GET_WKT() AS {columnName}";
+                        }
+                        else if (geometryMode == "SDE")
+                        {
+                            columnName = $"SDE.ST_ASTEXT({columnName}) AS {columnName}";
+                        }
+                    }
                 }
                 #endregion
 
@@ -700,30 +772,39 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Common Method 
-
-        public string GetObjectDisplayName(DatabaseObject obj, bool useQuotedString = false)
+        public string GetQuotedDbObjectNameWithSchema(DatabaseObject obj)
         {
-            if (this.GetType().Name == nameof(SqlServerInterpreter))
+            if (this.DatabaseType == DatabaseType.SqlServer || this.DatabaseType == DatabaseType.Postgres)
             {
-                return $"{this.GetString(obj.Owner, useQuotedString)}.{this.GetString(obj.Name, useQuotedString)}";
+                if(!string.IsNullOrEmpty(obj.Schema))
+                {
+                    return $"{this.GetString(obj.Schema, true)}.{this.GetString(obj.Name, true)}";
+                }
+                else
+                {
+                    return obj.Name;
+                }
             }
-            return $"{this.GetString(obj.Name, useQuotedString)}";
+
+            return $"{this.GetString(obj.Name, true)}";
+        }
+
+        public string GetQuotedDbObjectNameWithSchema(string schema, string dbObjName)
+        {
+            if (string.IsNullOrEmpty(schema))
+            {
+                return this.GetQuotedString(dbObjName);
+            }
+            else
+            {
+                return $"{this.GetQuotedString(schema)}.{this.GetQuotedString(dbObjName)}";
+            }
         }
 
         public string GetString(string str, bool useQuotedString = false)
         {
             return useQuotedString ? this.GetQuotedString(str) : str;
-        }
-
-        public string GetQuotedColumnNames(IEnumerable<TableColumn> columns)
-        {
-            return string.Join(",", columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.Name)));
-        }
-
-        public string GetQuotedObjectName(DatabaseObject obj)
-        {
-            return this.GetObjectDisplayName(obj, true);
-        }
+        }        
 
         public string GetQuotedString(string str)
         {
@@ -737,6 +818,11 @@ namespace DatabaseInterpreter.Core
             }
         }
 
+        public string GetQuotedColumnNames(IEnumerable<TableColumn> columns)
+        {
+            return string.Join(",", columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.Name)));
+        }
+
         protected bool IsObjectFectchSimpleMode()
         {
             return this.Option.ObjectFetchMode == DatabaseObjectFetchMode.Simple;
@@ -747,6 +833,44 @@ namespace DatabaseInterpreter.Core
             return value?.Replace(this.ScriptsDelimiter, ",");
         }
 
+        public bool IsLowDbVersion(DbConnection connection)
+        {
+            string serverVersion = this.ConnectionInfo.ServerVersion;
+
+            if (string.IsNullOrEmpty(serverVersion))
+            {
+                try
+                {
+                    bool needClose = false;
+
+                    if (connection == null)
+                    {
+                        connection = this.CreateConnection();
+                        needClose = true;
+                    }
+
+                    if (connection.State != ConnectionState.Open)
+                    {
+                        connection.Open();
+                    }
+
+                    serverVersion = connection.ServerVersion;
+
+                    if (needClose)
+                    {
+                        connection.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+            }
+
+            return this.IsLowDbVersion(serverVersion);
+        }
+
+        public abstract bool IsLowDbVersion(string serverVersion);
         protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
         protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
 
@@ -774,12 +898,14 @@ namespace DatabaseInterpreter.Core
         {
             string computeExpression = column.ComputeExp.Trim();
 
-            if (!computeExpression.StartsWith("(") && !computeExpression.EndsWith(")"))
+            if (computeExpression.StartsWith("(") && computeExpression.EndsWith(")"))
             {
-                computeExpression = $"({computeExpression})";
+                return computeExpression;
             }
-
-            return computeExpression;
+            else
+            {
+                return $"({computeExpression})";
+            }           
         }
 
         public DataTypeSpecification GetDataTypeSpecification(string dataType)

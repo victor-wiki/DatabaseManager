@@ -14,6 +14,7 @@
   <item name="number" args="precision,scale" range="1~38,0~38" optional="true"></item>
   <item name="nvarchar2" args="length" range="1~2000"></item>
   <item name="raw" args="length" range="1~2000"></item>
+  <item name="st_geometry" args=""></item>	
   <item name="timestamp" args="scale" range="0~9" optional="true" default="6"></item>
   <item name="timestamp with local time zone" format="timestamp($scale$) with local time zone" args="scale" range="0~9" default="6"></item>
   <item name="timestamp with time zone" format="timestamp($scale$) with time zone"  args="scale" range="0~9" default="6"></item>

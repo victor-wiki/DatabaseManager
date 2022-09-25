@@ -20,7 +20,7 @@ namespace DatabaseManager.Controls
         private Rectangle dragBoxFromMouseDown;
         private int rowIndexFromMouseDown;
         private int rowIndexOfItemUnderMouseToDrop;
-        private bool defaultNullable = false;
+        private bool defaultNullable = true;
         private IEnumerable<DataTypeSpecification> dataTypeSpecifications;
         public DatabaseType DatabaseType { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; }
@@ -41,7 +41,7 @@ namespace DatabaseManager.Controls
         {
             this.LoadDataTypes();
 
-            if (this.DatabaseType == DatabaseType.Oracle)
+            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
             {
                 this.colIdentity.Visible = false;
                 this.colDataType.Width = 200;
@@ -87,7 +87,7 @@ namespace DatabaseManager.Controls
                 row.Cells[this.colNullable.Name].Value = column.IsNullable;
                 row.Cells[this.colIdentity.Name].Value = column.IsIdentity;
                 row.Cells[this.colPrimary.Name].Value = column.IsPrimary;
-                row.Cells[this.colDefaultValue.Name].Value = ValueHelper.GetTrimedDefaultValue(column.DefaultValue);
+                row.Cells[this.colDefaultValue.Name].Value = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
                 row.Cells[this.colComment.Name].Value = column.Comment;
 
                 row.Tag = column;
@@ -127,17 +127,41 @@ namespace DatabaseManager.Controls
             }
         }
 
+        public bool ValidateDataGrid()
+        {
+            bool isInvalid = false;
+
+            for (int i = 0; i < this.dgvColumns.RowCount; i++)
+            {
+                DataGridViewRow row = this.dgvColumns.Rows[i];
+
+                string dataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
+
+                if(!string.IsNullOrEmpty(dataType) && !this.dataTypeSpecifications.Any(item=>item.Name == dataType.ToLower()))
+                {
+                    isInvalid = true;
+                    MessageBox.Show($"data type '{dataType}' is invalid.");
+                    break;
+                }
+            }
+
+            return !isInvalid;
+        }
+
         private void LoadDataTypes()
         {
-            dataTypeSpecifications = DataTypeManager.GetDataTypeSpecifications(this.DatabaseType);
+            this.dataTypeSpecifications = DataTypeManager.GetDataTypeSpecifications(this.DatabaseType);
 
             List<DatabaseObject> dbObjects = new List<DatabaseObject>();
 
-            dbObjects.AddRange(dataTypeSpecifications.Select(item => new DatabaseObject { Name = item.Name }));
+            foreach (var dataTypeSpec in this.dataTypeSpecifications)
+            {
+                dbObjects.Add(new DatabaseObject { Name = dataTypeSpec.Name });
+            }
 
             if (this.UserDefinedTypes != null)
             {
-                dbObjects.AddRange(this.UserDefinedTypes);
+                dbObjects.AddRange(this.UserDefinedTypes.GroupBy(item => item.Name).Select(item => new DatabaseObject() { Name = item.Key }));
             }
 
             this.colDataType.DataSource = dbObjects;
@@ -190,7 +214,7 @@ namespace DatabaseManager.Controls
                     if (userDefinedType != null)
                     {
                         col.IsUserDefined = true;
-                        col.TypeOwner = userDefinedType.Owner;
+                        col.DataTypeSchema = userDefinedType.Schema;
                     }
 
                     row.Tag = col;
@@ -276,6 +300,16 @@ namespace DatabaseManager.Controls
 
             string dataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
 
+            if (string.IsNullOrEmpty(dataType))
+            {
+                return;
+            }
+
+            if (dataType.IndexOf('(') >= 0)
+            {
+                dataType = dataType.Substring(0, dataType.IndexOf('('));
+            }
+
             if (!string.IsNullOrEmpty(dataType))
             {
                 UserDefinedType userDefindedType = this.GetUserDefinedType(dataType);
@@ -328,12 +362,12 @@ namespace DatabaseManager.Controls
 
         private void dgvColumns_SelectionChanged(object sender, EventArgs e)
         {
-            this.ShowColumnExtraPropertites();
+
         }
 
         private void ShowColumnExtraPropertites()
         {
-            var row = DataGridViewHelper.GetSelectedRow(this.dgvColumns);
+            var row = DataGridViewHelper.GetCurrentRow(this.dgvColumns);
 
             if (row != null)
             {
@@ -460,7 +494,7 @@ namespace DatabaseManager.Controls
 
         private void tsmiInsertColumn_Click(object sender, EventArgs e)
         {
-            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvColumns);
+            DataGridViewRow row = DataGridViewHelper.GetCurrentRow(this.dgvColumns);
 
             if (row != null)
             {
@@ -530,6 +564,28 @@ namespace DatabaseManager.Controls
             if (this.OnGenerateChangeScripts != null)
             {
                 this.OnGenerateChangeScripts();
+            }
+        }
+
+        private void dgvColumns_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            this.ShowColumnExtraPropertites();
+        }
+
+        private void dgvColumns_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (this.dgvColumns.CurrentCellAddress.X == this.colDataType.DisplayIndex)
+            {
+                ComboBox combo = e.Control as ComboBox;
+                if (combo != null)
+                {
+                    combo.DropDownStyle = ComboBoxStyle.DropDown;                    
+                }
             }
         }
     }

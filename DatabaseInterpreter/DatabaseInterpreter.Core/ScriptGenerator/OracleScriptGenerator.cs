@@ -1,8 +1,10 @@
 ﻿using DatabaseInterpreter.Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,12 +15,13 @@ namespace DatabaseInterpreter.Core
         public OracleScriptGenerator(DbInterpreter dbInterpreter) : base(dbInterpreter) { }
 
         #region Schema Script 
+        
 
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
-            string dbOwner = this.GetDbOwner();
+            string dbSchema = this.GetDbSchema();
 
             //#region User Defined Type
 
@@ -41,9 +44,20 @@ namespace DatabaseInterpreter.Core
 
             //#endregion
 
+            #region Sequence          
+            foreach (Sequence sequence in schemaInfo.Sequences)
+            {
+                this.FeedbackInfo(OperationState.Begin, sequence);
+
+                sb.AppendLine(this.AddSequence(sequence));
+
+                this.FeedbackInfo(OperationState.End, sequence);
+            }
+            #endregion
+
             #region Function           
             sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
-            #endregion
+            #endregion          
 
             #region Table
             foreach (Table table in schemaInfo.Tables)
@@ -54,7 +68,7 @@ namespace DatabaseInterpreter.Core
                 TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.TableName == table.Name);
                 IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == table.Name);
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
-                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Owner == table.Owner && item.TableName == table.Name);
+                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
 
                 ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
@@ -84,9 +98,9 @@ namespace DatabaseInterpreter.Core
             return sb;
         }
 
-        private string GetDbOwner()
+        private string GetDbSchema()
         {
-            return (this.dbInterpreter as OracleInterpreter).GetDbOwner();
+            return (this.dbInterpreter as OracleInterpreter).GetDbSchema();
         }
         #endregion
 
@@ -140,17 +154,17 @@ namespace DatabaseInterpreter.Core
         #region Alter Table
         public override Script RenameTable(Table table, string newName)
         {
-            return new AlterDbObjectScript<Table>($"RENAME TABLE {this.GetQuotedObjectName(table)} TO {this.GetQuotedString(newName)};");
+            return new AlterDbObjectScript<Table>($"RENAME TABLE {this.GetQuotedFullTableName(table)} TO {this.GetQuotedString(newName)};");
         }
 
         public override Script SetTableComment(Table table, bool isNew = true)
         {
-            return new AlterDbObjectScript<Table>($"COMMENT ON TABLE {table.Owner}.{this.GetQuotedString(table.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(table.Comment))}'" + this.scriptsDelimiter);
+            return new AlterDbObjectScript<Table>($"COMMENT ON TABLE {this.GetQuotedFullTableName(table)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(table.Comment))}'" + this.scriptsDelimiter);
         }
 
         public override Script AddTableColumn(Table table, TableColumn column)
         {
-            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} ADD { this.dbInterpreter.ParseColumn(table, column)};");
+            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} ADD {this.dbInterpreter.ParseColumn(table, column)};");
         }
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
@@ -158,14 +172,14 @@ namespace DatabaseInterpreter.Core
             return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} RENAME COLUMN {this.GetQuotedString(column.Name)} TO {newName};");
         }
 
-        public override Script AlterTableColumn(Table table, TableColumn column)
+        public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY {this.dbInterpreter.ParseColumn(table, column)}");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY {this.dbInterpreter.ParseColumn(table, newColumn)}");
         }
 
         public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
         {
-            return new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {column.Owner}.{this.GetQuotedString(column.TableName)}.{this.GetQuotedString(column.Name)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(column.Comment))}'" + this.scriptsDelimiter);
+            return new AlterDbObjectScript<TableColumn>($"COMMENT ON COLUMN {this.GetQuotedFullTableChildName(column)} IS '{this.dbInterpreter.ReplaceSplitChar(this.TransferSingleQuotationString(column.Comment))}'" + this.scriptsDelimiter);
         }
 
         public override Script DropTableColumn(TableColumn column)
@@ -179,7 +193,7 @@ namespace DatabaseInterpreter.Core
 $@"
 ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQuotedString(primaryKey.Name)} PRIMARY KEY 
 (
-{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )
 USING INDEX 
 TABLESPACE
@@ -195,15 +209,15 @@ TABLESPACE
 
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
-            string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
-            string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
+            string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
+            string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
 
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(
 $@"
-ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT { this.GetQuotedString(foreignKey.Name)} FOREIGN KEY ({columnNames})
-REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})");
+ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {this.GetQuotedString(foreignKey.Name)} FOREIGN KEY ({columnNames})
+REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})");
 
             if (foreignKey.DeleteCascade)
             {
@@ -227,7 +241,7 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
 
         public override Script AddIndex(TableIndex index)
         {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
             string type = "";
 
@@ -242,7 +256,7 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
 
             string reverse = index.Type == IndexType.Reverse.ToString() ? "REVERSE" : "";
 
-            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX { this.GetQuotedString(index.Name)} ON { this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
+            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
         }
 
         public override Script DropIndex(TableIndex index)
@@ -270,6 +284,17 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
 
         public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
 
+        public override Script AddSequence(Sequence sequence)
+        {
+            string script =
+$@"CREATE SEQUENCE {this.GetQuotedString(sequence.Name)}
+START WITH {sequence.StartValue} INCREMENT BY {sequence.Increment}  MINVALUE {sequence.MinValue} MAXVALUE {sequence.MaxValue} 
+CACHE {sequence.CacheSize} 
+{(sequence.Cycled ? "CYCLE" : "")} {(sequence.Ordered ? "ORDER" : "")};";
+
+            return new CreateDbObjectScript<Sequence>(script);
+        }
+
         public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
          TablePrimaryKey primaryKey,
          IEnumerable<TableForeignKey> foreignKeys,
@@ -279,7 +304,7 @@ REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceCol
             ScriptBuilder sb = new ScriptBuilder();
 
             string tableName = table.Name;
-            string quotedTableName = this.GetQuotedObjectName(table);
+            string quotedTableName = this.GetQuotedFullTableName(table);
 
             #region Create Table
 
@@ -298,14 +323,17 @@ TABLESPACE
             sb.AppendLine();
 
             #region Comment
-            if (!string.IsNullOrEmpty(table.Comment))
+            if (this.option.TableScriptsGenerateOption.GenerateComment)
             {
-                sb.AppendLine(this.SetTableComment(table));
-            }
+                if (!string.IsNullOrEmpty(table.Comment))
+                {
+                    sb.AppendLine(this.SetTableComment(table));
+                }
 
-            foreach (TableColumn column in columns.Where(item => !string.IsNullOrEmpty(item.Comment)))
-            {
-                sb.AppendLine(this.SetTableColumnComment(table, column, true));
+                foreach (TableColumn column in columns.Where(item => !string.IsNullOrEmpty(item.Comment)))
+                {
+                    sb.AppendLine(this.SetTableColumnComment(table, column, true));
+                }
             }
             #endregion
 
@@ -395,7 +423,7 @@ TABLESPACE
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            return $"DROP {typeName.ToUpper()} {this.GetQuotedObjectName(dbObject)};";
+            return $"DROP {typeName.ToUpper()} {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
         }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
@@ -407,7 +435,7 @@ TABLESPACE
             {
                 foreach (string sql in sqls)
                 {
-                    DbDataReader reader = this.dbInterpreter.GetDataReaderAsync(dbConnection, sql).Result;
+                    IDataReader reader = this.dbInterpreter.GetDataReader(dbConnection, sql);
 
                     while (reader.Read())
                     {
@@ -428,7 +456,7 @@ TABLESPACE
             return $@"SELECT 'ALTER TABLE ""'|| T.TABLE_NAME ||'"" {(enabled ? "ENABLE" : "DISABLE")} CONSTRAINT ""'||T.CONSTRAINT_NAME || '""' AS ""SQL""  
                             FROM USER_CONSTRAINTS T 
                             WHERE T.CONSTRAINT_TYPE = 'R'
-                            AND UPPER(OWNER)= UPPER('{this.GetDbOwner()}')
+                            AND UPPER(OWNER)= UPPER('{this.GetDbSchema()}')
                            ";
         }
 
@@ -436,7 +464,7 @@ TABLESPACE
         {
             return $@"SELECT 'ALTER TRIGGER ""'|| TRIGGER_NAME || '"" {(enabled ? "ENABLE" : "DISABLE")} '
                          FROM USER_TRIGGERS
-                         WHERE UPPER(TABLE_OWNER)= UPPER('{this.GetDbOwner()}')";
+                         WHERE UPPER(TABLE_OWNER)= UPPER('{this.GetDbSchema()}')";
         }
         #endregion
     }

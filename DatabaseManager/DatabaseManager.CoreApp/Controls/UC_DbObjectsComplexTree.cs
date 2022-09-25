@@ -89,7 +89,8 @@ namespace DatabaseManager.Controls
         {
             return (node.Level <= 3) && !this.IsOnlyHasFakeChild(node)
                && !(node.Tag is ScriptDbObject)
-               && !(node.Tag is UserDefinedType);
+               && !(node.Tag is UserDefinedType)
+               && !(node.Tag is Sequence);
         }
 
         private bool CanDelete(TreeNode node)
@@ -103,6 +104,8 @@ namespace DatabaseManager.Controls
             bool isView = node.Tag is DatabaseInterpreter.Model.View;
             bool isTable = node.Tag is Table;
             bool isScriptObject = node.Tag is ScriptDbObject;
+            bool isUserDefinedType = node.Tag is UserDefinedType;
+            bool isSequence = node.Tag is Sequence;
 
             this.tsmiNewQuery.Visible = isDatabase;
             this.tsmiNewTable.Visible = node.Name == nameof(DbObjectTreeFolderType.Tables) || isTable;
@@ -114,7 +117,7 @@ namespace DatabaseManager.Controls
             this.tsmiDesign.Visible = isTable;
             this.tsmiCopy.Visible = isTable;
             this.tsmiRefresh.Visible = this.CanRefresh(node);
-            this.tsmiGenerateScripts.Visible = isDatabase || isTable || isScriptObject;
+            this.tsmiGenerateScripts.Visible = isDatabase || isTable || isScriptObject || isUserDefinedType || isSequence;
             this.tsmiConvert.Visible = isDatabase;
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
@@ -194,7 +197,7 @@ namespace DatabaseManager.Controls
 
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
             {
-                string text = $"{userDefinedType.Name}({userDefinedType.Type})";
+                string text = $"{userDefinedType.Name}{(string.IsNullOrEmpty(userDefinedType.Type)? "": "({userDefinedType.Type})")}";
 
                 string imageKeyName = nameof(userDefinedType);
 
@@ -203,6 +206,8 @@ namespace DatabaseManager.Controls
 
                 parentNode.Nodes.Add(node);
             }
+
+            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Sequence, schemaInfo.Sequences, createFolderNode);
         }
 
         private TreeNodeCollection AddTreeNodes<T>(TreeNode node, DatabaseObjectType types, DatabaseObjectType type, List<T> dbObjects, bool createFolderNode = true, bool createFakeNode = false)
@@ -253,9 +258,14 @@ namespace DatabaseManager.Controls
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));
 
-            if (this.databaseType == DatabaseType.SqlServer)
+            if (this.databaseType == DatabaseType.SqlServer || this.databaseType == DatabaseType.Postgres)
             {
                 databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
+            }
+
+            if(this.databaseType != DatabaseType.MySql)
+            {
+                databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Sequences), nameof(DbObjectTreeFolderType.Sequences), true));
             }
         }
 
@@ -548,7 +558,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            if (MessageBox.Show("Are you sure to clear all data of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show($"Are you sure to clear all data of the database?{Environment.NewLine}Please handle this operation carefully!", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 TreeNode node = this.GetSelectedNode();
 
@@ -592,7 +602,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            if (MessageBox.Show("Are you sure to delete all objects of the database?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show($"Are you sure to delete all objects of the database?{Environment.NewLine}Please handle this operation carefully!", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector() { DatabaseType = this.databaseType };
 

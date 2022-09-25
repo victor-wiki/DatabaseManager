@@ -1,0 +1,11 @@
+﻿CREATE OR REPLACE FUNCTION $NAME$ 
+(
+	"ParameterName" integer	
+)
+RETURNS integer
+LANGUAGE 'sql'
+COST 100
+VOLATILE PARALLEL UNSAFE
+
+
+RETURN 0;

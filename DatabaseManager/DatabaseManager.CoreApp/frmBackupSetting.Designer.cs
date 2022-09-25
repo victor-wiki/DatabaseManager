@@ -165,11 +165,9 @@
             this.label1.Location = new System.Drawing.Point(69, 296);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(615, 62);
+            this.label1.Size = new System.Drawing.Size(615, 82);
             this.label1.TabIndex = 15;
-            this.label1.Text = "1. It should use mysqldump.exe for MySql\r\n2. It should use exp.exe for Oracle\r\n3." +
-    " For SqlServer, if it\'s remote backup, the save folder should be a shared networ" +
-    "k folder";
+            this.label1.Text = resources.GetString("label1.Text");
             // 
             // label2
             // 

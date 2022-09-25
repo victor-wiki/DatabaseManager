@@ -27,7 +27,7 @@ namespace DatabaseManager.Controls
 
         public UC_TableDesigner()
         {
-            InitializeComponent();
+            InitializeComponent();           
 
             this.ucIndexes.OnColumnSelect += this.ShowColumnSelector;
             this.ucForeignKeys.OnColumnMappingSelect += this.ShowColumnMappingSelector;
@@ -43,10 +43,10 @@ namespace DatabaseManager.Controls
 
         private async void InitControls()
         {
-            if (this.displayInfo.DatabaseType == DatabaseType.MySql)
+            if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
             {
-                this.tabControl1.TabPages.Remove(this.tabConstraints);
-            }
+                this.lblSchema.Text = "Owner:";
+            }           
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
@@ -57,11 +57,11 @@ namespace DatabaseManager.Controls
 
             if (this.displayInfo.IsNew)
             {
-                this.LoadDatabaseOwners();
+                this.LoadDatabaseSchemas();
             }
             else
             {
-                this.cboOwner.Enabled = false;               
+                this.cboSchema.Enabled = false;               
 
                 SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, TableNames = new string[] { this.displayInfo.Name } };
                 filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey;
@@ -73,7 +73,7 @@ namespace DatabaseManager.Controls
                 if (table != null)
                 {
                     this.txtTableName.Text = table.Name;
-                    this.cboOwner.Text = table.Owner;
+                    this.cboSchema.Text = table.Schema;
                     this.txtTableComment.Text = table.Comment;
 
                     #region Load Columns
@@ -89,14 +89,14 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private async void LoadDatabaseOwners()
+        private async void LoadDatabaseSchemas()
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
             List<string> items = new List<string>();
             string defaultItem = null;
 
-            List<DatabaseOwner> owners = await dbInterpreter.GetDatabaseOwnersAsync();
+            List<DatabaseSchema> owners = await dbInterpreter.GetDatabaseSchemasAsync();
 
             items.AddRange(owners.Select(item => item.Name));
 
@@ -106,26 +106,26 @@ namespace DatabaseManager.Controls
             }
             else if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
             {
-                this.cboOwner.Enabled = false;
-                defaultItem = (this.GetDbInterpreter() as OracleInterpreter).GetDbOwner();
+                this.cboSchema.Enabled = false;
+                defaultItem = (this.GetDbInterpreter() as OracleInterpreter).GetDbSchema();
             }
             else if (this.displayInfo.DatabaseType == DatabaseType.MySql)
             {
-                this.cboOwner.Enabled = false;
+                this.cboSchema.Enabled = false;
                 defaultItem = dbInterpreter.ConnectionInfo.Database;
             }
 
-            cboOwner.Items.AddRange(items.ToArray());
+            cboSchema.Items.AddRange(items.ToArray());
 
-            if (cboOwner.Items.Count == 1)
+            if (cboSchema.Items.Count == 1)
             {
-                cboOwner.SelectedIndex = 0;
+                cboSchema.SelectedIndex = 0;
             }
             else
             {
                 if (defaultItem != null)
                 {
-                    cboOwner.Text = defaultItem;
+                    cboSchema.Text = defaultItem;
                 }
             }
         }
@@ -136,6 +136,7 @@ namespace DatabaseManager.Controls
             this.ucColumns.DatabaseType = displayInfo.DatabaseType;
             this.ucIndexes.DatabaseType = displayInfo.DatabaseType;
             this.ucForeignKeys.DatabaseType = displayInfo.DatabaseType;
+            this.ucForeignKeys.DefaultSchema = this.GetDbInterpreter().DefaultSchema;
             this.ucConstraints.DatabaseType = displayInfo.DatabaseType;
 
             this.InitControls();
@@ -155,7 +156,7 @@ namespace DatabaseManager.Controls
             TableDesignerInfo tableDesignerInfo = new TableDesignerInfo()
             {
                 Name = this.txtTableName.Text.Trim(),
-                Owner = this.cboOwner.Text.Trim(),
+                Schema = this.cboSchema.Text.Trim(),
                 Comment = this.txtTableComment.Text.Trim(),
                 OldName = this.displayInfo.DatabaseObject?.Name
             };
@@ -164,7 +165,7 @@ namespace DatabaseManager.Controls
 
             List<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns();
 
-            columns.ForEach(item => { item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name; });
+            columns.ForEach(item => { item.Schema = tableDesignerInfo.Schema; item.TableName = tableDesignerInfo.Name; });
 
             schemaDesingerInfo.TableColumnDesingerInfos.AddRange(columns);
 
@@ -176,7 +177,7 @@ namespace DatabaseManager.Controls
             {
                 List<TableIndexDesignerInfo> indexes = this.ucIndexes.GetIndexes();
 
-                indexes.ForEach(item => { item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name; });
+                indexes.ForEach(item => { item.Schema = tableDesignerInfo.Schema; item.TableName = tableDesignerInfo.Name; });
 
                 schemaDesingerInfo.TableIndexDesingerInfos.AddRange(indexes);
             }
@@ -191,7 +192,7 @@ namespace DatabaseManager.Controls
 
                 foreignKeys.ForEach(item =>
                 {
-                    item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name;
+                    item.Schema = tableDesignerInfo.Schema; item.TableName = tableDesignerInfo.Name;
 
                     if (item.ReferencedTableName == this.selfTableName)
                     {
@@ -211,7 +212,7 @@ namespace DatabaseManager.Controls
             {
                 List<TableConstraintDesignerInfo> constraints = this.ucConstraints.GetConstraints();
 
-                constraints.ForEach(item => { item.Owner = tableDesignerInfo.Owner; item.TableName = tableDesignerInfo.Name; });
+                constraints.ForEach(item => { item.Schema = tableDesignerInfo.Schema; item.TableName = tableDesignerInfo.Name; });
 
                 schemaDesingerInfo.TableConstraintDesignerInfos.AddRange(constraints);
             }
@@ -222,6 +223,11 @@ namespace DatabaseManager.Controls
         public ContentSaveResult Save(ContentSaveInfo info)
         {
             this.EndControlsEdit();
+
+            if(!this.ucColumns.ValidateDataGrid())
+            {
+                return new ContentSaveResult() { IsOK = false};
+            }
 
             ContentSaveResult result = Task.Run(() => this.SaveTable()).Result;
 
@@ -321,7 +327,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            Table table = new Table() { Owner = this.cboOwner.Text, Name = this.txtTableName.Text.Trim() };
+            Table table = new Table() { Schema = this.cboSchema.Text, Name = this.txtTableName.Text.Trim() };
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 

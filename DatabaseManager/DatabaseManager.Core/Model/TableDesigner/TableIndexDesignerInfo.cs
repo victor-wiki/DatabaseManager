@@ -6,7 +6,7 @@ namespace DatabaseManager.Model
 {
     public class TableIndexDesignerInfo
     {
-        public string Owner { get; set; }
+        public string Schema { get; set; }
         public string TableName { get; set; }
         public string OldName { get; set; }
         public string Name { get; set; }

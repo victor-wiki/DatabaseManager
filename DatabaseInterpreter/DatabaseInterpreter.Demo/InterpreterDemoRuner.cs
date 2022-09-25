@@ -1,6 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Demo

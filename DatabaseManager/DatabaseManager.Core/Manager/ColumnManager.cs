@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
+
 namespace DatabaseManager.Core
 {
     public class ColumnManager
@@ -87,7 +88,7 @@ namespace DatabaseManager.Core
             }
 
             string columName = columnDesingerInfo.Name;
-            string dataType = columnDesingerInfo.DataType;
+            string dataType = columnDesingerInfo.DataType;          
 
             DataTypeSpecification dataTypeSpec = DataTypeManager.GetDataTypeSpecification(databaseType, dataType);
 
@@ -143,7 +144,7 @@ namespace DatabaseManager.Core
 
                         if (!int.TryParse(lengthItem, out lenValue))
                         {
-                            message = $"\"{lengthItem}\" is't a valid integer value";
+                            message = $"\"{lengthItem}\" isn't a valid integer value";
                             return false;
                         }
 
@@ -175,6 +176,11 @@ namespace DatabaseManager.Core
             string args = dataTypeSpec.Args;
 
             if (string.IsNullOrEmpty(args))
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(length) && dataTypeSpec.Optional)
             {
                 return;
             }

@@ -84,7 +84,6 @@
             this.dgvIndexes.MultiSelect = false;
             this.dgvIndexes.Name = "dgvIndexes";
             this.dgvIndexes.RowHeadersWidth = 25;
-            this.dgvIndexes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvIndexes.Size = new System.Drawing.Size(884, 396);
             this.dgvIndexes.TabIndex = 8;
             this.dgvIndexes.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellClick);

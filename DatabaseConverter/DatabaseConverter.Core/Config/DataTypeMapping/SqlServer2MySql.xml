@@ -41,11 +41,11 @@
   </mapping>
   <mapping>
     <source type="geography" />
-    <target type="mediumtext" />
+    <target type="geometry" />
   </mapping>
   <mapping>
     <source type="geometry" />
-    <target type="mediumtext" />
+    <target type="geometry" />
   </mapping>
   <mapping>
     <source type="hierarchyid" />

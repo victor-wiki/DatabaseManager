@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using System;
+using System.IO;
 
 namespace DatabaseManager.Core
 {
@@ -71,6 +69,10 @@ namespace DatabaseManager.Core
             else if (databaseType == DatabaseType.MySql)
             {
                 return new MySqlBackup();
+            }
+            else if(databaseType == DatabaseType.Postgres)
+            {
+                return new PostgresBackup();
             }
 
             throw new NotImplementedException($"Not implemente for backup {databaseType}.");

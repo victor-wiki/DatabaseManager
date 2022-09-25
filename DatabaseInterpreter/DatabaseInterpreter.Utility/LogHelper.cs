@@ -1,5 +1,5 @@
-﻿using System;
-using System.Text;
+﻿using DatabaseInterpreter.Model;
+using System;
 using System.IO;
 
 namespace DatabaseInterpreter.Utility
@@ -37,13 +37,5 @@ namespace DatabaseInterpreter.Utility
                 File.AppendAllLines(filePath, new string[] { content });
             }
         }
-    }
-
-    [Flags]
-    public enum LogType : int
-    {
-        None = 0,
-        Info = 2,
-        Error = 4
-    }
+    }    
 }

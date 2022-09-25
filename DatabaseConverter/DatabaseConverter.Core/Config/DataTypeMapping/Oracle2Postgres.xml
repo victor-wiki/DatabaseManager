@@ -1,0 +1,85 @@
+<mappings>
+	<mapping>
+		<source type="binary_double" />
+		<target type="double precision" />
+	</mapping>
+	<mapping>
+		<source type="binary_float" />
+		<target type="double precision" />
+	</mapping>
+	<mapping>
+		<source type="blob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="clob" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="character" />
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="timestamp without time zone" />
+	</mapping>
+	<mapping>
+		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
+		<target type="timestamp without time zone"  />
+		<special name="expression" value="interval day[(]0[)] to second([(]\d[)])?" type="time without time zone" ></special>
+	</mapping>
+	<mapping>
+		<source type="interval year([(]\d[)])? to month" isExp="true"/>
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="long" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="long raw" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="nchar" />
+		<target type="character" />
+	</mapping>
+	<mapping>
+		<source type="nclob" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="number" />
+		<target type="numeric" />
+		<special name="scale" value="0" type="integer"></special>
+	</mapping>
+	<mapping>
+		<source type="nvarchar2" />
+		<target type="character varying" />
+	</mapping>
+	<mapping>
+		<source type="raw" />
+		<target type="bytea" />
+		<special name="maxLength" value="16" type="character" targetMaxLength="36"></special>
+	</mapping>
+	<mapping>
+		<source type="st_geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="timestamp with time zone" />
+	</mapping>	
+	<mapping>
+		<source type="timestamp([(]\d[)])? with local time zone" isExp="true"/>
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="timestamp([(]\d[)])? with time zone" isExp="true"/>
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="varchar2" />
+		<target type="character varying" />
+	</mapping>
+</mappings>

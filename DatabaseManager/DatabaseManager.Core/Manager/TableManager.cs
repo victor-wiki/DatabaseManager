@@ -11,6 +11,7 @@ using System.Data;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
+
 namespace DatabaseManager.Core
 {
     public class TableManager
@@ -132,7 +133,7 @@ namespace DatabaseManager.Core
 
                     if (tableDesignerInfo.OldName != tableDesignerInfo.Name)
                     {
-                        scripts.Add(this.scriptGenerator.RenameTable(new Table() { Owner = tableDesignerInfo.Owner, Name = tableDesignerInfo.OldName }, tableDesignerInfo.Name));
+                        scripts.Add(this.scriptGenerator.RenameTable(new Table() { Schema = tableDesignerInfo.Schema, Name = tableDesignerInfo.OldName }, tableDesignerInfo.Name));
                     }
 
                     if (!this.IsStringEquals(tableDesignerInfo.Comment, oldTable.Comment))
@@ -271,7 +272,8 @@ namespace DatabaseManager.Core
 
                             if (this.IsValueEqualsIgnoreCase(constraintDesignerInfo.OldName, constraintDesignerInfo.Name))
                             {
-                                if (oldConstraint != null && this.IsStringEquals(oldConstraint.Comment, newConstraint.Comment))
+                                if (oldConstraint != null && this.IsStringEquals(oldConstraint.Comment, newConstraint.Comment) 
+                                    && this.IsStringEquals(oldConstraint.Definition, newConstraint.Definition))
                                 {
                                     continue;
                                 }
@@ -321,7 +323,7 @@ namespace DatabaseManager.Core
 
             DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
-            bool isDefaultValueEquals = ValueHelper.IsStringEquals(ValueHelper.GetTrimedDefaultValue(oldColumn.DefaultValue), newColumn.DefaultValue);
+            bool isDefaultValueEquals = ValueHelper.IsStringEquals(ValueHelper.GetTrimedParenthesisValue(oldColumn.DefaultValue), newColumn.DefaultValue);
 
             if (!SchemaInfoHelper.IsTableColumnEquals(databaseType, oldColumn, newColumn)
                 || !isDefaultValueEquals)
@@ -332,7 +334,7 @@ namespace DatabaseManager.Core
                     {
                         SqlServerScriptGenerator sqlServerScriptGenerator = scriptGenerator as SqlServerScriptGenerator;
 
-                        TableDefaultValueConstraint defaultValueConstraint = defaultValueConstraints?.FirstOrDefault(item => item.Owner == oldTable.Owner && item.TableName == oldTable.Name && item.ColumnName == oldColumn.Name);
+                        TableDefaultValueConstraint defaultValueConstraint = defaultValueConstraints?.FirstOrDefault(item => item.Schema == oldTable.Schema && item.TableName == oldTable.Name && item.ColumnName == oldColumn.Name);
 
                         if (defaultValueConstraint != null)
                         {
@@ -343,7 +345,7 @@ namespace DatabaseManager.Core
                     }
                 }
 
-                Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn);
+                Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
 
                 if (databaseType == DatabaseType.Oracle)
                 {
@@ -513,7 +515,7 @@ namespace DatabaseManager.Core
                 {
                     if (primaryKey == null)
                     {
-                        primaryKey = new TablePrimaryKey() { Owner = table.Owner, TableName = table.Name, Name = IndexManager.GetPrimaryKeyDefaultName(table) };
+                        primaryKey = new TablePrimaryKey() { Schema = table.Schema, TableName = table.Name, Name = IndexManager.GetPrimaryKeyDefaultName(table) };
                     }
 
                     IndexColumn indexColumn = new IndexColumn() { ColumnName = column.Name, IsDesc = false, Order = primaryKey.Columns.Count + 1 };
@@ -582,7 +584,7 @@ namespace DatabaseManager.Core
                 {
                     if (!indexDesignerInfo.IsPrimary)
                     {
-                        TableIndex index = new TableIndex() { Owner = indexDesignerInfo.Owner, TableName = indexDesignerInfo.TableName };
+                        TableIndex index = new TableIndex() { Schema = indexDesignerInfo.Schema, TableName = indexDesignerInfo.TableName };
                         index.Name = indexDesignerInfo.Name;
 
                         index.IsUnique = indexDesignerInfo.Type == IndexType.Unique.ToString();
@@ -605,7 +607,7 @@ namespace DatabaseManager.Core
             {
                 foreach (TableForeignKeyDesignerInfo keyDesignerInfo in schemaDesignerInfo.TableForeignKeyDesignerInfos)
                 {
-                    TableForeignKey foreignKey = new TableForeignKey() { Owner = keyDesignerInfo.Owner, TableName = keyDesignerInfo.TableName };
+                    TableForeignKey foreignKey = new TableForeignKey() { Schema = keyDesignerInfo.Schema, TableName = keyDesignerInfo.TableName };
                     foreignKey.Name = keyDesignerInfo.Name;
 
                     foreignKey.ReferencedTableName = keyDesignerInfo.ReferencedTableName;
@@ -628,7 +630,7 @@ namespace DatabaseManager.Core
             {
                 foreach (TableConstraintDesignerInfo constraintDesignerInfo in schemaDesignerInfo.TableConstraintDesignerInfos)
                 {
-                    TableConstraint constraint = new TableConstraint() { Owner = constraintDesignerInfo.Owner, TableName = constraintDesignerInfo.TableName };
+                    TableConstraint constraint = new TableConstraint() { Schema = constraintDesignerInfo.Schema, TableName = constraintDesignerInfo.TableName };
                     constraint.Name = constraintDesignerInfo.Name;
                     constraint.Definition = constraintDesignerInfo.Definition;
                     constraint.Comment = constraintDesignerInfo.Comment;

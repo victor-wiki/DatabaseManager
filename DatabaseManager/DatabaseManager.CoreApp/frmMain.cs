@@ -58,27 +58,27 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            Task.Run(new Action(() =>
+            //Task.Run(new Action(() =>
+            //{
+            this.txtMessage.ForeColor = Color.Black;
+
+            if (info.InfoType == FeedbackInfoType.Error)
             {
-                this.txtMessage.ForeColor = Color.Black;
-
-                if (info.InfoType == FeedbackInfoType.Error)
+                if (!info.IgnoreError)
                 {
-                    if (!info.IgnoreError)
-                    {
-                        MessageBox.Show(info.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    MessageBox.Show(info.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
 
-                    this.txtMessage.Text = info.Message;
-                    this.txtMessage.BackColor = this.BackColor;
-                    this.txtMessage.ForeColor = Color.Red;
-                    this.toolTip1.SetToolTip(this.txtMessage, info.Message);
-                }
-                else
-                {
-                    this.txtMessage.Text = info.Message;
-                }
-            }));            
+                this.txtMessage.Text = info.Message;
+                this.txtMessage.BackColor = this.BackColor;
+                this.txtMessage.ForeColor = Color.Red;
+                this.toolTip1.SetToolTip(this.txtMessage, info.Message);
+            }
+            else
+            {
+                this.txtMessage.Text = info.Message;
+            }
+            //}));
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)

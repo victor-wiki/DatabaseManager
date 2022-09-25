@@ -1,6 +1,6 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Demo;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseConverter.Demo;
 using System;
 
 namespace DatabaseConverter.Test

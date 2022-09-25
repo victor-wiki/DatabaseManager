@@ -57,5 +57,22 @@ namespace DatabaseInterpreter.Utility
             Regex reg = new Regex(@"(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])");
             return reg.Replace(name, " ");
         }
+
+        public static string FormatScript(string scripts)
+        {
+            Regex regex = new Regex(@"([;]+[\s]*[;]+)|(\r\n[\s]*[;])");
+
+            return StringHelper.ToSingleEmptyLine(regex.Replace(scripts, ";"));
+        }
+
+        public static string TrimBracket(string value)
+        {
+            while (value.Length > 2 && value.StartsWith("(") && value.EndsWith(")"))
+            {
+                value = value.Substring(1, value.Length - 2);
+            }
+
+            return value;                 
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DatabaseConverter.Model;
+﻿using DatabaseConverter.Core.Model;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
@@ -13,7 +14,7 @@ namespace DatabaseConverter.Core
     public abstract class DbObjectTranslator
     {
         private IObserver<FeedbackInfo> observer;
-        protected string sourceOwnerName;
+        protected string sourceSchemaName;
         protected DbInterpreter sourceDbInterpreter;
         protected DbInterpreter targetDbInterpreter;
         protected List<DataTypeMapping> dataTypeMappings = null;
@@ -21,9 +22,9 @@ namespace DatabaseConverter.Core
         protected List<IEnumerable<VariableMapping>> variableMappings = null;
         protected bool hasError = false;
 
-        public bool SkipError { get; set; }
+        public bool ContinueWhenErrorOccurs { get; set; }
         public bool HasError => this.hasError;
-        public string TargetDbOwner { get; set; }
+        public string TargetDbSchema { get; set; }
         public SchemaInfo SourceSchemaInfo { get; set; }
         public DbConverterOption Option { get; set; }
 
@@ -53,7 +54,7 @@ namespace DatabaseConverter.Core
             return mappings.FirstOrDefault(item => item.Source.Type?.ToLower() == dataType?.ToLower());
         }
 
-        public string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
+        internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
         {
             dataType = dataType.Trim();
 
@@ -137,18 +138,7 @@ namespace DatabaseConverter.Core
             return newDataType;
         }
 
-        public string FormatSql(string sql, out bool hasError)
-        {
-            hasError = false;
-
-            SqlFormattingManager manager = new SqlFormattingManager();
-
-            string formattedSql = manager.Format(sql, ref hasError);
-
-            return formattedSql;
-        }
-
-        public string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
+        public static string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
         {
             return Regex.Replace(source, Regex.Escape(oldValue), newValue, option);
         }
@@ -177,7 +167,7 @@ namespace DatabaseConverter.Core
 
                 if (sourceVariable != null && !string.IsNullOrEmpty(sourceVariable.Variable) && targetVariable.Variable != null && !string.IsNullOrEmpty(targetVariable.Variable))
                 {
-                    script = this.ReplaceValue(script, sourceVariable.Variable, targetVariable.Variable);
+                    script = ReplaceValue(script, sourceVariable.Variable, targetVariable.Variable);
                 }
             }
 
@@ -190,6 +180,11 @@ namespace DatabaseConverter.Core
             dictDataType = new Dictionary<string, string>();
 
             string name = fomular.Name;
+
+            if (!string.IsNullOrEmpty(targetFunctionInfo.Args) && !targetFunctionInfo.Args.Contains("EXP"))
+            {
+                return $"{targetFunctionInfo.Name}({targetFunctionInfo.Args})";
+            }           
 
             FunctionSpecification sourceFuncSpec = sourceFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == name.ToUpper());
             FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionInfo.Name.ToUpper());
@@ -205,8 +200,11 @@ namespace DatabaseConverter.Core
 
                 int fetchCount = string.IsNullOrEmpty(targetFunctionInfo.Args) ? fomularArgs.Count : -1;
 
-                Dictionary<int, string> sourceTokens = this.GetFunctionArgumentTokens(sourceFuncSpec, null, fetchCount);
-                Dictionary<int, string> targetTokens = this.GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args, fetchCount);
+                Dictionary<int, string> sourceTokens = GetFunctionArgumentTokens(sourceFuncSpec, null, fetchCount);
+
+                int targetArgsLength = targetFuncSpec.Args.Split(new string[] { targetFuncSpec.Delimiter }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+                Dictionary<int, string> targetTokens = GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args, fetchCount < targetArgsLength ? targetArgsLength : fetchCount);
 
                 bool ignore = false;
 
@@ -257,20 +255,45 @@ namespace DatabaseConverter.Core
                         {
                             args.Add(token);
                         }
+                        else if (token == "STR")
+                        {
+                            args.Add("''");
+                        }
+                        else if(token == "START")
+                        {
+                            args.Add("0");
+                        }
                     }
 
                     string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
 
                     string strArgs = string.Join(targetDelimiter, args);
+                    string targetFunctionName = targetFunctionInfo.Name;
 
-                    newExpression = $"{targetFunctionInfo.Name}{ (targetFuncSpec.NoParenthesess ? "" : $"({strArgs})") }";
+                    if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                    {
+                        if (name == "TRIM" && fomularArgs.Count>1)
+                        {
+                            switch(fomularArgs[0])
+                            {
+                                case "LEADING":
+                                    targetFunctionName = "LTRIM";
+                                    break;
+                                case "TRAILING":
+                                    targetFunctionName = "RTRIM";
+                                    break;
+                            }
+                        }
+                    }
+
+                    newExpression = $"{targetFunctionName}{(targetFuncSpec.NoParenthesess ? "" : $"({strArgs})")}";
                 }
             }
 
             return newExpression;
         }
 
-        public Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, string functionArgs, int fetchCount = -1)
+        internal static Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, string functionArgs, int fetchCount = -1)
         {
             Dictionary<int, string> dictTokenIndex = new Dictionary<int, string>();
 
@@ -330,6 +353,17 @@ namespace DatabaseConverter.Core
             }
 
             return functionInfo;
+        }
+
+        public string FormatSql(string sql, out bool hasError)
+        {
+            hasError = false;
+
+            SqlFormattingManager manager = new SqlFormattingManager();
+
+            string formattedSql = manager.Format(sql, ref hasError);
+
+            return formattedSql;
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

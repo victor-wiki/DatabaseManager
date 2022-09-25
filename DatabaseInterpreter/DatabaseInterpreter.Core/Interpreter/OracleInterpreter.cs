@@ -1,8 +1,12 @@
-﻿using DatabaseInterpreter.Model;
+﻿using Dapper;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using MySqlConnector;
 using Oracle.ManagedDataAccess.Client;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -13,17 +17,21 @@ namespace DatabaseInterpreter.Core
     public class OracleInterpreter : DbInterpreter
     {
         #region Field & Property
-        private string dbOwner;
+        private string dbSchema;
         public const int DEFAULT_PORT = 1521;
         public const string DEFAULT_SERVICE_NAME = "ORCL";
         public const string SEMICOLON_FUNC = "CHR(59)";
         public const string CONNECT_CHAR = "||";
         public override string UnicodeInsertChar => "";
-        public override string CommandParameterChar { get { return ":"; } }
-        public override char QuotationLeftChar { get { return '"'; } }
-        public override char QuotationRightChar { get { return '"'; } }
+        public override string CommandParameterChar => ":";
+        public const char QuotedLeftChar = '"';
+        public const char QuotedRightChar = '"';
+        public override char QuotationLeftChar { get { return QuotedLeftChar; } }
+        public override char QuotationRightChar { get { return QuotedRightChar; } }
         public override string CommentString => "--";
         public override DatabaseType DatabaseType => DatabaseType.Oracle;
+        public override string DefaultDataType => "varchar2";
+        public override string DefaultSchema => this.ConnectionInfo.UserId;
         public override IndexType IndexType => IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
@@ -32,7 +40,7 @@ namespace DatabaseInterpreter.Core
         #region Constructor
         public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
         {
-            this.dbOwner = connectionInfo.UserId;
+            this.dbSchema = connectionInfo.UserId;
             this.dbConnector = this.GetDbConnector();
         }
         #endregion
@@ -42,24 +50,37 @@ namespace DatabaseInterpreter.Core
         {
             return new DbConnector(new OracleProvider(), new OracleConnectionBuilder(), this.ConnectionInfo);
         }
+
+        public override bool IsLowDbVersion(string version)
+        {
+            if (version != null)
+            {
+                if (string.Compare(version.Substring(0, 2), "12") < 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
         #endregion
 
         #region Schema Information
         #region Database
 
-        public async Task<string> GetCurrentUserName()
+        public string GetCurrentUserName()
         {
             string sql = "SELECT sys_context('USERENV', 'CURRENT_USER') FROM dual";
-            return (await this.GetScalarAsync(this.CreateConnection(), sql))?.ToString();
+            return (this.GetScalar(this.CreateConnection(), sql))?.ToString();
         }
 
-        public string GetDbOwner()
+        public string GetDbSchema()
         {
-            if (this.ConnectionInfo != null && this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbOwner) || this.dbOwner == "/"))
+            if (this.ConnectionInfo != null && this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbSchema) || this.dbSchema == "/"))
             {
                 try
                 {
-                    return this.dbOwner = this.GetCurrentUserName().Result;
+                    return this.dbSchema = this.GetCurrentUserName();
                 }
                 catch (Exception ex)
                 {
@@ -67,7 +88,7 @@ namespace DatabaseInterpreter.Core
                 }
             }
 
-            return this.dbOwner;
+            return this.dbSchema;
         }
 
         public override Task<List<Database>> GetDatabasesAsync()
@@ -80,18 +101,20 @@ namespace DatabaseInterpreter.Core
                 notShowBuiltinDatabaseCondition = string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"AND TABLESPACE_NAME NOT IN({strBuiltinDatabase}) AND CONTENTS <>'UNDO'";
             }
 
-            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbOwner()}')) {notShowBuiltinDatabaseCondition}";
+            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbSchema()}')) {notShowBuiltinDatabaseCondition}";
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
         #endregion
 
-        #region Database Owner
-        public override Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        #region Database Schema
+        public override async Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
-            string sql = @"SELECT USERNAME AS ""Owner"",USERNAME AS ""NAME""  FROM ALL_USERS ORDER BY USERNAME";
+            string database = this.ConnectionInfo.UserId;
 
-            return base.GetDbObjectsAsync<DatabaseOwner>(sql);
+            List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = database, Name = database } };
+
+            return await Task.Run(() => { return databaseSchemas; });
         }
         #endregion
 
@@ -114,24 +137,58 @@ namespace DatabaseInterpreter.Core
 
             if (isSimpleMode)
             {
-                sql = $@"SELECT T.OWNER AS ""Owner"",T.TYPE_NAME AS ""Name""
+                sql = $@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name""
                         FROM ALL_TYPES T";
             }
             else
             {
-                sql = $@"SELECT T.OWNER AS ""Owner"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""DataType"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
+                sql = $@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""Type"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
                         FROM ALL_TYPES T
                         JOIN ALL_TYPE_ATTRS TA ON T.OWNER = TA.OWNER AND T.TYPE_NAME = TA.TYPE_NAME
                       ";
             }
 
-            sql += $" WHERE UPPER(T.OWNER)=UPPER('{this.GetDbOwner()}')";
+            sql += $" WHERE UPPER(T.OWNER)=UPPER('{this.GetDbSchema()}')";
 
             if (filter != null && filter.UserDefinedTypeNames != null && filter.UserDefinedTypeNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.UserDefinedTypeNames);
-                sql += $" AND T.TYPE_NAME IN ({ strNames })";
+                sql += $" AND T.TYPE_NAME IN ({strNames})";
             }
+
+            sql += $" ORDER BY T.TYPE_NAME{(isSimpleMode ? "" : ",TA.ATTR_NAME")}";
+
+            return sql;
+        }
+        #endregion
+
+        #region Sequence
+        public override Task<List<Sequence>> GetSequencesAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Sequence>(this.GetSqlForSequences(filter));
+        }
+        public override Task<List<Sequence>> GetSequencesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Sequence>(dbConnection, this.GetSqlForSequences(filter));
+        }
+
+        private string GetSqlForSequences(SchemaInfoFilter filter = null)
+        {
+            string sql = $@"SELECT SEQUENCE_OWNER AS ""Schema"",SEQUENCE_NAME AS ""Name"",'number' AS ""DataType"",
+                            MIN_VALUE AS ""MinValue"",MAX_VALUE AS ""MaxValue"",INCREMENT_BY AS ""Increment"",
+                            CASE CYCLE_FLAG WHEN 'Y' THEN 1 ELSE 0 END AS ""Cycled"",CASE order_flag WHEN 'Y' THEN 1 ELSE 0 END AS ""Ordered"",
+                            1 AS ""UseCache"",CACHE_SIZE AS ""CacheSize""
+                            FROM all_sequences s
+                            WHERE sequence_name='MySeq'
+                            AND UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')";
+
+            if (filter != null && filter.SequenceNames != null && filter.SequenceNames.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(filter.SequenceNames);
+                sql += $" AND s.SEQUENCE_NAME in ({strNames})";
+            }
+
+            sql += " ORDER BY s.SEQUENCE_NAME";
 
             return sql;
         }
@@ -140,40 +197,40 @@ namespace DatabaseInterpreter.Core
         #region Function  
         public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(this.GetSqlForProcedures("FUNCTION", filter));
+            return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines("FUNCTION", filter));
         }
 
         public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForProcedures("FUNCTION", filter));
+            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines("FUNCTION", filter));
         }
 
-        private string GetSqlForProcedures(string type, SchemaInfoFilter filter = null)
+        private string GetSqlForRoutines(string type, SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             bool isFunction = type.ToUpper() == "FUNCTION";
             string sql = "";
 
-            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbOwner()}')";
+            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";
             string nameCondition = "";
             string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
 
             if (objectNames != null && objectNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(objectNames);
-                nameCondition = $" AND P.OBJECT_NAME IN ({ strNames })";
+                nameCondition = $" AND P.OBJECT_NAME IN ({strNames})";
             }
 
             if (isSimpleMode)
             {
-                sql = $@"SELECT P.OBJECT_NAME AS ""Name"", P.OWNER AS ""Owner""
+                sql = $@"SELECT P.OBJECT_NAME AS ""Name"", P.OWNER AS ""Schema""
                          FROM ALL_PROCEDURES P 
                          WHERE P.OBJECT_TYPE='{type}' {ownerCondition}
                          {nameCondition}";
             }
             else
             {
-                sql = $@"SELECT S.NAME AS ""Name"", P.OWNER AS ""Owner"", 'CREATE OR REPLACE ' || LISTAGG(TEXT,'') WITHIN GROUP(ORDER BY LINE) ""Definition""
+                sql = $@"SELECT S.NAME AS ""Name"", P.OWNER AS ""Schema"", 'CREATE OR REPLACE ' || LISTAGG(TEXT,'') WITHIN GROUP(ORDER BY LINE) ""Definition""
                         FROM ALL_PROCEDURES P
                         JOIN ALL_SOURCE S ON P.OWNER = S.OWNER AND P.OBJECT_NAME = S.NAME
                         WHERE P.OBJECT_TYPE = '{type}' {ownerCondition}
@@ -216,25 +273,25 @@ namespace DatabaseInterpreter.Core
 
             if (isSimpleMode)
             {
-                sql = $@"SELECT T.OWNER AS ""Owner"", T.TABLE_NAME AS ""Name""
+                sql = $@"SELECT T.OWNER AS ""Schema"", T.TABLE_NAME AS ""Name""
                          FROM ALL_TABLES T 
                         ";
             }
             else
             {
-                sql = $@"SELECT T.OWNER AS ""Owner"", T.TABLE_NAME AS ""Name"", C.COMMENTS AS ""Comment"",
+                sql = $@"SELECT T.OWNER AS ""Schema"", T.TABLE_NAME AS ""Name"", C.COMMENTS AS ""Comment"",
                           1 AS ""IdentitySeed"", 1 AS ""IdentityIncrement""
                           FROM ALL_TABLES T
                           LEFT JOIN USER_TAB_COMMENTS C ON T.TABLE_NAME= C.TABLE_NAME
                      ";
             }
 
-            sql += $" WHERE UPPER(OWNER)=UPPER('{this.GetDbOwner()}')" + tablespaceCondition;
+            sql += $" WHERE UPPER(OWNER)=UPPER('{this.GetDbSchema()}')" + tablespaceCondition;
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND T.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND T.TABLE_NAME IN ({strTableNames})";
             }
 
             sql += " ORDER BY T.TABLE_NAME";
@@ -247,28 +304,36 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<TableColumn>> GetTableColumnsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(filter));
+            DbConnection connection = this.CreateConnection();
+            bool isLowDbVersion = this.IsLowDbVersion(connection);
+
+            return base.GetDbObjectsAsync<TableColumn>(connection, this.GetSqlForTableColumns(filter));
         }
 
         public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
+            bool isLowDbVersion = this.IsLowDbVersion(dbConnection);
+
+            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter, isLowDbVersion));
         }
 
-        private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
+        private string GetSqlForTableColumns(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
-            string sql = $@"SELECT OWNER AS ""Owner"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
-                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" , '' AS ""TypeOwner"",
+            string userGeneratedCondition = isLowDbVersion ? "" : " AND C.USER_GENERATED='YES'";
+
+            string sql = $@"SELECT OWNER AS ""Schema"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",C.DATA_TYPE_OWNER AS ""DataTypeSchema"",
+                 CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
+                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" ,
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN NULL ELSE DATA_DEFAULT END AS ""DefaultValue"",
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp""
                  FROM ALL_TAB_COLS C
                  LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
-                 WHERE UPPER(OWNER)=UPPER('{this.GetDbOwner()}')";
+                 WHERE UPPER(OWNER)=UPPER('{this.GetDbSchema()}'){userGeneratedCondition}";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -288,15 +353,15 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTablePrimaryKeyItems(SchemaInfoFilter filter = null)
         {
-            string sql = $@"SELECT UC.OWNER AS ""Owner"", UC.TABLE_NAME AS ""TableName"",UC.CONSTRAINT_NAME AS ""Name"",UCC.COLUMN_NAME AS ""ColumnName"", UCC.POSITION AS ""Order"", 0 AS ""IsDesc""
+            string sql = $@"SELECT UC.OWNER AS ""Schema"", UC.TABLE_NAME AS ""TableName"",UC.CONSTRAINT_NAME AS ""Name"",UCC.COLUMN_NAME AS ""ColumnName"", UCC.POSITION AS ""Order"", 0 AS ""IsDesc""
                         FROM USER_CONSTRAINTS UC
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME  
-                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetDbOwner()}')";
+                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetDbSchema()}')";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND UC.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND UC.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -316,18 +381,18 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
         {
-            string sql = $@"SELECT UC.OWNER AS ""Owner"", UC.TABLE_NAME AS ""TableName"", UC.CONSTRAINT_NAME AS ""Name"", UCC.column_name AS ""ColumnName"",
+            string sql = $@"SELECT UC.OWNER AS ""Schema"", UC.TABLE_NAME AS ""TableName"", UC.CONSTRAINT_NAME AS ""Name"", UCC.column_name AS ""ColumnName"",
                         RUCC.TABLE_NAME AS ""ReferencedTableName"",RUCC.COLUMN_NAME AS ""ReferencedColumnName"",
                         0 AS ""UpdateCascade"", CASE UC.DELETE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS ""DeleteCascade"" 
                         FROM USER_CONSTRAINTS UC                       
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME                       
                         JOIN USER_CONS_COLUMNS RUCC ON UC.OWNER=RUCC.OWNER AND UC.R_CONSTRAINT_NAME=RUCC.CONSTRAINT_NAME AND UCC.POSITION=RUCC.POSITION
-                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetDbOwner()}')";
+                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetDbSchema()}')";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND UC.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND UC.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -348,18 +413,18 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
 
-            string sql = $@"SELECT UI.TABLE_OWNER AS ""Owner"", UI.TABLE_NAME AS ""TableName"", UI.INDEX_NAME AS ""Name"", UIC.COLUMN_NAME AS ""ColumnName"", UIC.COLUMN_POSITION AS ""Order"",
+            string sql = $@"SELECT UI.TABLE_OWNER AS ""Schema"", UI.TABLE_NAME AS ""TableName"", UI.INDEX_NAME AS ""Name"", UIC.COLUMN_NAME AS ""ColumnName"", UIC.COLUMN_POSITION AS ""Order"",
                 CASE UIC.DESCEND WHEN 'ASC' THEN 0 ELSE 1 END AS ""IsDesc"", CASE UI.UNIQUENESS WHEN 'UNIQUE' THEN 1 ELSE 0 END AS ""IsUnique"",
                 UI.INDEX_TYPE AS ""Type"", CASE WHEN UC.CONSTRAINT_NAME IS NOT NULL THEN 1 ELSE 0 END AS ""IsPrimary"", CASE WHEN UC.CONSTRAINT_NAME IS NOT NULL THEN 1 ELSE 0 END AS ""Clustered""
                 FROM USER_INDEXES UI
                 JOIN USER_IND_COLUMNS UIC ON UI.INDEX_NAME = UIC.INDEX_NAME AND UI.TABLE_NAME = UIC.TABLE_NAME
                 LEFT JOIN USER_CONSTRAINTS UC ON UI.TABLE_NAME = UC.TABLE_NAME AND UI.TABLE_OWNER = UC.OWNER AND UI.INDEX_NAME = UC.CONSTRAINT_NAME AND UC.CONSTRAINT_TYPE = 'P'
-                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbOwner()}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}";
+                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbSchema()}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND UI.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND UI.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -375,7 +440,7 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
+                return this.GetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(this.GetSqlForTableTriggers(filter)));
             }
         }
 
@@ -387,11 +452,11 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                return this.SetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
+                return this.GetTriggerDefinition(base.GetDbObjectsAsync<TableTrigger>(dbConnection, this.GetSqlForTableTriggers(filter)));
             }
         }
 
-        private Task<List<TableTrigger>> SetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
+        private Task<List<TableTrigger>> GetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
         {
             foreach (TableTrigger trigger in tableTriggers.Result)
             {
@@ -405,11 +470,11 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT TRIGGER_NAME AS ""Name"",TABLE_OWNER AS ""Owner"", TABLE_NAME AS ""TableName"", 
-                         { (isSimpleMode ? "''" : "('CREATE OR REPLACE TRIGGER ' || DESCRIPTION)")} AS ""CreateClause"",
-                         { (isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
+            string sql = $@"SELECT TRIGGER_NAME AS ""Name"",TABLE_OWNER AS ""Schema"", TABLE_NAME AS ""TableName"", 
+                         {(isSimpleMode ? "''" : "('CREATE OR REPLACE TRIGGER ' || DESCRIPTION)")} AS ""CreateClause"",
+                         {(isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
                         FROM USER_TRIGGERS
-                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetDbOwner()}')
+                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetDbSchema()}')
                         ";
 
             if (filter != null)
@@ -417,13 +482,13 @@ namespace DatabaseInterpreter.Core
                 if (filter.TableNames != null && filter.TableNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                    sql += $" AND TABLE_NAME IN ({ strNames })";
+                    sql += $" AND TABLE_NAME IN ({strNames})";
                 }
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
-                    sql += $" AND TRIGGER_NAME IN ({ strNames })";
+                    sql += $" AND TRIGGER_NAME IN ({strNames})";
                 }
             }
 
@@ -436,26 +501,33 @@ namespace DatabaseInterpreter.Core
         #region Table Constraint
         public override Task<List<TableConstraint>> GetTableConstraintsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(this.GetSqlForTableConstraints(filter));
+            DbConnection connection = this.CreateConnection();
+            bool isLowDbVersion = this.IsLowDbVersion(connection);
+
+            return base.GetDbObjectsAsync<TableConstraint>(connection, this.GetSqlForTableConstraints(filter, isLowDbVersion));
         }
 
         public override Task<List<TableConstraint>> GetTableConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(filter));
+            bool isLowDbVersion = this.IsLowDbVersion(dbConnection);
+
+            return base.GetDbObjectsAsync<TableConstraint>(dbConnection, this.GetSqlForTableConstraints(filter, isLowDbVersion));
         }
 
-        private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
+        private string GetSqlForTableConstraints(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
-            string sql = $@"SELECT OWNER AS ""Owner"", CONSTRAINT_NAME AS ""Name"", TABLE_NAME AS ""TableName"", SEARCH_CONDITION_VC AS ""Definition""
+            string definitionField = isLowDbVersion ? "SEARCH_CONDITION" : "SEARCH_CONDITION_VC";
+
+            string sql = $@"SELECT OWNER AS ""Schema"", CONSTRAINT_NAME AS ""Name"", TABLE_NAME AS ""TableName"", {definitionField} AS ""Definition""
                          FROM ALL_CONSTRAINTS C
-                         WHERE UPPER(OWNER) = UPPER('{this.GetDbOwner()}') 
+                         WHERE UPPER(OWNER) = UPPER('{this.GetDbSchema()}') 
                          AND CONSTRAINT_TYPE = 'C' AND GENERATED = 'USER NAME'
                          ";
 
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TABLE_NAME IN ({ strNames })";
+                sql += $" AND TABLE_NAME IN ({strNames})";
             }
 
             sql += " ORDER BY CONSTRAINT_NAME";
@@ -467,26 +539,32 @@ namespace DatabaseInterpreter.Core
         #region View  
         public override Task<List<View>> GetViewsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(this.GetSqlForViews(filter));
+            var dbConnection = this.CreateConnection();
+            bool isLowDbVersion = this.IsLowDbVersion(dbConnection);
+
+            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(filter, isLowDbVersion));
         }
 
         public override Task<List<View>> GetViewsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(filter));
+            bool isLowDbVersion = this.IsLowDbVersion(dbConnection);
+
+            return base.GetDbObjectsAsync<View>(dbConnection, this.GetSqlForViews(filter, isLowDbVersion));
         }
 
-        private string GetSqlForViews(SchemaInfoFilter filter = null)
+        private string GetSqlForViews(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string definitionField = isLowDbVersion ? $"DBMS_METADATA.GET_DDL('VIEW',V.VIEW_NAME, '{this.ConnectionInfo.UserId}')" : "'CREATE OR REPLACE VIEW '||V.VIEW_NAME||' AS ' || CHR(13) || TEXT_VC";
 
-            string sql = $@"SELECT V.OWNER AS ""Owner"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : "'CREATE OR REPLACE VIEW '||V.VIEW_NAME||' AS ' || CHR(13) || TEXT_VC")} AS ""Definition"" 
+            string sql = $@"SELECT V.OWNER AS ""Schema"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : definitionField)} AS ""Definition"" 
                         FROM ALL_VIEWS V
-                        WHERE UPPER(OWNER) = UPPER('{this.GetDbOwner()}')";
+                        WHERE UPPER(OWNER) = UPPER('{this.GetDbSchema()}')";
 
             if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
-                sql += $" AND V.VIEW_NAME IN ({ strNames })";
+                sql += $" AND V.VIEW_NAME IN ({strNames})";
             }
 
             sql += " ORDER BY VIEW_NAME";
@@ -499,30 +577,15 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForProcedures("PROCEDURE", filter));
+            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines("PROCEDURE", filter));
         }
 
         public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForProcedures("PROCEDURE", filter));
+            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines("PROCEDURE", filter));
         }
         #endregion
-        #endregion
-
-        #region Database Operation      
-
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
-        {
-            string sql = $@"SELECT COUNT(1) FROM {this.GetDbOwner()}.{ this.GetQuotedString(table.Name)}";
-
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                sql += whereClause;
-            }
-
-            return base.GetTableRecordCountAsync(connection, sql);
-        }      
-        #endregion
+        #endregion       
 
         #region BulkCopy
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
@@ -530,11 +593,6 @@ namespace DatabaseInterpreter.Core
             if (!(connection is OracleConnection conn))
             {
                 return;
-            }
-
-            if (conn.State != ConnectionState.Open)
-            {
-                await conn.OpenAsync();
             }
 
             using (var bulkCopy = new OracleBulkCopy(conn, bulkCopyInfo.Transaction as OracleTransaction))
@@ -553,15 +611,15 @@ namespace DatabaseInterpreter.Core
         {
             var columns = dataTable.Columns.Cast<DataColumn>();
 
-            if (!columns.Any(item => item.DataType == typeof(MySql.Data.Types.MySqlDateTime)))
+            if (!columns.Any(item => item.DataType == typeof(MySqlDateTime)
+               || item.DataType.Name == "SqlGeography"
+               || item.DataType.Name == nameof(System.Collections.BitArray)))
             {
                 return dataTable;
             }
 
-            Dictionary<int, Type> changedColumnTypes = new Dictionary<int, Type>();
-            Dictionary<(int RowIndex, int ColumnIndex), object> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), object>();
-
-            DataTable dtChanged = dataTable.Clone();
+            Dictionary<int, DataTableColumnChangeInfo> changedColumns = new Dictionary<int, DataTableColumnChangeInfo>();
+            Dictionary<(int RowIndex, int ColumnIndex), dynamic> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), dynamic>();
 
             int rowIndex = 0;
 
@@ -577,29 +635,37 @@ namespace DatabaseInterpreter.Core
 
                         if (type != typeof(DBNull))
                         {
-                            if (type == typeof(MySql.Data.Types.MySqlDateTime))
+                            Type newColumnType = null;
+                            TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
+                            string dataType = tableColumn.DataType.ToLower();
+
+                            if (type == typeof(MySqlDateTime))
                             {
-                                MySql.Data.Types.MySqlDateTime mySqlDateTime = (MySql.Data.Types.MySqlDateTime)value;
-
-                                TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
-
-                                string dataType = tableColumn.DataType.ToLower();
-
-                                Type columnType = null;
+                                MySqlDateTime mySqlDateTime = (MySqlDateTime)value;
 
                                 if (dataType.Contains("date") || dataType.Contains("timestamp"))
                                 {
                                     DateTime dateTime = mySqlDateTime.GetDateTime();
 
-                                    columnType = typeof(DateTime);
+                                    newColumnType = typeof(DateTime);
 
                                     changedValues.Add((rowIndex, i), dateTime);
                                 }
+                            }
+                            else if (type == typeof(System.Collections.BitArray))
+                            {
+                                newColumnType = typeof(byte[]);
 
-                                if (columnType != null && !changedColumnTypes.ContainsKey(i))
-                                {
-                                    changedColumnTypes.Add(i, columnType);
-                                }
+                                var bitArray = value as BitArray;
+                                byte[] bytes = new byte[bitArray.Length];
+                                bitArray.CopyTo(bytes, 0);
+
+                                changedValues.Add((rowIndex, i), bytes);
+                            }
+
+                            if (newColumnType != null && !changedColumns.ContainsKey(i))
+                            {
+                                changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType });
                             }
                         }
                     }
@@ -608,49 +674,29 @@ namespace DatabaseInterpreter.Core
                 rowIndex++;
             }
 
-            if (changedColumnTypes.Count == 0)
+            if (changedColumns.Count == 0)
             {
                 return dataTable;
             }
 
-            for (int i = 0; i < dtChanged.Columns.Count; i++)
-            {
-                if (changedColumnTypes.ContainsKey(i))
-                {
-                    dtChanged.Columns[i].DataType = changedColumnTypes[i];
-                }
-            }
-
-            rowIndex = 0;
-
-            foreach (DataRow row in dataTable.Rows)
-            {
-                DataRow r = dtChanged.NewRow();
-
-                for (int i = 0; i < dataTable.Columns.Count; i++)
-                {
-                    var value = row[i];
-
-                    if (changedValues.ContainsKey((rowIndex, i)))
-                    {
-                        r[i] = changedValues[(rowIndex, i)];
-                    }
-                    else
-                    {
-                        r[i] = value;
-                    }
-                }
-
-                dtChanged.Rows.Add(r);
-
-                rowIndex++;
-            }
+            DataTable dtChanged = DataTableHelper.GetChangedDataTable(dataTable, changedColumns, changedValues);
 
             return dtChanged;
         }
         #endregion
 
         #region Sql Query Clause
+        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
+        {
+            string sql = $@"SELECT COUNT(1) FROM {this.GetDbSchema()}.{this.GetQuotedString(table.Name)}";
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
+
+            return base.GetTableRecordCountAsync(connection, sql);
+        }
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
@@ -688,18 +734,24 @@ namespace DatabaseInterpreter.Core
             {
                 string computeExpression = this.GetColumnComputeExpression(column);
 
-                return $"{ this.GetQuotedString(column.Name)} AS {computeExpression}";
+                return $"{this.GetQuotedString(column.Name)} AS ({computeExpression})";
             }
             else
             {
                 string dataType = this.ParseDataType(column);
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
-                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string defaultValueClause = "";
+
+                if (column.DefaultValue != null && !column.DefaultValue.Contains("nextval"))
+                {
+                    defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                }
+
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                string content = $"{ this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
-				
-				return content;
+                string content = $"{this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
+
+                return content;
             }
         }
 
@@ -738,6 +790,22 @@ namespace DatabaseInterpreter.Core
 
                         dataType = format;
                     }
+                    else
+                    {
+                        if (dataType.ToLower() == "st_geometry")
+                        {
+                            string geometryMode = SettingManager.Setting.OracleGeometryMode;
+
+                            if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                            {
+                                dataType = $@"""PUBLIC"".{dataType}";
+                            }
+                            else
+                            {
+                                dataType = $"{geometryMode}.{dataType}";
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -748,7 +816,7 @@ namespace DatabaseInterpreter.Core
                         dataType += $"({dataLength})";
                     }
                 }
-            }           
+            }
 
             return dataType.Trim();
         }

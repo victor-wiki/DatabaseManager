@@ -1,13 +1,18 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using MySql.Data.MySqlClient;
+using Microsoft.SqlServer.Types;
+using MySqlConnector;
+using NetTopologySuite.Geometries;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseInterpreter.Core
 {
@@ -16,11 +21,15 @@ namespace DatabaseInterpreter.Core
         #region Field & Property           
         public const int DEFAULT_PORT = 3306;
         public override string UnicodeInsertChar => "";
-        public override string CommandParameterChar { get { return "@"; } }
-        public override char QuotationLeftChar { get { return '`'; } }
-        public override char QuotationRightChar { get { return '`'; } }
+        public override string CommandParameterChar => "@";
+        public const char QuotedLeftChar = '`';
+        public const char QuotedRightChar = '`';
+        public override char QuotationLeftChar { get { return QuotedLeftChar; } }
+        public override char QuotationRightChar { get { return QuotedRightChar; } }
         public override string CommentString => "#";
         public override DatabaseType DatabaseType => DatabaseType.MySql;
+        public override string DefaultDataType => "varchar";
+        public override string DefaultSchema => this.ConnectionInfo.Database;
         public override IndexType IndexType => IndexType.Normal | IndexType.FullText | IndexType.Primary;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
@@ -29,7 +38,7 @@ namespace DatabaseInterpreter.Core
         public const int KeyIndexColumnMaxLength = 500;
         public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
         public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
-        public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }       
+        public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
         #endregion
 
         #region Constructor
@@ -43,6 +52,19 @@ namespace DatabaseInterpreter.Core
         public override DbConnector GetDbConnector()
         {
             return new DbConnector(new MySqlProvider(), new MySqlConnectionBuilder(), this.ConnectionInfo);
+        }
+
+        public override bool IsLowDbVersion(string version)
+        {
+            if (version != null)
+            {
+                if (string.Compare(version.Substring(0, 1), "8") < 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
         #endregion
 
@@ -64,7 +86,7 @@ namespace DatabaseInterpreter.Core
         }
 
         public string GetDatabaseVersion()
-        {            
+        {
             return this.GetDatabaseVersion(this.dbConnector.CreateConnection());
         }
 
@@ -72,15 +94,17 @@ namespace DatabaseInterpreter.Core
         {
             string sql = "select version() as version";
             return dbConnection.QuerySingleOrDefault(sql).version;
-        }       
+        }
         #endregion
 
-        #region Database Owner
-        public override async Task<List<DatabaseOwner>> GetDatabaseOwnersAsync()
+        #region Database Schema
+        public override async Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
-            List<Database> databases = await this.GetDatabasesAsync();
+            string database = this.ConnectionInfo.Database;
 
-            return databases.Select(item => new DatabaseOwner() { Owner = item.Owner, Name = item.Name, Order = item.Order }).ToList();
+            List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = database, Name = database } };
+
+            return await Task.Run(()=> { return  databaseSchemas; });           
         }
         #endregion
 
@@ -94,6 +118,19 @@ namespace DatabaseInterpreter.Core
         public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, "");
+        }
+        #endregion
+
+        #region Sequence      
+
+        public override Task<List<Sequence>> GetSequencesAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Sequence>("");
+        }
+
+        public override Task<List<Sequence>> GetSequencesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Sequence>(dbConnection, "");
         }
         #endregion
 
@@ -118,7 +155,7 @@ namespace DatabaseInterpreter.Core
             string sql = "";
             bool isFunction = type.ToUpper() == "FUNCTION";
             string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
-            string strNames = "";           
+            string strNames = "";
 
             if (objectNames != null && objectNames.Any())
             {
@@ -127,14 +164,14 @@ namespace DatabaseInterpreter.Core
 
             if (isSimpleMode)
             {
-                sql = $@"SELECT ROUTINE_NAME AS `Name`, ROUTINE_SCHEMA AS `Owner`                        
+                sql = $@"SELECT ROUTINE_NAME AS `Name`, ROUTINE_SCHEMA AS `Schema`                        
                         FROM INFORMATION_SCHEMA.`ROUTINES`
                         WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'
                        ";
 
                 if (strNames != "")
                 {
-                    sql += $" AND {nameColumn} IN ({ strNames })";
+                    sql += $" AND {nameColumn} IN ({strNames})";
                 }
 
                 sql += $" ORDER BY {nameColumn}";
@@ -146,16 +183,16 @@ namespace DatabaseInterpreter.Core
 
                 string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
 
-                sql = $@"SELECT ROUTINE_SCHEMA AS `Owner`, ROUTINE_NAME AS `Name`,
-                         CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
-                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
-                         ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
-                          FROM information_schema.Routines r
-                          LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
-                          WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
-                          GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
-                          ORDER BY r.ROUTINE_NAME";
-            }           
+                sql = $@"SELECT ROUTINE_SCHEMA AS `Schema`, ROUTINE_NAME AS `Name`,
+                        CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
+                        IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
+                        ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
+                        FROM information_schema.Routines r
+                        LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
+                        WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
+                        GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
+                        ORDER BY r.ROUTINE_NAME";
+            }
 
             return sql;
         }
@@ -176,7 +213,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Owner`, TABLE_NAME AS `Name` {(isSimpleMode ? "" : ", TABLE_COMMENT AS `Comment`, 1 AS `IdentitySeed`, 1 AS `IdentityIncrement`")}
+            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`, TABLE_NAME AS `Name` {(isSimpleMode ? "" : ", TABLE_COMMENT AS `Comment`, 1 AS `IdentitySeed`, 1 AS `IdentityIncrement`")}
                         FROM INFORMATION_SCHEMA.`TABLES`
                         WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA ='{this.ConnectionInfo.Database}' 
                         ";
@@ -184,7 +221,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND TABLE_NAME IN ({strTableNames})";
             }
 
             sql += " ORDER BY TABLE_NAME";
@@ -206,10 +243,10 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
-            string sql = $@"SELECT C.TABLE_SCHEMA AS `Owner`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
+            string sql = $@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`, COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`,
-                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `TypeOwner`,GENERATION_EXPRESSION AS `ComputeExp`
+                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,GENERATION_EXPRESSION AS `ComputeExp`
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
                         WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
@@ -217,7 +254,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -238,23 +275,23 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTablePrimaryKeyItems(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
+            string commentColumn = isSimpleMode ? "" : ",S.INDEX_COMMENT AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
 
-            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
-                            K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`{commentColumn}
+            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
+                        K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`{commentColumn}
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
                         JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
                         {commentJoin}
                         WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
-                        AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
+                        AND K.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
 
             if (filter.TableNames != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -278,7 +315,7 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
-            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Owner`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
+            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
                         CASE RC.UPDATE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS `UpdateCascade`, 
                         CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`{commentColumn}
@@ -292,7 +329,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -315,7 +352,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,
+            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`,
 	                        TABLE_NAME AS `TableName`,
 	                        INDEX_NAME AS `Name`,
 	                        COLUMN_NAME AS `ColumnName`,
@@ -331,7 +368,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null && filter.TableNames != null && filter.TableNames.Any())
             {
                 string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TABLE_NAME IN ({ strTableNames })";
+                sql += $" AND TABLE_NAME IN ({strTableNames})";
             }
 
             return sql;
@@ -355,7 +392,7 @@ namespace DatabaseInterpreter.Core
 
             string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
 
-            string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Owner`, EVENT_OBJECT_TABLE AS `TableName`, 
+            string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Schema`, EVENT_OBJECT_TABLE AS `TableName`, 
                          {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
                         FROM INFORMATION_SCHEMA.`TRIGGERS`
                         WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'
@@ -366,13 +403,13 @@ namespace DatabaseInterpreter.Core
                 if (filter.TableNames != null && filter.TableNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                    sql += $" AND EVENT_OBJECT_TABLE IN ({ strNames })";
+                    sql += $" AND EVENT_OBJECT_TABLE IN ({strNames})";
                 }
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
-                    sql += $" AND TRIGGER_NAME IN ({ strNames })";
+                    sql += $" AND TRIGGER_NAME IN ({strNames})";
                 }
             }
 
@@ -395,7 +432,36 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
-            return string.Empty;
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            string sql = "";
+
+            if (isSimpleMode)
+            {
+                sql = @"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`
+                        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC 
+                        WHERE AND CONSTRAINT_TYPE='CHECK'";
+            }
+            else
+            {
+                sql = $@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`,
+                         REPLACE(REPLACE(REPLACE(C.CHECK_CLAUSE,'\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""INFORMATION_SCHEMA""),''),
+                         (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""{this.ConnectionInfo.Database}""),'') AS `Definition`
+                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC
+                         JOIN INFORMATION_SCHEMA.CHECK_CONSTRAINTS C ON TC.CONSTRAINT_CATALOG=C.CONSTRAINT_CATALOG AND TC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND TC.CONSTRAINT_NAME=C.CONSTRAINT_NAME
+                         WHERE CONSTRAINT_TYPE='CHECK'";
+            }
+
+            sql += $" AND TC.CONSTRAINT_SCHEMA='{this.ConnectionInfo.Database}'";
+
+            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
+            {
+                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
+                sql += $" AND TC.TABLE_NAME IN ({strTableNames})";
+            }
+
+            sql += " ORDER BY TC.CONSTRAINT_NAME";
+
+            return sql;
         }
         #endregion
 
@@ -416,14 +482,14 @@ namespace DatabaseInterpreter.Core
 
             string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS','{Environment.NewLine}',VIEW_DEFINITION)";
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Owner`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : createViewClause)} AS `Definition` 
+            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : createViewClause)} AS `Definition` 
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
 
             if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
-                sql += $" AND TABLE_NAME IN ({ strNames })";
+                sql += $" AND TABLE_NAME IN ({strNames})";
             }
 
             sql += " ORDER BY TABLE_NAME";
@@ -450,7 +516,7 @@ namespace DatabaseInterpreter.Core
 
         public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
         {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedObjectName(table)}";
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(table)}";
 
             if (!string.IsNullOrEmpty(whereClause))
             {
@@ -471,92 +537,137 @@ namespace DatabaseInterpreter.Core
 
             MySqlBulkCopy bulkCopy = new MySqlBulkCopy(connection as MySqlConnection, bulkCopyInfo.Transaction as MySqlTransaction);
 
-            bulkCopy.DestinationTableName = bulkCopyInfo.DestinationTableName;
+            bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+
+            int i = 0;
+            foreach (DataColumn column in dataTable.Columns)
+            {                
+                bulkCopy.ColumnMappings.Add(new MySqlBulkCopyColumnMapping(i, column.ColumnName));
+
+                i++;
+            }
 
             await this.OpenConnectionAsync(connection);
-
+           
             await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
         }
 
         private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
-            bool hasSpecialColumn = false;
+            var columns = dataTable.Columns.Cast<DataColumn>();
 
-            foreach (DataColumn column in dataTable.Columns)
+            if (!columns.Any(item => DataTypeHelper.SpecialDataTypes.Contains(item.DataType.Name)
+                || item.DataType.Name == nameof(BitArray)
+                || item.DataType.Name == nameof(String)
+                )
+               )
             {
-                if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
-                {
-                    hasSpecialColumn = true;
-                    break;
-                }
+                return dataTable;
             }
 
-            if (hasSpecialColumn)
+            Func<DataColumn, TableColumn> getTableColumn = (column) =>
             {
-                Dictionary<string, Type> dictColumnTypes = new Dictionary<string, Type>();
+                return bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
+            };
 
-                DataTable dtSpecial = dataTable.Clone();
+            Dictionary<string, Type> dictColumnTypes = new Dictionary<string, Type>();
+            Dictionary<int, DataTableColumnChangeInfo> changedColumns = new Dictionary<int, DataTableColumnChangeInfo>();
+            Dictionary<(int RowIndex, int ColumnIndex), dynamic> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), dynamic>();
 
-                foreach (DataColumn column in dtSpecial.Columns)
+            int rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                for (int i = 0; i < dataTable.Columns.Count; i++)
                 {
-                    if (DataTypeHelper.SpecialDataTypes.Contains(column.DataType.Name))
+                    var value = row[i];
+
+                    if (value == null)
                     {
-                        TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == column.ColumnName);
-                        string dataType = tableColumn.DataType.ToLower();
-
-                        Type columnType = null;
-
-                        if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsTextType(dataType))
-                        {
-                            columnType = typeof(string);
-                        }
-                        else if (DataTypeHelper.IsBinaryType(dataType) || dataType.ToLower().Contains("blob"))
-                        {
-                            columnType = typeof(Byte[]);
-                        }
-
-                        if (columnType != null)
-                        {
-                            column.DataType = columnType;
-                            dictColumnTypes[column.ColumnName] = columnType;
-                        }
-                    }
-                }
-
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    DataRow r = dtSpecial.NewRow();
-
-                    for (int i = 0; i < dataTable.Columns.Count; i++)
-                    {
-                        var value = row[i];
-
-                        if (dictColumnTypes.ContainsKey(dataTable.Columns[i].ColumnName))
-                        {
-                            Type type = dictColumnTypes[dataTable.Columns[i].ColumnName];
-
-                            if (type == typeof(string))
-                            {
-                                r[i] = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
-                            }
-                            else
-                            {
-                                r[i] = value;
-                            }
-                        }
-                        else
-                        {
-                            r[i] = value;
-                        }
+                        continue;
                     }
 
-                    dtSpecial.Rows.Add(r);
+                    Type type = value.GetType();
+
+                    if (type == typeof(DBNull))
+                    {
+                        continue;
+                    }
+
+                    Type newColumnType = null;
+                    object newValue = null;
+
+                    TableColumn tableColumn = getTableColumn(dataTable.Columns[i]);
+                    string dataType = tableColumn.DataType.ToLower();
+
+                    if (DataTypeHelper.IsCharType(dataType) || DataTypeHelper.IsTextType(dataType))
+                    {
+                        newColumnType = typeof(string);
+                        newValue = value == null ? null : (type == typeof(string) ? value?.ToString() : Convert.ChangeType(value, type));
+                    }
+                    else if (type == typeof(BitArray))
+                    {
+                        var bitArray = value as BitArray;
+                        byte[] bytes = new byte[bitArray.Length];
+                        bitArray.CopyTo(bytes, 0);
+
+                        newColumnType = typeof(Byte[]);
+                        newValue = bytes;
+                    }
+                    else if (DataTypeHelper.IsBinaryType(dataType) || dataType.ToLower().Contains("blob"))
+                    {
+                        newColumnType = typeof(Byte[]);
+                        newValue = value as byte[];
+                    }
+                    else if (dataType == "geometry")
+                    {
+                        newColumnType = typeof(MySqlGeometry);
+
+                        if (value is SqlGeography geography)
+                        {
+                            newValue = GeometryHelper.SqlGeographyToMySqlGeometry(geography);
+                        }
+                        else if (value is SqlGeometry sqlGeom)
+                        {
+                            newValue = GeometryHelper.SqlGeometryToMySqlGeometry(sqlGeom);
+                        }
+                        else if (value is Geometry geom)
+                        {
+                            newValue = GeometryHelper.PostgresGeometryToMySqlGeometry(geom);
+                        }
+                        else if (value is byte[] bytes)
+                        {
+                            newValue = SqlGeometry.STGeomCollFromWKB(new System.Data.SqlTypes.SqlBytes(bytes), 0);
+                        }
+                        else if (value is string)
+                        {
+                            newValue = GeometryHelper.SqlGeometryToMySqlGeometry(SqlGeometry.STGeomFromText(new System.Data.SqlTypes.SqlChars(value as string), 0));
+                        }
+                    }
+
+                    if (newColumnType != null && !changedColumns.ContainsKey(i))
+                    {
+                        changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType });
+                    }
+
+                    if (newValue != null)
+                    {
+                        changedValues.Add((rowIndex, i), newValue);
+                    }
+
                 }
 
-                return dtSpecial;
+                rowIndex++;
             }
 
-            return dataTable;
+            if (changedColumns.Count == 0)
+            {
+                return dataTable;
+            }
+
+            DataTable dtChanged = DataTableHelper.GetChangedDataTable(dataTable, changedColumns, changedValues);
+
+            return dtChanged;
         }
         #endregion
 
@@ -569,7 +680,7 @@ namespace DatabaseInterpreter.Core
 							  FROM {tableName}
                              {whereClause} 
                              ORDER BY {(!string.IsNullOrEmpty(orderColumns) ? orderColumns : this.GetDefaultOrder())}
-                             LIMIT { startEndRowNumber.StartRowNumber - 1 } , {pageSize}";
+                             LIMIT {startEndRowNumber.StartRowNumber - 1} , {pageSize}";
 
             return pagedSql;
         }
@@ -600,14 +711,14 @@ namespace DatabaseInterpreter.Core
             {
                 string computeExpression = this.GetColumnComputeExpression(column);
 
-                return $"{ this.GetQuotedString(column.Name)} {dataType} AS {computeExpression}";
+                return $"{this.GetQuotedString(column.Name)} {dataType} AS {computeExpression}";
             }
             else
             {
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
-                string commentClause = (!string.IsNullOrEmpty(column.Comment) ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
-                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string commentClause = (!string.IsNullOrEmpty(column.Comment) && this.Option.TableScriptsGenerateOption.GenerateComment ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) && !column.DefaultValue.Contains("nextval") ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {scriptComment}{commentClause}";

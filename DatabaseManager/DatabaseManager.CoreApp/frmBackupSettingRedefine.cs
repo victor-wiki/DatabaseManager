@@ -38,7 +38,7 @@ namespace DatabaseManager
                 this.chkZipFile.Checked = this.Setting.ZipFile;
             }
 
-            if (this.DatabaseType == DatabaseType.SqlServer)
+            if (this.DatabaseType == DatabaseType.SqlServer || this.DatabaseType == DatabaseType.Postgres)
             {
                 this.chkZipFile.Enabled = false;
             }

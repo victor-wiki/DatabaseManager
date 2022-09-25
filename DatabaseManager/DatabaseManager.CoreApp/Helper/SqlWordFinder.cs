@@ -32,11 +32,11 @@ namespace DatabaseManager.Helper
 
             if (schemaInfo != null)
             {
-                if (IsTypeMatched(tokenType, SqlWordTokenType.Owner))
+                if (IsTypeMatched(tokenType, SqlWordTokenType.Schema))
                 {
-                    var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Owner, search)).Select(item => item.Owner).Distinct();
+                    var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Schema, search)).Select(item => item.Schema).Distinct();
 
-                    words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Owner, Text = item, Source = item }));
+                    words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Schema, Text = item, Source = item }));
                 }
 
                 FilterDbObjects(words, schemaInfo.Functions, SqlWordTokenType.Function, tokenType, search, parentName);
@@ -75,7 +75,7 @@ namespace DatabaseManager.Helper
 
                 if (!string.IsNullOrEmpty(parentName))
                 {
-                    objs = objs.Where(item => item.Owner.ToUpper() == parentName.ToUpper());
+                    objs = objs.Where(item => item.Schema.ToUpper() == parentName.ToUpper());
                 }
 
                 objs = objs.Where(item => ContainsWithNull(item.Name, search));

@@ -1,8 +1,7 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Demo;
+using DatabaseInterpreter.Model;
 using System;
-using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Test
 {
@@ -46,7 +45,8 @@ namespace DatabaseInterpreter.Test
                  | DatabaseObjectType.TableForeignKey
                  | DatabaseObjectType.TableIndex
                  | DatabaseObjectType.TableConstraint
-                 | DatabaseObjectType.TableTrigger;
+                 | DatabaseObjectType.TableTrigger
+                 | DatabaseObjectType.Sequence;
 
             await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), filter);
             await InterpreterDemoRuner.Run(new InterpreterDemo(mySqlInterpreter), filter);

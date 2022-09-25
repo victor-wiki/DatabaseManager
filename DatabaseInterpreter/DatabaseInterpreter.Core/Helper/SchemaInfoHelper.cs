@@ -13,23 +13,24 @@ namespace DatabaseInterpreter.Core
             return cloneSchemaInfo;
         }
 
-        public static void MapTableNames(SchemaInfo schemaInfo, Dictionary<string,string> tableNameMappings)
+        public static void MapTableNames(SchemaInfo schemaInfo, Dictionary<string, string> tableNameMappings)
         {
             schemaInfo.Tables.ForEach(item => item.Name = GetMappedTableName(item.Name, tableNameMappings));
             schemaInfo.TableColumns.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
             schemaInfo.TablePrimaryKeys.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
             schemaInfo.TableIndexes.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
             schemaInfo.TableConstraints.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
+            schemaInfo.TableTriggers.ForEach(item => item.TableName = GetMappedTableName(item.TableName, tableNameMappings));
             schemaInfo.TableForeignKeys.ForEach(item =>
                 {
                     item.TableName = GetMappedTableName(item.TableName, tableNameMappings);
                     item.ReferencedTableName = GetMappedTableName(item.ReferencedTableName, tableNameMappings);
-                }           
-            );          
+                }
+            );
         }
 
         public static void RenameTableChildren(SchemaInfo schemaInfo)
-        {            
+        {
             schemaInfo.TablePrimaryKeys.ForEach(item => item.Name = Rename(item.Name));
             schemaInfo.TableIndexes.ForEach(item => item.Name = Rename(item.Name));
             schemaInfo.TableConstraints.ForEach(item => item.Name = Rename(item.Name));
@@ -62,6 +63,18 @@ namespace DatabaseInterpreter.Core
                 }
 
                 keyNames.Add(item.Name);
+            });
+        }
+
+        public static void ForceRenameMySqlPrimaryKey(SchemaInfo schemaInfo)
+        {
+            List<string> keyNames = new List<string>();
+            schemaInfo.TablePrimaryKeys.ForEach(item =>
+            {
+                if (item.Name == "PRIMARY")
+                {
+                    item.Name = "PK_" + item.TableName;
+                }
             });
         }
 
@@ -123,6 +136,7 @@ namespace DatabaseInterpreter.Core
             ExcludeDbObjects(source.TableConstraints, target.TableConstraints);
             ExcludeDbObjects(source.TableTriggers, target.TableTriggers);
             ExcludeDbObjects(source.Procedures, target.Procedures);
+            ExcludeDbObjects(source.Sequences, target.Sequences);
         }
 
         public static void ExcludeDbObjects<T>(List<T> sourceObjs, List<T> targetObjs) where T : DatabaseObject
@@ -264,6 +278,7 @@ namespace DatabaseInterpreter.Core
                 filter.FunctionNames = schemaInfo.Functions.Select(item => item.Name).ToArray();
                 filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
                 filter.TableTriggerNames = schemaInfo.TableTriggers.Select(item => item.Name).ToArray();
+                filter.SequenceNames = schemaInfo.Sequences.Select(item => item.Name).ToArray();
             }
         }
 
@@ -271,13 +286,13 @@ namespace DatabaseInterpreter.Core
         {
             List<TablePrimaryKey> primaryKeys = new List<TablePrimaryKey>();
 
-            var groups = primaryKeyItems.GroupBy(item => new { item.Owner, item.TableName, item.Name, item.Clustered, item.Comment });
+            var groups = primaryKeyItems.GroupBy(item => new { item.Schema, item.TableName, item.Name, item.Clustered, item.Comment });
 
             foreach (var group in groups)
             {
                 TablePrimaryKey primaryKey = new TablePrimaryKey()
                 {
-                    Owner = group.Key.Owner,
+                    Schema = group.Key.Schema,
                     TableName = group.Key.TableName,
                     Name = group.Key.Name,
                     Clustered = group.Key.Clustered,
@@ -296,13 +311,13 @@ namespace DatabaseInterpreter.Core
         {
             List<TableIndex> indexes = new List<TableIndex>();
 
-            var groups = indexItems.GroupBy(item => new { item.Owner, item.TableName, item.Name, item.IsPrimary, item.IsUnique, item.Clustered, item.Type, item.Comment });
+            var groups = indexItems.GroupBy(item => new { item.Schema, item.TableName, item.Name, item.IsPrimary, item.IsUnique, item.Clustered, item.Type, item.Comment });
 
             foreach (var group in groups)
             {
                 TableIndex index = new TableIndex()
                 {
-                    Owner = group.Key.Owner,
+                    Schema = group.Key.Schema,
                     TableName = group.Key.TableName,
                     Name = group.Key.Name,
                     IsPrimary = group.Key.IsPrimary,
@@ -324,15 +339,16 @@ namespace DatabaseInterpreter.Core
         {
             List<TableForeignKey> foreignKeys = new List<TableForeignKey>();
 
-            var groups = foreignKeyItems.GroupBy(item => new { item.Owner, item.TableName, item.Name, item.ReferencedTableName, item.UpdateCascade, item.DeleteCascade, item.Comment });
+            var groups = foreignKeyItems.GroupBy(item => new { item.Schema, item.TableName, item.Name, item.ReferencedSchema, item.ReferencedTableName, item.UpdateCascade, item.DeleteCascade, item.Comment });
 
             foreach (var group in groups)
             {
                 TableForeignKey foreignKey = new TableForeignKey()
                 {
-                    Owner = group.Key.Owner,
+                    Schema = group.Key.Schema,
                     TableName = group.Key.TableName,
                     Name = group.Key.Name,
+                    ReferencedSchema = group.Key.ReferencedSchema,
                     ReferencedTableName = group.Key.ReferencedTableName,
                     UpdateCascade = group.Key.UpdateCascade,
                     DeleteCascade = group.Key.DeleteCascade,
@@ -352,7 +368,7 @@ namespace DatabaseInterpreter.Core
             if (IsTableColumnDataTypeAndLengthEquals(databaseType, column1, column2)
                && column1.IsNullable == column2.IsNullable
                && column1.IsIdentity == column2.IsIdentity
-               && ValueHelper.IsStringEquals(ValueHelper.GetTrimedDefaultValue(column1.DefaultValue), ValueHelper.GetTrimedDefaultValue(column2.DefaultValue))
+               && ValueHelper.IsStringEquals(ValueHelper.GetTrimedParenthesisValue(column1.DefaultValue), ValueHelper.GetTrimedParenthesisValue(column2.DefaultValue))
                && (excludeComment || (!excludeComment && ValueHelper.IsStringEquals(column1.Comment, column2.Comment)))
                && ValueHelper.IsStringEquals(column1.ComputeExp, column2.ComputeExp))
             {
@@ -457,6 +473,79 @@ namespace DatabaseInterpreter.Core
             }
 
             return value1 == value2;
+        }
+
+        public static void MapDatabaseObjectSchema(SchemaInfo schemaInfo, List<SchemaMappingInfo> mappings)
+        {
+            foreach (var mapping in mappings)
+            {
+                if (!string.IsNullOrEmpty(mapping.TargetSchema))
+                {
+                    bool isAllSourceSchema = string.IsNullOrEmpty(mapping.SourceSchema);
+                    string targetSchema = mapping.TargetSchema;
+
+                    var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    tables.ForEach(item => item.Schema = targetSchema);
+
+                    var columns = schemaInfo.TableColumns.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    columns.ForEach(item => item.Schema = targetSchema);
+
+                    var primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    primaryKeys.ForEach(item => item.Schema = targetSchema);
+
+                    var foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    foreignKeys.ForEach(item =>
+                    {
+                        if (item.Schema == item.ReferencedSchema)
+                        {
+                            item.ReferencedSchema = targetSchema;
+                        }
+                        else
+                        {
+                            item.ReferencedSchema = mappings.FirstOrDefault(t => t.SourceSchema == item.ReferencedSchema)?.TargetSchema;
+
+                            if (item.ReferencedSchema == null)
+                            {
+                                item.ReferencedSchema = targetSchema;
+                            }
+                        }
+                        item.Schema = targetSchema;
+                    });
+
+                    var indexes = schemaInfo.TableIndexes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    indexes.ForEach(item => item.Schema = targetSchema);
+
+                    var constraints = schemaInfo.TableConstraints.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    constraints.ForEach(item => item.Schema = targetSchema);
+
+                    var triggers = schemaInfo.TableTriggers.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    triggers.ForEach(item => item.Schema = targetSchema);
+
+                    var userDefinedTypes = schemaInfo.UserDefinedTypes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    userDefinedTypes.ForEach(item => item.Schema = targetSchema);
+
+                    var functions = schemaInfo.Functions.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    functions.ForEach(item => item.Schema = targetSchema);
+
+                    var procedures = schemaInfo.Procedures.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    procedures.ForEach(item => item.Schema = targetSchema);
+
+                    var sequences = schemaInfo.Sequences.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    sequences.ForEach(item => item.Schema = targetSchema);
+                }
+            }
+        }
+
+        public static string GetTableMappedSchema(Table table, List<SchemaMappingInfo> schemaMappings)
+        {
+            string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema == table.Schema)?.TargetSchema;
+
+            if (mappedSchema == null)
+            {
+                mappedSchema = schemaMappings.FirstOrDefault(item => string.IsNullOrEmpty(item.SourceSchema))?.TargetSchema;
+            }
+
+            return mappedSchema;
         }
     }
 }

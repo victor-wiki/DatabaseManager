@@ -28,12 +28,15 @@ namespace DatabaseManager.Controls
 
         public UC_TableConstraints()
         {
-            InitializeComponent();
+            InitializeComponent();          
         }
 
         private void UC_TableConstraints_Load(object sender, EventArgs e)
         {
-
+            if (this.DatabaseType == DatabaseType.MySql)
+            {
+                this.dgvConstraints.Columns["colComment"].Visible = false;
+            }
         }
 
         public void InitControls()

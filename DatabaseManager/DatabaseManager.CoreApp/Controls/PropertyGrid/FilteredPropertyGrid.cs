@@ -28,7 +28,7 @@ namespace DatabaseManager.Controls
 		private ObjectWrapper m_Wrapper = null;
 
 		/// <summary>Public constructor.</summary>
-		public FilteredPropertyGrid() {
+		public FilteredPropertyGrid() {			
 			InitializeComponent();
 			base.SelectedObject = m_Wrapper;
 		}

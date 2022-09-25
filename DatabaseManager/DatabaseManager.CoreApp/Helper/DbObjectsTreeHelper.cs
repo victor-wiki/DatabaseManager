@@ -136,16 +136,16 @@ namespace DatabaseManager.Helper
         public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects)
            where T : DatabaseObject
         {
-            bool isUniqueDbOwner = dbObjects.GroupBy(item => item.Owner).Count() == 1;
+            bool isUniqueDbSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
 
-            if (!isUniqueDbOwner)
+            if (!isUniqueDbSchema)
             {
-                dbObjects = dbObjects.OrderBy(item => item.Owner).ThenBy(item => item.Name);
+                dbObjects = dbObjects.OrderBy(item => item.Schema).ThenBy(item => item.Name);
             }
 
             foreach (var dbObj in dbObjects)
             {
-                string text = isUniqueDbOwner ? dbObj.Name : $"{dbObj.Owner}.{dbObj.Name}";
+                string text = isUniqueDbSchema ? dbObj.Name : $"{dbObj.Schema}.{dbObj.Name}";
                 TreeNode node = CreateTreeNode(dbObj.Name, text, dbObj.GetType().Name);
                 node.Tag = dbObj;
 

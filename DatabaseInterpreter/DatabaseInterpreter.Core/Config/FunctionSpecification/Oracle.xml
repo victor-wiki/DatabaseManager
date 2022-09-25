@@ -37,7 +37,7 @@
   <item name="EMPTY_BLOB" args=""></item>
   <item name="EMPTY_CLOB" args=""></item>
   <item name="EXP" args="EXP"></item>
-  <item name="EXTRACT" args="UNIT FROM DATE VALUE"></item>
+  <item name="EXTRACT" args="UNIT FROM DATE EXP"></item>
   <!--<item name="FIRST_VALUE" args=""></item>-->
   <item name="FLOOR" args="EXP"></item>
   <item name="FROM_TZ" args="TIMESTAMP,TIME_ZONE"></item>
@@ -94,7 +94,7 @@
   <item name="REPLACE" args="EXP,OLD[,NEW]"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
   <!--<item name="ROWNUM" args="" noParenthesess="1"></item>-->
-  <item name="RPAD" args="EXP,LENGTH,EXP"></item>
+  <item name="RPAD" args="STR,LENGTH,PAD"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SESSIONTIMEZONE" args="" noParenthesess="1"></item>
   <item name="SIGN" args="EXP"></item>

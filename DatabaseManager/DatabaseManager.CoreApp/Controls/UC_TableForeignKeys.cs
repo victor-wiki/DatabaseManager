@@ -26,6 +26,7 @@ namespace DatabaseManager.Controls
         public Table Table { get; set; }
 
         public DatabaseType DatabaseType { get; set; }
+        public string DefaultSchema { get; set; }
 
         public event ColumnMappingSelectHandler OnColumnMappingSelect;
 
@@ -42,9 +43,33 @@ namespace DatabaseManager.Controls
 
         public void InitControls(IEnumerable<Table> tables)
         {
-            this.colReferenceTable.DataSource = tables;
-            this.colReferenceTable.ValueMember = nameof(Table.Name);
-            this.colReferenceTable.DisplayMember = nameof(Table.Name);
+            List<Table> sortedTables = new List<Table>();
+            List<TableDisplayInfo> tableDisplayInfos = new List<TableDisplayInfo>();
+
+            foreach(var table in tables.Where(item=>item.Schema == this.DefaultSchema).OrderBy(item=>item.Name))
+            {
+                sortedTables.Add(table);
+            }
+
+            foreach (var table in tables.Where(item => item.Schema != this.DefaultSchema).OrderBy(item => item.Schema).ThenBy(item=>item.Name))
+            {
+                sortedTables.Add(table);
+            }
+
+            foreach (Table table in sortedTables)
+            {
+                TableDisplayInfo tableDisplayInfo = new TableDisplayInfo();
+
+                tableDisplayInfo.Schema = table.Schema;
+                tableDisplayInfo.Name = table.Name;
+                tableDisplayInfo.DisplayName = (table.Schema == this.DefaultSchema)? table.Name: $"{table.Name}({table.Schema})";
+
+                tableDisplayInfos.Add(tableDisplayInfo);
+            }
+
+            this.colReferenceTable.DataSource = tableDisplayInfos;
+            this.colReferenceTable.ValueMember = nameof(TableDisplayInfo.Name);
+            this.colReferenceTable.DisplayMember = nameof(TableDisplayInfo.DisplayName);       
 
             if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.MySql)
             {
@@ -275,5 +300,10 @@ namespace DatabaseManager.Controls
                 this.OnGenerateChangeScripts();
             }
         }
+    }
+
+    public class TableDisplayInfo:Table
+    {
+        public string DisplayName { get; set; }
     }
 }

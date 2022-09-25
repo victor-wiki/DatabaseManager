@@ -21,6 +21,7 @@ namespace DatabaseManager.Model
     {
         None = 0,
         NotNullWithEmpty = 1,
-        SelfReferenceSame = 2
+        SelfReferenceSame = 2,
+        WithLeadingOrTrailingWhitespace = 3
     }
 }

@@ -148,7 +148,7 @@
             this.imageList1.Images.SetKeyName(2, "tree_Table.png");
             this.imageList1.Images.SetKeyName(3, "tree_View.png");
             this.imageList1.Images.SetKeyName(4, "tree_TableColumn.png");
-            this.imageList1.Images.SetKeyName(5, "Owner.png");
+            this.imageList1.Images.SetKeyName(5, "Schema.png");
             // 
             // txtToolTip
             // 

@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
+using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -38,7 +38,7 @@ namespace SqlAnalyser.Core
             return this.ruleAnalyser.AnalyseTrigger(content);           
         }
 
-        public override string GenerateScripts(CommonScript script)
+        public override ScriptBuildResult GenerateScripts(CommonScript script)
         {
             if (script is RoutineScript routineScript)
             {
@@ -58,11 +58,14 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public string GenerateRoutineScripts(RoutineScript script)
+        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            sb.AppendLine($"CREATE {script.Type.ToString()} {script.FullName}");
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            sb.AppendLine($"CREATE {script.Type.ToString()} {script.NameWithSchema}");
 
             sb.AppendLine("(");
 
@@ -104,7 +107,7 @@ namespace SqlAnalyser.Core
 
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
             #region Cursor
@@ -113,7 +116,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (Statement statement in script.Statements.Where(item => item is DeclareCursorStatement))
                 {
-                    sb.AppendLine(this.BuildStatement(statement));
+                    sbBody.AppendLine(this.BuildStatement(statement));
                 }
             };
 
@@ -128,7 +131,7 @@ namespace SqlAnalyser.Core
                         DefaultValue = new TokenInfo("0")
                     };
 
-                    sb.AppendLine(this.BuildStatement(declareStatement));
+                    sbBody.AppendLine(this.BuildStatement(declareStatement));
                 }
 
                 appendDeclareCursor();
@@ -136,7 +139,7 @@ namespace SqlAnalyser.Core
                 DeclareCursorHandlerStatement handler = new DeclareCursorHandlerStatement();
                 handler.Statements.Add(new SetStatement() { Key = new TokenInfo("FINISHED") { Type = TokenType.VariableName }, Value = new TokenInfo("1") });
 
-                sb.AppendLine(this.BuildStatement(handler));
+                sbBody.AppendLine(this.BuildStatement(handler));
             }
             else
             {
@@ -147,7 +150,7 @@ namespace SqlAnalyser.Core
 
             if (script.ReturnTable != null)
             {
-                sb.AppendLine(MySqlStatementScriptBuilder.BuildTemporaryTable(script.ReturnTable));
+                sbBody.AppendLine(MySqlStatementScriptBuilder.BuildTemporaryTable(script.ReturnTable));
             }
 
             FetchCursorStatement fetchCursorStatement = null;
@@ -179,8 +182,10 @@ namespace SqlAnalyser.Core
                     hasLeaveStatement = true;
                 }
 
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
+
+            sb.Append(sbBody);
 
             sb.AppendLine("END");
 
@@ -189,32 +194,46 @@ namespace SqlAnalyser.Core
                 sb.Insert(beginIndex, "sp:");
             }
 
-            return this.FormatScripts(sb.ToString());
+            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();
+
+            return result;
         }
 
-        public string GenearteViewScripts(ViewScript script)
+        public ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            sb.AppendLine($"CREATE VIEW {script.FullName} AS");
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
             foreach (Statement statement in script.Statements)
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
-            return this.FormatScripts(sb.ToString());
+            sb.Append(sbBody);
+
+            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();
+
+            return result;
         }
 
-        public string GenearteTriggerScripts(TriggerScript script)
+        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
+            ScriptBuildResult result = new ScriptBuildResult();
+
             StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
 
             string events = string.Join(",", script.Events);
 
             string time = script.Time == TriggerTime.INSTEAD_OF ? "AFTER" : script.Time.ToString();
 
-            sb.AppendLine($"CREATE TRIGGER {script.FullName} {time} {events} ON {script.TableName}");
+            sb.AppendLine($"CREATE TRIGGER {script.NameWithSchema} {time} {events} ON {script.TableName}");
             sb.AppendLine($"FOR EACH ROW {script.Behavior} {script.OtherTriggerName}");
 
             int beginIndex = sb.Length - 1;
@@ -224,7 +243,7 @@ namespace SqlAnalyser.Core
 
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
@@ -234,17 +253,22 @@ namespace SqlAnalyser.Core
                     hasLeaveStatement = true;
                 }
 
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.AppendLine("END");
+            sb.Append(sbBody);
+
+            sbBody.AppendLine("END");
 
             if (hasLeaveStatement)
             {
                 sb.Insert(beginIndex, "sp:");
             }
 
-            return this.FormatScripts(sb.ToString());
+            result.Script = sb.ToString();
+            result.Body = sbBody.ToString();
+
+            return result;
         }     
     }
 }

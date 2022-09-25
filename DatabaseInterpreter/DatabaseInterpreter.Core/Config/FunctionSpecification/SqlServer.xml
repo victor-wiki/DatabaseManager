@@ -79,7 +79,7 @@
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
-  <item name="REPLICATE" args="EXP,LENGTH"></item>
+  <item name="REPLICATE" args="PAD,LENGTH"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
@@ -110,6 +110,7 @@
   <item name="TIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
   <item name="TODATETIMEOFFSET" args="EXP,TIME_ZONE"></item>
   <item name="TRANSLATE" args="EXP,OLD,NEW"></item>
+  <item name="TRIM" args="EXP"></item>
   <item name="TRY_CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="TRY_CONVERT" args="TYPE,EXP"></item>
   <item name="UPPER" args="EXP"></item>

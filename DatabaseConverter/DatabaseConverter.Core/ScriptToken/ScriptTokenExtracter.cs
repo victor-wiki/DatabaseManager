@@ -1,27 +1,26 @@
 ﻿using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace DatabaseConverter.Core
 {
     public class ScriptTokenExtracter
     {
-        public DbScript Script { get; set; }
+        public Statement Statement { get; set; }
 
         private List<TokenInfo> tokens = new List<TokenInfo>();
 
-        public ScriptTokenExtracter(DbScript script)
+        public ScriptTokenExtracter(Statement statement)
         {
-            this.Script = script;
+            this.Statement = statement;
         }
 
         public IEnumerable<TokenInfo> Extract()
         {
             this.tokens.Clear();
 
-            this.ExtractTokens(this.Script);
+            this.ExtractTokens(this.Statement);
 
             return this.tokens;
         }
@@ -36,6 +35,11 @@ namespace DatabaseConverter.Core
 
                 foreach (PropertyInfo property in properties)
                 {
+                    if (property.Name == nameof(TokenInfo.Parent))
+                    {
+                        continue;
+                    }
+
                     dynamic value = property.GetValue(obj);
 
                     if (value == null)
@@ -83,7 +87,7 @@ namespace DatabaseConverter.Core
                 return;
             }
 
-            this.tokens.Add(token);           
+            this.tokens.Add(token);
         }
     }
 }

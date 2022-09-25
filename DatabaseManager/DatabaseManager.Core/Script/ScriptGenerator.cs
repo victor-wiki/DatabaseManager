@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
@@ -48,9 +49,9 @@ namespace DatabaseManager.Core
                 if (databaseType == DatabaseType.SqlServer && script is SpliterScript)
                 {
                     continue;
-                }
+                }                
 
-                string content = script.Content;
+                string content = script.Content;                
 
                 if (scriptAction == ScriptAction.ALTER && typeName != nameof(Table))
                 {
@@ -87,7 +88,7 @@ namespace DatabaseManager.Core
                 sbContent.AppendLine(content);
             }
 
-            return sbContent.ToString();
+            return StringHelper.ToSingleEmptyLine(sbContent.ToString());
         }
 
         private int GetCreateIndex(string script, string createFlag)

@@ -27,7 +27,7 @@ namespace SqlAnalyser.Core
 
                 if (insert.Columns.Count > 0)
                 {
-                    this.AppendLine($"({ string.Join(",", insert.Columns.Select(item => item.ToString()))})");
+                    this.AppendLine($"({ string.Join(",", insert.Columns.Select(item => item))})");
                 }
 
                 if (insert.SelectStatements != null && insert.SelectStatements.Count > 0)
@@ -43,7 +43,7 @@ namespace SqlAnalyser.Core
             {
                 this.Append($"UPDATE");
 
-                List<TokenInfo> tableNames = new List<TokenInfo>();
+                List<TableName> tableNames = new List<TableName>();
 
                 if (update.FromItems != null)
                 {
@@ -54,7 +54,7 @@ namespace SqlAnalyser.Core
                     tableNames.AddRange(update.TableNames);
                 }
 
-                this.Append($" {string.Join(",", tableNames)}");
+                this.Append($" {string.Join(",", tableNames.Select(item=> item.NameWithAlias))}");
 
                 if (update.FromItems != null && update.FromItems.Count > 0)
                 {
@@ -207,11 +207,14 @@ namespace SqlAnalyser.Core
             }
             else if (statement is LoopExitStatement whileExit)
             {
-                this.AppendLine($"IF {whileExit.Condition} THEN");
-                this.AppendLine("BEGIN");
-                this.AppendLine("BREAK;");
-                this.AppendLine("END;");
-                this.AppendLine("END IF;");
+                if(!whileExit.IsCursorLoopExit)
+                {
+                    this.AppendLine($"IF {whileExit.Condition} THEN");
+                    this.AppendLine("BEGIN");
+                    this.AppendLine("BREAK;");
+                    this.AppendLine("END;");
+                    this.AppendLine("END IF;");
+                }               
             }
             else if (statement is ReturnStatement @return)
             {
@@ -299,7 +302,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is TruncateStatement truncate)
             {
-                this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
+                this.AppendLine($"TRUNCATE TABLE { truncate.TableName};");
             }
 
             return this;
@@ -307,54 +310,71 @@ namespace SqlAnalyser.Core
 
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
+            bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
+
+            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => item))}";
+
             if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
             {
                 ColumnName columnName = select.Columns.First();
 
                 this.AppendLine($"SET {columnName}");
             }
-            else
+            else if(!isWith)
             {
-                this.AppendLine($"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}");
+                this.AppendLine(selectColumns);
             }
 
             if (select.IntoTableName != null)
             {
-                this.AppendLine($"INTO {select.IntoTableName.ToString()}");
+                this.AppendLine($"INTO {select.IntoTableName}");
             }
 
-            if (select.FromItems != null && select.FromItems.Count > 0)
+            Action appendWith = () =>
             {
-                this.BuildSelectStatementFromItems(select);
-            }
-            else if (select.TableName != null)
+                int i = 0;
+
+                foreach (WithStatement withStatement in select.WithStatements)
+                {
+                    if (i == 0)
+                    {
+                        this.AppendLine($"WITH {withStatement.Name}");
+                    }
+                    else
+                    {
+                        this.AppendLine($",{withStatement.Name}");
+                    }
+
+                    this.AppendLine("AS(");
+
+                    this.AppendChildStatements(withStatement.SelectStatements, false);
+
+                    this.AppendLine(")");
+
+                    i++;
+                }
+
+            };
+
+            Action appendFrom = () =>
             {
-                if (select.WithStatements == null || select.WithStatements.Count == 0)
+                if (select.FromItems != null && select.FromItems.Count > 0)
+                {
+                    this.BuildSelectStatementFromItems(select);
+                }
+                else if (select.TableName != null)
                 {
                     this.AppendLine($"FROM {select.TableName}");
                 }
-                else
-                {
-                    string tableName = select.TableName.ToString();
+            };
 
-                    this.AppendLine("FROM");
-
-                    int i = 0;
-
-                    foreach (WithStatement withStatement in select.WithStatements)
-                    {
-                        this.AppendLine("(");
-
-                        this.AppendChildStatements(withStatement.SelectStatements, false);
-
-                        this.AppendLine($") AS {(tableName.StartsWith(withStatement.Name.ToString()) ? "" : withStatement.Name.ToString())}{(i < select.WithStatements.Count - 1 ? "," : "")}");
-
-                        i++;
-                    }
-
-                    this.AppendLine(select.TableName.ToString());
-                }
+            if (isWith)
+            {
+                appendWith();
+                this.AppendLine(selectColumns);
             }
+
+            appendFrom();
 
             if (select.Where != null)
             {
@@ -363,7 +383,7 @@ namespace SqlAnalyser.Core
 
             if (select.GroupBy != null && select.GroupBy.Count > 0)
             {
-                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy)}");
+                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy.Select(item=>item))}");
             }
 
             if (select.Having != null)
@@ -373,7 +393,7 @@ namespace SqlAnalyser.Core
 
             if (select.OrderBy != null && select.OrderBy.Count > 0)
             {
-                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy)}");
+                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy.Select(item=>item))}");
             }
 
             if (select.TopInfo != null)

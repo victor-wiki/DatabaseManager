@@ -1,10 +1,10 @@
-﻿using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Profile;
+﻿using DatabaseManager.Profile;
 using DatabaseInterpreter.Utility;
 using System;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager
 {
@@ -101,7 +101,8 @@ namespace DatabaseManager
 
         private AccountProfileInfo GetAccountProfileInfo()
         {
-            ConnectionInfo connectionInfo = this.ucAccountInfo.GetConnectionInfo();
+            ConnectionInfo connectionInfo = this.ucAccountInfo.GetConnectionInfo();           
+
             AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { DatabaseType = this.DatabaseType.ToString() };
 
             ObjectHelper.CopyProperties(connectionInfo, accountProfileInfo);

@@ -21,6 +21,11 @@ namespace DatabaseManager.Helper
 
             return null;
         }
+
+        public static DataGridViewRow GetCurrentRow(DataGridView dgv)
+        {
+            return dgv.CurrentRow;
+        }
         public static DataTable ConvertDataTable(DataTable dataTable)
         {
             DataTable dt = dataTable.Clone();

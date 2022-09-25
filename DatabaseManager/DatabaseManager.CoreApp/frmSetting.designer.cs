@@ -53,11 +53,15 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
+            this.tabOracle = new System.Windows.Forms.TabPage();
+            this.label6 = new System.Windows.Forms.Label();
+            this.cboOracleGeometryType = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.tabGeneral.SuspendLayout();
             this.tabMySql.SuspendLayout();
+            this.tabOracle.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblCommandTimeout
@@ -168,6 +172,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabGeneral);
             this.tabControl1.Controls.Add(this.tabMySql);
+            this.tabControl1.Controls.Add(this.tabOracle);
             this.tabControl1.Location = new System.Drawing.Point(1, 3);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
@@ -361,6 +366,41 @@
             this.lblMySqlCharset.TabIndex = 0;
             this.lblMySqlCharset.Text = "Charset:";
             // 
+            // tabOracle
+            // 
+            this.tabOracle.BackColor = System.Drawing.SystemColors.Control;
+            this.tabOracle.Controls.Add(this.cboOracleGeometryType);
+            this.tabOracle.Controls.Add(this.label6);
+            this.tabOracle.Location = new System.Drawing.Point(4, 26);
+            this.tabOracle.Name = "tabOracle";
+            this.tabOracle.Padding = new System.Windows.Forms.Padding(3);
+            this.tabOracle.Size = new System.Drawing.Size(493, 337);
+            this.tabOracle.TabIndex = 2;
+            this.tabOracle.Text = "Oracle";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(17, 14);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(100, 17);
+            this.label6.TabIndex = 2;
+            this.label6.Text = "Geometry Type:";
+            // 
+            // cboOracleGeometryType
+            // 
+            this.cboOracleGeometryType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboOracleGeometryType.FormattingEnabled = true;
+            this.cboOracleGeometryType.Items.AddRange(new object[] {
+            "MDSYS",
+            "SDE"});
+            this.cboOracleGeometryType.Location = new System.Drawing.Point(125, 11);
+            this.cboOracleGeometryType.Margin = new System.Windows.Forms.Padding(4);
+            this.cboOracleGeometryType.Name = "cboOracleGeometryType";
+            this.cboOracleGeometryType.Size = new System.Drawing.Size(138, 25);
+            this.cboOracleGeometryType.TabIndex = 20;
+            // 
             // frmSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -383,6 +423,8 @@
             this.tabGeneral.PerformLayout();
             this.tabMySql.ResumeLayout(false);
             this.tabMySql.PerformLayout();
+            this.tabOracle.ResumeLayout(false);
+            this.tabOracle.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -413,5 +455,8 @@
         private System.Windows.Forms.Label lblLogType;
         private System.Windows.Forms.ComboBox cboPreferredDatabase;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TabPage tabOracle;
+        private System.Windows.Forms.ComboBox cboOracleGeometryType;
+        private System.Windows.Forms.Label label6;
     }
 }

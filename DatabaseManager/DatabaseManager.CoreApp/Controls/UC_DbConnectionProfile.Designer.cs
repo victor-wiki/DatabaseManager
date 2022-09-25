@@ -104,9 +104,9 @@
             this.lblTitle.Location = new System.Drawing.Point(4, 5);
             this.lblTitle.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(31, 17);
+            this.lblTitle.Size = new System.Drawing.Size(35, 17);
             this.lblTitle.TabIndex = 36;
-            this.lblTitle.Text = "Tile:";
+            this.lblTitle.Text = "Title:";
             // 
             // cboDbType
             // 

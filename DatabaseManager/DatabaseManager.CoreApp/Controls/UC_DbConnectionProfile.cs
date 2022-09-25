@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Profile;
+using DatabaseManager.Profile;
 using DatabaseManager.Helper;
 using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager.Controls
 {

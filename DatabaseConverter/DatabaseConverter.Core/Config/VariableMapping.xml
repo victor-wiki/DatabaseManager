@@ -1,17 +1,20 @@
 <mappings>
-  <mapping>
-    <SqlServer>@@ROWCOUNT</SqlServer>
-    <MySql>(SELECT ROW_COUNT())</MySql>
-    <Oracle>SQL%ROWCOUNT</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>@@IDENTITY</SqlServer>
-    <MySql>(SELECT LAST_INSERT_ID())</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>@@VERSION</SqlServer>
-    <MySql>(SELECT VERSION())</MySql>
-    <Oracle></Oracle>
-  </mapping>
+	<mapping>
+		<SqlServer>@@ROWCOUNT</SqlServer>
+		<MySql>(SELECT ROW_COUNT())</MySql>
+		<Oracle>SQL%ROWCOUNT</Oracle>
+		<Postgres>ROW_COUNT</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>@@IDENTITY</SqlServer>
+		<MySql>(SELECT LAST_INSERT_ID())</MySql>
+		<Oracle></Oracle>
+		<Postgres>(SELECT LASTVAL())</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>@@VERSION</SqlServer>
+		<MySql>(SELECT VERSION())</MySql>
+		<Oracle></Oracle>
+		<Postgres>(SELECT VERSION())</Postgres>
+	</mapping>	
 </mappings>

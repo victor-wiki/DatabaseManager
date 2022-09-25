@@ -83,17 +83,22 @@ namespace DatabaseConverter.Core
                 if (!string.IsNullOrEmpty(functionExpression))
                 {
                     bool useBrackets = false;
-                    MappingFunctionInfo targetFunctionInfo= this.GetMappingFunctionInfo(text, out useBrackets);
+                    MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, out useBrackets);
 
                     FunctionFomular fomular = new FunctionFomular(functionExpression);
 
                     Dictionary<string, string> dictDataType = null;
 
-                    string newExpression = this.ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
+                    if (fomular.Name == null)
+                    {
+                        continue;
+                    }
+
+                    string newExpression = ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
 
                     if (newExpression != fomular.Expression)
                     {
-                        newDefinition = this.ReplaceValue(newDefinition, fomular.Expression, newExpression);
+                        newDefinition = ReplaceValue(newDefinition, fomular.Expression, newExpression);
 
                         changed = true;
                     }
@@ -103,12 +108,12 @@ namespace DatabaseConverter.Core
                         this.convertedDataTypes.AddRange(dictDataType.Values);
                     }
 
-                    if(!string.IsNullOrEmpty(targetFunctionInfo.Args) && changed)
+                    if (!string.IsNullOrEmpty(targetFunctionInfo.Args) && changed)
                     {
-                        if(!this.convertedFunctions.Contains(targetFunctionInfo.Name))
+                        if (!this.convertedFunctions.Contains(targetFunctionInfo.Name))
                         {
                             this.convertedFunctions.Add(targetFunctionInfo.Name);
-                        }                        
+                        }
                     }
                 }
             }
@@ -162,7 +167,10 @@ namespace DatabaseConverter.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            this.sourceOwnerName = DbInterpreterHelper.GetOwnerName(sourceDbInterpreter);
+            this.sourceSchemaName = sourceDbInterpreter.DefaultSchema;            
+
+            var sourceDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbInterpreter.DatabaseType);
+            var targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbInterpreter.DatabaseType);
 
             int ignoreCount = 0;
 
@@ -190,9 +198,9 @@ namespace DatabaseConverter.Core
 
                         if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
                         {
-                            if ((text == "dbo" || text == "[dbo]") && this.TargetDbOwner?.ToLower() != "dbo")
+                            if ((text == "dbo" || text == "[dbo]") && this.TargetDbSchema?.ToLower() != "dbo")
                             {
-                                if(nextToken!=null && nextToken.Text==".")
+                                if (nextToken != null && nextToken.Text == ".")
                                 {
                                     ignoreCount++;
                                 }
@@ -205,11 +213,11 @@ namespace DatabaseConverter.Core
                         {
                             sb.Append(text);
                             continue;
-                        }                       
+                        }
 
-                        //Remove owner name
+                        //Remove schema name
                         if (nextToken != null && nextToken.Text.Trim() != "(" &&
-                            text.Trim('"') == sourceOwnerName && i + 1 < tokens.Count && tokens[i + 1].Text == "."
+                            text.Trim('"') == sourceSchemaName && i + 1 < tokens.Count && tokens[i + 1].Text == "."
                             )
                         {
                             ignoreCount++;
@@ -225,17 +233,21 @@ namespace DatabaseConverter.Core
 
                             string textWithBrackets = text.ToLower() + "()";
 
-                            bool useBrackets = false;                           
+                            bool useBrackets = false;
 
-                            MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(text, out useBrackets);                          
+                            MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, out useBrackets);
 
-                            if (targetFunctionInfo.Name.ToLower() !=text.ToLower())
+                            if (targetFunctionInfo.Name.ToLower() != text.ToLower())
                             {
                                 string targetFunction = targetFunctionInfo.Name;
 
                                 if (!string.IsNullOrEmpty(targetFunction))
                                 {
                                     sb.Append(targetFunction);
+                                }
+                                else
+                                {
+                                    sb.Append(text); //reserve original function name
                                 }
 
                                 if (useBrackets)
@@ -257,7 +269,15 @@ namespace DatabaseConverter.Core
                         }
                         else
                         {
-                            sb.Append(this.GetQuotedString(text));
+                            if ((sourceDataTypeSpecs!=null && sourceDataTypeSpecs.Any(item => item.Name == text))
+                                ||(targetDataTypeSpecs != null && targetDataTypeSpecs.Any(item => item.Name == text)))
+                            {
+                                sb.Append(text);
+                            }
+                            else
+                            {
+                                sb.Append(this.GetQuotedString(text));
+                            }
                         }
                         break;
                     case TSQLTokenType.StringLiteral:

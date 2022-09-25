@@ -10,10 +10,12 @@ namespace SqlAnalyser.Model
         public string Symbol { get; set; }
         public int? StartIndex { get; set; }
         public int? StopIndex { get; set; }
+        public bool IsConst { get; set; }
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
 
-        public List<TokenInfo> Tokens { get; set; } = new List<TokenInfo>();
+        public TokenInfo Parent { get; private set; }
+        public List<TokenInfo> Children { get; } =new List<TokenInfo>();
 
         public TokenInfo(string symbol)
         {
@@ -63,6 +65,12 @@ namespace SqlAnalyser.Model
         public override string ToString()
         {
             return this.Symbol;
+        }  
+        
+        public void AddChild(TokenInfo child)
+        {
+            child.Parent = this;
+            this.Children.Add(child);
         }
     }
 

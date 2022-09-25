@@ -1,10 +1,10 @@
 ﻿using DatabaseInterpreter.Model;
-using MySql.Data.MySqlClient;
+using Microsoft.Data.SqlClient;
+using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
-using System.Data.SqlClient;
 
-namespace  DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Core
 {
     public class DbConnector
     {
@@ -30,16 +30,20 @@ namespace  DatabaseInterpreter.Core
             string lowerProviderName = this._dbProvider.ProviderName.ToLower();
             if (lowerProviderName.Contains("oracle"))
             {
-                factory = new OracleClientFactory();                
+                factory = new OracleClientFactory();
             }
-            else if(lowerProviderName.Contains("mysql"))
+            else if (lowerProviderName.Contains("mysql"))
             {
-                factory = MySqlClientFactory.Instance;
-            }            
-            else
+                factory = MySqlConnector.MySqlConnectorFactory.Instance;
+            }
+            else if (lowerProviderName.Contains("sqlclient"))
             {
                 factory = SqlClientFactory.Instance;
-            }            
+            }
+            else if (lowerProviderName.Contains("npgsql"))
+            {
+                factory = NpgsqlFactory.Instance;
+            }
            
             DbConnection connection = factory.CreateConnection();
             if (connection != null)

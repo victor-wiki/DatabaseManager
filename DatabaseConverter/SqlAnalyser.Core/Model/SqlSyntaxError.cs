@@ -13,7 +13,7 @@ namespace SqlAnalyser.Model
 
             foreach(SqlSyntaxErrorItem item in this.Items)
             {
-                sb.AppendLine($"{item.Text}(Line={item.Line},Column={item.Column},StartIndex={item.StartIndex},StopIndex={item.StopIndex});");
+                sb.AppendLine($"{item.Text}(Line={item.Line},Column={item.Column},StartIndex={item.StartIndex},StopIndex={item.StopIndex}):{item.Message};");
             }
 
             return sb.ToString();
@@ -27,5 +27,6 @@ namespace SqlAnalyser.Model
         public int StartIndex { get; set; }
         public int StopIndex { get; set; }
         public string Text { get; set; }
+        public string Message { get; set; }
     }
 }

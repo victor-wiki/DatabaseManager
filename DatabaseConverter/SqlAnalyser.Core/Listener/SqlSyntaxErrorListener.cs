@@ -1,9 +1,6 @@
 ﻿using Antlr4.Runtime;
 using SqlAnalyser.Model;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SqlAnalyser.Core
 {
@@ -28,6 +25,7 @@ namespace SqlAnalyser.Core
                 errorItem.Line = token.Line;
                 errorItem.Column = token.Column + 1;
                 errorItem.Text = token.Text;
+                errorItem.Message = msg;
 
                 this.Error.Items.Add(errorItem);
             }

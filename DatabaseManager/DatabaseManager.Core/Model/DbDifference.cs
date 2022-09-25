@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DatabaseInterpreter.Model;
 
+
 namespace DatabaseManager.Model
 {
     public class DbDifference

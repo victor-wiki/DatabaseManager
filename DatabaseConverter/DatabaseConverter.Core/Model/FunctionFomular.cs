@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace DatabaseConverter.Model
 {
@@ -13,8 +12,6 @@ namespace DatabaseConverter.Model
         private string _expression;
 
         public string Delimiter { get; set; } = ",";
-
-        
         public int StartIndex { get; set; }
         public int StopIndex { get; set; }
 

@@ -1,131 +1,146 @@
 <mappings>
-  <mapping>
-    <SqlServer>getdate()</SqlServer>
-    <MySql>CURRENT_TIMESTAMP</MySql>
-    <Oracle>SYSDATE</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>newid()</SqlServer>
-    <MySql></MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>newsequentialid()</SqlServer>
-    <MySql></MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>LEN,DATALENGTH</SqlServer>
-    <MySql>LENGTH</MySql>
-    <Oracle>LENGTH</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>SUBSTRING</SqlServer>
-    <MySql>SUBSTR,SUBSTRING</MySql>
-    <Oracle>SUBSTR</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>CHARINDEX</SqlServer>
-    <MySql>INSTR,LOCATE,POSITION</MySql>
-    <Oracle>INSTR</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>STUFF</SqlServer>
-    <MySql>INSERT</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>ISNULL</SqlServer>
-    <MySql>IFNULL</MySql>
-    <Oracle>NVL</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>DATEDIFF</SqlServer>
-    <MySql>DATEDIFF</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>DATEADD</SqlServer>
-    <MySql>DATE_ADD</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>REPLICATE</SqlServer>
-    <MySql>REPEAT</MySql>
-    <Oracle>RPAD</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>CONVERT</SqlServer>
-    <MySql>CONVERT</MySql>
-    <Oracle direction="IN">CAST</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>SYSTEM_USER</SqlServer>
-    <MySql>CURRENT_USER</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>DB_NAME</SqlServer>
-    <MySql>DATABASE</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>DAY</SqlServer>
-    <MySql>DAYOFMONTH</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>DATEPART</SqlServer>
-    <MySql>EXTRACT</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>IIF</SqlServer>
-    <MySql>IF</MySql>
-    <Oracle></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN">LOWER</SqlServer>
-    <MySql direction="OUT">LCASE</MySql>
-    <Oracle direction="IN">LOWER</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN">UPPER</SqlServer>
-    <MySql direction="OUT">UCASE</MySql>
-    <Oracle direction="IN">UPPER</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN">LOG</SqlServer>
-    <MySql direction="OUT">LN</MySql>
-    <Oracle direction="OUT">LN</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN">POWER</SqlServer>
-    <MySql direction="OUT">EXP</MySql>
-    <Oracle direction="IN"></Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN">REPLICATE</SqlServer>
-    <MySql direction="OUT">RPAD</MySql>  
-  </mapping>
-  <mapping>
-    <SqlServer>CEILING</SqlServer>
-    <MySql>CEILING,CEIL</MySql>
-    <Oracle>CEIL</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer>CHAR</SqlServer>
-    <MySql>CHAR</MySql>
-    <Oracle>CHR,NCHR</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer></SqlServer>
-    <MySql>TRUNCATE</MySql>
-    <Oracle>TRUNC</Oracle>
-  </mapping>
-  <mapping>
-    <SqlServer direction="IN" args="EXP AS INT">CAST</SqlServer>
-    <MySql direction="IN" args="EXP AS UNSIGNED">CAST</MySql>
-    <Oracle>TO_NUMBER</Oracle>
-  </mapping>
+	<mapping>
+		<SqlServer>GETDATE()</SqlServer>
+		<MySql>CURRENT_TIMESTAMP</MySql>
+		<Oracle>SYSDATE</Oracle>
+		<Postgres>CURRENT_TIMESTAMP,NOW()</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>LEN</SqlServer>
+		<MySql>CHAR_LENGTH</MySql>
+		<Oracle>LENGTH</Oracle>
+		<Postgres>LENGTH,CHAR_LENGTH,CHARACTER_LENGTH</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>DATALENGTH</SqlServer>
+		<MySql>LENGTH</MySql>
+		<Oracle>LENGTHB</Oracle>
+		<Postgres>OCTET_LENGTH</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>SUBSTRING</SqlServer>
+		<MySql>SUBSTR,SUBSTRING</MySql>
+		<Oracle>SUBSTR</Oracle>
+		<Postgres>SUBSTRING,SUBSTR</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>CHARINDEX</SqlServer>
+		<MySql>INSTR,LOCATE,POSITION</MySql>
+		<Oracle>INSTR</Oracle>
+		<Postgres>POSITION,STRPOS</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>STUFF</SqlServer>
+		<MySql>INSERT</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>ISNULL</SqlServer>
+		<MySql>IFNULL</MySql>
+		<Oracle>NVL</Oracle>
+		<Postgres>COALESCE</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>DATEDIFF</SqlServer>
+		<MySql>DATEDIFF</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>DATEADD</SqlServer>
+		<MySql>DATE_ADD</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>REPLICATE</SqlServer>
+		<MySql>REPEAT</MySql>
+		<Oracle>RPAD</Oracle>
+		<Postgres>RPAD</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>CONVERT</SqlServer>
+		<MySql>CONVERT</MySql>
+		<Oracle direction="IN">CAST</Oracle>
+		<Postgres>CAST</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>SYSTEM_USER</SqlServer>
+		<MySql>CURRENT_USER</MySql>
+		<Oracle direction="IN" args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
+		<Postgres>CURRENT_USER</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>DB_NAME()</SqlServer>
+		<MySql>DATABASE()</MySql>
+		<Oracle>ORA_DATABASE_NAME()</Oracle>
+		<Postgres>CURRENT_DATABASE()</Postgres>
+	</mapping>
+	<!--<mapping>
+		<SqlServer>DAY</SqlServer>
+		<MySql>DAYOFMONTH</MySql>
+		<Oracle direction="IN" args="DAY FROM DATE EXP">EXTRACT</Oracle>
+		<Postgres direction="IN" args="'DAY',TIMESTAMP EXP">DATE_PART</Postgres>
+	</mapping>-->
+	<mapping>
+		<SqlServer>DATEPART</SqlServer>
+		<MySql>EXTRACT</MySql>
+		<Oracle>EXTRACT</Oracle>
+		<Postgres>EXTRACT,DATE_PART</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>IIF</SqlServer>
+		<MySql>IF</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>LOWER</SqlServer>
+		<MySql>LCASE</MySql>
+		<Oracle>LOWER</Oracle>
+		<Postgres>LOWER</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>UPPER</SqlServer>
+		<MySql>UCASE</MySql>
+		<Oracle>UPPER</Oracle>
+		<Postgres>UPPER</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>LOG</SqlServer>
+		<MySql>LN</MySql>
+		<Oracle>LN</Oracle>
+		<Postgres>LN</Postgres>
+	</mapping>	
+	<mapping>
+		<SqlServer>REPLICATE</SqlServer>
+		<MySql>RPAD</MySql>
+		<Oracle>RPAD</Oracle>
+		<Postgres>RPAD</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>CEILING</SqlServer>
+		<MySql>CEILING,CEIL</MySql>
+		<Oracle>CEIL</Oracle>
+		<Postgres>CEILING,CEIL</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>CHAR</SqlServer>
+		<MySql>CHAR</MySql>
+		<Oracle>CHR,NCHR</Oracle>
+		<Postgres>CHAR</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer direction="IN" args="EXP,-1">ROUND</SqlServer>
+		<MySql>TRUNCATE</MySql>
+		<Oracle>TRUNC</Oracle>
+		<Postgres>TRUNC</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer direction="IN" args="EXP AS INT">CAST</SqlServer>
+		<MySql direction="IN" args="EXP AS UNSIGNED">CAST</MySql>
+		<Oracle>TO_NUMBER</Oracle>
+		<Postgres direction="IN" args="EXP AS INTEGER">CAST</Postgres>
+	</mapping>
 </mappings>

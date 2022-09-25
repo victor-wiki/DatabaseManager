@@ -1,7 +1,7 @@
-﻿using DatabaseInterpreter.Model;
-using System;
+﻿using System;
 using System.Diagnostics;
 using Humanizer;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager.Helper
 {

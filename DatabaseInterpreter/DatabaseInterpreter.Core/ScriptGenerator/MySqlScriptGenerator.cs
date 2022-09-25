@@ -30,8 +30,9 @@ namespace DatabaseInterpreter.Core
                 TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.TableName == table.Name);
                 IEnumerable<TableForeignKey> foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.TableName == table.Name);
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
+                IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
 
-                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, null);
+                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
                 sb.AppendRange(sbTable.Scripts);
 
@@ -125,9 +126,9 @@ namespace DatabaseInterpreter.Core
             return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} CHANGE {this.GetQuotedString(column.Name)} {newName} {this.dbInterpreter.ParseDataType(column)};");
         }
 
-        public override Script AlterTableColumn(Table table, TableColumn column)
+        public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)}");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, newColumn)}");
         }
 
         public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
@@ -146,10 +147,13 @@ namespace DatabaseInterpreter.Core
 
             string sql = $"ALTER TABLE {this.GetQuotedString(primaryKey.TableName)} ADD CONSTRAINT { this.GetQuotedString(this.GetRestrictedLengthName(primaryKey.Name))} PRIMARY KEY ({columnNames})";
 
-            if (!string.IsNullOrEmpty(primaryKey.Comment))
+            if (this.option.TableScriptsGenerateOption.GenerateComment)
             {
-                sql += $" COMMENT '{this.TransferSingleQuotationString(primaryKey.Comment)}'";
-            }
+                if (!string.IsNullOrEmpty(primaryKey.Comment))
+                {
+                    sql += $" COMMENT '{this.TransferSingleQuotationString(primaryKey.Comment)}'";
+                }
+            }           
 
             return new CreateDbObjectScript<TablePrimaryKey>(sql + this.scriptsDelimiter);
         }
@@ -208,10 +212,13 @@ namespace DatabaseInterpreter.Core
 
             string sql = $"ALTER TABLE {this.GetQuotedString(index.TableName)} ADD {type} INDEX {this.GetQuotedString(this.GetRestrictedLengthName(index.Name))} ({columnNames})";
 
-            if (!string.IsNullOrEmpty(index.Comment))
+            if(this.option.TableScriptsGenerateOption.GenerateComment)
             {
-                sql += $" COMMENT '{this.TransferSingleQuotationString(index.Comment)}'";
-            }
+                if (!string.IsNullOrEmpty(index.Comment))
+                {
+                    sql += $" COMMENT '{this.TransferSingleQuotationString(index.Comment)}'";
+                }
+            }            
 
             return new CreateDbObjectScript<TableIndex>(sql + this.scriptsDelimiter);
         }
@@ -223,17 +230,17 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new Script("");
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition})");
         }
 
         public override Script DropCheckConstraint(TableConstraint constraint)
         {
-            return new Script("");
+            return new Script($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} DROP CONSTRAINT {this.GetQuotedString(constraint.Name)}");
         }
 
         public override Script SetIdentityEnabled(TableColumn column, bool enabled)
         {
-            Table table = new Table() { Owner = column.Owner, Name = column.TableName };
+            Table table = new Table() { Schema = column.Schema, Name = column.TableName };
 
             return new AlterDbObjectScript<TableColumn>($"ALTER TABLE { this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
         }
@@ -243,6 +250,8 @@ namespace DatabaseInterpreter.Core
         #region Database Operation
 
         public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
+
+        public override Script AddSequence(Sequence sequence) { return new Script(""); }
 
         public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
             TablePrimaryKey primaryKey,
@@ -257,7 +266,7 @@ namespace DatabaseInterpreter.Core
             string notCreateIfExistsClause = mySqlInterpreter.NotCreateIfExistsClause;
 
             string tableName = table.Name;
-            string quotedTableName = this.GetQuotedObjectName(table);
+            string quotedTableName = this.GetQuotedFullTableName(table);
 
             this.RestrictColumnLength(columns, primaryKey?.Columns);
             this.RestrictColumnLength(columns, foreignKeys.SelectMany(item => item.Columns));
@@ -267,11 +276,17 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey!=null)
             {
+                List<IndexColumn> pkColumns = new List<IndexColumn>();
+
+                //identity column must be the first primary key column.
+                pkColumns.AddRange(primaryKey.Columns.Where(item => columns.Any(col => col.Name == item.ColumnName && col.IsIdentity)));
+                pkColumns.AddRange(primaryKey.Columns.Where(item => columns.Any(col => col.Name == item.ColumnName && !col.IsIdentity)));
+
                 primaryKeyColumns =
 $@"
 ,PRIMARY KEY
 (
-{string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+{string.Join(Environment.NewLine, pkColumns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )";
             }
 
@@ -281,7 +296,7 @@ $@"
 $@"
 CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
-){(!string.IsNullOrEmpty(table.Comment) ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
+){(!string.IsNullOrEmpty(table.Comment) && this.option.TableScriptsGenerateOption.GenerateComment ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
 DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
@@ -323,6 +338,16 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
             }
             #endregion
 
+            #region Constraint
+            if (this.option.TableScriptsGenerateOption.GenerateConstraint && constraints != null)
+            {
+                foreach (TableConstraint constraint in constraints)
+                {
+                    sb.AppendLine(this.AddCheckConstraint(constraint));                   
+                }
+            }
+            #endregion
+
             sb.AppendLine();
 
             return sb;
@@ -360,7 +385,7 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedObjectName(dbObject)};";
+            return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
         }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)

@@ -1,13 +1,13 @@
-﻿using DatabaseManager.Model;
-using System;
-using System.Text;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using System.Threading.Tasks;
-using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Model;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using DatabaseInterpreter.Utility;
+using System.Threading.Tasks;
+
 
 namespace DatabaseManager.Core
 {
@@ -33,6 +33,10 @@ namespace DatabaseManager.Core
             {
                 return this.DiagnoseNotNullWithEmpty();
             }
+            else if (diagnoseType == DiagnoseType.WithLeadingOrTrailingWhitespace)
+            {
+                return this.DiagnoseWithLeadingOrTrailingWhitespace();
+            }
 
             throw new NotSupportedException($"Not support diagnose for {diagnoseType}");
         }
@@ -41,6 +45,27 @@ namespace DatabaseManager.Core
         {
             this.Feedback("Begin to diagnose not null fields with empty value...");
 
+            DiagnoseResult result = await this.DiagnoseTableColumn(DiagnoseType.NotNullWithEmpty);
+
+            this.Feedback("End diagnose not null fields with empty value.");
+
+            return result;
+        }
+
+
+        public virtual async Task<DiagnoseResult> DiagnoseWithLeadingOrTrailingWhitespace()
+        {
+            this.Feedback("Begin to diagnose character fields with leading or trailing whitespace...");
+
+            DiagnoseResult result = await this.DiagnoseTableColumn(DiagnoseType.WithLeadingOrTrailingWhitespace);     
+
+            this.Feedback("End diagnose character fields with leading or trailing whitespace.");
+
+            return result;
+        }
+
+        private async Task<DiagnoseResult> DiagnoseTableColumn(DiagnoseType diagnoseType)
+        {
             DiagnoseResult result = new DiagnoseResult();
 
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
@@ -53,8 +78,19 @@ namespace DatabaseManager.Core
 
             this.Feedback("End get table columns.");
 
-            var groups = columns.Where(item => DataTypeHelper.IsCharType(item.DataType) && !item.IsNullable)
-                         .GroupBy(item => new { item.Owner, item.TableName });
+            dynamic groups = null;
+
+            if (diagnoseType == DiagnoseType.NotNullWithEmpty)
+            {
+                groups = columns.Where(item => DataTypeHelper.IsCharType(item.DataType) && !item.DataType.EndsWith("[]") && !item.IsNullable)
+                         .GroupBy(item => new { item.Schema, item.TableName });
+            }
+            else if (diagnoseType == DiagnoseType.WithLeadingOrTrailingWhitespace)
+            {
+                groups = columns.Where(item => DataTypeHelper.IsCharType(item.DataType) && !item.DataType.EndsWith("[]"))
+                         .GroupBy(item => new { item.Schema, item.TableName });
+            }
+
 
             using (DbConnection dbConnection = interpreter.CreateConnection())
             {
@@ -62,7 +98,16 @@ namespace DatabaseManager.Core
                 {
                     foreach (TableColumn column in group)
                     {
-                        string countSql = this.GetTableColumnEmptySql(interpreter, column, true);
+                        string countSql = "";
+                        
+                        if(diagnoseType == DiagnoseType.NotNullWithEmpty)
+                        {
+                            countSql = this.GetTableColumnWithEmptyValueSql(interpreter, column, true);
+                        }
+                        else
+                        {
+                            countSql = this.GetTableColumnWithLeadingOrTrailingWhitespaceSql(interpreter, column, true);
+                        }                      
 
                         this.Feedback($@"Begin to get invalid record count for column ""{column.Name}"" of table ""{column.TableName}""...");
 
@@ -72,18 +117,27 @@ namespace DatabaseManager.Core
 
                         if (count > 0)
                         {
+                            string sql = "";
+
+                            if (diagnoseType == DiagnoseType.NotNullWithEmpty)
+                            {
+                                sql = this.GetTableColumnWithEmptyValueSql(interpreter, column, false);
+                            }
+                            else
+                            {
+                                sql = this.GetTableColumnWithLeadingOrTrailingWhitespaceSql(interpreter, column, false);
+                            }
+
                             result.Details.Add(new DiagnoseResultItem()
                             {
                                 DatabaseObject = column,
                                 RecordCount = count,
-                                Sql = this.GetTableColumnEmptySql(interpreter, column, false)
+                                Sql = sql
                             });
                         }
                     }
                 }
             }
-
-            this.Feedback("End diagnose not null fields with empty value.");
 
             return result;
         }
@@ -105,7 +159,7 @@ namespace DatabaseManager.Core
             this.Feedback("End get foreign keys.");
 
             var groups = foreignKeys.Where(item => item.ReferencedTableName == item.TableName)
-                         .GroupBy(item => new { item.Owner, item.TableName });
+                         .GroupBy(item => new { item.Schema, item.TableName });
 
             using (DbConnection dbConnection = interpreter.CreateConnection())
             {
@@ -156,13 +210,17 @@ namespace DatabaseManager.Core
             {
                 return new OracleDiagnosis(connectionInfo);
             }
+            else if(databaseType == DatabaseType.Postgres)
+            {
+                return new PostgresDiagnosis(connectionInfo);
+            }
 
             throw new NotImplementedException($"Not implemente diagnosis for {databaseType}.");
         }
 
-        protected virtual string GetTableColumnEmptySql(DbInterpreter interpreter, TableColumn column, bool isCount)
+        protected virtual string GetTableColumnWithEmptyValueSql(DbInterpreter interpreter, TableColumn column, bool isCount)
         {
-            string tableName = $"{column.Owner}.{interpreter.GetQuotedString(column.TableName)}";
+            string tableName = $"{column.Schema}.{interpreter.GetQuotedString(column.TableName)}";
             string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
 
             string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {this.GetStringLengthFunction()}({interpreter.GetQuotedString(column.Name)})=0";
@@ -170,9 +228,29 @@ namespace DatabaseManager.Core
             return sql;
         }
 
+        protected virtual string GetTableColumnWithLeadingOrTrailingWhitespaceSql(DbInterpreter interpreter, TableColumn column, bool isCount)
+        {
+            string tableName = $"{column.Schema}.{interpreter.GetQuotedString(column.TableName)}";
+            string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
+            string columnName = interpreter.GetQuotedString(column.Name);
+            string lengthFunName = this.GetStringLengthFunction();
+
+            string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {lengthFunName}(TRIM({columnName}))<{lengthFunName}({columnName})";
+
+            if(interpreter.DatabaseType == DatabaseType.Postgres)
+            {
+                if(column.DataType == "character")
+                {
+                    sql += $" OR {lengthFunName}({columnName})<>{column.MaxLength}";
+                }
+            }
+
+            return sql;
+        }
+
         protected virtual string GetTableColumnReferenceSql(DbInterpreter interpreter, TableForeignKey foreignKey, bool isCount)
         {
-            string tableName = $"{foreignKey.Owner}.{interpreter.GetQuotedString(foreignKey.TableName)}";
+            string tableName = $"{foreignKey.Schema}.{interpreter.GetQuotedString(foreignKey.TableName)}";
             string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
             string whereClause = string.Join(" AND ", foreignKey.Columns.Select(item => $"{interpreter.GetQuotedString(item.ColumnName)}={interpreter.GetQuotedString(item.ReferencedColumnName)}"));
 

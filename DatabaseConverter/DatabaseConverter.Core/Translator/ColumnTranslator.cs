@@ -4,6 +4,7 @@ using DatabaseInterpreter.Model;
 using NCalc;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -16,7 +17,7 @@ namespace DatabaseConverter.Core
         private DatabaseType targetDbType;
         private IEnumerable<DataTypeSpecification> sourceDataTypeSpecs;
         private IEnumerable<DataTypeSpecification> targetDataTypeSpecs;
-
+        private FunctionTranslator functionTranslator;
 
         public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, List<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
@@ -25,6 +26,7 @@ namespace DatabaseConverter.Core
             this.targetDbType = targetInterpreter.DatabaseType;
             this.sourceDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbType);
             this.targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbType);
+            this.functionTranslator = new FunctionTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
         }
 
         public override void Translate()
@@ -42,6 +44,8 @@ namespace DatabaseConverter.Core
             this.FeedbackInfo("Begin to translate columns.");
 
             this.LoadMappings();
+            this.functionTranslator.LoadMappings();
+            this.functionTranslator.LoadFunctionSpecifications();
 
             this.CheckComputeExpression();
 
@@ -62,7 +66,6 @@ namespace DatabaseConverter.Core
 
             this.FeedbackInfo("End translate columns.");
         }
-
         public void ConvertDataType(TableColumn column)
         {
             string originalDataType = column.DataType;
@@ -100,6 +103,26 @@ namespace DatabaseConverter.Core
                 string targetDataType = targetMapping.Type;
 
                 DataTypeSpecification targetDataTypeSpec = this.GetDataTypeSpecification(this.targetDataTypeSpecs, targetDataType);
+
+                if (targetDataTypeSpec == null)
+                {
+                    throw new Exception($"No type '{targetDataType}' defined for '{targetDbType}'.");
+                }
+
+                if (targetDataTypeSpec.IsIdentity)
+                {
+                    if (targetDbType == DatabaseType.SqlServer || targetDbType == DatabaseType.MySql)
+                    {
+                        column.IsIdentity = true;
+
+                        if (column.DefaultValue.Contains("nextval"))
+                        {
+                            column.DefaultValue = null;
+                        }
+
+                        return;
+                    }
+                }
 
                 column.DataType = targetDataType;
 
@@ -205,6 +228,10 @@ namespace DatabaseConverter.Core
                             else if (name == "expression")
                             {
                                 matched = this.IsSpecialExpressionMatched(special, originalDataType);
+                            }
+                            else if (name == "isDentity")
+                            {
+                                matched = column.IsIdentity;
                             }
 
                             if (matched)
@@ -315,6 +342,10 @@ namespace DatabaseConverter.Core
                         column.DataType = dataType;
                     }
                 }
+            }
+            else
+            {
+                column.DataType = targetDbInterpreter.DefaultDataType;
             }
         }
 
@@ -430,13 +461,43 @@ namespace DatabaseConverter.Core
 
         public void ConvertDefaultValue(TableColumn column)
         {
-            string defaultValue = ValueHelper.GetTrimedDefaultValue(column.DefaultValue);
+            string defaultValue = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
 
             IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString() && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
 
             if (funcMappings != null)
             {
                 defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
+            }
+            else
+            {
+                if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                {
+                    if (defaultValue.Contains("::")) //remove Postgres type reference
+                    {
+                        string[] items = defaultValue.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+                        List<string> list = new List<string>();
+
+                        foreach (var item in items)
+                        {
+                            list.Add(item.Split(new string[] { "::" }, StringSplitOptions.RemoveEmptyEntries)[0]);
+                        }
+
+                        defaultValue = string.Join(" ", list);
+                    }
+
+                    if (defaultValue.Trim() == "true" || defaultValue.Trim() == "false")
+                    {
+                        defaultValue = defaultValue.Replace("true", "1").Replace("false", "0");
+                    }
+                }
+                else if (this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                {
+                    if (column.DataType == "boolean")
+                    {
+                        defaultValue = defaultValue.Replace("0", "false").Replace("1", "true");
+                    }
+                }
             }
 
             column.DefaultValue = defaultValue;
@@ -454,9 +515,50 @@ namespace DatabaseConverter.Core
             }
 
             column.ComputeExp = this.ParseDefinition(column.ComputeExp);
+
+            string computeExp = column.ComputeExp.ToLower();
+
+            if (this.targetDbType == DatabaseType.Postgres)
+            {
+                //this is to avoid error when datatype like money uses coalesce(exp,0)
+                if (computeExp.Contains("coalesce"))
+                {
+                    string exp = column.ComputeExp;
+
+                    if (computeExp.StartsWith("("))
+                    {
+                        exp = exp.Substring(1, computeExp.Length - 1);
+                    }
+
+                    List<FunctionFomular> fomulars = FunctionTranslator.GetFunctionFomulars(exp);
+
+                    if (fomulars.Count > 0 && fomulars.First().Args.Count > 0)
+                    {
+                        column.ComputeExp = fomulars.First().Args[0];
+                    }
+                }
+            }
+
+            column.ComputeExp = this.functionTranslator.GetMappedFunction(column.ComputeExp);
+
+            if(this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
+            {
+                if (column.DataType == "money" && !column.ComputeExp.ToLower().Contains("::money"))
+                {
+                    column.ComputeExp = TranslateHelper.ConvertNumberToPostgresMoney(column.ComputeExp);
+                }
+            }
+            
+            if(this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+            {
+                if (column.ComputeExp.Contains("::")) //datatype convert operator
+                {
+                    column.ComputeExp = TranslateHelper.RemovePostgresDataTypeConvertExpression(column.ComputeExp, sourceDataTypeSpecs, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar);
+                }
+            }
         }
 
-        private void CheckComputeExpression()
+        private async void CheckComputeExpression()
         {
             IEnumerable<Function> customFunctions = this.SourceSchemaInfo?.Functions;
 
@@ -492,7 +594,7 @@ namespace DatabaseConverter.Core
                     {
                         if (customFunctions == null || customFunctions.Count() == 0)
                         {
-                            customFunctions = this.sourceDbInterpreter.GetFunctionsAsync().Result;
+                            customFunctions = await this.sourceDbInterpreter.GetFunctionsAsync();
                         }
 
                         if (customFunctions != null)

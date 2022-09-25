@@ -8,11 +8,11 @@ namespace DatabaseInterpreter.Core
 {
     public class FunctionManager : ConfigManager
     {
-        private static Dictionary<DatabaseType, List<FunctionSpecification>> _functionSpecifications;      
+        private static Dictionary<DatabaseType, List<FunctionSpecification>> _functionSpecifications;
 
         public static List<FunctionSpecification> GetFunctionSpecifications(DatabaseType dbType)
         {
-            if(_functionSpecifications!=null && _functionSpecifications.ContainsKey(dbType))
+            if (_functionSpecifications != null && _functionSpecifications.ContainsKey(dbType))
             {
                 return _functionSpecifications[dbType];
             }
@@ -29,14 +29,14 @@ namespace DatabaseInterpreter.Core
                 NoParenthesess = item.Attribute("noParenthesess")?.Value == "1"
             }).ToList();
 
-            if(_functionSpecifications==null)
+            if (_functionSpecifications == null)
             {
-                _functionSpecifications = new Dictionary<DatabaseType, List<FunctionSpecification>>();               
+                _functionSpecifications = new Dictionary<DatabaseType, List<FunctionSpecification>>();
             }
 
             _functionSpecifications.Add(dbType, functionSpecs);
 
             return functionSpecs;
-        }      
+        }
     }
 }

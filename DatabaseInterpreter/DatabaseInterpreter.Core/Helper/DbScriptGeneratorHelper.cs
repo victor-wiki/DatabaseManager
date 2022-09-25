@@ -19,6 +19,9 @@ namespace DatabaseInterpreter.Core
                 case DatabaseType.Oracle:
                     dbScriptGenerator = new OracleScriptGenerator(dbInterpreter);
                     break;
+                case DatabaseType.Postgres:
+                    dbScriptGenerator = new PostgresScriptGenerator(dbInterpreter);
+                    break;
 
             }
 

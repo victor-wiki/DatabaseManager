@@ -16,7 +16,7 @@ namespace SqlAnalyser.Core
 
         protected void Append(string value, bool appendIndent = true)
         {
-            sb.Append($"{(appendIndent ? this.indent : "")}{ value }");
+            sb.Append($"{(appendIndent ? this.indent : "")}{value}");
         }
 
         protected void AppendLine(string value, bool appendIndent = true)
@@ -104,7 +104,16 @@ namespace SqlAnalyser.Core
                     this.Append(",", false);
                 }
 
-                this.Append($"{fromItem.TableName}{(hasJoins ? Environment.NewLine : "")}", false);
+                NameToken fromTableName = fromItem.TableName;
+
+                if (fromTableName == null)
+                {
+                    fromTableName = selectStatement.TableName;
+                }
+
+                string fromTableAlias = fromTableName.Alias == null ? "" : " " + fromTableName.Alias.ToString();
+
+                this.Append($"{fromTableName}{fromTableAlias}{(hasJoins ? Environment.NewLine : "")}", false);
 
                 bool hasSubSelect = false;
 
@@ -155,8 +164,8 @@ namespace SqlAnalyser.Core
                         else
                         {
                             string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
-
-                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                            string alias = joinItem.TableName.Alias == null ? "" : $" {joinItem.TableName.Alias}";
+                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{alias}{condition}");
                         }
                     }
                 }
@@ -169,7 +178,6 @@ namespace SqlAnalyser.Core
                 this.AppendLine("", false);
             }
         }
-
         public string GetTrimedQuotationValue(string value)
         {
             return value?.Trim('[', ']', '"', '`');

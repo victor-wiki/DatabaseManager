@@ -1,4 +1,6 @@
-﻿namespace DatabaseManager.Controls
+﻿using DatabaseInterpreter.Model;
+
+namespace DatabaseManager.Controls
 {
     partial class UC_TableDesigner
     {
@@ -30,7 +32,7 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.txtTableName = new System.Windows.Forms.TextBox();
-            this.lblOwner = new System.Windows.Forms.Label();
+            this.lblSchema = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.txtTableComment = new System.Windows.Forms.TextBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
@@ -43,7 +45,7 @@
             this.tabConstraints = new System.Windows.Forms.TabPage();
             this.ucConstraints = new DatabaseManager.Controls.UC_TableConstraints();
             this.dataGridViewComboBoxColumn1 = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.cboOwner = new System.Windows.Forms.ComboBox();
+            this.cboSchema = new System.Windows.Forms.ComboBox();
             this.tabControl1.SuspendLayout();
             this.tabColumns.SuspendLayout();
             this.tabForeignKeys.SuspendLayout();
@@ -69,15 +71,15 @@
             this.txtTableName.Size = new System.Drawing.Size(417, 23);
             this.txtTableName.TabIndex = 2;
             // 
-            // lblOwner
+            // lblSchema
             // 
-            this.lblOwner.AutoSize = true;
-            this.lblOwner.Location = new System.Drawing.Point(601, 10);
-            this.lblOwner.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblOwner.Name = "lblOwner";
-            this.lblOwner.Size = new System.Drawing.Size(49, 17);
-            this.lblOwner.TabIndex = 3;
-            this.lblOwner.Text = "Owner:";
+            this.lblSchema.AutoSize = true;
+            this.lblSchema.Location = new System.Drawing.Point(601, 10);
+            this.lblSchema.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblSchema.Name = "lblSchema";
+            this.lblSchema.Size = new System.Drawing.Size(56, 17);
+            this.lblSchema.TabIndex = 3;
+            this.lblSchema.Text = "Schema:";
             // 
             // label3
             // 
@@ -131,7 +133,7 @@
             // ucColumns
             // 
             this.ucColumns.BackColor = System.Drawing.Color.White;
-            this.ucColumns.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucColumns.DatabaseType = DatabaseType.Unknown;
             this.ucColumns.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucColumns.Location = new System.Drawing.Point(4, 4);
             this.ucColumns.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -154,7 +156,7 @@
             // 
             // ucForeignKeys
             // 
-            this.ucForeignKeys.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucForeignKeys.DatabaseType = DatabaseType.Unknown;
             this.ucForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucForeignKeys.Location = new System.Drawing.Point(4, 4);
             this.ucForeignKeys.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -176,7 +178,7 @@
             // 
             // ucIndexes
             // 
-            this.ucIndexes.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucIndexes.DatabaseType = DatabaseType.Unknown;
             this.ucIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucIndexes.Location = new System.Drawing.Point(0, 0);
             this.ucIndexes.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -198,7 +200,7 @@
             // 
             // ucConstraints
             // 
-            this.ucConstraints.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucConstraints.DatabaseType = DatabaseType.Unknown;
             this.ucConstraints.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucConstraints.Location = new System.Drawing.Point(0, 0);
             this.ucConstraints.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -215,25 +217,25 @@
             this.dataGridViewComboBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridViewComboBoxColumn1.Width = 120;
             // 
-            // cboOwner
+            // cboSchema
             // 
-            this.cboOwner.FormattingEnabled = true;
-            this.cboOwner.Location = new System.Drawing.Point(656, 6);
-            this.cboOwner.Margin = new System.Windows.Forms.Padding(4);
-            this.cboOwner.Name = "cboOwner";
-            this.cboOwner.Size = new System.Drawing.Size(153, 25);
-            this.cboOwner.TabIndex = 9;
+            this.cboSchema.FormattingEnabled = true;
+            this.cboSchema.Location = new System.Drawing.Point(656, 6);
+            this.cboSchema.Margin = new System.Windows.Forms.Padding(4);
+            this.cboSchema.Name = "cboSchema";
+            this.cboSchema.Size = new System.Drawing.Size(153, 25);
+            this.cboSchema.TabIndex = 9;
             // 
             // UC_TableDesigner
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.Controls.Add(this.cboOwner);
+            this.Controls.Add(this.cboSchema);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.txtTableComment);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.lblOwner);
+            this.Controls.Add(this.lblSchema);
             this.Controls.Add(this.txtTableName);
             this.Controls.Add(this.label1);
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -253,7 +255,7 @@
         #endregion
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtTableName;
-        private System.Windows.Forms.Label lblOwner;
+        private System.Windows.Forms.Label lblSchema;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtTableComment;
         private System.Windows.Forms.TabControl tabControl1;
@@ -261,7 +263,7 @@
         private System.Windows.Forms.DataGridViewComboBoxColumn dataGridViewComboBoxColumn1;
         private System.Windows.Forms.TabPage tabColumns;
         private UC_TableColumns ucColumns;
-        private System.Windows.Forms.ComboBox cboOwner;
+        private System.Windows.Forms.ComboBox cboSchema;
         private System.Windows.Forms.TabPage tabIndexes;
         private System.Windows.Forms.TabPage tabConstraints;
         private UC_TableIndexes ucIndexes;

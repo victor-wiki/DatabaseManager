@@ -111,13 +111,15 @@
             this.dgvColumns.MultiSelect = false;
             this.dgvColumns.Name = "dgvColumns";
             this.dgvColumns.RowHeadersWidth = 25;
-            this.dgvColumns.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvColumns.RowTemplate.Height = 25;
             this.dgvColumns.Size = new System.Drawing.Size(1133, 442);
             this.dgvColumns.TabIndex = 7;
             this.dgvColumns.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellContentClick);
+            this.dgvColumns.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellEnter);
             this.dgvColumns.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellValueChanged);
             this.dgvColumns.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvColumns_DataBindingComplete);
             this.dgvColumns.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvColumns_DataError);
+            this.dgvColumns.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dgvColumns_EditingControlShowing);
             this.dgvColumns.RowHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvColumns_RowHeaderMouseClick);
             this.dgvColumns.SelectionChanged += new System.EventHandler(this.dgvColumns_SelectionChanged);
             this.dgvColumns.UserAddedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dgvColumns_UserAddedRow);
@@ -140,11 +142,11 @@
             // colDataType
             // 
             this.colDataType.DataPropertyName = "DataType";
-            this.colDataType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.colDataType.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.colDataType.HeaderText = "Data Type";
             this.colDataType.Name = "colDataType";
             this.colDataType.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colDataType.Width = 150;
+            this.colDataType.Width = 180;
             // 
             // colLength
             // 

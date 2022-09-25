@@ -26,7 +26,7 @@ namespace SqlAnalyser.Core
 
                 if (insert.Columns.Count > 0)
                 {
-                    this.AppendLine($"({ string.Join(",", insert.Columns.Select(item => item.ToString()))})");
+                    this.AppendLine($"({string.Join(",", insert.Columns.Select(item => item.ToString()))})");
                 }
 
                 if (insert.SelectStatements != null && insert.SelectStatements.Count > 0)
@@ -42,11 +42,13 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"UPDATE");
 
-                List<TokenInfo> tableNames = new List<TokenInfo>();
+                List<TableName> tableNames = new List<TableName>();
 
                 if (update.FromItems != null)
                 {
                     int i = 0;
+
+                    List<NameValueItem> nameValues = new List<NameValueItem>();
 
                     foreach (FromItem fromItem in update.FromItems)
                     {
@@ -55,39 +57,38 @@ namespace SqlAnalyser.Core
                             tableNames.Add(fromItem.TableName);
                         }
 
-                        List<JoinItem> usedJoinItems = new List<JoinItem>();
+                        NameValueItem nameValueItem = new NameValueItem();
 
-                        foreach (NameValueItem nameValue in update.SetItems)
+                        nameValueItem.Name = new TokenInfo($"({string.Join(",", update.SetItems.Select(item => item.Name))})");
+
+                        string colNames = string.Join(",", update.SetItems.Select(item => item.Value));
+
+                        string join = "";
+
+                        int j = 0;
+                        foreach (var joinItem in fromItem.JoinItems)
                         {
-                            string[] ids = nameValue.Value.Symbol.Split('.').Select(item => item.Trim()).ToArray();
-
-                            string tableName = ids[0];                                               
-
-                            JoinItem joinItem = fromItem.JoinItems.FirstOrDefault(item => item.TableName.Name?.Symbol?.ToUpper().Trim('"') == tableName.ToUpper()
-                                                || item.TableName.Alias?.Symbol?.ToUpper()?.Trim('"') == tableName.ToUpper());
-
-                            if (joinItem != null)
+                            if (j == 0)
                             {
-                                usedJoinItems.Add(joinItem);
-
-                                string condition = joinItem.Condition == null ? "" : $" WHERE {joinItem.Condition}";
-
-                                nameValue.Value = new TokenInfo($"(SELECT {nameValue.Name} FROM {joinItem.TableName}{condition})");
+                                join += "FROM";
                             }
+                            else
+                            {
+                                join += joinItem.Type.ToString() + " JOIN";
+                            }
+
+                            join += $" {joinItem.TableName} ON {joinItem.Condition}{Environment.NewLine}";
+                            j++;
                         }
 
-                        var otherJoinItems = fromItem.JoinItems.Where(item => !usedJoinItems.Contains(item));
+                        nameValueItem.Value = new TokenInfo($"(SELECT {colNames} {join})");
 
-                        if (otherJoinItems != null && otherJoinItems.Count() > 0)
-                        {
-                            foreach (var otherJoinItem in otherJoinItems)
-                            {
-                                //TODO
-                            }
-                        }
+                        nameValues.Add(nameValueItem);
 
                         i++;
                     }
+
+                    update.SetItems = nameValues;
                 }
 
                 if (tableNames.Count == 0 && update.TableNames.Count > 0)
@@ -95,7 +96,7 @@ namespace SqlAnalyser.Core
                     tableNames.AddRange(update.TableNames);
                 }
 
-                this.Append($" {string.Join(",", tableNames)}", false);
+                this.Append($" {string.Join(",", tableNames.Select(item => item.NameWithAlias))}", false);
 
                 this.AppendLine("SET");
 
@@ -180,7 +181,7 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null && set.Value != null)
                 {
-                    this.AppendLine($"{set.Key } := {set.Value };");
+                    this.AppendLine($"{set.Key} := {set.Value};");
                 }
             }
             else if (statement is LoopStatement loop)
@@ -301,7 +302,7 @@ namespace SqlAnalyser.Core
                 select.TableName = new TableName("DUAL");
             }
 
-            string selectColumns = $"SELECT {string.Join("," + Environment.NewLine + indent, select.Columns.Select(item => item.ToString()))}";
+            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => item))}";
 
             if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
             {
@@ -314,7 +315,7 @@ namespace SqlAnalyser.Core
 
             if (select.IntoTableName != null)
             {
-                this.AppendLine($"INTO {select.IntoTableName.ToString()}");
+                this.AppendLine($"INTO {select.IntoTableName}");
             }
 
             Action appendWith = () =>

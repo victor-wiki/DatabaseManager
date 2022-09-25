@@ -8,11 +8,20 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql and Oracle.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>1.0.4</Version>
+    <Version>2.0.0</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
     <PackageReleaseNotes>allow different ports on same host for mysql;
 fix treenode refresh issue</PackageReleaseNotes>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="frmColumnMapping - 复制.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="frmColumnMapping - 复制.resx" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.2" />
@@ -22,10 +31,11 @@ fix treenode refresh issue</PackageReleaseNotes>
 
   <ItemGroup>
     <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
-    <ProjectReference Include="..\..\DatabaseConverter\SqlAnalyser.Core\SqlAnalyser.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
+    <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
     <ProjectReference Include="..\DatabaseManager.Core\DatabaseManager.Core.csproj" />
+    <ProjectReference Include="..\DatabaseManager.Profile\DatabaseManager.Profile.csproj" />
   </ItemGroup>
 
   <ItemGroup>

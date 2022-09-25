@@ -1,0 +1,158 @@
+﻿<items>
+	<!--<item name="aclitem" args=""></item>
+	<item name="aclitem[]" args="" indexForbidden="true"></item>-->
+	<item name="bigint" args=""></item>
+	<item name="bigint[]" args="" indexForbidden="true"></item>
+	<item name="bigserial" args=""  isIdentity="true"></item>
+	<item name="bit" args=""></item>
+	<item name="bit[]" args=""></item>
+	<item name="bit varying" args=""></item>
+	<item name="bit varying[]" args=""></item>
+	<item name="boolean" args=""></item>
+	<item name="boolean[]" args="" indexForbidden="true"></item>
+	<item name="box" args=""></item>
+	<item name="box[]" args="" indexForbidden="true"></item>
+	<item name="bytea" args="" indexForbidden="true"></item>
+	<item name="bytea[]" args="" indexForbidden="true"></item>
+	<item name="&quot;char&quot;" args=""></item>
+	<item name="&quot;char[]&quot;" args=""></item>
+	<item name="character" args="length"></item>
+	<item name="character[]" args="length"></item>
+	<item name="character varying" args="length" optional="true"></item>	
+	<item name="cidr" args=""></item>
+	<item name="cidr[]" args="" indexForbidden="true"></item>
+	<item name="circle" args=""></item>
+	<item name="circle[]" args="" indexForbidden="true"></item>
+	<item name="cstring[]" args="" indexForbidden="true"></item>
+	<item name="date" args=""></item>
+	<item name="date[]" args="" indexForbidden="true"></item>
+	<item name="datemultirange[]" args="" indexForbidden="true"></item>
+	<item name="daterange" args=""></item>
+	<item name="daterange[]" args="" indexForbidden="true"></item>
+	<item name="double precision" args=""></item>
+	<item name="double precision[]" args="" indexForbidden="true"></item>
+	<item name="geography" args="" ></item>
+	<item name="geography[]" args="" indexForbidden="true"></item>
+	<item name="geometry" args="" ></item>
+	<item name="geometry[]" args="" indexForbidden="true"></item>	
+	<item name="gtsvector" args="" ></item>
+	<item name="gtsvector[]" args="" indexForbidden="true"></item>
+	<item name="inet" args=""></item>
+	<item name="inet[]" args="" indexForbidden="true"></item>
+	<item name="int2vector" args=""></item>
+	<item name="int2vector[]" args="" indexForbidden="true"></item>
+	<item name="int4multirange[]" args="" indexForbidden="true"></item>
+	<item name="int4range" args=""></item>
+	<item name="int4range[]" args="" indexForbidden="true"></item>
+	<item name="int8range" args=""></item>
+	<item name="int8range[]" args="" indexForbidden="true"></item>
+	<item name="integer" args=""></item>
+	<item name="integer[]" args="" indexForbidden="true"></item>
+	<item name="interval" args=""></item>
+	<item name="interval[]" args=""></item>
+	<item name="json" args="" indexForbidden="true"></item>
+	<item name="json[]" args="" indexForbidden="true"></item>
+	<item name="jsonb" args="" indexForbidden="true"></item>
+	<item name="jsonb[]" args="" indexForbidden="true"></item>
+	<item name="jsonpath" args="" indexForbidden="true"></item>
+	<item name="jsonpath[]" args="" indexForbidden="true"></item>
+	<item name="line" args=""></item>
+	<item name="line[]" args="" indexForbidden="true"></item>
+	<item name="lseg" args=""></item>
+	<item name="lseg[]" args="" indexForbidden="true"></item>
+	<item name="macaddr" args=""></item>
+	<item name="macaddr[]" args="" indexForbidden="true"></item>
+	<item name="macaddr8" args=""></item>
+	<item name="macaddr8[]" args="" indexForbidden="true"></item>
+	<item name="money" args=""></item>
+	<item name="money[]" args="" indexForbidden="true"></item>
+	<item name="name" args=""></item>
+	<item name="name[]" args="" indexForbidden="true"></item>
+	<item name="numeric" args="precision,scale" range="1~1000,0~1000" optional="true"></item>
+	<item name="numeric[]" args="precision,scale" range="1~1000,0~1000" optional="true" indexForbidden="true"></item>
+	<item name="nummultirange[]" args="" indexForbidden="true"></item>
+	<item name="numrange" args="" indexForbidden="true"></item>
+	<item name="numrange[]" args="" indexForbidden="true"></item>
+	<item name="oid" args="" ></item>
+	<item name="oid[]" args=""  indexForbidden="true"></item>
+	<item name="oidvector" args="" ></item>
+	<item name="oidvector[]" args="" indexForbidden="true"></item>
+	<item name="path" args=""></item>
+	<item name="path[]" args="" indexForbidden="true"></item>
+	<item name="pg_brin_bloom_summary" args=""></item>
+	<item name="pg_brin_minmax_multi_summary" args=""></item>
+	<item name="pg_dependencies" args=""></item>
+	<item name="pg_lsn" args="" ></item>
+	<item name="pg_lsn[]" args="" indexForbidden="true"></item>
+	<item name="pg_mcv_list" args=""></item>
+	<item name="pg_ndistinct" args=""></item>
+	<item name="pg_node_tree" args=""></item>
+	<item name="pg_snapshot" args="" ></item>
+	<item name="pg_snapshot[]" args="" indexForbidden="true"></item>
+	<item name="point" args=""></item>
+	<item name="point[]" args="" indexForbidden="true"></item>
+	<item name="polygon" args=""></item>
+	<item name="polygon[]" args="" indexForbidden="true"></item>
+	<item name="real" args="" ></item>
+	<item name="real[]" args="" indexForbidden="true"></item>
+	<item name="refcursor" args="" ></item>
+	<item name="refcursor[]" args="" indexForbidden="true"></item>
+	<item name="regclass" args="" ></item>
+	<item name="regclass[]" args="" indexForbidden="true"></item>
+	<item name="regcollation" args="" ></item>
+	<item name="regcollation[]" args="" indexForbidden="true"></item>
+	<item name="regconfig" args="" ></item>
+	<item name="regconfig[]" args="" indexForbidden="true"></item>
+	<item name="regdictionary" args="" ></item>
+	<item name="regdictionary[]" args="" indexForbidden="true"></item>
+	<item name="regnamespace" args="" ></item>
+	<item name="regnamespace[]" args="" indexForbidden="true"></item>
+	<item name="regoper" args="" ></item>
+	<item name="regoper[]" args="" indexForbidden="true"></item>
+	<item name="regoperator" args="" ></item>
+	<item name="regoperator[]" args="" indexForbidden="true"></item>
+	<item name="regproc" args=""></item>
+	<item name="regproc[]" args="" indexForbidden="true"></item>
+	<item name="regprocedure" args=""></item>
+	<item name="regprocedure[]" args="" indexForbidden="true"></item>
+	<item name="regrole" args=""></item>
+	<item name="regrole[]" args="" indexForbidden="true"></item>
+	<item name="regtype" args=""></item>
+	<item name="regtype[]" args="" indexForbidden="true"></item>
+	<item name="serial" args="" isIdentity="true" ></item>
+	<item name="smallint" args=""></item>
+	<item name="smallint[]" args="" indexForbidden="true"></item>
+	<item name="smallserial" args=""  isIdentity="true"></item>	
+	<item name="text" args=""  indexForbidden="true"></item>
+	<item name="text[]" args=""  indexForbidden="true"></item>
+	<item name="tid" args=""></item>
+	<item name="tid[]" args=""></item>
+	<item name="time with time zone" format="time($scale$) with time zone"  args="scale" range="0~6" default="6"></item>
+	<item name="time with time zone[]" format="time($scale$) with time zone[]"  args="scale" range="0~6" default="6"></item>
+	<item name="time without time zone" format="time($scale$) without time zone"  args="scale" range="0~6" default="6"></item>
+	<item name="time without time zone[]" format="time($scale$) without time zone[]"  args="scale" range="0~6" default="6"></item>
+	<item name="timestamp with time zone" format="timestamp($scale$) with time zone"  args="scale" range="0~6" default="6"></item>
+	<item name="timestamp with time zone[]" format="timestamp($scale$) with time zone[]"  args="scale" range="0~6" default="6"></item>
+	<item name="timestamp without time zone" format="timestamp($scale$) without time zone"  args="scale" range="0~6" default="6"></item>
+	<item name="timestamp without time zone[]" format="timestamp($scale$) without time zone"  args="scale" range="0~6" default="6"></item>
+	<item name="tsmultirange[]" args="" indexForbidden="true"></item>
+	<item name="tsquery" args=""></item>
+	<item name="tsquery[]" args="" indexForbidden="true"></item>
+	<item name="tsrange" args=""></item>
+	<item name="tsrange[]" args="" indexForbidden="true"></item>
+	<item name="tstzmultirange[]" args=""></item>
+	<item name="tstzrange" args=""></item>
+	<item name="tstzrange[]" args="" indexForbidden="true"></item>
+	<item name="tsvector" args=""></item>
+	<item name="tsvector[]" args="" indexForbidden="true"></item>
+	<item name="txid_snapshot" args=""></item>
+	<item name="txid_snapshot[]" args="" indexForbidden="true"></item>
+	<item name="uuid" args=""></item>
+	<item name="uuid[]" args="" indexForbidden="true"></item>
+	<item name="xid" args=""></item>
+	<item name="xid[]" args="" indexForbidden="true"></item>
+	<item name="xid8" args=""></item>
+	<item name="xid8[]" args="" indexForbidden="true"></item>
+	<item name="xml" args="" size="2GB" indexForbidden="true"></item>
+	<item name="xml[]" args="" size="2GB" indexForbidden="true"></item>
+</items>

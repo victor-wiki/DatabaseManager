@@ -1,0 +1,10 @@
+﻿CREATE OR REPLACE PROCEDURE $NAME$ 
+(	
+   "ParameterName INTEGER
+)
+LANGUAGE 'plpgsql'
+AS $$
+BEGIN	  
+
+END 
+$$;

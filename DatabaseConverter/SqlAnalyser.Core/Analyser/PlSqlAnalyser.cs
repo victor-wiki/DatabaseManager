@@ -1,11 +1,10 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
@@ -40,7 +39,7 @@ namespace SqlAnalyser.Core
             return this.ruleAnalyser.AnalyseTrigger(content);
         }
 
-        public override string GenerateScripts(CommonScript script)
+        public override ScriptBuildResult GenerateScripts(CommonScript script)
         {
             if (script is RoutineScript routineScript)
             {
@@ -60,11 +59,14 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public string GenerateRoutineScripts(RoutineScript script)
+        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.FullName}");
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.NameWithSchema}");
 
             if (script.Parameters.Count > 0)
             {
@@ -136,60 +138,65 @@ namespace SqlAnalyser.Core
 
             }
 
-            FetchCursorStatement fetchCursorStatement = null;
-
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement || item is DeclareCursorStatement)))
             {
-                if (statement is FetchCursorStatement fetch)
-                {
-                    fetchCursorStatement = fetch;
-                    continue;
-                }
-                else if (statement is WhileStatement @while)
+                if (statement is WhileStatement @while)
                 {
                     FetchCursorStatement fs = @while.Statements.FirstOrDefault(item => item is FetchCursorStatement) as FetchCursorStatement;
 
-                    if (fetchCursorStatement != null && fs != null)
+                    if (fs != null)
                     {
                         @while.Condition.Symbol = "1=1";
 
-                        if (fs.Variables.Count == 0)
-                        {
-                            @while.Statements.Insert(0, new LoopExitStatement() { Condition = new TokenInfo($"{fs.CursorName}%NOTFOUND") });
-                            @while.Statements.Insert(0, fetchCursorStatement);
-                        }
+                        @while.Statements.Insert(0, new LoopExitStatement() { Condition = new TokenInfo($"{fs.CursorName}%NOTFOUND") });
                     }
                 }
 
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.AppendLine($"END {script.FullName};");
+            sb.Append(sbBody);
 
-            return this.FormatScripts(sb.ToString());
+            sb.AppendLine($"END {script.NameWithSchema};");
+
+            result.Script = sb.ToString();
+            result.Body = sbBody.ToString();
+
+            return result;
         }
 
-        public string GenearteViewScripts(ViewScript script)
+        public ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
-            StringBuilder sb = new StringBuilder();
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            sb.AppendLine($"CREATE OR REPLACE VIEW {script.FullName} AS");
+            StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
+
+            sb.AppendLine($"CREATE OR REPLACE VIEW {script.NameWithSchema} AS");
 
             foreach (Statement statement in script.Statements)
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
 
-            return this.FormatScripts(sb.ToString());
+            sb.Append(sbBody);
+
+            result.Script = sb.ToString();
+            result.Body = sbBody.ToString();
+
+            return result;
         }
 
-        public string GenearteTriggerScripts(TriggerScript script)
+        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
+            ScriptBuildResult result = new ScriptBuildResult();
+
             StringBuilder sb = new StringBuilder();
+            StringBuilder sbBody = new StringBuilder();
 
             string events = string.Join(" OR ", script.Events);
 
-            sb.AppendLine($"CREATE OR REPLACE TRIGGER {script.FullName}");
+            sb.AppendLine($"CREATE OR REPLACE TRIGGER {script.NameWithSchema}");
             sb.AppendLine($"{script.Time} {events} ON {script.TableName}");
             sb.AppendLine($"FOR EACH ROW");
 
@@ -207,12 +214,17 @@ namespace SqlAnalyser.Core
 
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
             {
-                sb.AppendLine(this.BuildStatement(statement));
+                sbBody.AppendLine(this.BuildStatement(statement));
             }
+
+            sb.Append(sbBody);
 
             sb.AppendLine("END;");
 
-            return this.FormatScripts(sb.ToString());
+            result.Script = sb.ToString();
+            result.Body = sb.ToString();
+
+            return result;
         }
     }
 }

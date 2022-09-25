@@ -1,0 +1,595 @@
+<mappings>
+	<mapping>
+		<source type="aclitem" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="aclitem[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="number" precision="19" scale="0"/>
+	</mapping>
+	<mapping>
+		<source type="bigint[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="bigserial" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="raw" />
+	</mapping>
+	<mapping>
+		<source type="bit[]" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="bit varying" />
+		<target type="blob" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="bit varying[]" />
+		<target type="varchar2" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="boolean" />
+		<target type="number" precision="1" scale="0"/>
+	</mapping>
+	<mapping>
+		<source type="boolean[]" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="box" />
+		<target type="varchar2" />
+	</mapping>
+	<mapping>
+		<source type="box[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="bytea" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="&quot;char&quot;" />
+		<target type="char" length="1"/>
+	</mapping>
+	<mapping>
+		<source type="&quot;char[]&quot;" />
+		<target type="varchar2"/>
+	</mapping>
+	<mapping>
+		<source type="character" />
+		<target type="varchar2" />		
+	</mapping>
+	<mapping>
+		<source type="character[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="character varying" />
+		<target type="varchar2" substitute="clob"/>
+		<special name="maxLength" value="-1" type="clob"></special>
+	</mapping>
+	<mapping>
+		<source type="cidr" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="cidr[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="circle" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="circle[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="cstring[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="date[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="datemultirange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="daterange" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="double precision" />
+		<target type="binary_double" />
+	</mapping>
+	<mapping>
+		<source type="double precision[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="geography" />
+		<target type="st_geometry"/>
+	</mapping>
+	<mapping>
+		<source type="geography[]" />
+		<target type="varchar2"/>
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="geometry[]" />
+		<target type="varchar2" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="gtsvector" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="gtsvector[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="inet" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="inet[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="int2vector[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="int4range" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="int4range[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="int8range" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="int8range[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="number"/>
+	</mapping>
+	<mapping>
+		<source type="integer[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="interval" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="interval[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="json" />
+		<target type="clob"/>
+	</mapping>
+	<mapping>
+		<source type="json[]" />
+		<target type="varchar2" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="jsonb" />
+		<target type="clob"/>
+	</mapping>
+	<mapping>
+		<source type="jsonb[]" />
+		<target type="varchar2" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="jsonpath" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="line" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="line[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="lseg" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="lseg[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr8" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr8[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="money" />
+		<target type="number" precision="19" scale="2"/>
+	</mapping>
+	<mapping>
+		<source type="money[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="name" />
+		<target type="varchar2" length="128"/>
+	</mapping>
+	<mapping>
+		<source type="name[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="number"/>
+	</mapping>
+	<mapping>
+		<source type="numeric[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="nummultirange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="numrange" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="numrange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="oid" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="oid[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="oidvector" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="oidvector[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="path" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_brin_bloom_summary" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_brin_minmax_multi_summary" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_dependencies" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_lsn" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="pg_lsn[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_mcv_list" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_ndistinct" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_node_tree" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_snapshot" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="pg_snapshot[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="point" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="point[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="polygon" />
+		<target type="st_geometry" />
+	</mapping>
+	<mapping>
+		<source type="polygon[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="number" precision="15" scale="2"/>
+	</mapping>
+	<mapping>
+		<source type="real[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="refcursor" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="refcursor[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regclass" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regclass[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regcollation" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regcollation[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regconfig" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="xregconfig[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regdictionary" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regdictionary[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regnamespace" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regnamespace[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regoper" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regoper[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regoperator" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regoperator[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regproc" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regproc[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regprocedure" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regprocedure[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regrole" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regrole[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="regtype" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="regtype[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="serial" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="smallint[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="text[]" />
+		<target type="varchar2" length="8000"/>
+	</mapping>
+	<mapping>
+		<source type="tid" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="time with time zone" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="time with time zone[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="time without time zone" />
+		<target type="varchar2" length="50"/>
+	</mapping>
+	<mapping>
+		<source type="time without time zone[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="timestamp with time zone" />
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="timestamp with time zone[]" />
+		<target type="varcchar" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="timestamp without time zone" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="timestamp without time zone[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tsmultirange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tsquery" />
+		<target type="varchar2" lenght="100"/>
+	</mapping>
+	<mapping>
+		<source type="tsquery[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tsrange" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="tsrange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tstzmultirange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tstzrange" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="tstzrange[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="tsvector" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="tsvector[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="txid_snapshot" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="txid_snapshot[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="uuid" />
+		<target type="varchar2" length="50" />
+	</mapping>
+	<mapping>
+		<source type="uuid[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="xid" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="xid[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="xid8" />
+		<target type="varchar2" length="100"/>
+	</mapping>
+	<mapping>
+		<source type="xid8[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="xml" />
+		<target type="clob" />
+	</mapping>
+	<mapping>
+		<source type="xml[]" />
+		<target type="varchar2" length="1000"/>
+	</mapping>
+</mappings>

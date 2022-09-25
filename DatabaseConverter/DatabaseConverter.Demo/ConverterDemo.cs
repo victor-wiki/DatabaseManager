@@ -1,7 +1,8 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Core;
+using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseConverter.Core;
 using System;
 using System.Threading.Tasks;
 
@@ -52,11 +53,7 @@ namespace DatabaseConverter.Demo
                         source.DbInterpreter.Option.InQueryItemLimitCount = 2000;
                     }
 
-                    if (targetDbType == DatabaseType.SqlServer)
-                    {
-                        target.DbOwner = "dbo";
-                    }
-                    else if (targetDbType == DatabaseType.MySql)
+                    if (targetDbType == DatabaseType.MySql)
                     {
                         target.DbInterpreter.Option.RemoveEmoji = true;
                     }

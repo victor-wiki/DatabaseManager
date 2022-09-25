@@ -1,6 +1,12 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Microsoft.SqlServer.Types;
+using MySqlConnector;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.Noding.Snapround;
+using NpgsqlTypes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -75,29 +81,11 @@ namespace DatabaseInterpreter.Core
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
                 this.ClearScriptFile(GenerateScriptMode.Data);
-            }
-
-            int i = 0;
-            int pickupIndex = -1;
-
-            if (schemaInfo.PickupTable != null)
-            {
-                foreach (Table table in schemaInfo.Tables)
-                {
-                    if (table.Owner == schemaInfo.PickupTable.Owner && table.Name == schemaInfo.PickupTable.Name)
-                    {
-                        pickupIndex = i;
-                        break;
-                    }
-                    i++;
-                }
-            }
-
-            i = 0;
+            }            
 
             using (DbConnection connection = this.dbInterpreter.CreateConnection())
             {
-                int tableCount = schemaInfo.Tables.Count - (pickupIndex == -1 ? 0 : pickupIndex);
+                int tableCount = schemaInfo.Tables.Count;
                 int count = 0;
 
                 foreach (Table table in schemaInfo.Tables)
@@ -105,24 +93,18 @@ namespace DatabaseInterpreter.Core
                     if (this.dbInterpreter.CancelRequested)
                     {
                         break;
-                    }
-
-                    if (i < pickupIndex)
-                    {
-                        i++;
-                        continue;
-                    }
+                    }                   
 
                     count++;
 
                     string strTableCount = $"({count}/{tableCount})";
                     string tableName = table.Name;
 
-                    List<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Owner == table.Owner && item.TableName == tableName).OrderBy(item => item.Order).ToList();
+                    List<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Schema == table.Schema && item.TableName == tableName).OrderBy(item => item.Order).ToList();
 
                     bool isSelfReference = TableReferenceHelper.IsSelfReference(tableName, schemaInfo.TableForeignKeys);
 
-                    TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Owner == table.Owner && item.TableName == tableName);
+                    TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Schema == table.Schema && item.TableName == tableName);
 
                     string primaryKeyColumns = primaryKey == null ? "" : string.Join(",", primaryKey.Columns.OrderBy(item => item.Order).Select(item => this.GetQuotedString(item.ColumnName)));
 
@@ -143,11 +125,11 @@ namespace DatabaseInterpreter.Core
                     if (isSelfReference)
                     {
                         string parentColumnName = schemaInfo.TableForeignKeys.FirstOrDefault(item =>
-                            item.Owner == table.Owner
+                            item.Schema == table.Schema
                             && item.TableName == tableName
                             && item.ReferencedTableName == tableName)?.Columns?.FirstOrDefault()?.ColumnName;
 
-                        string strWhere = $" WHERE { this.GetQuotedString(parentColumnName)} IS NULL";
+                        string strWhere = $" WHERE {this.GetQuotedString(parentColumnName)} IS NULL";
 
                         dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, parentColumnName, columns, strWhere);
                     }
@@ -168,9 +150,7 @@ namespace DatabaseInterpreter.Core
                         {
                             this.AppendScriptsToFile(Environment.NewLine, GenerateScriptMode.Data);
                         }
-                    }
-
-                    i++;
+                    }                 
 
                     if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
@@ -203,7 +183,7 @@ namespace DatabaseInterpreter.Core
 
         private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string parentColumnName, List<TableColumn> columns, string whereClause = "")
         {
-            string quotedTableName = this.GetQuotedObjectName(table);
+            string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
 
             int pageSize = this.dbInterpreter.DataBatchSize;
 
@@ -215,14 +195,14 @@ namespace DatabaseInterpreter.Core
 
             if (parentValues.Count > 0)
             {
-                TableColumn parentColumn = columns.FirstOrDefault(item => item.Owner == table.Owner && item.Name == parentColumnName);
+                TableColumn parentColumn = columns.FirstOrDefault(item => item.Schema == table.Schema && item.Name == parentColumnName);
 
                 long parentValuesPageCount = PaginationHelper.GetPageCount(parentValues.Count, this.option.InQueryItemLimitCount);
 
                 for (long parentValuePageNumber = 1; parentValuePageNumber <= parentValuesPageCount; parentValuePageNumber++)
                 {
                     IEnumerable<object> pagedParentValues = parentValues.Skip((int)(parentValuePageNumber - 1) * pageSize).Take(this.option.InQueryItemLimitCount);
-                    whereClause = $" WHERE { this.GetQuotedString(parentColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true)))})";
+                    whereClause = $" WHERE {this.GetQuotedString(parentColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true)))})";
                     total = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
 
                     if (total > 0)
@@ -250,7 +230,7 @@ namespace DatabaseInterpreter.Core
 
             List<string> excludeColumnNames = new List<string>();
 
-            if (this.option.TableScriptsGenerateOption.GenerateIdentity && !this.option.InsertIdentityValue)
+            if (this.option.TableScriptsGenerateOption.GenerateIdentity)
             {
                 excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity).Select(item => item.Name));
             }
@@ -261,7 +241,7 @@ namespace DatabaseInterpreter.Core
             {
                 StringBuilder sbFilePage = new StringBuilder();
 
-                string tableName = this.GetQuotedObjectName(table);
+                string tableName = this.GetQuotedFullTableName(table);
                 string insert = $"{this.GetBatchInsertPrefix()} {tableName}({this.GetQuotedColumnNames(columns.Where(item => !excludeColumnNames.Contains(item.Name)))})VALUES";
 
                 if (appendString)
@@ -361,7 +341,8 @@ namespace DatabaseInterpreter.Core
                 if (!excludeColumnNames.Contains(column.Name))
                 {
                     object value = this.ParseValue(column, row[column.Name]);
-                    bool isBytes = ValueHelper.IsBytes(value);
+                    bool isBitArray = row[column.Name]?.GetType() == typeof(BitArray);
+                    bool isBytes = ValueHelper.IsBytes(value) || isBitArray;
 
                     if (!isAppendToFile)
                     {
@@ -370,6 +351,15 @@ namespace DatabaseInterpreter.Core
                             string parameterName = $"P{pageNumber}_{rowIndex}_{column.Name}";
 
                             string parameterPlaceholder = this.dbInterpreter.CommandParameterChar + parameterName;
+
+                            if (this.databaseType != DatabaseType.Postgres && isBitArray)
+                            {
+                                var bitArray = value as BitArray;
+                                byte[] bytes = new byte[bitArray.Length];
+                                bitArray.CopyTo(bytes, 0);
+
+                                value = bytes;
+                            }
 
                             parameters.Add(parameterPlaceholder, value);
 
@@ -447,13 +437,14 @@ namespace DatabaseInterpreter.Core
                 }
 
                 bool oracleSemicolon = false;
+                string dataType = column.DataType.ToLower();
 
                 switch (type.Name)
                 {
                     case nameof(Guid):
 
                         needQuotated = true;
-                        if (this.databaseType == DatabaseType.Oracle && column.DataType.ToLower() == "raw" && column.MaxLength == 16)
+                        if (this.databaseType == DatabaseType.Oracle && dataType == "raw" && column.MaxLength == 16)
                         {
                             strValue = StringHelper.GuidToRaw(value.ToString());
                         }
@@ -478,13 +469,13 @@ namespace DatabaseInterpreter.Core
 
                     case nameof(DateTime):
                     case nameof(DateTimeOffset):
-                    case nameof(MySql.Data.Types.MySqlDateTime):
+                    case nameof(MySqlDateTime):
 
                         if (this.databaseType == DatabaseType.Oracle)
                         {
-                            if (type.Name == nameof(MySql.Data.Types.MySqlDateTime))
+                            if (type.Name == nameof(MySqlDateTime))
                             {
-                                DateTime dateTime = ((MySql.Data.Types.MySqlDateTime)value).GetDateTime();
+                                DateTime dateTime = ((MySqlDateTime)value).GetDateTime();
 
                                 strValue = this.GetOracleDatetimeConvertString(dateTime);
                             }
@@ -525,9 +516,15 @@ namespace DatabaseInterpreter.Core
 
                     case nameof(Boolean):
 
-                        strValue = value.ToString() == "True" ? "1" : "0";
+                        if (this.databaseType == DatabaseType.Postgres)
+                        {
+                            strValue = value.ToString().ToLower();
+                        }
+                        else
+                        {
+                            strValue = value.ToString() == "True" ? "1" : "0";
+                        }
                         break;
-
                     case nameof(TimeSpan):
 
                         if (this.databaseType == DatabaseType.Oracle)
@@ -538,7 +535,9 @@ namespace DatabaseInterpreter.Core
                         {
                             needQuotated = true;
 
-                            if (column.DataType.IndexOf("datetime", StringComparison.OrdinalIgnoreCase) >= 0)
+                            if (dataType.Contains("datetime")
+                                || dataType.Contains("timestamp")
+                                )
                             {
                                 DateTime dateTime = this.dbInterpreter.MinDateTime.AddSeconds(TimeSpan.Parse(value.ToString()).TotalSeconds);
 
@@ -550,17 +549,51 @@ namespace DatabaseInterpreter.Core
                             }
                         }
                         break;
+                    case nameof(SqlGeography):
+                    case nameof(SqlGeometry):
+                    case nameof(Point):
+                    case nameof(LineString):
+                    case nameof(Polygon):
+                    case nameof(MultiPoint):
+                    case nameof(MultiLineString):
+                    case nameof(MultiPolygon):
+                    case nameof(GeometryCollection):
+                        if (this.databaseType == DatabaseType.MySql)
+                        {
+                            strValue = $"ST_GeomFromText('{value.ToString()}')";
+                        }
+                        else if (this.databaseType == DatabaseType.Oracle)
+                        {
+                            string geometryMode = SettingManager.Setting.OracleGeometryMode;
 
-                    case "SqlHierarchyId":
-                    case "SqlGeography":
-                    case "SqlGeometry":
+                            if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                            {
+                                strValue = $"MDSYS.ST_GEOMETRY(SDO_GEOMETRY('{value.ToString()}'))";
+                            }
+                            else if (geometryMode == "SDE")
+                            {
+                                strValue = $"SDE.ST_GEOMETRY('{value.ToString()}', 0)"; //sde geometry
+                            }
+                        }
+                        else
+                        {
+                            needQuotated = true;
+                            strValue = value.ToString();
+                        }
 
+                        break;
+                    case nameof(SqlHierarchyId):
+                    case nameof(NpgsqlLine):
+                    case nameof(NpgsqlBox):
+                    case nameof(NpgsqlCircle):
+                    case nameof(NpgsqlPath):
+                    case nameof(NpgsqlLSeg):
+                    case nameof(NpgsqlTsVector):
                         needQuotated = true;
                         strValue = value.ToString();
+
                         break;
-
                     default:
-
                         if (string.IsNullOrEmpty(strValue))
                         {
                             strValue = value.ToString();
@@ -654,7 +687,7 @@ namespace DatabaseInterpreter.Core
 
         public abstract Script RenameTableColumn(Table table, TableColumn column, string newName);
 
-        public abstract Script AlterTableColumn(Table table, TableColumn column);
+        public abstract Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn);
 
         public abstract Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true);
 
@@ -681,6 +714,7 @@ namespace DatabaseInterpreter.Core
 
         #region Database Operation  
         public abstract Script AddUserDefinedType(UserDefinedType userDefinedType);
+        public abstract Script AddSequence(Sequence sequence);
         public abstract ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
            TablePrimaryKey primaryKey,
            IEnumerable<TableForeignKey> foreignKeys,
@@ -698,7 +732,7 @@ namespace DatabaseInterpreter.Core
         {
             if (dbObject is TableColumn column)
             {
-                return this.AddTableColumn(new Table() { Owner = column.Owner, Name = column.TableName }, column);
+                return this.AddTableColumn(new Table() { Schema = column.Schema, Name = column.TableName }, column);
             }
             else if (dbObject is TablePrimaryKey primaryKey)
             {
@@ -715,15 +749,15 @@ namespace DatabaseInterpreter.Core
             else if (dbObject is TableConstraint constraint)
             {
                 return this.AddCheckConstraint(constraint);
-            } 
-            else if(dbObject is UserDefinedType userDefinedType)
+            }
+            else if (dbObject is UserDefinedType userDefinedType)
             {
                 return this.AddUserDefinedType(userDefinedType);
             }
             else if (dbObject is ScriptDbObject scriptDbObject)
             {
                 return new CreateDbObjectScript<ScriptDbObject>(scriptDbObject.Definition);
-            }            
+            }
 
             throw new NotSupportedException($"Not support to add {dbObject.GetType().Name} using this method.");
         }
@@ -780,11 +814,6 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Common Method
-        public string GetQuotedObjectName(DatabaseObject obj)
-        {
-            return this.dbInterpreter.GetQuotedObjectName(obj);
-        }
-
         public string GetQuotedString(string str)
         {
             return this.dbInterpreter.GetQuotedString(str);
@@ -795,16 +824,37 @@ namespace DatabaseInterpreter.Core
             return this.dbInterpreter.GetQuotedColumnNames(columns);
         }
 
+        public string GetQuotedDbObjectNameWithSchema(DatabaseObject dbObject)
+        {
+            return this.dbInterpreter.GetQuotedDbObjectNameWithSchema(dbObject);
+        }
+
+        public string GetQuotedDbObjectNameWithSchema(string schema, string dbObjName)
+        {
+            return this.dbInterpreter.GetQuotedDbObjectNameWithSchema(schema, dbObjName);
+        }
+
+        public string GetQuotedFullTableName(Table table)
+        {
+            return this.GetQuotedDbObjectNameWithSchema(table);
+        }
+
         public string GetQuotedFullTableName(TableChild tableChild)
         {
-            if (string.IsNullOrEmpty(tableChild.Owner))
+            if (string.IsNullOrEmpty(tableChild.Schema))
             {
                 return this.GetQuotedString(tableChild.TableName);
             }
             else
             {
-                return $"{tableChild.Owner}.{this.GetQuotedString(tableChild.TableName)}";
+                return $"{this.GetQuotedString(tableChild.Schema)}.{this.GetQuotedString(tableChild.TableName)}";
             }
+        }
+
+        public string GetQuotedFullTableChildName(TableChild tableChild)
+        {
+            string fullTableName = this.GetQuotedFullTableName(tableChild);
+            return $"{fullTableName}.{this.GetQuotedString(tableChild.Name)}";
         }
 
         public string TransferSingleQuotationString(string comment)

@@ -1,4 +1,6 @@
-﻿namespace DatabaseManager.Controls
+﻿using DatabaseInterpreter.Model;
+
+namespace DatabaseManager.Controls
 {
     partial class UC_SqlQuery
     {
@@ -71,7 +73,7 @@
             // 
             // queryEditor
             // 
-            this.queryEditor.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.queryEditor.DatabaseType = DatabaseType.Unknown;
             this.queryEditor.DbInterpreter = null;
             this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             this.queryEditor.Location = new System.Drawing.Point(0, 0);

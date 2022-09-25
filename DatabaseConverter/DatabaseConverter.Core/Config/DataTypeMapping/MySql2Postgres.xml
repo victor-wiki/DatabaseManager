@@ -1,0 +1,158 @@
+<mappings>
+	<mapping>
+		<source type="bigint" />
+		<target type="bigint" />
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="blob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="character" />
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="double" />
+		<target type="double precision" />
+	</mapping>
+	<mapping>
+		<source type="enum" />
+		<target type="character varying" length="50" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="double precision" />
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="geomcollection" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="json" />
+		<target type="json" />
+	</mapping>
+	<mapping>
+		<source type="linestring" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="longblob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="longtext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="mediumblob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="mediumint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="mediumtext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="multilinestring" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipoint" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="multipolygon" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="point" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="polygon" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="set" />
+		<target type="character varying" length="1000"/>
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="time without time zone" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="tinyblob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="tinytext" />
+		<target type="character varying" length="255" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="character varying"/>
+	</mapping>
+	<mapping>
+		<source type="year" />
+		<target type="integer" />
+	</mapping>
+</mappings>

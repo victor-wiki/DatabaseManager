@@ -1,24 +1,23 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using System.Linq;
 
 namespace SqlAnalyser.Model
 {
     public class NameToken : TokenInfo
     {
-        protected TokenInfo name;
+        public string Schema { get; set; }
+
         protected TokenInfo alias;
 
-        public virtual TokenInfo Name
+        public virtual string Name
         {
             get
             {
-                return this.name;
+                return this.Symbol;
             }
             set
             {
-                value.Type = this.Type;
-                this.name = value;
+                this.Symbol = value;
             }
         }
         public TokenInfo Alias
@@ -35,6 +34,19 @@ namespace SqlAnalyser.Model
                 }
 
                 this.alias = value;
+            }
+        }
+
+        public string NameWithSchema
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(this.Schema))
+                {
+                    return $"{this.Schema}.{this.Name}";
+                }
+
+                return this.Name;
             }
         }
 

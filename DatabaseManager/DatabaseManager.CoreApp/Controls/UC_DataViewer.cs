@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
-using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
+using DatabaseManager.Model;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -83,7 +81,10 @@ namespace DatabaseManager.Controls
             {
                 Type valueType = column.ValueType;
 
-                if (valueType == typeof(byte[]) || valueType.Name == "SqlGeography")
+                if (valueType == typeof(byte[]) || 
+                    valueType.Name.Contains("Geography") ||
+                    valueType.Name.Contains("Geometry") 
+                   )
                 {
                     column.SortMode = DataGridViewColumnSortMode.NotSortable;
                 }

@@ -1,4 +1,6 @@
-﻿namespace DatabaseManager
+﻿using DatabaseInterpreter.Model;
+
+namespace DatabaseManager
 {
     partial class frmGenerateScripts
     {
@@ -47,6 +49,8 @@
             this.txtMessage = new System.Windows.Forms.RichTextBox();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
+            this.chkGenerateIdentity = new System.Windows.Forms.CheckBox();
+            this.chkGenerateComment = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -64,6 +68,8 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.chkGenerateComment);
+            this.splitContainer1.Panel1.Controls.Add(this.chkGenerateIdentity);
             this.splitContainer1.Panel1.Controls.Add(this.chkTreatBytesAsNull);
             this.splitContainer1.Panel1.Controls.Add(this.panelConnector);
             this.splitContainer1.Panel1.Controls.Add(this.tvDbObjects);
@@ -113,7 +119,7 @@
             // 
             this.dbConnectionProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.dbConnectionProfile.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.dbConnectionProfile.DatabaseType = DatabaseType.Unknown;
             this.dbConnectionProfile.EnableDatabaseType = true;
             this.dbConnectionProfile.Location = new System.Drawing.Point(7, 5);
             this.dbConnectionProfile.Margin = new System.Windows.Forms.Padding(0);
@@ -258,6 +264,34 @@
             this.txtMessage.TabIndex = 1;
             this.txtMessage.Text = "";
             // 
+            // chkGenerateIdentity
+            // 
+            this.chkGenerateIdentity.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkGenerateIdentity.AutoSize = true;
+            this.chkGenerateIdentity.Checked = true;
+            this.chkGenerateIdentity.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkGenerateIdentity.Location = new System.Drawing.Point(176, 391);
+            this.chkGenerateIdentity.Margin = new System.Windows.Forms.Padding(4);
+            this.chkGenerateIdentity.Name = "chkGenerateIdentity";
+            this.chkGenerateIdentity.Size = new System.Drawing.Size(127, 21);
+            this.chkGenerateIdentity.TabIndex = 55;
+            this.chkGenerateIdentity.Text = "Generate Identity";
+            this.chkGenerateIdentity.UseVisualStyleBackColor = true;
+            // 
+            // chkGenerateComment
+            // 
+            this.chkGenerateComment.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkGenerateComment.AutoSize = true;
+            this.chkGenerateComment.Checked = true;
+            this.chkGenerateComment.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkGenerateComment.Location = new System.Drawing.Point(324, 391);
+            this.chkGenerateComment.Margin = new System.Windows.Forms.Padding(4);
+            this.chkGenerateComment.Name = "chkGenerateComment";
+            this.chkGenerateComment.Size = new System.Drawing.Size(140, 21);
+            this.chkGenerateComment.TabIndex = 56;
+            this.chkGenerateComment.Text = "Generate Comment";
+            this.chkGenerateComment.UseVisualStyleBackColor = true;
+            // 
             // frmGenerateScripts
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -300,5 +334,7 @@
         private System.Windows.Forms.FolderBrowserDialog dlgOutputFolder;
         private System.Windows.Forms.Panel panelConnector;
         private System.Windows.Forms.CheckBox chkTreatBytesAsNull;
+        private System.Windows.Forms.CheckBox chkGenerateComment;
+        private System.Windows.Forms.CheckBox chkGenerateIdentity;
     }
 }

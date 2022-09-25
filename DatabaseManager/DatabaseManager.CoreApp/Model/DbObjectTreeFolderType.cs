@@ -12,6 +12,7 @@
         Triggers = 7,
         Keys = 8,
         Constraints = 9,
-        Indexes = 10
+        Indexes = 10,
+        Sequences =11
     }
 }

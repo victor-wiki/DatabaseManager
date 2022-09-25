@@ -43,6 +43,7 @@ namespace DatabaseManager
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
 
             this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
+            this.cboOracleGeometryType.Text = setting.OracleGeometryMode;
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
@@ -56,6 +57,7 @@ namespace DatabaseManager
             setting.NotCreateIfExists = this.chkNotCreateIfExists.Checked;
             setting.EnableLog = this.chkEnableLog.Checked;
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
+            setting.OracleGeometryMode = this.cboOracleGeometryType.Text;
 
             if(this.cboPreferredDatabase.SelectedIndex>=0)
             {

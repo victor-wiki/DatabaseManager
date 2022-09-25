@@ -33,15 +33,15 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvForeignKeys = new System.Windows.Forms.DataGridView();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiDeleteForeignKey = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.colReferenceTable = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colKeyName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
             this.colUpdateCascade = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colDeleteCascade = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiDeleteForeignKey = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dgvForeignKeys)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -81,7 +81,6 @@
             this.dgvForeignKeys.MultiSelect = false;
             this.dgvForeignKeys.Name = "dgvForeignKeys";
             this.dgvForeignKeys.RowHeadersWidth = 25;
-            this.dgvForeignKeys.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvForeignKeys.Size = new System.Drawing.Size(962, 370);
             this.dgvForeignKeys.TabIndex = 9;
             this.dgvForeignKeys.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvForeignKeys_CellContentClick);
@@ -92,13 +91,35 @@
             this.dgvForeignKeys.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvForeignKeys_KeyDown);
             this.dgvForeignKeys.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvForeignKeys_MouseUp);
             // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiDeleteForeignKey,
+            this.tsmiGenerateChangeScripts});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
+            // 
+            // tsmiDeleteForeignKey
+            // 
+            this.tsmiDeleteForeignKey.Name = "tsmiDeleteForeignKey";
+            this.tsmiDeleteForeignKey.Size = new System.Drawing.Size(228, 22);
+            this.tsmiDeleteForeignKey.Text = "Delete Foreign Key";
+            this.tsmiDeleteForeignKey.Click += new System.EventHandler(this.tsmiDeleteForeignKey_Click);
+            // 
+            // tsmiGenerateChangeScripts
+            // 
+            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
+            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
+            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
+            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
+            // 
             // colReferenceTable
             // 
             this.colReferenceTable.DataPropertyName = "ReferencedTableName";
             this.colReferenceTable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.colReferenceTable.HeaderText = "Reference Table";
             this.colReferenceTable.Name = "colReferenceTable";
-            this.colReferenceTable.Width = 150;
+            this.colReferenceTable.Width = 200;
             // 
             // colKeyName
             // 
@@ -136,28 +157,6 @@
             this.colComment.DataPropertyName = "Comment";
             this.colComment.HeaderText = "Comment";
             this.colComment.Name = "colComment";
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiDeleteForeignKey,
-            this.tsmiGenerateChangeScripts});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
-            // 
-            // tsmiDeleteForeignKey
-            // 
-            this.tsmiDeleteForeignKey.Name = "tsmiDeleteForeignKey";
-            this.tsmiDeleteForeignKey.Size = new System.Drawing.Size(228, 22);
-            this.tsmiDeleteForeignKey.Text = "Delete Foreign Key";
-            this.tsmiDeleteForeignKey.Click += new System.EventHandler(this.tsmiDeleteForeignKey_Click);
-            // 
-            // tsmiGenerateChangeScripts
-            // 
-            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
-            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
-            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
-            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
             // 
             // UC_TableForeignKeys
             // 

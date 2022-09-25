@@ -1,4 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
+using Microsoft.SqlServer.Types;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +14,9 @@ namespace DatabaseInterpreter.Core
         public static readonly string[] TextTypeFlags = { "text" };
         public static readonly string[] BinaryTypeFlags = { "binary" };
         public static readonly string[] DatetimeTypeFlags = { "date", "time" };
-        public static List<string> SpecialDataTypes = new List<string>() { "SqlHierarchyId", "SqlGeography", "SqlGeometry" };
+        public static List<string> SpecialDataTypes = new List<string>() { 
+            nameof(SqlHierarchyId), nameof(SqlGeography), nameof(SqlGeometry),nameof(Geometry), "Byte[]"
+        };
 
         public static bool IsCharType(string dataType)
         {
@@ -46,7 +50,10 @@ namespace DatabaseInterpreter.Core
 
             if (dbInterpreter != null)
             {
-                dataType = dataType.Trim(dbInterpreter.QuotationLeftChar, dbInterpreter.QuotationRightChar);
+                if(!(dbInterpreter.DatabaseType== DatabaseType.Postgres && dataType== "\"char\""))
+                {
+                    dataType = dataType.Trim(dbInterpreter.QuotationLeftChar, dbInterpreter.QuotationRightChar);
+                }               
             }
 
             int index = dataType.IndexOf("(");

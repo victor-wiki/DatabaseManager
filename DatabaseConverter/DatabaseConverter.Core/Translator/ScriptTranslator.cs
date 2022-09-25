@@ -3,6 +3,7 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using SqlAnalyser.Core;
+using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -62,11 +63,13 @@ namespace DatabaseConverter.Core
 
                 ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
                 tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
-                tokenProcessor.TargetDbOwner = this.TargetDbOwner;
+                tokenProcessor.TargetDbSchema = this.TargetDbSchema;
 
                 tokenProcessor.Process();
 
-                dbObj.Definition = targetAnalyser.GenerateScripts(script);
+                ScriptBuildResult scriptBuildResult = targetAnalyser.GenerateScripts(script);
+                
+                dbObj.Definition = StringHelper.FormatScript(scriptBuildResult.Script);
             };
 
             foreach (T dbObj in this.scripts)
@@ -102,7 +105,7 @@ namespace DatabaseConverter.Core
                             //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
                             if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
                             {
-                                ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbOwner) { SkipError = this.SkipError };
+                                ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbSchema) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
                                 viewTranslator.Translate();
 
                                 replaced = true;
@@ -145,19 +148,12 @@ namespace DatabaseConverter.Core
                     if (!result.HasError && !tokenProcessed)
                     {
                         processTokens(dbObj, script);
-                    }
-
-                    bool formatHasError = false;
+                    }                 
 
                     string definition = this.ReplaceVariables(dbObj.Definition);
 
-                    dbObj.Definition = definition; // this.FormatSql(definition, out formatHasError);
-
-                    if (formatHasError)
-                    {
-                        dbObj.Definition = definition;
-                    }
-
+                    //dbObj.Definition = this.ParseDefinition(definition);
+                    
                     if (this.OnTranslated != null)
                     {
                         this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, new TranslateResult() { Error = result.Error, Data = dbObj.Definition });
@@ -167,9 +163,9 @@ namespace DatabaseConverter.Core
 
                     if (!replaced && result.HasError)
                     {
-                        this.FeedbackError(this.ParseSqlSyntaxError(result.Error, originalDefinition).ToString(), this.SkipError);
+                        this.FeedbackError(this.ParseSqlSyntaxError(result.Error, originalDefinition).ToString(), this.ContinueWhenErrorOccurs);
 
-                        if(!this.SkipError)
+                        if(!this.ContinueWhenErrorOccurs)
                         {
                             this.hasError = true;
                         }
@@ -187,14 +183,14 @@ namespace DatabaseConverter.Core
                         TargetObject = dbObj.Name
                     };
 
-                    if (!this.SkipError)
+                    if (!this.ContinueWhenErrorOccurs)
                     {
                         this.hasError = true;
                         throw sce;
                     }
                     else
                     {
-                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.SkipError);
+                        this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), this.ContinueWhenErrorOccurs);
                     }
                 }
             }
@@ -213,9 +209,9 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            if (script.Owner != this.TargetDbOwner)
+            if (script.Schema != this.TargetDbSchema)
             {
-                Regex ownerRegex = new Regex($@"[{this.sourceDbInterpreter.QuotationLeftChar}]({script.Owner})[{this.sourceDbInterpreter.QuotationRightChar}][\.]", RegexOptions.IgnoreCase);
+                Regex ownerRegex = new Regex($@"[{this.sourceDbInterpreter.QuotationLeftChar}]({script.Schema})[{this.sourceDbInterpreter.QuotationRightChar}][\.]", RegexOptions.IgnoreCase);
 
                 if (ownerRegex.IsMatch(script.Definition))
                 {
@@ -249,6 +245,10 @@ namespace DatabaseConverter.Core
             else if (dbType == DatabaseType.Oracle)
             {
                 sqlAnalyser = new PlSqlAnalyser();
+            }
+            else if(dbType == DatabaseType.Postgres)
+            {
+                sqlAnalyser = new PostgreSqlAnalyser();
             }
 
             return sqlAnalyser;

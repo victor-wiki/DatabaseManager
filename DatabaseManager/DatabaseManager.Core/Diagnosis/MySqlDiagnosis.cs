@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 
+
 namespace DatabaseManager.Core
 {
     public class MySqlDiagnosis : DbDiagnosis

@@ -4,20 +4,20 @@ namespace SqlAnalyser.Model
 {
     public class DbScript
     {
-        public TokenInfo Owner { get; set; }
+        public string Schema { get; set; }
         public TokenInfo Name { get; set; }
 
-        public string FullName
+        public string NameWithSchema
         {
             get
             {
-                if (this.Owner == null || this.Owner.Symbol == null)
+                if (string.IsNullOrEmpty(this.Schema))
                 {
                     return this.Name?.ToString();
                 }
                 else
                 {
-                    return this.Owner + "." + this.Name;
+                    return $"{this.Schema}.{this.Name}";
                 }
             }
         }

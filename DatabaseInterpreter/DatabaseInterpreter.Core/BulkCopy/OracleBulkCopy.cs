@@ -50,7 +50,7 @@ namespace DatabaseInterpreter.Core
             {
                 if (value == null || value.Length == 0)
                 {
-                    throw new ArgumentException("Destination Table Name cannot be null or empty string");
+                    throw new ArgumentException("Destination table name cannot be null or empty string");
                 }
 
                 _destinationTableName = value;
@@ -99,9 +99,7 @@ namespace DatabaseInterpreter.Core
             {
                 await this._connection.OpenAsync();
             }
-        }
-
-        // TODO: Implement WriteToServer for a IDataReader input
+        }       
 
         public async Task<int> WriteToServerAsync(DataTable table)
         {

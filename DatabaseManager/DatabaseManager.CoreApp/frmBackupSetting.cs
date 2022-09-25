@@ -7,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using DatabaseManager.Core;
 using System.IO;
 using DatabaseManager.Helper;
+using DatabaseInterpreter.Model;
 
 namespace DatabaseManager
 {
@@ -171,6 +171,10 @@ namespace DatabaseManager
                 if(dbType == DatabaseType.SqlServer.ToString())
                 {
                     row.Cells[this.colClientToolFilePath.Name].ReadOnly = true;
+                    row.Cells[this.colZipBackupFile.Name].ReadOnly = true;
+                }
+                else if(dbType == DatabaseType.Postgres.ToString())
+                {
                     row.Cells[this.colZipBackupFile.Name].ReadOnly = true;
                 }
             }

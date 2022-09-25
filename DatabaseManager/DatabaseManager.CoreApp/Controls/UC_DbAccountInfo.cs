@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Profile;
+using DatabaseManager.Profile;
 using DatabaseManager.Core;
 using DatabaseManager.Model;
 using System;
@@ -20,6 +20,7 @@ namespace DatabaseManager.Controls
         public TestDbConnectHandler OnTestConnect;
 
         public bool RememberPassword => this.chkRememberPassword.Checked;
+        private string serverVersion;
 
         public UC_DbAccountInfo()
         {
@@ -38,6 +39,11 @@ namespace DatabaseManager.Controls
             {
                 this.lblPort.Visible = this.txtPort.Visible = true;
                 this.txtPort.Text = OracleInterpreter.DEFAULT_PORT.ToString();
+            }
+            else if (this.DatabaseType == DatabaseType.Postgres)
+            {
+                this.lblPort.Visible = this.txtPort.Visible = true;
+                this.txtPort.Text = PostgresInterpreter.DEFAULT_PORT.ToString();
             }
 
             var authTypes = Enum.GetNames(typeof(AuthenticationType));
@@ -134,6 +140,8 @@ namespace DatabaseManager.Controls
                 {
                     await dbConnection.OpenAsync();
 
+                    this.serverVersion = dbConnection.ServerVersion;
+
                     MessageBox.Show("Success.");
 
                     if (this.OnTestConnect != null)
@@ -153,7 +161,7 @@ namespace DatabaseManager.Controls
 
         public ConnectionInfo GetConnectionInfo()
         {
-            return new ConnectionInfo()
+            ConnectionInfo connectionInfo = new ConnectionInfo()
             {
                 Server = this.cboServer.Text.Trim(),
                 Port = this.txtPort.Text.Trim(),
@@ -161,8 +169,15 @@ namespace DatabaseManager.Controls
                 UserId = this.txtUserId.Text.Trim(),
                 Password = this.txtPassword.Text.Trim(),
                 IsDba = this.chkAsDba.Checked,
-                UseSsl = this.chkUseSsl.Checked
+                UseSsl = this.chkUseSsl.Checked                
             };
+
+            if(!string.IsNullOrEmpty(this.serverVersion))
+            {
+                connectionInfo.ServerVersion = this.serverVersion;
+            }
+
+            return connectionInfo;
         }
 
         private void cboAuthentication_SelectedIndexChanged(object sender, EventArgs e)
