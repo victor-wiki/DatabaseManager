@@ -138,14 +138,14 @@ namespace DatabaseManager.Controls
 
             try
             {
-                this.HandleKeyUpFoIntellisense(e);
+                this.HandleKeyUpForIntellisense(e);
             }
             catch (Exception ex)
             {
             }
         }
 
-        private void HandleKeyUpFoIntellisense(KeyEventArgs e)
+        private void HandleKeyUpForIntellisense(KeyEventArgs e)
         {
             if (e.KeyValue >= 112 && e.KeyValue <= 123)
             {
