@@ -41,7 +41,7 @@ namespace DatabaseManager.Controls
         {
             this.LoadDataTypes();
 
-            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
+            if (this.DatabaseType == DatabaseType.Oracle)
             {
                 this.colIdentity.Visible = false;
                 this.colDataType.Width = 200;
@@ -260,7 +260,7 @@ namespace DatabaseManager.Controls
                     DataGridViewHelper.SetRowColumnsReadOnly(this.dgvColumns, row, string.IsNullOrEmpty(columnName), this.colColumnName);
                     this.SetColumnCellsReadonly(row);
                 }
-                else if (e.ColumnIndex == this.colDataType.Index)
+                else if (e.ColumnIndex == this.colDataType.Index || e.ColumnIndex == this.colDefaultValue.Index)
                 {
                     this.SetColumnCellsReadonly(row);
                 }
@@ -329,6 +329,15 @@ namespace DatabaseManager.Controls
 
                     lengthCell.ReadOnly = isLengthReadOnly;
                     primaryCell.ReadOnly = isPrimaryReadOnly;
+
+                    if (this.DatabaseType == DatabaseType.Postgres)
+                    {
+                        if (ValueHelper.IsSequenceNextVal(row.Cells[this.colDefaultValue.Name].Value?.ToString()))
+                        {
+                            isIdentityReadOnly = true;
+                        }
+                    }
+
                     identityCell.ReadOnly = isIdentityReadOnly;
 
                     if (isLengthReadOnly)
@@ -339,7 +348,7 @@ namespace DatabaseManager.Controls
                     if (isPrimaryReadOnly)
                     {
                         primaryCell.Value = false;
-                    }
+                    }                  
 
                     if (isIdentityReadOnly)
                     {

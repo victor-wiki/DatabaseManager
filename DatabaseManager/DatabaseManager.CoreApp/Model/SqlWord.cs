@@ -21,7 +21,8 @@ namespace DatabaseManager.Model
         View = 64,
         TableColumn = 128,
         String = 256,
-        Comment = 512
+        Comment = 512,
+        Number = 1024
     }
 
     public class SqlWordToken

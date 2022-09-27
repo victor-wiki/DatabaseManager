@@ -354,7 +354,7 @@ CREATE TABLE {quotedTableName}(
 
                 foreach (TableColumn column in defaultValueColumns)
                 {
-                    if(column.DefaultValue.Contains("nextval"))
+                    if(ValueHelper.IsSequenceNextVal(column.DefaultValue))
                     {
                         continue;
                     }

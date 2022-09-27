@@ -211,11 +211,21 @@ namespace DatabaseManager.Controls
 
         private void DeleteRow()
         {
-            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvIndexes);
+            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvIndexes);            
 
-            if (row != null && !row.IsNewRow)
+            if (row != null)
             {
-                this.dgvIndexes.Rows.RemoveAt(row.Index);
+                if(!row.IsNewRow)
+                {
+                    this.dgvIndexes.Rows.RemoveAt(row.Index);
+                }
+                else
+                {
+                    foreach(DataGridViewCell cell in row.Cells)
+                    {
+                        cell.Value = null;
+                    }
+                }
             }
         }
 
@@ -410,7 +420,8 @@ namespace DatabaseManager.Controls
             if (this.dgvIndexes.CurrentCell != null && this.lbIndexType.SelectedItem != null)
             {
                 string type = this.lbIndexType.SelectedItem.ToString();
-                this.dgvIndexes.CurrentCell.Value = type;
+
+                this.dgvIndexes.CurrentCell.Value = type;              
 
                 this.lbIndexType.Visible = false;
             }

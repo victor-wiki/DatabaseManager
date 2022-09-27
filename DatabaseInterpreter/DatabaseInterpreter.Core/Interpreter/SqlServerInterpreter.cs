@@ -854,7 +854,9 @@ namespace DatabaseInterpreter.Core
         {
             if (column.IsUserDefined)
             {
-                return $"{this.GetQuotedString(column.Name)} {this.GetQuotedString(column.DataTypeSchema)}.{this.GetQuotedString(column.DataType)} {(column.IsRequired ? "NOT NULL" : "NULL")}";
+                string dataType = string.IsNullOrEmpty(column.DataTypeSchema) ? this.GetQuotedString(column.DataType): $"{this.GetQuotedString(column.DataTypeSchema)}.{this.GetQuotedString(column.DataType)}";
+                
+                return $"{this.GetQuotedString(column.Name)} {dataType} {(column.IsRequired ? "NOT NULL" : "NULL")}";
             }
 
             bool isComputed = column.IsComputed;

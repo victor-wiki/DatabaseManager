@@ -14,8 +14,7 @@ namespace DatabaseInterpreter.Model
         public bool AllowMax { get; set; }
         public string MapTo { get; set; }
         public bool IndexForbidden { get; set; }
-        public bool AllowIdentity { get; set; }
-        public bool IsIdentity { get; set; }
+        public bool AllowIdentity { get; set; }     
         public List<DataTypeArgument> Arugments { get; set; } = new List<DataTypeArgument>();
     }
 

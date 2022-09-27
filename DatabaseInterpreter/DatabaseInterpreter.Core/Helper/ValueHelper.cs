@@ -116,5 +116,10 @@ namespace DatabaseInterpreter.Core
 
             return str1 == str2;
         }
+
+        public static bool IsSequenceNextVal(string value)
+        {
+            return value?.Contains("nextval") == true;
+        }
     }
 }

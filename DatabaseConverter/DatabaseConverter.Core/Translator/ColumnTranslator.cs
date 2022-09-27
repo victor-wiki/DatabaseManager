@@ -107,22 +107,7 @@ namespace DatabaseConverter.Core
                 if (targetDataTypeSpec == null)
                 {
                     throw new Exception($"No type '{targetDataType}' defined for '{targetDbType}'.");
-                }
-
-                if (targetDataTypeSpec.IsIdentity)
-                {
-                    if (targetDbType == DatabaseType.SqlServer || targetDbType == DatabaseType.MySql)
-                    {
-                        column.IsIdentity = true;
-
-                        if (column.DefaultValue.Contains("nextval"))
-                        {
-                            column.DefaultValue = null;
-                        }
-
-                        return;
-                    }
-                }
+                }               
 
                 column.DataType = targetDataType;
 

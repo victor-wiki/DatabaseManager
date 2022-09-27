@@ -33,16 +33,16 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvIndexes = new System.Windows.Forms.DataGridView();
-            this.colType = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.colIndexName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiDeleteIndex = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.lbIndexType = new System.Windows.Forms.ListBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.indexPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
+            this.colType = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.colIndexName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvIndexes)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -97,40 +97,6 @@
             this.dgvIndexes.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvIndexes_KeyDown);
             this.dgvIndexes.MouseClick += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseClick);
             this.dgvIndexes.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseUp);
-            // 
-            // colType
-            // 
-            this.colType.DataPropertyName = "Type";
-            this.colType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.colType.HeaderText = "Type";
-            this.colType.Name = "colType";
-            this.colType.ReadOnly = true;
-            this.colType.Width = 180;
-            // 
-            // colIndexName
-            // 
-            this.colIndexName.DataPropertyName = "Name";
-            this.colIndexName.HeaderText = "Name";
-            this.colIndexName.Name = "colIndexName";
-            this.colIndexName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.colIndexName.Width = 200;
-            // 
-            // colColumns
-            // 
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.colColumns.DefaultCellStyle = dataGridViewCellStyle2;
-            this.colColumns.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.colColumns.HeaderText = "Columns";
-            this.colColumns.Name = "colColumns";
-            this.colColumns.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colColumns.Width = 200;
-            // 
-            // colComment
-            // 
-            this.colComment.DataPropertyName = "Comment";
-            this.colComment.HeaderText = "Comment";
-            this.colComment.Name = "colComment";
-            this.colComment.Width = 150;
             // 
             // contextMenuStrip1
             // 
@@ -200,6 +166,39 @@
             this.indexPropertites.Name = "indexPropertites";
             this.indexPropertites.Size = new System.Drawing.Size(884, 67);
             this.indexPropertites.TabIndex = 1;
+            // 
+            // colType
+            // 
+            this.colType.DataPropertyName = "Type";
+            this.colType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.colType.HeaderText = "Type";
+            this.colType.Name = "colType";
+            this.colType.Width = 180;
+            // 
+            // colIndexName
+            // 
+            this.colIndexName.DataPropertyName = "Name";
+            this.colIndexName.HeaderText = "Name";
+            this.colIndexName.Name = "colIndexName";
+            this.colIndexName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.colIndexName.Width = 200;
+            // 
+            // colColumns
+            // 
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.colColumns.DefaultCellStyle = dataGridViewCellStyle2;
+            this.colColumns.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.colColumns.HeaderText = "Columns";
+            this.colColumns.Name = "colColumns";
+            this.colColumns.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colColumns.Width = 200;
+            // 
+            // colComment
+            // 
+            this.colComment.DataPropertyName = "Comment";
+            this.colComment.HeaderText = "Comment";
+            this.colComment.Name = "colComment";
+            this.colComment.Width = 150;
             // 
             // UC_TableIndexes
             // 

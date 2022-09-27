@@ -165,15 +165,13 @@ namespace DatabaseManager.Controls
             {
                 this.SetWordListViewVisible(false);
 
-                if (token != null)
+                if (token != null && token.Text != null)
                 {
                     if (token.Type != SqlWordTokenType.String && token.Text.Contains("'"))
                     {
                         this.ClearStyle(token);
                     }
                 }
-
-                return;
             }
 
             if (this.panelWords.Visible)
@@ -232,7 +230,7 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if (token.Text.Length > 0 && this.DbInterpreter.CommentString.Contains(token.Text.Last()))
+                if (token != null && token.Text.Length > 0 && this.DbInterpreter.CommentString.Contains(token.Text.Last()))
                 {
                     int start = this.txtEditor.SelectionStart;
                     int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
@@ -252,7 +250,7 @@ namespace DatabaseManager.Controls
 
         private void ShowWordListByToken(SqlWordToken token)
         {
-            if (string.IsNullOrEmpty(token.Text))
+            if (token== null || string.IsNullOrEmpty(token.Text) || token.Type == SqlWordTokenType.Number)
             {
                 this.SetWordListViewVisible(false);
 
@@ -308,6 +306,7 @@ namespace DatabaseManager.Controls
                             item.ImageIndex = 0;
                             break;
                         case SqlWordTokenType.BuiltinFunction:
+                        case SqlWordTokenType.Function:
                             item.ImageIndex = 1;
                             break;
                         case SqlWordTokenType.Table:
@@ -514,10 +513,10 @@ namespace DatabaseManager.Controls
 
                 token.StartIndex = i + (exited ? 1 : 0);
 
-                //if (token.StartIndex > token.StopIndex)
-                //{
-                //    token.StartIndex = token.StopIndex;
-                //}
+                if (token.StartIndex == token.StopIndex && isInsert && word.Length > 0)
+                {
+                    token.StopIndex = token.StartIndex + word.Length;
+                }
 
                 if (word.Contains("'"))
                 {
@@ -573,16 +572,22 @@ namespace DatabaseManager.Controls
                 token.StopIndex = lineFirstCharIndex + this.txtEditor.Lines[lineIndex].Length - 1;
             }
 
+            string trimedWord = this.TrimQuotationChars(word);
+
             if (!noAction)
             {
-                if (this.keywords.Any(item => item.ToUpper() == word.ToUpper()))
+                if (this.dbSchemas.Any(item => item.ToUpper() == trimedWord.ToUpper()))
+                {
+                    token.Type = SqlWordTokenType.Schema;
+                }
+                else if (this.keywords.Any(item => item.ToUpper() == word.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.Keyword;
 
                     this.SetWordColor(token);
 
                 }
-                else if (this.builtinFunctions.Any(item => item.Name.ToUpper() == word.ToUpper()))
+                else if (this.builtinFunctions.Any(item => item.Name.ToUpper() == trimedWord.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.BuiltinFunction;
 
@@ -592,6 +597,10 @@ namespace DatabaseManager.Controls
                 {
                     token.Type = SqlWordTokenType.Comment;
                     this.SetWordColor(token, true);
+                }
+                else if (long.TryParse(word, out _))
+                {
+                    token.Type = SqlWordTokenType.Number;
                 }
                 else
                 {
@@ -672,7 +681,7 @@ namespace DatabaseManager.Controls
 
         private string TrimQuotationChars(string value)
         {
-            return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar);
+            return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar, '"');
         }
 
         private void SetWordColor(SqlWordToken token, bool keepCurrentPos = false)

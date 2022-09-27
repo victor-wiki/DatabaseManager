@@ -40,8 +40,7 @@ namespace DatabaseInterpreter.Core
                 AllowMax = IsTrueValue(item.Attribute("allowMax")),
                 MapTo = item.Attribute("mapTo")?.Value,
                 IndexForbidden = IsTrueValue(item.Attribute("indexForbidden")),
-                AllowIdentity = IsTrueValue(item.Attribute("allowIdentity")),
-                IsIdentity = IsTrueValue(item.Attribute("IsIdentity"))               
+                AllowIdentity = IsTrueValue(item.Attribute("allowIdentity"))                 
             }).ToList();
 
             functionSpecs.ForEach(item => ParseArgument(item));

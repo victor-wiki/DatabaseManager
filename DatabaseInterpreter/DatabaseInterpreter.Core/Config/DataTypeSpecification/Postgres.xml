@@ -1,9 +1,9 @@
 ﻿<items>
 	<!--<item name="aclitem" args=""></item>
 	<item name="aclitem[]" args="" indexForbidden="true"></item>-->
-	<item name="bigint" args=""></item>
+	<item name="bigint" args="" allowIdentity="true"></item>
 	<item name="bigint[]" args="" indexForbidden="true"></item>
-	<item name="bigserial" args=""  isIdentity="true"></item>
+	<item name="bigserial" args=""  allowIdentity="false"></item>
 	<item name="bit" args=""></item>
 	<item name="bit[]" args=""></item>
 	<item name="bit varying" args=""></item>
@@ -46,7 +46,7 @@
 	<item name="int4range[]" args="" indexForbidden="true"></item>
 	<item name="int8range" args=""></item>
 	<item name="int8range[]" args="" indexForbidden="true"></item>
-	<item name="integer" args=""></item>
+	<item name="integer" args="" allowIdentity="true"></item>
 	<item name="integer[]" args="" indexForbidden="true"></item>
 	<item name="interval" args=""></item>
 	<item name="interval[]" args=""></item>
@@ -119,10 +119,10 @@
 	<item name="regrole[]" args="" indexForbidden="true"></item>
 	<item name="regtype" args=""></item>
 	<item name="regtype[]" args="" indexForbidden="true"></item>
-	<item name="serial" args="" isIdentity="true" ></item>
-	<item name="smallint" args=""></item>
+	<item name="serial" args="" allowIdentity="false"></item>
+	<item name="smallint" args="" allowIdentity="true"></item>
 	<item name="smallint[]" args="" indexForbidden="true"></item>
-	<item name="smallserial" args=""  isIdentity="true"></item>	
+	<item name="smallserial" args=""  allowIdentity="false"></item>	
 	<item name="text" args=""  indexForbidden="true"></item>
 	<item name="text[]" args=""  indexForbidden="true"></item>
 	<item name="tid" args=""></item>

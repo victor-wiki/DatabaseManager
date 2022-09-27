@@ -163,7 +163,7 @@ namespace DatabaseInterpreter.Core
         {
             Point[] points = new Point[geometry.STNumGeometries().Value];
             for (int i = 1; i <= points.Length; i++)
-                points[i - 1] = new Point(new Coordinate(geometry.STX.Value, geometry.STY.Value));
+                points[i - 1] = new Point(new Coordinate(geometry.STPointN(i).STX.Value, geometry.STPointN(i).STY.Value));
 
             return points;
         }

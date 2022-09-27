@@ -742,7 +742,7 @@ namespace DatabaseInterpreter.Core
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string defaultValueClause = "";
 
-                if (column.DefaultValue != null && !column.DefaultValue.Contains("nextval"))
+                if (column.DefaultValue != null && !ValueHelper.IsSequenceNextVal(column.DefaultValue))
                 {
                     defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 }

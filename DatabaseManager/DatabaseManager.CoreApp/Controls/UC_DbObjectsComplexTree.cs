@@ -30,7 +30,7 @@ namespace DatabaseManager.Controls
 
         public UC_DbObjectsComplexTree()
         {
-            InitializeComponent();
+            InitializeComponent();            
 
             FormEventCenter.OnRefreshNavigatorFolder += this.RefreshFolderNode;
 
@@ -44,7 +44,7 @@ namespace DatabaseManager.Controls
             this.connectionInfo = connectionInfo;
 
             this.tvDbObjects.Nodes.Clear();
-
+         
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, simpleInterpreterOption);
 
             List<Database> databases = await dbInterpreter.GetDatabasesAsync();
@@ -127,6 +127,11 @@ namespace DatabaseManager.Controls
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
             this.tsmiCompare.Visible = isDatabase;
+           
+            this.tsmiSelectScript.Visible = isTable || isView;
+            this.tsmiInsertScript.Visible = isTable;
+            this.tsmiUpdateScript.Visible = isTable;
+            this.tsmiDeleteScript.Visible = isTable;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -188,7 +193,7 @@ namespace DatabaseManager.Controls
             SchemaInfo schemaInfo = databaseObjectType == DatabaseObjectType.None ? new SchemaInfo() :
                                     await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
 
-            this.ClearNodes(parentNode);
+            this.ClearNodes(parentNode);           
 
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Table, schemaInfo.Tables, createFolderNode, true);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
@@ -486,7 +491,7 @@ namespace DatabaseManager.Controls
 
         private void tsmiGenerateScripts_Click(object sender, EventArgs e)
         {
-            this.GenerateScripts(ScriptAction.CREATE);
+            
         }
 
         private async void GenerateScripts(ScriptAction scriptAction)
@@ -802,9 +807,7 @@ namespace DatabaseManager.Controls
 
                     DbInterpreter dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(treeNode).Name);
 
-                    string[] items = text.Trim().Split('.');
-
-                    items[items.Length - 1] = dbInterpreter.GetQuotedString(items[items.Length - 1]);
+                    var items = text.Trim().Split('.').Select(item=>dbInterpreter.GetQuotedString(item));                   
 
                     DoDragDrop(string.Join(".", items), DragDropEffects.Move);
                 }
@@ -1028,6 +1031,31 @@ namespace DatabaseManager.Controls
 
             frmCompare frmCompare = new frmCompare(this.databaseType, this.GetConnectionInfo(database.Name));
             frmCompare.ShowDialog();
+        }
+
+        private void tsmiCreateScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.CREATE);
+        }
+
+        private void tsmiSelectScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.SELECT);
+        }
+
+        private void tsmiInsertScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.INSERT);
+        }
+
+        private void tsmiUpdateScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.UPDATE);
+        }
+
+        private void tsmiDeleteScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.DELETE);
         }
     }
 }

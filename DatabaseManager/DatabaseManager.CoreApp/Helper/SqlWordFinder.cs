@@ -19,14 +19,7 @@ namespace DatabaseManager.Helper
             //    var keywords = KeywordManager.GetKeywords(databaseType).Where(item => Contains(item, search));
 
             //    words.AddRange(keywords.Select(item => new SqlWord() { Type = SqlWordTokenType.Keyword, Text = item }));
-            //}           
-
-            if (IsTypeMatched(tokenType, SqlWordTokenType.BuiltinFunction))
-            {
-                var builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => ContainsWithNull(item.Name, search));
-
-                words.AddRange(builtinFunctions.Select(item => new SqlWord() { Type = SqlWordTokenType.BuiltinFunction, Text = item.Name, Source = item }));
-            }
+            //}            
 
             SchemaInfo schemaInfo = DataStore.GetSchemaInfo(databaseType);
 
@@ -37,9 +30,7 @@ namespace DatabaseManager.Helper
                     var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Schema, search)).Select(item => item.Schema).Distinct();
 
                     words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Schema, Text = item, Source = item }));
-                }
-
-                FilterDbObjects(words, schemaInfo.Functions, SqlWordTokenType.Function, tokenType, search, parentName);
+                }               
 
                 FilterDbObjects(words, schemaInfo.Tables, SqlWordTokenType.Table, tokenType, search, parentName);
 
@@ -61,6 +52,15 @@ namespace DatabaseManager.Helper
 
                     words.AddRange(columns.Select(item => new SqlWord() { Type = SqlWordTokenType.TableColumn, Text = item.Name, Source = item }));
                 }
+
+                FilterDbObjects(words, schemaInfo.Functions, SqlWordTokenType.Function, tokenType, search, parentName);
+            }
+
+            if (IsTypeMatched(tokenType, SqlWordTokenType.BuiltinFunction))
+            {
+                var builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => ContainsWithNull(item.Name, search));
+
+                words.AddRange(builtinFunctions.Select(item => new SqlWord() { Type = SqlWordTokenType.BuiltinFunction, Text = item.Name, Source = item }));
             }
 
             return words;

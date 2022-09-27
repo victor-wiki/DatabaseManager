@@ -186,11 +186,6 @@ namespace DatabaseInterpreter.Core
             {
                 try
                 {
-                    DbCommand dbCommand = dbConnection.CreateCommand();
-
-                    dbCommand.CommandText = sql;
-                    dbCommand.CommandType = CommandType.Text;
-
                     await this.OpenConnectionAsync(dbConnection);
 
                     objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
@@ -527,9 +522,9 @@ namespace DatabaseInterpreter.Core
                 sql = this.AppendLimitClause(sql, limitCount.Value);
             }
 
-            if(this.DatabaseType == DatabaseType.Postgres)
+            if (this.DatabaseType == DatabaseType.Postgres)
             {
-                NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();               
+                NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite(geographyAsDefault: false);
             }
 
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
