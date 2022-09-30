@@ -28,15 +28,15 @@ namespace DatabaseManager.Core
 
             if (dbObject is Table)
             {
-                if(scriptAction == ScriptAction.CREATE)
+                if (scriptAction == ScriptAction.CREATE)
                 {
                     dbInterpreter.Option.GetTableAllObjects = true;
-                }  
+                }
                 else
                 {
                     databaseObjectType |= DatabaseObjectType.TableColumn;
                 }
-            }           
+            }
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
             filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });
@@ -47,7 +47,7 @@ namespace DatabaseManager.Core
             {
                 DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
 
-                List<Script> scripts = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts;              
+                List<Script> scripts = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts;
 
                 DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
@@ -99,9 +99,13 @@ namespace DatabaseManager.Core
 
                 return StringHelper.ToSingleEmptyLine(sbContent.ToString());
             }
-            else if(dbObject is Table table)
+            else if (dbObject is Table table)
             {
                 return this.GenerateTableDMLScript(schemaInfo, table, scriptAction);
+            }
+            else if (dbObject is View view)
+            {
+                return this.GenerateViewDMLScript(schemaInfo, view, scriptAction);
             }
 
             return String.Empty;
@@ -132,7 +136,7 @@ namespace DatabaseManager.Core
             string tableName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(table);
             var columns = schemaInfo.TableColumns;
 
-            switch(scriptAction)
+            switch (scriptAction)
             {
                 case ScriptAction.SELECT:
                     string columnNames = this.dbInterpreter.GetQuotedColumnNames(columns);
@@ -141,7 +145,7 @@ namespace DatabaseManager.Core
                 case ScriptAction.INSERT:
                     var insertColumns = columns.Where(item => !item.IsIdentity && !item.IsComputed);
                     string insertColumnNames = string.Join(",", insertColumns.Select(item => this.dbInterpreter.GetQuotedString(item.Name)));
-                    string insertValues = string.Join(",", insertColumns.Select(item=>"?"));
+                    string insertValues = string.Join(",", insertColumns.Select(item => "?"));
 
                     script = $"INSERT INTO {tableName}({insertColumnNames}){Environment.NewLine}VALUES({insertValues});";
                     break;
@@ -153,7 +157,22 @@ namespace DatabaseManager.Core
                     break;
                 case ScriptAction.DELETE:
                     script = $"DELETE FROM {tableName}{Environment.NewLine}WHERE <condition>;";
-                    break;                   
+                    break;
+            }
+
+            return script;
+        }
+
+        public string GenerateViewDMLScript(SchemaInfo schemaInfo, View view, ScriptAction scriptAction)
+        {
+            string script = "";
+            string viewName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(view);
+
+            switch (scriptAction)
+            {
+                case ScriptAction.SELECT:
+                    script = $"SELECT * {Environment.NewLine}FROM {viewName}";
+                    break;
             }
 
             return script;

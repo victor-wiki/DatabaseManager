@@ -23,8 +23,7 @@ namespace DatabaseConverter.Core
         protected bool hasError = false;
 
         public bool ContinueWhenErrorOccurs { get; set; }
-        public bool HasError => this.hasError;
-        public string TargetDbSchema { get; set; }
+        public bool HasError => this.hasError;      
         public SchemaInfo SourceSchemaInfo { get; set; }
         public DbConverterOption Option { get; set; }
 

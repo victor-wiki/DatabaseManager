@@ -37,6 +37,8 @@ namespace DatabaseConverter.Core
 
         public void Translate(DatabaseObjectType databaseObjectType = DatabaseObjectType.None)
         {
+            this.TranslateSchema();
+
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableColumn))
             {
                 ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
@@ -72,9 +74,7 @@ namespace DatabaseConverter.Core
             {
                 ScriptTranslator<TableTrigger> triggerTranslator = this.GetScriptTranslator<TableTrigger>(this.targetSchemaInfo.TableTriggers);
                 triggerTranslator.Translate();
-            }
-
-            this.TranslateSchema();
+            }          
         }
 
         private void Translate(DbObjectTranslator translator)

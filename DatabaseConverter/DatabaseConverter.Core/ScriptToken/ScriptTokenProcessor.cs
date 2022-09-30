@@ -17,7 +17,7 @@ namespace DatabaseConverter.Core
         public DbInterpreter SourceInterpreter { get; set; }
         public DbInterpreter TargetInterpreter { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
-        public string TargetDbSchema { get; set; }
+   
 
         public char[] TrimChars
         {
@@ -128,7 +128,7 @@ namespace DatabaseConverter.Core
                     {
                         string oldSymbol = token.Symbol;
 
-                        this.RemoveQuotationChar(token);
+                        this.HandleQuotationChar(token);
 
                         if (oldSymbol != token.Symbol && !string.IsNullOrEmpty(oldSymbol))
                         {
@@ -147,17 +147,26 @@ namespace DatabaseConverter.Core
                     {
                         this.ReplaceTokenSymbol(dictChangedValues, token);
 
-                        this.RemoveQuotationChar(token);
+                        this.HandleQuotationChar(token);
                     }
                 }
             }
-         
+
+            this.Script.Schema = this.TargetInterpreter.GetQuotedString(this.DbObject.Schema);
             this.Script.Name.Symbol = this.TargetInterpreter.GetQuotedString(this.DbObject.Name);
         }
 
         private bool IsNameContainsWihtespace(string name)
         {
             return name.Contains(" ");
+        }
+
+        private void HandleQuotationChar(TokenInfo token)
+        {
+            if(this.SourceInterpreter.QuotationLeftChar != this.TargetInterpreter.QuotationLeftChar)
+            {
+                this.RemoveQuotationChar(token);
+            }            
         }
 
         private void RemoveQuotationChar(TokenInfo token)
@@ -233,7 +242,7 @@ namespace DatabaseConverter.Core
              {
                  this.RestoreValue(token);
 
-                 if (this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer && this.TargetDbSchema != "dbo" && token.Symbol.ToLower().Contains("dbo."))
+                 if (this.TargetInterpreter.DatabaseType != DatabaseType.SqlServer && this.Script.Schema != "dbo" && token.Symbol.ToLower().Contains("dbo."))
                  {
                      token.Symbol = this.ReplaceValue(token.Symbol, "dbo.", "");
                  }

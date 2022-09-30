@@ -487,6 +487,9 @@ namespace DatabaseInterpreter.Core
                     var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
                     tables.ForEach(item => item.Schema = targetSchema);
 
+                    var views = schemaInfo.Views.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                    views.ForEach(item => item.Schema = targetSchema);
+
                     var columns = schemaInfo.TableColumns.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
                     columns.ForEach(item => item.Schema = targetSchema);
 

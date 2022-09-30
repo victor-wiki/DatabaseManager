@@ -62,8 +62,7 @@ namespace DatabaseConverter.Core
                 }
 
                 ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
-                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
-                tokenProcessor.TargetDbSchema = this.TargetDbSchema;
+                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;               
 
                 tokenProcessor.Process();
 
@@ -105,7 +104,7 @@ namespace DatabaseConverter.Core
                             //Currently, ANTLR can't parse some complex tsql accurately, so it uses general strategy.
                             if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
                             {
-                                ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }, this.TargetDbSchema) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
+                                ViewTranslator viewTranslator = new ViewTranslator(this.sourceDbInterpreter, this.targetDbInterpreter, new List<View>() { dbObj as View }) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
                                 viewTranslator.Translate();
 
                                 replaced = true;
@@ -207,17 +206,7 @@ namespace DatabaseConverter.Core
                 {
                     script.Definition = regex.Replace(script.Definition, "");
                 }
-            }
-
-            if (script.Schema != this.TargetDbSchema)
-            {
-                Regex ownerRegex = new Regex($@"[{this.sourceDbInterpreter.QuotationLeftChar}]({script.Schema})[{this.sourceDbInterpreter.QuotationRightChar}][\.]", RegexOptions.IgnoreCase);
-
-                if (ownerRegex.IsMatch(script.Definition))
-                {
-                    script.Definition = ownerRegex.Replace(script.Definition, "");
-                }
-            }
+            }           
         }
 
         private SqlSyntaxError ParseSqlSyntaxError(SqlSyntaxError error, string definition)

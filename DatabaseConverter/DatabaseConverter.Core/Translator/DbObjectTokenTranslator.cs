@@ -194,20 +194,7 @@ namespace DatabaseConverter.Core
                 {
                     case TSQLTokenType.Identifier:
 
-                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
-
-                        if (this.sourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
-                        {
-                            if ((text == "dbo" || text == "[dbo]") && this.TargetDbSchema?.ToLower() != "dbo")
-                            {
-                                if (nextToken != null && nextToken.Text == ".")
-                                {
-                                    ignoreCount++;
-                                }
-
-                                continue;
-                            }
-                        }
+                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;                       
 
                         if (convertedDataTypes.Contains(text))
                         {
