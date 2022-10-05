@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.0.2</Version>
+    <Version>2.0.3</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.2</AssemblyVersion>
-    <FileVersion>2.0.2</FileVersion>
-    <PackageReleaseNotes>fix issue: view script convert;if the quotation char of source and target database is same, do not remove quotation char.</PackageReleaseNotes>
+    <AssemblyVersion>2.0.3</AssemblyVersion>
+    <FileVersion>2.0.3</FileVersion>
+    <PackageReleaseNotes>fix issue: oracle open connection</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
