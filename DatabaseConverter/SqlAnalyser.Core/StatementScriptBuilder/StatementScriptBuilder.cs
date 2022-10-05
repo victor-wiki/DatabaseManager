@@ -82,7 +82,7 @@ namespace SqlAnalyser.Core
         }
 
         protected virtual void BuildSelectStatement(SelectStatement select, bool appendSeparator = true) { }
-
+        
         protected void BuildSelectStatementFromItems(SelectStatement selectStatement)
         {
             int count = selectStatement.FromItems.Count;
@@ -109,11 +109,9 @@ namespace SqlAnalyser.Core
                 if (fromTableName == null)
                 {
                     fromTableName = selectStatement.TableName;
-                }
+                }             
 
-                string fromTableAlias = fromTableName.Alias == null ? "" : " " + fromTableName.Alias.ToString();
-
-                this.Append($"{fromTableName}{fromTableAlias}{(hasJoins ? Environment.NewLine : "")}", false);
+                this.Append($"{this.GetNameWithAlias(fromTableName)}{(hasJoins ? Environment.NewLine : "")}", false);
 
                 bool hasSubSelect = false;
 
@@ -163,9 +161,8 @@ namespace SqlAnalyser.Core
                         }
                         else
                         {
-                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
-                            string alias = joinItem.TableName.Alias == null ? "" : $" {joinItem.TableName.Alias}";
-                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{alias}{condition}");
+                            string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";                            
+                            this.AppendLine($"{joinItem.Type} JOIN {this.GetNameWithAlias(joinItem.TableName)}{condition}");
                         }
                     }
                 }
@@ -178,6 +175,12 @@ namespace SqlAnalyser.Core
                 this.AppendLine("", false);
             }
         }
+
+        protected virtual string GetNameWithAlias(NameToken name)
+        {
+            return name?.NameWithAlias;
+        }
+
         public string GetTrimedQuotationValue(string value)
         {
             return value?.Trim('[', ']', '"', '`');

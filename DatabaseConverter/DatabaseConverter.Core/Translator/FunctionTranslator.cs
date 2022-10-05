@@ -11,7 +11,7 @@ namespace DatabaseConverter.Core
 {
     public class FunctionTranslator : DbObjectTranslator
     {
-        private List<TokenInfo> functions;
+        private IEnumerable<TokenInfo> functions;
         private DatabaseType sourceDbType;
         private DatabaseType targetDbType;
 
@@ -27,7 +27,7 @@ namespace DatabaseConverter.Core
             this.targetDbType = targetInterpreter.DatabaseType;
         }
 
-        public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, List<TokenInfo> functions) : base(sourceInterpreter, targetInterpreter)
+        public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TokenInfo> functions) : base(sourceInterpreter, targetInterpreter)
         {
             this.functions = functions;
             this.sourceDbType = sourceInterpreter.DatabaseType;

@@ -7,6 +7,7 @@ using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -15,12 +16,12 @@ namespace DatabaseConverter.Core
     public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
-        private List<T> scripts;
+        private IEnumerable<T> scripts;
         private DatabaseType sourceDbType;
         private DatabaseType targetDbType;
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
-        public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, List<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
+        public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
             this.sourceDbType = sourceDbInterpreter.DatabaseType;
             this.targetDbType = targetDbInterpreter.DatabaseType;
@@ -62,7 +63,8 @@ namespace DatabaseConverter.Core
                 }
 
                 ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
-                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;               
+                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
+                tokenProcessor.Option = this.Option;
 
                 tokenProcessor.Process();
 
@@ -87,6 +89,20 @@ namespace DatabaseConverter.Core
                     bool tokenProcessed = false;
 
                     this.Validate(dbObj);
+
+                    if(sourceDbType == DatabaseType.MySql)
+                    {
+                        string dbName = this.sourceDbInterpreter.ConnectionInfo.Database;
+                        dbObj.Definition = dbObj.Definition.Replace($"`{dbName}`.", "").Replace($"{dbName}.", "");
+                    }
+                    else if(sourceDbType == DatabaseType.Postgres)
+                    {
+                        if(dbObj.Definition.Contains("::"))
+                        {
+                            var dataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbType);
+                            dbObj.Definition = TranslateHelper.RemovePostgresDataTypeConvertExpression(dbObj.Definition, dataTypeSpecs, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar);
+                        }
+                    }
 
                     string originalDefinition = dbObj.Definition;
 

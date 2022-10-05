@@ -467,7 +467,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT v.table_schema AS ""Schema"",v.table_name AS ""Name"",{(isSimpleMode ? "''" : $@"CONCAT('CREATE OR REPLACE VIEW ""',v.table_name,'"" AS{Environment.NewLine}',v.view_definition)")} AS ""Definition""
+            string sql = $@"SELECT v.table_schema AS ""Schema"",v.table_name AS ""Name"",{(isSimpleMode ? "''" : $@"CONCAT('CREATE OR REPLACE VIEW ""',v.table_schema,'"".""',v.table_name,'"" AS{Environment.NewLine}',v.view_definition)")} AS ""Definition""
                             FROM information_schema.views v
                             WHERE UPPER(v.table_catalog) = UPPER('{this.ConnectionInfo.Database}')";
 

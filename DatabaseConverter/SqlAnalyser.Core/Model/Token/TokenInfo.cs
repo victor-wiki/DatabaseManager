@@ -10,7 +10,7 @@ namespace SqlAnalyser.Model
         public string Symbol { get; set; }
         public int? StartIndex { get; set; }
         public int? StopIndex { get; set; }
-        public bool IsConst { get; set; }
+        public bool IsConst { get; set; }        
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
 
@@ -91,6 +91,8 @@ namespace SqlAnalyser.Model
         CursorName = 12,
         Alias = 13,
         Pivot = 14,
-        UnPivot = 15
+        UnPivot = 15,
+        SequenceName = 16,
+        UpdateSet = 17
     }
 }

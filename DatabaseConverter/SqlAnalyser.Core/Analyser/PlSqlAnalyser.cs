@@ -66,7 +66,7 @@ namespace SqlAnalyser.Core
             StringBuilder sb = new StringBuilder();
             StringBuilder sbBody = new StringBuilder();
 
-            sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.NameWithSchema}");
+            sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.Name}");
 
             if (script.Parameters.Count > 0)
             {
@@ -157,7 +157,7 @@ namespace SqlAnalyser.Core
 
             sb.Append(sbBody);
 
-            sb.AppendLine($"END {script.NameWithSchema};");
+            sb.AppendLine($"END {script.Name};");
 
             result.Script = sb.ToString();
             result.Body = sbBody.ToString();

@@ -31,7 +31,7 @@ namespace DatabaseInterpreter.Core
         public override string CommentString => "--";
         public override DatabaseType DatabaseType => DatabaseType.Oracle;
         public override string DefaultDataType => "varchar2";
-        public override string DefaultSchema => this.ConnectionInfo.UserId;
+        public override string DefaultSchema => this.ConnectionInfo.UserId?.ToUpper();
         public override IndexType IndexType => IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
@@ -555,7 +555,7 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForViews(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            string definitionField = isLowDbVersion ? $"DBMS_METADATA.GET_DDL('VIEW',V.VIEW_NAME, '{this.ConnectionInfo.UserId}')" : "'CREATE OR REPLACE VIEW '||V.VIEW_NAME||' AS ' || CHR(13) || TEXT_VC";
+            string definitionField = isLowDbVersion ? $"DBMS_METADATA.GET_DDL('VIEW',V.VIEW_NAME, '{this.ConnectionInfo.UserId}')" : @"'CREATE OR REPLACE VIEW ""'||V.VIEW_NAME||'"" AS ' || CHR(13) || TEXT_VC";
 
             string sql = $@"SELECT V.OWNER AS ""Schema"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : definitionField)} AS ""Definition"" 
                         FROM ALL_VIEWS V
@@ -841,7 +841,7 @@ namespace DatabaseInterpreter.Core
                         {
                             long? length = column.MaxLength;
 
-                            if (length > 0 && DataTypeHelper.StartWithN(dataType))
+                            if (length > 0 && DataTypeHelper.StartsWithN(dataType))
                             {
                                 length = length / 2;
                             }

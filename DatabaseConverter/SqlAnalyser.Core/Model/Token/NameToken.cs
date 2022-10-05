@@ -1,25 +1,19 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using System.IO;
 
 namespace SqlAnalyser.Model
 {
     public class NameToken : TokenInfo
     {
+        public string Server { get; set; }
+        public string Database { get; set; }
         public string Schema { get; set; }
 
-        protected TokenInfo alias;
+        public bool HasAs { get; set; }
 
-        public virtual string Name
-        {
-            get
-            {
-                return this.Symbol;
-            }
-            set
-            {
-                this.Symbol = value;
-            }
-        }
+        protected TokenInfo alias;      
+
         public TokenInfo Alias
         {
             get
@@ -43,10 +37,25 @@ namespace SqlAnalyser.Model
             {
                 if (!string.IsNullOrEmpty(this.Schema))
                 {
-                    return $"{this.Schema}.{this.Name}";
+                    return $"{this.Schema}.{this.Symbol}";
                 }
 
-                return this.Name;
+                return this.Symbol;
+            }
+        }
+
+        public string NameWithAlias
+        {
+            get
+            {
+                if(this.alias == null)
+                {
+                    return this.Symbol;
+                }
+
+                string strAs = this.HasAs ? " AS " : " ";
+
+                return $"{this.Symbol}{strAs}{this.alias}";
             }
         }
 

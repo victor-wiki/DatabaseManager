@@ -115,7 +115,7 @@ namespace SqlAnalyser.Core
                 }
                 else
                 {
-                    sb.AppendLine($"RETURNS {script.ReturnTable.Name}({string.Join(",", script.ReturnTable.Columns.Select(t => $"{t.Name} {t.DataType}")) })");
+                    sb.AppendLine($"RETURNS {script.ReturnTable.Name}({string.Join(",", script.ReturnTable.Columns.Select(t => $"{t.Symbol} {t.DataType}")) })");
                 }
             }
 

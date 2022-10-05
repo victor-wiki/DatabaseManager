@@ -163,7 +163,7 @@ namespace SqlAnalyser.Core
                     int i = 0;
                     foreach (var column in declare.Table.Columns)
                     {
-                        this.AppendLine($"{column.Name} {column.DataType}{(i == declare.Table.Columns.Count - 1 ? "" : ",")}");
+                        this.AppendLine($"{column.Symbol} {column.DataType}{(i == declare.Table.Columns.Count - 1 ? "" : ",")}");
                     }
 
                     this.AppendLine(")");
@@ -354,7 +354,6 @@ namespace SqlAnalyser.Core
             return this;
         }
 
-
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
             bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
@@ -363,7 +362,7 @@ namespace SqlAnalyser.Core
             string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : "")}";
             string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
 
-            string selectColumns = $"SELECT {top}{intoVariable}{string.Join(",", select.Columns.Select(item => item))}";
+            string selectColumns = $"SELECT {top}{intoVariable}{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
             if (!isWith)
             {
@@ -413,7 +412,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (select.TableName != null)
                 {
-                    this.AppendLine($"FROM {select.TableName}");
+                    this.AppendLine($"FROM {this.GetNameWithAlias(select.TableName)}");
                 }
             };
 

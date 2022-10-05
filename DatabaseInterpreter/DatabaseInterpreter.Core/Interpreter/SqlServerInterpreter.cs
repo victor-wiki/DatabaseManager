@@ -910,7 +910,7 @@ namespace DatabaseInterpreter.Core
                 {
                     return string.Empty;
                 }
-                else if (isChar && DataTypeHelper.StartWithN(dataType)) //ie. nchar, nvarchar
+                else if (isChar && DataTypeHelper.StartsWithN(dataType)) //ie. nchar, nvarchar
                 {
                     if (column.MaxLength == -1 || column.MaxLength == null)
                     {

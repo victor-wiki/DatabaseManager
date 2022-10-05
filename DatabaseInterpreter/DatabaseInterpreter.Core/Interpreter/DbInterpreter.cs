@@ -549,10 +549,10 @@ namespace DatabaseInterpreter.Core
                 {
                     string orderBy = this.GetDefaultOrder();
 
-                    if(!string.IsNullOrEmpty(orderBy))
+                    if (!string.IsNullOrEmpty(orderBy))
                     {
                         sql += Environment.NewLine + "ORDER BY " + orderBy;
-                    }                    
+                    }
                 }
 
                 if (this.DatabaseType == DatabaseType.SqlServer)
@@ -562,7 +562,7 @@ namespace DatabaseInterpreter.Core
                         sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
                     }
                 }
-                else if(this.DatabaseType == DatabaseType.MySql || this.DatabaseType == DatabaseType.Postgres)
+                else if (this.DatabaseType == DatabaseType.MySql || this.DatabaseType == DatabaseType.Postgres)
                 {
                     sql = $@"SELECT * FROM
                        (
@@ -570,13 +570,13 @@ namespace DatabaseInterpreter.Core
                        ) TEMP"
                       + Environment.NewLine + this.GetLimitStatement(0, limitCount);
                 }
-                else if(this.DatabaseType == DatabaseType.Oracle)
+                else if (this.DatabaseType == DatabaseType.Oracle)
                 {
                     sql = $@"SELECT * FROM
                        (
                          {sql}
                        ) TEMP
-                       WHERE ROWNUM BETWEEN 1 AND {limitCount}";                          
+                       WHERE ROWNUM BETWEEN 1 AND {limitCount}";
                 }
             }
 
@@ -592,7 +592,7 @@ namespace DatabaseInterpreter.Core
             foreach (TableColumn column in columns)
             {
                 string columnName = this.GetQuotedString(column.Name);
-                string dataType = column.DataType.ToLower(); 
+                string dataType = column.DataType.ToLower();
                 #region MySql
                 if (this.DatabaseType == DatabaseType.MySql)
                 {
@@ -621,18 +621,18 @@ namespace DatabaseInterpreter.Core
                                 }
                             }
                         }
-                    }                    
+                    }
                 }
                 #endregion
 
                 #region Oralce
                 else if (this.DatabaseType == DatabaseType.Oracle)
-                {                   
-                    if(dataType=="st_geometry")
+                {
+                    if (dataType == "st_geometry")
                     {
                         string geometryMode = SettingManager.Setting.OracleGeometryMode;
-                       
-                        if(string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+
+                        if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
                         {
                             quotedTableName += " t"; //must use alias
                             columnName = $"t.{columnName}.GET_WKT() AS {columnName}";
@@ -767,7 +767,7 @@ namespace DatabaseInterpreter.Core
         {
             if (this.DatabaseType == DatabaseType.SqlServer || this.DatabaseType == DatabaseType.Postgres)
             {
-                if(!string.IsNullOrEmpty(obj.Schema))
+                if (!string.IsNullOrEmpty(obj.Schema))
                 {
                     return $"{this.GetString(obj.Schema, true)}.{this.GetString(obj.Name, true)}";
                 }
@@ -795,13 +795,13 @@ namespace DatabaseInterpreter.Core
         public string GetString(string str, bool useQuotedString = false)
         {
             return useQuotedString ? this.GetQuotedString(str) : str;
-        }        
+        }
 
         public string GetQuotedString(string str)
         {
-            if (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || (str != null && str.Contains(" ")))
+            if (str != null && (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || str.Contains(" ")))
             {
-                return $"{ this.QuotationLeftChar}{str}{this.QuotationRightChar}";
+                return $"{this.QuotationLeftChar}{str}{this.QuotationRightChar}";
             }
             else
             {
@@ -896,7 +896,7 @@ namespace DatabaseInterpreter.Core
             else
             {
                 return $"({computeExpression})";
-            }           
+            }
         }
 
         public DataTypeSpecification GetDataTypeSpecification(string dataType)
@@ -980,7 +980,7 @@ namespace DatabaseInterpreter.Core
 
         public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
         {
-            string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for { StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower() } \"{dbObject.Name}\".";
+            string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for {StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower()} \"{dbObject.Name}\".";
             this.Feedback(FeedbackInfoType.Info, message);
         }
         #endregion

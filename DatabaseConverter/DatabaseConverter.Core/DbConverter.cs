@@ -257,7 +257,10 @@ namespace DatabaseConverter.Core
 
                 if (this.Option.ExecuteScriptOnTargetServer)
                 {
-                    dbConnection.Open();
+                    if(dbConnection.State != ConnectionState.Open)
+                    {
+                        dbConnection.Open();
+                    }                   
 
                     if (this.Option.UseTransaction)
                     {
@@ -653,7 +656,7 @@ namespace DatabaseConverter.Core
                 CancellationToken = this.CancellationTokenSource.Token
             };
 
-            string mappedSchema = SchemaInfoHelper.GetTableMappedSchema(table, this.Option.SchemaMappings);
+            string mappedSchema = SchemaInfoHelper.GetMappedSchema(table.Schema, this.Option.SchemaMappings);
 
             if (mappedSchema == null)
             {

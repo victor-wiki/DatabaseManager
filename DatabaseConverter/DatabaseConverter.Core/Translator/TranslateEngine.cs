@@ -19,7 +19,7 @@ namespace DatabaseConverter.Core
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public const DatabaseObjectType SupportDatabaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TableConstraint |
                                                        DatabaseObjectType.View | DatabaseObjectType.Function |
-                                                       DatabaseObjectType.Procedure | DatabaseObjectType.TableTrigger;
+                                                       DatabaseObjectType.Procedure | DatabaseObjectType.TableTrigger | DatabaseObjectType.Sequence;
 
 
         public TranslateHandler OnTranslated;

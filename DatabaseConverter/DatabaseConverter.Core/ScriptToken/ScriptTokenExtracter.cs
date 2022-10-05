@@ -1,6 +1,7 @@
 ﻿using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace DatabaseConverter.Core
@@ -85,7 +86,7 @@ namespace DatabaseConverter.Core
             if (token == null)
             {
                 return;
-            }
+            }            
 
             this.tokens.Add(token);
         }

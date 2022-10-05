@@ -433,7 +433,7 @@ namespace DatabaseInterpreter.Core
             {
                 return column1.MaxLength == column2.MaxLength;
             }
-            else if (isChar1 && isChar2 && DataTypeHelper.StartWithN(dataType1) && DataTypeHelper.StartWithN(dataType2))
+            else if (isChar1 && isChar2 && DataTypeHelper.StartsWithN(dataType1) && DataTypeHelper.StartsWithN(dataType2))
             {
                 return column1.MaxLength == column2.MaxLength;
             }
@@ -473,75 +473,72 @@ namespace DatabaseInterpreter.Core
             }
 
             return value1 == value2;
-        }
+        }        
 
         public static void MapDatabaseObjectSchema(SchemaInfo schemaInfo, List<SchemaMappingInfo> mappings)
         {
             foreach (var mapping in mappings)
             {
-                if (!string.IsNullOrEmpty(mapping.TargetSchema))
+                bool isAllSourceSchema = string.IsNullOrEmpty(mapping.SourceSchema);
+                string targetSchema = mapping.TargetSchema;
+
+                var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                tables.ForEach(item => item.Schema = targetSchema);
+
+                var views = schemaInfo.Views.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                views.ForEach(item => item.Schema = targetSchema);
+
+                var columns = schemaInfo.TableColumns.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                columns.ForEach(item => item.Schema = targetSchema);
+
+                var primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                primaryKeys.ForEach(item => item.Schema = targetSchema);
+
+                var foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                foreignKeys.ForEach(item =>
                 {
-                    bool isAllSourceSchema = string.IsNullOrEmpty(mapping.SourceSchema);
-                    string targetSchema = mapping.TargetSchema;
-
-                    var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    tables.ForEach(item => item.Schema = targetSchema);
-
-                    var views = schemaInfo.Views.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    views.ForEach(item => item.Schema = targetSchema);
-
-                    var columns = schemaInfo.TableColumns.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    columns.ForEach(item => item.Schema = targetSchema);
-
-                    var primaryKeys = schemaInfo.TablePrimaryKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    primaryKeys.ForEach(item => item.Schema = targetSchema);
-
-                    var foreignKeys = schemaInfo.TableForeignKeys.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    foreignKeys.ForEach(item =>
+                    if (item.Schema == item.ReferencedSchema)
                     {
-                        if (item.Schema == item.ReferencedSchema)
+                        item.ReferencedSchema = targetSchema;
+                    }
+                    else
+                    {
+                        item.ReferencedSchema = mappings.FirstOrDefault(t => t.SourceSchema == item.ReferencedSchema)?.TargetSchema;
+
+                        if (item.ReferencedSchema == null)
                         {
                             item.ReferencedSchema = targetSchema;
                         }
-                        else
-                        {
-                            item.ReferencedSchema = mappings.FirstOrDefault(t => t.SourceSchema == item.ReferencedSchema)?.TargetSchema;
+                    }
+                    item.Schema = targetSchema;
+                });
 
-                            if (item.ReferencedSchema == null)
-                            {
-                                item.ReferencedSchema = targetSchema;
-                            }
-                        }
-                        item.Schema = targetSchema;
-                    });
+                var indexes = schemaInfo.TableIndexes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                indexes.ForEach(item => item.Schema = targetSchema);
 
-                    var indexes = schemaInfo.TableIndexes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    indexes.ForEach(item => item.Schema = targetSchema);
+                var constraints = schemaInfo.TableConstraints.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                constraints.ForEach(item => item.Schema = targetSchema);
 
-                    var constraints = schemaInfo.TableConstraints.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    constraints.ForEach(item => item.Schema = targetSchema);
+                var triggers = schemaInfo.TableTriggers.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                triggers.ForEach(item => item.Schema = targetSchema);
 
-                    var triggers = schemaInfo.TableTriggers.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    triggers.ForEach(item => item.Schema = targetSchema);
+                var userDefinedTypes = schemaInfo.UserDefinedTypes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                userDefinedTypes.ForEach(item => item.Schema = targetSchema);
 
-                    var userDefinedTypes = schemaInfo.UserDefinedTypes.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    userDefinedTypes.ForEach(item => item.Schema = targetSchema);
+                var functions = schemaInfo.Functions.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                functions.ForEach(item => item.Schema = targetSchema);
 
-                    var functions = schemaInfo.Functions.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    functions.ForEach(item => item.Schema = targetSchema);
+                var procedures = schemaInfo.Procedures.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                procedures.ForEach(item => item.Schema = targetSchema);
 
-                    var procedures = schemaInfo.Procedures.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    procedures.ForEach(item => item.Schema = targetSchema);
-
-                    var sequences = schemaInfo.Sequences.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
-                    sequences.ForEach(item => item.Schema = targetSchema);
-                }
+                var sequences = schemaInfo.Sequences.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
+                sequences.ForEach(item => item.Schema = targetSchema);
             }
         }
 
-        public static string GetTableMappedSchema(Table table, List<SchemaMappingInfo> schemaMappings)
+        public static string GetMappedSchema(string schema, List<SchemaMappingInfo> schemaMappings)
         {
-            string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema == table.Schema)?.TargetSchema;
+            string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema == schema)?.TargetSchema;
 
             if (mappedSchema == null)
             {
@@ -549,6 +546,6 @@ namespace DatabaseInterpreter.Core
             }
 
             return mappedSchema;
-        }
+        }       
     }
 }

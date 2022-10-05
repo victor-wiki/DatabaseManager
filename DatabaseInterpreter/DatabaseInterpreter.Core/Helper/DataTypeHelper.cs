@@ -29,7 +29,7 @@ namespace DatabaseInterpreter.Core
         }
 
 
-        public static bool StartWithN(string dataType)
+        public static bool StartsWithN(string dataType)
         {
             return dataType.StartsWith("n", StringComparison.OrdinalIgnoreCase);
         }

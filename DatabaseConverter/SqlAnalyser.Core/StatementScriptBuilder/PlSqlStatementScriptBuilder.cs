@@ -77,7 +77,7 @@ namespace SqlAnalyser.Core
                                 join += joinItem.Type.ToString() + " JOIN";
                             }
 
-                            join += $" {joinItem.TableName} ON {joinItem.Condition}{Environment.NewLine}";
+                            join += $" {this.GetNameWithAlias(joinItem.TableName)} ON {joinItem.Condition}{Environment.NewLine}";
                             j++;
                         }
 
@@ -302,7 +302,7 @@ namespace SqlAnalyser.Core
                 select.TableName = new TableName("DUAL");
             }
 
-            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => item))}";
+            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
             if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
             {
@@ -352,7 +352,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (select.TableName != null)
                 {
-                    this.AppendLine($"FROM {select.TableName}");
+                    this.AppendLine($"FROM {this.GetNameWithAlias(select.TableName)}");
                 }
             };
 

@@ -12,14 +12,14 @@ namespace DatabaseConverter.Core
 {
     public class ColumnTranslator : DbObjectTokenTranslator
     {
-        private List<TableColumn> columns;
+        private IEnumerable<TableColumn> columns;
         private DatabaseType sourceDbType;
         private DatabaseType targetDbType;
         private IEnumerable<DataTypeSpecification> sourceDataTypeSpecs;
         private IEnumerable<DataTypeSpecification> targetDataTypeSpecs;
         private FunctionTranslator functionTranslator;
 
-        public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, List<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
+        public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
             this.columns = columns;
             this.sourceDbType = sourceInterpreter.DatabaseType;
@@ -122,7 +122,7 @@ namespace DatabaseConverter.Core
                         {
                             column.MaxLength = int.Parse(targetMapping.Length);
 
-                            if (DataTypeHelper.StartWithN(targetDataType) && !DataTypeHelper.StartWithN(sourceDataType))
+                            if (DataTypeHelper.StartsWithN(targetDataType) && !DataTypeHelper.StartsWithN(sourceDataType))
                             {
                                 column.MaxLength *= 2;
                             }

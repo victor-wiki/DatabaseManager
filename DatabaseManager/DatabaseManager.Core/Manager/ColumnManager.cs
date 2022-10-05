@@ -211,7 +211,7 @@ namespace DatabaseManager.Core
                         }
                         else
                         {
-                            column.MaxLength = long.Parse(lengthItem) * (DataTypeHelper.StartWithN(dataType) ? 2 : 1);
+                            column.MaxLength = long.Parse(lengthItem) * (DataTypeHelper.StartsWithN(dataType) ? 2 : 1);
                         }
                     }
                     else

@@ -71,7 +71,7 @@ namespace SqlAnalyser.Core
                         {
                             string condition = joinItem.Condition == null ? "" : $" ON {joinItem.Condition}";
 
-                            this.AppendLine($"{joinItem.Type} JOIN {joinItem.TableName}{condition}");
+                            this.AppendLine($"{joinItem.Type} JOIN {this.GetNameWithAlias(joinItem.TableName)}{condition}");
                         }
 
                         i++;
@@ -312,7 +312,7 @@ namespace SqlAnalyser.Core
         {
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
-            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => item))}";
+            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
             if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
             {
@@ -364,7 +364,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (select.TableName != null)
                 {
-                    this.AppendLine($"FROM {select.TableName}");
+                    this.AppendLine($"FROM {this.GetNameWithAlias(select.TableName)}");
                 }
             };
 
@@ -444,7 +444,7 @@ namespace SqlAnalyser.Core
             int i = 0;
             foreach (var column in table.Columns)
             {
-                sb.AppendLine($"{column.Name} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                sb.AppendLine($"{column.Symbol} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
                 i++;
             }
 

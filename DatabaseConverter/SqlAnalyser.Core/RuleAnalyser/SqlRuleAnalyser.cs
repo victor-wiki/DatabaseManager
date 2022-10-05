@@ -3,11 +3,17 @@ using Antlr4.Runtime.Tree;
 using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using static TSqlParser;
 
 namespace SqlAnalyser.Core
 {
     public abstract class SqlRuleAnalyser
     {
+        public abstract IEnumerable<Type> ParseTableTypes { get; }
+        public abstract IEnumerable<Type> ParseColumnTypes { get; }
+
         public abstract Lexer GetLexer(string content);
 
         public virtual ICharStream GetCharStreamFromString(string content)
@@ -39,7 +45,12 @@ namespace SqlAnalyser.Core
 
         public abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
         public abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
-        public abstract bool IsFunction(IParseTree node);    
+        public abstract bool IsFunction(IParseTree node);
+        public virtual TokenInfo ParseFunction(ParserRuleContext node)
+        {
+            TokenInfo token = new TokenInfo(node as ParserRuleContext);
+            return token;
+        }
 
         public virtual AnalyseResult Analyse<T>(string content)
             where T : DatabaseObject
@@ -89,7 +100,7 @@ namespace SqlAnalyser.Core
             {
                 if (this.IsFunction(child))
                 {
-                    script.Functions.Add(new TokenInfo(child as ParserRuleContext));
+                    script.Functions.Add(this.ParseFunction(child as ParserRuleContext));
                 }
                 else if (child is ParserRuleContext)
                 {
@@ -98,11 +109,80 @@ namespace SqlAnalyser.Core
             }
         }
 
-        protected TokenInfo ParseToken(ParserRuleContext node, TokenType tokenType = TokenType.General, bool strict = false)
+        protected TokenInfo CreateToken(ParserRuleContext node, TokenType tokenType = TokenType.General)
         {
-            TokenInfo tokenInfo = new TokenInfo(node) { Type = tokenType };                 
+            TokenInfo tokenInfo = new TokenInfo(node) { Type = tokenType };
 
             return tokenInfo;
-        }       
+        }
+
+        protected bool HasAsFlag(ParserRuleContext node)
+        {
+            return node.children.Count > 0 && node.GetChild(0).GetText() == "AS";
+        }
+
+        protected List<ParserRuleContext> FindSpecificContexts(ParserRuleContext node, IEnumerable<Type> searchTypes)
+        {
+            List<ParserRuleContext> fullNames = new List<ParserRuleContext>();            
+
+            if (node != null && node.children != null)
+            {
+                foreach (var child in node.children)
+                {
+                    if (searchTypes.Any(t => t == child.GetType()))
+                    {
+                        var c = child as ParserRuleContext;
+
+                        fullNames.Add(c);
+                    }
+                    else if (!(child is TerminalNodeImpl))
+                    {
+                        fullNames.AddRange(this.FindSpecificContexts(child as ParserRuleContext, searchTypes));
+                    }
+                }
+            }
+
+            return fullNames;
+        }
+
+        protected List<TokenInfo> ParseTableAndColumnNames(ParserRuleContext node, IEnumerable<Type> tableTypes, IEnumerable<Type> columnTypes)
+        {
+            List<TokenInfo> tokens = new List<TokenInfo>();
+
+            var fullTableNames = this.FindSpecificContexts(node, tableTypes);
+            var fullColumnNames = this.FindSpecificContexts(node, columnTypes);
+
+            foreach (var columnName in fullColumnNames)
+            {
+                tokens.Add(this.ParseColumnName(columnName));
+            }
+
+            foreach (var tableName in fullTableNames)
+            {
+                tokens.Add(this.ParseTableName(tableName));
+            }
+
+            return tokens;
+        }
+
+        protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token, IEnumerable<Type> tableTypes, IEnumerable<Type> columnTypes)
+        {
+            this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
+        }
+
+        protected void AddChildColumnNameToken(ParserRuleContext node, TokenInfo token, IEnumerable<Type> searchTypes)
+        {
+            this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
+        }
+
+        protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token)
+        {
+            this.AddChildTableAndColumnNameToken(node, token, this.ParseTableTypes, this.ParseColumnTypes);
+        }
+
+        protected void AddChildColumnNameToken(ParserRuleContext node, TokenInfo token)
+        {
+            this.AddChildColumnNameToken(node, token, this.ParseColumnTypes);
+        }
     }
 }

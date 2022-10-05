@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using SqlAnalyser.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using static MySqlParser;
@@ -9,6 +10,10 @@ namespace SqlAnalyser.Core
 {
     public class MySqlRuleAnalyser : SqlRuleAnalyser
     {
+        public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(SingleTableContext), typeof(TableRefContext) };
+
+        public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(SelectItemContext), typeof(ColumnRefContext) };
+
         public override Lexer GetLexer(string content)
         {
             return new MySqlLexer(this.GetCharStreamFromString(content));
@@ -111,35 +116,35 @@ namespace SqlAnalyser.Core
 
             foreach (var child in node.unlabeledBlock().beginEndBlock().children)
             {
-                if(child is SpDeclarationsContext spDeclarations)
+                if (child is SpDeclarationsContext spDeclarations)
                 {
-                    foreach(var declaration in spDeclarations.spDeclaration())
+                    foreach (var declaration in spDeclarations.spDeclaration())
                     {
-                        foreach(var c in declaration.children)
+                        foreach (var c in declaration.children)
                         {
-                            if(c is VariableDeclarationContext variable)
+                            if (c is VariableDeclarationContext variable)
                             {
                                 statements.Add(this.ParseDeclareStatement(variable));
                             }
-                            else if(c is HandlerDeclarationContext handlerDeclaration)
+                            else if (c is HandlerDeclarationContext handlerDeclaration)
                             {
                                 statements.Add(this.ParseDeclareHandler(handlerDeclaration));
                             }
-                            else if(c is CursorDeclarationContext cursorDeclaration)
+                            else if (c is CursorDeclarationContext cursorDeclaration)
                             {
                                 statements.Add(this.ParseDeclareCursor(cursorDeclaration));
                             }
-                        }                       
+                        }
                     }
                 }
-                else if(child is CompoundStatementListContext compoundStatementList)
+                else if (child is CompoundStatementListContext compoundStatementList)
                 {
                     statements.AddRange(this.ParseCompoundStatementList(compoundStatementList));
-                }                
+                }
             }
 
             return statements;
-        }    
+        }
 
         public List<Statement> ParseSimpleStatement(SimpleStatementContext simpleStatementContext)
         {
@@ -281,9 +286,9 @@ namespace SqlAnalyser.Core
 
                     foreach (var child in view.children)
                     {
-                        if (child is ViewSelectContext select)
+                        if (child is ViewTailContext tail)
                         {
-                            // script.Statements.Add(this.ParseSelectStatement(select));
+                            script.Statements.Add(this.ParseViewSelectStatement(tail.viewSelect()));
                         }
                     }
 
@@ -504,10 +509,14 @@ namespace SqlAnalyser.Core
 
             foreach (var setItem in setItems)
             {
+                var valueExp = setItem.expr();
+
                 NameValueItem item = new NameValueItem();
 
                 item.Name = this.ParseColumnName(setItem.columnRef());
-                item.Value = new TokenInfo(setItem.expr());
+                item.Value = new TokenInfo(valueExp);
+
+                this.AddChildTableAndColumnNameToken(valueExp, item.Value);
 
                 statement.SetItems.Add(item);
             }
@@ -539,6 +548,21 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
+        public SelectStatement ParseViewSelectStatement(ViewSelectContext node)
+        {
+            SelectStatement statement = new SelectStatement();
+
+            foreach (var child in node.children)
+            {
+                if (child is QueryExpressionOrParensContext exp)
+                {
+                    statement = this.ParseQueryExpression(exp.queryExpression());
+                }
+            }
+
+            return statement;
+        }
+
         public SelectStatement ParseSelectStatement(SelectStatementContext node)
         {
             SelectStatement statement = new SelectStatement();
@@ -547,53 +571,62 @@ namespace SqlAnalyser.Core
             {
                 if (child is QueryExpressionContext exp)
                 {
-                    QueryExpressionBodyContext body = exp.queryExpressionBody();
+                    statement = this.ParseQueryExpression(exp);
+                }
+            }
 
-                    bool isUnion = false;
-                    UnionType unionType = UnionType.UNION;
+            return statement;
+        }
 
-                    foreach (var c in body.children)
+        public SelectStatement ParseQueryExpression(QueryExpressionContext node)
+        {
+            SelectStatement statement = null;
+
+            QueryExpressionBodyContext body = node.queryExpressionBody();
+
+            bool isUnion = false;
+            UnionType unionType = UnionType.UNION;
+
+            foreach (var c in body.children)
+            {
+                if (c is QueryPrimaryContext queryPrimary)
+                {
+                    if (!isUnion)
                     {
-                        if (c is QueryPrimaryContext queryPrimary)
-                        {
-                            if (!isUnion)
-                            {
-                                statement = this.ParseQuerySpecification(queryPrimary.querySpecification());
-                            }
-                            else
-                            {
-                                UnionStatement unionStatement = new UnionStatement();
-                                unionStatement.Type = unionType;
-                                unionStatement.SelectStatement = this.ParseQuerySpecification(queryPrimary.querySpecification());
+                        statement = this.ParseQuerySpecification(queryPrimary.querySpecification());
+                    }
+                    else
+                    {
+                        UnionStatement unionStatement = new UnionStatement();
+                        unionStatement.Type = unionType;
+                        unionStatement.SelectStatement = this.ParseQuerySpecification(queryPrimary.querySpecification());
 
-                                statement.UnionStatements.Add(unionStatement);
+                        statement.UnionStatements.Add(unionStatement);
 
-                                isUnion = false;
-                            }
-                        }
-                        else if (c is TerminalNodeImpl terminalNode)
-                        {
-                            if (terminalNode.Symbol.Type == MySqlParser.UNION_SYMBOL)
-                            {
-                                isUnion = true;
-                                statement.UnionStatements = new List<UnionStatement>();
-                            }
-                        }
-                        else if (c is UnionOptionContext unionOption)
-                        {
-                            switch (unionOption.GetText())
-                            {
-                                case nameof(TSqlParser.ALL):
-                                    unionType = UnionType.UNION_ALL;
-                                    break;
-                                case nameof(TSqlParser.INTERSECT):
-                                    unionType = UnionType.INTERSECT;
-                                    break;
-                                case nameof(TSqlParser.EXCEPT):
-                                    unionType = UnionType.EXCEPT;
-                                    break;
-                            }
-                        }
+                        isUnion = false;
+                    }
+                }
+                else if (c is TerminalNodeImpl terminalNode)
+                {
+                    if (terminalNode.Symbol.Type == MySqlParser.UNION_SYMBOL)
+                    {
+                        isUnion = true;
+                        statement.UnionStatements = new List<UnionStatement>();
+                    }
+                }
+                else if (c is UnionOptionContext unionOption)
+                {
+                    switch (unionOption.GetText())
+                    {
+                        case nameof(TSqlParser.ALL):
+                            unionType = UnionType.UNION_ALL;
+                            break;
+                        case nameof(TSqlParser.INTERSECT):
+                            unionType = UnionType.INTERSECT;
+                            break;
+                        case nameof(TSqlParser.EXCEPT):
+                            unionType = UnionType.EXCEPT;
+                            break;
                     }
                 }
             }
@@ -615,7 +648,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (var col in columns)
                 {
-                    statement.Columns.Add(this.ParseColumnName(col.expr()));
+                    statement.Columns.Add(this.ParseColumnName(col));
                 }
             }
 
@@ -628,7 +661,21 @@ namespace SqlAnalyser.Core
                 foreach (var fromTable in fromTables)
                 {
                     FromItem fromItem = new FromItem();
-                    fromItem.TableName = this.ParseTableName(fromTable.tableFactor().singleTable());
+
+                    var tableFactor = fromTable.tableFactor();
+
+                    if (tableFactor.tableReferenceListParens() == null)
+                    {
+                        fromItem.TableName = this.ParseTableName(tableFactor.singleTable());
+                    }
+                    else
+                    {
+                        var tableRefListParents = tableFactor.tableReferenceListParens();
+
+                        fromItem.TableName = new TableName(tableRefListParents);
+
+                        this.AddChildTableAndColumnNameToken(tableRefListParents, fromItem.TableName);
+                    }
 
                     if (statement.TableName == null)
                     {
@@ -639,10 +686,27 @@ namespace SqlAnalyser.Core
                 }
 
                 var condition = node.whereClause();
+                var groupBy = node.groupByClause();
+                var having = node.havingClause();
 
                 if (condition != null)
                 {
                     statement.Where = this.ParseCondition(condition.expr());
+                }
+
+                if (groupBy != null)
+                {
+                    statement.GroupBy = new List<TokenInfo>();
+
+                    foreach (var col in groupBy.orderList().orderExpression())
+                    {
+                        statement.GroupBy.Add(this.CreateToken(col, TokenType.GroupBy));
+                    }
+                }
+
+                if (having != null)
+                {
+                    statement.Having = this.ParseCondition(having.expr());
                 }
             }
 
@@ -677,11 +741,11 @@ namespace SqlAnalyser.Core
                     }
                     else if (child is ExprIsContext expr)
                     {
-                        statements.Last().Value = this.ParseToken(expr);
+                        statements.Last().Value = this.CreateToken(expr);
                     }
                     else if (child is SetExprOrDefaultContext setExpr)
                     {
-                        statements.Last().Value = this.ParseToken(setExpr);
+                        statements.Last().Value = this.CreateToken(setExpr);
                     }
                 }
             }
@@ -872,19 +936,19 @@ namespace SqlAnalyser.Core
 
             var innerStatements = this.ParseCompoundStatementList(node.compoundStatementList());
 
-            foreach(var innerStatement in innerStatements)
+            foreach (var innerStatement in innerStatements)
             {
                 bool useInnerStatement = true;
 
-                if(innerStatement is IfStatement ifStatement)
+                if (innerStatement is IfStatement ifStatement)
                 {
-                    foreach(var ifItem in ifStatement.Items)
+                    foreach (var ifItem in ifStatement.Items)
                     {
                         var leaveOrIterate = ifItem.Statements.FirstOrDefault(item => item is LeaveStatement || item is IterateStatement);
-                        
-                        if(leaveOrIterate != null)
+
+                        if (leaveOrIterate != null)
                         {
-                            if(ifItem.Condition?.Symbol?.ToUpper() != "DONE")
+                            if (ifItem.Condition?.Symbol?.ToUpper() != "DONE")
                             {
                                 statement.Condition = ifItem.Condition;
                             }
@@ -896,11 +960,11 @@ namespace SqlAnalyser.Core
                 }
 
 
-                if(useInnerStatement)
+                if (useInnerStatement)
                 {
                     statement.Statements.Add(innerStatement);
-                }               
-            }           
+                }
+            }
 
             return statement;
         }
@@ -1024,6 +1088,7 @@ namespace SqlAnalyser.Core
 
                     if (alias != null)
                     {
+                        tableName.HasAs = this.HasAsFlag(alias);
                         tableName.Alias = new TokenInfo(alias);
                     }
                 }
@@ -1042,7 +1107,23 @@ namespace SqlAnalyser.Core
 
             if (node != null)
             {
-                if (node is QualifiedIdentifierContext qualifiedIdentifier)
+                if (node is SelectItemContext si)
+                {
+                    var expr = si.expr();
+
+                    columnName = new ColumnName(expr);               
+
+                    var alias = si.selectAlias();
+
+                    if (alias != null)
+                    {
+                        columnName.HasAs = this.HasAsFlag(alias);
+                        columnName.Alias = new TokenInfo(alias.identifier());
+                    }
+
+                    this.AddChildColumnNameToken(si, columnName);
+                }
+                else if (node is QualifiedIdentifierContext qualifiedIdentifier)
                 {
                     columnName = new ColumnName(qualifiedIdentifier.identifier());
                 }
@@ -1050,14 +1131,45 @@ namespace SqlAnalyser.Core
                 {
                     columnName = new ColumnName(columnRef.fieldIdentifier());
                 }
+                else if (node is ExprIsContext expr)
+                {
+                    var detail = this.GetColumnDetailContext(expr);
+
+                    if (detail is NumLiteralContext nl)
+                    {
+                        columnName = new ColumnName(nl) { IsConst = true };
+                    }
+                }
 
                 if (!strict && columnName == null)
                 {
                     columnName = new ColumnName(node);
+
+                    this.AddChildColumnNameToken(node, columnName);
                 }
             }
 
             return columnName;
+        }
+
+        private ParserRuleContext GetColumnDetailContext(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                foreach (var child in node.children)
+                {
+                    if (child is NumLiteralContext nl)
+                    {
+                        return nl;
+                    }
+                    else
+                    {
+                        return this.GetColumnDetailContext(child as ParserRuleContext);
+                    }
+                }
+            }
+
+            return node;
         }
 
         private TokenInfo ParseCondition(ParserRuleContext node)
@@ -1066,12 +1178,21 @@ namespace SqlAnalyser.Core
             {
                 if (node is ExprContext || node is ExprIsContext)
                 {
-                    return this.ParseToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+
+                    bool isIfCondition = node.Parent != null && (node.Parent is IfBodyContext || node.Parent is LeaveStatementContext);
+
+                    if (!isIfCondition)
+                    {
+                        this.AddChildTableAndColumnNameToken(node, token);
+                    }
+
+                    return token;
                 }
             }
 
             return null;
-        }
+        }     
 
         public override bool IsFunction(IParseTree node)
         {
