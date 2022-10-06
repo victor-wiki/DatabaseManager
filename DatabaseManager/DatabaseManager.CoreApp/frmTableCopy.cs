@@ -35,6 +35,8 @@ namespace DatabaseManager
         private void InitControls()
         {
             this.txtName.Text = this.Table.Name + "_copy";
+
+            this.SetSchemaControlStates();
         }
 
         private async void btnExecute_Click(object sender, EventArgs e)
@@ -99,13 +101,12 @@ namespace DatabaseManager
                     this.dbConverter.Option.BulkCopy = true;
                     this.dbConverter.Option.UseTransaction = true;
                     this.dbConverter.Option.ConvertComputeColumnExpression = true;
-                    this.dbConverter.Option.IgnoreNotSelfForeignKey = true;
+                    this.dbConverter.Option.IgnoreNotSelfForeignKey = true;                   
 
-                    var targetDbSchemas = await target.DbInterpreter.GetDatabaseSchemasAsync();
-
-                    if (targetDbSchemas.Any(item => item.Schema == this.Table.Schema))
+                    if (this.cboSchema.Visible)
                     {
-                        this.dbConverter.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = this.Table.Schema, TargetSchema = this.Table.Schema });
+                        string targetSchema = string.IsNullOrEmpty(this.cboSchema.Text) ? target.DbInterpreter.DefaultSchema : this.cboSchema.Text;
+                        this.dbConverter.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = this.Table.Schema, TargetSchema = targetSchema });
                     }
 
                     this.dbConverter.Subscribe(this);
@@ -113,9 +114,7 @@ namespace DatabaseManager
                     if (this.DatabaseType == DatabaseType.MySql)
                     {
                         source.DbInterpreter.Option.InQueryItemLimitCount = 2000;
-                    }
-
-                    
+                    }                    
 
                     this.dbConverter.Option.SplitScriptsToExecute = true;
 
@@ -186,23 +185,57 @@ namespace DatabaseManager
         private void rbSameDatabase_CheckedChanged(object sender, EventArgs e)
         {
             this.SetControlState();
-        }
-
-        private void rbAnotherDatabase_CheckedChanged(object sender, EventArgs e)
-        {
-            this.SetControlState();
-        }
+        }       
 
         private void SetControlState()
         {
             this.ucConnection.Enabled = this.rbAnotherDatabase.Checked;
+            this.txtName.Text = this.rbSameDatabase.Checked ? $"{this.Table.Name}_copy" : this.Table.Name;        
 
-            this.txtName.Text = this.rbSameDatabase.Checked ? $"{this.Table.Name}_copy" : this.Table.Name;
+            this.SetSchemaControlStates();
         }
 
         private void ucConnection_OnSelectedChanged(object sender, ConnectionInfo connectionInfo)
         {
             this.targetDbConnectionInfo = connectionInfo;
+
+            this.SetSchemaControlStates();
+        }
+
+        private void SetSchemaControlStates()
+        {
+            this.cboSchema.Text = "";
+
+            var targetDbInterpreter = this.GetTargetDbInterpreter();
+
+            if(targetDbInterpreter!=null)
+            {
+                DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
+
+                this.lblSchema.Visible = this.cboSchema.Visible = targetDbType == DatabaseType.SqlServer || targetDbType == DatabaseType.Postgres;
+
+                this.ShowSchemas();
+            }           
+        }
+
+        private async void ShowSchemas()
+        {
+            this.cboSchema.Items.Clear();
+
+            if(this.cboSchema.Visible)
+            {
+                var targetDbSchemas = await this.GetTargetDbInterpreter().GetDatabaseSchemasAsync();
+
+                foreach (var schema in targetDbSchemas)
+                {
+                    this.cboSchema.Items.Add(schema.Name);
+
+                    if (this.Table.Schema == schema.Name)
+                    {
+                        this.cboSchema.Text = schema.Name;
+                    }
+                }
+            }                
         }
 
         private bool ValidateInputs()
@@ -253,6 +286,11 @@ namespace DatabaseManager
             DbInterpreter dbInterpreter = this.GetTargetDbInterpreter();
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { this.txtName.Text.Trim() } };
+
+            if(!string.IsNullOrEmpty(this.cboSchema.Text))
+            {
+                filter.Schema = this.cboSchema.Text;
+            }
 
             var tables = await dbInterpreter.GetTablesAsync(filter);
 

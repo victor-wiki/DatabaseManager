@@ -21,7 +21,7 @@ namespace DatabaseManager.Core
             this.dbInterpreter = dbInterpreter;
         }
 
-        public string GetTemplateContent(DatabaseObjectType databaseObjectType, ScriptAction scriptAction)           
+        public string GetTemplateContent(DatabaseObjectType databaseObjectType, ScriptAction scriptAction, DatabaseObject databaseObject)           
         {
             string scriptTypeName = databaseObjectType.ToString();
             string scriptTypeFolder = Path.Combine(TemplateFolder, scriptTypeName);
@@ -40,16 +40,25 @@ namespace DatabaseManager.Core
 
             string templateContent = File.ReadAllText(scriptTemplateFilePath);
 
-            templateContent = this.ReplaceTemplatePlaceHolders(templateContent, databaseObjectType, scriptAction);
+            templateContent = this.ReplaceTemplatePlaceHolders(templateContent, databaseObjectType, scriptAction, databaseObject);
 
             return templateContent;
         }
 
-        private string ReplaceTemplatePlaceHolders(string templateContent, DatabaseObjectType databaseObjectType, ScriptAction scriptAction)
+        private string ReplaceTemplatePlaceHolders(string templateContent, DatabaseObjectType databaseObjectType, ScriptAction scriptAction, DatabaseObject databaseObject)
         {
+            string nameTemplate = $"{databaseObjectType.ToString().ToUpper()}_NAME";
+
+            string name = this.dbInterpreter.DatabaseType == DatabaseType.SqlServer ? this.dbInterpreter.GetQuotedDbObjectNameWithSchema(databaseObject?.Schema, nameTemplate)
+                : this.dbInterpreter.GetQuotedString(nameTemplate);
+
+            string tableName = databaseObjectType == DatabaseObjectType.TableTrigger && databaseObject!=null ? this.dbInterpreter.GetQuotedDbObjectNameWithSchema(databaseObject)
+                            : this.dbInterpreter.GetQuotedString($"TABLE_NAME");
+
+
             templateContent = templateContent.Replace("$ACTION$", scriptAction.ToString())
-                .Replace("$NAME$", this.dbInterpreter.GetQuotedString($"{databaseObjectType.ToString().ToUpper()}_NAME"))
-                .Replace("$TABLE_NAME$", this.dbInterpreter.GetQuotedString($"TABLE_NAME"));           
+                .Replace("$NAME$", name)
+                .Replace("$TABLE_NAME$", tableName);           
 
             return templateContent;
         }

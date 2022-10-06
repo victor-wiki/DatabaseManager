@@ -30,7 +30,7 @@ namespace DatabaseManager.Controls
 
         public UC_DbObjectsComplexTree()
         {
-            InitializeComponent();            
+            InitializeComponent();
 
             FormEventCenter.OnRefreshNavigatorFolder += this.RefreshFolderNode;
 
@@ -44,7 +44,7 @@ namespace DatabaseManager.Controls
             this.connectionInfo = connectionInfo;
 
             this.tvDbObjects.Nodes.Clear();
-         
+
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, simpleInterpreterOption);
 
             List<Database> databases = await dbInterpreter.GetDatabasesAsync();
@@ -127,7 +127,7 @@ namespace DatabaseManager.Controls
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
             this.tsmiCompare.Visible = isDatabase;
-           
+
             this.tsmiSelectScript.Visible = isTable || isView;
             this.tsmiInsertScript.Visible = isTable;
             this.tsmiUpdateScript.Visible = isTable;
@@ -193,7 +193,7 @@ namespace DatabaseManager.Controls
             SchemaInfo schemaInfo = databaseObjectType == DatabaseObjectType.None ? new SchemaInfo() :
                                     await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
 
-            this.ClearNodes(parentNode);           
+            this.ClearNodes(parentNode);
 
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Table, schemaInfo.Tables, createFolderNode, true);
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
@@ -202,7 +202,7 @@ namespace DatabaseManager.Controls
 
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
             {
-                string text = $"{userDefinedType.Name}{(string.IsNullOrEmpty(userDefinedType.Type)? "": "({userDefinedType.Type})")}";
+                string text = $"{userDefinedType.Name}{(string.IsNullOrEmpty(userDefinedType.Type) ? "" : "({userDefinedType.Type})")}";
 
                 string imageKeyName = nameof(userDefinedType);
 
@@ -268,7 +268,7 @@ namespace DatabaseManager.Controls
                 databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
             }
 
-            if(this.databaseType != DatabaseType.MySql)
+            if (this.databaseType != DatabaseType.MySql)
             {
                 databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Sequences), nameof(DbObjectTreeFolderType.Sequences), true));
             }
@@ -282,7 +282,7 @@ namespace DatabaseManager.Controls
 
             dbInterpreter.Subscribe(this);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, TableNames = new string[] { table.Name } });
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, Schema = table.Schema, TableNames = new string[] { table.Name } });
 
             this.ClearNodes(treeNode);
 
@@ -491,7 +491,7 @@ namespace DatabaseManager.Controls
 
         private void tsmiGenerateScripts_Click(object sender, EventArgs e)
         {
-            
+
         }
 
         private async void GenerateScripts(ScriptAction scriptAction)
@@ -807,7 +807,7 @@ namespace DatabaseManager.Controls
 
                     DbInterpreter dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(treeNode).Name);
 
-                    var items = text.Trim().Split('.').Select(item=>dbInterpreter.GetQuotedString(item));                   
+                    var items = text.Trim().Split('.').Select(item => dbInterpreter.GetQuotedString(item));
 
                     DoDragDrop(string.Join(".", items), DragDropEffects.Move);
                 }
@@ -867,6 +867,7 @@ namespace DatabaseManager.Controls
                 if (dbObject != null)
                 {
                     info.DatabaseObject = dbObject;
+                    info.Schema = dbObject.Schema;
                     info.Name = dbObject.Name;
                 }
             }
@@ -904,7 +905,15 @@ namespace DatabaseManager.Controls
 
             DatabaseObjectDisplayInfo displayInfo = this.GetDisplayInfo();
             displayInfo.IsNew = true;
-            displayInfo.Content = scriptTemplate.GetTemplateContent(databaseObjectType, scriptAction);
+
+            DatabaseObject dbObj = null;
+
+            if (databaseObjectType == DatabaseObjectType.TableTrigger)
+            {
+                dbObj = this.GetSelectedNode().Parent?.Tag as Table;
+            }
+
+            displayInfo.Content = scriptTemplate.GetTemplateContent(databaseObjectType, scriptAction, dbObj);
             displayInfo.ScriptAction = scriptAction;
 
             this.ShowContent(displayInfo);

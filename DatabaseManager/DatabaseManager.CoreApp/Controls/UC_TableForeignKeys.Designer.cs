@@ -115,7 +115,7 @@
             // 
             // colReferenceTable
             // 
-            this.colReferenceTable.DataPropertyName = "ReferencedTableName";
+            this.colReferenceTable.DataPropertyName = "Table.ReferencedTableName";
             this.colReferenceTable.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.colReferenceTable.HeaderText = "Reference Table";
             this.colReferenceTable.Name = "colReferenceTable";

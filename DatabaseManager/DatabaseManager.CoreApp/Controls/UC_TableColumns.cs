@@ -125,28 +125,7 @@ namespace DatabaseManager.Controls
                     columnDesingerInfo.OldName = columnDesingerInfo.Name;
                 }
             }
-        }
-
-        public bool ValidateDataGrid()
-        {
-            bool isInvalid = false;
-
-            for (int i = 0; i < this.dgvColumns.RowCount; i++)
-            {
-                DataGridViewRow row = this.dgvColumns.Rows[i];
-
-                string dataType = DataGridViewHelper.GetCellStringValue(row, this.colDataType.Name);
-
-                if(!string.IsNullOrEmpty(dataType) && !this.dataTypeSpecifications.Any(item=>item.Name == dataType.ToLower()))
-                {
-                    isInvalid = true;
-                    MessageBox.Show($"data type '{dataType}' is invalid.");
-                    break;
-                }
-            }
-
-            return !isInvalid;
-        }
+        }        
 
         private void LoadDataTypes()
         {

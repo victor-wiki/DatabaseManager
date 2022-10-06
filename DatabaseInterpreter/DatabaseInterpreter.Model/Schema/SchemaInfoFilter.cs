@@ -6,13 +6,14 @@ namespace DatabaseInterpreter.Model
     {
         public bool Strict { get; set; }
         public DatabaseObjectType DatabaseObjectType = DatabaseObjectType.None;
+        public string Schema { get; set; }
         public string[] UserDefinedTypeNames { get; set; }
         public string[] SequenceNames { get; set; }
         public string[] FunctionNames { get; set; }
         public string[] TableNames { get; set; }
         public string[] ViewNames { get; set; }
         public string[] ProcedureNames { get; set; }
-        public string[] TableTriggerNames { get; set; }
+        public string[] TableTriggerNames { get; set; }       
     }
 
     [Flags]

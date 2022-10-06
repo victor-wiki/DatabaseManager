@@ -41,6 +41,8 @@
             this.ucConnection = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.chkGenerateIdentity = new System.Windows.Forms.CheckBox();
             this.chkOnlyCopyTable = new System.Windows.Forms.CheckBox();
+            this.lblSchema = new System.Windows.Forms.Label();
+            this.cboSchema = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // rbSameDatabase
@@ -67,7 +69,6 @@
             this.rbAnotherDatabase.TabIndex = 2;
             this.rbAnotherDatabase.Text = "another database";
             this.rbAnotherDatabase.UseVisualStyleBackColor = true;
-            this.rbAnotherDatabase.CheckedChanged += new System.EventHandler(this.rbAnotherDatabase_CheckedChanged);
             // 
             // chkScriptData
             // 
@@ -108,7 +109,7 @@
             // btnClose
             // 
             this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnClose.Location = new System.Drawing.Point(336, 230);
+            this.btnClose.Location = new System.Drawing.Point(371, 230);
             this.btnClose.Margin = new System.Windows.Forms.Padding(4);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(88, 33);
@@ -120,7 +121,7 @@
             // btnExecute
             // 
             this.btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnExecute.Location = new System.Drawing.Point(223, 230);
+            this.btnExecute.Location = new System.Drawing.Point(258, 230);
             this.btnExecute.Margin = new System.Windows.Forms.Padding(4);
             this.btnExecute.Name = "btnExecute";
             this.btnExecute.Size = new System.Drawing.Size(88, 33);
@@ -157,7 +158,7 @@
             this.ucConnection.Location = new System.Drawing.Point(12, 42);
             this.ucConnection.Margin = new System.Windows.Forms.Padding(0);
             this.ucConnection.Name = "ucConnection";
-            this.ucConnection.Size = new System.Drawing.Size(596, 33);
+            this.ucConnection.Size = new System.Drawing.Size(666, 33);
             this.ucConnection.TabIndex = 0;
             this.ucConnection.Title = "Target:";
             this.ucConnection.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.ucConnection_OnSelectedChanged);
@@ -188,11 +189,33 @@
             this.chkOnlyCopyTable.Text = "Only copy table(no primary/foreign key and so on)";
             this.chkOnlyCopyTable.UseVisualStyleBackColor = true;
             // 
+            // lblSchema
+            // 
+            this.lblSchema.AutoSize = true;
+            this.lblSchema.Location = new System.Drawing.Point(449, 92);
+            this.lblSchema.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblSchema.Name = "lblSchema";
+            this.lblSchema.Size = new System.Drawing.Size(56, 17);
+            this.lblSchema.TabIndex = 29;
+            this.lblSchema.Text = "Schema:";
+            // 
+            // cboSchema
+            // 
+            this.cboSchema.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboSchema.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cboSchema.FormattingEnabled = true;
+            this.cboSchema.Location = new System.Drawing.Point(517, 87);
+            this.cboSchema.Name = "cboSchema";
+            this.cboSchema.Size = new System.Drawing.Size(121, 25);
+            this.cboSchema.TabIndex = 30;
+            // 
             // frmTableCopy
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(616, 280);
+            this.ClientSize = new System.Drawing.Size(686, 280);
+            this.Controls.Add(this.cboSchema);
+            this.Controls.Add(this.lblSchema);
             this.Controls.Add(this.chkOnlyCopyTable);
             this.Controls.Add(this.chkGenerateIdentity);
             this.Controls.Add(this.txtName);
@@ -231,5 +254,7 @@
         private System.Windows.Forms.TextBox txtName;
         private System.Windows.Forms.CheckBox chkGenerateIdentity;
         private System.Windows.Forms.CheckBox chkOnlyCopyTable;
+        private System.Windows.Forms.Label lblSchema;
+        private System.Windows.Forms.ComboBox cboSchema;
     }
 }

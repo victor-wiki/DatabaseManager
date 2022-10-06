@@ -243,7 +243,7 @@ namespace DatabaseManager.Core
             {
                 if(difference.DatabaseObjectType == DatabaseObjectType.TableColumn)
                 {
-                    SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { source.TableName } };
+                    SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = source.Schema, TableNames = new string[] { source.TableName } };
                     List<TableDefaultValueConstraint> defaultValueConstraints = await this.tableManager.GetTableDefaultConstraints(filter);
 
                     Table table = new Table() { Schema = targetTable.Schema, Name = target.TableName };

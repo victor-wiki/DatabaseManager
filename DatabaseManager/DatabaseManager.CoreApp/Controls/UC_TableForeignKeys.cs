@@ -14,13 +14,13 @@ using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {
-    public delegate void ColumnMappingSelectHandler(string referenceTableName, List<ForeignKeyColumn> mappings);
+    public delegate void ColumnMappingSelectHandler(string referenceTableShema, string referenceTableName, List<ForeignKeyColumn> mappings);
 
     public partial class UC_TableForeignKeys : UserControl
     {
         private bool inited = false;
         private bool loadedData = false;
-
+        private List<TableDisplayInfo> tableDisplayInfos = new List<TableDisplayInfo>();
         public bool Inited => this.inited;
         public bool LoadedData => this.loadedData;
         public Table Table { get; set; }
@@ -44,14 +44,13 @@ namespace DatabaseManager.Controls
         public void InitControls(IEnumerable<Table> tables)
         {
             List<Table> sortedTables = new List<Table>();
-            List<TableDisplayInfo> tableDisplayInfos = new List<TableDisplayInfo>();
 
-            foreach(var table in tables.Where(item=>item.Schema == this.DefaultSchema).OrderBy(item=>item.Name))
+            foreach (var table in tables.Where(item => item.Schema == this.DefaultSchema).OrderBy(item => item.Name))
             {
                 sortedTables.Add(table);
             }
 
-            foreach (var table in tables.Where(item => item.Schema != this.DefaultSchema).OrderBy(item => item.Schema).ThenBy(item=>item.Name))
+            foreach (var table in tables.Where(item => item.Schema != this.DefaultSchema).OrderBy(item => item.Schema).ThenBy(item => item.Name))
             {
                 sortedTables.Add(table);
             }
@@ -60,16 +59,15 @@ namespace DatabaseManager.Controls
             {
                 TableDisplayInfo tableDisplayInfo = new TableDisplayInfo();
 
-                tableDisplayInfo.Schema = table.Schema;
-                tableDisplayInfo.Name = table.Name;
-                tableDisplayInfo.DisplayName = (table.Schema == this.DefaultSchema)? table.Name: $"{table.Name}({table.Schema})";
+                tableDisplayInfo.Table = table;
+                tableDisplayInfo.DisplayName = this.GetReferenceTableDisplayName(table);
 
                 tableDisplayInfos.Add(tableDisplayInfo);
             }
 
             this.colReferenceTable.DataSource = tableDisplayInfos;
-            this.colReferenceTable.ValueMember = nameof(TableDisplayInfo.Name);
-            this.colReferenceTable.DisplayMember = nameof(TableDisplayInfo.DisplayName);       
+            this.colReferenceTable.ValueMember = nameof(TableDisplayInfo.Table);
+            this.colReferenceTable.DisplayMember = nameof(TableDisplayInfo.DisplayName);
 
             if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.MySql)
             {
@@ -77,6 +75,11 @@ namespace DatabaseManager.Controls
             }
 
             this.inited = true;
+        }
+
+        private string GetReferenceTableDisplayName(Table table)
+        {
+            return (table.Schema == this.DefaultSchema) ? table.Name : $"{table.Name}({table.Schema})";
         }
 
         public void LoadForeignKeys(IEnumerable<TableForeignKeyDesignerInfo> foreignKeyDesignerInfos)
@@ -90,7 +93,16 @@ namespace DatabaseManager.Controls
                 DataGridViewRow row = this.dgvForeignKeys.Rows[rowIndex];
 
                 row.Cells[this.colKeyName.Name].Value = key.Name;
-                row.Cells[this.colReferenceTable.Name].Value = key.ReferencedTableName;
+
+                Table table = new Table() { Schema = key.ReferencedSchema, Name = key.ReferencedTableName };
+
+                string referenceTableName = this.GetReferenceTableDisplayName(table);
+
+                var tableDisplayInfo = this.tableDisplayInfos.FirstOrDefault(item => item.DisplayName == referenceTableName);
+  
+                row.Cells[this.colReferenceTable.Name].Value = referenceTableName;
+                row.Cells[this.colReferenceTable.Name].Tag = tableDisplayInfo.Table;
+
                 row.Cells[this.colColumns.Name].Value = this.GetColumnMappingsDisplayText(key.Columns);
                 row.Cells[this.colUpdateCascade.Name].Value = key.UpdateCascade;
                 row.Cells[this.colDeleteCascade.Name].Value = key.DeleteCascade;
@@ -119,10 +131,13 @@ namespace DatabaseManager.Controls
                 {
                     TableForeignKeyDesignerInfo tag = row.Tag as TableForeignKeyDesignerInfo;
 
+                    Table referenceTable = row.Cells[this.colReferenceTable.Name].Tag as Table;
+
                     key.OldName = tag?.OldName;
                     key.Name = keyName;
                     key.Columns = tag?.Columns;
-                    key.ReferencedTableName = DataGridViewHelper.GetCellStringValue(row, this.colReferenceTable.Name);
+                    key.ReferencedSchema = referenceTable.Schema;
+                    key.ReferencedTableName = referenceTable.Name;
                     key.UpdateCascade = DataGridViewHelper.GetCellBoolValue(row, this.colUpdateCascade.Name);
                     key.DeleteCascade = DataGridViewHelper.GetCellBoolValue(row, this.colDeleteCascade.Name);
                     key.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
@@ -190,13 +205,16 @@ namespace DatabaseManager.Controls
                 DataGridViewRow row = this.dgvForeignKeys.Rows[e.RowIndex];
 
                 string keyName = DataGridViewHelper.GetCellStringValue(row, this.colKeyName.Name);
+
+                Table table = row.Cells[this.colReferenceTable.Name].Tag as Table;
+
                 string referenceTableName = DataGridViewHelper.GetCellStringValue(row, this.colReferenceTable.Name);
 
                 if (!string.IsNullOrEmpty(keyName) && !string.IsNullOrEmpty(referenceTableName))
                 {
                     if (this.OnColumnMappingSelect != null)
                     {
-                        this.OnColumnMappingSelect(referenceTableName, (row.Tag as TableForeignKeyDesignerInfo)?.Columns);
+                        this.OnColumnMappingSelect(table.Schema, table.Name, (row.Tag as TableForeignKeyDesignerInfo)?.Columns);
                     }
                 }
             }
@@ -255,13 +273,19 @@ namespace DatabaseManager.Controls
 
             if (e.ColumnIndex == this.colReferenceTable.Index)
             {
-                string referencedTableName = DataGridViewHelper.GetCellStringValue(row, this.colReferenceTable.Name);
+                Table referenceTable = row.Cells[this.colReferenceTable.Name].Value as Table ;
+
                 string keyName = DataGridViewHelper.GetCellStringValue(row, this.colKeyName.Name);
 
-                if (!string.IsNullOrEmpty(referencedTableName) && string.IsNullOrEmpty(keyName))
+                if (referenceTable != null)
                 {
-                    row.Cells[this.colKeyName.Name].Value = IndexManager.GetForeignKeyDefaultName(this.Table.Name, referencedTableName);
-                }
+                    if(string.IsNullOrEmpty(keyName))
+                    {
+                        row.Cells[this.colKeyName.Name].Value = IndexManager.GetForeignKeyDefaultName(this.Table.Name, referenceTable.Name);
+                    }                    
+
+                    row.Cells[this.colReferenceTable.Name].Tag = referenceTable;
+                }               
             }
         }
 
@@ -299,11 +323,12 @@ namespace DatabaseManager.Controls
             {
                 this.OnGenerateChangeScripts();
             }
-        }
+        }       
     }
 
-    public class TableDisplayInfo:Table
+    public class TableDisplayInfo
     {
         public string DisplayName { get; set; }
+        public Table Table { get; set; }
     }
 }

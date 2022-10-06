@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
@@ -27,7 +28,7 @@ namespace DatabaseInterpreter.Core
         public override DatabaseType DatabaseType => DatabaseType.SqlServer;
         public override string DefaultDataType => "varchar";
         public override string DefaultSchema => "dbo";
-        public override IndexType IndexType => IndexType.Normal | IndexType.Unique | IndexType.ColumnStore | IndexType.Primary;
+        public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.ColumnStore;
         public override bool SupportBulkCopy { get { return true; } }
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
@@ -102,19 +103,18 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
         {
-            string sql = @"SELECT schema_name(T.schema_id) AS [Schema],T.name as [Name], T.name as [AttrName], ST.name AS [Type], T.max_length AS [MaxLength], T.precision AS [Precision],T.scale AS [Scale],T.is_nullable AS IsNullable
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(@"SELECT schema_name(T.schema_id) AS [Schema],T.name as [Name], T.name as [AttrName], ST.name AS [Type], T.max_length AS [MaxLength], T.precision AS [Precision],T.scale AS [Scale],T.is_nullable AS IsNullable
                             FROM sys.types T JOIN sys.systypes ST ON T.system_type_id=ST.xusertype
-                            WHERE is_user_defined=1";
+                            WHERE is_user_defined=1");
 
-            if (filter != null && filter.UserDefinedTypeNames != null && filter.UserDefinedTypeNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.UserDefinedTypeNames);
-                sql += $" AND T.name in ({strNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(T.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "T.name"));           
 
-            sql += " ORDER BY T.name";
+            sb.Append("ORDER BY T.name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -129,21 +129,20 @@ namespace DatabaseInterpreter.Core
         }
         private string GetSqlForSequences(SchemaInfoFilter filter = null)
         {
-            string sql = @"select schema_name(s.schema_id) as [Schema],s.name as [Name],t.name as [DataType],
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(@"select schema_name(s.schema_id) as [Schema],s.name as [Name],t.name as [DataType],
                             start_value as [StartValue],increment as [Increment],minimum_value as [MinValue],maximum_value as [MaxValue],
                             is_cycling as [Cycled],is_cached as [UseCache],cache_size as [CacheSize]
                             from sys.sequences s
-                            join sys.types t on s.system_type_id = t.system_type_id";
+                            join sys.types t on s.system_type_id = t.system_type_id");
 
-            if (filter != null && filter.SequenceNames != null && filter.SequenceNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.SequenceNames);
-                sql += $" AND s.name in ({strNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(s.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.name"));          
 
-            sql += " ORDER BY s.name";
+            sb.Append("ORDER BY s.name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -162,22 +161,20 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForFunctions(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            var sb = this.CreateSqlBuilder();
 
-            string sql = $@"SELECT o.name AS [Name], schema_name(o.schema_id) AS [Schema], 
+            sb.Append($@"SELECT o.name AS [Name], schema_name(o.schema_id) AS [Schema], 
                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(o.object_id)")} AS [Definition]
                            FROM sys.all_objects o 
                            WHERE o.type IN ('FN', 'IF', 'AF', 'FS', 'FT','TF')
-                           AND SCHEMA_NAME(schema_id)='dbo'";
+                           AND SCHEMA_NAME(schema_id) NOT IN('sys')");
 
-            if (filter != null && filter.FunctionNames != null && filter.FunctionNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.FunctionNames);
-                sql += $" AND o.name IN ({strNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(o.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "o.name"));            
 
-            sql += " ORDER BY o.name";
+            sb.Append("ORDER BY o.name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -195,35 +192,30 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTables(SchemaInfoFilter filter = null)
         {
-            string sql = "";
+            var sb = this.CreateSqlBuilder();
 
             if (this.IsObjectFectchSimpleMode())
             {
-                sql = $@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name],
+                sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name],
                          IDENT_SEED(schema_name(t.schema_id)+'.'+t.name) AS [IdentitySeed],IDENT_INCR(schema_name(t.schema_id)+'.'+t.name) AS [IdentityIncrement]
                          FROM sys.tables t
-                         WHERE 1=1";
+                         WHERE 1=1");
             }
             else
             {
-                sql = $@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name], ext2.value AS [Comment],
+                sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name], ext2.value AS [Comment],
                         IDENT_SEED(schema_name(t.schema_id)+'.'+t.name) AS [IdentitySeed],IDENT_INCR(schema_name(t.schema_id)+'.'+t.name) AS [IdentityIncrement]
                         FROM sys.tables t
                         LEFT JOIN sys.extended_properties ext ON t.object_id=ext.major_id AND ext.minor_id=0 AND ext.class=1 AND ext.name='microsoft_database_tools_support'
                         LEFT JOIN sys.extended_properties ext2 ON t.object_id=ext2.major_id and ext2.minor_id=0 AND ext2.class_desc='OBJECT_OR_COLUMN' AND ext2.name='MS_Description'
-                        WHERE t.is_ms_shipped=0 AND ext.class is null
-                       ";
+                        WHERE t.is_ms_shipped=0 AND ext.class is null");
             }
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND t.name in ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));         
+            sb.Append("ORDER BY t.name");
 
-            sql += " ORDER BY t.name";
-
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -242,11 +234,11 @@ namespace DatabaseInterpreter.Core
         {
             //Note: MaxLength consider char/nvarchar, ie. it's nvarchar(50), the max length is 100.
 
-            string sql = "";
+            var sb = this.CreateSqlBuilder();
 
             if (this.IsObjectFectchSimpleMode())
             {
-                sql = @"SELECT schema_name(t.schema_id) AS [Schema], 
+                sb.Append(@"SELECT schema_name(t.schema_id) AS [Schema], 
                             t.name AS [TableName],
                             c.name AS [Name], 
                             st.name AS [DataType],
@@ -258,11 +250,11 @@ namespace DatabaseInterpreter.Core
                             c.is_identity AS [IsIdentity]                       
                         FROM sys.columns c 
                         JOIN sys.systypes st ON c.user_type_id = st.xusertype
-                        JOIN sys.tables t ON c.object_id=t.object_id";
+                        JOIN sys.tables t ON c.object_id=t.object_id");
             }
             else
             {
-                sql = @"SELECT schema_name(t.schema_id) AS [Schema], 
+                sb.Append(@"SELECT schema_name(t.schema_id) AS [Schema], 
                             t.name AS [TableName],
                             c.name AS [Name], 
                             st.name AS [DataType],
@@ -283,16 +275,14 @@ namespace DatabaseInterpreter.Core
                         LEFT JOIN sys.syscomments sco ON c.default_object_id=sco.id
                         LEFT JOIN sys.extended_properties ext on c.column_id=ext.minor_id AND c.object_id=ext.major_id AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'
 						LEFT JOIN sys.types sty on c.user_type_id = sty.user_type_id
-                        LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id";
+                        LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id");
             }
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" WHERE t.name IN ({strTableNames})";
-            }
+            sb.Append("WHERE 1=1");
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -315,7 +305,9 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(i.name, 'PK')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
 
-            string sql = $@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [TableName],i.name AS [Name], 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [TableName],i.name AS [Name], 
                            c.name AS [ColumnName], ic.key_ordinal AS [Order],ic.is_descending_key AS [IsDesc],
                            CASE i.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]{commentColumn}
                          FROM sys.index_columns ic
@@ -323,15 +315,12 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
                          JOIN sys.tables t ON c.object_id=t.object_id
                          {commentJoin}
-                         WHERE i.is_primary_key=1";
+                         WHERE i.is_primary_key=1");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND t.name IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -353,7 +342,9 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(fk.name, 'F')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
 
-            string sql = $@"SELECT schema_name(t.schema_id) AS [Schema],object_name(fk.parent_object_id) AS TableName,fk.name AS [Name],c.name AS [ColumnName],
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema],object_name(fk.parent_object_id) AS [TableName],fk.name AS [Name],c.name AS [ColumnName],
                          schema_name(rt.schema_id) AS [ReferencedSchema], object_name(fck.referenced_object_id) AS [ReferencedTableName],rc.name AS [ReferencedColumnName],
                          fk.update_referential_action AS [UpdateCascade],fk.delete_referential_action AS [DeleteCascade]{commentColumn}
                          FROM sys.foreign_keys fk
@@ -363,15 +354,12 @@ namespace DatabaseInterpreter.Core
                          JOIN sys.tables t ON c.object_id=t.object_id
                          JOIN sys.tables rt ON rc.object_id=rt.object_id
                          {commentJoin}
-                         WHERE 1=1";
+                         WHERE 1=1");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND object_name(fk.parent_object_id) IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "object_name(fk.parent_object_id)"));           
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -395,10 +383,12 @@ namespace DatabaseInterpreter.Core
 
             if (!isSimpleMode && includePrimaryKey)
             {
-                commentJoin += Environment.NewLine + " LEFT JOIN sys.extended_properties ext2 on object_id(i.name, 'PK')=ext2.major_id  AND ext2.class_desc='OBJECT_OR_COLUMN' AND ext2.name='MS_Description'";
+                commentJoin += Environment.NewLine + "LEFT JOIN sys.extended_properties ext2 on object_id(i.name, 'PK')=ext2.major_id  AND ext2.class_desc='OBJECT_OR_COLUMN' AND ext2.name='MS_Description'";
             }
 
-            string sql = $@"SELECT schema_name(t.schema_id) AS [Schema],object_name(ic.object_id) AS TableName,i.name AS [Name], 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema],object_name(ic.object_id) AS TableName,i.name AS [Name], 
                           i.is_primary_key AS [IsPrimary], i.is_unique AS [IsUnique], c.name AS [ColumnName], ic.key_ordinal AS [Order],ic.is_descending_key AS [IsDesc],
                           CASE i.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]{commentColumn},
                           CASE WHEN i.is_primary_key=1 THEN 'Primary' WHEN i.is_unique=1 THEN 'Unique' WHEN i.type=6 THEN 'ColumnStore' ELSE 'Normal' END AS [Type]
@@ -407,15 +397,12 @@ namespace DatabaseInterpreter.Core
                         JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
                         JOIN sys.tables t ON c.object_id=t.object_id
                         {commentJoin}
-                        WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0)) ";
+                        WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0))");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND t.name IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -435,29 +422,28 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT t.name AS [Name], OBJECT_SCHEMA_NAME(t.object_id) AS [Schema],object_name(t.parent_id) AS [TableName], 
-                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(t.object_id)")} AS [Definition]
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT t.name AS [Name], object_schema_name(t.object_id) AS [Schema],object_name(t.parent_id) AS [TableName], 
+                            {(isSimpleMode ? "''" : "object_definition(t.object_id)")} AS [Definition]
                             FROM sys.triggers t
-                            WHERE t.parent_id >0";
+                            WHERE t.parent_id >0");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "object_schema_name(t.object_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "object_name(t.parent_id)"));
 
             if (filter != null)
             {
-                if (filter.TableNames != null && filter.TableNames.Any())
-                {
-                    string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                    sql += $" AND object_name(t.parent_id) IN ({strNames})";
-                }
-
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
                     string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
-                    sql += $" AND t.name IN ({strNames})";
+                    sb.Append($"AND t.name IN ({strNames})");
                 }
             }
 
-            sql += " ORDER BY t.name";
+            sb.Append("ORDER BY t.name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -478,21 +464,20 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(chk.name, 'C')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
 
-            string sql = $@"select schema_name(t.schema_id) as [Schema], t.name as [TableName], col.name as [ColumnName], chk.name as [Name], 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"select schema_name(t.schema_id) as [Schema], t.name as [TableName], col.name as [ColumnName], chk.name as [Name], 
                          chk.definition as [Definition] {commentColumn}
                          from sys.check_constraints chk
                          inner join sys.columns col on chk.parent_object_id = col.object_id and col.column_id = chk.parent_column_id
                          inner join sys.tables t on chk.parent_object_id = t.object_id
                          {commentJoin}
-                         WHERE 1=1";
+                         WHERE 1=1");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND t.name IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));            
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -512,19 +497,18 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT v.name AS [Name], schema_name(v.schema_id) AS [Schema], {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT v.name AS [Name], schema_name(v.schema_id) AS [Schema], {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
                             FROM sys.views v
-                            WHERE 1=1";
+                            WHERE 1=1");
 
-            if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
-                sql += $" AND v.name IN ({strNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(v.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.name"));           
 
-            sql += " ORDER BY v.name";
+            sb.Append("ORDER BY v.name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion       
 
@@ -544,20 +528,19 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT name AS [Name], SCHEMA_NAME(schema_id) AS [Schema], 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT name AS [Name], SCHEMA_NAME(schema_id) AS [Schema], 
                             {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
                             FROM sys.procedures
-                            WHERE name not like 'sp[_]%'";
+                            WHERE name not like 'sp[_]%'");
 
-            if (filter != null && filter.ProcedureNames != null && filter.ProcedureNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.ProcedureNames);
-                sql += $" AND name IN ({strNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ProcedureNames, "name"));           
 
-            sql += " ORDER BY name";
+            sb.Append("ORDER BY name");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -574,18 +557,17 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableDefaultValueConstraints(SchemaInfoFilter filter = null)
         {
-            string sql = $@"select schema_name(t.schema_id) as [Schema], t.name as [TableName], col.name as [ColumnName], c.name as [Name]
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"select schema_name(t.schema_id) as [Schema], t.name as [TableName], col.name as [ColumnName], c.name as [Name]
                         from sys.default_constraints c
                         inner join sys.columns col on c.parent_object_id = col.object_id and col.column_id = c.parent_column_id
-                        inner join sys.tables t on c.parent_object_id = t.object_id";
+                        inner join sys.tables t on c.parent_object_id = t.object_id");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND t.name IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));            
 
-            return sql;
+            return sb.Content;
         }
         #endregion
         #endregion

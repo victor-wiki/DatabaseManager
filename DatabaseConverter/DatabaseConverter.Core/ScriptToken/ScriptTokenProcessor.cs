@@ -158,8 +158,28 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            this.Script.Schema = this.TargetDbInterpreter.GetQuotedString(this.DbObject.Schema);
-            this.Script.Name.Symbol = this.TargetDbInterpreter.GetQuotedString(this.DbObject.Name);
+            this.Script.Schema = this.GetQuotedString(this.DbObject.Schema);
+            this.Script.Name.Symbol = this.GetQuotedString(this.DbObject.Name);
+
+            #region Handle Trigger
+            if (this.Script is TriggerScript ts)
+            {
+                this.RestoreValue(ts.TableName);
+                ts.TableName.Symbol = this.GetQuotedString(ts.TableName.Symbol);
+
+                if (ts.OtherTriggerName != null)
+                {
+                    this.RestoreValue(ts.OtherTriggerName);
+                    ts.OtherTriggerName.Symbol = this.GetQuotedString(ts.OtherTriggerName?.Symbol);
+                }
+
+                if (ts.FunctionName != null)
+                {
+                    this.RestoreValue(ts.FunctionName);
+                    ts.FunctionName.Symbol = this.GetQuotedString(ts.FunctionName?.Symbol);
+                }
+            } 
+            #endregion
         }
 
         private void HandleQuotationChar(Statement statement, TokenInfo token, IEnumerable<TokenInfo> tokens)

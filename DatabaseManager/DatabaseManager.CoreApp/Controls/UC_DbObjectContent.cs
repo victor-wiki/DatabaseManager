@@ -73,7 +73,9 @@ namespace DatabaseManager.Controls
 
                 string filePath = File.Exists(info.FilePath) ? (info.FilePath + "  -  ") : "";
 
-                page.ToolTipText = $@"{filePath}{info.DatabaseType}{database}";
+                string title = string.IsNullOrEmpty(filePath) ? $" - {page.Text}" : "";
+
+                page.ToolTipText = $@"{filePath}{info.DatabaseType}{database}{title}";
             }
         }
 
@@ -446,7 +448,7 @@ namespace DatabaseManager.Controls
                     displayInfo.IsNew = false;
                     displayInfo.Name = table.Name;
 
-                    tabPage.Text = this.GetFormatTabHeaderText(displayInfo.Name);
+                    tabPage.Text = this.GetFormatTabHeaderText(this.GetInfoName(displayInfo));
 
                     this.SetTabPageTooltip(tabPage);
                 }
@@ -501,6 +503,15 @@ namespace DatabaseManager.Controls
 
                     info.Name = name;
                 }
+            }
+            else
+            {
+                if (info.DatabaseType == DatabaseType.SqlServer || info.DatabaseType == DatabaseType.Postgres)
+                {
+                    var dbObject = info.DatabaseObject;
+
+                    name = $"{dbObject.Schema}.{dbObject.Name}";
+                }               
             }
 
             return name;

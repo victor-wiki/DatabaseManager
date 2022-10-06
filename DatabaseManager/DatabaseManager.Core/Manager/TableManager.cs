@@ -93,7 +93,7 @@ namespace DatabaseManager.Core
 
                 table = schemaInfo.Tables.First();
 
-                scriptsData.Table = table;               
+                scriptsData.Table = table;
 
                 List<Script> scripts = new List<Script>();
 
@@ -110,6 +110,7 @@ namespace DatabaseManager.Core
                     TableDesignerInfo tableDesignerInfo = schemaDesignerInfo.TableDesignerInfo;
 
                     SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true };
+                    filter.Schema = tableDesignerInfo.Schema;
                     filter.TableNames = new string[] { tableDesignerInfo.OldName };
                     filter.DatabaseObjectType = DatabaseObjectType.Table
                         | DatabaseObjectType.TableColumn
@@ -238,6 +239,7 @@ namespace DatabaseManager.Core
                                 foreignKeyDesignerInfo.DeleteCascade == oldForeignKey.DeleteCascade)
                             {
                                 if (oldForeignKey != null && this.IsStringEquals(oldForeignKey.Comment, newForeignKey.Comment)
+                                    && oldForeignKey.ReferencedSchema == newForeignKey.ReferencedSchema && oldForeignKey.ReferencedTableName == newForeignKey.ReferencedTableName
                                     && SchemaInfoHelper.IsForeignKeyColumnsEquals(oldForeignKey.Columns, newForeignKey.Columns))
                                 {
                                     continue;
@@ -272,7 +274,7 @@ namespace DatabaseManager.Core
 
                             if (this.IsValueEqualsIgnoreCase(constraintDesignerInfo.OldName, constraintDesignerInfo.Name))
                             {
-                                if (oldConstraint != null && this.IsStringEquals(oldConstraint.Comment, newConstraint.Comment) 
+                                if (oldConstraint != null && this.IsStringEquals(oldConstraint.Comment, newConstraint.Comment)
                                     && this.IsStringEquals(oldConstraint.Definition, newConstraint.Definition))
                                 {
                                     continue;
@@ -305,13 +307,13 @@ namespace DatabaseManager.Core
             }
         }
 
-        public async Task<List<TableDefaultValueConstraint>> GetTableDefaultConstraints( SchemaInfoFilter filter)
+        public async Task<List<TableDefaultValueConstraint>> GetTableDefaultConstraints(SchemaInfoFilter filter)
         {
             List<TableDefaultValueConstraint> defaultValueConstraints = null;
 
             if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
             {
-                defaultValueConstraints = await(this.dbInterpreter as SqlServerInterpreter).GetTableDefautValueConstraintsAsync(filter);
+                defaultValueConstraints = await (this.dbInterpreter as SqlServerInterpreter).GetTableDefautValueConstraintsAsync(filter);
             }
 
             return defaultValueConstraints;
@@ -382,12 +384,15 @@ namespace DatabaseManager.Core
                     scripts.Add(this.scriptGenerator.DropPrimaryKey(oldPrimaryKey));
                 }
 
-                scripts.Add(this.scriptGenerator.AddPrimaryKey(newPrimaryKey));
-
-                if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
+                if (newPrimaryKey != null)
                 {
-                    this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
-                }
+                    scripts.Add(this.scriptGenerator.AddPrimaryKey(newPrimaryKey));
+
+                    if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
+                    {
+                        this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
+                    }
+                }                
             };
 
             if (primaryKeyChanged)
@@ -610,6 +615,7 @@ namespace DatabaseManager.Core
                     TableForeignKey foreignKey = new TableForeignKey() { Schema = keyDesignerInfo.Schema, TableName = keyDesignerInfo.TableName };
                     foreignKey.Name = keyDesignerInfo.Name;
 
+                    foreignKey.ReferencedSchema = keyDesignerInfo.ReferencedSchema;
                     foreignKey.ReferencedTableName = keyDesignerInfo.ReferencedTableName;
                     foreignKey.UpdateCascade = keyDesignerInfo.UpdateCascade;
                     foreignKey.DeleteCascade = keyDesignerInfo.DeleteCascade;

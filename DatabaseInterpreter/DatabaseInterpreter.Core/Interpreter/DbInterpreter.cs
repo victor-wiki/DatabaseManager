@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -668,7 +669,7 @@ namespace DatabaseInterpreter.Core
             {
                 long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
 
-                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { TableNames = new string[] { table.Name } });
+                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { Schema = table.Schema, TableNames = new string[] { table.Name } });
 
                 DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, total, pageSize, pageNumber, whereClause);
 
@@ -763,6 +764,9 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Common Method 
+        public abstract bool IsLowDbVersion(string serverVersion);
+        protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
+        protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
         public string GetQuotedDbObjectNameWithSchema(DatabaseObject obj)
         {
             if (this.DatabaseType == DatabaseType.SqlServer || this.DatabaseType == DatabaseType.Postgres)
@@ -859,13 +863,34 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.IsLowDbVersion(serverVersion);
+        }       
+
+        protected SqlBuilder CreateSqlBuilder()
+        {
+            return new SqlBuilder();
         }
 
-        public abstract bool IsLowDbVersion(string serverVersion);
-        protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
-        protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
+        protected string GetFilterSchemaCondition(SchemaInfoFilter filter , string columnName)
+        {
+            if(filter!=null && !string.IsNullOrEmpty(filter.Schema))
+            {
+                return $"AND {columnName}='{filter.Schema}'";
+            }
 
+            return string.Empty;
+        }
+      
+        protected string GetFilterNamesCondition(SchemaInfoFilter filter, string []names, string columnName)
+        {
+            if (filter != null && names != null && names.Any())
+            {
+                string strNames = StringHelper.GetSingleQuotedString(names);
 
+                return $"AND {columnName} IN ({strNames})";
+            }
+
+            return string.Empty;
+        }
         #endregion
 
         #region Parse Column & DataType 

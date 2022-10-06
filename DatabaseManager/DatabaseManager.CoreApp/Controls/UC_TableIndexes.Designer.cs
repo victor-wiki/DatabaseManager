@@ -33,16 +33,15 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.dgvIndexes = new System.Windows.Forms.DataGridView();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiDeleteIndex = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
-            this.lbIndexType = new System.Windows.Forms.ListBox();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.indexPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
             this.colType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colIndexName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colColumns = new System.Windows.Forms.DataGridViewButtonColumn();
             this.colComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiDeleteIndex = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGenerateChangeScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.indexPropertites = new DatabaseManager.Controls.FilteredPropertyGrid();
             ((System.ComponentModel.ISupportInitialize)(this.dgvIndexes)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -86,7 +85,6 @@
             this.dgvIndexes.RowHeadersWidth = 25;
             this.dgvIndexes.Size = new System.Drawing.Size(884, 396);
             this.dgvIndexes.TabIndex = 8;
-            this.dgvIndexes.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellClick);
             this.dgvIndexes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellContentClick);
             this.dgvIndexes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellValueChanged);
             this.dgvIndexes.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvIndexes_DataError);
@@ -95,77 +93,7 @@
             this.dgvIndexes.UserAddedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dgvIndexes_UserAddedRow);
             this.dgvIndexes.SizeChanged += new System.EventHandler(this.dgvIndexes_SizeChanged);
             this.dgvIndexes.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvIndexes_KeyDown);
-            this.dgvIndexes.MouseClick += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseClick);
             this.dgvIndexes.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvIndexes_MouseUp);
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiDeleteIndex,
-            this.tsmiGenerateChangeScripts});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
-            // 
-            // tsmiDeleteIndex
-            // 
-            this.tsmiDeleteIndex.Name = "tsmiDeleteIndex";
-            this.tsmiDeleteIndex.Size = new System.Drawing.Size(228, 22);
-            this.tsmiDeleteIndex.Text = "Delete Index";
-            this.tsmiDeleteIndex.Click += new System.EventHandler(this.tsmiDeleteIndex_Click);
-            // 
-            // tsmiGenerateChangeScripts
-            // 
-            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
-            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
-            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
-            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
-            // 
-            // lbIndexType
-            // 
-            this.lbIndexType.FormattingEnabled = true;
-            this.lbIndexType.ItemHeight = 17;
-            this.lbIndexType.Location = new System.Drawing.Point(4, 241);
-            this.lbIndexType.Margin = new System.Windows.Forms.Padding(4);
-            this.lbIndexType.Name = "lbIndexType";
-            this.lbIndexType.Size = new System.Drawing.Size(139, 123);
-            this.lbIndexType.TabIndex = 10;
-            this.lbIndexType.Visible = false;
-            this.lbIndexType.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lbIndexType_MouseClick);
-            this.lbIndexType.VisibleChanged += new System.EventHandler(this.lbIndexType_VisibleChanged);
-            // 
-            // splitContainer1
-            // 
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
-            this.splitContainer1.Name = "splitContainer1";
-            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
-            // 
-            // splitContainer1.Panel1
-            // 
-            this.splitContainer1.Panel1.Controls.Add(this.lbIndexType);
-            this.splitContainer1.Panel1.Controls.Add(this.dgvIndexes);
-            // 
-            // splitContainer1.Panel2
-            // 
-            this.splitContainer1.Panel2.Controls.Add(this.indexPropertites);
-            this.splitContainer1.Size = new System.Drawing.Size(884, 469);
-            this.splitContainer1.SplitterDistance = 396;
-            this.splitContainer1.SplitterWidth = 6;
-            this.splitContainer1.TabIndex = 11;
-            // 
-            // indexPropertites
-            // 
-            this.indexPropertites.BrowsableProperties = null;
-            this.indexPropertites.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.indexPropertites.HelpVisible = false;
-            this.indexPropertites.HiddenAttributes = null;
-            this.indexPropertites.HiddenProperties = null;
-            this.indexPropertites.Location = new System.Drawing.Point(0, 0);
-            this.indexPropertites.Margin = new System.Windows.Forms.Padding(4);
-            this.indexPropertites.Name = "indexPropertites";
-            this.indexPropertites.Size = new System.Drawing.Size(884, 67);
-            this.indexPropertites.TabIndex = 1;
             // 
             // colType
             // 
@@ -200,6 +128,61 @@
             this.colComment.Name = "colComment";
             this.colComment.Width = 150;
             // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiDeleteIndex,
+            this.tsmiGenerateChangeScripts});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 48);
+            // 
+            // tsmiDeleteIndex
+            // 
+            this.tsmiDeleteIndex.Name = "tsmiDeleteIndex";
+            this.tsmiDeleteIndex.Size = new System.Drawing.Size(228, 22);
+            this.tsmiDeleteIndex.Text = "Delete Index";
+            this.tsmiDeleteIndex.Click += new System.EventHandler(this.tsmiDeleteIndex_Click);
+            // 
+            // tsmiGenerateChangeScripts
+            // 
+            this.tsmiGenerateChangeScripts.Name = "tsmiGenerateChangeScripts";
+            this.tsmiGenerateChangeScripts.Size = new System.Drawing.Size(228, 22);
+            this.tsmiGenerateChangeScripts.Text = "Generate Changed Scripts";
+            this.tsmiGenerateChangeScripts.Click += new System.EventHandler(this.tsmiGenerateChangeScripts_Click);
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
+            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.dgvIndexes);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.indexPropertites);
+            this.splitContainer1.Size = new System.Drawing.Size(884, 469);
+            this.splitContainer1.SplitterDistance = 396;
+            this.splitContainer1.SplitterWidth = 6;
+            this.splitContainer1.TabIndex = 11;
+            // 
+            // indexPropertites
+            // 
+            this.indexPropertites.BrowsableProperties = null;
+            this.indexPropertites.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.indexPropertites.HelpVisible = false;
+            this.indexPropertites.HiddenAttributes = null;
+            this.indexPropertites.HiddenProperties = null;
+            this.indexPropertites.Location = new System.Drawing.Point(0, 0);
+            this.indexPropertites.Margin = new System.Windows.Forms.Padding(4);
+            this.indexPropertites.Name = "indexPropertites";
+            this.indexPropertites.Size = new System.Drawing.Size(884, 67);
+            this.indexPropertites.TabIndex = 1;
+            // 
             // UC_TableIndexes
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -223,7 +206,6 @@
         private System.Windows.Forms.DataGridView dgvIndexes;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiDeleteIndex;
-        private System.Windows.Forms.ListBox lbIndexType;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private FilteredPropertyGrid indexPropertites;
         private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangeScripts;

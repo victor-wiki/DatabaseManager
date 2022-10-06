@@ -39,7 +39,9 @@ namespace DatabaseManager.Core
             }
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
-            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });
+
+            filter.Schema = dbObject.Schema;
+            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });           
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 

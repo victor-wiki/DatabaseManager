@@ -63,7 +63,7 @@ namespace DatabaseManager.Controls
             {
                 this.cboSchema.Enabled = false;               
 
-                SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, TableNames = new string[] { this.displayInfo.Name } };
+                SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, Schema =this.displayInfo.Schema, TableNames = new string[] { this.displayInfo.Name } };
                 filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey;
 
                 SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
@@ -192,7 +192,8 @@ namespace DatabaseManager.Controls
 
                 foreignKeys.ForEach(item =>
                 {
-                    item.Schema = tableDesignerInfo.Schema; item.TableName = tableDesignerInfo.Name;
+                    item.Schema = tableDesignerInfo.Schema;
+                    item.TableName = tableDesignerInfo.Name;
 
                     if (item.ReferencedTableName == this.selfTableName)
                     {
@@ -222,12 +223,7 @@ namespace DatabaseManager.Controls
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
-            this.EndControlsEdit();
-
-            if(!this.ucColumns.ValidateDataGrid())
-            {
-                return new ContentSaveResult() { IsOK = false};
-            }
+            this.EndControlsEdit();           
 
             ContentSaveResult result = Task.Run(() => this.SaveTable()).Result;
 
@@ -347,6 +343,7 @@ namespace DatabaseManager.Controls
                     if (!this.ucIndexes.LoadedData)
                     {
                         SchemaInfoFilter filter = new SchemaInfoFilter();
+                        filter.Schema = this.displayInfo.Schema;
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
                         List<TableIndex> tableIndexes = await dbInterpreter.GetTableIndexesAsync(filter, true);
@@ -384,6 +381,8 @@ namespace DatabaseManager.Controls
                     if (!this.ucForeignKeys.LoadedData)
                     {
                         SchemaInfoFilter filter = new SchemaInfoFilter();
+
+                        filter.Schema = this.displayInfo.Schema;
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
                         dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Details;
@@ -408,6 +407,8 @@ namespace DatabaseManager.Controls
                     if (!this.ucConstraints.LoadedData)
                     {
                         SchemaInfoFilter filter = new SchemaInfoFilter();
+
+                        filter.Schema = this.displayInfo.Schema;
                         filter.TableNames = new string[] { this.displayInfo.Name };
 
                         List<TableConstraint> constraints = await dbInterpreter.GetTableConstraintsAsync(filter);
@@ -454,7 +455,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private async void ShowColumnMappingSelector(string referenceTableName, List<ForeignKeyColumn> mappings)
+        private async void ShowColumnMappingSelector(string referenceSchema, string referenceTableName, List<ForeignKeyColumn> mappings)
         {
             frmColumnMapping form = new frmColumnMapping() { ReferenceTableName = referenceTableName, TableName = this.txtTableName.Text.Trim(), Mappings = mappings };
 
@@ -465,7 +466,7 @@ namespace DatabaseManager.Controls
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
             dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
-            SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { referenceTableName } };
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = referenceSchema, TableNames = new string[] { referenceTableName } };
             List<TableColumn> referenceTableColumns = await dbInterpreter.GetTableColumnsAsync(filter);
 
             if (referenceTableName == this.selfTableName)

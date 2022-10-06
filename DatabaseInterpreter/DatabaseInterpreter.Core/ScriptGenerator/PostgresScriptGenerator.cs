@@ -261,14 +261,15 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
-            string type = "";
+            string type = index.Type;
 
             string sql = "";
-            if (index.Type == IndexType.Normal.ToString() || index.Type == IndexType.Unique.ToString())
+
+            if (type == IndexType.Normal.ToString() || type == IndexType.Unique.ToString())
             {
-                sql = $"CREATE {(index.Type == IndexType.Normal.ToString() ? "" : "UNIQUE")} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+                sql = $"CREATE {(type == IndexType.Normal.ToString() ? "" : "UNIQUE")} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
             }
-            else if (index.Type != IndexType.Normal.ToString())
+            else if (type != IndexType.Normal.ToString() && type!= IndexType.Unique.ToString())
             {
                 sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} USING {type.ToUpper()}({columnNames});";
             }

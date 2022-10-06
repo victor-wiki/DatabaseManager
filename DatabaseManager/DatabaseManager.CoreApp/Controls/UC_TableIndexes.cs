@@ -51,12 +51,7 @@ namespace DatabaseManager.Controls
             {
                 if (dbInterpreter.IndexType.HasFlag((IndexType)type) && (IndexType)type != IndexType.None)
                 {
-                    typeNames.Add(type.ToString());
-
-                    if (type.ToString() != IndexType.Primary.ToString())
-                    {
-                        this.lbIndexType.Items.Add(type.ToString());
-                    }
+                    typeNames.Add(type.ToString());                    
                 }
             }
 
@@ -83,19 +78,7 @@ namespace DatabaseManager.Controls
                 row.Cells[this.colIndexName.Name].Value = index.Name;
                 row.Cells[this.colType.Name].Value = index.Type;
                 row.Cells[this.colColumns.Name].Value = this.GetColumnsDisplayText(index.Columns);
-                row.Cells[this.colComment.Name].Value = index.Comment;
-
-                if (index.IsPrimary)
-                {
-                    if (this.DatabaseType == DatabaseType.Oracle)
-                    {
-                        DataGridViewHelper.SetRowCellsReadOnly(row, true);
-                    }
-                    else
-                    {
-                        row.Cells[this.colType.Name].ReadOnly = true;
-                    }
-                }
+                row.Cells[this.colComment.Name].Value = index.Comment;              
 
                 row.Tag = index;
             }
@@ -104,12 +87,7 @@ namespace DatabaseManager.Controls
 
             this.AutoSizeColumns();
             this.dgvIndexes.ClearSelection();
-        }
-
-        private string GetColumnsDisplayText(IEnumerable<IndexColumn> columns)
-        {
-            return string.Join(",", columns.Select(item => item.ColumnName));
-        }
+        }    
 
         public void LoadPrimaryKeys(IEnumerable<TableColumnDesingerInfo> columnDesingerInfos)
         {
@@ -145,7 +123,7 @@ namespace DatabaseManager.Controls
             }
             else if (primaryRowIndex < 0 && columnDesingerInfos.Count() > 0)
             {
-                this.dgvIndexes.Rows.Insert(0, 1);
+                int rowIndex = this.dgvIndexes.Rows.Add();
 
                 TableIndexDesignerInfo tableIndexDesignerInfo = new TableIndexDesignerInfo()
                 {
@@ -156,8 +134,7 @@ namespace DatabaseManager.Controls
 
                 tableIndexDesignerInfo.Columns.AddRange(columnDesingerInfos.Select(item => new IndexColumn() { ColumnName = item.Name }));
 
-                DataGridViewRow primaryRow = this.dgvIndexes.Rows[0];
-                primaryRow.Cells[this.colType.Name].ReadOnly = true;
+                DataGridViewRow primaryRow = this.dgvIndexes.Rows[rowIndex];               
                 primaryRow.Cells[this.colType.Name].Value = tableIndexDesignerInfo.Type;
                 primaryRow.Cells[this.colIndexName.Name].Value = tableIndexDesignerInfo.Name;
                 primaryRow.Cells[this.colColumns.Name].Value = this.GetColumnsDisplayText(tableIndexDesignerInfo.Columns);
@@ -168,6 +145,11 @@ namespace DatabaseManager.Controls
             }
 
             this.ShowIndexExtraPropertites();
+        }
+
+        private string GetColumnsDisplayText(IEnumerable<IndexColumn> columns)
+        {
+            return string.Join(",", columns.Select(item => item.ColumnName));
         }
 
         public List<TableIndexDesignerInfo> GetIndexes()
@@ -211,21 +193,11 @@ namespace DatabaseManager.Controls
 
         private void DeleteRow()
         {
-            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvIndexes);            
+            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvIndexes);
 
-            if (row != null)
+            if (row != null && !row.IsNewRow)
             {
-                if(!row.IsNewRow)
-                {
-                    this.dgvIndexes.Rows.RemoveAt(row.Index);
-                }
-                else
-                {
-                    foreach(DataGridViewCell cell in row.Cells)
-                    {
-                        cell.Value = null;
-                    }
-                }
+                this.dgvIndexes.Rows.RemoveAt(row.Index);
             }
         }
 
@@ -259,11 +231,7 @@ namespace DatabaseManager.Controls
                 {
                     bool isEmptyNewRow = row.IsNewRow && DataGridViewHelper.IsEmptyRow(row);
 
-                    string type = DataGridViewHelper.GetCellStringValue(row, this.colType.Name);
-
-                    bool? isPrimary = (row.Tag as TableIndexDesignerInfo)?.IsPrimary;
-
-                    this.tsmiDeleteIndex.Enabled = !isEmptyNewRow && !(isPrimary == true) && !(!string.IsNullOrEmpty(type) && type == IndexType.Primary.ToString());
+                    this.tsmiDeleteIndex.Enabled = !isEmptyNewRow;
                 }
                 else
                 {
@@ -304,128 +272,13 @@ namespace DatabaseManager.Controls
                 {
                     nameCell.Value = type == IndexType.Primary.ToString() ? IndexManager.GetPrimaryKeyDefaultName(this.Table) : IndexManager.GetIndexDefaultName(this.Table);
                 }
-            }
-        }
 
-        private Rectangle? GetCurrentCellRectangle()
-        {
-            DataGridViewCell currentCell = this.dgvIndexes.CurrentCell;
-
-            if (currentCell != null)
-            {
-                return this.dgvIndexes.GetCellDisplayRectangle(currentCell.ColumnIndex, currentCell.RowIndex, true);
-            }
-
-            return default(Rectangle?);
-        }
-
-        private void SetListBoxPostition()
-        {
-            Rectangle? rectangle = this.GetCurrentCellRectangle();
-
-            if (rectangle.HasValue)
-            {
-                this.lbIndexType.Left = rectangle.Value.X;
-                this.lbIndexType.Top = rectangle.Value.Y + rectangle.Value.Height;
-                this.lbIndexType.Width = rectangle.Value.Width;
-                this.lbIndexType.Visible = true;
-                this.lbIndexType.Tag = rectangle.Value;
-            }
-        }
-
-        private void dgvIndexes_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            this.dtTypeCellClick = DateTime.Now;
-
-            if (e.RowIndex < 0)
-            {
-                return;
-            }
-
-            if (this.lbIndexType.Visible)
-            {
-                Rectangle? rectangle = this.GetCurrentCellRectangle();
-
-                if (rectangle.HasValue && this.lbIndexType.Tag != null && (Rectangle)this.lbIndexType.Tag == rectangle.Value)
+                if(row.Tag !=null)
                 {
-                    this.lbIndexType.Visible = false;
-                    return;
-                }
+                    (row.Tag as TableIndexDesignerInfo).IsPrimary = type == IndexType.Primary.ToString();
+                }               
             }
-
-            this.lbIndexType.Visible = false;
-
-            DataGridViewRow row = this.dgvIndexes.Rows[e.RowIndex];
-            bool isPrimary = (row.Tag as TableIndexDesignerInfo)?.IsPrimary == true;
-
-            if (e.ColumnIndex == this.colType.Index)
-            {
-                DataGridViewCell cell = row.Cells[this.colType.Name];
-
-                if(isPrimary)
-                {
-                    return;
-                }
-
-                string value = DataGridViewHelper.GetCellStringValue(row, this.colType.Name);
-
-                if (value != IndexType.Primary.ToString())
-                {
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        this.lbIndexType.SelectedItem = value;
-                    }
-
-                    this.SetListBoxPostition();
-                }
-            }
-        }
-
-        private void dgvIndexes_MouseClick(object sender, MouseEventArgs e)
-        {
-            if ((DateTime.Now - this.dtTypeCellClick).TotalSeconds < 1)
-            {
-                return;
-            }
-
-            this.CheckListBoxVisible(e);
-        }
-
-        private void CheckListBoxVisible(MouseEventArgs e)
-        {
-            if (this.lbIndexType.Tag != null)
-            {
-                Rectangle rectangle = (Rectangle)this.lbIndexType.Tag;
-
-                if (!rectangle.Contains(e.Location) || (rectangle.Contains(e.Location) && this.lbIndexType.Visible))
-                {
-                    this.lbIndexType.Visible = false;
-                    this.lbIndexType.Tag = null;
-                    this.lbIndexType.SelectedItem = null;
-                }
-            }
-        }
-
-        private void lbIndexType_VisibleChanged(object sender, EventArgs e)
-        {
-            if (!this.lbIndexType.Visible)
-            {
-                this.lbIndexType.SelectedItem = null;
-                this.lbIndexType.Tag = null;
-            }
-        }
-
-        private void lbIndexType_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (this.dgvIndexes.CurrentCell != null && this.lbIndexType.SelectedItem != null)
-            {
-                string type = this.lbIndexType.SelectedItem.ToString();
-
-                this.dgvIndexes.CurrentCell.Value = type;              
-
-                this.lbIndexType.Visible = false;
-            }
-        }
+        }      
 
         private void dgvIndexes_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -437,12 +290,7 @@ namespace DatabaseManager.Controls
             if (e.ColumnIndex == this.colColumns.Index)
             {
                 DataGridViewRow row = this.dgvIndexes.Rows[e.RowIndex];
-                DataGridViewCell cell = row.Cells[this.colColumns.Name];
-                
-                if(cell.ReadOnly)
-                {
-                    return;
-                }
+                DataGridViewCell cell = row.Cells[this.colColumns.Name];          
 
                 string indexName = DataGridViewHelper.GetCellStringValue(row, this.colIndexName.Name);
                 string type = DataGridViewHelper.GetCellStringValue(row, this.colType.Name);

@@ -4,6 +4,7 @@ namespace DatabaseManager.Model
 {
     public class DatabaseObjectDisplayInfo
     {
+        public string Schema { get; set; }
         public string Name { get; set; }
         public DatabaseObject DatabaseObject { get; set; }
         public DatabaseObjectDisplayType DisplayType { get; set; } = DatabaseObjectDisplayType.Script;

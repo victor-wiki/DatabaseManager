@@ -30,7 +30,7 @@ namespace DatabaseInterpreter.Core
         public override DatabaseType DatabaseType => DatabaseType.MySql;
         public override string DefaultDataType => "varchar";
         public override string DefaultSchema => this.ConnectionInfo.Database;
-        public override IndexType IndexType => IndexType.Normal | IndexType.FullText | IndexType.Primary;
+        public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
 
@@ -151,8 +151,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
             string nameColumn = isSimpleMode ? "ROUTINE_NAME" : "name";
-
-            string sql = "";
+           
             bool isFunction = type.ToUpper() == "FUNCTION";
             string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
             string strNames = "";
@@ -162,19 +161,20 @@ namespace DatabaseInterpreter.Core
                 strNames = StringHelper.GetSingleQuotedString(objectNames);
             }
 
+            var sb = this.CreateSqlBuilder();
+
             if (isSimpleMode)
             {
-                sql = $@"SELECT ROUTINE_NAME AS `Name`, ROUTINE_SCHEMA AS `Schema`                        
+                sb.Append($@"SELECT ROUTINE_NAME AS `Name`, ROUTINE_SCHEMA AS `Schema`                        
                         FROM INFORMATION_SCHEMA.`ROUTINES`
-                        WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'
-                       ";
+                        WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
                 if (strNames != "")
                 {
-                    sql += $" AND {nameColumn} IN ({strNames})";
+                    sb.Append($"AND {nameColumn} IN ({strNames})");
                 }
 
-                sql += $" ORDER BY {nameColumn}";
+                sb.Append($"ORDER BY {nameColumn}");
             }
             else
             {
@@ -183,7 +183,7 @@ namespace DatabaseInterpreter.Core
 
                 string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
 
-                sql = $@"SELECT ROUTINE_SCHEMA AS `Schema`, ROUTINE_NAME AS `Name`,
+                sb.Append($@"SELECT ROUTINE_SCHEMA AS `Schema`, ROUTINE_NAME AS `Name`,
                         CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
                         ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
@@ -191,10 +191,10 @@ namespace DatabaseInterpreter.Core
                         LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
                         WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
                         GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
-                        ORDER BY r.ROUTINE_NAME";
+                        ORDER BY r.ROUTINE_NAME");
             }
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -213,20 +213,16 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`, TABLE_NAME AS `Name` {(isSimpleMode ? "" : ", TABLE_COMMENT AS `Comment`, 1 AS `IdentitySeed`, 1 AS `IdentityIncrement`")}
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`, TABLE_NAME AS `Name` {(isSimpleMode ? "" : ", TABLE_COMMENT AS `Comment`, 1 AS `IdentitySeed`, 1 AS `IdentityIncrement`")}
                         FROM INFORMATION_SCHEMA.`TABLES`
-                        WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA ='{this.ConnectionInfo.Database}' 
-                        ";
+                        WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
+           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));           
+            sb.Append("ORDER BY TABLE_NAME");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TABLE_NAME IN ({strTableNames})";
-            }
-
-            sql += " ORDER BY TABLE_NAME";
-
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -243,21 +239,19 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
-            string sql = $@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`, COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`,
                         CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,GENERATION_EXPRESSION AS `ComputeExp`
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
-                        WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
+                        WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));          
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -277,24 +271,21 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",S.INDEX_COMMENT AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
+            
+            var sb = this.CreateSqlBuilder();
 
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
-
-            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
+            sb.Append($@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`ORDINAL_POSITION` AS `Order`, 0 AS `IsDesc`{commentColumn}
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
                         JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA AND C.TABLE_NAME = K.TABLE_NAME AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
                         {commentJoin}
                         WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
-                        AND K.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'";
+                        AND K.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
 
-            if (filter.TableNames != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -315,7 +306,9 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
-            string sql = $@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
                         CASE RC.UPDATE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS `UpdateCascade`, 
                         CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`{commentColumn}
@@ -324,15 +317,11 @@ namespace DatabaseInterpreter.Core
                         JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC ON RC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND RC.CONSTRAINT_NAME=C.CONSTRAINT_NAME AND C.TABLE_NAME=RC.TABLE_NAME                        
                         {commentJoin}
                         WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
-                        AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'";
+                        AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND C.TABLE_NAME IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -352,7 +341,9 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`,
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`,
 	                        TABLE_NAME AS `TableName`,
 	                        INDEX_NAME AS `Name`,
 	                        COLUMN_NAME AS `ColumnName`,
@@ -363,15 +354,11 @@ namespace DatabaseInterpreter.Core
 	                        0 AS `IsDesc`{commentColumn}
 	                        FROM INFORMATION_SCHEMA.STATISTICS                           
 	                        WHERE INDEX_NAME NOT IN({(includePrimaryKey ? "" : "'PRIMARY',")} 'FOREIGN')                          
-	                        AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
+	                        AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TABLE_NAME IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -392,30 +379,27 @@ namespace DatabaseInterpreter.Core
 
             string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
 
-            string sql = $@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Schema`, EVENT_OBJECT_TABLE AS `TableName`, 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT TRIGGER_NAME AS `Name`, TRIGGER_SCHEMA AS `Schema`, EVENT_OBJECT_TABLE AS `TableName`, 
                          {(isSimpleMode ? "''" : definitionClause)} AS `Definition`
                         FROM INFORMATION_SCHEMA.`TRIGGERS`
-                        WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'
-                        ";
+                        WHERE TRIGGER_SCHEMA = '{this.ConnectionInfo.Database}'");
 
             if (filter != null)
             {
-                if (filter.TableNames != null && filter.TableNames.Any())
-                {
-                    string strNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                    sql += $" AND EVENT_OBJECT_TABLE IN ({strNames})";
-                }
+                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "EVENT_OBJECT_TABLE"));                
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
-                    string strNames = StringHelper.GetSingleQuotedString(filter.TableTriggerNames);
-                    sql += $" AND TRIGGER_NAME IN ({strNames})";
+                    string strNames = StringHelper.GetSingleQuotedString(filter?.TableTriggerNames);
+                    sb.Append($"AND TRIGGER_NAME IN ({strNames})");
                 }
             }
 
-            sql += " ORDER BY TRIGGER_NAME";
+            sb.Append("ORDER BY TRIGGER_NAME");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -433,35 +417,31 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            string sql = "";
+            var sb = this.CreateSqlBuilder() ;
 
             if (isSimpleMode)
             {
-                sql = @"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`
+                sb.Append(@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC 
-                        WHERE AND CONSTRAINT_TYPE='CHECK'";
+                        WHERE AND CONSTRAINT_TYPE='CHECK'");
             }
             else
             {
-                sql = $@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`,
+                sb.Append($@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`,
                          REPLACE(REPLACE(REPLACE(C.CHECK_CLAUSE,'\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""INFORMATION_SCHEMA""),''),
                          (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""{this.ConnectionInfo.Database}""),'') AS `Definition`
                          FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC
                          JOIN INFORMATION_SCHEMA.CHECK_CONSTRAINTS C ON TC.CONSTRAINT_CATALOG=C.CONSTRAINT_CATALOG AND TC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND TC.CONSTRAINT_NAME=C.CONSTRAINT_NAME
-                         WHERE CONSTRAINT_TYPE='CHECK'";
+                         WHERE CONSTRAINT_TYPE='CHECK'");
             }
 
-            sql += $" AND TC.CONSTRAINT_SCHEMA='{this.ConnectionInfo.Database}'";
+            sb.Append($"AND TC.CONSTRAINT_SCHEMA='{this.ConnectionInfo.Database}'");
 
-            if (filter != null && filter.TableNames != null && filter.TableNames.Any())
-            {
-                string strTableNames = StringHelper.GetSingleQuotedString(filter.TableNames);
-                sql += $" AND TC.TABLE_NAME IN ({strTableNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TC.TABLE_NAME"));            
 
-            sql += " ORDER BY TC.CONSTRAINT_NAME";
+            sb.Append("ORDER BY TC.TABLE_NAME,TC.CONSTRAINT_NAME");
 
-            return sql;
+            return sb.Content;
         }
         #endregion
 
@@ -482,19 +462,17 @@ namespace DatabaseInterpreter.Core
 
             string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS','{Environment.NewLine}',VIEW_DEFINITION)";
 
-            string sql = $@"SELECT TABLE_SCHEMA AS `Schema`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : createViewClause)} AS `Definition` 
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`,TABLE_NAME AS `Name`, {(isSimpleMode ? "''" : createViewClause)} AS `Definition` 
                         FROM INFORMATION_SCHEMA.`VIEWS`
-                        WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'";
+                        WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-            if (filter != null && filter.ViewNames != null && filter.ViewNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(filter.ViewNames);
-                sql += $" AND TABLE_NAME IN ({strNames})";
-            }
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));            
 
-            sql += " ORDER BY TABLE_NAME";
+            sb.Append("ORDER BY TABLE_NAME");
 
-            return sql;
+            return sb.Content;
         }
 
         #endregion      
