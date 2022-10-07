@@ -514,9 +514,7 @@ namespace DatabaseInterpreter.Core
                 appendSchemaAndNamesCondition();
 
                 sb.Append("GROUP BY r.routine_schema,r.routine_name,r.routine_definition,r.data_type");
-            }
-            
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.table_name"));
+            }           
 
             sb.Append("ORDER BY r.routine_name");
 

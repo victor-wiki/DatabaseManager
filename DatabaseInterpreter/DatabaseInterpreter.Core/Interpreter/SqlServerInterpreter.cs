@@ -170,7 +170,7 @@ namespace DatabaseInterpreter.Core
                            AND SCHEMA_NAME(schema_id) NOT IN('sys')");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(o.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "o.name"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.FunctionNames, "o.name"));            
 
             sb.Append("ORDER BY o.name");
 

@@ -153,13 +153,7 @@ namespace DatabaseInterpreter.Core
             string nameColumn = isSimpleMode ? "ROUTINE_NAME" : "name";
            
             bool isFunction = type.ToUpper() == "FUNCTION";
-            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
-            string strNames = "";
-
-            if (objectNames != null && objectNames.Any())
-            {
-                strNames = StringHelper.GetSingleQuotedString(objectNames);
-            }
+            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;          
 
             var sb = this.CreateSqlBuilder();
 
@@ -169,29 +163,27 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`ROUTINES`
                         WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-                if (strNames != "")
-                {
-                    sb.Append($"AND {nameColumn} IN ({strNames})");
-                }
+                sb.Append(this.GetFilterNamesCondition(filter, objectNames, nameColumn));               
 
                 sb.Append($"ORDER BY {nameColumn}");
             }
             else
             {
                 string functionReturns = isFunction ? ", 'RETURNS ',IFNULL(r.DATA_TYPE,''), ' '" : "";
-                string procParameterMode = isFunction ? "" : "IFNULL(p.PARAMETER_MODE,''),' ',";
-
-                string condition = strNames == "" ? "" : $" AND r.ROUTINE_NAME IN({strNames})";
+                string procParameterMode = isFunction ? "" : "IFNULL(p.PARAMETER_MODE,''),' ',";               
 
                 sb.Append($@"SELECT ROUTINE_SCHEMA AS `Schema`, ROUTINE_NAME AS `Name`,
                         CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
-                        ') '{functionReturns}, '{Environment.NewLine}', ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
+                        ') '{functionReturns}, CHAR(13), ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
                         FROM information_schema.Routines r
                         LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
-                        WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'{condition}
-                        GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
-                        ORDER BY r.ROUTINE_NAME");
+                        WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'");
+
+                sb.Append(this.GetFilterNamesCondition(filter, objectNames, "r.ROUTINE_NAME"));
+
+                sb.Append(@"GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME
+                          ORDER BY r.ROUTINE_NAME");
             }
 
             return sb.Content;
@@ -377,7 +369,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, '{Environment.NewLine}', ACTION_STATEMENT) USING UTF8)";
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, CHAR(13), ACTION_STATEMENT) USING UTF8)";
 
             var sb = this.CreateSqlBuilder();
 
@@ -460,7 +452,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS','{Environment.NewLine}',VIEW_DEFINITION)";
+            string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS',CHAR(13),VIEW_DEFINITION)";
 
             var sb = this.CreateSqlBuilder();
 
@@ -468,7 +460,7 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "TABLE_NAME"));            
 
             sb.Append("ORDER BY TABLE_NAME");
 

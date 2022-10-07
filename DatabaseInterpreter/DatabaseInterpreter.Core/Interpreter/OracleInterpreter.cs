@@ -203,19 +203,12 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             bool isFunction = type.ToUpper() == "FUNCTION";         
 
-            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";
-            string nameCondition = "";
-            string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
-
-            if (objectNames != null && objectNames.Any())
-            {
-                string strNames = StringHelper.GetSingleQuotedString(objectNames);
-                nameCondition = $" AND P.OBJECT_NAME IN ({strNames})";
-            }
+            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";    
+            string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;           
 
             var sb = this.CreateSqlBuilder();
 
-            Action appendSchemaAndNamesCondition = () =>
+            Action appendNamesCondition = () =>
             {
                 sb.Append(this.GetFilterNamesCondition(filter, objectNames, "P.OBJECT_NAME"));
             };
@@ -226,7 +219,7 @@ namespace DatabaseInterpreter.Core
                          FROM ALL_PROCEDURES P 
                          WHERE P.OBJECT_TYPE='{type}' {ownerCondition}");
 
-                appendSchemaAndNamesCondition();
+                appendNamesCondition();
             }
             else
             {
@@ -235,7 +228,7 @@ namespace DatabaseInterpreter.Core
                         JOIN ALL_SOURCE S ON P.OWNER = S.OWNER AND P.OBJECT_NAME = S.NAME
                         WHERE P.OBJECT_TYPE = '{type}' {ownerCondition}");
 
-                appendSchemaAndNamesCondition();
+                appendNamesCondition();
 
                 sb.Append("GROUP BY P.OWNER, S.NAME");
             }
