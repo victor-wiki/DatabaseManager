@@ -3,11 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.5</AssemblyVersion>
-    <FileVersion>2.0.5</FileVersion>
-    <Version>2.0.5</Version>
-    <PackageReleaseNotes>add schema filter restrict;
-add SqlBuilder to concat sql</PackageReleaseNotes>
+    <AssemblyVersion>2.0.6</AssemblyVersion>
+    <FileVersion>2.0.6</FileVersion>
+    <Version>2.0.6</Version>
+    <PackageReleaseNotes>fix sql query filter</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
 
