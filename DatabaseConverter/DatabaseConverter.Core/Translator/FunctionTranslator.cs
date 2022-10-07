@@ -12,8 +12,7 @@ namespace DatabaseConverter.Core
     public class FunctionTranslator : DbObjectTranslator
     {
         private IEnumerable<TokenInfo> functions;
-        private DatabaseType sourceDbType;
-        private DatabaseType targetDbType;
+     
 
         private const string ParenthesesExpression = @"\(.*\)";
         private const string NameExpression = @"\b([a-zA-Z]+)\b";
@@ -22,16 +21,12 @@ namespace DatabaseConverter.Core
         private List<FunctionSpecification> targetFuncSpecs;
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter) : base(sourceInterpreter, targetInterpreter)
-        {
-            this.sourceDbType = sourceInterpreter.DatabaseType;
-            this.targetDbType = targetInterpreter.DatabaseType;
+        {           
         }
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TokenInfo> functions) : base(sourceInterpreter, targetInterpreter)
         {
-            this.functions = functions;
-            this.sourceDbType = sourceInterpreter.DatabaseType;
-            this.targetDbType = targetInterpreter.DatabaseType;
+            this.functions = functions;           
         }
 
         public override void Translate()

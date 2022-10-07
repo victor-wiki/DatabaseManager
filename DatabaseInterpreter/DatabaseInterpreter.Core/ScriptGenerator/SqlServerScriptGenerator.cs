@@ -440,7 +440,10 @@ CREATE TABLE {quotedTableName}(
         {
             string script = 
 $@"CREATE SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)} AS {sequence.DataType} 
-START WITH {sequence.StartValue} INCREMENT BY {sequence.Increment} MINVALUE {sequence.MinValue} MAXVALUE {sequence.MaxValue}
+START WITH {sequence.StartValue}
+INCREMENT BY {sequence.Increment}
+MINVALUE {(long)sequence.MinValue}
+MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled? "CYCLE" : "")}
 {(sequence.UseCache? "CACHE":"")} {sequence.CacheSize};";
 

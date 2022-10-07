@@ -1,5 +1,6 @@
 ﻿using Antlr.Runtime;
 using DatabaseConverter.Core.Model;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using Newtonsoft.Json.Linq;
@@ -16,6 +17,7 @@ namespace DatabaseConverter.Core
         private const string NameExpression = @"^([a-zA-Z_\s]+)$";
         private ColumnTranslator columnTranslator;
         private Dictionary<string, string> dictChangedValues = new Dictionary<string, string>();
+        private List<IEnumerable<VariableMapping>> triggerVariableMappings;
         public CommonScript Script { get; set; }
         public ScriptDbObject DbObject { get; set; }
         public DbInterpreter SourceDbInterpreter { get; set; }
@@ -33,6 +35,7 @@ namespace DatabaseConverter.Core
 
         public ScriptTokenProcessor(CommonScript script, ScriptDbObject dbObject, DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter)
         {
+            this.triggerVariableMappings = TriggerVariableMappingManager.GetVariableMappings();
             this.Script = script;
             this.DbObject = dbObject;
             this.SourceDbInterpreter = sourceInterpreter;
@@ -143,7 +146,10 @@ namespace DatabaseConverter.Core
                     }
                     else if (tokenType == TokenType.VariableName)
                     {
-                        changeParaVarName(token);
+                        if (token.Symbol?.StartsWith("@@") == false)
+                        {
+                            changeParaVarName(token);
+                        }
                     }
                     else if (token.Type == TokenType.DataType)
                     {
@@ -178,7 +184,7 @@ namespace DatabaseConverter.Core
                     this.RestoreValue(ts.FunctionName);
                     ts.FunctionName.Symbol = this.GetQuotedString(ts.FunctionName?.Symbol);
                 }
-            } 
+            }
             #endregion
         }
 
@@ -218,7 +224,10 @@ namespace DatabaseConverter.Core
 
                     if (!isAlias && !isFunction)
                     {
-                        token.Symbol = this.GetNewQuotedString(token.Symbol);
+                        if (!this.IsTriggerInteralTable(token))
+                        {
+                            token.Symbol = this.GetNewQuotedString(token.Symbol);
+                        }
                     }
                 }
                 else
@@ -258,8 +267,15 @@ namespace DatabaseConverter.Core
                             }
                             else if (items.Length == 2)
                             {
-                                schema = items[0];
-                                tableName = items[1];
+                                if (this.IsTriggerVariable(token))
+                                {
+                                    return $"{items[0]}.{this.GetNewQuotedString(items[1])}";
+                                }
+                                else
+                                {
+                                    schema = items[0];
+                                    tableName = items[1];
+                                }
                             }
 
                             bool isAlias = this.IsAlias(tableName, tokens);
@@ -342,6 +358,21 @@ namespace DatabaseConverter.Core
             }
 
             return false;
+        }
+
+        private bool IsTriggerInteralTable(TokenInfo token)
+        {
+            if (this.Script is TriggerScript)
+            {
+                return this.triggerVariableMappings.Any(item => item.Any(t => t.DbType == this.SourceDbInterpreter.DatabaseType.ToString() && t.Variable.ToUpper() == token.Symbol));
+            }
+
+            return false;
+        }
+
+        private bool IsTriggerVariable(TokenInfo token)
+        {
+            return this.Script is TriggerScript && (token.Type == TokenType.UpdateSetValue || token.Type == TokenType.InsertValue);
         }
 
         private string ReplaceSymbol(string value, string oldSymbol, string newSymbol)

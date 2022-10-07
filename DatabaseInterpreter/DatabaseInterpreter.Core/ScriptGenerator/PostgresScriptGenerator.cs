@@ -44,6 +44,17 @@ namespace DatabaseInterpreter.Core
             sb.AppendRange(this.GenerateScriptDbObjectScripts<Function>(schemaInfo.Functions));
             #endregion
 
+            #region Sequence          
+            foreach (Sequence sequence in schemaInfo.Sequences)
+            {
+                this.FeedbackInfo(OperationState.Begin, sequence);
+
+                sb.AppendLine(this.AddSequence(sequence));
+
+                this.FeedbackInfo(OperationState.End, sequence);
+            }
+            #endregion
+
             #region Table
             foreach (Table table in schemaInfo.Tables)
             {
@@ -73,18 +84,7 @@ namespace DatabaseInterpreter.Core
 
                 this.FeedbackInfo(OperationState.End, table);
             }
-            #endregion
-
-            #region Sequence          
-            foreach (Sequence sequence in schemaInfo.Sequences)
-            {
-                this.FeedbackInfo(OperationState.Begin, sequence);
-
-                sb.AppendLine(this.AddSequence(sequence));
-
-                this.FeedbackInfo(OperationState.End, sequence);
-            }
-            #endregion
+            #endregion          
 
             #region View           
             sb.AppendRange(this.GenerateScriptDbObjectScripts<View>(schemaInfo.Views));
@@ -313,9 +313,13 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             string script =
 $@"CREATE SEQUENCE IF NOT EXISTS {this.GetQuotedDbObjectNameWithSchema(sequence)}
-START {sequence.StartValue} INCREMENT {sequence.Increment} MINVALUE {sequence.MinValue} MAXVALUE {sequence.MaxValue}
+START {sequence.StartValue}
+INCREMENT {sequence.Increment}
+MINVALUE {(long)sequence.MinValue}
+MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled ? "CYCLE" : "")}
-CACHE {sequence.CacheSize} {(sequence.OwnedByTable == null ? "" : $"OWNED BY {this.GetQuotedString(sequence.OwnedByTable)}.{this.GetQuotedString(sequence.OwnedByColumn)}")};";
+CACHE {sequence.CacheSize}
+{(sequence.OwnedByTable == null ? "" : $"OWNED BY {this.GetQuotedString(sequence.OwnedByTable)}.{this.GetQuotedString(sequence.OwnedByColumn)}")};";
 
             return new CreateDbObjectScript<Sequence>(script);
         }

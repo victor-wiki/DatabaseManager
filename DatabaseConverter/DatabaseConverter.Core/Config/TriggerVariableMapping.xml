@@ -1,0 +1,14 @@
+<mappings>
+	<mapping>
+		<SqlServer>INSERTED</SqlServer>
+		<MySql>NEW</MySql>
+		<Oracle>:NEW</Oracle>
+		<Postgres>NEW</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>DELETED</SqlServer>
+		<MySql>OLD</MySql>
+		<Oracle>:OLD</Oracle>
+		<Postgres>OLD</Postgres>
+	</mapping>	
+</mappings>

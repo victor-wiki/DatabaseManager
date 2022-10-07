@@ -617,7 +617,7 @@ namespace SqlAnalyser.Core
                             {
                                 statement.Columns.Add(this.ParseColumnName(colName));
                             }
-                        }                       
+                        }
                     }
                     else if (child is Values_clauseContext values)
                     {
@@ -629,7 +629,7 @@ namespace SqlAnalyser.Core
                                 {
                                     if (expChild is ExpressionContext value)
                                     {
-                                        TokenInfo valueInfo = new TokenInfo(value);
+                                        TokenInfo valueInfo = new TokenInfo(value) { Type = TokenType.InsertValue };
 
                                         statement.Values.Add(valueInfo);
                                     }
@@ -659,7 +659,7 @@ namespace SqlAnalyser.Core
                 foreach (Column_based_update_set_clauseContext colSet in columnSets)
                 {
                     var valueExp = colSet.expression();
-                    var value = this.CreateToken(valueExp, TokenType.UpdateSet);
+                    var value = this.CreateToken(valueExp, TokenType.UpdateSetValue);
 
                     statement.SetItems.Add(new NameValueItem()
                     {
@@ -1314,7 +1314,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (node is Table_ref_auxContext tra)
                 {
-                    tableName = new TableName(tra.table_ref_aux_internal());                 
+                    tableName = new TableName(tra.table_ref_aux_internal());
 
                     setAlias(tra.table_alias());
                 }
@@ -1348,11 +1348,11 @@ namespace SqlAnalyser.Core
                     IdentifierContext id = cn.identifier();
                     if (ids != null && ids.Length > 0)
                     {
-                        columnName = new ColumnName(ids[0]);                       
+                        columnName = new ColumnName(ids[0]);
                     }
                     else if (id != null)
                     {
-                        columnName = new ColumnName(id);                       
+                        columnName = new ColumnName(id);
                     }
                 }
                 else if (node is Variable_nameContext vname)
@@ -1443,7 +1443,9 @@ namespace SqlAnalyser.Core
                     if (!isIfCondition)
                     {
                         this.AddChildTableAndColumnNameToken(node, token);
-                    }                  
+                    }
+
+                    return token;
                 }
             }
 
@@ -1462,10 +1464,10 @@ namespace SqlAnalyser.Core
             }
             else if (node is General_element_partContext gep)
             {
-                if(gep.id_expression().Last().GetText()== "NEXTVAL")
+                if (gep.id_expression().Last().GetText() == "NEXTVAL")
                 {
                     return true;
-                }                
+                }
             }
             else if (node is Variable_nameContext vn)
             {
@@ -1483,7 +1485,7 @@ namespace SqlAnalyser.Core
             TokenInfo token = base.ParseFunction(node);
 
             if (node is General_element_partContext || node is Variable_nameContext)
-            {                
+            {
                 Id_expressionContext[] ids = null;
 
                 if (node is General_element_partContext gep)
@@ -1495,7 +1497,7 @@ namespace SqlAnalyser.Core
                     ids = vn.id_expression();
                 }
 
-                if(ids.Last().GetText()== "NEXTVAL")
+                if (ids.Last().GetText() == "NEXTVAL")
                 {
                     NameToken seqName;
 
@@ -1510,7 +1512,7 @@ namespace SqlAnalyser.Core
                     }
 
                     token.AddChild(seqName);
-                }               
+                }
             }
 
             return token;

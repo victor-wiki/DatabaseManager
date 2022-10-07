@@ -466,7 +466,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (var v in value.expr())
                 {
-                    TokenInfo valueInfo = new TokenInfo(v);
+                    TokenInfo valueInfo = new TokenInfo(v) { Type = TokenType.InsertValue };
 
                     statement.Values.Add(valueInfo);
                 }

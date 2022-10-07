@@ -122,7 +122,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable;
-            this.tsmiTranslate.Visible = isTable || isScriptObject;
+            this.tsmiTranslate.Visible = isTable || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;

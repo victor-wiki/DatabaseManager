@@ -43,6 +43,7 @@ namespace DatabaseManager.Controls
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
             
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
+            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Sequence), "Sequences", schemaInfo.Sequences);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
@@ -84,6 +85,9 @@ namespace DatabaseManager.Controls
                         {
                             case nameof(UserDefinedType):
                                 schemaInfo.UserDefinedTypes.Add(item.Tag as UserDefinedType);
+                                break;
+                            case nameof(Sequence):
+                                schemaInfo.Sequences.Add(item.Tag as Sequence);
                                 break;
                             case nameof(Table):
                                 schemaInfo.Tables.Add(item.Tag as Table);

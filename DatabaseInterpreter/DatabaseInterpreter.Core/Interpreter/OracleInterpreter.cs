@@ -176,8 +176,7 @@ namespace DatabaseInterpreter.Core
                             CASE CYCLE_FLAG WHEN 'Y' THEN 1 ELSE 0 END AS ""Cycled"",CASE order_flag WHEN 'Y' THEN 1 ELSE 0 END AS ""Ordered"",
                             1 AS ""UseCache"",CACHE_SIZE AS ""CacheSize""
                             FROM all_sequences s
-                            WHERE sequence_name='MySeq'
-                            AND UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')");
+                            WHERE UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.SEQUENCE_NAME"));           
 

@@ -279,6 +279,11 @@ namespace DatabaseInterpreter.Core
                 filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
                 filter.TableTriggerNames = schemaInfo.TableTriggers.Select(item => item.Name).ToArray();
                 filter.SequenceNames = schemaInfo.Sequences.Select(item => item.Name).ToArray();
+
+                if(filter.Schema == null)
+                {
+
+                }
             }
         }
 
@@ -546,6 +551,38 @@ namespace DatabaseInterpreter.Core
             }
 
             return mappedSchema;
-        }       
+        }    
+        
+        public static SchemaInfo GetSchemaInfoByDbObject(DatabaseObject dbObject)
+        {
+            SchemaInfo schemaInfo = new SchemaInfo();
+
+            if (dbObject is Table)
+            {
+                schemaInfo.Tables.Add(dbObject as Table);
+            }
+            else if (dbObject is View)
+            {
+                schemaInfo.Views.Add(dbObject as DatabaseInterpreter.Model.View);
+            }
+            else if (dbObject is Function)
+            {
+                schemaInfo.Functions.Add(dbObject as Function);
+            }
+            else if (dbObject is Procedure)
+            {
+                schemaInfo.Procedures.Add(dbObject as Procedure);
+            }
+            else if (dbObject is TableTrigger)
+            {
+                schemaInfo.TableTriggers.Add(dbObject as TableTrigger);
+            }
+            else if (dbObject is Sequence)
+            {
+                schemaInfo.Sequences.Add(dbObject as Sequence);
+            }
+
+            return schemaInfo;
+        }
     }
 }

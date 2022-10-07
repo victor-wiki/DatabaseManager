@@ -16,15 +16,11 @@ namespace DatabaseConverter.Core
     public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
-        private IEnumerable<T> scripts;
-        private DatabaseType sourceDbType;
-        private DatabaseType targetDbType;
+        private IEnumerable<T> scripts;       
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
-        {
-            this.sourceDbType = sourceDbInterpreter.DatabaseType;
-            this.targetDbType = targetDbInterpreter.DatabaseType;
+        {          
             this.scripts = scripts;
         }
 
@@ -68,14 +64,47 @@ namespace DatabaseConverter.Core
 
                 tokenProcessor.Process();
 
+                string anotherDefinition = null;                
+
+                if (typeof(T) == typeof(TableTrigger))
+                {
+                    //make up a trigger function
+                    if (this.targetDbType == DatabaseType.Postgres)
+                    {
+                        string name = this.targetDbInterpreter.GetQuotedString($"func_{dbObj.Name}");
+                        string nameWithSchema = string.IsNullOrEmpty(script.Schema) ? this.targetDbInterpreter.GetQuotedString(name) : $"{script.Schema}.{name}";
+
+                        NameToken triggerFunctionName = new NameToken(nameWithSchema);
+
+                        RoutineScript rs = new RoutineScript() { Name= triggerFunctionName, Type = RoutineType.FUNCTION, ReturnDataType = new TokenInfo("trigger") };
+                        rs.Statements.AddRange(script.Statements);
+
+                        (script as TriggerScript).FunctionName = triggerFunctionName;
+
+                        anotherDefinition = StringHelper.FormatScript(targetAnalyser.GenerateScripts(rs).Script);
+
+                        if(this.sourceDbType == DatabaseType.SqlServer)
+                        {
+                            //Dictionary<string, string> dictTableMappings = new Dictionary<string, string>() { { "INSERTED" , "NEW" }, { } };
+                            //Regex regex = new Regex(@"\bINSERTED\b");
+                            //anotherDefinition = anotherDefinition.Replace(, ).Replace("DELETED", "OLD");
+                        }
+                    }
+                }
+
                 ScriptBuildResult scriptBuildResult = targetAnalyser.GenerateScripts(script);
-                
+
                 dbObj.Definition = StringHelper.FormatScript(scriptBuildResult.Script);
+
+                if (anotherDefinition != null)
+                {
+                    dbObj.Definition = anotherDefinition + Environment.NewLine + dbObj.Definition;
+                }
             };
 
             foreach (T dbObj in this.scripts)
             {
-                if(this.hasError)
+                if (this.hasError)
                 {
                     break;
                 }
@@ -90,14 +119,14 @@ namespace DatabaseConverter.Core
 
                     this.Validate(dbObj);
 
-                    if(sourceDbType == DatabaseType.MySql)
+                    if (sourceDbType == DatabaseType.MySql)
                     {
                         string dbName = this.sourceDbInterpreter.ConnectionInfo.Database;
                         dbObj.Definition = dbObj.Definition.Replace($"`{dbName}`.", "").Replace($"{dbName}.", "");
                     }
-                    else if(sourceDbType == DatabaseType.Postgres)
+                    else if (sourceDbType == DatabaseType.Postgres)
                     {
-                        if(dbObj.Definition.Contains("::"))
+                        if (dbObj.Definition.Contains("::"))
                         {
                             var dataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbType);
                             dbObj.Definition = TranslateHelper.RemovePostgresDataTypeConvertExpression(dbObj.Definition, dataTypeSpecs, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar);
@@ -158,29 +187,34 @@ namespace DatabaseConverter.Core
                             }
                         }
                         #endregion
-                    }
+                    }                    
 
                     if (!result.HasError && !tokenProcessed)
                     {
                         processTokens(dbObj, script);
-                    }                 
+                    }
 
-                    string definition = this.ReplaceVariables(dbObj.Definition);
+                    dbObj.Definition = this.ReplaceVariables(dbObj.Definition, this.variableMappings);
 
-                    //dbObj.Definition = this.ParseDefinition(definition);
-                    
+                    if (script is TriggerScript)
+                    {
+                        var triggerVariableMappings = TriggerVariableMappingManager.GetVariableMappings();
+
+                        dbObj.Definition = this.ReplaceVariables(dbObj.Definition, triggerVariableMappings);
+                    }
+
                     if (this.OnTranslated != null)
                     {
                         this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, new TranslateResult() { Error = result.Error, Data = dbObj.Definition });
                     }
 
-                    this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: { (result.HasError ? "Error" : "OK") }.");
+                    this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: {(result.HasError ? "Error" : "OK")}.");
 
                     if (!replaced && result.HasError)
                     {
                         this.FeedbackError(this.ParseSqlSyntaxError(result.Error, originalDefinition).ToString(), this.ContinueWhenErrorOccurs);
 
-                        if(!this.ContinueWhenErrorOccurs)
+                        if (!this.ContinueWhenErrorOccurs)
                         {
                             this.hasError = true;
                         }
@@ -222,7 +256,7 @@ namespace DatabaseConverter.Core
                 {
                     script.Definition = regex.Replace(script.Definition, "");
                 }
-            }           
+            }
         }
 
         private SqlSyntaxError ParseSqlSyntaxError(SqlSyntaxError error, string definition)
@@ -251,7 +285,7 @@ namespace DatabaseConverter.Core
             {
                 sqlAnalyser = new PlSqlAnalyser();
             }
-            else if(dbType == DatabaseType.Postgres)
+            else if (dbType == DatabaseType.Postgres)
             {
                 sqlAnalyser = new PostgreSqlAnalyser();
             }

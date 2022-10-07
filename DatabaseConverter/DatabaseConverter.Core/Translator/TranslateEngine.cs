@@ -39,6 +39,12 @@ namespace DatabaseConverter.Core
         {
             this.TranslateSchema();
 
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Sequence))
+            {
+                SequenceTranslator sequenceTranslator = new SequenceTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.Sequences);
+                this.Translate(sequenceTranslator);
+            }
+
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableColumn))
             {
                 ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);

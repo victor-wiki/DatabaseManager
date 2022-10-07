@@ -135,7 +135,7 @@ namespace DatabaseInterpreter.Core
                             start_value as [StartValue],increment as [Increment],minimum_value as [MinValue],maximum_value as [MaxValue],
                             is_cycling as [Cycled],is_cached as [UseCache],cache_size as [CacheSize]
                             from sys.sequences s
-                            join sys.types t on s.system_type_id = t.system_type_id");
+                            join sys.types t on s.system_type_id = t.system_type_id and s.schema_id = t.schema_id");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(s.schema_id)"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.name"));          

@@ -410,7 +410,7 @@ namespace SqlAnalyser.Core
 
                     if (tableValues != null)
                     {
-                        statement.Values = tableValues.expression_list().SelectMany(item => item.expression().Select(t => new TokenInfo(t))).ToList();
+                        statement.Values = tableValues.expression_list().SelectMany(item => item.expression().Select(t => new TokenInfo(t) { Type = TokenType.InsertValue })).ToList();
                     }
                     else if (derivedTable != null)
                     {
@@ -435,7 +435,7 @@ namespace SqlAnalyser.Core
             foreach (var ele in node.update_elem())
             {
                 var valExp = ele.expression();
-                var value = this.CreateToken(valExp, TokenType.UpdateSet);
+                var value = this.CreateToken(valExp, TokenType.UpdateSetValue);
 
                 statement.SetItems.Add(new NameValueItem()
                 {

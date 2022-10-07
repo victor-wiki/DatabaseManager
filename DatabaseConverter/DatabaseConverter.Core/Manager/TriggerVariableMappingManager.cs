@@ -7,9 +7,9 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class VariableMappingManager : ConfigManager
+    public class TriggerVariableMappingManager : ConfigManager
     {
-        public static string VariableMappingFilePath { get { return Path.Combine(ConfigRootFolder, "VariableMapping.xml"); } }
+        public static string TriggerVariableMappingFilePath { get { return Path.Combine(ConfigRootFolder, "TriggerVariableMapping.xml"); } }
 
         private static List<IEnumerable<VariableMapping>> _variableMappings;
         public static List<IEnumerable<VariableMapping>> VariableMappings
@@ -27,7 +27,7 @@ namespace DatabaseConverter.Core
 
         public static List<IEnumerable<VariableMapping>> GetVariableMappings()
         {
-            XDocument doc = XDocument.Load(VariableMappingFilePath);
+            XDocument doc = XDocument.Load(TriggerVariableMappingFilePath);
             return doc.Root.Elements("mapping").Select(item =>
             item.Elements().Select(t => new VariableMapping() { DbType = t.Name.ToString(), Variable = t.Value }))
             .ToList();

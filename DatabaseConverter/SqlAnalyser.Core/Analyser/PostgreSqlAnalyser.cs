@@ -122,12 +122,9 @@ namespace SqlAnalyser.Core
                     }
 
                     sb.AppendLine($"RETURNS {dataType}");
-                }
-                else if (script.ReturnTable != null)
-                {
-                    //sb.AppendLine($"RETURN {script.ReturnTable}");
-                }
+                }                
             }
+
             sb.AppendLine("LANGUAGE 'plpgsql'");
             sb.AppendLine("AS");
             sb.AppendLine("$$");
@@ -212,13 +209,13 @@ namespace SqlAnalyser.Core
             StringBuilder sb = new StringBuilder();
             StringBuilder sbBody = new StringBuilder();
 
-
             string events = string.Join(" OR ", script.Events);
 
-            sb.AppendLine($"CREATE OR REPLACE TRIGGER {script.NameWithSchema}");
+            sb.AppendLine($"CREATE OR REPLACE TRIGGER {script.Name}");
             sb.AppendLine($"{script.Time} {events} ON {script.TableName.NameWithSchema}");
             sb.AppendLine("FOR EACH ROW");
-            sbBody.AppendLine($"EXECUTE FUNCTION {script.FunctionName.NameWithSchema}();");
+
+            sbBody.AppendLine($"EXECUTE FUNCTION {script.FunctionName?.NameWithSchema}();");
 
             sb.Append(sbBody);
 

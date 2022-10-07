@@ -93,6 +93,7 @@ namespace SqlAnalyser.Model
         Pivot = 14,
         UnPivot = 15,
         SequenceName = 16,
-        UpdateSet = 17
+        UpdateSetValue = 17,
+        InsertValue = 18
     }
 }

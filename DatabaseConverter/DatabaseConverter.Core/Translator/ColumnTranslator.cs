@@ -12,9 +12,7 @@ namespace DatabaseConverter.Core
 {
     public class ColumnTranslator : DbObjectTokenTranslator
     {
-        private IEnumerable<TableColumn> columns;
-        private DatabaseType sourceDbType;
-        private DatabaseType targetDbType;
+        private IEnumerable<TableColumn> columns;      
         private IEnumerable<DataTypeSpecification> sourceDataTypeSpecs;
         private IEnumerable<DataTypeSpecification> targetDataTypeSpecs;
         private FunctionTranslator functionTranslator;
@@ -22,8 +20,7 @@ namespace DatabaseConverter.Core
         public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
             this.columns = columns;
-            this.sourceDbType = sourceInterpreter.DatabaseType;
-            this.targetDbType = targetInterpreter.DatabaseType;
+           
             this.sourceDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbType);
             this.targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbType);
             this.functionTranslator = new FunctionTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);

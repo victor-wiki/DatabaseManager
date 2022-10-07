@@ -24,6 +24,7 @@ namespace DatabaseConverter.Core
         private bool cancelRequested = false;
         private IObserver<FeedbackInfo> observer;
         private DbTransaction transaction = null;
+        private DatabaseObject translateDbObject = null;
 
         public bool HasError => this.hasError;
         public bool IsBusy => this.isBusy;
@@ -70,12 +71,21 @@ namespace DatabaseConverter.Core
             this.observer = observer;
         }
 
-        public Task<DbConverterResult> Convert(SchemaInfo schemaInfo = null)
+        public Task<DbConverterResult> Translate(DatabaseObject dbObject)
         {
-            return this.InternalConvert(schemaInfo);
+            this.translateDbObject = dbObject;
+
+            SchemaInfo schemaInfo = SchemaInfoHelper.GetSchemaInfoByDbObject(dbObject);            
+
+            return this.InternalConvert(schemaInfo, dbObject.Schema);
         }
 
-        private async Task<DbConverterResult> InternalConvert(SchemaInfo schemaInfo = null)
+        public Task<DbConverterResult> Convert(SchemaInfo schemaInfo = null, string schema = null)
+        {
+            return this.InternalConvert(schemaInfo, schema);
+        }
+
+        private async Task<DbConverterResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null)
         {
             DbConverterResult result = new DbConverterResult();
             bool continuedWhenErrorOccured = false;
@@ -100,6 +110,11 @@ namespace DatabaseConverter.Core
             }
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
+
+            if (schema != null)
+            {
+                filter.Schema = schema;
+            }
 
             SchemaInfoHelper.SetSchemaInfoFilterValues(filter, schemaInfo);
 
@@ -179,17 +194,7 @@ namespace DatabaseConverter.Core
             translateEngine.UserDefinedTypes = utypes;
             translateEngine.OnTranslated += this.Translated;
             translateEngine.Subscribe(this.observer);
-            translateEngine.Translate(translateDbObjectType);
-
-            if (this.Option.OnlyForTranslate)
-            {
-                if (targetSchemaInfo.Tables.Count == 0 && targetSchemaInfo.UserDefinedTypes.Count == 0)
-                {
-                    result.InfoType = DbConverterResultInfoType.Information;
-                    result.Message = "Target database has no tables and user defined types.";
-                    return result;
-                }
-            }
+            translateEngine.Translate(translateDbObjectType);            
 
             #endregion
 
@@ -217,7 +222,7 @@ namespace DatabaseConverter.Core
 
             string script = "";
 
-            targetInterpreter.Subscribe(this.observer);           
+            targetInterpreter.Subscribe(this.observer);
 
             DataTransferErrorProfile dataErrorProfile = null;
 
@@ -231,18 +236,21 @@ namespace DatabaseConverter.Core
                 {
                     if (this.Target.DbInterpreter.DatabaseType == DatabaseType.Oracle)
                     {
-                        if (this.Target.DbInterpreter.IsLowDbVersion(dbConnection))
+                        if(!this.Option.OnlyForTranslate)
                         {
-                            SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
-                        }
+                            if (this.Target.DbInterpreter.IsLowDbVersion(dbConnection))
+                            {
+                                SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
+                            }
+                        }                       
                     }
 
                     scriptBuilder = targetDbScriptGenerator.GenerateSchemaScripts(targetSchemaInfo);
 
-                    if (targetSchemaInfo.Tables.Any())
+                    if(this.Option.OnlyForTranslate)
                     {
-                        this.Translated(targetInterpreter.DatabaseType, targetSchemaInfo.Tables.First(), new TranslateResult() { Data = scriptBuilder.ToString() });
-                    }
+                        this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
+                    }                    
                 }
 
                 if (this.Option.OnlyForTranslate)
@@ -257,17 +265,17 @@ namespace DatabaseConverter.Core
 
                 if (this.Option.ExecuteScriptOnTargetServer)
                 {
-                    if(dbConnection.State != ConnectionState.Open)
+                    if (dbConnection.State != ConnectionState.Open)
                     {
                         dbConnection.Open();
-                    }                   
+                    }
 
                     if (this.Option.UseTransaction)
                     {
                         this.transaction = dbConnection.BeginTransaction();
                         canCommit = true;
                     }
-                }             
+                }
 
                 #region Schema sync        
 

@@ -6,11 +6,11 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql and PostgreSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.1</AssemblyVersion>
-    <FileVersion>2.0.1</FileVersion>
-    <PackageReleaseNotes>change name token; parse table name and column name as child token</PackageReleaseNotes>
+    <AssemblyVersion>2.0.2</AssemblyVersion>
+    <FileVersion>2.0.2</FileVersion>
+    <PackageReleaseNotes>handle insert and update value token for trigger</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

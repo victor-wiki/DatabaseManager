@@ -288,9 +288,13 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
         {
             string script =
 $@"CREATE SEQUENCE {this.GetQuotedString(sequence.Name)}
-START WITH {sequence.StartValue} INCREMENT BY {sequence.Increment}  MINVALUE {sequence.MinValue} MAXVALUE {sequence.MaxValue} 
+START WITH {sequence.StartValue}
+INCREMENT BY {sequence.Increment}
+MINVALUE {sequence.MinValue}
+MAXVALUE {sequence.MaxValue} 
 CACHE {sequence.CacheSize} 
-{(sequence.Cycled ? "CYCLE" : "")} {(sequence.Ordered ? "ORDER" : "")};";
+{(sequence.Cycled ? "CYCLE" : "")}
+{(sequence.Ordered ? "ORDER" : "")};";
 
             return new CreateDbObjectScript<Sequence>(script);
         }

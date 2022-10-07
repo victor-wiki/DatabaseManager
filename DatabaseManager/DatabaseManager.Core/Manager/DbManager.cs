@@ -253,32 +253,9 @@ namespace DatabaseManager.Core
                 if (translateHandler != null)
                 {
                     dbConverter.OnTranslated += translateHandler;
-                }               
+                }                  
 
-                SchemaInfo schemaInfo = new SchemaInfo();
-
-                if (dbObject is Table)
-                {
-                    schemaInfo.Tables.Add(dbObject as Table);
-                }
-                else if (dbObject is View)
-                {
-                    schemaInfo.Views.Add(dbObject as DatabaseInterpreter.Model.View);
-                }
-                else if (dbObject is Function)
-                {
-                    schemaInfo.Functions.Add(dbObject as Function);
-                }
-                else if (dbObject is Procedure)
-                {
-                    schemaInfo.Procedures.Add(dbObject as Procedure);
-                }
-                else if (dbObject is TableTrigger)
-                {
-                    schemaInfo.TableTriggers.Add(dbObject as TableTrigger);
-                }
-
-                await dbConverter.Convert(schemaInfo);
+                await dbConverter.Translate(dbObject);
             }
         }
 

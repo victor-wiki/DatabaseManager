@@ -11,7 +11,8 @@ namespace DatabaseManager.Helper
     public static class DbObjectsTreeHelper
     {
         public static readonly string FakeNodeName = "_FakeNode_";
-        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedType | DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Procedure | DatabaseObjectType.Function | DatabaseObjectType.TableTrigger;
+        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.UserDefinedType | DatabaseObjectType.Sequence | DatabaseObjectType.Table 
+                                                           | DatabaseObjectType.View | DatabaseObjectType.Procedure | DatabaseObjectType.Function | DatabaseObjectType.TableTrigger;
 
         public static string GetFolderNameByDbObjectType(DatabaseObjectType databaseObjectType)
         {
@@ -111,11 +112,14 @@ namespace DatabaseManager.Helper
           where T : DatabaseObject
         {
             TreeNode node = CreateFolderNode(name, text, dbObjects);
+
             if (node != null)
             {
                 treeNodes.Add(node);
+
                 return node;
             }
+
             return null;
         }
 

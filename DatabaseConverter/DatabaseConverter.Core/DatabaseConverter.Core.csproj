@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.0.4</Version>
+    <Version>2.0.5</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.4</AssemblyVersion>
-    <FileVersion>2.0.4</FileVersion>
-    <PackageReleaseNotes>handle trigger script name token</PackageReleaseNotes>
+    <AssemblyVersion>2.0.5</AssemblyVersion>
+    <FileVersion>2.0.5</FileVersion>
+    <PackageReleaseNotes>handle trigger token; add sequence convert</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,7 @@
     <None Remove="Config\DataTypeMapping\SqlServer2Oracle.xml" />
     <None Remove="Config\DataTypeMapping\SqlServer2Postgres.xml" />
     <None Remove="Config\FunctionMapping.xml" />
+    <None Remove="Config\TriggerVariableMapping.xml" />
     <None Remove="Config\VariableMapping.xml" />
   </ItemGroup>
 
@@ -66,6 +67,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\DataTypeMapping\SqlServer2Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\TriggerVariableMapping.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Config\VariableMapping.xml">

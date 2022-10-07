@@ -17,6 +17,8 @@ namespace DatabaseConverter.Core
         protected string sourceSchemaName;
         protected DbInterpreter sourceDbInterpreter;
         protected DbInterpreter targetDbInterpreter;
+        protected DatabaseType sourceDbType;
+        protected DatabaseType targetDbType;
         protected List<DataTypeMapping> dataTypeMappings = null;
         protected List<IEnumerable<FunctionMapping>> functionMappings = null;
         protected List<IEnumerable<VariableMapping>> variableMappings = null;
@@ -33,7 +35,8 @@ namespace DatabaseConverter.Core
         {
             this.sourceDbInterpreter = source;
             this.targetDbInterpreter = target;
-
+            this.sourceDbType = source.DatabaseType;
+            this.targetDbType = target.DatabaseType;
         }
 
         public void LoadMappings()
@@ -157,9 +160,9 @@ namespace DatabaseConverter.Core
             return newExpression;
         }
 
-        public string ReplaceVariables(string script)
+        public string ReplaceVariables(string script, List<IEnumerable<VariableMapping>> mappings)
         {
-            foreach (IEnumerable<VariableMapping> mapping in this.variableMappings)
+            foreach (IEnumerable<VariableMapping> mapping in mappings)
             {
                 VariableMapping sourceVariable = mapping.FirstOrDefault(item => item.DbType == this.sourceDbInterpreter.DatabaseType.ToString());
                 VariableMapping targetVariable = mapping.FirstOrDefault(item => item.DbType == this.targetDbInterpreter.DatabaseType.ToString());
