@@ -75,7 +75,7 @@ namespace DatabaseConverter.Core
         {
             this.translateDbObject = dbObject;
 
-            SchemaInfo schemaInfo = SchemaInfoHelper.GetSchemaInfoByDbObject(dbObject);            
+            SchemaInfo schemaInfo = SchemaInfoHelper.GetSchemaInfoByDbObject(dbObject);
 
             return this.InternalConvert(schemaInfo, dbObject.Schema);
         }
@@ -138,29 +138,34 @@ namespace DatabaseConverter.Core
                 SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
             }
 
-            #region Set data type by user define type          
-
             List<UserDefinedType> utypes = new List<UserDefinedType>();
 
             if (sourceInterpreter.DatabaseType != this.Target.DbInterpreter.DatabaseType)
             {
                 utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
 
-                if (utypes != null && utypes.Count > 0)
+                if(SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
                 {
-                    foreach (TableColumn column in sourceSchemaInfo.TableColumns)
+                    if (utypes != null && utypes.Count > 0)
                     {
-                        UserDefinedType utype = utypes.FirstOrDefault(item => item.Name == column.DataType);
-                        if (utype != null)
+                        foreach (TableColumn column in sourceSchemaInfo.TableColumns)
                         {
-                            column.DataType = utype.Type;
-                            column.MaxLength = utype.MaxLength;
+                            UserDefinedType utype = utypes.FirstOrDefault(item => item.Name == column.DataType);
+
+                            if (utype != null && utype.Attributes.Count == 1)
+                            {
+                                var attr = utype.Attributes.First();
+
+                                column.DataType = attr.DataType;
+                                column.MaxLength = attr.MaxLength;
+                                column.Precision = attr.Precision;
+                                column.Scale = attr.Scale;
+                                column.IsUserDefined = false;
+                            }
                         }
                     }
-                }
+                }               
             }
-
-            #endregion
 
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
@@ -194,7 +199,7 @@ namespace DatabaseConverter.Core
             translateEngine.UserDefinedTypes = utypes;
             translateEngine.OnTranslated += this.Translated;
             translateEngine.Subscribe(this.observer);
-            translateEngine.Translate(translateDbObjectType);            
+            translateEngine.Translate(translateDbObjectType);
 
             #endregion
 
@@ -236,21 +241,21 @@ namespace DatabaseConverter.Core
                 {
                     if (this.Target.DbInterpreter.DatabaseType == DatabaseType.Oracle)
                     {
-                        if(!this.Option.OnlyForTranslate)
+                        if (!this.Option.OnlyForTranslate)
                         {
                             if (this.Target.DbInterpreter.IsLowDbVersion(dbConnection))
                             {
                                 SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
                             }
-                        }                       
+                        }
                     }
 
                     scriptBuilder = targetDbScriptGenerator.GenerateSchemaScripts(targetSchemaInfo);
 
-                    if(this.Option.OnlyForTranslate)
+                    if (this.Option.OnlyForTranslate)
                     {
                         this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
-                    }                    
+                    }
                 }
 
                 if (this.Option.OnlyForTranslate)

@@ -37,7 +37,9 @@ namespace DatabaseManager
                 DatabaseObjectType.Table,
                 DatabaseObjectType.View,
                 DatabaseObjectType.Function,
-                DatabaseObjectType.Procedure
+                DatabaseObjectType.Procedure,
+                DatabaseObjectType.UserDefinedType,
+                DatabaseObjectType.Sequence
             };
 
             if(this.DatabaseType== DatabaseType.SqlServer)

@@ -92,20 +92,20 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type 
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(this.GetSqlForUserDefinedTypes(filter));
         }
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
         {
             var sb = this.CreateSqlBuilder();
 
-            sb.Append(@"SELECT schema_name(T.schema_id) AS [Schema],T.name as [Name], T.name as [AttrName], ST.name AS [Type], T.max_length AS [MaxLength], T.precision AS [Precision],T.scale AS [Scale],T.is_nullable AS IsNullable
+            sb.Append(@"SELECT schema_name(T.schema_id) AS [Schema],T.name as [Name], T.name as [AttrName], ST.name AS [DataType], T.max_length AS [MaxLength], T.precision AS [Precision],T.scale AS [Scale],T.is_nullable AS IsNullable
                             FROM sys.types T JOIN sys.systypes ST ON T.system_type_id=ST.xusertype
                             WHERE is_user_defined=1");
 

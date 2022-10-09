@@ -67,9 +67,19 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region User Defined Type     
-        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        public abstract Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
+        public virtual async Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
+        {
+            List<UserDefinedTypeItem> items = await this.GetUserDefinedTypeItemsAsync(filter);
+            return SchemaInfoHelper.GetUserDefinedTypes(items);
+        }
+        public virtual async Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            List<UserDefinedTypeItem> items = await this.GetUserDefinedTypeItemsAsync(dbConnection, filter);
+            return SchemaInfoHelper.GetUserDefinedTypes(items);
+        }
         #endregion
 
         #region Sequence     

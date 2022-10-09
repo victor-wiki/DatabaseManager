@@ -16,26 +16,15 @@ namespace DatabaseInterpreter.Core
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
             ScriptBuilder sb = new ScriptBuilder();
+           
 
-            #region User Defined Type
-            List<string> userTypeNames = new List<string>();
+            #region User Defined Type            
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
             {
-                this.FeedbackInfo(OperationState.Begin, userDefinedType);
+                this.FeedbackInfo(OperationState.Begin, userDefinedType);                
 
-                string userTypeName = userDefinedType.Name;
-
-                if (userTypeNames.Contains(userTypeName))
-                {
-                    userTypeName += "_" + userDefinedType.AttrName;
-                }
-
-                userDefinedType.Name = userTypeName;
-
-                sb.AppendLine(this.AddUserDefinedType(userDefinedType));
-                sb.AppendLine(new SpliterScript(this.scriptsDelimiter));
-
-                userTypeNames.Add(userDefinedType.Name);
+                sb.AppendLine(this.CreateUserDefinedType(userDefinedType));
+                sb.AppendLine(new SpliterScript(this.scriptsDelimiter));                
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
             }
@@ -46,7 +35,7 @@ namespace DatabaseInterpreter.Core
             {
                 this.FeedbackInfo(OperationState.Begin, sequence);                
 
-                sb.AppendLine(this.AddSequence(sequence));                           
+                sb.AppendLine(this.CreateSequence(sequence));                           
 
                 this.FeedbackInfo(OperationState.End, sequence);
             }
@@ -67,7 +56,7 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Schema == table.Schema && item.TableName == table.Name).OrderBy(item => item.Order);
                 IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
 
-                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
+                ScriptBuilder sbTable = this.CreateTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
                 sb.AppendRange(sbTable.Scripts);
 
@@ -301,7 +290,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         #region Database Operation
 
-        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+        public override ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
             TablePrimaryKey primaryKey,
             IEnumerable<TableForeignKey> foreignKeys,
             IEnumerable<TableIndex> indexes,
@@ -426,17 +415,20 @@ CREATE TABLE {quotedTableName}(
             return sb;
         }
 
-        public override Script AddUserDefinedType(UserDefinedType userDefinedType)
+        public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
         {
-            TableColumn column = new TableColumn() { DataType = userDefinedType.Type, MaxLength = userDefinedType.MaxLength, Precision = userDefinedType.Precision, Scale = userDefinedType.Scale };
+            //only fetch first one, because SQLServer UDT is single attribute
+            UserDefinedTypeItem item = userDefinedType.Attributes.First();
+
+            TableColumn column = new TableColumn() { DataType = item.DataType, MaxLength = item.MaxLength, Precision = item.Precision, Scale = item.Scale };
             string dataLength = this.dbInterpreter.GetColumnDataLength(column);
 
-            string script = $@"CREATE TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)} FROM {this.GetQuotedString(userDefinedType.Type)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(userDefinedType.IsRequired ? "NOT NULL" : "NULL")};";
+            string script = $@"CREATE TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)} FROM {this.GetQuotedString(item.DataType)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(item.IsRequired ? "NOT NULL" : "NULL")};";
 
             return new CreateDbObjectScript<UserDefinedType>(script);
         }
 
-        public override Script AddSequence(Sequence sequence)
+        public override Script CreateSequence(Sequence sequence)
         {
             string script = 
 $@"CREATE SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)} AS {sequence.DataType} 
@@ -452,7 +444,12 @@ MAXVALUE {(long)sequence.MaxValue}
 
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
-            return new DropDbObjectScript<UserDefinedType>(this.GetDropSql("type", userDefinedType));
+            return new DropDbObjectScript<UserDefinedType>(this.GetDropSql("TYPE", userDefinedType));
+        }
+
+        public override Script DropSequence(Sequence sequence)
+        {
+            return new DropDbObjectScript<Sequence>(this.GetDropSql("SEQUENCE", sequence));
         }
 
         public override Script DropTable(Table table)

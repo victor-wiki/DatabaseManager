@@ -21,21 +21,13 @@ namespace DatabaseInterpreter.Core
 
             #region User Defined Type
 
-            List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
-
-            foreach (string userTypeName in userTypeNames)
+            foreach (var userDefinedType in schemaInfo.UserDefinedTypes)
             {
-                IEnumerable<UserDefinedType> userTypes = schemaInfo.UserDefinedTypes.Where(item => item.Name == userTypeName);
+                this.FeedbackInfo(OperationState.Begin, userDefinedType);
 
-                this.FeedbackInfo(OperationState.Begin, userTypes.First());
+                sb.AppendLine(this.CreateUserDefinedType(userDefinedType));
 
-                string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {item.Type}"));
-
-                string script = $"CREATE TYPE {this.GetQuotedString(userTypes.First().Schema)}.{this.GetQuotedString(userTypeName)} AS ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
-
-                sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
-
-                this.FeedbackInfo(OperationState.End, userTypes.First());
+                this.FeedbackInfo(OperationState.End, userDefinedType);
             }
 
             #endregion           
@@ -49,7 +41,7 @@ namespace DatabaseInterpreter.Core
             {
                 this.FeedbackInfo(OperationState.Begin, sequence);
 
-                sb.AppendLine(this.AddSequence(sequence));
+                sb.AppendLine(this.CreateSequence(sequence));
 
                 this.FeedbackInfo(OperationState.End, sequence);
             }
@@ -78,7 +70,7 @@ namespace DatabaseInterpreter.Core
                     }
                 }
 
-                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
+                ScriptBuilder sbTable = this.CreateTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
                 sb.AppendRange(sbTable.Scripts);
 
@@ -307,9 +299,16 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         #region Database Operation
 
-        public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
+        public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
+        {
+            string dataTypes = string.Join(",", userDefinedType.Attributes.Select(item => $"{this.GetQuotedString(item.AttrName)} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.DataType, Precision = item.Precision, Scale = item.Scale })}"));
 
-        public override Script AddSequence(Sequence sequence)
+            string script = $"CREATE TYPE {this.GetQuotedString(userDefinedType.Name)} AS ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
+
+            return new CreateDbObjectScript<UserDefinedType>(script);
+        }
+
+        public override Script CreateSequence(Sequence sequence)
         {
             string script =
 $@"CREATE SEQUENCE IF NOT EXISTS {this.GetQuotedDbObjectNameWithSchema(sequence)}
@@ -323,7 +322,7 @@ CACHE {sequence.CacheSize}
 
             return new CreateDbObjectScript<Sequence>(script);
         }
-        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+        public override ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
          TablePrimaryKey primaryKey,
          IEnumerable<TableForeignKey> foreignKeys,
          IEnumerable<TableIndex> indexes,
@@ -420,7 +419,12 @@ USING HEAP;";
         }
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
-            return new Script("");
+            return new Script($"DROP TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)};");
+        }
+
+        public override Script DropSequence(Sequence sequence)
+        {
+            return new Script($"DROP SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)};");
         }
 
         public override Script DropTable(Table table)

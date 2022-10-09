@@ -227,35 +227,35 @@
             // tsmiCreateScript
             // 
             this.tsmiCreateScript.Name = "tsmiCreateScript";
-            this.tsmiCreateScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCreateScript.Size = new System.Drawing.Size(156, 22);
             this.tsmiCreateScript.Text = "Create Script";
             this.tsmiCreateScript.Click += new System.EventHandler(this.tsmiCreateScript_Click);
             // 
             // tsmiSelectScript
             // 
             this.tsmiSelectScript.Name = "tsmiSelectScript";
-            this.tsmiSelectScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSelectScript.Size = new System.Drawing.Size(156, 22);
             this.tsmiSelectScript.Text = "Select Script";
             this.tsmiSelectScript.Click += new System.EventHandler(this.tsmiSelectScript_Click);
             // 
             // tsmiInsertScript
             // 
             this.tsmiInsertScript.Name = "tsmiInsertScript";
-            this.tsmiInsertScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiInsertScript.Size = new System.Drawing.Size(156, 22);
             this.tsmiInsertScript.Text = "Insert Script";
             this.tsmiInsertScript.Click += new System.EventHandler(this.tsmiInsertScript_Click);
             // 
             // tsmiUpdateScript
             // 
             this.tsmiUpdateScript.Name = "tsmiUpdateScript";
-            this.tsmiUpdateScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiUpdateScript.Size = new System.Drawing.Size(156, 22);
             this.tsmiUpdateScript.Text = "Update Script";
             this.tsmiUpdateScript.Click += new System.EventHandler(this.tsmiUpdateScript_Click);
             // 
             // tsmiDeleteScript
             // 
             this.tsmiDeleteScript.Name = "tsmiDeleteScript";
-            this.tsmiDeleteScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDeleteScript.Size = new System.Drawing.Size(156, 22);
             this.tsmiDeleteScript.Text = "Delete Script";
             this.tsmiDeleteScript.Click += new System.EventHandler(this.tsmiDeleteScript_Click);
             // 
@@ -294,28 +294,28 @@
             // tsmiBackup
             // 
             this.tsmiBackup.Name = "tsmiBackup";
-            this.tsmiBackup.Size = new System.Drawing.Size(137, 22);
+            this.tsmiBackup.Size = new System.Drawing.Size(180, 22);
             this.tsmiBackup.Text = "Backup";
             this.tsmiBackup.Click += new System.EventHandler(this.tsmiBackup_Click);
             // 
             // tsmiDiagnose
             // 
             this.tsmiDiagnose.Name = "tsmiDiagnose";
-            this.tsmiDiagnose.Size = new System.Drawing.Size(137, 22);
+            this.tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
             this.tsmiDiagnose.Text = "Diagnose";
             this.tsmiDiagnose.Click += new System.EventHandler(this.tsmiDiagnose_Click);
             // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(137, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
             this.tsmiClearData.Text = "Clear Data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 

@@ -110,14 +110,14 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type       
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>("");
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>("");
         }
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, "");
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, "");
         }
         #endregion
 

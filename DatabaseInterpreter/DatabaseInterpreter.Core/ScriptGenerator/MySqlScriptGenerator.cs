@@ -32,7 +32,7 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
                 IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
 
-                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
+                ScriptBuilder sbTable = this.CreateTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
                 sb.AppendRange(sbTable.Scripts);
 
@@ -249,11 +249,11 @@ namespace DatabaseInterpreter.Core
 
         #region Database Operation
 
-        public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
+        public override Script CreateUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
 
-        public override Script AddSequence(Sequence sequence) { return new Script(""); }
+        public override Script CreateSequence(Sequence sequence) { return new Script(""); }
 
-        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+        public override ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
             TablePrimaryKey primaryKey,
             IEnumerable<TableForeignKey> foreignKeys,
             IEnumerable<TableIndex> indexes,
@@ -354,6 +354,11 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
         }
 
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
+        {
+            return new Script("");
+        }
+
+        public override Script DropSequence(Sequence sequence)
         {
             return new Script("");
         }

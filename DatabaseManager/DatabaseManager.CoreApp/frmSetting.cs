@@ -31,6 +31,7 @@ namespace DatabaseManager
             this.numCommandTimeout.Value = setting.CommandTimeout;
             this.numDataBatchSize.Value = setting.DataBatchSize;
             this.chkShowBuiltinDatabase.Checked = setting.ShowBuiltinDatabase;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Checked = setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
             this.txtMySqlCharset.Text = setting.MySqlCharset;
             this.txtMySqlCharsetCollation.Text = setting.MySqlCharsetCollation;
             this.chkNotCreateIfExists.Checked = setting.NotCreateIfExists;
@@ -52,6 +53,7 @@ namespace DatabaseManager
             setting.CommandTimeout = (int)this.numCommandTimeout.Value;
             setting.DataBatchSize = (int)this.numDataBatchSize.Value;
             setting.ShowBuiltinDatabase = this.chkShowBuiltinDatabase.Checked;
+            setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr = this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Checked;
             setting.MySqlCharset = this.txtMySqlCharset.Text.Trim();
             setting.MySqlCharsetCollation = this.txtMySqlCharsetCollation.Text.Trim();
             setting.NotCreateIfExists = this.chkNotCreateIfExists.Checked;

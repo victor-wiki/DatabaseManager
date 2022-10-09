@@ -5,6 +5,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DatabaseConverter.Core
 {
@@ -18,8 +19,8 @@ namespace DatabaseConverter.Core
         private DbConverterOption option;
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public const DatabaseObjectType SupportDatabaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TableConstraint |
-                                                       DatabaseObjectType.View | DatabaseObjectType.Function |
-                                                       DatabaseObjectType.Procedure | DatabaseObjectType.TableTrigger | DatabaseObjectType.Sequence;
+                                                                    DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure | 
+                                                                    DatabaseObjectType.TableTrigger | DatabaseObjectType.Sequence | DatabaseObjectType.UserDefinedType;
 
 
         public TranslateHandler OnTranslated;
@@ -37,7 +38,13 @@ namespace DatabaseConverter.Core
 
         public void Translate(DatabaseObjectType databaseObjectType = DatabaseObjectType.None)
         {
-            this.TranslateSchema();
+            this.TranslateSchema();                  
+
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.UserDefinedType))
+            {
+                UserDefinedTypeTranslator userDefinedTypeTranslator = new UserDefinedTypeTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.UserDefinedTypes);
+                this.Translate(userDefinedTypeTranslator);
+            }
 
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Sequence))
             {
@@ -48,6 +55,7 @@ namespace DatabaseConverter.Core
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableColumn))
             {
                 ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
+                columnTranslator.UserDefinedTypes = this.UserDefinedTypes;
                 this.Translate(columnTranslator);
             }
 

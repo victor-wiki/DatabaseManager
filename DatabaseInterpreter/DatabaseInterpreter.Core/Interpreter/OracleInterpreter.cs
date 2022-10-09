@@ -120,14 +120,14 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type       
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(this.GetSqlForUserDefinedTypes(filter));
         }
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
@@ -142,7 +142,7 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""Type"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
+                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""DataType"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
                         FROM ALL_TYPES T
                         JOIN ALL_TYPE_ATTRS TA ON T.OWNER = TA.OWNER AND T.TYPE_NAME = TA.TYPE_NAME");
             }
@@ -311,14 +311,16 @@ namespace DatabaseInterpreter.Core
 
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT OWNER AS ""Schema"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",C.DATA_TYPE_OWNER AS ""DataTypeSchema"",
+            sb.Append($@"SELECT C.OWNER AS ""Schema"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",C.DATA_TYPE_OWNER AS ""DataTypeSchema"",
                  CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
                  DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" ,
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN NULL ELSE DATA_DEFAULT END AS ""DefaultValue"",
-                 CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp""
+                 CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp"",
+                 CASE WHEN T.TYPE_NAME IS NULL THEN 0 ELSE 1 END AS ""IsUserDefined""
                  FROM ALL_TAB_COLS C
+                 LEFT JOIN ALL_TYPES T ON C.OWNER=T.OWNER AND C.DATA_TYPE=T.TYPE_NAME
                  LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
-                 WHERE UPPER(OWNER)=UPPER('{this.GetDbSchema()}'){userGeneratedCondition}");
+                 WHERE UPPER(C.OWNER)=UPPER('{this.GetDbSchema()}'){userGeneratedCondition}");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 
@@ -728,6 +730,11 @@ namespace DatabaseInterpreter.Core
 
         public override string ParseDataType(TableColumn column)
         {
+            if (column.IsUserDefined)
+            {
+                return this.GetQuotedString(column.DataType);
+            }
+
             string dataType = column.DataType;
 
             if (dataType.IndexOf("(") < 0)

@@ -280,7 +280,7 @@ namespace DatabaseInterpreter.Core
                 filter.TableTriggerNames = schemaInfo.TableTriggers.Select(item => item.Name).ToArray();
                 filter.SequenceNames = schemaInfo.Sequences.Select(item => item.Name).ToArray();
 
-                if(filter.Schema == null)
+                if (filter.Schema == null)
                 {
 
                 }
@@ -338,6 +338,36 @@ namespace DatabaseInterpreter.Core
             }
 
             return indexes;
+        }
+
+        public static List<UserDefinedType> GetUserDefinedTypes(List<UserDefinedTypeItem> userDefinedTypeItems)
+        {
+            List<UserDefinedType> userDefinedTypes = new List<UserDefinedType>();
+
+            var groups = userDefinedTypeItems.GroupBy(item => new { item.Schema, item.Name });
+
+            foreach (var group in groups)
+            {
+                UserDefinedType userDefinedType = new UserDefinedType()
+                {
+                    Schema = group.Key.Schema,
+                    Name = group.Key.Name
+                };
+
+                userDefinedType.Attributes.AddRange(group.Select(item => new UserDefinedTypeItem()
+                {
+                    AttrName = item.AttrName,
+                    DataType= item.DataType,
+                    MaxLength = item.MaxLength,
+                    Precision = item.Precision,
+                    Scale = item.Scale,
+                    IsNullable = item.IsNullable
+                }));
+
+                userDefinedTypes.Add(userDefinedType);
+            }
+
+            return userDefinedTypes;
         }
 
         public static List<TableForeignKey> GetTableForeignKeys(List<TableForeignKeyItem> foreignKeyItems)
@@ -478,7 +508,7 @@ namespace DatabaseInterpreter.Core
             }
 
             return value1 == value2;
-        }        
+        }
 
         public static void MapDatabaseObjectSchema(SchemaInfo schemaInfo, List<SchemaMappingInfo> mappings)
         {
@@ -551,8 +581,8 @@ namespace DatabaseInterpreter.Core
             }
 
             return mappedSchema;
-        }    
-        
+        }
+
         public static SchemaInfo GetSchemaInfoByDbObject(DatabaseObject dbObject)
         {
             SchemaInfo schemaInfo = new SchemaInfo();
@@ -580,6 +610,10 @@ namespace DatabaseInterpreter.Core
             else if (dbObject is Sequence)
             {
                 schemaInfo.Sequences.Add(dbObject as Sequence);
+            }
+            else if (dbObject is UserDefinedType)
+            {
+                schemaInfo.UserDefinedTypes.Add(dbObject as UserDefinedType);
             }
 
             return schemaInfo;

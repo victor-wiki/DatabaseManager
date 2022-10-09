@@ -112,13 +112,13 @@ namespace DatabaseInterpreter.Core
 
                     if (this.option.DataGenerateThreshold.HasValue && total > this.option.DataGenerateThreshold.Value)
                     {
-                        this.FeedbackInfo($"Record count of table \"{table.Name}\" exceeds {this.option.DataGenerateThreshold.Value},ignore it.");
+                        this.FeedbackInfo($"Record count of table \"{this.GetQuotedFullTableName(table)}\" exceeds {this.option.DataGenerateThreshold.Value},ignore it.");
                         continue;
                     }
 
                     int pageSize = this.dbInterpreter.DataBatchSize;
 
-                    this.FeedbackInfo($"{strTableCount}Table \"{table.Name}\":record count is {total}.");
+                    this.FeedbackInfo($"{strTableCount}Table \"{this.GetQuotedFullTableName(table)}\":record count is {total}.");
 
                     Dictionary<long, List<Dictionary<string, object>>> dictPagedData;
 
@@ -138,7 +138,7 @@ namespace DatabaseInterpreter.Core
                         dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize);
                     }
 
-                    this.FeedbackInfo($"{strTableCount}Table \"{table.Name}\":data read finished.");
+                    this.FeedbackInfo($"{strTableCount}Table \"{this.GetQuotedFullTableName(table) }\":data read finished.");
 
                     if (count > 1)
                     {
@@ -382,6 +382,18 @@ namespace DatabaseInterpreter.Core
                             {
                                 value = null;
                             }
+                        }
+                    }
+
+                    if(column.IsUserDefined)
+                    {
+                        if(this.databaseType == DatabaseType.Postgres)
+                        {
+                            value = $"row({value})";
+                        }
+                        else if (this.databaseType == DatabaseType.Oracle)
+                        {
+                            value = $"{this.GetQuotedString(column.DataType)}({value})";
                         }
                     }
 
@@ -713,14 +725,15 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation  
-        public abstract Script AddUserDefinedType(UserDefinedType userDefinedType);
-        public abstract Script AddSequence(Sequence sequence);
-        public abstract ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+        public abstract Script CreateUserDefinedType(UserDefinedType userDefinedType);
+        public abstract Script CreateSequence(Sequence sequence);
+        public abstract ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
            TablePrimaryKey primaryKey,
            IEnumerable<TableForeignKey> foreignKeys,
            IEnumerable<TableIndex> indexes,
            IEnumerable<TableConstraint> constraints);
         public abstract Script DropUserDefinedType(UserDefinedType userDefinedType);
+        public abstract Script DropSequence(Sequence sequence);
         public abstract Script DropTable(Table table);
         public abstract Script DropView(View view);
         public abstract Script DropTrigger(TableTrigger trigger);
@@ -728,7 +741,7 @@ namespace DatabaseInterpreter.Core
         public abstract Script DropProcedure(Procedure procedure);
         public abstract IEnumerable<Script> SetConstrainsEnabled(bool enabled);
 
-        public virtual Script Add(DatabaseObject dbObject)
+        public virtual Script Create(DatabaseObject dbObject)
         {
             if (dbObject is TableColumn column)
             {
@@ -752,7 +765,7 @@ namespace DatabaseInterpreter.Core
             }
             else if (dbObject is UserDefinedType userDefinedType)
             {
-                return this.AddUserDefinedType(userDefinedType);
+                return this.CreateUserDefinedType(userDefinedType);
             }
             else if (dbObject is ScriptDbObject scriptDbObject)
             {
@@ -807,6 +820,10 @@ namespace DatabaseInterpreter.Core
             else if (dbObject is UserDefinedType userDefinedType)
             {
                 return this.DropUserDefinedType(userDefinedType);
+            }
+            else if(dbObject is Sequence sequence)
+            {
+                return this.DropSequence(sequence);
             }
 
             throw new NotSupportedException($"Not support to drop {dbObject.GetType().Name}.");

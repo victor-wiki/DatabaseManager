@@ -7,6 +7,7 @@ namespace DatabaseInterpreter.Model
         public int CommandTimeout { get; set; } = 600;
         public int DataBatchSize { get; set; } = 500;
         public bool ShowBuiltinDatabase { get; set; }
+        public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;
         public bool NotCreateIfExists { get; set; }
         public string MySqlCharset { get; set; } = "utf8mb4";
         public string MySqlCharsetCollation { get; set; } = "utf8mb4_bin";

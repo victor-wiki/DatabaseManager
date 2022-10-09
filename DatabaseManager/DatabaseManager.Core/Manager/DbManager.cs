@@ -163,6 +163,7 @@ namespace DatabaseManager.Core
                     await this.DropDbObjects(connection, schemaInfo.Tables);
                     await this.DropDbObjects(connection, schemaInfo.Functions);
                     await this.DropDbObjects(connection, schemaInfo.UserDefinedTypes);
+                    await this.DropDbObjects(connection, schemaInfo.Sequences);
                 }
             }
             catch (Exception ex)

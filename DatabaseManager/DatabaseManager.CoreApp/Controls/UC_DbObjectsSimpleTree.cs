@@ -22,7 +22,7 @@ namespace DatabaseManager.Controls
             TreeView.CheckForIllegalCrossThreadCalls = false;
         }
 
-        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, DatabaseObjectType excludeObjType = DatabaseObjectType.None)
+        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo)
         {
             this.tvDbObjects.Nodes.Clear();
 
@@ -30,12 +30,7 @@ namespace DatabaseManager.Controls
 
             DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
 
-            databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
-
-            if (excludeObjType != DatabaseObjectType.None)
-            {
-                databaseObjectType = databaseObjectType ^ DatabaseObjectType.UserDefinedType;
-            }
+            databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;           
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };

@@ -38,6 +38,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr = new System.Windows.Forms.CheckBox();
             this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.chkLogError = new System.Windows.Forms.CheckBox();
@@ -54,8 +55,8 @@
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
             this.tabOracle = new System.Windows.Forms.TabPage();
-            this.label6 = new System.Windows.Forms.Label();
             this.cboOracleGeometryType = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -183,6 +184,7 @@
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr);
             this.tabGeneral.Controls.Add(this.cboPreferredDatabase);
             this.tabGeneral.Controls.Add(this.label5);
             this.tabGeneral.Controls.Add(this.chkLogError);
@@ -206,11 +208,24 @@
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
             // 
+            // chkUseOriginalDataTypeIfUdtHasOnlyOneAttr
+            // 
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.AutoSize = true;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Checked = true;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Location = new System.Drawing.Point(13, 164);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Margin = new System.Windows.Forms.Padding(4);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Name = "chkUseOriginalDataTypeIfUdtHasOnlyOneAttr";
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Size = new System.Drawing.Size(404, 21);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.TabIndex = 25;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Text = "Use original data type if user defined type has only one attribute";
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.UseVisualStyleBackColor = true;
+            // 
             // cboPreferredDatabase
             // 
             this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(154, 278);
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(154, 295);
             this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboPreferredDatabase.Name = "cboPreferredDatabase";
             this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
@@ -219,7 +234,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(10, 282);
+            this.label5.Location = new System.Drawing.Point(10, 299);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(124, 17);
@@ -231,7 +246,7 @@
             this.chkLogError.AutoSize = true;
             this.chkLogError.Checked = true;
             this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(206, 241);
+            this.chkLogError.Location = new System.Drawing.Point(206, 259);
             this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogError.Name = "chkLogError";
             this.chkLogError.Size = new System.Drawing.Size(57, 21);
@@ -244,7 +259,7 @@
             this.chkLogInfo.AutoSize = true;
             this.chkLogInfo.Checked = true;
             this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(92, 241);
+            this.chkLogInfo.Location = new System.Drawing.Point(92, 259);
             this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogInfo.Name = "chkLogInfo";
             this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
@@ -255,7 +270,7 @@
             // lblLogType
             // 
             this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(11, 241);
+            this.lblLogType.Location = new System.Drawing.Point(11, 259);
             this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogType.Name = "lblLogType";
             this.lblLogType.Size = new System.Drawing.Size(62, 17);
@@ -285,7 +300,7 @@
             // chkNotCreateIfExists
             // 
             this.chkNotCreateIfExists.AutoSize = true;
-            this.chkNotCreateIfExists.Location = new System.Drawing.Point(13, 171);
+            this.chkNotCreateIfExists.Location = new System.Drawing.Point(13, 192);
             this.chkNotCreateIfExists.Margin = new System.Windows.Forms.Padding(4);
             this.chkNotCreateIfExists.Name = "chkNotCreateIfExists";
             this.chkNotCreateIfExists.Size = new System.Drawing.Size(176, 21);
@@ -307,7 +322,7 @@
             // chkEnableLog
             // 
             this.chkEnableLog.AutoSize = true;
-            this.chkEnableLog.Location = new System.Drawing.Point(13, 205);
+            this.chkEnableLog.Location = new System.Drawing.Point(13, 225);
             this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
             this.chkEnableLog.Name = "chkEnableLog";
             this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
@@ -378,16 +393,6 @@
             this.tabOracle.TabIndex = 2;
             this.tabOracle.Text = "Oracle";
             // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(17, 14);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(100, 17);
-            this.label6.TabIndex = 2;
-            this.label6.Text = "Geometry Type:";
-            // 
             // cboOracleGeometryType
             // 
             this.cboOracleGeometryType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -400,6 +405,16 @@
             this.cboOracleGeometryType.Name = "cboOracleGeometryType";
             this.cboOracleGeometryType.Size = new System.Drawing.Size(138, 25);
             this.cboOracleGeometryType.TabIndex = 20;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(17, 14);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(100, 17);
+            this.label6.TabIndex = 2;
+            this.label6.Text = "Geometry Type:";
             // 
             // frmSetting
             // 
@@ -458,5 +473,6 @@
         private System.Windows.Forms.TabPage tabOracle;
         private System.Windows.Forms.ComboBox cboOracleGeometryType;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.CheckBox chkUseOriginalDataTypeIfUdtHasOnlyOneAttr;
     }
 }

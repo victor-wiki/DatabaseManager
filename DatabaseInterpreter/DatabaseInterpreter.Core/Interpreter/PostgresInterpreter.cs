@@ -82,14 +82,14 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region User Defined Type  
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(this.GetSqlForUserDefinedTypes(filter));
         }
 
-        public override Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedType>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
@@ -107,7 +107,10 @@ namespace DatabaseInterpreter.Core
             else
             {
                 sb.Append($@"SELECT n.nspname AS ""Schema"",t.typname AS ""Name"",a.attname AS ""AttrName"",
-                        pg_catalog.format_type ( a.atttypid, a.atttypmod ) AS ""Type"",
+                        pg_catalog.format_type(a.atttypid, null) AS ""DataType"",
+                        COALESCE(information_schema._pg_char_max_length(a.atttypid, a.atttypmod),-1) AS ""MaxLength"",
+                        information_schema._pg_numeric_precision(a.atttypid, a.atttypmod) AS ""Precision"",
+                        information_schema._pg_numeric_scale(a.atttypid, a.atttypmod) AS ""Scale"",
                         CASE a.attnotnull WHEN true THEN 0 ELSE 1 END AS ""IsNullable""
                         FROM pg_catalog.pg_attribute a
                         JOIN pg_catalog.pg_type t ON a.attrelid = t.typrelid
@@ -721,7 +724,12 @@ namespace DatabaseInterpreter.Core
 
         public override string ParseDataType(TableColumn column)
         {
-            string dataType = column.DataType;
+            if (column.IsUserDefined)
+            {
+                return this.GetQuotedString(column.DataType);
+            }
+
+            string dataType = column.DataType;           
 
             if (dataType != null && dataType.IndexOf("(") < 0)
             {

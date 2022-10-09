@@ -9,13 +9,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
     public class ScriptTokenProcessor
     {
         private const string NameExpression = @"^([a-zA-Z_\s]+)$";
-        private ColumnTranslator columnTranslator;
+        private DataTypeTranslator dataTypeTranslator;
         private Dictionary<string, string> dictChangedValues = new Dictionary<string, string>();
         private List<IEnumerable<VariableMapping>> triggerVariableMappings;
         public CommonScript Script { get; set; }
@@ -52,8 +53,8 @@ namespace DatabaseConverter.Core
             IEnumerable<string> keywords = KeywordManager.GetKeywords(this.TargetDbInterpreter.DatabaseType);
             IEnumerable<string> functions = FunctionManager.GetFunctionSpecifications(this.TargetDbInterpreter.DatabaseType).Select(item => item.Name);
 
-            this.columnTranslator = new ColumnTranslator(this.SourceDbInterpreter, this.TargetDbInterpreter, null);
-            columnTranslator.LoadMappings();
+            this.dataTypeTranslator = new DataTypeTranslator(this.SourceDbInterpreter, this.TargetDbInterpreter);
+            dataTypeTranslator.LoadMappings();
 
             DatabaseType targeDbType = this.TargetDbInterpreter.DatabaseType;
 
@@ -91,11 +92,15 @@ namespace DatabaseConverter.Core
             {
                 if (token.Symbol != null)
                 {
-                    TableColumn tableColumn = this.CreateTableColumn(token.Symbol);
+                    TableColumn column = this.CreateTableColumn(token.Symbol);
 
-                    columnTranslator.ConvertDataType(tableColumn);
+                    DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfoByTableColumn(column);
 
-                    token.Symbol = this.TargetDbInterpreter.ParseDataType(tableColumn);
+                    dataTypeTranslator.Translate(dataTypeInfo);
+
+                    DataTypeHelper.SetDataTypeInfoToTableColumn(dataTypeInfo, column);
+
+                    token.Symbol = this.TargetDbInterpreter.ParseDataType(column);
                 }
             };
 
@@ -719,8 +724,10 @@ namespace DatabaseConverter.Core
 
                 if (userDefinedType != null)
                 {
-                    column.DataType = userDefinedType.Type;
-                    column.MaxLength = userDefinedType.MaxLength;
+                    var attr = userDefinedType.Attributes.First();
+
+                    column.DataType = attr.DataType;
+                    column.MaxLength = attr.MaxLength;
                 }
                 else
                 {

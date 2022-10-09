@@ -295,7 +295,7 @@ namespace DatabaseManager.Controls
 
                 if (userDefindedType != null)
                 {
-                    dataType = userDefindedType.Type;
+                    dataType = userDefindedType.Attributes.First().DataType;
                 }
 
                 DataTypeSpecification dataTypeSpec = this.dataTypeSpecifications.FirstOrDefault(item => item.Name == dataType);

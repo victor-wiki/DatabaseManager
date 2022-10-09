@@ -119,7 +119,7 @@ namespace DatabaseManager.Core
             {
                 var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Schema);
                 scripts.Add(this.targetScriptGenerator.Drop(targetScriptDbObject));
-                scripts.Add(this.targetScriptGenerator.Add(cloneObj));
+                scripts.Add(this.targetScriptGenerator.Create(cloneObj));
             }
 
             return scripts;
@@ -137,7 +137,7 @@ namespace DatabaseManager.Core
             if (diffType == DbDifferenceType.Added)
             {
                 var cloneObj = this.CloneDbObject(source, targetDbSchema);
-                scripts.Add(this.targetScriptGenerator.AddUserDefinedType(cloneObj));
+                scripts.Add(this.targetScriptGenerator.CreateUserDefinedType(cloneObj));
             }
             else if (diffType == DbDifferenceType.Deleted)
             {
@@ -147,7 +147,7 @@ namespace DatabaseManager.Core
             {
                 var cloneObj = this.CloneDbObject(source, target.Schema);
                 scripts.Add(this.targetScriptGenerator.DropUserDefinedType(target));
-                scripts.Add(this.targetScriptGenerator.AddUserDefinedType(cloneObj));
+                scripts.Add(this.targetScriptGenerator.CreateUserDefinedType(cloneObj));
             }
 
             return scripts;
@@ -176,7 +176,7 @@ namespace DatabaseManager.Core
                 this.ChangeSchema(indexes, targetDbSchema);
                 this.ChangeSchema(constraints, targetDbSchema);
 
-                scripts.AddRange(this.targetScriptGenerator.AddTable(sourceTable, columns, primaryKey, foreignKeys, indexes, constraints).Scripts);
+                scripts.AddRange(this.targetScriptGenerator.CreateTable(sourceTable, columns, primaryKey, foreignKeys, indexes, constraints).Scripts);
             }
             else if (diffType == DbDifferenceType.Deleted)
             {
@@ -233,7 +233,7 @@ namespace DatabaseManager.Core
 
             if (diffType == DbDifferenceType.Added)
             {
-                scripts.Add(this.targetScriptGenerator.Add(this.CloneTableChild(source, difference.DatabaseObjectType, targetTable.Schema)));
+                scripts.Add(this.targetScriptGenerator.Create(this.CloneTableChild(source, difference.DatabaseObjectType, targetTable.Schema)));
             }
             else if (diffType == DbDifferenceType.Deleted)
             {

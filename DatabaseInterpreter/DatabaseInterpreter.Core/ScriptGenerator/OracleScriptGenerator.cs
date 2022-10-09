@@ -23,33 +23,25 @@ namespace DatabaseInterpreter.Core
 
             string dbSchema = this.GetDbSchema();
 
-            //#region User Defined Type
+            #region User Defined Type          
 
-            //List<string> userTypeNames = schemaInfo.UserDefinedTypes.Select(item => item.Name).Distinct().ToList();
+            foreach (var userDefinedType in schemaInfo.UserDefinedTypes)
+            {
+                this.FeedbackInfo(OperationState.Begin, userDefinedType);
 
-            //foreach (string userTypeName in userTypeNames)
-            //{
-            //    IEnumerable<UserDefinedType> userTypes = schemaInfo.UserDefinedTypes.Where(item => item.Name == userTypeName);
+                sb.AppendLine(this.CreateUserDefinedType(userDefinedType));
 
-            //    this.FeedbackInfo(OperationState.Begin, userTypes.First());
+                this.FeedbackInfo(OperationState.End, userDefinedType);
+            }
 
-            //    string dataTypes = string.Join(",", userTypes.Select(item => $"{item.AttrName} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.Type, Precision = item.Precision, Scale = item.Scale })}"));
-
-            //    string script = $"CREATE TYPE {this.GetQuotedString(userTypeName)} AS OBJECT ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
-
-            //    sb.AppendLine(new CreateDbObjectScript<UserDefinedType>(script));
-
-            //    this.FeedbackInfo(OperationState.End, userTypes.First());
-            //}
-
-            //#endregion
+            #endregion
 
             #region Sequence          
             foreach (Sequence sequence in schemaInfo.Sequences)
             {
                 this.FeedbackInfo(OperationState.Begin, sequence);
 
-                sb.AppendLine(this.AddSequence(sequence));
+                sb.AppendLine(this.CreateSequence(sequence));
 
                 this.FeedbackInfo(OperationState.End, sequence);
             }
@@ -70,7 +62,7 @@ namespace DatabaseInterpreter.Core
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.TableName == table.Name).OrderBy(item => item.Order);
                 IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
 
-                ScriptBuilder sbTable = this.AddTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
+                ScriptBuilder sbTable = this.CreateTable(table, columns, primaryKey, foreignKeys, indexes, constraints);
 
                 sb.AppendRange(sbTable.Scripts);
 
@@ -282,9 +274,16 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
         #region Database Operation
 
-        public override Script AddUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
+        public override Script CreateUserDefinedType(UserDefinedType userDefinedType) 
+        {
+            string dataTypes = string.Join(",", userDefinedType.Attributes.Select(item => $"{this.GetQuotedString(item.AttrName)} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.DataType, Precision = item.Precision, Scale = item.Scale })}"));
 
-        public override Script AddSequence(Sequence sequence)
+            string script = $"CREATE TYPE {this.GetQuotedString(userDefinedType.Name)} AS OBJECT ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
+
+            return new CreateDbObjectScript<UserDefinedType>(script);
+        }
+
+        public override Script CreateSequence(Sequence sequence)
         {
             string script =
 $@"CREATE SEQUENCE {this.GetQuotedString(sequence.Name)}
@@ -299,7 +298,7 @@ CACHE {sequence.CacheSize}
             return new CreateDbObjectScript<Sequence>(script);
         }
 
-        public override ScriptBuilder AddTable(Table table, IEnumerable<TableColumn> columns,
+        public override ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
          TablePrimaryKey primaryKey,
          IEnumerable<TableForeignKey> foreignKeys,
          IEnumerable<TableIndex> indexes,
@@ -310,15 +309,16 @@ CACHE {sequence.CacheSize}
             string tableName = table.Name;
             string quotedTableName = this.GetQuotedFullTableName(table);
 
+            string tablespace = this.dbInterpreter.ConnectionInfo.Database;
+            string strTablespace = string.IsNullOrEmpty(tablespace) ? "" : $"TABLESPACE {tablespace}";
+
             #region Create Table
 
             string tableScript =
 $@"
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-)
-TABLESPACE
-{this.dbInterpreter.ConnectionInfo.Database}" + this.scriptsDelimiter;
+){strTablespace}" + this.scriptsDelimiter;
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 
@@ -395,9 +395,15 @@ TABLESPACE
 
             return sb;
         }
+
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
-            return new Script("");
+            return new Script($"DROP TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)} FORCE;");
+        }
+
+        public override Script DropSequence(Sequence sequence)
+        {
+            return new Script($"DROP SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)};");
         }
 
         public override Script DropTable(Table table)

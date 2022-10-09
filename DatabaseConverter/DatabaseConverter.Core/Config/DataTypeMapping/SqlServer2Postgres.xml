@@ -123,7 +123,7 @@
   <mapping>
     <source type="tinyint" />
     <target type="smallint"/>
-	<special name="isDentity" type="integer"></special>
+	<special name="isIdentity" type="integer"></special>
   </mapping>
   <mapping>
     <source type="uniqueidentifier" />

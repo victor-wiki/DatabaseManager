@@ -111,5 +111,25 @@ namespace DatabaseInterpreter.Core
 
             return dataTypeInfo;
         }
+
+        public static DataTypeInfo GetDataTypeInfoByTableColumn(TableColumn column)
+        {
+            return  new DataTypeInfo()
+            {
+                DataType = column.DataType,
+                MaxLength = column.MaxLength,
+                Precision = column.Precision,
+                Scale = column.Scale,
+                IsIdentity = column.IsIdentity
+            };
+        }  
+        
+        public static void SetDataTypeInfoToTableColumn(DataTypeInfo dataTypeInfo, TableColumn column)
+        {
+            column.DataType = dataTypeInfo.DataType;
+            column.MaxLength = dataTypeInfo.MaxLength;
+            column.Precision = dataTypeInfo.Precision;
+            column.Scale = dataTypeInfo.Scale;
+        }
     }
 }

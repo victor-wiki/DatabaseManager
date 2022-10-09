@@ -566,11 +566,11 @@ namespace DatabaseManager
                 IEnumerable<TableIndex> indexes = schemaInfo.TableIndexes.Where(item => item.Schema == table.Schema && item.TableName == table.Name).OrderBy(item => item.Name);
                 IEnumerable<TableConstraint> constraints = schemaInfo.TableConstraints.Where(item => item.Schema == table.Schema && item.TableName == table.Name);
 
-                return scriptGenerator.AddTable(table, columns, tablePrimaryKey, foreignKeys, indexes, constraints).ToString();
+                return scriptGenerator.CreateTable(table, columns, tablePrimaryKey, foreignKeys, indexes, constraints).ToString();
             }
             else
             {
-                return scriptGenerator.Add(dbObj).Content;
+                return scriptGenerator.Create(dbObj).Content;
             }
         }
 

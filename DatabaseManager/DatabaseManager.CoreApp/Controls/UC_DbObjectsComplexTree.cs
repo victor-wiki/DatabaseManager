@@ -122,7 +122,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable;
-            this.tsmiTranslate.Visible = isTable || isSequence || isScriptObject;
+            this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
@@ -201,8 +201,11 @@ namespace DatabaseManager.Controls
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
 
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
-            {
-                string text = $"{userDefinedType.Name}{(string.IsNullOrEmpty(userDefinedType.Type) ? "" : "({userDefinedType.Type})")}";
+            {                
+                string dataType = userDefinedType.Attributes.Count > 1 ? "" :userDefinedType.Attributes.First().DataType;
+                string strDataType = string.IsNullOrEmpty(dataType) ? "" : $"({dataType})";
+
+                string text = $"{userDefinedType.Name}{strDataType}";
 
                 string imageKeyName = nameof(userDefinedType);
 
@@ -263,13 +266,9 @@ namespace DatabaseManager.Controls
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Functions), nameof(DbObjectTreeFolderType.Functions), true));
             databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Procedures), nameof(DbObjectTreeFolderType.Procedures), true));
 
-            if (this.databaseType == DatabaseType.SqlServer || this.databaseType == DatabaseType.Postgres)
-            {
-                databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
-            }
-
             if (this.databaseType != DatabaseType.MySql)
             {
+                databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Types), nameof(DbObjectTreeFolderType.Types), true));
                 databaseNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Sequences), nameof(DbObjectTreeFolderType.Sequences), true));
             }
         }
@@ -361,7 +360,11 @@ namespace DatabaseManager.Controls
         {
             string text = dbInterpreter.ParseColumn(table, column).Replace(dbInterpreter.QuotationLeftChar.ToString(), "").Replace(dbInterpreter.QuotationRightChar.ToString(), "");
 
-            return $"{column.Name} ({text.Replace(column.Name + " ", "").ToLower().Trim()})";
+            int index = text.IndexOf(column.Name);
+
+            string displayText = text.Substring(index+column.Name.Length);
+
+            return $"{column.Name} ({displayText.ToLower().Trim()})";
         }
 
         private async void tvDbObjects_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -665,7 +668,7 @@ namespace DatabaseManager.Controls
             {
                 if (MessageBox.Show("Are you sure to delete this object?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    Task.Run(() => this.DropDbObject(node));
+                    this.DropDbObject(node);
                 }
             }
         }
