@@ -8,7 +8,7 @@
   Compare database objects, generate scripts of changes and sync the changes to target database. 
 
 ### Generate Scripts
-   Generate database objects scripts of create schema and insert data.
+   Generate database objects scripts of create schema and insert data.   
     
 ### View Data
   It supports pagination, sort and filter for single table.
@@ -24,6 +24,9 @@
   
 ### Empty Database
   Delete all objects of a database.
+  
+### Translate Script Online
+  The web application under this project provides a Web UI that allows translate script from one database to another.
 
 ## UI - Main
 ![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=2)
@@ -42,4 +45,7 @@
 
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=2)
+
+## UI - Tranlate Script Online
+![Tranlate Script Online](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateOnline.png?raw=true&rid=2)
 
