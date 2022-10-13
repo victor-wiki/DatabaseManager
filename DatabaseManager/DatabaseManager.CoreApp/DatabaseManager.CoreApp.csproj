@@ -8,22 +8,14 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.5</Version>
+    <Version>2.0.6</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>add user defined type convert</PackageReleaseNotes>
+    <PackageReleaseNotes>translate method move to TranslatorManager</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.5</AssemblyVersion>
-    <FileVersion>2.0.5</FileVersion>
+    <AssemblyVersion>2.0.6</AssemblyVersion>
+    <FileVersion>2.0.6</FileVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="frmColumnMapping - 复制.Designer.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Remove="frmColumnMapping - 复制.resx" />
-  </ItemGroup>
-
+	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.2" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.900.6-rc0" />

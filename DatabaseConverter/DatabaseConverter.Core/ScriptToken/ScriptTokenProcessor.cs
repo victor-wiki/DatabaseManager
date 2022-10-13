@@ -231,7 +231,24 @@ namespace DatabaseConverter.Core
                     {
                         if (!this.IsTriggerInteralTable(token))
                         {
-                            token.Symbol = this.GetNewQuotedString(token.Symbol);
+                            bool handled = false;
+
+                            if (statement is SelectStatement select)
+                            {
+                                if (select.IntoTableName?.Symbol == token.Symbol)
+                                {
+                                    if (this.dictChangedValues.Keys.Contains(token.Symbol))
+                                    {
+                                        token.Symbol = this.dictChangedValues[token.Symbol];
+                                        handled = true;
+                                    }
+                                }
+                            }
+
+                            if (!handled)
+                            {
+                                token.Symbol = this.GetNewQuotedString(token.Symbol);
+                            }
                         }
                     }
                 }
@@ -534,11 +551,23 @@ namespace DatabaseConverter.Core
             return alias;
         }
 
-        private void ReplaceTokenSymbol(Dictionary<string, string> dict, TokenInfo tokenInfo)
+        private void ReplaceTokenSymbol(Dictionary<string, string> dict, TokenInfo token)
         {
             foreach (var pv in dict)
             {
-                tokenInfo.Symbol = tokenInfo.Symbol.Replace(pv.Key, pv.Value);
+                if (dict.Keys.Contains(token.Symbol))
+                {
+                    token.Symbol = token.Symbol.Replace(pv.Key, pv.Value);
+                }
+                else if(token.Symbol.Contains(pv.Key))
+                {
+                    if(!token.Symbol.Contains($"'{pv.Key}'"))
+                    {
+                        string pattern = pv.Key.StartsWith("@") ? $"({pv.Key})" : $"\\b{pv.Key}\\b";
+
+                        token.Symbol = Regex.Replace(token.Symbol, pattern, pv.Value, RegexOptions.Multiline);
+                    }                    
+                }
             }
         }
 

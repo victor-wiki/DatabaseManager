@@ -1,0 +1,100 @@
+﻿@page
+@using DatabaseInterpreter.Model
+@{
+    var databaseTypes = Enum.GetNames(typeof(DatabaseType));
+
+    var databaseDropDownItems = new List<SelectListItem>();
+
+    databaseDropDownItems.AddRange(databaseTypes.Select(item => new SelectListItem() { Text = item, Value = item }));
+}
+
+<style>
+    .contentPanel {
+        display: inline;
+        width: 505px;
+        float: left;
+    }
+
+    .actionPanel {
+        display: inline;
+        width: 80px;
+        float: left;
+        height: 300px;
+    }
+
+    .actionButton {
+        margin-top: 220px;
+    }
+</style>
+
+<script type="text/javascript">
+    var validate=function(){
+        var sourceDatabaseType = $("#sourceDatabaseType").val();
+        var targetDatabaseType = $("#targetDatabaseType").val();
+
+        if (sourceDatabaseType == "Unknown" || targetDatabaseType == "Unknown") {
+            alert('please specify source database type and target database type.');
+            return false;
+        }
+
+        var source = $("#source").val();
+
+        if(source==""){
+            alert('the source content can not be empty!');
+            return false;
+        }
+
+        return true;
+    }
+
+    var post = function () {
+        var isValid = validate();
+
+        if(!isValid){
+            return;
+        }
+
+        var data = $("#translateForm").serialize();       
+
+        $.ajax({
+            type: "POST",
+            url: "/Home/Translate",
+            data: data,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function (response) {
+                if(response){
+                    $("#target").val(response);
+                }else{
+                    $("#target").val("N/A");
+                }                
+            },
+            error: function (result) {
+                alert(result);
+            }
+        });
+    };
+</script>
+
+<div>
+    <form id="translateForm">
+        <div class="contentPanel">
+            <div>
+                <span>Source:</span> @Html.DropDownList("sourceDatabaseType", databaseDropDownItems)
+            </div>
+            <div style="margin-top:5px;">
+                <textarea id="source" name="source" cols="65" rows="20" spellcheck="false"></textarea>
+            </div>
+        </div>
+        <div class="actionPanel">
+            <input type="button" value="Translate" class="actionButton" onclick="post()" />
+        </div>
+        <div class="contentPanel">
+            <div>
+                <span>Target:</span> @Html.DropDownList("targetDatabaseType", databaseDropDownItems)
+            </div>
+            <div style="margin-top:5px;">
+                <textarea id="target" name="target" cols="65" rows="20" spellcheck="false"></textarea>
+            </div>
+        </div>
+    </form>
+</div>

@@ -232,33 +232,7 @@ namespace DatabaseManager.Core
             {
                 this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
             }
-        }
-
-        public async Task Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, TranslateHandler translateHandler = null)
-        {
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
-            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
-
-            DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, connectionInfo, sourceScriptOption) };
-            DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, new ConnectionInfo(), sourceScriptOption) };
-
-            using (DbConverter dbConverter = new DbConverter(source, target))
-            {
-                dbConverter.Option.OnlyForTranslate = true;
-                dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
-                dbConverter.Option.ExecuteScriptOnTargetServer = false;
-                dbConverter.Option.ConvertComputeColumnExpression = true;
-
-                dbConverter.Subscribe(this.observer);
-
-                if (translateHandler != null)
-                {
-                    dbConverter.OnTranslated += translateHandler;
-                }                  
-
-                await dbConverter.Translate(dbObject);
-            }
-        }
+        }       
 
         public bool Backup(BackupSetting setting, ConnectionInfo connectionInfo)
         {

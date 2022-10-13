@@ -16,11 +16,11 @@ namespace DatabaseConverter.Core
     public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
-        private IEnumerable<T> scripts;       
+        private IEnumerable<T> scripts;
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
-        {          
+        {
             this.scripts = scripts;
         }
 
@@ -64,7 +64,7 @@ namespace DatabaseConverter.Core
 
                 tokenProcessor.Process();
 
-                string anotherDefinition = null;                
+                string anotherDefinition = null;
 
                 if (typeof(T) == typeof(TableTrigger))
                 {
@@ -76,19 +76,12 @@ namespace DatabaseConverter.Core
 
                         NameToken triggerFunctionName = new NameToken(nameWithSchema);
 
-                        RoutineScript rs = new RoutineScript() { Name= triggerFunctionName, Type = RoutineType.FUNCTION, ReturnDataType = new TokenInfo("trigger") };
+                        RoutineScript rs = new RoutineScript() { Name = triggerFunctionName, Type = RoutineType.FUNCTION, ReturnDataType = new TokenInfo("trigger") };
                         rs.Statements.AddRange(script.Statements);
 
                         (script as TriggerScript).FunctionName = triggerFunctionName;
 
                         anotherDefinition = StringHelper.FormatScript(targetAnalyser.GenerateScripts(rs).Script);
-
-                        if(this.sourceDbType == DatabaseType.SqlServer)
-                        {
-                            //Dictionary<string, string> dictTableMappings = new Dictionary<string, string>() { { "INSERTED" , "NEW" }, { } };
-                            //Regex regex = new Regex(@"\bINSERTED\b");
-                            //anotherDefinition = anotherDefinition.Replace(, ).Replace("DELETED", "OLD");
-                        }
                     }
                 }
 
@@ -122,7 +115,11 @@ namespace DatabaseConverter.Core
                     if (sourceDbType == DatabaseType.MySql)
                     {
                         string dbName = this.sourceDbInterpreter.ConnectionInfo.Database;
-                        dbObj.Definition = dbObj.Definition.Replace($"`{dbName}`.", "").Replace($"{dbName}.", "");
+
+                        if (dbName != null)
+                        {
+                            dbObj.Definition = dbObj.Definition.Replace($"`{dbName}`.", "").Replace($"{dbName}.", "");
+                        }
                     }
                     else if (sourceDbType == DatabaseType.Postgres)
                     {
@@ -187,10 +184,16 @@ namespace DatabaseConverter.Core
                             }
                         }
                         #endregion
-                    }                    
+                    }
 
                     if (!result.HasError && !tokenProcessed)
                     {
+                        if (string.IsNullOrEmpty(dbObj.Name) && !string.IsNullOrEmpty(result.Script?.Name?.Symbol))
+                        {
+                            dbObj.Name = result.Script.Name.Symbol;
+                            dbObj.Schema = result.Script.Schema;
+                        }
+
                         processTokens(dbObj, script);
                     }
 

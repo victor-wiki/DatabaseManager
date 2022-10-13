@@ -778,10 +778,10 @@ namespace DatabaseManager.Controls
 
             if (tag is DatabaseObject)
             {
-                DbManager dbManager = new DbManager();
-                dbManager.Subscribe(this);
+                TranslateManager translateManager = new TranslateManager();
+                translateManager.Subscribe(this);
 
-                await dbManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated);
+                await translateManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated);
             }
         }
 
