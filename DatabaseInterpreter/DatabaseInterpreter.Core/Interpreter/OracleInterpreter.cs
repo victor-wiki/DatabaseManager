@@ -93,12 +93,11 @@ namespace DatabaseInterpreter.Core
 
         public override Task<List<Database>> GetDatabasesAsync()
         {
-            string notShowBuiltinDatabaseCondition = "";
+            string notShowBuiltinDatabaseCondition = this.GetExcludeBuiltinDbNamesCondition("TABLESPACE_NAME", false);
 
-            if (!this.ShowBuiltinDatabase)
+            if (!string.IsNullOrEmpty(notShowBuiltinDatabaseCondition))
             {
-                string strBuiltinDatabase = this.BuiltinDatabases.Count > 0 ? string.Join(",", this.BuiltinDatabases.Select(item => $"'{item}'")) : "";
-                notShowBuiltinDatabaseCondition = string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"AND TABLESPACE_NAME NOT IN({strBuiltinDatabase}) AND CONTENTS <>'UNDO'";
+                notShowBuiltinDatabaseCondition +=" AND CONTENTS <>'UNDO'";
             }
 
             string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbSchema()}')) {notShowBuiltinDatabaseCondition}";

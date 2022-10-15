@@ -33,6 +33,7 @@ namespace DatabaseInterpreter.Core
         public override string DefaultSchema => "public";
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.BTree | IndexType.Brin | IndexType.Hash | IndexType.Gin | IndexType.GiST | IndexType.SP_GiST;
         public override bool SupportBulkCopy { get { return true; } }
+        public override List<string> BuiltinDatabases => new List<string> { "postgres" };
         public List<string> SystemSchemas => new List<string> { "pg_catalog", "pg_toast", "information_schema" };
         #endregion
 
@@ -68,7 +69,7 @@ namespace DatabaseInterpreter.Core
         #region Database
         public override Task<List<Database>> GetDatabasesAsync()
         {
-            string sql = @"SELECT datname AS ""Name"" FROM pg_database WHERE datname NOT LIKE 'template%' AND datname NOT IN('postgres') ORDER BY datname";
+            string sql = $@"SELECT datname AS ""Name"" FROM pg_database WHERE datname NOT LIKE 'template%'{this.GetExcludeBuiltinDbNamesCondition("datname", false)} ORDER BY datname";            
 
             return base.GetDbObjectsAsync<Database>(sql);
         }

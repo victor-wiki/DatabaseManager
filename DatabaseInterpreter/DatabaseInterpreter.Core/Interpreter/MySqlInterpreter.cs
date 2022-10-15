@@ -72,15 +72,7 @@ namespace DatabaseInterpreter.Core
         #region Database
         public override Task<List<Database>> GetDatabasesAsync()
         {
-            string notShowBuiltinDatabaseCondition = "";
-
-            if (!this.ShowBuiltinDatabase)
-            {
-                string strBuiltinDatabase = this.BuiltinDatabases.Count > 0 ? string.Join(",", this.BuiltinDatabases.Select(item => $"'{item}'")) : "";
-                notShowBuiltinDatabaseCondition = string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"WHERE SCHEMA_NAME NOT IN({strBuiltinDatabase})";
-            }
-
-            string sql = $"SELECT SCHEMA_NAME AS `Name` FROM INFORMATION_SCHEMA.`SCHEMATA` {notShowBuiltinDatabaseCondition}";
+            string sql = $"SELECT SCHEMA_NAME AS `Name` FROM INFORMATION_SCHEMA.`SCHEMATA` {this.GetExcludeBuiltinDbNamesCondition("SCHEMA_NAME")}";
 
             return base.GetDbObjectsAsync<Database>(sql);
         }

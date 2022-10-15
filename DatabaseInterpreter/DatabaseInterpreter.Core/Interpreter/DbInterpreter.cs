@@ -874,30 +874,41 @@ namespace DatabaseInterpreter.Core
             }
 
             return this.IsLowDbVersion(serverVersion);
-        }       
+        }
 
         protected SqlBuilder CreateSqlBuilder()
         {
             return new SqlBuilder();
         }
 
-        protected string GetFilterSchemaCondition(SchemaInfoFilter filter , string columnName)
+        protected string GetFilterSchemaCondition(SchemaInfoFilter filter, string columnName)
         {
-            if(filter!=null && !string.IsNullOrEmpty(filter.Schema))
+            if (filter != null && !string.IsNullOrEmpty(filter.Schema))
             {
                 return $"AND {columnName}='{filter.Schema}'";
             }
 
             return string.Empty;
         }
-      
-        protected string GetFilterNamesCondition(SchemaInfoFilter filter, string []names, string columnName)
+
+        protected string GetFilterNamesCondition(SchemaInfoFilter filter, string[] names, string columnName)
         {
             if (filter != null && names != null && names.Any())
             {
                 string strNames = StringHelper.GetSingleQuotedString(names);
 
                 return $"AND {columnName} IN ({strNames})";
+            }
+
+            return string.Empty;
+        }
+
+        protected string GetExcludeBuiltinDbNamesCondition(string columnName, bool isFirstCondition = true)
+        {
+            if (!this.ShowBuiltinDatabase)
+            {
+                string strBuiltinDatabase = this.BuiltinDatabases.Count > 0 ? string.Join(",", this.BuiltinDatabases.Select(item => $"'{item}'")) : "";
+                return string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"{(isFirstCondition? "WHERE":"AND")} {columnName} NOT IN({strBuiltinDatabase})";
             }
 
             return string.Empty;
