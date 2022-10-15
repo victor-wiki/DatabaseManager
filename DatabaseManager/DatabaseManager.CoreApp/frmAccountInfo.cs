@@ -5,6 +5,8 @@ using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Data;
+using DatabaseManager.Core;
 
 namespace DatabaseManager
 {
@@ -95,6 +97,11 @@ namespace DatabaseManager
             this.AccountProfileInfo = accountProfileInfo;
 
             this.DialogResult = DialogResult.OK;
+
+            if(SettingManager.Setting.RememberPasswordDuringSession)
+            {
+                DataStore.SetAccountProfileInfo(accountProfileInfo);
+            }           
 
             this.Close();
         }

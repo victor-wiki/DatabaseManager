@@ -572,7 +572,7 @@ namespace DatabaseInterpreter.Core
             {
                 bulkCopy.BatchSize = dataTable.Rows.Count;
                 bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
-                bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : SettingManager.Setting.CommandTimeout; ;
+                bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : Setting.CommandTimeout; ;
                 bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
                 bulkCopy.DetectDateTimeTypeByValues = bulkCopyInfo.DetectDateTimeTypeByValues;
 
@@ -772,7 +772,7 @@ namespace DatabaseInterpreter.Core
                     {
                         if (dataType.ToLower() == "st_geometry")
                         {
-                            string geometryMode = SettingManager.Setting.OracleGeometryMode;
+                            string geometryMode = Setting.OracleGeometryMode;
 
                             if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
                             {

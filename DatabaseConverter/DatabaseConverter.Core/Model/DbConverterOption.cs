@@ -21,6 +21,7 @@ namespace DatabaseConverter.Core.Model
         public bool OnlyCommentComputeColumnExpressionInScript { get; set; }
         public bool RenameTableChildren { get; set; }
         public bool IgnoreNotSelfForeignKey { get; set; }
+        public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;
 
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
     }

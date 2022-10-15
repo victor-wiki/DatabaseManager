@@ -36,8 +36,8 @@ namespace DatabaseInterpreter.Core
 
         public const int NameMaxLength = 64;
         public const int KeyIndexColumnMaxLength = 500;
-        public readonly string DbCharset = SettingManager.Setting.MySqlCharset;
-        public readonly string DbCharsetCollation = SettingManager.Setting.MySqlCharsetCollation;
+        public readonly string DbCharset = Setting.MySqlCharset;
+        public readonly string DbCharsetCollation = Setting.MySqlCharsetCollation;
         public string NotCreateIfExistsClause { get { return this.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
         #endregion
 

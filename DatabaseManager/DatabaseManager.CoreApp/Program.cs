@@ -1,3 +1,5 @@
+using DatabaseInterpreter.Core;
+using DatabaseManager.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,8 @@ namespace DatabaseManager
         [STAThread]
         static void Main()
         {
+            DbInterpreter.Setting = SettingManager.GetInterpreterSetting();
+
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

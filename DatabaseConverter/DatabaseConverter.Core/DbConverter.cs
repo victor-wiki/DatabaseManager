@@ -129,7 +129,7 @@ namespace DatabaseConverter.Core
 
             sourceSchemaInfo.TableColumns = DbObjectHelper.ResortTableColumns(sourceSchemaInfo.Tables, sourceSchemaInfo.TableColumns);
 
-            if (SettingManager.Setting.NotCreateIfExists)
+            if (DbInterpreter.Setting.NotCreateIfExists)
             {
                 this.Target.DbInterpreter.Option.GetTableAllObjects = false;
 
@@ -144,7 +144,7 @@ namespace DatabaseConverter.Core
             {
                 utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
 
-                if(SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
+                if(this.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
                 {
                     if (utypes != null && utypes.Count > 0)
                     {

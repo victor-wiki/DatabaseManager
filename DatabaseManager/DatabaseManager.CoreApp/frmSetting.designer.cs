@@ -38,6 +38,9 @@
             this.label2 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.txtLockPassword = new System.Windows.Forms.TextBox();
+            this.lblPassword = new System.Windows.Forms.Label();
+            this.chkRememberPasswordDuringSession = new System.Windows.Forms.CheckBox();
             this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr = new System.Windows.Forms.CheckBox();
             this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -102,7 +105,7 @@
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(168, 381);
+            this.btnConfirm.Location = new System.Drawing.Point(176, 438);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(88, 33);
@@ -115,7 +118,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(289, 381);
+            this.btnCancel.Location = new System.Drawing.Point(297, 438);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -178,12 +181,15 @@
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(501, 367);
+            this.tabControl1.Size = new System.Drawing.Size(517, 424);
             this.tabControl1.TabIndex = 15;
             // 
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.txtLockPassword);
+            this.tabGeneral.Controls.Add(this.lblPassword);
+            this.tabGeneral.Controls.Add(this.chkRememberPasswordDuringSession);
             this.tabGeneral.Controls.Add(this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr);
             this.tabGeneral.Controls.Add(this.cboPreferredDatabase);
             this.tabGeneral.Controls.Add(this.label5);
@@ -204,9 +210,40 @@
             this.tabGeneral.Margin = new System.Windows.Forms.Padding(4);
             this.tabGeneral.Name = "tabGeneral";
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(4);
-            this.tabGeneral.Size = new System.Drawing.Size(493, 337);
+            this.tabGeneral.Size = new System.Drawing.Size(509, 394);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
+            // 
+            // txtLockPassword
+            // 
+            this.txtLockPassword.Location = new System.Drawing.Point(115, 363);
+            this.txtLockPassword.Margin = new System.Windows.Forms.Padding(4);
+            this.txtLockPassword.Name = "txtLockPassword";
+            this.txtLockPassword.PasswordChar = '*';
+            this.txtLockPassword.Size = new System.Drawing.Size(164, 23);
+            this.txtLockPassword.TabIndex = 28;
+            // 
+            // lblPassword
+            // 
+            this.lblPassword.AutoSize = true;
+            this.lblPassword.Location = new System.Drawing.Point(12, 366);
+            this.lblPassword.Name = "lblPassword";
+            this.lblPassword.Size = new System.Drawing.Size(99, 17);
+            this.lblPassword.TabIndex = 27;
+            this.lblPassword.Text = "Lock password:";
+            // 
+            // chkRememberPasswordDuringSession
+            // 
+            this.chkRememberPasswordDuringSession.AutoSize = true;
+            this.chkRememberPasswordDuringSession.Checked = true;
+            this.chkRememberPasswordDuringSession.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkRememberPasswordDuringSession.Location = new System.Drawing.Point(13, 332);
+            this.chkRememberPasswordDuringSession.Margin = new System.Windows.Forms.Padding(4);
+            this.chkRememberPasswordDuringSession.Name = "chkRememberPasswordDuringSession";
+            this.chkRememberPasswordDuringSession.Size = new System.Drawing.Size(495, 21);
+            this.chkRememberPasswordDuringSession.TabIndex = 26;
+            this.chkRememberPasswordDuringSession.Text = "Remember password during application session(store it in memory temporarily)";
+            this.chkRememberPasswordDuringSession.UseVisualStyleBackColor = true;
             // 
             // chkUseOriginalDataTypeIfUdtHasOnlyOneAttr
             // 
@@ -225,7 +262,7 @@
             // 
             this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(154, 295);
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(142, 295);
             this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboPreferredDatabase.Name = "cboPreferredDatabase";
             this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
@@ -322,7 +359,7 @@
             // chkEnableLog
             // 
             this.chkEnableLog.AutoSize = true;
-            this.chkEnableLog.Location = new System.Drawing.Point(13, 225);
+            this.chkEnableLog.Location = new System.Drawing.Point(13, 224);
             this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
             this.chkEnableLog.Name = "chkEnableLog";
             this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
@@ -341,7 +378,7 @@
             this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
-            this.tabMySql.Size = new System.Drawing.Size(493, 337);
+            this.tabMySql.Size = new System.Drawing.Size(493, 394);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
@@ -389,7 +426,7 @@
             this.tabOracle.Location = new System.Drawing.Point(4, 26);
             this.tabOracle.Name = "tabOracle";
             this.tabOracle.Padding = new System.Windows.Forms.Padding(3);
-            this.tabOracle.Size = new System.Drawing.Size(493, 337);
+            this.tabOracle.Size = new System.Drawing.Size(493, 394);
             this.tabOracle.TabIndex = 2;
             this.tabOracle.Text = "Oracle";
             // 
@@ -421,7 +458,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(507, 428);
+            this.ClientSize = new System.Drawing.Size(523, 485);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
@@ -474,5 +511,8 @@
         private System.Windows.Forms.ComboBox cboOracleGeometryType;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox chkUseOriginalDataTypeIfUdtHasOnlyOneAttr;
+        private System.Windows.Forms.CheckBox chkRememberPasswordDuringSession;
+        private System.Windows.Forms.TextBox txtLockPassword;
+        private System.Windows.Forms.Label lblPassword;
     }
 }

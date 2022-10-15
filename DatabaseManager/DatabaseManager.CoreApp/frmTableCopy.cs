@@ -3,6 +3,7 @@ using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -101,7 +102,8 @@ namespace DatabaseManager
                     this.dbConverter.Option.BulkCopy = true;
                     this.dbConverter.Option.UseTransaction = true;
                     this.dbConverter.Option.ConvertComputeColumnExpression = true;
-                    this.dbConverter.Option.IgnoreNotSelfForeignKey = true;                   
+                    this.dbConverter.Option.IgnoreNotSelfForeignKey = true;
+                    this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
 
                     if (this.cboSchema.Visible)
                     {

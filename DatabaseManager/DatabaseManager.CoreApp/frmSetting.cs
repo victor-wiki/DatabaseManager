@@ -1,8 +1,9 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
+using DatabaseManager.Model;
 using System;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -42,9 +43,15 @@ namespace DatabaseManager
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
+            this.chkRememberPasswordDuringSession.Checked = setting.RememberPasswordDuringSession;
 
             this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
             this.cboOracleGeometryType.Text = setting.OracleGeometryMode;
+
+            if(!string.IsNullOrEmpty(setting.LockPassword))
+            {
+                this.txtLockPassword.Text = AesHelper.Decrypt(setting.LockPassword);
+            }
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
@@ -60,6 +67,18 @@ namespace DatabaseManager
             setting.EnableLog = this.chkEnableLog.Checked;
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
             setting.OracleGeometryMode = this.cboOracleGeometryType.Text;
+            setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
+
+            string password = this.txtLockPassword.Text.Trim();
+
+            if(!string.IsNullOrEmpty(password))
+            {
+                setting.LockPassword = AesHelper.Encrypt(password);
+            }
+            else
+            {
+                setting.LockPassword = "";
+            }
 
             if(this.cboPreferredDatabase.SelectedIndex>=0)
             {
@@ -81,6 +100,8 @@ namespace DatabaseManager
             setting.LogType = logType;
 
             SettingManager.SaveConfig(setting);
+
+            DbInterpreter.Setting = SettingManager.GetInterpreterSetting();
         }
     }
 }

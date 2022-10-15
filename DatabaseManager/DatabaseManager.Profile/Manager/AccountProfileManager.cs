@@ -45,9 +45,16 @@ namespace DatabaseManager.Profile
 
                 ObjectHelper.CopyProperties(info, oldProfile);
 
-                if (rememberPassword && !string.IsNullOrEmpty(info.Password))
+                if (rememberPassword)
                 {
-                    oldProfile.Password = AesHelper.Encrypt(info.Password);
+                    if(!string.IsNullOrEmpty(info.Password))
+                    {
+                        oldProfile.Password = AesHelper.Encrypt(info.Password);
+                    }                   
+                }
+                else
+                {
+                    oldProfile.Password = "";
                 }
             }
 

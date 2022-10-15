@@ -11,6 +11,8 @@ using DatabaseManager.Profile;
 using DatabaseManager.Helper;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Data;
+using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {
@@ -52,7 +54,7 @@ namespace DatabaseManager.Controls
 
         public UC_DbConnectionProfile()
         {
-            InitializeComponent();           
+            InitializeComponent();
         }
 
         private void UC_DbConnectionProfile_Load(object sender, EventArgs e)
@@ -73,8 +75,7 @@ namespace DatabaseManager.Controls
             {
                 this.cboDbType.Items.Add(value.ToString());
             }
-        }   
-      
+        }
 
         public bool IsDbTypeSelected()
         {
@@ -99,6 +100,8 @@ namespace DatabaseManager.Controls
 
             if (connectionInfo != null)
             {
+                this.SetConnectionPasswordFromDataStore(connectionInfo);
+
                 if (this.OnSelectedChanged != null)
                 {
                     this.OnSelectedChanged(this, connectionInfo);
@@ -182,6 +185,7 @@ namespace DatabaseManager.Controls
 
             DatabaseType dbType = this.DatabaseType;
             frmDbConnect frmDbConnect = new frmDbConnect(dbType);
+
             if (this.SetConnectionInfo(frmDbConnect))
             {
                 this.LoadProfileNames(frmDbConnect.ProflieName);
@@ -195,7 +199,10 @@ namespace DatabaseManager.Controls
             if (dialogResult == DialogResult.OK)
             {
                 ConnectionInfo connectionInfo = frmDbConnect.ConnectionInfo;
-                this.connectionInfo = connectionInfo;
+
+                this.SetConnectionPasswordFromDataStore(connectionInfo);
+
+                this.connectionInfo = connectionInfo;          
 
                 if (this.OnSelectedChanged != null)
                 {
@@ -204,7 +211,31 @@ namespace DatabaseManager.Controls
 
                 return true;
             }
+
             return false;
+        }
+
+        private void SetConnectionPasswordFromDataStore(ConnectionInfo connectionInfo)
+        {
+            if(!SettingManager.Setting.RememberPasswordDuringSession)
+            {
+                return;
+            }
+
+            var profileInfo = this.cboDbProfile.SelectedItem as ConnectionProfileInfo;
+
+            if (profileInfo != null)
+            {
+                if (string.IsNullOrEmpty(connectionInfo.Password))
+                {
+                    var accountProfile = DataStore.GetAccountProfileInfo(profileInfo.AccountProfileId);
+
+                    if (accountProfile != null && !accountProfile.IntegratedSecurity && !string.IsNullOrEmpty(accountProfile.Password))
+                    {
+                        connectionInfo.Password = accountProfile.Password;
+                    }
+                }
+            }
         }
 
         private void btnConfigDbProfile_Click(object sender, EventArgs e)
@@ -239,7 +270,7 @@ namespace DatabaseManager.Controls
 
             if (profileName != from.ProflieName)
             {
-                this.LoadProfileNames(from.ProflieName);                
+                this.LoadProfileNames(from.ProflieName);
             }
 
             if (this.cboDbProfile.SelectedItem != null)
@@ -270,6 +301,6 @@ namespace DatabaseManager.Controls
         private void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
         {
             this.LoadProfileNames();
-        }        
+        }
     }
 }

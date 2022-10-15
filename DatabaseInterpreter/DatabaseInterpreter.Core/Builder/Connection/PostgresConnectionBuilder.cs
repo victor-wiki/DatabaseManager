@@ -9,7 +9,7 @@ namespace DatabaseInterpreter.Core
         {
             string server = connectionInfo.Server;          
             string port = connectionInfo.Port;
-            int timeout = SettingManager.Setting.CommandTimeout;
+            int timeout = DbInterpreter.Setting.CommandTimeout;
 
             if (string.IsNullOrEmpty(port))
             {

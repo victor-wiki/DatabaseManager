@@ -127,6 +127,7 @@ namespace DatabaseManager.Profile
             ConnectionInfo connectionInfo = null;
 
             string filePath = ProfilePath;
+
             if (File.Exists(filePath))
             {
                 IEnumerable<ConnectionProfileInfo> profiles = (IEnumerable<ConnectionProfileInfo>)JsonConvert.DeserializeObject(File.ReadAllText(ProfilePath), typeof(IEnumerable<ConnectionProfileInfo>));

@@ -12,7 +12,9 @@ using DatabaseManager.Profile;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
 using DatabaseInterpreter.Core;
+using DatabaseManager.Core;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Data;
 
 namespace DatabaseManager.Controls
 {
@@ -99,7 +101,7 @@ namespace DatabaseManager.Controls
         {
             string type = this.cboDbType.Text;
 
-            var profiles = AccountProfileManager.GetProfiles(type).OrderBy(item=>item.Description);
+            var profiles = AccountProfileManager.GetProfiles(type).OrderBy(item => item.Description);
 
             this.cboAccount.DataSource = profiles.ToList();
             this.cboAccount.DisplayMember = nameof(AccountProfileInfo.Description);
@@ -161,12 +163,22 @@ namespace DatabaseManager.Controls
             AccountProfileInfo profileInfo = this.cboAccount.SelectedItem as AccountProfileInfo;
 
             if (!profileInfo.IntegratedSecurity && string.IsNullOrEmpty(profileInfo.Password))
-            {
-                MessageBox.Show("Please specify password for the database.");
-                if (!this.SetConnectionInfo(profileInfo))
+            {                
+                var storedInfo = DataStore.GetAccountProfileInfo(profileInfo.Id);
+
+                if (storedInfo != null && !profileInfo.IntegratedSecurity && !string.IsNullOrEmpty(storedInfo.Password))
                 {
-                    return;
+                    profileInfo.Password = storedInfo.Password;
                 }
+                else
+                {
+                    MessageBox.Show("Please specify password for the database.");
+
+                    if (!this.SetConnectionInfo(profileInfo))
+                    {
+                        return;
+                    }
+                }               
             }
 
             this.btnConnect.Enabled = false;
@@ -174,10 +186,14 @@ namespace DatabaseManager.Controls
             try
             {
                 ConnectionInfo connectionInfo = new ConnectionInfo();
-                ObjectHelper.CopyProperties(profileInfo, connectionInfo);
+                ObjectHelper.CopyProperties(profileInfo, connectionInfo);               
 
                 await this.tvDbObjects.LoadTree(this.DatabaseType, connectionInfo);
 
+                if(SettingManager.Setting.RememberPasswordDuringSession)
+                {
+                    DataStore.SetAccountProfileInfo(profileInfo);
+                }                
             }
             catch (Exception ex)
             {
@@ -214,13 +230,15 @@ namespace DatabaseManager.Controls
             {
                 AccountProfileInfo profileInfo = frmAccountInfo.AccountProfileInfo;
                 ObjectHelper.CopyProperties(profileInfo, (this.cboAccount.SelectedItem as AccountProfileInfo));
-                this.cboAccount.Text = profileInfo.Description;
+                this.cboAccount.Text = profileInfo.Description;                
+
                 return true;
             }
             else
             {
                 this.btnConnect.Enabled = true;
             }
+
             return false;
         }
 

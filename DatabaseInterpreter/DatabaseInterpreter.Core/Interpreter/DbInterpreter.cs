@@ -25,10 +25,10 @@ namespace DatabaseInterpreter.Core
         public virtual string UnicodeInsertChar { get; } = "N";
         public virtual string ScriptsDelimiter => ";";
         public abstract string CommentString { get; }
-        public bool ShowBuiltinDatabase => SettingManager.Setting.ShowBuiltinDatabase;
-        public DbObjectNameMode DbObjectNameMode => SettingManager.Setting.DbObjectNameMode;
-        public int DataBatchSize => SettingManager.Setting.DataBatchSize;
-        public bool NotCreateIfExists => SettingManager.Setting.NotCreateIfExists;
+        public bool ShowBuiltinDatabase => Setting.ShowBuiltinDatabase;
+        public DbObjectNameMode DbObjectNameMode => Setting.DbObjectNameMode;
+        public int DataBatchSize => Setting.DataBatchSize;
+        public bool NotCreateIfExists => Setting.NotCreateIfExists;
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
@@ -40,6 +40,7 @@ namespace DatabaseInterpreter.Core
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
+        public static DbInterpreterSetting Setting = new DbInterpreterSetting();
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
         public ConnectionInfo ConnectionInfo { get; protected set; }
 
@@ -399,7 +400,7 @@ namespace DatabaseInterpreter.Core
             DbCommand command = dbConnection.CreateCommand();
             command.CommandType = commandInfo.CommandType;
             command.CommandText = commandInfo.CommandText;
-            command.CommandTimeout = SettingManager.Setting.CommandTimeout;
+            command.CommandTimeout = Setting.CommandTimeout;
 
             if (this.Option.RequireInfoMessage)
             {
@@ -641,7 +642,7 @@ namespace DatabaseInterpreter.Core
                 {
                     if (dataType == "st_geometry")
                     {
-                        string geometryMode = SettingManager.Setting.OracleGeometryMode;
+                        string geometryMode = Setting.OracleGeometryMode;
 
                         if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
                         {

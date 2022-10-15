@@ -1,9 +1,11 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Model;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace DatabaseInterpreter.Core
+namespace DatabaseManager.Core
 {
     public class SettingManager : ConfigManager
     {
@@ -36,6 +38,15 @@ namespace DatabaseInterpreter.Core
             string content = JsonConvert.SerializeObject(setting, Formatting.Indented);
 
             File.WriteAllText(ConfigFilePath, content);
+        }
+
+        public static DbInterpreterSetting GetInterpreterSetting()
+        {
+            DbInterpreterSetting dbInterpreterSetting = new DbInterpreterSetting();
+
+            ObjectHelper.CopyProperties(Setting, dbInterpreterSetting);
+
+            return dbInterpreterSetting;
         }
     }
 }

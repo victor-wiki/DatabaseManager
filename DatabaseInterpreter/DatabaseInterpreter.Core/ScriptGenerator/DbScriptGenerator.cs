@@ -576,7 +576,7 @@ namespace DatabaseInterpreter.Core
                         }
                         else if (this.databaseType == DatabaseType.Oracle)
                         {
-                            string geometryMode = SettingManager.Setting.OracleGeometryMode;
+                            string geometryMode = DbInterpreter.Setting.OracleGeometryMode;
 
                             if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
                             {

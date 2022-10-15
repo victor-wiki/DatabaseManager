@@ -32,6 +32,7 @@ namespace DatabaseManager.Core
                 dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
                 dbConverter.Option.ExecuteScriptOnTargetServer = false;
                 dbConverter.Option.ConvertComputeColumnExpression = true;
+                dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
 
                 dbConverter.Subscribe(this.observer);
 

@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
+using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
@@ -247,6 +248,12 @@ namespace DatabaseManager
         {
             frmCompare form = new frmCompare();
             form.ShowDialog();
+        }
+
+        private void tsmiLock_Click(object sender, EventArgs e)
+        {
+            frmLockApp lockApp = new frmLockApp();
+            lockApp.ShowDialog();
         }
     }
 }

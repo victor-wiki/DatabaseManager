@@ -4,6 +4,7 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
+using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using System;
 using System.Collections.Generic;
@@ -35,8 +36,7 @@ namespace DatabaseManager
 
             this.sourceDatabaseType = sourceDatabaseType;
             this.sourceDbConnectionInfo = sourceConnectionInfo;
-            this.useSourceConnector = false;
-            
+            this.useSourceConnector = false;            
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -245,7 +245,8 @@ namespace DatabaseManager
                     this.dbConverter.Option.ContinueWhenErrorOccurs = this.chkContinueWhenErrorOccurs.Checked;
                     this.dbConverter.Option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
                     this.dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
-                    this.dbConverter.Option.SplitScriptsToExecute = true;                   
+                    this.dbConverter.Option.SplitScriptsToExecute = true;
+                    this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
 
                     this.dbConverter.Option.SchemaMappings = this.schemaMappings;
 

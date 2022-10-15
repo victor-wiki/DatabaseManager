@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DatabaseManager.Data;
 
 namespace DatabaseManager.Controls
 {
@@ -82,14 +83,10 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                if (!string.IsNullOrEmpty(info.Password))
-                {
-                    this.chkRememberPassword.Checked = true;
-                }
-                else if(!string.IsNullOrEmpty(password))
+                if(!string.IsNullOrEmpty(password))
                 {
                     this.txtPassword.Text = password;
-                }
+                }               
             }
         }
 

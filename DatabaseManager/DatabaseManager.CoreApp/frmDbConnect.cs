@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Windows.Forms;
+using DatabaseManager.Data;
 
 namespace DatabaseManager
 {
@@ -205,7 +206,19 @@ namespace DatabaseManager
 
                 if (frm.ShowDialog() == DialogResult.OK)
                 {
-                    this.ucDbAccountInfo.LoadData(frm.SelectedAccountProfileInfo);
+                    string password = null;
+
+                    if(SettingManager.Setting.RememberPasswordDuringSession)
+                    {
+                        var storeInfo = DataStore.GetAccountProfileInfo(frm.SelectedAccountProfileInfo.Id);
+
+                        if (storeInfo != null && !frm.SelectedAccountProfileInfo.IntegratedSecurity && !string.IsNullOrEmpty(storeInfo.Password))
+                        {
+                            password = storeInfo.Password;
+                        }
+                    }                   
+
+                    this.ucDbAccountInfo.LoadData(frm.SelectedAccountProfileInfo, password);
                 }
             }
         }
