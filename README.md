@@ -26,7 +26,8 @@
   Delete all objects of a database.
   
 ### Translate Script Online
-  The web application under this project provides a Web UI that allows translate script from one database to another.
+  The web application under this project provides a page that allows to translate script from one kind to another.
+<br/>(Note:The function and procedure of Postgres currently can't be translated to others.)
 
 ## UI - Main
 ![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=2)
@@ -46,6 +47,6 @@
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=2)
 
-## UI - Tranlate Script Online
-![Tranlate Script Online](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateOnline.png?raw=true&rid=2)
+## UI - Translate Script Online
+![Translate Script Online](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateOnline.png?raw=true&rid=2)
 
