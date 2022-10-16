@@ -169,26 +169,27 @@ namespace DatabaseConverter.Core
 
             if (this.targetDbType == DatabaseType.Postgres)
             {
-                //this is to avoid error when datatype like money uses coalesce(exp,0)
+                //this is to avoid error when datatype is money uses coalesce(exp,0)
                 if (computeExp.Contains("coalesce"))
                 {
-                    string exp = column.ComputeExp;
-
-                    if (computeExp.StartsWith("("))
+                    if(column.DataType.ToLower()=="money")
                     {
-                        exp = exp.Substring(1, computeExp.Length - 1);
-                    }
+                        string exp = column.ComputeExp;
 
-                    List<FunctionFomular> fomulars = FunctionTranslator.GetFunctionFomulars(exp);
+                        if (computeExp.StartsWith("("))
+                        {
+                            exp = exp.Substring(1, computeExp.Length - 1);
+                        }
 
-                    if (fomulars.Count > 0 && fomulars.First().Args.Count > 0)
-                    {
-                        column.ComputeExp = fomulars.First().Args[0];
-                    }
+                        List<FunctionFomular> fomulars = FunctionTranslator.GetFunctionFomulars(exp);
+
+                        if (fomulars.Count > 0 && fomulars.First().Args.Count > 0)
+                        {
+                            column.ComputeExp = fomulars.First().Args[0];
+                        }
+                    }                    
                 }
-            }
-
-            column.ComputeExp = this.functionTranslator.GetMappedFunction(column.ComputeExp);
+            }         
 
             if (this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
             {

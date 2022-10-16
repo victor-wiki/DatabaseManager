@@ -69,6 +69,11 @@ namespace DatabaseConverter.Core
                     continue;
                 }
 
+                if(!this.sourceFuncSpecs.Any(item=>item.Name == name.ToUpper()))
+                {
+                    continue;
+                }
+
                 bool useBrackets = false;
 
                 MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(name, out useBrackets);

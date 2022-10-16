@@ -171,8 +171,20 @@ namespace DatabaseManager
                 profile.Name = profileName;
                 profile.DatabaseType = this.DatabaseType.ToString();
 
-                this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
-            }
+                this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);     
+                
+                if(SettingManager.Setting.RememberPasswordDuringSession)
+                {
+                    if(!this.ConnectionInfo.IntegratedSecurity && !this.ucDbAccountInfo.RememberPassword && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                    {
+                        AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { Id = profile.AccountProfileId };
+                        ObjectHelper.CopyProperties(this.ConnectionInfo, accountProfileInfo);
+                        accountProfileInfo.Password = this.ConnectionInfo.Password;
+
+                        DataStore.SetAccountProfileInfo(accountProfileInfo);
+                    }
+                }
+            }           
 
             this.DialogResult = DialogResult.OK;
         }

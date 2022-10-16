@@ -53,15 +53,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            if (version != null)
-            {
-                if (string.Compare(version.Substring(0, 2), "12") < 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return this.IsLowDbVersion(version, 12);
         }
         #endregion
 

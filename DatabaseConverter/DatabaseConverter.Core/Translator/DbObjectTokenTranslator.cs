@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using TSQL;
 using TSQL.Tokens;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -57,26 +58,18 @@ namespace DatabaseConverter.Core
 
                 switch (token.Type)
                 {
-                    case TSQLTokenType.SystemIdentifier:
-
-                        functionExpression = this.GetFunctionExpression(token, definition);
-
-                        break;
-
+                    case TSQLTokenType.SystemIdentifier:                      
                     case TSQLTokenType.Identifier:
 
-                        switch (text.ToUpper())
+                        if (sourceFuncSpecs.Any(item => item.Name == text.ToUpper()))
                         {
-                            case "CAST":
-                            case "TO_NUMBER":
-                                functionExpression = this.GetFunctionExpression(token, definition);
+                            functionExpression = this.GetFunctionExpression(token, definition);
 
-                                break;
+                            break;
                         }
+
                         break;
-
                     case TSQLTokenType.Keyword:
-
                         break;
                 }
 
@@ -116,7 +109,7 @@ namespace DatabaseConverter.Core
                         }
                     }
                 }
-            }
+            }         
 
             return newDefinition;
         }
@@ -167,7 +160,7 @@ namespace DatabaseConverter.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            this.sourceSchemaName = sourceDbInterpreter.DefaultSchema;            
+            this.sourceSchemaName = sourceDbInterpreter.DefaultSchema;
 
             var sourceDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbInterpreter.DatabaseType);
             var targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbInterpreter.DatabaseType);
@@ -194,7 +187,7 @@ namespace DatabaseConverter.Core
                 {
                     case TSQLTokenType.Identifier:
 
-                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;                       
+                        var nextToken = i + 1 < tokens.Count ? tokens[i + 1] : null;
 
                         if (convertedDataTypes.Contains(text))
                         {
@@ -256,8 +249,8 @@ namespace DatabaseConverter.Core
                         }
                         else
                         {
-                            if ((sourceDataTypeSpecs!=null && sourceDataTypeSpecs.Any(item => item.Name == text))
-                                ||(targetDataTypeSpecs != null && targetDataTypeSpecs.Any(item => item.Name == text)))
+                            if ((sourceDataTypeSpecs != null && sourceDataTypeSpecs.Any(item => item.Name == text))
+                                || (targetDataTypeSpecs != null && targetDataTypeSpecs.Any(item => item.Name == text)))
                             {
                                 sb.Append(text);
                             }
@@ -313,8 +306,7 @@ namespace DatabaseConverter.Core
 
         private string GetQuotedString(string text)
         {
-            if (//text.StartsWith(this.sourceDbInterpreter.QuotationLeftChar.ToString()) && text.EndsWith(this.sourceDbInterpreter.QuotationRightChar.ToString())&& 
-                !text.StartsWith(this.targetDbInterpreter.QuotationLeftChar.ToString()) && !text.EndsWith(this.targetDbInterpreter.QuotationRightChar.ToString()))
+            if (!text.StartsWith(this.targetDbInterpreter.QuotationLeftChar.ToString()) && !text.EndsWith(this.targetDbInterpreter.QuotationRightChar.ToString()))
             {
                 return this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"', this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar));
             }

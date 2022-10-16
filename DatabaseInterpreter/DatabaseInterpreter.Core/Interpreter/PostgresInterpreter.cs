@@ -53,15 +53,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            if (version != null)
-            {
-                if (string.Compare(version.Substring(0, 1), "10") < 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return this.IsLowDbVersion(version, 12);
         }
         #endregion
 
@@ -69,7 +61,7 @@ namespace DatabaseInterpreter.Core
         #region Database
         public override Task<List<Database>> GetDatabasesAsync()
         {
-            string sql = $@"SELECT datname AS ""Name"" FROM pg_database WHERE datname NOT LIKE 'template%'{this.GetExcludeBuiltinDbNamesCondition("datname", false)} ORDER BY datname";            
+            string sql = $@"SELECT datname AS ""Name"" FROM pg_database WHERE datname NOT LIKE 'template%'{this.GetExcludeBuiltinDbNamesCondition("datname", false)} ORDER BY datname";
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
@@ -120,11 +112,11 @@ namespace DatabaseInterpreter.Core
             }
 
             sb.Append($@"AND t.typtype='c' AND ( t.typrelid = 0 OR ( SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid ) )
-                       AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid ) AND "
-                       + this.GetExcludeSystemSchemasCondition("n.nspname"));
+                       AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid )");
 
+            sb.Append(this.GetExcludeSystemSchemasCondition("n.nspname"));
             sb.Append(this.GetFilterSchemaCondition(filter, "n.nspname"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "t.typname"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "t.typname"));
 
             sb.Append($"ORDER BY t.typname{(isSimpleMode ? "" : ",a.attname")}");
 
@@ -144,9 +136,15 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForSequences(SchemaInfoFilter filter = null)
         {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
+
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT sequence_schema AS ""Schema"",sequence_name AS ""Name"",'numeric' AS ""DataType"",
+            bool isLowDbVersion = this.IsLowDbVersion(this.ServerVersion, 10);
+
+            if(!isLowDbVersion)
+            {
+                sb.Append($@"SELECT sequence_schema AS ""Schema"",sequence_name AS ""Name"",'numeric' AS ""DataType"",
                             start_value AS ""StartValue"",increment AS ""Increment"",minimum_value AS ""MinValue"",maximum_value AS ""MaxValue"",
                             CASE cycle_option WHEN 'YES' THEN 1 ELSE 0 END AS ""Cycled"",
                             CASE WHEN ps.seqcache>0 THEN 1 ELSE 0 END AS ""UseCache"", ps.seqcache AS ""CacheSize"",
@@ -156,9 +154,28 @@ namespace DatabaseInterpreter.Core
                             JOIN information_schema.sequences s ON s.sequence_name=c.relname
                             LEFT JOIN pg_catalog.pg_depend d ON d.objid=c.oid AND d.deptype='a'
                             LEFT JOIN pg_catalog.pg_class dc ON d.refobjid=dc.oid
-                            LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=dc.oid AND d.refobjsubid=a.attnum
-                            WHERE UPPER(sequence_catalog)=UPPER('{this.ConnectionInfo.Database}')");
+                            LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=dc.oid AND d.refobjsubid=a.attnum");
+            }
+            else
+            {
+                //low version has no table "pg_catalog.pg_sequence"
 
+                bool isSingle = filter.SequenceNames?.Length == 1;
+
+                string sequenceName = this.GetQuotedDbObjectNameWithSchema(filter.Schema, filter.SequenceNames?.FirstOrDefault());
+                string cacheClause = (!isSimpleMode && isSingle) ? $@"{Environment.NewLine},(SELECT CASE WHEN cache_value>0 THEN 1 ELSE 0 END FROM {sequenceName}) AS ""UseCache"",(SELECT cache_value FROM {sequenceName}) AS ""CacheSize""":"";
+
+                sb.Append($@"SELECT sequence_schema AS ""Schema"",sequence_name AS ""Name"",('numeric' :: CHARACTER VARYING) AS ""DataType"",
+                start_value AS ""StartValue"",increment AS ""Increment"",minimum_value AS ""MinValue"",maximum_value AS ""MaxValue"",
+                CASE cycle_option WHEN 'YES' THEN 1 ELSE 0 END AS ""Cycled"",dc.relname AS ""OwnedByTable"",a.attname AS ""OwnedByColumn""{cacheClause}
+                FROM information_schema.sequences s
+                JOIN pg_catalog.pg_class c ON c.relname=s.sequence_name AND c.relkind = 'S' :: ""char""
+                LEFT JOIN pg_catalog.pg_depend d ON d.objid=c.oid AND d.deptype='a'
+                LEFT JOIN pg_catalog.pg_class dc ON d.refobjid=dc.oid
+                LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=dc.oid AND d.refobjsubid=a.attnum");
+            }            
+
+            sb.Append($"WHERE UPPER(sequence_catalog)=UPPER('{this.ConnectionInfo.Database}')");
             sb.Append(this.GetFilterSchemaCondition(filter, "sequence_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.sequence_name"));
 
@@ -193,15 +210,22 @@ namespace DatabaseInterpreter.Core
 
         private string GetExcludeSystemSchemasCondition(string tableSchema)
         {
-            string strSystemSchemas = this.SystemSchemas.Count > 0 ? string.Join(",", this.SystemSchemas.Select(item => $"'{item}'")) : "";
-            return $" {tableSchema} NOT IN({strSystemSchemas})";
+            string database = this.ConnectionInfo.Database;
+
+            if (!this.BuiltinDatabases.Contains(database))
+            {
+                string strSystemSchemas = this.SystemSchemas.Count > 0 ? string.Join(",", this.SystemSchemas.Select(item => $"'{item}'")) : "";
+                return $"AND {tableSchema} NOT IN({strSystemSchemas})";
+            }
+
+            return string.Empty;
         }
 
         private string GetSqlForTables(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            var sb=this.CreateSqlBuilder();
+            var sb = this.CreateSqlBuilder();
 
             if (isSimpleMode)
             {
@@ -220,7 +244,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append($"WHERE t.table_type='BASE TABLE' AND UPPER(t.table_catalog)=UPPER('{this.ConnectionInfo.Database}')");
 
-            sb.Append($"AND {this.GetExcludeSystemSchemasCondition("t.table_schema")}");
+            sb.Append(this.GetExcludeSystemSchemasCondition("t.table_schema"));
             sb.Append(this.GetFilterSchemaCondition(filter, "t.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.table_name"));
 
@@ -263,7 +287,7 @@ namespace DatabaseInterpreter.Core
                         LEFT JOIN pg_description d ON pc.oid = d.objoid AND c.ordinal_position = d.objsubid");
 
             sb.Append($"WHERE UPPER(c.table_catalog)=UPPER('{this.ConnectionInfo.Database}')");
-            sb.Append($"AND {this.GetExcludeSystemSchemasCondition("c.table_schema")}");
+            sb.Append(this.GetExcludeSystemSchemasCondition("c.table_schema"));
             sb.Append(this.GetFilterSchemaCondition(filter, "c.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "c.table_name"));
 
@@ -384,8 +408,8 @@ namespace DatabaseInterpreter.Core
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT trigger_name AS ""Name"",event_object_schema AS ""TableSchema"",event_object_table AS ""TableName"",                         
-                         {(isSimpleMode ? "''" : $@"CONCAT('CREATE TRIGGER ""',trigger_name,'"" ',action_timing,' ',event_manipulation,
-                        ' ON ',event_object_schema,'.',event_object_table,'{Environment.NewLine}FOR EACH ',action_orientation, '{Environment.NewLine}',action_statement)")} AS ""Definition""
+                         ({(isSimpleMode ? "''" : $@"CONCAT('CREATE TRIGGER ""',trigger_name,'"" ',action_timing,' ',event_manipulation,
+                        ' ON ',event_object_schema,'.""',event_object_table,'""{Environment.NewLine}FOR EACH ',action_orientation, '{Environment.NewLine}',action_statement)")}:: CHARACTER VARYING) AS ""Definition""
                         FROM information_schema.triggers
                         WHERE UPPER(trigger_catalog) = UPPER('{this.ConnectionInfo.Database}')");
 
@@ -453,11 +477,18 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT v.table_schema AS ""Schema"",v.table_name AS ""Name"",{(isSimpleMode ? "''" : $@"CONCAT('CREATE OR REPLACE VIEW ""',v.table_schema,'"".""',v.table_name,'"" AS{Environment.NewLine}',v.view_definition)")} AS ""Definition""
-                            FROM information_schema.views v
-                            WHERE UPPER(v.table_catalog) = UPPER('{this.ConnectionInfo.Database}')");
+            string definition = "";
 
-            sb.Append("AND " + this.GetExcludeSystemSchemasCondition("v.table_schema"));
+            if (!isSimpleMode)
+            {
+                definition = $@",CONCAT('CREATE OR REPLACE VIEW ""',v.table_schema,'"".""',v.table_name,'"" AS{Environment.NewLine}',v.view_definition) AS ""Definition""";
+            }
+
+            sb.Append($@"SELECT v.table_schema AS ""Schema"",v.table_name AS ""Name""{definition}
+                         FROM information_schema.views v
+                         WHERE UPPER(v.table_catalog) = UPPER('{this.ConnectionInfo.Database}')");
+
+            sb.Append(this.GetExcludeSystemSchemasCondition("v.table_schema"));
 
             sb.Append(this.GetFilterSchemaCondition(filter, "v.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.table_name"));
@@ -493,15 +524,15 @@ namespace DatabaseInterpreter.Core
             {
                 sb.Append(this.GetFilterSchemaCondition(filter, "r.routine_schema"));
                 sb.Append(this.GetFilterNamesCondition(filter, objectNames, " r.routine_name"));
-            };           
+            };
 
             if (isSimpleMode)
             {
                 sb.Append($@"SELECT r.routine_schema AS ""Schema"", r.routine_name AS ""Name"",CASE WHEN r.data_type='trigger' THEN 1 ELSE 0 END AS ""IsTriggerFunction""
                          FROM information_schema.routines r
-                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')
-                         AND {this.GetExcludeSystemSchemasCondition("r.routine_schema")}");
+                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')");
 
+                sb.Append(this.GetExcludeSystemSchemasCondition("r.routine_schema"));
                 appendSchemaAndNamesCondition();
             }
             else
@@ -509,16 +540,16 @@ namespace DatabaseInterpreter.Core
                 sb.Append($@"SELECT r.routine_schema AS ""Schema"", r.routine_name AS ""Name"",CASE WHEN r.data_type='trigger' THEN 1 ELSE 0 END AS ""IsTriggerFunction"",
                         concat('CREATE OR REPLACE {type} ', routine_schema,'.""',r.routine_name, '""(', array_to_string(
                         array_agg(concat(CASE p.parameter_mode WHEN 'IN' THEN '' ELSE p.parameter_mode END,' ',p.parameter_name,' ',p.data_type)),','),')'
-                        ,r.routine_definition) AS ""Definition""
+                        {(isFunction? "' RETURNS ',r.data_type": "")},CHR(13),'LANGUAGE ''plpgsql''',CHR(13),'AS',CHR(13),'$$',r.routine_definition,'$$;') AS ""Definition""
                         FROM information_schema.routines r
                         LEFT JOIN information_schema.parameters p ON p.specific_name=r.specific_name
                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')
-                        AND {this.GetExcludeSystemSchemasCondition("r.routine_schema")} {strNamesCondition}");
+                        {this.GetExcludeSystemSchemasCondition("r.routine_schema")} {strNamesCondition}");
 
                 appendSchemaAndNamesCondition();
 
                 sb.Append("GROUP BY r.routine_schema,r.routine_name,r.routine_definition,r.data_type");
-            }           
+            }
 
             sb.Append("ORDER BY r.routine_name");
 
@@ -703,16 +734,52 @@ namespace DatabaseInterpreter.Core
         #region Parse Column & DataType
         public override string ParseColumn(Table table, TableColumn column)
         {
+            bool isLowDbVersion = this.IsLowDbVersion();
+
+            //the "GENERATED ALWAYS" can be used since v12.
+
             if (column.IsComputed)
             {
-                return $"{this.GetQuotedString(column.Name)} {column.DataType} GENERATED ALWAYS AS ({column.ComputeExp}) STORED";
+                if (!isLowDbVersion)
+                {
+                    return $"{this.GetQuotedString(column.Name)} {column.DataType} GENERATED ALWAYS AS ({column.ComputeExp}) STORED";
+                }
+                else
+                {
+                    return $"{this.GetQuotedString(column.Name)} {column.DataType} NULL";
+                }
             }
             else
             {
                 string dataType = this.ParseDataType(column);
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
 
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $" GENERATED ALWAYS AS IDENTITY " : "");
+                bool isIdentity = this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity;
+
+                string identityClause = "";
+
+                if (isIdentity)
+                {
+                    if (!isLowDbVersion)
+                    {
+                        identityClause = " GENERATED ALWAYS AS IDENTITY ";
+                    }
+                    else
+                    {
+                        if (dataType == "integer")
+                        {
+                            dataType = "serial";
+                        }
+                        else if (dataType == "bigint")
+                        {
+                            dataType = "bigserial";
+                        }
+                        else if (dataType == "smallint")
+                        {
+                            dataType = "smallserial";
+                        }
+                    }
+                }
 
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
@@ -730,7 +797,7 @@ namespace DatabaseInterpreter.Core
                 return this.GetQuotedString(column.DataType);
             }
 
-            string dataType = column.DataType;           
+            string dataType = column.DataType;
 
             if (dataType != null && dataType.IndexOf("(") < 0)
             {

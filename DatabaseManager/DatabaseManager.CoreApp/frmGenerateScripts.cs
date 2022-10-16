@@ -92,10 +92,8 @@ namespace DatabaseManager
                     return;
                 }
 
-                if (!this.connectionInfo.IntegratedSecurity && string.IsNullOrEmpty(this.connectionInfo.Password))
-                {
-                    MessageBox.Show("Please specify password for the database.");
-                    this.dbConnectionProfile.ConfigConnection(true);
+                if (!this.dbConnectionProfile.ValidateProfile())
+                {                   
                     return;
                 }
 

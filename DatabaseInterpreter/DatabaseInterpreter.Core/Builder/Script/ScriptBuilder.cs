@@ -37,7 +37,7 @@ namespace DatabaseInterpreter.Core
 
         public override string ToString()
         {           
-            string script = string.Join("", this.scripts.Select(item => item.Content)) ;
+            string script = string.Join("", this.scripts.Select(item => item.Content)).Trim() ;
 
             return this.FormatScript ? this.Format(script) : script;
         }

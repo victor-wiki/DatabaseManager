@@ -243,7 +243,10 @@ namespace DatabaseConverter.Core
                     {
                         if (!this.Option.OnlyForTranslate)
                         {
-                            if (this.Target.DbInterpreter.IsLowDbVersion(dbConnection))
+                            string serverVersion = this.Target.DbInterpreter.ConnectionInfo?.ServerVersion;
+                            bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? this.Target.DbInterpreter.IsLowDbVersion() : this.Target.DbInterpreter.IsLowDbVersion(dbConnection);
+
+                            if (isLowDbVersion)
                             {
                                 SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
                             }

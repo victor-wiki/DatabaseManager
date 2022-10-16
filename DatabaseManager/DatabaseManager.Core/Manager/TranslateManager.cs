@@ -125,7 +125,7 @@ namespace DatabaseManager.Core
                 }
             }
 
-            if (scriptDbObjects != null && scriptDbObjects.Count>0)
+            if (scriptDbObjects != null && scriptDbObjects.Count > 0)
             {
                 return scriptDbObjects[0].Definition;
             }
@@ -162,7 +162,7 @@ namespace DatabaseManager.Core
                 {
                     return ScriptType.Function;
                 }
-                else if (prefix.IndexOf(" PROCEDURE ") > 0)
+                else if (prefix.IndexOf(" PROCEDURE ") > 0 || prefix.IndexOf(" PROC ") > 0)
                 {
                     return ScriptType.Procedure;
                 }

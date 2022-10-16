@@ -36,9 +36,10 @@
             // 
             // btnConfirm
             // 
-            this.btnConfirm.Location = new System.Drawing.Point(116, 196);
+            this.btnConfirm.Location = new System.Drawing.Point(135, 278);
+            this.btnConfirm.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnConfirm.Name = "btnConfirm";
-            this.btnConfirm.Size = new System.Drawing.Size(75, 23);
+            this.btnConfirm.Size = new System.Drawing.Size(88, 33);
             this.btnConfirm.TabIndex = 11;
             this.btnConfirm.Text = "OK";
             this.btnConfirm.UseVisualStyleBackColor = true;
@@ -47,16 +48,18 @@
             // ucAccountInfo
             // 
             this.ucAccountInfo.DatabaseType = DatabaseInterpreter.Model.DatabaseType.SqlServer;
-            this.ucAccountInfo.Location = new System.Drawing.Point(3, 12);
+            this.ucAccountInfo.Location = new System.Drawing.Point(4, 17);
+            this.ucAccountInfo.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             this.ucAccountInfo.Name = "ucAccountInfo";
-            this.ucAccountInfo.Size = new System.Drawing.Size(381, 178);
+            this.ucAccountInfo.Size = new System.Drawing.Size(444, 252);
             this.ucAccountInfo.TabIndex = 0;
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(214, 196);
+            this.btnCancel.Location = new System.Drawing.Point(250, 278);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
+            this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 12;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -64,13 +67,14 @@
             // 
             // frmAccountInfo
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(386, 232);
+            this.ClientSize = new System.Drawing.Size(450, 329);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
             this.Controls.Add(this.ucAccountInfo);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "frmAccountInfo";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

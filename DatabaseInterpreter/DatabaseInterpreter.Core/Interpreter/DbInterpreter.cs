@@ -20,6 +20,7 @@ namespace DatabaseInterpreter.Core
         protected DbConnector dbConnector;
         protected bool hasError = false;
 
+        public string ServerVersion => this.ConnectionInfo?.ServerVersion;
         public readonly DateTime MinDateTime = new DateTime(1970, 1, 1);
         public const string RowNumberColumnName = "_ROWNUMBER";
         public virtual string UnicodeInsertChar { get; } = "N";
@@ -839,9 +840,21 @@ namespace DatabaseInterpreter.Core
             return value?.Replace(this.ScriptsDelimiter, ",");
         }
 
+        public bool IsLowDbVersion()
+        {
+            string serverVersion = this.ServerVersion;
+
+            if (!string.IsNullOrEmpty(serverVersion))
+            {
+                return this.IsLowDbVersion(serverVersion);
+            }
+
+            return false;
+        }
+
         public bool IsLowDbVersion(DbConnection connection)
         {
-            string serverVersion = this.ConnectionInfo.ServerVersion;
+            string serverVersion = this.ServerVersion;
 
             if (string.IsNullOrEmpty(serverVersion))
             {
@@ -876,6 +889,24 @@ namespace DatabaseInterpreter.Core
             return this.IsLowDbVersion(serverVersion);
         }
 
+        public bool IsLowDbVersion(string version, int majorVersion)
+        {
+            if (version != null)
+            {
+                string majorVer = version.Split('.')[0];
+
+                if (int.TryParse(majorVer, out _))
+                {
+                    if (int.Parse(majorVer) < majorVersion)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         protected SqlBuilder CreateSqlBuilder()
         {
             return new SqlBuilder();
@@ -908,7 +939,7 @@ namespace DatabaseInterpreter.Core
             if (!this.ShowBuiltinDatabase)
             {
                 string strBuiltinDatabase = this.BuiltinDatabases.Count > 0 ? string.Join(",", this.BuiltinDatabases.Select(item => $"'{item}'")) : "";
-                return string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"{(isFirstCondition? "WHERE":"AND")} {columnName} NOT IN({strBuiltinDatabase})";
+                return string.IsNullOrEmpty(strBuiltinDatabase) ? "" : $"{(isFirstCondition ? "WHERE" : "AND")} {columnName} NOT IN({strBuiltinDatabase})";
             }
 
             return string.Empty;

@@ -16,6 +16,7 @@
   <item name="CHAR_LENGTH" args="EXP"></item>
   <item name="CHAR" args="EXP"></item>
   <item name="CHARACTER_LENGTH" args="EXP"></item>
+  <item name="COALESCE" args="EXP,DEFAULT"></item>
   <item name="CONCAT" args="EXP1,EXP2,..."></item>
   <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..."></item>
   <item name="COS" args="EXP"></item>

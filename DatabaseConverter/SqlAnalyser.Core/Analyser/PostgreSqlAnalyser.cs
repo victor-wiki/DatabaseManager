@@ -215,7 +215,7 @@ namespace SqlAnalyser.Core
             sb.AppendLine($"{script.Time} {events} ON {script.TableName.NameWithSchema}");
             sb.AppendLine("FOR EACH ROW");
 
-            sbBody.AppendLine($"EXECUTE FUNCTION {script.FunctionName?.NameWithSchema}();");
+            sbBody.AppendLine($"EXECUTE PROCEDURE {script.FunctionName?.NameWithSchema}();");
 
             sb.Append(sbBody);
 

@@ -328,6 +328,8 @@ CACHE {sequence.CacheSize}
          IEnumerable<TableIndex> indexes,
          IEnumerable<TableConstraint> constraints)
         {
+            bool isLowDbVersion = this.dbInterpreter.IsLowDbVersion();
+
             ScriptBuilder sb = new ScriptBuilder();
 
             string tableName = table.Name;
@@ -339,8 +341,7 @@ CACHE {sequence.CacheSize}
 $@"
 CREATE TABLE IF NOT EXISTS {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-)
-USING HEAP;";
+){(isLowDbVersion? "": "USING HEAP")};";
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 

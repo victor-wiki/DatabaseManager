@@ -108,7 +108,7 @@ namespace SqlAnalyser.Core
                     #endregion
 
                     #region Parameters   
-                    this.SetRoutineParameters(script, proc.func_args_with_defaults().func_args_with_defaults_list().func_arg_with_default());
+                    this.SetRoutineParameters(script, proc.func_args_with_defaults().func_args_with_defaults_list()?.func_arg_with_default());
                     #endregion
 
                     //#region Declare

@@ -76,6 +76,7 @@ namespace DatabaseManager.Controls
             this.txtPassword.Text = info.Password;
             this.chkAsDba.Checked = info.IsDba;
             this.chkUseSsl.Checked = info.UseSsl;
+            this.serverVersion = info.ServerVersion;
 
             if (info.IntegratedSecurity)
             {
@@ -86,7 +87,12 @@ namespace DatabaseManager.Controls
                 if(!string.IsNullOrEmpty(password))
                 {
                     this.txtPassword.Text = password;
-                }               
+                }  
+                
+                if(!string.IsNullOrEmpty(info.Password))
+                {
+                    this.chkRememberPassword.Checked = true;
+                }
             }
         }
 

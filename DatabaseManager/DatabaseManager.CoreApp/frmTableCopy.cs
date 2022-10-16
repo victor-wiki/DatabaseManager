@@ -15,11 +15,10 @@ namespace DatabaseManager
     {
         private ConnectionInfo targetDbConnectionInfo;
         private DbConverter dbConverter = null;
-        private bool hasError = false;
 
         public DatabaseType DatabaseType { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
-        public Table Table { get; set; }        
+        public Table Table { get; set; }
 
         public DatabaseInterpreter.Utility.FeedbackHandler OnFeedback;
 
@@ -42,8 +41,6 @@ namespace DatabaseManager
 
         private async void btnExecute_Click(object sender, EventArgs e)
         {
-            this.hasError = false;
-
             await this.CopyTable();
         }
 
@@ -78,7 +75,7 @@ namespace DatabaseManager
                 DatabaseType targetDatabaseType = this.rbAnotherDatabase.Checked ? this.ucConnection.DatabaseType : this.DatabaseType;
                 ConnectionInfo targetConnectionInfo = this.rbAnotherDatabase.Checked ? this.targetDbConnectionInfo : this.ConnectionInfo;
 
-                DbInterpreterOption sourceOption = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs= true };
+                DbInterpreterOption sourceOption = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs = true };
                 DbInterpreterOption targetOption = new DbInterpreterOption() { ThrowExceptionWhenErrorOccurs = true };
 
                 targetOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
@@ -86,12 +83,12 @@ namespace DatabaseManager
                 DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, this.ConnectionInfo, sourceOption) };
                 DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDatabaseType, targetConnectionInfo, targetOption) };
 
-                if(this.chkOnlyCopyTable.Checked)
+                if (this.chkOnlyCopyTable.Checked)
                 {
                     source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn;
                 }
 
-                source.TableNameMappings.Add(this.Table.Name, name);              
+                source.TableNameMappings.Add(this.Table.Name, name);
 
                 this.btnExecute.Enabled = false;
 
@@ -116,7 +113,7 @@ namespace DatabaseManager
                     if (this.DatabaseType == DatabaseType.MySql)
                     {
                         source.DbInterpreter.Option.InQueryItemLimitCount = 2000;
-                    }                    
+                    }
 
                     this.dbConverter.Option.SplitScriptsToExecute = true;
 
@@ -125,7 +122,7 @@ namespace DatabaseManager
                     if (result.InfoType == DbConverterResultInfoType.Information)
                     {
                         if (!this.dbConverter.CancelRequested)
-                        {                           
+                        {
                             MessageBox.Show("Table copied.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
@@ -139,13 +136,12 @@ namespace DatabaseManager
                     }
                     else if (result.InfoType == DbConverterResultInfoType.Error) //message shows in main form because it uses Subscribe above
                     {
-                       // MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }                   
+                        // MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                this.hasError = true;
                 this.HandleException(ex);
             }
             finally
@@ -187,12 +183,12 @@ namespace DatabaseManager
         private void rbSameDatabase_CheckedChanged(object sender, EventArgs e)
         {
             this.SetControlState();
-        }       
+        }
 
         private void SetControlState()
         {
             this.ucConnection.Enabled = this.rbAnotherDatabase.Checked;
-            this.txtName.Text = this.rbSameDatabase.Checked ? $"{this.Table.Name}_copy" : this.Table.Name;        
+            this.txtName.Text = this.rbSameDatabase.Checked ? $"{this.Table.Name}_copy" : this.Table.Name;
 
             this.SetSchemaControlStates();
         }
@@ -207,25 +203,29 @@ namespace DatabaseManager
         private void SetSchemaControlStates()
         {
             this.cboSchema.Text = "";
+            this.cboSchema.Items.Clear();
 
             var targetDbInterpreter = this.GetTargetDbInterpreter();
 
-            if(targetDbInterpreter!=null)
+            if (targetDbInterpreter != null)
             {
                 DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
 
                 this.lblSchema.Visible = this.cboSchema.Visible = targetDbType == DatabaseType.SqlServer || targetDbType == DatabaseType.Postgres;
 
                 this.ShowSchemas();
-            }           
+            }
         }
 
         private async void ShowSchemas()
         {
-            this.cboSchema.Items.Clear();
-
-            if(this.cboSchema.Visible)
+            if (this.cboSchema.Visible)
             {
+                if(this.rbAnotherDatabase.Checked && !this.ucConnection.ValidateProfile())
+                {
+                    return;
+                }
+
                 var targetDbSchemas = await this.GetTargetDbInterpreter().GetDatabaseSchemasAsync();
 
                 foreach (var schema in targetDbSchemas)
@@ -237,7 +237,7 @@ namespace DatabaseManager
                         this.cboSchema.Text = schema.Name;
                     }
                 }
-            }                
+            }
         }
 
         private bool ValidateInputs()
@@ -289,7 +289,7 @@ namespace DatabaseManager
 
             SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { this.txtName.Text.Trim() } };
 
-            if(!string.IsNullOrEmpty(this.cboSchema.Text))
+            if (!string.IsNullOrEmpty(this.cboSchema.Text))
             {
                 filter.Schema = this.cboSchema.Text;
             }

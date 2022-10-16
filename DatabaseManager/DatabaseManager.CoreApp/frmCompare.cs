@@ -145,10 +145,8 @@ namespace DatabaseManager
                     return;
                 }
 
-                if (!this.sourceDbConnectionInfo.IntegratedSecurity && string.IsNullOrEmpty(this.sourceDbConnectionInfo.Password))
+                if (!this.sourceDbProfile.ValidateProfile())
                 {
-                    MessageBox.Show("Please specify password for the source database.");
-                    this.sourceDbProfile.ConfigConnection(true);
                     return;
                 }
             }
@@ -175,9 +173,16 @@ namespace DatabaseManager
                 return;
             }
 
-            if (this.sourceDbConnectionInfo.Server == this.targetDbConnectionInfo.Server && this.sourceDbConnectionInfo.Database == this.targetDbConnectionInfo.Database)
+            if (this.sourceDbConnectionInfo.Server == this.targetDbConnectionInfo.Server
+                && this.sourceDbConnectionInfo.Port == this.targetDbConnectionInfo.Port
+                && this.sourceDbConnectionInfo.Database == this.targetDbConnectionInfo.Database)
             {
                 MessageBox.Show("Source database cannot be equal to the target database.");
+                return;
+            }
+
+            if (!this.targetDbProfile.ValidateProfile())
+            {
                 return;
             }
 
