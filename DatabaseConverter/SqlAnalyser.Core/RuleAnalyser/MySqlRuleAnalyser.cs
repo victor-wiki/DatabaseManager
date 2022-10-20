@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -150,6 +151,21 @@ namespace SqlAnalyser.Core
         {
             List<Statement> statements = new List<Statement>();
 
+            Action<DatabaseObjectType, TokenType, ParserRuleContext[]> addDropStatement = (objType, tokenType, objNames) =>
+            {
+                if (objNames != null)
+                {
+                    foreach (var objName in objNames)
+                    {
+                        DropStatement dropStatement = new DropStatement();
+                        dropStatement.ObjectType = objType;
+                        dropStatement.ObjectName = new NameToken(objName) { Type = tokenType };
+
+                        statements.Add(dropStatement);
+                    }
+                }
+            };
+
             foreach (var child in simpleStatementContext.children)
             {
                 if (child is SelectStatementContext select)
@@ -178,6 +194,32 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseCallStatement(call));
                 }
+                else if(child is DropStatementContext drop)
+                {
+                    foreach(var c in drop.children)
+                    {
+                        if (c is DropTableContext drop_table)
+                        {
+                            addDropStatement(DatabaseObjectType.Table, TokenType.TableName, drop_table.tableRefList().tableRef());
+                        }
+                        else if (c is DropViewContext drop_view)
+                        {
+                            addDropStatement(DatabaseObjectType.View, TokenType.ViewName, drop_view.viewRefList().viewRef());
+                        }
+                        else if (c is DropFunctionContext drop_function)
+                        {
+                            addDropStatement(DatabaseObjectType.Function, TokenType.FunctionName, new ParserRuleContext[] { drop_function.functionRef() });
+                        }
+                        else if (c is DropProcedureContext drop_proc)
+                        {
+                            addDropStatement(DatabaseObjectType.Procedure, TokenType.ProcedureName, new ParserRuleContext[] { drop_proc.procedureRef() });
+                        }
+                        else if (c is DropTriggerContext drop_trigger)
+                        {
+                            addDropStatement(DatabaseObjectType.Trigger, TokenType.TriggerName, new ParserRuleContext[] { drop_trigger.triggerRef() });
+                        }
+                    }                    
+                }               
             }
 
             return statements;

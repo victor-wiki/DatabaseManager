@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.9</Version>
-    <PackageReleaseNotes>in addition to "PROCEDURE", add "PROC" when translate</PackageReleaseNotes>
+    <Version>2.0.10</Version>
+    <PackageReleaseNotes>bug fix: table designer's index</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.9</AssemblyVersion>
-    <FileVersion>2.0.9</FileVersion>
+    <AssemblyVersion>2.0.10</AssemblyVersion>
+    <FileVersion>2.0.10</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

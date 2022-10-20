@@ -1,4 +1,5 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Model;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -163,7 +164,7 @@ namespace SqlAnalyser.Core
                     int i = 0;
                     foreach (var column in declare.Table.Columns)
                     {
-                        this.AppendLine($"{column.Symbol} {column.DataType}{(i == declare.Table.Columns.Count - 1 ? "" : ",")}");
+                        this.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == declare.Table.Columns.Count - 1 ? "" : ",")}");
                     }
 
                     this.AppendLine(")");
@@ -177,13 +178,13 @@ namespace SqlAnalyser.Core
 
                     if (valueToken != null)
                     {
-                        if (valueToken.Type == TokenType.RoutineName)
+                        if (this.IsRoutineName(valueToken))
                         {
                             this.MakeupRoutineName(valueToken);
                         }
                         else
                         {
-                            TokenInfo child = valueToken.Children.FirstOrDefault(item => item.Type == TokenType.RoutineName);
+                            TokenInfo child = valueToken.Children.FirstOrDefault(item => this.IsRoutineName(item));
 
                             if (child != null)
                             {
@@ -350,8 +351,21 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"TRUNCATE TABLE {truncate.TableName}");
             }
+            else if(statement is DropStatement drop)
+            {
+                string objectType = drop.ObjectType.ToString().ToUpper();                
+
+                this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
+            }
 
             return this;
+        }
+
+        private bool IsRoutineName(TokenInfo token)
+        {
+            var tokenType = token.Type;
+
+            return tokenType == TokenType.RoutineName || tokenType == TokenType.ProcedureName || tokenType == TokenType.FunctionName;
         }
 
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)

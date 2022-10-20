@@ -18,7 +18,7 @@ namespace DatabaseManager.Core
         private IObserver<FeedbackInfo> observer;
         private string asPattern = @"\b(AS|IS)\b";
 
-        public async Task Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, TranslateHandler translateHandler = null)
+        public async Task Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, TranslateHandler translateHandler = null, bool removeCarriagRreturnChar = false)
         {
             DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
@@ -33,6 +33,7 @@ namespace DatabaseManager.Core
                 dbConverter.Option.ExecuteScriptOnTargetServer = false;
                 dbConverter.Option.ConvertComputeColumnExpression = true;
                 dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
+                dbConverter.Option.RemoveCarriagRreturnChar = removeCarriagRreturnChar;
 
                 dbConverter.Subscribe(this.observer);
 

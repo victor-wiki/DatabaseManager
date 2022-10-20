@@ -4,6 +4,7 @@ using DatabaseConverter.Profile;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -101,7 +102,7 @@ namespace DatabaseConverter.Core
             if (schemaInfo != null && !this.Source.DbInterpreter.Option.GetTableAllObjects
                 && (schemaInfo.TableTriggers == null || schemaInfo.TableTriggers.Count == 0))
             {
-                databaseObjectType = databaseObjectType ^ DatabaseObjectType.TableTrigger;
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Trigger;
             }
 
             if (this.Source.DatabaseObjectType != DatabaseObjectType.None)
@@ -129,13 +130,16 @@ namespace DatabaseConverter.Core
 
             sourceSchemaInfo.TableColumns = DbObjectHelper.ResortTableColumns(sourceSchemaInfo.Tables, sourceSchemaInfo.TableColumns);
 
-            if (DbInterpreter.Setting.NotCreateIfExists)
+            if (DbInterpreter.Setting.NotCreateIfExists && !this.Option.OnlyForTranslate && !this.Option.OnlyForTableCopy)
             {
-                this.Target.DbInterpreter.Option.GetTableAllObjects = false;
+                if(this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
+                {
+                    this.Target.DbInterpreter.Option.GetTableAllObjects = false;
 
-                SchemaInfo targetSchema = await this.Target.DbInterpreter.GetSchemaInfoAsync(filter);
+                    SchemaInfo targetSchema = await this.Target.DbInterpreter.GetSchemaInfoAsync(filter);
 
-                SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
+                    SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
+                }                
             }
 
             List<UserDefinedType> utypes = new List<UserDefinedType>();
@@ -193,7 +197,7 @@ namespace DatabaseConverter.Core
 
             if (!this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema) && this.Option.BulkCopy && this.Target.DbInterpreter.SupportBulkCopy)
             {
-                translateDbObjectType = DatabaseObjectType.TableColumn;
+                translateDbObjectType = DatabaseObjectType.Column;
             }
 
             translateEngine.UserDefinedTypes = utypes;
@@ -257,7 +261,10 @@ namespace DatabaseConverter.Core
 
                     if (this.Option.OnlyForTranslate)
                     {
-                        this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
+                        if(!(this.translateDbObject is ScriptDbObject)) //script db object uses script translator which uses event to feed back to ui.
+                        {
+                            this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
+                        }                        
                     }
                 }
 

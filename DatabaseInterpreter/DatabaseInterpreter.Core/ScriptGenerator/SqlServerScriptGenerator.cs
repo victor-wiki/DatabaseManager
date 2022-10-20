@@ -437,44 +437,44 @@ INCREMENT BY {sequence.Increment}
 MINVALUE {(long)sequence.MinValue}
 MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled? "CYCLE" : "")}
-{(sequence.UseCache? "CACHE":"")} {sequence.CacheSize};";
+{(sequence.UseCache? "CACHE":"")}{(sequence.CacheSize>0? sequence.CacheSize.ToString(): "")};";
 
             return new CreateDbObjectScript<Sequence>(script);
         }
 
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
-            return new DropDbObjectScript<UserDefinedType>(this.GetDropSql("TYPE", userDefinedType));
+            return new DropDbObjectScript<UserDefinedType>(this.GetDropSql(nameof(DatabaseObjectType.Type), userDefinedType));
         }
 
         public override Script DropSequence(Sequence sequence)
         {
-            return new DropDbObjectScript<Sequence>(this.GetDropSql("SEQUENCE", sequence));
+            return new DropDbObjectScript<Sequence>(this.GetDropSql(nameof(DatabaseObjectType.Sequence), sequence));
         }
 
         public override Script DropTable(Table table)
         {
-            return new DropDbObjectScript<Table>(this.GetDropSql(nameof(Table), table));
+            return new DropDbObjectScript<Table>(this.GetDropSql(nameof(DatabaseObjectType.Table), table));
         }
 
         public override Script DropView(View view)
         {
-            return new DropDbObjectScript<View>(this.GetDropSql(nameof(View), view));
+            return new DropDbObjectScript<View>(this.GetDropSql(nameof(DatabaseObjectType.View), view));
         }
 
         public override Script DropTrigger(TableTrigger trigger)
         {
-            return new DropDbObjectScript<View>(this.GetDropSql("trigger", trigger));
+            return new DropDbObjectScript<View>(this.GetDropSql(nameof(DatabaseObjectType.Trigger), trigger));
         }
 
         public override Script DropFunction(Function function)
         {
-            return new DropDbObjectScript<Function>(this.GetDropSql(nameof(Function), function));
+            return new DropDbObjectScript<Function>(this.GetDropSql(nameof(DatabaseObjectType.Function), function));
         }
 
         public override Script DropProcedure(Procedure procedure)
         {
-            return new DropDbObjectScript<Procedure>(this.GetDropSql(nameof(Procedure), procedure));
+            return new DropDbObjectScript<Procedure>(this.GetDropSql(nameof(DatabaseObjectType.Procedure), procedure));
         }
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)

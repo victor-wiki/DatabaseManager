@@ -1,4 +1,5 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Model;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -226,7 +227,17 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement call)
             {
-                this.AppendLine($"CALL {call.Name}({string.Join(",", call.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                string content = string.Join(",", call.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()));
+
+                if(call.IsExecuteSql)
+                {
+                    this.AppendLine($"PREPARE dynamicSQL FROM {content};");
+                    this.AppendLine("EXECUTE dynamicSQL;");
+                }
+                else
+                {
+                    this.AppendLine($"CALL {call.Name}({content});");
+                }               
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -303,6 +314,12 @@ namespace SqlAnalyser.Core
             else if (statement is TruncateStatement truncate)
             {
                 this.AppendLine($"TRUNCATE TABLE { truncate.TableName};");
+            }
+            else if (statement is DropStatement drop)
+            {
+                string objectType = drop.ObjectType.ToString().ToUpper();                
+
+                this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
             }
 
             return this;
@@ -444,7 +461,7 @@ namespace SqlAnalyser.Core
             int i = 0;
             foreach (var column in table.Columns)
             {
-                sb.AppendLine($"{column.Symbol} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
                 i++;
             }
 

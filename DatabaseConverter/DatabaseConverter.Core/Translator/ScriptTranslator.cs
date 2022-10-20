@@ -2,14 +2,17 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using PoorMansTSqlFormatterRedux;
 using SqlAnalyser.Core;
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -109,6 +112,13 @@ namespace DatabaseConverter.Core
                     this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\".");
 
                     bool tokenProcessed = false;
+                    
+                    dbObj.Definition = dbObj.Definition.Trim();
+
+                    if(this.Option.RemoveCarriagRreturnChar)
+                    {
+                        dbObj.Definition = dbObj.Definition.Replace("\r\n", "\n");
+                    }
 
                     this.Validate(dbObj);
 
@@ -208,7 +218,7 @@ namespace DatabaseConverter.Core
 
                     if (this.OnTranslated != null)
                     {
-                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, new TranslateResult() { Error = result.Error, Data = dbObj.Definition });
+                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, new TranslateResult() { Error = replaced ? null : result.Error, Data = dbObj.Definition });
                     }
 
                     this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: {(result.HasError ? "Error" : "OK")}.");

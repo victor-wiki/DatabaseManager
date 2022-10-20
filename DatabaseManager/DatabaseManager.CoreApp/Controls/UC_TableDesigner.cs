@@ -64,7 +64,7 @@ namespace DatabaseManager.Controls
                 this.cboSchema.Enabled = false;               
 
                 SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, Schema =this.displayInfo.Schema, TableNames = new string[] { this.displayInfo.Name } };
-                filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey;
+                filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column | DatabaseObjectType.PrimaryKey;
 
                 SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
@@ -429,7 +429,7 @@ namespace DatabaseManager.Controls
 
             foreach (TableColumnDesingerInfo column in columns)
             {
-                if (databaseObjectType == DatabaseObjectType.TableIndex)
+                if (databaseObjectType == DatabaseObjectType.Index)
                 {
                     if (!string.IsNullOrEmpty(column.DataType) && string.IsNullOrEmpty(column.ExtraPropertyInfo?.Expression))
                     {
@@ -448,7 +448,7 @@ namespace DatabaseManager.Controls
 
             if (columnSelect.ShowDialog() == DialogResult.OK)
             {
-                if (databaseObjectType == DatabaseObjectType.TableIndex)
+                if (databaseObjectType == DatabaseObjectType.Index)
                 {
                     this.ucIndexes.SetRowColumns(columnSelect.SelectedColumns);
                 }

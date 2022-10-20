@@ -124,14 +124,19 @@ namespace DatabaseInterpreter.Core
 
                     if (isSelfReference)
                     {
-                        string parentColumnName = schemaInfo.TableForeignKeys.FirstOrDefault(item =>
+                        var fk = schemaInfo.TableForeignKeys.FirstOrDefault(item =>
                             item.Schema == table.Schema
                             && item.TableName == tableName
-                            && item.ReferencedTableName == tableName)?.Columns?.FirstOrDefault()?.ColumnName;
+                            && item.ReferencedTableName == tableName);
 
-                        string strWhere = $" WHERE {this.GetQuotedString(parentColumnName)} IS NULL";
+                        var fkc = fk.Columns.FirstOrDefault();
 
-                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, parentColumnName, columns, strWhere);
+                        string referencedColumnName = this.GetQuotedString(fkc.ReferencedColumnName);
+                        string columnName = this.GetQuotedString(fkc.ColumnName);                       
+
+                        string strWhere = $" WHERE ({columnName} IS NULL OR {columnName}={referencedColumnName})";
+
+                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, fkc.ReferencedColumnName, fkc.ColumnName, columns, strWhere);
                     }
                     else
                     {
@@ -181,7 +186,7 @@ namespace DatabaseInterpreter.Core
             return dataScripts;
         }
 
-        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string parentColumnName, List<TableColumn> columns, string whereClause = "")
+        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string referencedColumnName, string fkColumnName, List<TableColumn> columns, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
 
@@ -195,19 +200,21 @@ namespace DatabaseInterpreter.Core
 
             if (parentValues.Count > 0)
             {
-                TableColumn parentColumn = columns.FirstOrDefault(item => item.Schema == table.Schema && item.Name == parentColumnName);
+                TableColumn parentColumn = columns.FirstOrDefault(item => item.Schema == table.Schema && item.Name == fkColumnName);
 
                 long parentValuesPageCount = PaginationHelper.GetPageCount(parentValues.Count, this.option.InQueryItemLimitCount);
 
                 for (long parentValuePageNumber = 1; parentValuePageNumber <= parentValuesPageCount; parentValuePageNumber++)
                 {
                     IEnumerable<object> pagedParentValues = parentValues.Skip((int)(parentValuePageNumber - 1) * pageSize).Take(this.option.InQueryItemLimitCount);
-                    whereClause = $" WHERE {this.GetQuotedString(parentColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true)))})";
+                    whereClause = $@" WHERE {this.GetQuotedString(fkColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true)))}) 
+                                      AND ({this.GetQuotedString(fkColumnName)}<>{this.GetQuotedString(referencedColumnName)})";
+
                     total = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
 
                     if (total > 0)
                     {
-                        Dictionary<long, List<Dictionary<string, object>>> dictChildPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, parentColumnName, columns, whereClause);
+                        Dictionary<long, List<Dictionary<string, object>>> dictChildPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, referencedColumnName, fkColumnName, columns, whereClause);
 
                         foreach (var kp in dictChildPagedData)
                         {
@@ -385,7 +392,7 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
-                    if(column.IsUserDefined)
+                    if(DataTypeHelper.IsUserDefinedType(column))
                     {
                         if(this.databaseType == DatabaseType.Postgres)
                         {
@@ -470,6 +477,7 @@ namespace DatabaseInterpreter.Core
 
                         needQuotated = true;
                         strValue = value.ToString();
+
                         if (this.databaseType == DatabaseType.Oracle)
                         {
                             if (strValue.Contains(";"))
@@ -615,11 +623,11 @@ namespace DatabaseInterpreter.Core
 
                 if (needQuotated)
                 {
-                    strValue = $"{this.dbInterpreter.UnicodeInsertChar}'{ValueHelper.TransferSingleQuotation(strValue)}'";
+                    strValue = $"{this.dbInterpreter.UnicodeLeadingFlag}'{ValueHelper.TransferSingleQuotation(strValue)}'";
 
                     if (oracleSemicolon)
                     {
-                        strValue = strValue.Replace(";", $"'{OracleInterpreter.CONNECT_CHAR}{OracleInterpreter.SEMICOLON_FUNC}{OracleInterpreter.CONNECT_CHAR}'");
+                        strValue = strValue.Replace(";", $"'{this.dbInterpreter.STR_CONCAT_CHARS}{OracleInterpreter.SEMICOLON_FUNC}{this.dbInterpreter.STR_CONCAT_CHARS}'");
                     }
 
                     return strValue;

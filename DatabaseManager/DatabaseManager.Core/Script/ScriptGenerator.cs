@@ -34,7 +34,7 @@ namespace DatabaseManager.Core
                 }
                 else
                 {
-                    databaseObjectType |= DatabaseObjectType.TableColumn;
+                    databaseObjectType |= DatabaseObjectType.Column;
                 }
             }
 
@@ -99,7 +99,7 @@ namespace DatabaseManager.Core
                     sbContent.AppendLine(content);
                 }
 
-                return StringHelper.ToSingleEmptyLine(sbContent.ToString());
+                return StringHelper.ToSingleEmptyLine(sbContent.ToString().Trim());
             }
             else if (dbObject is Table table)
             {

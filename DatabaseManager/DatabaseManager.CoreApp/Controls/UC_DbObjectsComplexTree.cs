@@ -21,7 +21,7 @@ namespace DatabaseManager.Controls
     {
         private DatabaseType databaseType;
         private ConnectionInfo connectionInfo;
-        private DbInterpreterOption simpleInterpreterOption = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
+        private DbInterpreterOption simpleInterpreterOption = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple, ThrowExceptionWhenErrorOccurs =true };
 
         public ShowDbObjectContentHandler OnShowContent;
         public DatabaseInterpreter.Utility.FeedbackHandler OnFeedback;
@@ -439,19 +439,19 @@ namespace DatabaseManager.Controls
                     switch (name)
                     {
                         case nameof(DbObjectTreeFolderType.Columns):
-                            databaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
+                            databaseObjectType = DatabaseObjectType.Column | DatabaseObjectType.PrimaryKey | DatabaseObjectType.ForeignKey;
                             break;
                         case nameof(DbObjectTreeFolderType.Triggers):
-                            databaseObjectType = DatabaseObjectType.TableTrigger;
+                            databaseObjectType = DatabaseObjectType.Trigger;
                             break;
                         case nameof(DbObjectTreeFolderType.Indexes):
-                            databaseObjectType = DatabaseObjectType.TableIndex;
+                            databaseObjectType = DatabaseObjectType.Index;
                             break;
                         case nameof(DbObjectTreeFolderType.Keys):
-                            databaseObjectType = DatabaseObjectType.TablePrimaryKey | DatabaseObjectType.TableForeignKey;
+                            databaseObjectType = DatabaseObjectType.PrimaryKey | DatabaseObjectType.ForeignKey;
                             break;
                         case nameof(DbObjectTreeFolderType.Constraints):
-                            databaseObjectType = DatabaseObjectType.TableConstraint;
+                            databaseObjectType = DatabaseObjectType.Constraint;
                             break;
                     }
 
@@ -781,7 +781,7 @@ namespace DatabaseManager.Controls
                 TranslateManager translateManager = new TranslateManager();
                 translateManager.Subscribe(this);
 
-                await translateManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated);
+                await translateManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated, true);
             }
         }
 
@@ -897,7 +897,7 @@ namespace DatabaseManager.Controls
 
         private void tsmiNewTrigger_Click(object sender, EventArgs e)
         {
-            this.DoScript(DatabaseObjectType.TableTrigger, ScriptAction.CREATE);
+            this.DoScript(DatabaseObjectType.Trigger, ScriptAction.CREATE);
         }
 
         private void DoScript(DatabaseObjectType databaseObjectType, ScriptAction scriptAction)
@@ -911,7 +911,7 @@ namespace DatabaseManager.Controls
 
             DatabaseObject dbObj = null;
 
-            if (databaseObjectType == DatabaseObjectType.TableTrigger)
+            if (databaseObjectType == DatabaseObjectType.Trigger)
             {
                 dbObj = this.GetSelectedNode().Parent?.Tag as Table;
             }

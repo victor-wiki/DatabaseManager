@@ -85,7 +85,7 @@ namespace DatabaseManager
 
                 if (this.chkOnlyCopyTable.Checked)
                 {
-                    source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.TableColumn;
+                    source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column;
                 }
 
                 source.TableNameMappings.Add(this.Table.Name, name);
@@ -101,6 +101,8 @@ namespace DatabaseManager
                     this.dbConverter.Option.ConvertComputeColumnExpression = true;
                     this.dbConverter.Option.IgnoreNotSelfForeignKey = true;
                     this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
+                    this.dbConverter.Option.OnlyForTableCopy = true;
+
 
                     if (this.cboSchema.Visible)
                     {
@@ -226,16 +228,23 @@ namespace DatabaseManager
                     return;
                 }
 
-                var targetDbSchemas = await this.GetTargetDbInterpreter().GetDatabaseSchemasAsync();
-
-                foreach (var schema in targetDbSchemas)
+                try
                 {
-                    this.cboSchema.Items.Add(schema.Name);
+                    var targetDbSchemas = await this.GetTargetDbInterpreter().GetDatabaseSchemasAsync();
 
-                    if (this.Table.Schema == schema.Name)
+                    foreach (var schema in targetDbSchemas)
                     {
-                        this.cboSchema.Text = schema.Name;
+                        this.cboSchema.Items.Add(schema.Name);
+
+                        if (this.Table.Schema == schema.Name)
+                        {
+                            this.cboSchema.Text = schema.Name;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    
                 }
             }
         }

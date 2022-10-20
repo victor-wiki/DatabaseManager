@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using DatabaseInterpreter.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -420,6 +421,18 @@ namespace SqlAnalyser.Core
         {
             List<Statement> statements = new List<Statement>();
 
+            Action<DatabaseObjectType, TokenType, ParserRuleContext> addDropStatement = (objType, tokenType, objName) =>
+            {
+                if (objName != null)
+                {
+                    DropStatement dropStatement = new DropStatement();
+                    dropStatement.ObjectType = objType;
+                    dropStatement.ObjectName = new NameToken(objName) { Type = tokenType };
+
+                    statements.Add(dropStatement);
+                }
+            };
+
             foreach (var child in node.children)
             {
                 if (child is Sql_statementContext sql)
@@ -458,6 +471,34 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseReturnStatement(@return));
                 }
+                else if(child is Drop_tableContext drop_Table)
+                {
+                    addDropStatement(DatabaseObjectType.Table, TokenType.TableName, drop_Table.tableview_name());
+                }
+                else if (child is Drop_viewContext drop_View)
+                {
+                    addDropStatement(DatabaseObjectType.View, TokenType.ViewName, drop_View.tableview_name());
+                }
+                else if (child is Drop_typeContext drop_Type)
+                {
+                    addDropStatement(DatabaseObjectType.Type, TokenType.TypeName, drop_Type.type_name());
+                }
+                else if (child is Drop_sequenceContext drop_Sequence)
+                {
+                    addDropStatement(DatabaseObjectType.Sequence, TokenType.SequenceName, drop_Sequence.sequence_name());
+                }
+                else if (child is Drop_functionContext drop_Func)
+                {
+                    addDropStatement(DatabaseObjectType.Function, TokenType.FunctionName, drop_Func.function_name());
+                }
+                else if (child is Drop_procedureContext drop_Proc)
+                {
+                    addDropStatement(DatabaseObjectType.Procedure, TokenType.ProcedureName, drop_Proc.procedure_name());
+                }
+                else if (child is Drop_triggerContext drop_Trigger)
+                {
+                    addDropStatement(DatabaseObjectType.Trigger, TokenType.TriggerName, drop_Trigger.trigger_name());
+                }
             }
 
             return statements;
@@ -480,7 +521,7 @@ namespace SqlAnalyser.Core
         {
             Statement statement;
 
-            TokenInfo functionName = new TokenInfo(node.routine_name()) { Type = TokenType.RoutineName };
+            TokenInfo functionName = new TokenInfo(node.routine_name()) { Type = TokenType.FunctionName };
 
             if (functionName.Symbol.IndexOf("DBMS_OUTPUT", StringComparison.OrdinalIgnoreCase) >= 0)
             {

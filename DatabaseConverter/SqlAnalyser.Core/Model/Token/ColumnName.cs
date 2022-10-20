@@ -23,6 +23,19 @@ namespace SqlAnalyser.Model
             }
         }
 
+        public string FieldName
+        {
+            get
+            {
+                if (this.alias != null)
+                {
+                    return this.alias.Symbol;
+                }
+
+                return this.Symbol;
+            }
+        }
+
         //public string FullName
         //{
         //    get

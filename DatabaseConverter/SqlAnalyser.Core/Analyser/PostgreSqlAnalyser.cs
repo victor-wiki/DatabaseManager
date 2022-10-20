@@ -122,7 +122,21 @@ namespace SqlAnalyser.Core
                     }
 
                     sb.AppendLine($"RETURNS {dataType}");
-                }                
+                }
+                else if (script.ReturnTable != null)
+                {
+                    if (script.ReturnTable.Columns.Count > 0)
+                    {
+                        sb.AppendLine($"RETURNS TABLE({string.Join(",", script.ReturnTable.Columns.Select(item =>this.GetColumnInfo(item)))})");
+                    }
+                }
+                else
+                {
+                    if (script.Statements.Count > 0 && script.Statements.First() is SelectStatement select)
+                    {
+                        sb.AppendLine($"RETURNS TABLE({string.Join(",", select.Columns.Select(item => $"{item.FieldName} character varying"))})");
+                    }                    
+                }
             }
 
             sb.AppendLine("LANGUAGE 'plpgsql'");
@@ -136,10 +150,13 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
-            if (script.ReturnTable != null)
+            if(script.Type == RoutineType.FUNCTION)
             {
-                //
-            }
+                if (script.ReturnDataType == null)
+                {
+                    sb.Append("RETURN QUERY ");
+                }
+            }            
 
             FetchCursorStatement fetchCursorStatement = null;
 
@@ -178,6 +195,14 @@ namespace SqlAnalyser.Core
             result.Body = sbBody.ToString();
 
             return result;
+        }
+
+        private string GetColumnInfo(ColumnInfo columnInfo)
+        {
+            string name = columnInfo.Name.FieldName;
+            string dataType = string.IsNullOrEmpty(columnInfo.DataType) ? "character varying" : columnInfo.DataType;
+
+            return $"{name} {dataType}";
         }
 
         public ScriptBuildResult GenearteViewScripts(ViewScript script)

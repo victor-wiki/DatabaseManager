@@ -14,13 +14,13 @@ namespace DatabaseConverter.Core
         private SchemaInfo sourceSchemaInfo;
         private SchemaInfo targetSchemaInfo;
         private DbInterpreter sourceInterpreter;
-        private DbInterpreter targetInerpreter;      
+        private DbInterpreter targetInerpreter;
         private IObserver<FeedbackInfo> observer;
         private DbConverterOption option;
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
-        public const DatabaseObjectType SupportDatabaseObjectType = DatabaseObjectType.TableColumn | DatabaseObjectType.TableConstraint |
-                                                                    DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure | 
-                                                                    DatabaseObjectType.TableTrigger | DatabaseObjectType.Sequence | DatabaseObjectType.UserDefinedType;
+        public const DatabaseObjectType SupportDatabaseObjectType = DatabaseObjectType.Column | DatabaseObjectType.Constraint |
+                                                                    DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure |
+                                                                    DatabaseObjectType.Trigger | DatabaseObjectType.Sequence | DatabaseObjectType.Type;
 
 
         public TranslateHandler OnTranslated;
@@ -32,15 +32,15 @@ namespace DatabaseConverter.Core
             this.sourceSchemaInfo = sourceSchemaInfo;
             this.targetSchemaInfo = targetSchemaInfo;
             this.sourceInterpreter = sourceInterpreter;
-            this.targetInerpreter = targetInerpreter;           
+            this.targetInerpreter = targetInerpreter;
             this.option = option;
         }
 
         public void Translate(DatabaseObjectType databaseObjectType = DatabaseObjectType.None)
         {
-            this.TranslateSchema();                  
+            this.TranslateSchema();
 
-            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.UserDefinedType))
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Type))
             {
                 UserDefinedTypeTranslator userDefinedTypeTranslator = new UserDefinedTypeTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.UserDefinedTypes);
                 this.Translate(userDefinedTypeTranslator);
@@ -52,14 +52,14 @@ namespace DatabaseConverter.Core
                 this.Translate(sequenceTranslator);
             }
 
-            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableColumn))
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Column))
             {
                 ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
                 columnTranslator.UserDefinedTypes = this.UserDefinedTypes;
                 this.Translate(columnTranslator);
             }
 
-            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableConstraint))
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Constraint))
             {
                 ConstraintTranslator constraintTranslator = new ConstraintTranslator(sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableConstraints) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
                 constraintTranslator.TableCoumns = this.targetSchemaInfo.TableColumns;
@@ -84,17 +84,17 @@ namespace DatabaseConverter.Core
                 procedureTranslator.Translate();
             }
 
-            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.TableTrigger))
+            if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Trigger))
             {
                 ScriptTranslator<TableTrigger> triggerTranslator = this.GetScriptTranslator<TableTrigger>(this.targetSchemaInfo.TableTriggers);
                 triggerTranslator.Translate();
-            }          
+            }
         }
 
         private void Translate(DbObjectTranslator translator)
         {
             translator.Option = this.option;
-            translator.SourceSchemaInfo = this.sourceSchemaInfo;          
+            translator.SourceSchemaInfo = this.sourceSchemaInfo;
             translator.Subscribe(this.observer);
             translator.Translate();
         }
@@ -113,7 +113,7 @@ namespace DatabaseConverter.Core
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceInterpreter, this.targetInerpreter, dbObjects) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
             translator.Option = this.option;
-            translator.UserDefinedTypes = this.UserDefinedTypes;        
+            translator.UserDefinedTypes = this.UserDefinedTypes;
             translator.OnTranslated += this.ScriptTranslated;
             translator.Subscribe(this.observer);
 
@@ -130,15 +130,25 @@ namespace DatabaseConverter.Core
 
         private void TranslateSchema()
         {
-            List<SchemaMappingInfo> schemaMappings = this.option.SchemaMappings;   
+            List<SchemaMappingInfo> schemaMappings = this.option.SchemaMappings;
 
             if (schemaMappings.Count == 0)
             {
                 schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = "", TargetSchema = this.targetInerpreter.DefaultSchema });
             }
+            else
+            {
+                if (this.sourceInterpreter.DefaultSchema != null && this.targetInerpreter.DefaultSchema != null)
+                {
+                    if (!schemaMappings.Any(item => item.SourceSchema == this.sourceInterpreter.DefaultSchema))
+                    {
+                        schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = this.sourceInterpreter.DefaultSchema, TargetSchema = this.targetInerpreter.DefaultSchema });
+                    }
+                }                
+            }
 
             SchemaInfoHelper.MapDatabaseObjectSchema(targetSchemaInfo, schemaMappings);
-        }        
+        }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
         {

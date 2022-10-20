@@ -7,5 +7,6 @@ namespace DatabaseManager.Model
         public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;       
         public DatabaseType PreferredDatabase { get; set; }
         public bool RememberPasswordDuringSession { get; set; } = true;
+        public bool EnableEditorHighlighting { get; set; } = true;
     }   
 }

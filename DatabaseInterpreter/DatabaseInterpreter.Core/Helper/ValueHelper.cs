@@ -1,6 +1,8 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Microsoft.SqlServer.Types;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
@@ -46,7 +48,7 @@ namespace DatabaseInterpreter.Core
                type == typeof(Guid) ||
                type == typeof(DateTimeOffset) ||
                type == typeof(TimeSpan) ||
-               typeName == "SqlHierarchyId"
+               typeName == nameof(SqlHierarchyId)
                )
             {
                 return true;
@@ -92,19 +94,68 @@ namespace DatabaseInterpreter.Core
 
         public static string GetTrimedParenthesisValue(string value)
         {
-            if (!string.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value) && value.StartsWith('(') && value.EndsWith(')'))
             {
-                value = value.TrimStart('(').TrimEnd(')');
-
-                if (value.EndsWith("("))
+                while (value.StartsWith('(') && value.EndsWith(')') && IsParenthesisBalanced(value))
                 {
-                    value += ")";
+                    string trimedValue = value.Substring(1, value.Length - 2);
+
+                    if(!IsParenthesisBalanced(trimedValue))
+                    {
+                        return value;
+                    }
+                    else
+                    {
+                        value = trimedValue;
+                    }
                 }
 
                 return value;
             }
 
             return value;
+        }
+
+        public static bool IsParenthesisBalanced(string value)
+        {
+            Dictionary<char, char> pairs = new Dictionary<char, char>() { { '(', ')' } };
+
+            Stack<char> parenthesis = new Stack<char>();
+
+            try
+            {
+                foreach (char c in value)
+                {
+                    if (pairs.Keys.Contains(c))
+                    {
+                        parenthesis.Push(c);
+                    }
+                    else
+                    {
+                        if (pairs.Values.Contains(c))
+                        {
+                            if (c == pairs[parenthesis.First()])
+                            {
+                                parenthesis.Pop();
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            return parenthesis.Count() == 0 ? true : false;
         }
 
         public static bool IsStringEquals(string str1, string str2)

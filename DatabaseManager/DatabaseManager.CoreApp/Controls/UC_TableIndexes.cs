@@ -76,7 +76,7 @@ namespace DatabaseManager.Controls
                 DataGridViewRow row = this.dgvIndexes.Rows[rowIndex];
 
                 row.Cells[this.colIndexName.Name].Value = index.Name;
-                row.Cells[this.colType.Name].Value = index.Type;
+                row.Cells[this.colType.Name].Value = this.GetIndexTypeEnumName(index.Type);
                 row.Cells[this.colColumns.Name].Value = this.GetColumnsDisplayText(index.Columns);
                 row.Cells[this.colComment.Name].Value = index.Comment;              
 
@@ -87,7 +87,22 @@ namespace DatabaseManager.Controls
 
             this.AutoSizeColumns();
             this.dgvIndexes.ClearSelection();
-        }    
+        }   
+        
+        private string GetIndexTypeEnumName(string type)
+        {
+            var typeNames = Enum.GetNames(typeof(IndexType));
+
+            foreach(var tn in typeNames)
+            {
+                if(tn.ToLower()== type.ToLower())
+                {
+                    return tn;
+                }
+            }
+
+            return type;
+        }
 
         public void LoadPrimaryKeys(IEnumerable<TableColumnDesingerInfo> columnDesingerInfos)
         {
@@ -301,7 +316,7 @@ namespace DatabaseManager.Controls
 
                     if (this.OnColumnSelect != null)
                     {
-                        this.OnColumnSelect(DatabaseObjectType.TableIndex,
+                        this.OnColumnSelect(DatabaseObjectType.Index,
                             indexDesignerInfo?.Columns == null ? Enumerable.Empty<IndexColumn>() : indexDesignerInfo?.Columns,
                             type == IndexType.Primary.ToString()
                         );

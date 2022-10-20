@@ -277,27 +277,27 @@ namespace DatabaseManager
             }
             else if (difference.Type == DbObjectTreeFolderType.Columns.ToString())
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TableColumn);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.Column);
             }
             else if (difference.Type == "Primary Keys")
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TablePrimaryKey);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.PrimaryKey);
             }
             else if (difference.Type == "Foreign Keys")
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TableForeignKey);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.ForeignKey);
             }
             else if (difference.Type == DbObjectTreeFolderType.Indexes.ToString())
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TableIndex);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.Index);
             }
             else if (difference.Type == DbObjectTreeFolderType.Constraints.ToString())
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TableConstraint);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.Constraint);
             }
             else if (difference.Type == DbObjectTreeFolderType.Triggers.ToString())
             {
-                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.TableTrigger);
+                return difference.Parent.SubDifferences.Where(item => item.DatabaseObjectType == DatabaseObjectType.Trigger);
             }
             else
             {
@@ -326,17 +326,17 @@ namespace DatabaseManager
                 }
             };
 
-            addFolder(DatabaseObjectType.TableColumn, DbObjectTreeFolderType.Columns.ToString());
+            addFolder(DatabaseObjectType.Column, DbObjectTreeFolderType.Columns.ToString());
 
-            addFolder(DatabaseObjectType.TablePrimaryKey, "Primary Keys");
+            addFolder(DatabaseObjectType.PrimaryKey, "Primary Keys");
 
-            addFolder(DatabaseObjectType.TableForeignKey, "Foreign Keys");
+            addFolder(DatabaseObjectType.ForeignKey, "Foreign Keys");
 
-            addFolder(DatabaseObjectType.TableIndex, DbObjectTreeFolderType.Indexes.ToString());
+            addFolder(DatabaseObjectType.Index, DbObjectTreeFolderType.Indexes.ToString());
 
-            addFolder(DatabaseObjectType.TableConstraint, DbObjectTreeFolderType.Constraints.ToString());
+            addFolder(DatabaseObjectType.Constraint, DbObjectTreeFolderType.Constraints.ToString());
 
-            addFolder(DatabaseObjectType.TableTrigger, DbObjectTreeFolderType.Triggers.ToString());
+            addFolder(DatabaseObjectType.Trigger, DbObjectTreeFolderType.Triggers.ToString());
 
             return differences;
         }
@@ -368,7 +368,7 @@ namespace DatabaseManager
 
                 switch (databaseObjectType)
                 {
-                    case DatabaseObjectType.UserDefinedType:
+                    case DatabaseObjectType.Type:
                         difference.ParentType = DbObjectTreeFolderType.Types.ToString();
                         addFolderType(DbObjectTreeFolderType.Types, difference.DifferenceType);
                         break;

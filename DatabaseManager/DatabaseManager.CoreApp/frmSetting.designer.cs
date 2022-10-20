@@ -60,6 +60,8 @@
             this.tabOracle = new System.Windows.Forms.TabPage();
             this.cboOracleGeometryType = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.chkEnableEditorHighlighting = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -187,6 +189,8 @@
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.chkEnableEditorHighlighting);
+            this.tabGeneral.Controls.Add(this.checkBox1);
             this.tabGeneral.Controls.Add(this.txtLockPassword);
             this.tabGeneral.Controls.Add(this.lblPassword);
             this.tabGeneral.Controls.Add(this.chkRememberPasswordDuringSession);
@@ -283,7 +287,7 @@
             this.chkLogError.AutoSize = true;
             this.chkLogError.Checked = true;
             this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(206, 259);
+            this.chkLogError.Location = new System.Drawing.Point(324, 225);
             this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogError.Name = "chkLogError";
             this.chkLogError.Size = new System.Drawing.Size(57, 21);
@@ -296,7 +300,7 @@
             this.chkLogInfo.AutoSize = true;
             this.chkLogInfo.Checked = true;
             this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(92, 259);
+            this.chkLogInfo.Location = new System.Drawing.Point(210, 225);
             this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogInfo.Name = "chkLogInfo";
             this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
@@ -307,7 +311,7 @@
             // lblLogType
             // 
             this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(11, 259);
+            this.lblLogType.Location = new System.Drawing.Point(129, 225);
             this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogType.Name = "lblLogType";
             this.lblLogType.Size = new System.Drawing.Size(62, 17);
@@ -378,7 +382,7 @@
             this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
-            this.tabMySql.Size = new System.Drawing.Size(493, 394);
+            this.tabMySql.Size = new System.Drawing.Size(509, 394);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
@@ -426,7 +430,7 @@
             this.tabOracle.Location = new System.Drawing.Point(4, 26);
             this.tabOracle.Name = "tabOracle";
             this.tabOracle.Padding = new System.Windows.Forms.Padding(3);
-            this.tabOracle.Size = new System.Drawing.Size(493, 394);
+            this.tabOracle.Size = new System.Drawing.Size(509, 394);
             this.tabOracle.TabIndex = 2;
             this.tabOracle.Text = "Oracle";
             // 
@@ -452,6 +456,30 @@
             this.label6.Size = new System.Drawing.Size(100, 17);
             this.label6.TabIndex = 2;
             this.label6.Text = "Geometry Type:";
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(210, 187);
+            this.checkBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(89, 21);
+            this.checkBox1.TabIndex = 29;
+            this.checkBox1.Text = "Enable log";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            // 
+            // chkEnableEditorHighlighting
+            // 
+            this.chkEnableEditorHighlighting.AutoSize = true;
+            this.chkEnableEditorHighlighting.Checked = true;
+            this.chkEnableEditorHighlighting.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkEnableEditorHighlighting.Location = new System.Drawing.Point(13, 259);
+            this.chkEnableEditorHighlighting.Margin = new System.Windows.Forms.Padding(4);
+            this.chkEnableEditorHighlighting.Name = "chkEnableEditorHighlighting";
+            this.chkEnableEditorHighlighting.Size = new System.Drawing.Size(219, 21);
+            this.chkEnableEditorHighlighting.TabIndex = 30;
+            this.chkEnableEditorHighlighting.Text = "Enable highlighting for sql editor";
+            this.chkEnableEditorHighlighting.UseVisualStyleBackColor = true;
             // 
             // frmSetting
             // 
@@ -514,5 +542,7 @@
         private System.Windows.Forms.CheckBox chkRememberPasswordDuringSession;
         private System.Windows.Forms.TextBox txtLockPassword;
         private System.Windows.Forms.Label lblPassword;
+        private System.Windows.Forms.CheckBox chkEnableEditorHighlighting;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }

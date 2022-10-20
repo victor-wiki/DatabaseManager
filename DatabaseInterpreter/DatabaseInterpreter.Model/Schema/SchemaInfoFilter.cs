@@ -22,15 +22,15 @@ namespace DatabaseInterpreter.Model
         None = 0,
         Table = 2,
         View = 4,
-        UserDefinedType = 8,
+        Type = 8,
         Function = 16,
         Procedure = 32,
-        TableColumn = 64,
-        TableTrigger = 128,
-        TablePrimaryKey = 256,
-        TableForeignKey = 512,
-        TableIndex = 1024,
-        TableConstraint = 2048,
+        Column = 64,
+        Trigger = 128,
+        PrimaryKey = 256,
+        ForeignKey = 512,
+        Index = 1024,
+        Constraint = 2048,
         Sequence = 4096
     }
 }

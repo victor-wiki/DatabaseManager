@@ -23,7 +23,8 @@ namespace DatabaseInterpreter.Core
         public string ServerVersion => this.ConnectionInfo?.ServerVersion;
         public readonly DateTime MinDateTime = new DateTime(1970, 1, 1);
         public const string RowNumberColumnName = "_ROWNUMBER";
-        public virtual string UnicodeInsertChar { get; } = "N";
+        public virtual string UnicodeLeadingFlag { get; } = "N";
+        public virtual string STR_CONCAT_CHARS { get; }
         public virtual string ScriptsDelimiter => ";";
         public abstract string CommentString { get; }
         public bool ShowBuiltinDatabase => Setting.ShowBuiltinDatabase;
@@ -246,7 +247,7 @@ namespace DatabaseInterpreter.Core
 
             using (DbConnection connection = this.CreateConnection())
             {
-                if (this.NeedFetchObjects(DatabaseObjectType.UserDefinedType, filter.UserDefinedTypeNames, filter))
+                if (this.NeedFetchObjects(DatabaseObjectType.Type, filter.UserDefinedTypeNames, filter))
                 {
                     schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter);
                 }
@@ -276,32 +277,32 @@ namespace DatabaseInterpreter.Core
                     schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.TableColumn, filter, null))
+                if (this.NeedFetchTableObjects(DatabaseObjectType.Column, filter, null))
                 {
                     schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.TablePrimaryKey, filter, null))
+                if (this.NeedFetchTableObjects(DatabaseObjectType.PrimaryKey, filter, null))
                 {
                     schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter);
                 }
 
-                if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.TableForeignKey, filter, null))
+                if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.ForeignKey, filter, null))
                 {
                     schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.TableIndex, filter, null))
+                if (this.NeedFetchTableObjects(DatabaseObjectType.Index, filter, null))
                 {
                     schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter, this.Option.IncludePrimaryKeyWhenGetTableIndex);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.TableConstraint, filter, null))
+                if (this.NeedFetchTableObjects(DatabaseObjectType.Constraint, filter, null))
                 {
                     schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.TableTrigger, filter, filter.TableTriggerNames))
+                if (this.NeedFetchTableObjects(DatabaseObjectType.Trigger, filter, filter.TableTriggerNames))
                 {
                     schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter);
                 }
@@ -604,6 +605,14 @@ namespace DatabaseInterpreter.Core
 
             foreach (TableColumn column in columns)
             {
+                if(this.Option.ExcludeGeometryForData)
+                {
+                    if(DataTypeHelper.IsGeometryType(column.DataType))
+                    {
+                        continue;
+                    }
+                }
+
                 string columnName = this.GetQuotedString(column.Name);
                 string dataType = column.DataType.ToLower();
                 #region MySql

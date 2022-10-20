@@ -8,13 +8,15 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.8</Version>
+    <Version>2.0.9</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1.fix bug: if not remember password, no reminder to specify password.
-2.fix bug: when compare or convert, if server and database are some but port is different, not allowed to execute.</PackageReleaseNotes>
+    <PackageReleaseNotes>bug fix:
+1.table designer's index and foreign key
+2.table copy db connect
+3.richtextbox highlighting for parse error</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.8</AssemblyVersion>
-    <FileVersion>2.0.8</FileVersion>
+    <AssemblyVersion>2.0.9</AssemblyVersion>
+    <FileVersion>2.0.9</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

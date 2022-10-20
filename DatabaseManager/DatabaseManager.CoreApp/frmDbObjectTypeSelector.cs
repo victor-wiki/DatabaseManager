@@ -38,13 +38,13 @@ namespace DatabaseManager
                 DatabaseObjectType.View,
                 DatabaseObjectType.Function,
                 DatabaseObjectType.Procedure,
-                DatabaseObjectType.UserDefinedType,
+                DatabaseObjectType.Type,
                 DatabaseObjectType.Sequence
             };
 
             if(this.DatabaseType== DatabaseType.SqlServer)
             {
-                dbObjTypes.Insert(0, DatabaseObjectType.UserDefinedType);
+                dbObjTypes.Insert(0, DatabaseObjectType.Type);
             }
 
             foreach(DatabaseObjectType type in dbObjTypes)

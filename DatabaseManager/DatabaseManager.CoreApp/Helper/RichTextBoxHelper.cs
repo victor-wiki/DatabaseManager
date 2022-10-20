@@ -1,6 +1,7 @@
 ﻿using DatabaseConverter.Core;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Core;
 using SqlAnalyser.Model;
 using System;
 using System.Drawing;
@@ -36,6 +37,14 @@ namespace DatabaseManager.Helper
 
         public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null)
         {
+            if (!SettingManager.Setting.EnableEditorHighlighting)
+            {
+                richTextBox.SelectionStart = 0;
+                richTextBox.SelectionLength = 0;
+                richTextBox.Focus();
+                return;
+            }
+
             int start = richTextBox.SelectionStart;
 
             var dataTypes = DataTypeManager.GetDataTypeSpecifications(databaseType).Select(item => item.Name);
@@ -62,7 +71,7 @@ namespace DatabaseManager.Helper
         }
 
         public static void Highlighting(RichTextBox richTextBox, string regex, RegexOptions option, Color color, int? startIndex = null, int? stopIndex = null)
-        {            
+        {
             string text = richTextBox.Text;
 
             if (startIndex.HasValue && stopIndex.HasValue)
@@ -97,10 +106,10 @@ namespace DatabaseManager.Helper
                     richTextBox.SelectionColor = color;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
-            }            
+            }
         }
 
         public static void HighlightingError(RichTextBox richTextBox, object error)
@@ -109,12 +118,8 @@ namespace DatabaseManager.Helper
             {
                 foreach (SqlSyntaxErrorItem item in sqlSyntaxError.Items)
                 {
-                    int rowIndex = item.Line - 1;
-
-                    int startIndex = richTextBox.GetFirstCharIndexFromLine(rowIndex) + item.Column;
-
-                    richTextBox.SelectionStart = startIndex;
-                    richTextBox.SelectionLength = item.Text.Length;
+                    richTextBox.SelectionStart = item.StartIndex;
+                    richTextBox.SelectionLength = item.StopIndex - item.StartIndex + 1;
 
                     richTextBox.SelectionColor = Color.Red;
                     richTextBox.SelectionBackColor = Color.Yellow;

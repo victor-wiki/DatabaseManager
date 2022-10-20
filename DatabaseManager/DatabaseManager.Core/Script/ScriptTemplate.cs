@@ -52,7 +52,7 @@ namespace DatabaseManager.Core
             string name = this.dbInterpreter.DatabaseType == DatabaseType.SqlServer ? this.dbInterpreter.GetQuotedDbObjectNameWithSchema(databaseObject?.Schema, nameTemplate)
                 : this.dbInterpreter.GetQuotedString(nameTemplate);
 
-            string tableName = databaseObjectType == DatabaseObjectType.TableTrigger && databaseObject!=null ? this.dbInterpreter.GetQuotedDbObjectNameWithSchema(databaseObject)
+            string tableName = databaseObjectType == DatabaseObjectType.Trigger && databaseObject!=null ? this.dbInterpreter.GetQuotedDbObjectNameWithSchema(databaseObject)
                             : this.dbInterpreter.GetQuotedString($"TABLE_NAME");
 
 

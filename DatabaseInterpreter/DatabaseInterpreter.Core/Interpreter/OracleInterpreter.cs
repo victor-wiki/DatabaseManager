@@ -21,8 +21,8 @@ namespace DatabaseInterpreter.Core
         public const int DEFAULT_PORT = 1521;
         public const string DEFAULT_SERVICE_NAME = "ORCL";
         public const string SEMICOLON_FUNC = "CHR(59)";
-        public const string CONNECT_CHAR = "||";
-        public override string UnicodeInsertChar => "";
+        public override string STR_CONCAT_CHARS => "||";       
+        public override string UnicodeLeadingFlag => "";
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
         public const char QuotedRightChar = '"';
@@ -721,7 +721,7 @@ namespace DatabaseInterpreter.Core
 
         public override string ParseDataType(TableColumn column)
         {
-            if (column.IsUserDefined)
+            if (DataTypeHelper.IsUserDefinedType(column))
             {
                 return this.GetQuotedString(column.DataType);
             }
@@ -836,7 +836,10 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (column.MaxLength > 0)
                             {
-                                dataLength = column.MaxLength.ToString();
+                                if(dataTypeSpec.Args == "length")
+                                {
+                                    dataLength = column.MaxLength.ToString();
+                                }                                
                             }
                         }
                     }

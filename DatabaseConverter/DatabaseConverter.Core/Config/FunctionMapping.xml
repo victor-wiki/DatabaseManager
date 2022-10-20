@@ -1,6 +1,6 @@
 <mappings>
 	<mapping>
-		<SqlServer>GETDATE()</SqlServer>
+		<SqlServer>GETDATE(),SYSDATETIME()</SqlServer>
 		<MySql>CURRENT_TIMESTAMP</MySql>
 		<Oracle>SYSDATE</Oracle>
 		<Postgres>CURRENT_TIMESTAMP,NOW()</Postgres>
@@ -62,7 +62,7 @@
 	<mapping>
 		<SqlServer>CONVERT</SqlServer>
 		<MySql>CONVERT</MySql>
-		<Oracle direction="IN">CAST</Oracle>
+		<Oracle>CAST</Oracle>
 		<Postgres>CAST</Postgres>
 	</mapping>
 	<mapping>

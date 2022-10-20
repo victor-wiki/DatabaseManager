@@ -357,7 +357,7 @@ namespace DatabaseInterpreter.Core
                 userDefinedType.Attributes.AddRange(group.Select(item => new UserDefinedTypeItem()
                 {
                     AttrName = item.AttrName,
-                    DataType= item.DataType,
+                    DataType = item.DataType,
                     MaxLength = item.MaxLength,
                     Precision = item.Precision,
                     Scale = item.Scale,
@@ -415,11 +415,11 @@ namespace DatabaseInterpreter.Core
 
         private static bool IsTableColumnDataTypeAndLengthEquals(DatabaseType databaseType, TableColumn column1, TableColumn column2)
         {
-            if (column1.IsUserDefined != column2.IsUserDefined)
+            if (DataTypeHelper.IsUserDefinedType(column1) != DataTypeHelper.IsUserDefinedType(column2))
             {
                 return false;
             }
-            else if (column1.IsUserDefined && column2.IsUserDefined)
+            else if (DataTypeHelper.IsUserDefinedType(column1) && DataTypeHelper.IsUserDefinedType(column2))
             {
                 return column1.DataType == column2.DataType;
             }
@@ -515,7 +515,7 @@ namespace DatabaseInterpreter.Core
             foreach (var mapping in mappings)
             {
                 bool isAllSourceSchema = string.IsNullOrEmpty(mapping.SourceSchema);
-                string targetSchema = mapping.TargetSchema;
+                string targetSchema = mapping.TargetSchema;                
 
                 var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
                 tables.ForEach(item => item.Schema = targetSchema);

@@ -11,6 +11,8 @@ namespace DatabaseInterpreter.Core
 {
     public class PostgresScriptGenerator : DbScriptGenerator
     {
+        public string NotCreateIfExistsClause { get { return this.dbInterpreter.NotCreateIfExists ? "IF NOT EXISTS" : ""; } }
+
         public PostgresScriptGenerator(DbInterpreter dbInterpreter) : base(dbInterpreter) { }
 
         #region Schema Script 
@@ -254,16 +256,43 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
             string type = index.Type;
+            IndexType indexType = IndexType.None;
+            
+            foreach(var name in Enum.GetNames(typeof(IndexType)))
+            {
+                if(name.ToUpper() == type.ToUpper())
+                {
+                    indexType =(IndexType) Enum.Parse(typeof(IndexType), name);
+                    break;
+                }
+            }  
+            
+            if(indexType == IndexType.None || ((indexType | this.dbInterpreter.IndexType)!= this.dbInterpreter.IndexType))
+            {
+                indexType = IndexType.BTree;
+            }
 
             string sql = "";
 
-            if (type == IndexType.Normal.ToString() || type == IndexType.Unique.ToString())
+            Action addNormOrUnique = () =>
             {
-                sql = $"CREATE {(type == IndexType.Normal.ToString() ? "" : "UNIQUE")} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+                sql = $"CREATE {(type == IndexType.Unique.ToString() ? "UNIQUE" : "")} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+            };
+
+            if (indexType == IndexType.Unique)
+            {
+                addNormOrUnique();
             }
-            else if (type != IndexType.Normal.ToString() && type!= IndexType.Unique.ToString())
+            else if (type != IndexType.Unique.ToString())
             {
-                sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} USING {type.ToUpper()}({columnNames});";
+                if((indexType | this.dbInterpreter.IndexType) == this.dbInterpreter.IndexType)
+                {
+                    sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} USING {indexType.ToString().ToUpper()}({columnNames});";
+                }
+                else
+                {                    
+                    addNormOrUnique();
+                }
             }
 
             return new CreateDbObjectScript<TableIndex>(sql);
@@ -317,7 +346,7 @@ INCREMENT {sequence.Increment}
 MINVALUE {(long)sequence.MinValue}
 MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled ? "CYCLE" : "")}
-CACHE {sequence.CacheSize}
+{(sequence.CacheSize > 0 ? $"CACHE {sequence.CacheSize}":"")}
 {(sequence.OwnedByTable == null ? "" : $"OWNED BY {this.GetQuotedString(sequence.OwnedByTable)}.{this.GetQuotedString(sequence.OwnedByColumn)}")};";
 
             return new CreateDbObjectScript<Sequence>(script);
@@ -339,9 +368,9 @@ CACHE {sequence.CacheSize}
 
             string tableScript =
 $@"
-CREATE TABLE IF NOT EXISTS {quotedTableName}(
+CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-){(isLowDbVersion? "": "USING HEAP")};";
+){(isLowDbVersion ? "" : "USING HEAP")};";
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 
@@ -420,42 +449,42 @@ CREATE TABLE IF NOT EXISTS {quotedTableName}(
         }
         public override Script DropUserDefinedType(UserDefinedType userDefinedType)
         {
-            return new Script($"DROP TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)};");
+            return new DropDbObjectScript<UserDefinedType>(this.GetDropSql(nameof(DatabaseObjectType.Type), userDefinedType));
         }
 
         public override Script DropSequence(Sequence sequence)
         {
-            return new Script($"DROP SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)};");
+            return new DropDbObjectScript<Sequence>(this.GetDropSql(nameof(DatabaseObjectType.Sequence), sequence));           
         }
 
         public override Script DropTable(Table table)
         {
-            return new DropDbObjectScript<Table>(this.GetDropSql(nameof(Table), table));
+            return new DropDbObjectScript<Table>(this.GetDropSql(nameof(DatabaseObjectType.Table), table));
         }
 
         public override Script DropView(View view)
         {
-            return new DropDbObjectScript<View>(this.GetDropSql(nameof(View), view));
+            return new DropDbObjectScript<View>(this.GetDropSql(nameof(DatabaseObjectType.View), view));
         }
 
         public override Script DropTrigger(TableTrigger trigger)
         {
-            return new DropDbObjectScript<View>(this.GetDropSql("trigger", trigger));
+            return new DropDbObjectScript<View>(this.GetDropSql(nameof(DatabaseObjectType.Trigger), trigger));
         }
 
         public override Script DropFunction(Function function)
         {
-            return new DropDbObjectScript<Function>(this.GetDropSql(nameof(Function), function));
+            return new DropDbObjectScript<Function>(this.GetDropSql(nameof(DatabaseObjectType.Function), function));
         }
 
         public override Script DropProcedure(Procedure procedure)
         {
-            return new DropDbObjectScript<Procedure>(this.GetDropSql(nameof(Procedure), procedure));
+            return new DropDbObjectScript<Procedure>(this.GetDropSql(nameof(DatabaseObjectType.Procedure), procedure));
         }
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            return $"DROP {typeName.ToUpper()} {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
+            return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
         }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)

@@ -17,11 +17,13 @@ namespace DatabaseConverter.Core.Model
         /// </summary>
         public bool ContinueWhenErrorOccurs { get; set; }
         public bool OnlyForTranslate { get; set; }
+        public bool OnlyForTableCopy { get; set; }
         public bool ConvertComputeColumnExpression { get; set; }
         public bool OnlyCommentComputeColumnExpressionInScript { get; set; }
         public bool RenameTableChildren { get; set; }
         public bool IgnoreNotSelfForeignKey { get; set; }
         public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;
+        public bool RemoveCarriagRreturnChar { get; set; }
 
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
     }

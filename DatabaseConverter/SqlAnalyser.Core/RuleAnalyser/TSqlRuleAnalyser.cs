@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Tree;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using RTools_NTS.Util;
 using SqlAnalyser.Model;
@@ -187,7 +188,7 @@ namespace SqlAnalyser.Core
                     else if (child is Table_type_definitionContext type)
                     {
                         script.ReturnTable.Columns = type.column_def_table_constraints().column_def_table_constraint()
-                            .Select(item => this.ParseColumnName(item)).ToList();
+                            .Select(item => new ColumnInfo() { Name = this.ParseColumnName(item) }).ToList();
                     }
                 }
 
@@ -373,6 +374,21 @@ namespace SqlAnalyser.Core
 
             if (node.children != null)
             {
+                Action<DatabaseObjectType, TokenType, ParserRuleContext[]> addDropStatement = (objType, tokenType, objNames) =>
+                {
+                    if (objNames != null)
+                    {
+                        foreach (var objName in objNames)
+                        {
+                            DropStatement dropStatement = new DropStatement();
+                            dropStatement.ObjectType = objType;
+                            dropStatement.ObjectName = new NameToken(objName) { Type = tokenType };
+
+                            statements.Add(dropStatement);
+                        }
+                    }
+                };
+
                 foreach (var child in node.children)
                 {
                     if (child is Truncate_tableContext truncate)
@@ -382,6 +398,34 @@ namespace SqlAnalyser.Core
                         truncateStatement.TableName = this.ParseTableName(truncate.table_name());
 
                         statements.Add(truncateStatement);
+                    }
+                    else if (child is Drop_tableContext drop_Table)
+                    {
+                        addDropStatement(DatabaseObjectType.Table, TokenType.TableName, drop_Table.table_name());
+                    }
+                    else if (child is Drop_viewContext drop_View)
+                    {
+                        addDropStatement(DatabaseObjectType.View, TokenType.ViewName, drop_View.simple_name());
+                    }
+                    else if (child is Drop_functionContext drop_Function)
+                    {
+                        addDropStatement(DatabaseObjectType.Function, TokenType.FunctionName, drop_Function.func_proc_name_schema());
+                    }
+                    else if (child is Drop_procedureContext drop_Procedure)
+                    {
+                        addDropStatement(DatabaseObjectType.Procedure, TokenType.ProcedureName, drop_Procedure.func_proc_name_schema());
+                    }
+                    else if (child is Drop_triggerContext drop_Trigger)
+                    {
+                        addDropStatement(DatabaseObjectType.Trigger, TokenType.TriggerName, drop_Trigger.drop_dml_trigger()?.simple_name());
+                    }
+                    else if (child is Drop_typeContext drop_Type)
+                    {
+                        addDropStatement(DatabaseObjectType.Type, TokenType.TypeName, new ParserRuleContext[] { drop_Type.simple_name() });
+                    }
+                    else if (child is Drop_sequenceContext drop_Sequence)
+                    {
+                        addDropStatement(DatabaseObjectType.Sequence, TokenType.SequenceName, new ParserRuleContext[] { drop_Sequence.sequence_name });
                     }
                 }
             }
@@ -892,7 +936,7 @@ namespace SqlAnalyser.Core
                     {
                         Name = declareStatement.Name,
                         Columns = table.column_def_table_constraints().column_def_table_constraint()
-                        .Select(item => this.ParseColumnName(item)).ToList()
+                        .Select(item => new ColumnInfo() { Name = this.ParseColumnName(item) }).ToList()
                     };
 
                     statements.Add(declareStatement);
@@ -1173,8 +1217,23 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Top_clauseContext top)
                 {
+                    var topCount = top.top_count();
+
                     statement.TopInfo = new SelectTopInfo();
-                    statement.TopInfo.TopCount = new TokenInfo(top.top_count());
+                    statement.TopInfo.TopCount = new TokenInfo(topCount);
+
+                    string text = topCount.GetText();
+
+                    if (text.Contains("@"))
+                    {
+                        if (text.StartsWith("(") && topCount.expression() != null)
+                        {
+                            statement.TopInfo.TopCount = new TokenInfo(topCount.expression());
+                        }
+
+                        statement.TopInfo.TopCount.Type = TokenType.VariableName;
+                    }
+
                     statement.TopInfo.IsPercent = node.select_list().select_list_elem().Any(item => item.children.Any(t => t?.GetText()?.ToUpper() == "PERCENT"));
                 }
             }
@@ -1284,7 +1343,13 @@ namespace SqlAnalyser.Core
         {
             TryCatchStatement statement = new TryCatchStatement();
 
-            statement.TryStatements.AddRange(this.ParseSqlClause(node.try_clauses));
+            var sqlClauses = node.sql_clauses();
+
+            foreach (var sc in sqlClauses)
+            {
+                statement.TryStatements.AddRange(this.ParseSqlClause(sc));
+            }
+
             statement.CatchStatements.AddRange(this.ParseSqlClause(node.try_clauses));
 
             return statement;
@@ -1308,6 +1373,7 @@ namespace SqlAnalyser.Core
             statement.Name = new TokenInfo(body.func_proc_name_server_database_schema()) { Type = TokenType.RoutineName };
 
             Execute_statement_argContext args = body.execute_statement_arg();
+            var varStrs = body.execute_var_string();
 
             if (args != null)
             {
@@ -1315,6 +1381,12 @@ namespace SqlAnalyser.Core
                 {
                     statement.Arguments.Add(new TokenInfo(arg));
                 }
+            }
+            else if (varStrs != null && varStrs.Length > 0)
+            {
+                statement.IsExecuteSql = true;
+
+                statement.Arguments.AddRange(varStrs.Select(item => new TokenInfo(item) { Type = TokenType.VariableName }));
             }
 
             return statement;
@@ -1482,7 +1554,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (node is Full_table_nameContext fullName)
                 {
-                    tableName = new TableName(fullName.table);
+                    tableName = new TableName(fullName);
                     tableName.Server = fullName.server?.GetText();
                     tableName.Database = fullName.database?.GetText();
                     tableName.Schema = fullName.schema?.GetText();

@@ -36,7 +36,7 @@ namespace DatabaseManager
 
             this.sourceDatabaseType = sourceDatabaseType;
             this.sourceDbConnectionInfo = sourceConnectionInfo;
-            this.useSourceConnector = false;            
+            this.useSourceConnector = false;
         }
 
         private void frmMain_Load(object sender, EventArgs e)
@@ -59,6 +59,11 @@ namespace DatabaseManager
                 this.gbOption.Top -= increaseHeight;
                 this.tvDbObjects.Height += increaseHeight;
                 this.gbOption.Height += increaseHeight;
+
+                if (this.sourceDatabaseType == DatabaseType.MySql || this.sourceDatabaseType == DatabaseType.Oracle)
+                {
+                    this.btnSetSchemaMappings.Enabled = false;
+                }
             }
         }
 
@@ -186,14 +191,14 @@ namespace DatabaseManager
             {
                 MessageBox.Show("Target connection info is null.");
                 return;
-            }           
+            }
 
-            if(!this.targetDbProfile.ValidateProfile())
+            if (!this.targetDbProfile.ValidateProfile())
             {
                 return;
             }
 
-            if (this.sourceDbConnectionInfo.Server == this.targetDbConnectionInfo.Server 
+            if (this.sourceDbConnectionInfo.Server == this.targetDbConnectionInfo.Server
                 && this.sourceDbConnectionInfo.Port == this.targetDbConnectionInfo.Port
                 && this.sourceDbConnectionInfo.Database == this.targetDbConnectionInfo.Database)
             {
@@ -204,7 +209,13 @@ namespace DatabaseManager
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
 
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None, SortObjectsByReference = true, GetTableAllObjects = true, ThrowExceptionWhenErrorOccurs = false };
+            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() {
+                ScriptOutputMode = GenerateScriptOutputMode.None,
+                SortObjectsByReference = true, GetTableAllObjects = true,
+                ThrowExceptionWhenErrorOccurs = false,
+                ExcludeGeometryForData = this.chkExcludeGeometryForData.Checked
+            };
+
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString, ThrowExceptionWhenErrorOccurs = false };
 
             this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);
@@ -252,7 +263,7 @@ namespace DatabaseManager
                     this.dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
                     this.dbConverter.Option.SplitScriptsToExecute = true;
                     this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
-
+                    
                     this.dbConverter.Option.SchemaMappings = this.schemaMappings;
 
                     if (sourceDbType == DatabaseType.MySql)
@@ -379,7 +390,10 @@ namespace DatabaseManager
                 {
                     if (this.ConfirmCancel())
                     {
-                        this.dbConverter.Cancle();
+                        if (this.dbConverter != null)
+                        {
+                            this.dbConverter.Cancle();
+                        }
 
                         this.SetExecuteButtonEnabled(true);
                     }
@@ -469,20 +483,30 @@ namespace DatabaseManager
         private void sourceDbProfile_OnSelectedChanged(object sender, ConnectionInfo connectionInfo)
         {
             this.sourceDbConnectionInfo = connectionInfo;
-            this.schemaMappings = new List<SchemaMappingInfo>();
+
+            if (useSourceConnector)
+            {
+                this.SetSchemaMappingSetControl();
+            }
         }
 
         private void targetDbProfile_OnSelectedChanged(object sender, ConnectionInfo connectionInfo)
         {
             this.targetDbConnectionInfo = connectionInfo;
 
-            UC_DbConnectionProfile connectionProfile = sender as UC_DbConnectionProfile;
+            this.SetSchemaMappingSetControl();
+        }
 
-            if (connectionProfile.IsDbTypeSelected())
+        private void SetSchemaMappingSetControl()
+        {
+            UC_DbConnectionProfile targetProfile = this.targetDbProfile as UC_DbConnectionProfile;
+
+            if (targetProfile.IsDbTypeSelected())
             {
-                DatabaseType databaseType = connectionProfile.DatabaseType;
+                DatabaseType databaseType = targetProfile.DatabaseType;
 
-                this.btnSetSchemaMappings.Enabled = !(databaseType== DatabaseType.Oracle || databaseType == DatabaseType.MySql);
+                this.btnSetSchemaMappings.Enabled = !(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.MySql
+                     || this.sourceDatabaseType == DatabaseType.Oracle || this.sourceDatabaseType == DatabaseType.MySql);
             }
             else
             {
@@ -523,12 +547,12 @@ namespace DatabaseManager
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
 
-            if(sourceDbType == DatabaseType.Unknown || targetDbType == DatabaseType.Unknown)
+            if (sourceDbType == DatabaseType.Unknown || targetDbType == DatabaseType.Unknown)
             {
                 return;
             }
 
-            if(this.sourceDbConnectionInfo == null || this.targetDbConnectionInfo == null)
+            if (this.sourceDbConnectionInfo == null || this.targetDbConnectionInfo == null)
             {
                 return;
             }
@@ -538,8 +562,8 @@ namespace DatabaseManager
             DbInterpreter sourceInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.sourceDbConnectionInfo, option);
             DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, option);
 
-            List<DatabaseSchema> sourceSchemas = null; 
-            List<DatabaseSchema> targetSchemas = null;
+            List<DatabaseSchema> sourceSchemas = new List<DatabaseSchema>();
+            List<DatabaseSchema> targetSchemas = new List<DatabaseSchema>();
 
             try
             {
@@ -548,14 +572,13 @@ namespace DatabaseManager
             }
             catch (Exception ex)
             {
-                sourceSchemas = new List<DatabaseSchema>();
-                targetSchemas = new List<DatabaseSchema>();
             }
 
-            frmSchemaMapping form = new frmSchemaMapping() { 
-                Mappings = this.schemaMappings, 
-                SourceSchemas = sourceSchemas.Select(item => item.Name).ToList(), 
-                TargetSchemas = targetSchemas.Select(item => item.Name).ToList() 
+            frmSchemaMapping form = new frmSchemaMapping()
+            {
+                Mappings = this.schemaMappings,
+                SourceSchemas = sourceSchemas.Select(item => item.Name).ToList(),
+                TargetSchemas = targetSchemas.Select(item => item.Name).ToList()
             };
 
             if (form.ShowDialog() == DialogResult.OK)

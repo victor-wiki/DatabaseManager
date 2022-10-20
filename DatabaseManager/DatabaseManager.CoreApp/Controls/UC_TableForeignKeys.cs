@@ -79,7 +79,7 @@ namespace DatabaseManager.Controls
 
         private string GetReferenceTableDisplayName(Table table)
         {
-            return (table.Schema == this.DefaultSchema) ? table.Name : $"{table.Name}({table.Schema})";
+            return (table.Schema == this.DefaultSchema || string.IsNullOrEmpty(table.Schema)) ? table.Name : $"{table.Name}({table.Schema})";
         }
 
         public void LoadForeignKeys(IEnumerable<TableForeignKeyDesignerInfo> foreignKeyDesignerInfos)

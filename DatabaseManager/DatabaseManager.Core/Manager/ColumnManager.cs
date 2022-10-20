@@ -30,7 +30,7 @@ namespace DatabaseManager.Core
 
                 ObjectHelper.CopyProperties(column, columnDesingerInfo);
 
-                string dataType = column.IsUserDefined ? column.DataType : dataTypeInfo.DataType.ToLower();
+                string dataType = DataTypeHelper.IsUserDefinedType(column) ? column.DataType : dataTypeInfo.DataType.ToLower();
 
                 if (!dataTypes.Contains(dataType))
                 {
@@ -76,13 +76,13 @@ namespace DatabaseManager.Core
             }
 
             return dataTypeDesignerInfos;
-        }
+        }     
 
         public static bool ValidateDataType(DatabaseType databaseType, TableColumnDesingerInfo columnDesingerInfo, out string message)
         {
             message = "";
 
-            if(columnDesingerInfo.IsUserDefined)
+            if(DataTypeHelper.IsUserDefinedType(columnDesingerInfo))
             {
                 return true;
             }
@@ -216,7 +216,14 @@ namespace DatabaseManager.Core
                     }
                     else
                     {
-                        column.MaxLength = long.Parse(lengthItem);
+                        if(lengthItem != "max")
+                        {
+                            column.MaxLength = long.Parse(lengthItem);
+                        }
+                        else
+                        {
+                            column.MaxLength = -1;
+                        }
                     }
                 }
                 else if (argName == "precision" || argName == "dayScale")

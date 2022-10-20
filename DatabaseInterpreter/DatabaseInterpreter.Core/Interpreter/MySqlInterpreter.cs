@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
     {
         #region Field & Property           
         public const int DEFAULT_PORT = 3306;
-        public override string UnicodeInsertChar => "";
+        public override string UnicodeLeadingFlag => "";
         public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '`';
         public const char QuotedRightChar = '`';
@@ -88,7 +88,7 @@ namespace DatabaseInterpreter.Core
 
             List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = database, Name = database } };
 
-            return await Task.Run(()=> { return  databaseSchemas; });           
+            return await Task.Run(() => { return databaseSchemas; });
         }
         #endregion
 
@@ -135,9 +135,9 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
             string nameColumn = isSimpleMode ? "ROUTINE_NAME" : "name";
-           
+
             bool isFunction = type.ToUpper() == "FUNCTION";
-            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;          
+            string[] objectNames = type == "FUNCTION" ? filter?.FunctionNames : filter?.ProcedureNames;
 
             var sb = this.CreateSqlBuilder();
 
@@ -147,19 +147,19 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`ROUTINES`
                         WHERE ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-                sb.Append(this.GetFilterNamesCondition(filter, objectNames, nameColumn));               
+                sb.Append(this.GetFilterNamesCondition(filter, objectNames, nameColumn));
 
                 sb.Append($"ORDER BY {nameColumn}");
             }
             else
             {
                 string functionReturns = isFunction ? ", 'RETURNS ',IFNULL(r.DATA_TYPE,''), ' '" : "";
-                string procParameterMode = isFunction ? "" : "IFNULL(p.PARAMETER_MODE,''),' ',";               
+                string procParameterMode = isFunction ? "" : "IFNULL(p.PARAMETER_MODE,''),' ',";
 
                 sb.Append($@"SELECT ROUTINE_SCHEMA AS `Schema`, ROUTINE_NAME AS `Name`,
                         CONVERT(CONCAT('CREATE {type}  `', ROUTINE_SCHEMA, '`.`', ROUTINE_NAME, '`(', 
                         IFNULL(GROUP_CONCAT(CONCAT(IFNULL(CASE p.PARAMETER_MODE WHEN 'IN' THEN '' ELSE p.PARAMETER_MODE END,''),' ',p.PARAMETER_NAME, ' ', p.`DTD_IDENTIFIER`)),''), 
-                        ') '{functionReturns}, CHAR(13), ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
+                        ') '{functionReturns}, CHAR(10), ROUTINE_DEFINITION) USING utf8)  AS `Definition` 
                         FROM information_schema.Routines r
                         LEFT JOIN information_schema.`PARAMETERS` p ON r.`ROUTINE_SCHEMA`= p.`SPECIFIC_SCHEMA` AND r.`ROUTINE_NAME`= p.`SPECIFIC_NAME`
                         WHERE r.ROUTINE_TYPE = '{type}' AND ROUTINE_SCHEMA = '{this.ConnectionInfo.Database}'");
@@ -194,8 +194,8 @@ namespace DatabaseInterpreter.Core
             sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`, TABLE_NAME AS `Name` {(isSimpleMode ? "" : ", TABLE_COMMENT AS `Comment`, 1 AS `IdentitySeed`, 1 AS `IdentityIncrement`")}
                         FROM INFORMATION_SCHEMA.`TABLES`
                         WHERE TABLE_TYPE ='BASE TABLE' AND TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
-           
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));           
+
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
             sb.Append("ORDER BY TABLE_NAME");
 
             return sb.Content;
@@ -225,7 +225,7 @@ namespace DatabaseInterpreter.Core
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
                         WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));          
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 
             return sb.Content;
         }
@@ -247,7 +247,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",S.INDEX_COMMENT AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
-            
+
             var sb = this.CreateSqlBuilder();
 
             //Note:TABLE_SCHEMA of INFORMATION_SCHEMA.KEY_COLUMN_USAGE will improve performance when it's used in where clause, just use CONSTRAINT_SCHEMA in join on clause because it equals to TABLE_SCHEMA.
@@ -353,7 +353,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, CHAR(13), ACTION_STATEMENT) USING UTF8)";
+            string definitionClause = $@"CONVERT(CONCAT('CREATE TRIGGER {this.NotCreateIfExistsClause} `', TRIGGER_SCHEMA, '`.`', TRIGGER_NAME, '` ', ACTION_TIMING, ' ', EVENT_MANIPULATION, ' ON ', TRIGGER_SCHEMA, '.', EVENT_OBJECT_TABLE, ' FOR EACH ', ACTION_ORIENTATION, CHAR(10), ACTION_STATEMENT) USING UTF8)";
 
             var sb = this.CreateSqlBuilder();
 
@@ -364,7 +364,7 @@ namespace DatabaseInterpreter.Core
 
             if (filter != null)
             {
-                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "EVENT_OBJECT_TABLE"));                
+                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "EVENT_OBJECT_TABLE"));
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
@@ -393,7 +393,7 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            var sb = this.CreateSqlBuilder() ;
+            var sb = this.CreateSqlBuilder();
 
             if (isSimpleMode)
             {
@@ -413,7 +413,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append($"AND TC.CONSTRAINT_SCHEMA='{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TC.TABLE_NAME"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TC.TABLE_NAME"));
 
             sb.Append("ORDER BY TC.TABLE_NAME,TC.CONSTRAINT_NAME");
 
@@ -436,7 +436,7 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS',CHAR(13),VIEW_DEFINITION)";
+            string createViewClause = $"CONCAT('CREATE VIEW `',TABLE_SCHEMA, '`.`', TABLE_NAME,  '` AS',CHAR(10),VIEW_DEFINITION)";
 
             var sb = this.CreateSqlBuilder();
 
@@ -444,7 +444,7 @@ namespace DatabaseInterpreter.Core
                         FROM INFORMATION_SCHEMA.`VIEWS`
                         WHERE TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "TABLE_NAME"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "TABLE_NAME"));
 
             sb.Append("ORDER BY TABLE_NAME");
 
@@ -495,14 +495,14 @@ namespace DatabaseInterpreter.Core
 
             int i = 0;
             foreach (DataColumn column in dataTable.Columns)
-            {                
+            {
                 bulkCopy.ColumnMappings.Add(new MySqlBulkCopyColumnMapping(i, column.ColumnName));
 
                 i++;
             }
 
             await this.OpenConnectionAsync(connection);
-           
+
             await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
         }
 
@@ -513,6 +513,7 @@ namespace DatabaseInterpreter.Core
             if (!columns.Any(item => DataTypeHelper.SpecialDataTypes.Contains(item.DataType.Name)
                 || item.DataType.Name == nameof(BitArray)
                 || item.DataType.Name == nameof(String)
+                || item.DataType.Name == nameof(DateTime)
                 )
                )
             {
@@ -572,6 +573,17 @@ namespace DatabaseInterpreter.Core
                     {
                         newColumnType = typeof(Byte[]);
                         newValue = value as byte[];
+                    }
+                    else if (dataType == "timestamp")
+                    {
+                        DateTime dt = DateTime.Parse(value.ToString());
+                        DateTime maxDt = DateTime.Parse("2037-12-31 23:59:59.999999"); //mysql timestamp max value is it. It should use datetime if value is greater than it.
+
+                        if (dt > maxDt)
+                        {
+                            newColumnType = typeof(DateTime);
+                            newValue = maxDt;
+                        }
                     }
                     else if (dataType == "geometry")
                     {

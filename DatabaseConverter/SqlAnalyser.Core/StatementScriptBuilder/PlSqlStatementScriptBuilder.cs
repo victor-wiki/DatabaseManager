@@ -220,7 +220,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement execute)
             {
-                this.AppendLine($"{execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                this.AppendLine($"{(execute.IsExecuteSql? "EXECUTE IMMEDIATE" : "CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -288,6 +288,12 @@ namespace SqlAnalyser.Core
             else if (statement is TruncateStatement truncate)
             {
                 this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
+            }
+            else if (statement is DropStatement drop)
+            {
+                string objectType = drop.ObjectType.ToString().ToUpper();
+
+                this.AppendLine($"DROP {objectType} {drop.ObjectName.NameWithSchema};");
             }
 
             return this;

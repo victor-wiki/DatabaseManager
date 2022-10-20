@@ -40,6 +40,7 @@ namespace DatabaseManager
             this.cboDbObjectNameMode.Text = setting.DbObjectNameMode.ToString();
             this.chkLogInfo.Checked = setting.LogType.HasFlag(LogType.Info);
             this.chkLogError.Checked = setting.LogType.HasFlag(LogType.Error);
+            this.chkEnableEditorHighlighting.Checked = setting.EnableEditorHighlighting;
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
@@ -68,6 +69,7 @@ namespace DatabaseManager
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
             setting.OracleGeometryMode = this.cboOracleGeometryType.Text;
             setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
+            setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 

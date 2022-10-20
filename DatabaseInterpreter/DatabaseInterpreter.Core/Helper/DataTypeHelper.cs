@@ -12,8 +12,9 @@ namespace DatabaseInterpreter.Core
     {
         public static readonly string[] CharTypeFlags = { "char" };
         public static readonly string[] TextTypeFlags = { "text" };
-        public static readonly string[] BinaryTypeFlags = { "binary" };
+        public static readonly string[] BinaryTypeFlags = { "binary", "bytea" };
         public static readonly string[] DatetimeTypeFlags = { "date", "time" };
+        public static readonly string[] GeometryTypeFlags = { "geometry", "geography"};
         public static List<string> SpecialDataTypes = new List<string>() { 
             nameof(SqlHierarchyId), nameof(SqlGeography), nameof(SqlGeometry),nameof(Geometry), "Byte[]"
         };
@@ -26,6 +27,11 @@ namespace DatabaseInterpreter.Core
         public static bool IsBinaryType(string dataType)
         {
             return BinaryTypeFlags.Any(item => dataType.ToLower().Contains(item));
+        }
+
+        public static bool IsGeometryType(string dataType)
+        {
+            return GeometryTypeFlags.Any(item => dataType.ToLower().Contains(item));
         }
 
 
@@ -42,6 +48,19 @@ namespace DatabaseInterpreter.Core
         public static bool IsDatetimeType(string dataType)
         {
             return DatetimeTypeFlags.Any(item => dataType.ToLower().Contains(item));
+        }
+
+        public static bool IsUserDefinedType(TableColumn column)
+        {
+            string dataType = column.DataType;
+
+            //although for its owned database, these are udt, but as a whole, they are not.
+            if (dataType == "geography" || dataType == "geometry" || dataType == "st_geometry") 
+            {
+                return false;
+            }
+
+            return column.IsUserDefined;
         }
 
         public static DataTypeInfo GetDataTypeInfo(DbInterpreter dbInterpreter, string dataType)

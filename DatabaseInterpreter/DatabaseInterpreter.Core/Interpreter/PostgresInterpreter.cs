@@ -20,8 +20,8 @@ namespace DatabaseInterpreter.Core
         #region Field & Property
         private string dbSchema;
         public const int DEFAULT_PORT = 5432;
-        public const string CONNECT_CHAR = "||";
-        public override string UnicodeInsertChar => "";
+        public override string STR_CONCAT_CHARS => "||";
+        public override string UnicodeLeadingFlag => "";
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
         public const char QuotedRightChar = '"';
@@ -31,7 +31,7 @@ namespace DatabaseInterpreter.Core
         public override DatabaseType DatabaseType => DatabaseType.Postgres;
         public override string DefaultDataType => "character varying";
         public override string DefaultSchema => "public";
-        public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.BTree | IndexType.Brin | IndexType.Hash | IndexType.Gin | IndexType.GiST | IndexType.SP_GiST;
+        public override IndexType IndexType => IndexType.Primary | IndexType.Unique | IndexType.BTree | IndexType.Brin | IndexType.Hash | IndexType.Gin | IndexType.GiST | IndexType.SP_GiST;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "postgres" };
         public List<string> SystemSchemas => new List<string> { "pg_catalog", "pg_toast", "information_schema" };
@@ -65,7 +65,9 @@ namespace DatabaseInterpreter.Core
 
             return base.GetDbObjectsAsync<Database>(sql);
         }
+        #endregion
 
+        #region Database Schema
         public override Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
             string sql = @"SELECT nspname AS ""Name"",nspname AS ""Schema"" FROM pg_catalog.pg_namespace WHERE nspname NOT IN ('information_schema','pg_catalog', 'pg_toast') ORDER BY nspname";
@@ -279,7 +281,7 @@ namespace DatabaseInterpreter.Core
                         d.description AS ""Comment""
                         FROM information_schema.columns c
                         INNER JOIN pg_catalog.pg_namespace pn ON c.table_schema=pn.nspname
-                        INNER JOIN pg_catalog.pg_class pc ON pn.oid=pc.relnamespace AND c.table_name = pc.relname
+                        INNER JOIN pg_catalog.pg_class pc ON pn.oid=pc.relnamespace AND c.table_name = pc.relname AND pc.relkind='r'
                         LEFT JOIN information_schema.element_types et ON et.object_catalog=c.table_catalog AND et.object_schema=c.table_schema AND et.object_name=c.table_name AND et.collection_type_identifier=c.ordinal_position::text
                         LEFT JOIN pg_catalog.pg_depend pd ON pd.objid= pc.oid AND pd.objsubid=c.ordinal_position AND (pd.deptype is null or pd.deptype='n')
                         LEFT JOIN pg_catalog.pg_type pt ON pd.refobjid=pt.oid  
@@ -376,8 +378,11 @@ namespace DatabaseInterpreter.Core
         {
             var sb = this.CreateSqlBuilder();
 
+            //the table pg_constraint only has pk, fk and unique index.
             sb.Append($@"SELECT n.nspname AS ""Schema"", c.relname AS ""TableName"",ccu.column_name AS ""ColumnName"",con.conname AS ""Name"",
-                        CASE con.contype WHEN 'u' THEN 1 ELSE 0 END AS ""IsUnique"",CASE con.contype WHEN 'p' THEN 1 ELSE 0 END AS ""IsPrimary""
+                        CASE con.contype WHEN 'u' THEN 'Unique' WHEN 'p' THEN 'Primary' ELSE '' END AS ""Type"", 
+                        CASE con.contype WHEN 'u' THEN 1 ELSE 0 END AS ""IsUnique"",CASE con.contype WHEN 'p' THEN 1 ELSE 0 END AS ""IsPrimary"",
+                        CASE con.contype WHEN 'p' THEN 1 ELSE 0 END AS ""Clustered""
                         FROM pg_catalog.pg_constraint con 
                         JOIN pg_catalog.pg_class c ON con.connamespace=c.relnamespace AND c.oid=con.conrelid
                         JOIN pg_catalog.pg_namespace n ON c.relnamespace=n.oid
@@ -386,6 +391,22 @@ namespace DatabaseInterpreter.Core
 
             sb.Append(this.GetFilterSchemaCondition(filter, "n.nspname"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "ccu.table_name"));
+
+            //common index, such as:btree
+            sb.Append($@"UNION ALL
+                        SELECT n.nspname AS ""Schema"", c1.relname AS ""TableName"", a.attname AS ""ColumnName"", c2.relname AS ""Name"", am.amname AS ""Type"",
+                        0 AS ""IsUnique"",0 AS ""IsPrimary"",0 AS ""Clustered""
+                        FROM pg_index i
+                        JOIN pg_class c1 ON i.indrelid=c1.oid
+                        JOIN pg_class c2 ON i.indexrelid=c2.oid
+                        JOIN pg_namespace n ON c1.relnamespace = n.oid
+                        JOIN pg_catalog.pg_am am ON am.oid=c2.relam
+                        JOIN pg_catalog.pg_depend d ON d.objid= c2.oid AND d.refobjid=c1.oid
+                        JOIN pg_attribute a ON a.attrelid=d.refobjid AND d.refobjsubid=a.attnum
+                        WHERE c2.relkind IN('i','I')");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "n.nspname"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "c1.relname"));
 
             return sb.Content;
         }
@@ -540,7 +561,7 @@ namespace DatabaseInterpreter.Core
                 sb.Append($@"SELECT r.routine_schema AS ""Schema"", r.routine_name AS ""Name"",CASE WHEN r.data_type='trigger' THEN 1 ELSE 0 END AS ""IsTriggerFunction"",
                         concat('CREATE OR REPLACE {type} ', routine_schema,'.""',r.routine_name, '""(', array_to_string(
                         array_agg(concat(CASE p.parameter_mode WHEN 'IN' THEN '' ELSE p.parameter_mode END,' ',p.parameter_name,' ',p.data_type)),','),')'
-                        {(isFunction? "' RETURNS ',r.data_type": "")},CHR(13),'LANGUAGE ''plpgsql''',CHR(13),'AS',CHR(13),'$$',r.routine_definition,'$$;') AS ""Definition""
+                        {(isFunction? "' RETURNS ',r.data_type": "")},CHR(10),'LANGUAGE ''plpgsql''',CHR(10),'AS',CHR(10),'$$',r.routine_definition,'$$;') AS ""Definition""
                         FROM information_schema.routines r
                         LEFT JOIN information_schema.parameters p ON p.specific_name=r.specific_name
                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')
@@ -636,11 +657,11 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (type == typeof(SqlGeography))
                             {
+                                newColumnType = typeof(Geometry);
+
                                 SqlGeography geography = (SqlGeography)value;
 
                                 newValue = GeometryHelper.SqlGeographyToPostgresGeography(geography);
-
-                                newColumnType = typeof(Geometry);
                             }
                             else if (type == typeof(SqlGeometry))
                             {
@@ -792,7 +813,7 @@ namespace DatabaseInterpreter.Core
 
         public override string ParseDataType(TableColumn column)
         {
-            if (column.IsUserDefined)
+            if (DataTypeHelper.IsUserDefinedType(column))
             {
                 return this.GetQuotedString(column.DataType);
             }

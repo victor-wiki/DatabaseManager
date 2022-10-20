@@ -58,7 +58,7 @@ namespace DatabaseConverter.Core
 
         internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
         {
-            dataType = dataType.Trim();
+            dataType = this.GetTrimedValue(dataType.Trim());
 
             DatabaseType sourceDbType = this.sourceDbInterpreter.DatabaseType;
             DatabaseType targetDbType = this.targetDbInterpreter.DatabaseType;
@@ -85,7 +85,7 @@ namespace DatabaseConverter.Core
                 {
                     if (targetDbType == DatabaseType.MySql)
                     {
-                        if (upperTypeName == "INT")
+                        if (upperTypeName == "INT" || upperTypeName=="BIT")
                         {
                             newDataType = "SIGNED";
                         }
@@ -100,7 +100,30 @@ namespace DatabaseConverter.Core
                     }
                     else if (targetDbType == DatabaseType.Oracle)
                     {
-                        if (DataTypeHelper.IsCharType(newDataType) && this.GetType() == typeof(FunctionTranslator))
+                        if (this.GetType() == typeof(FunctionTranslator))
+                        {
+                            if(DataTypeHelper.IsCharType(newDataType) || DataTypeHelper.IsBinaryType(newDataType))
+                            {
+                                int index = dataType.IndexOf('(');
+
+                                if (index > 0)
+                                {
+                                    return $"{newDataType}{dataType.Substring(index)}"; 
+                                }
+                                else
+                                {
+                                    return newDataType;
+                                }
+                            }
+                            else
+                            {
+                                return newDataType;
+                            }                           
+                        }
+                    }
+                    else if(targetDbType == DatabaseType.Postgres)
+                    {
+                        if(DataTypeHelper.IsBinaryType(newDataType))
                         {
                             return newDataType;
                         }
@@ -138,6 +161,11 @@ namespace DatabaseConverter.Core
             }
 
             return newDataType;
+        }
+
+        private string GetTrimedValue(string value)
+        {
+            return value?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar);
         }
 
         public static string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
@@ -366,6 +394,11 @@ namespace DatabaseConverter.Core
             string formattedSql = manager.Format(sql, ref hasError);
 
             return formattedSql;
+        }
+
+        protected string GetTrimedName(string name)
+        {
+            return name?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar , '"');
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

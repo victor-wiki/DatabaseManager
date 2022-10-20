@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Core;
 using DatabaseManager.Data;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
@@ -235,7 +236,8 @@ namespace DatabaseManager.Controls
                     int start = this.txtEditor.SelectionStart;
                     int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
                     int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
-                    RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop);
+
+                    RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop); ;
                 }
             }
             else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)

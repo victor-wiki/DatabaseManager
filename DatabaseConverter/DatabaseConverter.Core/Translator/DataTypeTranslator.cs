@@ -208,11 +208,7 @@ namespace DatabaseConverter.Core
 
                         if (!useConfigPrecisionScale)
                         {
-                            if (sourceDataTypeSpec.Args == "scale")
-                            {
-                                dataTypeInfo.Precision = default(int?);
-                            }
-                            else if (sourceDataTypeSpec.Args == "precision,scale" && sourceDataTypeSpec.Args == targetDataTypeSpec.Args)
+                            if (sourceDataTypeSpec.Args == targetDataTypeSpec.Args)
                             {
                                 ArgumentRange? precisionRange = DataTypeManager.GetArgumentRange(targetDataTypeSpec, "precision");
                                 ArgumentRange? scaleRange = DataTypeManager.GetArgumentRange(targetDataTypeSpec, "scale");
@@ -237,6 +233,10 @@ namespace DatabaseConverter.Core
                                         }
                                     }
                                 }
+                            }
+                            else
+                            {
+                                dataTypeInfo.Precision = default(int?);
                             }
                         }
                     }

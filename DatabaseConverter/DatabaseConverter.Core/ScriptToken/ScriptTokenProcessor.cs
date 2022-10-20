@@ -133,6 +133,12 @@ namespace DatabaseConverter.Core
 
                     if (tokenType == TokenType.RoutineName
                         || tokenType == TokenType.TableName
+                        || tokenType == TokenType.ViewName
+                        || tokenType == TokenType.TypeName
+                        || tokenType == TokenType.SequenceName
+                        || tokenType == TokenType.FunctionName
+                        || tokenType == TokenType.ProcedureName
+                        || tokenType == TokenType.TriggerName
                         || tokenType == TokenType.ColumnName
                         || tokenType == TokenType.Alias)
                     {
@@ -166,6 +172,8 @@ namespace DatabaseConverter.Core
 
                         this.HandleQuotationChar(statement, token, tokens);
                     }
+
+                    this.HandleConcatChars(token);
                 }
             }
 
@@ -192,6 +200,11 @@ namespace DatabaseConverter.Core
             }
             #endregion
         }
+
+        private void HandleConcatChars(TokenInfo token)
+        {
+            token.Symbol = TranslateHelper.ConvertConcatChars(token.Symbol, this.SourceDbInterpreter.STR_CONCAT_CHARS, this.TargetDbInterpreter.STR_CONCAT_CHARS);
+        }       
 
         private void HandleQuotationChar(Statement statement, TokenInfo token, IEnumerable<TokenInfo> tokens)
         {
@@ -446,7 +459,7 @@ namespace DatabaseConverter.Core
 
             if (token.Type == TokenType.ColumnName && statement is SelectStatement select)
             {
-                if (select.TableName == null && select.FromItems == null)
+                if (select.TableName == null && select.FromItems == null && select.Where == null)
                 {
                     return false;
                 }
@@ -559,14 +572,14 @@ namespace DatabaseConverter.Core
                 {
                     token.Symbol = token.Symbol.Replace(pv.Key, pv.Value);
                 }
-                else if(token.Symbol.Contains(pv.Key))
+                else if (token.Symbol.Contains(pv.Key))
                 {
-                    if(!token.Symbol.Contains($"'{pv.Key}'"))
+                    if (!token.Symbol.Contains($"'{pv.Key}'"))
                     {
                         string pattern = pv.Key.StartsWith("@") ? $"({pv.Key})" : $"\\b{pv.Key}\\b";
 
                         token.Symbol = Regex.Replace(token.Symbol, pattern, pv.Value, RegexOptions.Multiline);
-                    }                    
+                    }
                 }
             }
         }
@@ -675,18 +688,7 @@ namespace DatabaseConverter.Core
 
                     string trimedSeqName = this.GetTrimedName(seqName);
 
-                    if (targetDbType == DatabaseType.SqlServer)
-                    {
-                        token.Symbol = $"NEXT VALUE FOR {this.TargetDbInterpreter.GetQuotedDbObjectNameWithSchema(mappedSchema, trimedSeqName)}";
-                    }
-                    else if (targetDbType == DatabaseType.Postgres)
-                    {
-                        token.Symbol = $"NEXTVAL('{this.TargetDbInterpreter.GetQuotedDbObjectNameWithSchema(mappedSchema, trimedSeqName)}')";
-                    }
-                    else if (targetDbType == DatabaseType.Oracle)
-                    {
-                        token.Symbol = $"{this.TargetDbInterpreter.GetQuotedDbObjectNameWithSchema(mappedSchema, trimedSeqName)}.NEXTVAL";
-                    }
+                    token.Symbol = SequenceTranslator.ConvertSequenceValue(this.TargetDbInterpreter, mappedSchema, trimedSeqName);
                 }
             }
         }
@@ -739,12 +741,26 @@ namespace DatabaseConverter.Core
                 }
                 else if (length > 0)
                 {
-                    column.Precision = length;
+                    DataTypeSpecification dataTypeSpecification = this.SourceDbInterpreter.GetDataTypeSpecification(dataType);
 
-                    if (lengthItems.Length > 1)
+                    if (dataTypeSpecification != null)
                     {
-                        column.Scale = int.Parse(lengthItems[1]);
-                    }
+                        string args = dataTypeSpecification.Args;
+
+                        if (args=="scale")
+                        {
+                            column.Scale = length;
+                        }
+                        else if(args == "precision,scale")
+                        {
+                            column.Precision = length;
+
+                            if (lengthItems.Length > 1)
+                            {
+                                column.Scale = int.Parse(lengthItems[1]);
+                            }
+                        }
+                    }                    
                 }
             }
             else

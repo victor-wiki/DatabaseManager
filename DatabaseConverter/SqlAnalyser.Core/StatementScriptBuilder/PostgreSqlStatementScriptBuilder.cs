@@ -238,7 +238,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement execute)
             {
-                this.AppendLine($"CALL {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                this.AppendLine($"{(execute.IsExecuteSql? "EXECUTE":"CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -274,6 +274,8 @@ namespace SqlAnalyser.Core
             }
             else if (statement is TryCatchStatement tryCatch)
             {
+                this.AppendChildStatements(tryCatch.TryStatements, true);
+
                 this.AppendLine("EXCEPTION WHEN 1=1 THEN");
 
                 this.AppendChildStatements(tryCatch.CatchStatements, true);
@@ -301,6 +303,12 @@ namespace SqlAnalyser.Core
             else if (statement is TruncateStatement truncate)
             {
                 this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
+            }
+            else if (statement is DropStatement drop)
+            {
+                string objectType = drop.ObjectType.ToString().ToUpper();
+
+                this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
             }
 
             return this;

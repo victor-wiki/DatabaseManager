@@ -113,16 +113,13 @@ namespace DatabaseManager.Core
                     filter.Schema = tableDesignerInfo.Schema;
                     filter.TableNames = new string[] { tableDesignerInfo.OldName };
                     filter.DatabaseObjectType = DatabaseObjectType.Table
-                        | DatabaseObjectType.TableColumn
-                        | DatabaseObjectType.TablePrimaryKey
-                        | DatabaseObjectType.TableForeignKey
-                        | DatabaseObjectType.TableIndex
-                        | DatabaseObjectType.TableConstraint;
+                        | DatabaseObjectType.Column
+                        | DatabaseObjectType.PrimaryKey
+                        | DatabaseObjectType.ForeignKey
+                        | DatabaseObjectType.Index
+                        | DatabaseObjectType.Constraint;
 
-                    if (this.dbInterpreter.DatabaseType == DatabaseType.Oracle)
-                    {
-                        this.dbInterpreter.Option.IncludePrimaryKeyWhenGetTableIndex = true;
-                    }
+                    this.dbInterpreter.Option.IncludePrimaryKeyWhenGetTableIndex = true;
 
                     SchemaInfo oldSchemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(filter);
                     Table oldTable = oldSchemaInfo.Tables.FirstOrDefault();
@@ -511,7 +508,7 @@ namespace DatabaseManager.Core
                 TableColumn tableColumn = new TableColumn();
                 ObjectHelper.CopyProperties(column, tableColumn);
 
-                if (!tableColumn.IsUserDefined)
+                if (!DataTypeHelper.IsUserDefinedType(tableColumn))
                 {
                     ColumnManager.SetColumnLength(this.dbInterpreter.DatabaseType, tableColumn, column.Length);
                 }
@@ -595,6 +592,7 @@ namespace DatabaseManager.Core
                         index.IsUnique = indexDesignerInfo.Type == IndexType.Unique.ToString();
                         index.Clustered = indexDesignerInfo.Clustered;
                         index.Comment = indexDesignerInfo.Comment;
+                        index.Type = indexDesignerInfo.Type;
 
                         index.Columns.AddRange(indexDesignerInfo.Columns);
 

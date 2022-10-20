@@ -202,15 +202,15 @@ namespace DatabaseManager.Core
 
                     switch (subDbObjectType)
                     {
-                        case DatabaseObjectType.TableColumn:
-                        case DatabaseObjectType.TablePrimaryKey:
-                        case DatabaseObjectType.TableForeignKey:
-                        case DatabaseObjectType.TableIndex:
-                        case DatabaseObjectType.TableConstraint:
+                        case DatabaseObjectType.Column:
+                        case DatabaseObjectType.PrimaryKey:
+                        case DatabaseObjectType.ForeignKey:
+                        case DatabaseObjectType.Index:
+                        case DatabaseObjectType.Constraint:
                             scripts.AddRange(await this.GenerateTableChildChangedScripts(subDiff));
                             break;
 
-                        case DatabaseObjectType.TableTrigger:
+                        case DatabaseObjectType.Trigger:
                             scripts.AddRange(this.GenereateScriptDbObjectChangedScripts(subDiff, targetDbSchema));
                             break;
                     }
@@ -241,7 +241,7 @@ namespace DatabaseManager.Core
             }
             else if (diffType == DbDifferenceType.Modified)
             {
-                if(difference.DatabaseObjectType == DatabaseObjectType.TableColumn)
+                if(difference.DatabaseObjectType == DatabaseObjectType.Column)
                 {
                     SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = source.Schema, TableNames = new string[] { source.TableName } };
                     List<TableDefaultValueConstraint> defaultValueConstraints = await this.tableManager.GetTableDefaultConstraints(filter);
@@ -254,19 +254,19 @@ namespace DatabaseManager.Core
                 {
                     var clonedSource = this.CloneTableChild(difference.Source, difference.DatabaseObjectType, targetTable.Schema);
 
-                    if (difference.DatabaseObjectType == DatabaseObjectType.TablePrimaryKey)
+                    if (difference.DatabaseObjectType == DatabaseObjectType.PrimaryKey)
                     {
                         scripts.AddRange(this.tableManager.GetPrimaryKeyAlterScripts(target as TablePrimaryKey, clonedSource as TablePrimaryKey, false));
                     }
-                    else if (difference.DatabaseObjectType == DatabaseObjectType.TableForeignKey)
+                    else if (difference.DatabaseObjectType == DatabaseObjectType.ForeignKey)
                     {
                         scripts.AddRange(this.tableManager.GetForeignKeyAlterScripts(target as TableForeignKey, clonedSource as TableForeignKey));
                     }
-                    else if (difference.DatabaseObjectType == DatabaseObjectType.TableIndex)
+                    else if (difference.DatabaseObjectType == DatabaseObjectType.Index)
                     {
                         scripts.AddRange(this.tableManager.GetIndexAlterScripts(target as TableIndex, clonedSource as TableIndex));
                     }
-                    else if (difference.DatabaseObjectType == DatabaseObjectType.TableConstraint)
+                    else if (difference.DatabaseObjectType == DatabaseObjectType.Constraint)
                     {
                         scripts.AddRange(this.tableManager.GetConstraintAlterScripts(target as TableConstraint, clonedSource as TableConstraint));
                     }
@@ -278,19 +278,19 @@ namespace DatabaseManager.Core
 
         private DatabaseObject CloneTableChild(DatabaseObject tableChild, DatabaseObjectType databaseObjectType, string targetSchema)
         {
-            if (databaseObjectType == DatabaseObjectType.TablePrimaryKey)
+            if (databaseObjectType == DatabaseObjectType.PrimaryKey)
             {
                 return this.CloneDbObject(tableChild as TablePrimaryKey, targetSchema);                
             }
-            else if (databaseObjectType == DatabaseObjectType.TableForeignKey)
+            else if (databaseObjectType == DatabaseObjectType.ForeignKey)
             {
                 return this.CloneDbObject(tableChild as TableForeignKey, targetSchema);
             }
-            else if (databaseObjectType == DatabaseObjectType.TableIndex)
+            else if (databaseObjectType == DatabaseObjectType.Index)
             {
                 return this.CloneDbObject(tableChild as TableIndex, targetSchema);
             }
-            else if (databaseObjectType == DatabaseObjectType.TableConstraint)
+            else if (databaseObjectType == DatabaseObjectType.Constraint)
             {
                 return this.CloneDbObject(tableChild as TableConstraint, targetSchema);
             }
