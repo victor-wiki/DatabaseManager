@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.10</Version>
-    <PackageReleaseNotes>bug fix: table designer's index</PackageReleaseNotes>
+    <Version>2.0.11</Version>
+    <PackageReleaseNotes>Empty database objects: continue where error occurs.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.10</AssemblyVersion>
-    <FileVersion>2.0.10</FileVersion>
+    <AssemblyVersion>2.0.11</AssemblyVersion>
+    <FileVersion>2.0.11</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

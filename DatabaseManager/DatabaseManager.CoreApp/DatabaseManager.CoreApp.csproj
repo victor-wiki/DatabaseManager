@@ -8,15 +8,14 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.9</Version>
+    <Version>2.0.10</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>bug fix:
-1.table designer's index and foreign key
-2.table copy db connect
-3.richtextbox highlighting for parse error</PackageReleaseNotes>
+    <PackageReleaseNotes>1.create schema if not exists when convert
+2.tab page title enhance
+3.data viewer: fix oracle geometry error</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.9</AssemblyVersion>
-    <FileVersion>2.0.9</FileVersion>
+    <AssemblyVersion>2.0.10</AssemblyVersion>
+    <FileVersion>2.0.10</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

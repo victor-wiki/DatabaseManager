@@ -4,6 +4,7 @@ using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Noding.Snapround;
+using NetTopologySuite.Operation;
 using NpgsqlTypes;
 using System;
 using System.Collections;
@@ -14,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseInterpreter.Core
 {
@@ -81,7 +83,7 @@ namespace DatabaseInterpreter.Core
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
                 this.ClearScriptFile(GenerateScriptMode.Data);
-            }            
+            }
 
             using (DbConnection connection = this.dbInterpreter.CreateConnection())
             {
@@ -93,7 +95,7 @@ namespace DatabaseInterpreter.Core
                     if (this.dbInterpreter.CancelRequested)
                     {
                         break;
-                    }                   
+                    }
 
                     count++;
 
@@ -132,18 +134,18 @@ namespace DatabaseInterpreter.Core
                         var fkc = fk.Columns.FirstOrDefault();
 
                         string referencedColumnName = this.GetQuotedString(fkc.ReferencedColumnName);
-                        string columnName = this.GetQuotedString(fkc.ColumnName);                       
+                        string columnName = this.GetQuotedString(fkc.ColumnName);
 
                         string strWhere = $" WHERE ({columnName} IS NULL OR {columnName}={referencedColumnName})";
 
-                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, fkc.ReferencedColumnName, fkc.ColumnName, columns, strWhere);
+                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, fkc.ReferencedColumnName, fkc.ColumnName, columns, total, strWhere);
                     }
                     else
                     {
-                        dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize);
+                        dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, total, pageSize);
                     }
 
-                    this.FeedbackInfo($"{strTableCount}Table \"{this.GetQuotedFullTableName(table) }\":data read finished.");
+                    this.FeedbackInfo($"{strTableCount}Table \"{this.GetQuotedFullTableName(table)}\":data read finished.");
 
                     if (count > 1)
                     {
@@ -155,7 +157,7 @@ namespace DatabaseInterpreter.Core
                         {
                             this.AppendScriptsToFile(Environment.NewLine, GenerateScriptMode.Data);
                         }
-                    }                 
+                    }
 
                     if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
@@ -186,15 +188,15 @@ namespace DatabaseInterpreter.Core
             return dataScripts;
         }
 
-        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string referencedColumnName, string fkColumnName, List<TableColumn> columns, string whereClause = "")
+        private async Task<Dictionary<long, List<Dictionary<string, object>>>> GetSortedPageData(DbConnection connection, Table table, string primaryKeyColumns, string referencedColumnName, string fkColumnName, List<TableColumn> columns, long total, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
 
             int pageSize = this.dbInterpreter.DataBatchSize;
 
-            long total = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
+            long batchCount = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
 
-            var dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, pageSize, whereClause);
+            var dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, batchCount, pageSize, whereClause);
 
             List<object> parentValues = dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.dbInterpreter.QuotationLeftChar, this.dbInterpreter.QuotationRightChar)])).ToList();
 
@@ -207,14 +209,19 @@ namespace DatabaseInterpreter.Core
                 for (long parentValuePageNumber = 1; parentValuePageNumber <= parentValuesPageCount; parentValuePageNumber++)
                 {
                     IEnumerable<object> pagedParentValues = parentValues.Skip((int)(parentValuePageNumber - 1) * pageSize).Take(this.option.InQueryItemLimitCount);
-                    whereClause = $@" WHERE {this.GetQuotedString(fkColumnName)} IN ({string.Join(",", pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true)))}) 
+
+                    var parsedValues = pagedParentValues.Select(item => this.ParseValue(parentColumn, item, true));
+
+                    string inCondition = this.GetWhereInCondition(parsedValues, fkColumnName);
+
+                    whereClause = $@" WHERE ({inCondition})
                                       AND ({this.GetQuotedString(fkColumnName)}<>{this.GetQuotedString(referencedColumnName)})";
 
-                    total = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
+                    batchCount = Convert.ToInt64(await this.dbInterpreter.GetScalarAsync(connection, $"SELECT COUNT(1) FROM {quotedTableName} {whereClause}"));
 
-                    if (total > 0)
+                    if (batchCount > 0)
                     {
-                        Dictionary<long, List<Dictionary<string, object>>> dictChildPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, referencedColumnName, fkColumnName, columns, whereClause);
+                        Dictionary<long, List<Dictionary<string, object>>> dictChildPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, referencedColumnName, fkColumnName, columns, total, whereClause);
 
                         foreach (var kp in dictChildPagedData)
                         {
@@ -228,6 +235,34 @@ namespace DatabaseInterpreter.Core
             return dictPagedData;
         }
 
+        private string GetWhereInCondition(IEnumerable<object> values, string columnName)
+        {
+            int valuesCount = values.Count();
+            StringBuilder sb = new StringBuilder();
+
+            int oracleLimitCount = 1000;//oracle where in items count is limit to 1000
+
+            if (valuesCount > oracleLimitCount && this.databaseType == DatabaseType.Oracle)
+            {
+                var groups = values.Select((x, i) => new { Index = i, Value = x }).GroupBy(x => x.Index / oracleLimitCount).Select(x => x.Select(v => v.Value));
+
+                int count = 0;
+
+                foreach (var gp in groups)
+                {
+                    sb.AppendLine($"{(count > 0 ? " OR " : "")}{this.GetQuotedString(columnName)} IN ({string.Join(",", gp)})");
+
+                    count++;
+                }
+            }
+            else
+            {
+                sb.Append($"{this.GetQuotedString(columnName)} IN ({string.Join(",", values)})");
+            }
+
+            return sb.ToString();
+        }
+
         public virtual Dictionary<string, object> AppendDataScripts(StringBuilder sb, Table table, List<TableColumn> columns, Dictionary<long, List<Dictionary<string, object>>> dictPagedData)
         {
             Dictionary<string, object> parameters = new Dictionary<string, object>();
@@ -237,19 +272,54 @@ namespace DatabaseInterpreter.Core
 
             List<string> excludeColumnNames = new List<string>();
 
-            if (this.option.TableScriptsGenerateOption.GenerateIdentity)
+            bool excludeIdentityColumn = false;
+
+            if (this.databaseType == DatabaseType.Oracle && this.dbInterpreter.IsLowDbVersion())
             {
-                excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity).Select(item => item.Name));
+                excludeIdentityColumn = false;
+            }
+            else
+            {
+                if (this.option.TableScriptsGenerateOption.GenerateIdentity)
+                {
+                    excludeIdentityColumn = true;
+                }
+            }
+
+            excludeColumnNames.AddRange(columns.Where(item => item.IsIdentity && excludeIdentityColumn).Select(item => item.Name));
+
+            if (this.option.ExcludeGeometryForData)
+            {
+                excludeColumnNames.AddRange(columns.Where(item => DataTypeHelper.IsGeometryType(item.DataType)).Select(item => item.Name));
             }
 
             excludeColumnNames.AddRange(columns.Where(item => item.IsComputed).Select(item => item.Name));
 
+            bool identityColumnHasBeenExcluded = excludeColumnNames.Any(item => columns.Any(col => col.Name == item && col.IsIdentity));
+            bool computeColumnHasBeenExcluded = columns.Any(item => item.IsComputed);
+
+            bool canBatchInsert = true;
+
+            if (this.databaseType == DatabaseType.Oracle)
+            {
+                if (identityColumnHasBeenExcluded)
+                {
+                    canBatchInsert = false;
+                }
+            }
+
             foreach (var kp in dictPagedData)
             {
+                if (kp.Value.Count == 0)
+                {
+                    continue;
+                }
+
                 StringBuilder sbFilePage = new StringBuilder();
 
                 string tableName = this.GetQuotedFullTableName(table);
-                string insert = $"{this.GetBatchInsertPrefix()} {tableName}({this.GetQuotedColumnNames(columns.Where(item => !excludeColumnNames.Contains(item.Name)))})VALUES";
+                string columnNames = this.GetQuotedColumnNames(columns.Where(item => !excludeColumnNames.Contains(item.Name)));
+                string insert = !canBatchInsert ? "" : $"{this.GetBatchInsertPrefix()} {tableName}({this.GetQuotedColumnNames(columns.Where(item => !excludeColumnNames.Contains(item.Name)))})VALUES";
 
                 if (appendString)
                 {
@@ -258,7 +328,10 @@ namespace DatabaseInterpreter.Core
                         sb.AppendLine();
                     }
 
-                    sb.AppendLine(insert);
+                    if (!string.IsNullOrEmpty(insert))
+                    {
+                        sb.AppendLine(insert);
+                    }
                 }
 
                 if (appendFile)
@@ -268,7 +341,10 @@ namespace DatabaseInterpreter.Core
                         sbFilePage.AppendLine();
                     }
 
-                    sbFilePage.AppendLine(insert);
+                    if (!string.IsNullOrEmpty(insert))
+                    {
+                        sbFilePage.AppendLine(insert);
+                    }
                 }
 
                 int rowCount = 0;
@@ -289,8 +365,13 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
-                    string beginChar = this.GetBatchInsertItemBefore(tableName, rowCount == 1);
-                    string endChar = this.GetBatchInsertItemEnd(rowCount == kp.Value.Count);
+                    bool isAllEnd = rowCount == kp.Value.Count;
+
+                    string beginChar = canBatchInsert ? this.GetBatchInsertItemBefore(tableName,
+                                        (identityColumnHasBeenExcluded || computeColumnHasBeenExcluded) ? columnNames : "",
+                                        rowCount == 1) :
+                                     $"INSERT INTO {tableName}({columnNames}) VALUES";
+                    string endChar = canBatchInsert ? this.GetBatchInsertItemEnd(isAllEnd) : (isAllEnd ? ";" : (canBatchInsert ? "," : ";"));
 
                     values = $"{beginChar}{values}{endChar}";
 
@@ -327,7 +408,7 @@ namespace DatabaseInterpreter.Core
             return "INSERT INTO";
         }
 
-        protected virtual string GetBatchInsertItemBefore(string tableName, bool isFirstRow)
+        protected virtual string GetBatchInsertItemBefore(string tableName, string columnNames, bool isFirstRow)
         {
             return "";
         }
@@ -345,66 +426,91 @@ namespace DatabaseInterpreter.Core
 
             foreach (TableColumn column in columns)
             {
+                string columnName = column.Name;
+
+                if (!row.ContainsKey(columnName))
+                {
+                    continue;
+                }
+
                 if (!excludeColumnNames.Contains(column.Name))
                 {
-                    object value = this.ParseValue(column, row[column.Name]);
+                    object value = row[columnName];
+                    object parsedValue = this.ParseValue(column, value);
                     bool isBitArray = row[column.Name]?.GetType() == typeof(BitArray);
-                    bool isBytes = ValueHelper.IsBytes(value) || isBitArray;
+                    bool isBytes = ValueHelper.IsBytes(parsedValue) || isBitArray;
+                    bool isNullValue = value == DBNull.Value || parsedValue == "NULL";
 
-                    if (!isAppendToFile)
+                    if(!isNullValue)
                     {
-                        if ((isBytes && !this.option.TreatBytesAsNullForExecuting) || this.NeedInsertParameter(column, value))
+                        if (!isAppendToFile)
                         {
-                            string parameterName = $"P{pageNumber}_{rowIndex}_{column.Name}";
+                            bool needInsertParameter = this.NeedInsertParameter(column, parsedValue);
 
-                            string parameterPlaceholder = this.dbInterpreter.CommandParameterChar + parameterName;
-
-                            if (this.databaseType != DatabaseType.Postgres && isBitArray)
+                            if ((isBytes && !this.option.TreatBytesAsNullForExecuting) || needInsertParameter)
                             {
-                                var bitArray = value as BitArray;
-                                byte[] bytes = new byte[bitArray.Length];
-                                bitArray.CopyTo(bytes, 0);
+                                string parameterName = $"P{pageNumber}_{rowIndex}_{column.Name}";
 
-                                value = bytes;
+                                string parameterPlaceholder = this.dbInterpreter.CommandParameterChar + parameterName;
+
+                                if (this.databaseType != DatabaseType.Postgres && isBitArray)
+                                {
+                                    var bitArray = parsedValue as BitArray;
+                                    byte[] bytes = new byte[bitArray.Length];
+                                    bitArray.CopyTo(bytes, 0);
+
+                                    parsedValue = bytes;
+                                }
+
+                                //if(this.databaseType == DatabaseType.Oracle)
+                                //{
+                                //    if(needInsertParaeter)
+                                //    {
+                                //        if(DataTypeHelper.IsGeometryType(column.DataType))
+                                //        {
+                                //            parsedValue = null; //TODO
+                                //        }
+                                //    }
+                                //}
+
+                                parameters.Add(parameterPlaceholder, parsedValue);
+
+                                parsedValue = parameterPlaceholder;
                             }
-
-                            parameters.Add(parameterPlaceholder, value);
-
-                            value = parameterPlaceholder;
+                            else if (isBytes && this.option.TreatBytesAsNullForExecuting)
+                            {
+                                parsedValue = null;
+                            }
                         }
-                        else if (isBytes && this.option.TreatBytesAsNullForExecuting)
+                        else
                         {
-                            value = null;
+                            if (isBytes)
+                            {
+                                if (this.option.TreatBytesAsHexStringForFile)
+                                {
+                                    parsedValue = this.GetBytesConvertHexString(parsedValue, column.DataType);
+                                }
+                                else
+                                {
+                                    parsedValue = null;
+                                }
+                            }
                         }
-                    }
-                    else
+                    }                 
+
+                    if (DataTypeHelper.IsUserDefinedType(column))
                     {
-                        if (isBytes)
+                        if (this.databaseType == DatabaseType.Postgres)
                         {
-                            if (this.option.TreatBytesAsHexStringForFile)
-                            {
-                                value = this.GetBytesConvertHexString(value, column.DataType);
-                            }
-                            else
-                            {
-                                value = null;
-                            }
-                        }
-                    }
-
-                    if(DataTypeHelper.IsUserDefinedType(column))
-                    {
-                        if(this.databaseType == DatabaseType.Postgres)
-                        {
-                            value = $"row({value})";
+                            parsedValue = $"row({parsedValue})";
                         }
                         else if (this.databaseType == DatabaseType.Oracle)
                         {
-                            value = $"{this.GetQuotedString(column.DataType)}({value})";
+                            parsedValue = $"{this.GetQuotedString(column.DataType)}({parsedValue})";
                         }
                     }
 
-                    values.Add(value);
+                    values.Add(parsedValue);
                 }
             }
 
@@ -430,6 +536,14 @@ namespace DatabaseInterpreter.Core
                 string strValue = "";
 
                 if (type == typeof(DBNull))
+                {
+                    return "NULL";
+                }
+                else if (value is SqlGeography sgg && sgg.IsNull)
+                {
+                    return "NULL";
+                }
+                else if (value is SqlGeometry sgm && sgm.IsNull)
                 {
                     return "NULL";
                 }
@@ -519,9 +633,24 @@ namespace DatabaseInterpreter.Core
                         }
                         else if (this.databaseType == DatabaseType.MySql)
                         {
-                            if (type.Name == nameof(DateTimeOffset))
+                            if (type.Name == nameof(DateTime))
+                            {
+                                DateTime dt = (DateTime)value;
+
+                                if (dt > MySqlInterpreter.Timestamp_Max_Value.ToLocalTime())
+                                {
+                                    value = MySqlInterpreter.Timestamp_Max_Value.ToLocalTime();
+                                }
+
+                            }
+                            else if (type.Name == nameof(DateTimeOffset))
                             {
                                 DateTimeOffset dtOffset = DateTimeOffset.Parse(value.ToString());
+
+                                if (dtOffset > MySqlInterpreter.Timestamp_Max_Value.ToLocalTime())
+                                {
+                                    dtOffset = MySqlInterpreter.Timestamp_Max_Value.ToLocalTime();
+                                }
 
                                 strValue = $"'{dtOffset.DateTime.Add(dtOffset.Offset).ToString("yyyy-MM-dd HH:mm:ss.ffffff")}'";
                             }
@@ -578,21 +707,36 @@ namespace DatabaseInterpreter.Core
                     case nameof(MultiLineString):
                     case nameof(MultiPolygon):
                     case nameof(GeometryCollection):
+                        int srid = 0;
+
+                        if (value is SqlGeography sgg) srid = sgg.STSrid.Value;
+                        else if (value is SqlGeometry sgm) srid = sgm.STSrid.Value;
+                        else if (value is Geometry g) srid = g.SRID;
+
                         if (this.databaseType == DatabaseType.MySql)
                         {
-                            strValue = $"ST_GeomFromText('{value.ToString()}')";
+                            strValue = $"ST_GeomFromText('{value.ToString()}',{srid})";
                         }
                         else if (this.databaseType == DatabaseType.Oracle)
                         {
-                            string geometryMode = DbInterpreter.Setting.OracleGeometryMode;
+                            string str = value.ToString();
 
-                            if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                            if (str.Length > 4000) //oracle allow max char length
                             {
-                                strValue = $"MDSYS.ST_GEOMETRY(SDO_GEOMETRY('{value.ToString()}'))";
+                                strValue = "NULL";
                             }
-                            else if (geometryMode == "SDE")
+                            else
                             {
-                                strValue = $"SDE.ST_GEOMETRY('{value.ToString()}', 0)"; //sde geometry
+                                string geometryMode = DbInterpreter.Setting.OracleGeometryMode;
+
+                                if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                                {
+                                    strValue = $"MDSYS.ST_GEOMETRY(SDO_GEOMETRY('{str}',{srid}))";
+                                }
+                                else if (geometryMode == "SDE")
+                                {
+                                    strValue = $"SDE.ST_GEOMETRY('{str}', {srid})"; //sde geometry
+                                }
                             }
                         }
                         else
@@ -733,6 +877,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation  
+        public abstract Script CreateSchema(DatabaseSchema schema);
         public abstract Script CreateUserDefinedType(UserDefinedType userDefinedType);
         public abstract Script CreateSequence(Sequence sequence);
         public abstract ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
@@ -829,7 +974,7 @@ namespace DatabaseInterpreter.Core
             {
                 return this.DropUserDefinedType(userDefinedType);
             }
-            else if(dbObject is Sequence sequence)
+            else if (dbObject is Sequence sequence)
             {
                 return this.DropSequence(sequence);
             }

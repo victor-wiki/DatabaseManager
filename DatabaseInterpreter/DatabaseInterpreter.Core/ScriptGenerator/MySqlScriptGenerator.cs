@@ -248,7 +248,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Database Operation
-
+        public override Script CreateSchema(DatabaseSchema schema) { return new Script(""); }
         public override Script CreateUserDefinedType(UserDefinedType userDefinedType) { return new Script(""); }
 
         public override Script CreateSequence(Sequence sequence) { return new Script(""); }

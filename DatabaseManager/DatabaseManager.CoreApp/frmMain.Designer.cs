@@ -36,7 +36,6 @@
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiBackupSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLock = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
@@ -51,6 +50,7 @@
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -90,7 +90,7 @@
             // 
             this.tsmiSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiSetting.Image")));
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(163, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -98,7 +98,7 @@
             // 
             this.tsmiDbConnection.Image = ((System.Drawing.Image)(resources.GetObject("tsmiDbConnection.Image")));
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(163, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -106,7 +106,7 @@
             // 
             this.tsmiBackupSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiBackupSetting.Image")));
             this.tsmiBackupSetting.Name = "tsmiBackupSetting";
-            this.tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
+            this.tsmiBackupSetting.Size = new System.Drawing.Size(163, 22);
             this.tsmiBackupSetting.Text = "Backup Setting";
             this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
             // 
@@ -114,7 +114,7 @@
             // 
             this.tsmiLock.Image = global::DatabaseManager.Resources.Lock;
             this.tsmiLock.Name = "tsmiLock";
-            this.tsmiLock.Size = new System.Drawing.Size(180, 22);
+            this.tsmiLock.Size = new System.Drawing.Size(163, 22);
             this.tsmiLock.Text = "Lock";
             this.tsmiLock.Click += new System.EventHandler(this.tsmiLock_Click);
             // 
@@ -135,7 +135,7 @@
             // 
             this.splitContainer1.Panel2.BackColor = System.Drawing.Color.White;
             this.splitContainer1.Panel2.Controls.Add(this.panelContent);
-            this.splitContainer1.Size = new System.Drawing.Size(917, 578);
+            this.splitContainer1.Size = new System.Drawing.Size(917, 495);
             this.splitContainer1.SplitterDistance = 175;
             this.splitContainer1.TabIndex = 8;
             // 
@@ -145,7 +145,7 @@
             this.navigator.Location = new System.Drawing.Point(0, 0);
             this.navigator.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             this.navigator.Name = "navigator";
-            this.navigator.Size = new System.Drawing.Size(175, 578);
+            this.navigator.Size = new System.Drawing.Size(175, 495);
             this.navigator.TabIndex = 0;
             // 
             // panelContent
@@ -155,7 +155,7 @@
             this.panelContent.Location = new System.Drawing.Point(0, 0);
             this.panelContent.Margin = new System.Windows.Forms.Padding(4);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(738, 578);
+            this.panelContent.Size = new System.Drawing.Size(738, 495);
             this.panelContent.TabIndex = 0;
             // 
             // ucContent
@@ -165,7 +165,7 @@
             this.ucContent.Location = new System.Drawing.Point(0, 0);
             this.ucContent.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             this.ucContent.Name = "ucContent";
-            this.ucContent.Size = new System.Drawing.Size(738, 578);
+            this.ucContent.Size = new System.Drawing.Size(738, 495);
             this.ucContent.TabIndex = 0;
             this.ucContent.Visible = false;
             // 
@@ -281,12 +281,13 @@
             this.txtMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtMessage.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.txtMessage.ForeColor = System.Drawing.Color.Black;
-            this.txtMessage.Location = new System.Drawing.Point(0, 646);
+            this.txtMessage.Location = new System.Drawing.Point(0, 563);
             this.txtMessage.Margin = new System.Windows.Forms.Padding(4);
             this.txtMessage.Name = "txtMessage";
             this.txtMessage.ReadOnly = true;
             this.txtMessage.Size = new System.Drawing.Size(917, 16);
             this.txtMessage.TabIndex = 11;
+            this.txtMessage.MouseHover += new System.EventHandler(this.txtMessage_MouseHover);
             // 
             // dlgOpenFile
             // 
@@ -298,7 +299,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(917, 662);
+            this.ClientSize = new System.Drawing.Size(917, 579);
             this.Controls.Add(this.txtMessage);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.splitContainer1);
@@ -333,7 +334,6 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetting;
-        private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private Controls.UC_DbObjectsNavigator navigator;
         private System.Windows.Forms.Panel panelContent;
@@ -351,6 +351,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiBackupSetting;
         private System.Windows.Forms.ToolStripButton tsBtnCompare;
         private System.Windows.Forms.ToolStripMenuItem tsmiLock;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
 

@@ -51,7 +51,9 @@ namespace DatabaseManager.Controls
 
             int pageSize = this.pagination.PageSize;
 
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, new DbInterpreterOption());
+            var option = new DbInterpreterOption() { ShowTextForGeometry = true };
+
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, option);
 
             string orderColumns = "";
 

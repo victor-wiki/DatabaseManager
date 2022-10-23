@@ -63,6 +63,8 @@ namespace DatabaseManager
                 if (this.sourceDatabaseType == DatabaseType.MySql || this.sourceDatabaseType == DatabaseType.Oracle)
                 {
                     this.btnSetSchemaMappings.Enabled = false;
+                    this.chkCreateSchemaIfNotExists.Enabled = false;
+                    this.chkCreateSchemaIfNotExists.Checked = false;
                 }
             }
         }
@@ -209,14 +211,21 @@ namespace DatabaseManager
             DatabaseType sourceDbType = this.useSourceConnector ? this.sourceDbProfile.DatabaseType : this.sourceDatabaseType;
             DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
 
-            DbInterpreterOption sourceScriptOption = new DbInterpreterOption() {
+            DbInterpreterOption sourceScriptOption = new DbInterpreterOption()
+            {
                 ScriptOutputMode = GenerateScriptOutputMode.None,
-                SortObjectsByReference = true, GetTableAllObjects = true,
-                ThrowExceptionWhenErrorOccurs = false,
+                SortObjectsByReference = true,
+                GetTableAllObjects = true,
+                ThrowExceptionWhenErrorOccurs = true,
                 ExcludeGeometryForData = this.chkExcludeGeometryForData.Checked
             };
 
-            DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString, ThrowExceptionWhenErrorOccurs = false };
+            DbInterpreterOption targetScriptOption = new DbInterpreterOption()
+            {
+                ScriptOutputMode = GenerateScriptOutputMode.WriteToString,
+                ThrowExceptionWhenErrorOccurs = true,
+                ExcludeGeometryForData = this.chkExcludeGeometryForData.Checked
+            };
 
             this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);
 
@@ -241,6 +250,8 @@ namespace DatabaseManager
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
 
+            targetScriptOption.ScriptMode = scriptMode;
+
             if (scriptMode == GenerateScriptMode.None)
             {
                 MessageBox.Show("Please specify the script mode.");
@@ -254,17 +265,20 @@ namespace DatabaseManager
             {
                 using (this.dbConverter = new DbConverter(source, target))
                 {
-                    this.dbConverter.Option.GenerateScriptMode = scriptMode;
-                    this.dbConverter.Option.BulkCopy = this.chkBulkCopy.Checked;
-                    this.dbConverter.Option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
-                    this.dbConverter.Option.UseTransaction = this.chkUseTransaction.Checked;
-                    this.dbConverter.Option.ContinueWhenErrorOccurs = this.chkContinueWhenErrorOccurs.Checked;
-                    this.dbConverter.Option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
-                    this.dbConverter.Option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
-                    this.dbConverter.Option.SplitScriptsToExecute = true;
-                    this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
-                    
-                    this.dbConverter.Option.SchemaMappings = this.schemaMappings;
+                    var option = this.dbConverter.Option;
+
+                    option.GenerateScriptMode = scriptMode;
+                    option.BulkCopy = this.chkBulkCopy.Checked;
+                    option.ExecuteScriptOnTargetServer = this.chkExecuteOnTarget.Checked;
+                    option.UseTransaction = this.chkUseTransaction.Checked;
+                    option.ContinueWhenErrorOccurs = this.chkContinueWhenErrorOccurs.Checked;
+                    option.ConvertComputeColumnExpression = this.chkComputeColumn.Checked;
+                    option.OnlyCommentComputeColumnExpressionInScript = this.chkOnlyCommentComputeExpression.Checked;
+                    option.SplitScriptsToExecute = true;
+                    option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
+                    option.CreateSchemaIfNotExists = this.chkCreateSchemaIfNotExists.Checked;
+
+                    option.SchemaMappings = this.schemaMappings;
 
                     if (sourceDbType == DatabaseType.MySql)
                     {
@@ -501,16 +515,26 @@ namespace DatabaseManager
         {
             UC_DbConnectionProfile targetProfile = this.targetDbProfile as UC_DbConnectionProfile;
 
+            bool enable = false;
+
             if (targetProfile.IsDbTypeSelected())
             {
                 DatabaseType databaseType = targetProfile.DatabaseType;
 
-                this.btnSetSchemaMappings.Enabled = !(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.MySql
+                enable = !(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.MySql
                      || this.sourceDatabaseType == DatabaseType.Oracle || this.sourceDatabaseType == DatabaseType.MySql);
+            }
+
+            this.btnSetSchemaMappings.Enabled = enable;
+
+            if (!enable)
+            {            
+                this.chkCreateSchemaIfNotExists.Enabled = false;
+                this.chkCreateSchemaIfNotExists.Checked = false;
             }
             else
             {
-                this.btnSetSchemaMappings.Enabled = false;
+                this.chkCreateSchemaIfNotExists.Enabled = true;
             }
 
             this.schemaMappings = new List<SchemaMappingInfo>();

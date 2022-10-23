@@ -1,4 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
+using Microsoft.SqlServer.Types;
+using MySqlConnector;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,7 +18,7 @@ namespace DatabaseInterpreter.Core
         public OracleScriptGenerator(DbInterpreter dbInterpreter) : base(dbInterpreter) { }
 
         #region Schema Script 
-        
+
 
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
@@ -108,9 +111,9 @@ namespace DatabaseInterpreter.Core
             return "INSERT ALL INTO";
         }
 
-        protected override string GetBatchInsertItemBefore(string tableName, bool isFirstRow)
+        protected override string GetBatchInsertItemBefore(string tableName, string columnNames, bool isFirstRow)
         {
-            return isFirstRow ? "" : $"INTO {tableName} VALUES";
+            return isFirstRow ? "" : $"INTO {tableName}{(string.IsNullOrEmpty(columnNames) ? "" : $"({columnNames})")} VALUES";
         }
 
         protected override string GetBatchInsertItemEnd(bool isAllEnd)
@@ -122,22 +125,38 @@ namespace DatabaseInterpreter.Core
         {
             if (value != null)
             {
-                if (column.DataType.ToLower() == "clob")
+                Type type = value.GetType();
+                string dataType = column.DataType.ToLower();
+
+                if (dataType == "clob")
                 {
                     return true;
                 }
-                if (value.GetType() == typeof(string))
+                else if (DataTypeHelper.IsGeometryType(dataType))
+                {
+                    //string str = value.ToString();
+
+                    //if (str.Length > 1000)
+                    //{
+                    //    return true;
+                    //}
+                    return false;
+                }
+
+                if (type == typeof(string))
                 {
                     string str = value.ToString();
+
                     if (str.Length > 1000 || (str.Contains(OracleInterpreter.SEMICOLON_FUNC) && str.Length > 500))
                     {
                         return true;
                     }
                 }
-                else if (value.GetType().Name == nameof(TimeSpan))
+                else if (type.Name == nameof(TimeSpan))
                 {
                     return true;
                 }
+                
             }
             return false;
         }
@@ -166,7 +185,14 @@ namespace DatabaseInterpreter.Core
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY {this.dbInterpreter.ParseColumn(table, newColumn)}");
+            string clause = this.dbInterpreter.ParseColumn(table, newColumn);
+
+            if(DataTypeHelper.IsGeometryType(newColumn.DataType))
+            {
+                clause = clause.Replace(this.dbInterpreter.ParseDataType(newColumn), "");
+            }
+
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY {clause}");
         }
 
         public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
@@ -181,6 +207,9 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
         {
+            string tablespace = this.dbInterpreter.ConnectionInfo.Database;
+            string strTablespace = string.IsNullOrEmpty(tablespace) ? "" : $"TABLESPACE {tablespace}";
+
             string sql =
 $@"
 ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQuotedString(primaryKey.Name)} PRIMARY KEY 
@@ -188,8 +217,7 @@ ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQu
 {string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )
 USING INDEX 
-TABLESPACE
-{this.dbInterpreter.ConnectionInfo.Database}{this.scriptsDelimiter}";
+{strTablespace}{this.scriptsDelimiter}";
 
             return new Script(sql);
         }
@@ -273,8 +301,9 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
         #endregion
 
         #region Database Operation
+        public override Script CreateSchema(DatabaseSchema schema) { return new Script(""); }
 
-        public override Script CreateUserDefinedType(UserDefinedType userDefinedType) 
+        public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
         {
             string dataTypes = string.Join(",", userDefinedType.Attributes.Select(item => $"{this.GetQuotedString(item.AttrName)} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.DataType, Precision = item.Precision, Scale = item.Scale })}"));
 
@@ -433,7 +462,9 @@ CREATE TABLE {quotedTableName}(
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            return $"DROP {typeName.ToUpper()} {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
+            bool isTable = dbObject is Table;
+
+            return $@"DROP {typeName.ToUpper()} {this.GetQuotedDbObjectNameWithSchema(dbObject)}{(isTable ? " PURGE" : "")};";
         }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)

@@ -29,6 +29,7 @@ namespace DatabaseInterpreter.Core
         public override string CommentString => "#";
         public override DatabaseType DatabaseType => DatabaseType.MySql;
         public override string DefaultDataType => "varchar";
+        public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07"); 
         public override string DefaultSchema => this.ConnectionInfo.Database;
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
         public override bool SupportBulkCopy { get { return true; } }
@@ -89,6 +90,11 @@ namespace DatabaseInterpreter.Core
             List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = database, Name = database } };
 
             return await Task.Run(() => { return databaseSchemas; });
+        }
+
+        public override async Task<List<DatabaseSchema>> GetDatabaseSchemasAsync(DbConnection dbConnection)
+        {
+            return await this.GetDatabaseSchemasAsync();
         }
         #endregion
 
@@ -220,7 +226,9 @@ namespace DatabaseInterpreter.Core
             sb.Append($@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`, COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`,
-                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,GENERATION_EXPRESSION AS `ComputeExp`
+                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,
+                        REPLACE(REPLACE(REPLACE(C.GENERATION_EXPRESSION,'\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""INFORMATION_SCHEMA""),''),
+                        (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{this.ConnectionInfo.Database}'),'') AS `ComputeExp`
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA
                         WHERE C.TABLE_SCHEMA ='{this.ConnectionInfo.Database}'");
@@ -405,7 +413,7 @@ namespace DatabaseInterpreter.Core
             {
                 sb.Append($@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`,
                          REPLACE(REPLACE(REPLACE(C.CHECK_CLAUSE,'\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""INFORMATION_SCHEMA""),''),
-                         (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""{this.ConnectionInfo.Database}""),'') AS `Definition`
+                         (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{this.ConnectionInfo.Database}'),'') AS `Definition`
                          FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC
                          JOIN INFORMATION_SCHEMA.CHECK_CONSTRAINTS C ON TC.CONSTRAINT_CATALOG=C.CONSTRAINT_CATALOG AND TC.CONSTRAINT_SCHEMA=C.CONSTRAINT_SCHEMA AND TC.CONSTRAINT_NAME=C.CONSTRAINT_NAME
                          WHERE CONSTRAINT_TYPE='CHECK'");
@@ -576,13 +584,12 @@ namespace DatabaseInterpreter.Core
                     }
                     else if (dataType == "timestamp")
                     {
-                        DateTime dt = DateTime.Parse(value.ToString());
-                        DateTime maxDt = DateTime.Parse("2037-12-31 23:59:59.999999"); //mysql timestamp max value is it. It should use datetime if value is greater than it.
+                        DateTime dt = DateTime.Parse(value.ToString());                       
 
-                        if (dt > maxDt)
+                        if (dt > Timestamp_Max_Value.ToLocalTime())
                         {
                             newColumnType = typeof(DateTime);
-                            newValue = maxDt;
+                            newValue = Timestamp_Max_Value.ToLocalTime();
                         }
                     }
                     else if (dataType == "geometry")
@@ -591,11 +598,25 @@ namespace DatabaseInterpreter.Core
 
                         if (value is SqlGeography geography)
                         {
-                            newValue = GeometryHelper.SqlGeographyToMySqlGeometry(geography);
+                            if (!geography.IsNull)
+                            {
+                                newValue = GeometryHelper.SqlGeographyToMySqlGeometry(geography);
+                            }
+                            else
+                            {
+                                newValue = DBNull.Value;
+                            }
                         }
                         else if (value is SqlGeometry sqlGeom)
                         {
-                            newValue = GeometryHelper.SqlGeometryToMySqlGeometry(sqlGeom);
+                            if (!sqlGeom.IsNull)
+                            {
+                                newValue = GeometryHelper.SqlGeometryToMySqlGeometry(sqlGeom);
+                            }
+                            else
+                            {
+                                newValue = DBNull.Value;
+                            }
                         }
                         else if (value is Geometry geom)
                         {

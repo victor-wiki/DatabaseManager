@@ -54,7 +54,7 @@
 	</mapping>
 	<mapping>
 		<source type="int" />
-		<target type="number" />
+		<target type="int" />
 	</mapping>
 	<mapping>
 		<source type="json" />
@@ -118,7 +118,7 @@
 	</mapping>
 	<mapping>
 		<source type="smallint" />
-		<target type="number" />
+		<target type="smallint" />
 	</mapping>
 	<mapping>
 		<source type="text" />
@@ -142,7 +142,7 @@
 	</mapping>
 	<mapping>
 		<source type="tinyint" />
-		<target type="number" />
+		<target type="smallint" />
 	</mapping>
 	<mapping>
 		<source type="tinytext" />

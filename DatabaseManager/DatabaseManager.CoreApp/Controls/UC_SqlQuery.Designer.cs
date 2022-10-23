@@ -73,7 +73,7 @@ namespace DatabaseManager.Controls
             // 
             // queryEditor
             // 
-            this.queryEditor.DatabaseType = DatabaseType.Unknown;
+            this.queryEditor.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.queryEditor.DbInterpreter = null;
             this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             this.queryEditor.Location = new System.Drawing.Point(0, 0);

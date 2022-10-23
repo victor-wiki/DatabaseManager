@@ -107,9 +107,14 @@ namespace DatabaseInterpreter.Core
 
             return await Task.Run(() => { return databaseSchemas; });
         }
+
+        public override async Task<List<DatabaseSchema>> GetDatabaseSchemasAsync(DbConnection dbConnection)
+        {
+            return await this.GetDatabaseSchemasAsync();
+        }
         #endregion
 
-        #region User Defined Type       
+            #region User Defined Type       
 
         public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
@@ -167,7 +172,7 @@ namespace DatabaseInterpreter.Core
                             CASE CYCLE_FLAG WHEN 'Y' THEN 1 ELSE 0 END AS ""Cycled"",CASE order_flag WHEN 'Y' THEN 1 ELSE 0 END AS ""Ordered"",
                             1 AS ""UseCache"",CACHE_SIZE AS ""CacheSize""
                             FROM all_sequences s
-                            WHERE UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')");
+                            WHERE SEQUENCE_NAME NOT LIKE 'ISEQ$$_%' AND UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.SEQUENCE_NAME"));           
 
@@ -299,12 +304,13 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
             string userGeneratedCondition = isLowDbVersion ? "" : " AND C.USER_GENERATED='YES'";
-
+            string identityColumn = isLowDbVersion ? "0" : "CASE C.IDENTITY_COLUMN  WHEN 'YES' THEN 1 ELSE 0 END";
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT C.OWNER AS ""Schema"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",C.DATA_TYPE_OWNER AS ""DataTypeSchema"",
                  CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
-                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", 0 AS ""IsIdentity"", CC.COMMENTS AS ""Comment"" ,
+                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", CC.COMMENTS AS ""Comment"" ,
+                 {identityColumn} AS ""IsIdentity"",
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN NULL ELSE DATA_DEFAULT END AS ""DefaultValue"",
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp"",
                  CASE WHEN T.TYPE_NAME IS NULL THEN 0 ELSE 1 END AS ""IsUserDefined""
@@ -702,8 +708,11 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
+                bool isLowDbVersion = this.IsLowDbVersion();
+
                 string dataType = this.ParseDataType(column);
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && !isLowDbVersion ? $"GENERATED ALWAYS AS IDENTITY" : "");
                 string defaultValueClause = "";
 
                 if (column.DefaultValue != null && !ValueHelper.IsSequenceNextVal(column.DefaultValue))
@@ -713,7 +722,7 @@ namespace DatabaseInterpreter.Core
 
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
-                string content = $"{this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{scriptComment}";
+                string content = $"{this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {identityClause} {requiredClause} {scriptComment}";
 
                 return content;
             }
@@ -732,32 +741,37 @@ namespace DatabaseInterpreter.Core
             {
                 DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataType.ToLower());
 
-                if (dataTypeSpec != null && !string.IsNullOrEmpty(dataTypeSpec.Format))
+                bool applied = false;
+                if (dataTypeSpec != null)
                 {
                     string format = dataTypeSpec.Format;
-                    string args = dataTypeSpec.Args;
+                    string args = dataTypeSpec.Args;                    
 
                     if (!string.IsNullOrEmpty(args))
                     {
-                        string[] argItems = args.Split(',');
-
-                        foreach (string argItem in argItems)
+                        if(!string.IsNullOrEmpty(format))
                         {
-                            if (argItem == "dayScale")
-                            {
-                                format = format.Replace("$dayScale$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
-                            }
-                            else if (argItem == "precision")
-                            {
-                                format = format.Replace("$precision$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
-                            }
-                            else if (argItem == "scale")
-                            {
-                                format = format.Replace("$scale$", (column.Scale.HasValue ? column.Scale.Value : 0).ToString());
-                            }
-                        }
+                            string[] argItems = args.Split(',');
 
-                        dataType = format;
+                            foreach (string argItem in argItems)
+                            {
+                                if (argItem == "dayScale")
+                                {
+                                    format = format.Replace("$dayScale$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
+                                }
+                                else if (argItem == "precision")
+                                {
+                                    format = format.Replace("$precision$", (column.Precision.HasValue ? column.Precision.Value : 0).ToString());
+                                }
+                                else if (argItem == "scale")
+                                {
+                                    format = format.Replace("$scale$", (column.Scale.HasValue ? column.Scale.Value : 0).ToString());
+                                }
+                            }
+
+                            dataType = format;
+                            applied = true;
+                        }                       
                     }
                     else
                     {
@@ -773,10 +787,13 @@ namespace DatabaseInterpreter.Core
                             {
                                 dataType = $"{geometryMode}.{dataType}";
                             }
+
+                            applied = true;
                         }
                     }
                 }
-                else
+
+                if(!applied)
                 {
                     string dataLength = this.GetColumnDataLength(column);
 

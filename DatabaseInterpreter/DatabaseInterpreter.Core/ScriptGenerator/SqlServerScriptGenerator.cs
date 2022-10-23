@@ -289,6 +289,12 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         #endregion
 
         #region Database Operation
+        public override Script CreateSchema(DatabaseSchema schema) 
+        {
+            string script = $"CREATE SCHEMA {this.GetQuotedString(schema.Name)};";
+
+            return new CreateDbObjectScript<DatabaseSchema>(script);
+        }
 
         public override ScriptBuilder CreateTable(Table table, IEnumerable<TableColumn> columns,
             TablePrimaryKey primaryKey,
@@ -437,7 +443,7 @@ INCREMENT BY {sequence.Increment}
 MINVALUE {(long)sequence.MinValue}
 MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled? "CYCLE" : "")}
-{(sequence.UseCache? "CACHE":"")}{(sequence.CacheSize>0? sequence.CacheSize.ToString(): "")};";
+{(sequence.UseCache? "CACHE":"")}{(sequence.CacheSize>0? $" {sequence.CacheSize}" : "")};";
 
             return new CreateDbObjectScript<Sequence>(script);
         }

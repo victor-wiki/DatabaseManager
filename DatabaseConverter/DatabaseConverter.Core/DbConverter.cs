@@ -95,7 +95,7 @@ namespace DatabaseConverter.Core
             sourceInterpreter.Option.BulkCopy = this.Option.BulkCopy;
             sourceInterpreter.Subscribe(this.observer);
 
-            sourceInterpreter.Option.GetTableAllObjects = false;
+            sourceInterpreter.Option.GetTableAllObjects = false;           
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
 
@@ -132,14 +132,14 @@ namespace DatabaseConverter.Core
 
             if (DbInterpreter.Setting.NotCreateIfExists && !this.Option.OnlyForTranslate && !this.Option.OnlyForTableCopy)
             {
-                if(this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
+                if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
                     this.Target.DbInterpreter.Option.GetTableAllObjects = false;
 
                     SchemaInfo targetSchema = await this.Target.DbInterpreter.GetSchemaInfoAsync(filter);
 
                     SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
-                }                
+                }
             }
 
             List<UserDefinedType> utypes = new List<UserDefinedType>();
@@ -148,7 +148,7 @@ namespace DatabaseConverter.Core
             {
                 utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
 
-                if(this.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
+                if (this.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
                 {
                     if (utypes != null && utypes.Count > 0)
                     {
@@ -168,7 +168,7 @@ namespace DatabaseConverter.Core
                             }
                         }
                     }
-                }               
+                }
             }
 
             SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
@@ -187,6 +187,54 @@ namespace DatabaseConverter.Core
             {
                 targetSchemaInfo.TableForeignKeys = targetSchemaInfo.TableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).ToList();
             }
+
+            DbInterpreter targetInterpreter = this.Target.DbInterpreter;
+            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
+
+            #region Create schema if not exists
+            if (this.Option.CreateSchemaIfNotExists
+                && (targetInterpreter.DatabaseType == DatabaseType.SqlServer || targetInterpreter.DatabaseType == DatabaseType.Postgres))
+            {
+                using (DbConnection dbConnection = targetInterpreter.CreateConnection())
+                {
+                    if (dbConnection.State != ConnectionState.Open)
+                    {
+                        dbConnection.Open();
+                    }                   
+
+                    var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
+                    var targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
+
+                    var notExistsSchemas = sourceSchemas.Where(item => item != sourceInterpreter.DefaultSchema).Select(item => item)
+                         .Union(this.Option.SchemaMappings.Select(item => item.TargetSchema))
+                         .Except(targetSchemas.Select(item => item)).Distinct();
+
+                    foreach (var schemaName in notExistsSchemas)
+                    {
+                        string createSchemaScript = targetDbScriptGenerator.CreateSchema(new DatabaseSchema() { Name = schemaName }).Content;
+
+                        await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(createSchemaScript));
+                    }                 
+
+                    if (this.Option.SchemaMappings.Count == 1 && this.Option.SchemaMappings.First().SourceSchema == "")
+                    {
+                        this.Option.SchemaMappings.Clear();
+                    }
+
+                    foreach (var ss in sourceSchemas)
+                    {
+                        string mappedSchema = SchemaInfoHelper.GetMappedSchema(ss, this.Option.SchemaMappings);
+
+                        if (string.IsNullOrEmpty(mappedSchema))
+                        {
+                            string targetSchema = ss == sourceInterpreter.DefaultSchema ? targetInterpreter.DefaultSchema : ss;
+
+                            this.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = ss, TargetSchema = targetSchema });
+                        }
+                    }
+                }                
+            }
+            #endregion
 
             #region Translate
             TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Option);
@@ -223,9 +271,7 @@ namespace DatabaseConverter.Core
                 {
                     SchemaInfoHelper.EnsureIndexNameUnique(targetSchemaInfo);
                 }
-            }
-
-            DbInterpreter targetInterpreter = this.Target.DbInterpreter;
+            }           
 
             bool generateIdentity = targetInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity;
 
@@ -237,9 +283,7 @@ namespace DatabaseConverter.Core
 
             using (DbConnection dbConnection = this.Option.ExecuteScriptOnTargetServer ? targetInterpreter.CreateConnection() : null)
             {
-                ScriptBuilder scriptBuilder = null;
-
-                DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
+                ScriptBuilder scriptBuilder = null;                
 
                 if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
@@ -261,10 +305,10 @@ namespace DatabaseConverter.Core
 
                     if (this.Option.OnlyForTranslate)
                     {
-                        if(!(this.translateDbObject is ScriptDbObject)) //script db object uses script translator which uses event to feed back to ui.
+                        if (!(this.translateDbObject is ScriptDbObject)) //script db object uses script translator which uses event to feed back to ui.
                         {
                             this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
-                        }                        
+                        }
                     }
                 }
 
@@ -418,6 +462,15 @@ namespace DatabaseConverter.Core
                 #region Data sync
                 if (!targetInterpreter.HasError && this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Data) && sourceSchemaInfo.Tables.Count > 0)
                 {
+                    if (targetInterpreter.DatabaseType == DatabaseType.Oracle && generateIdentity)
+                    {
+                        if (!targetInterpreter.IsLowDbVersion())
+                        {
+                            sourceInterpreter.Option.ExcludeIdentityForData = true;
+                            targetInterpreter.Option.ExcludeIdentityForData = true;
+                        }
+                    }
+
                     List<TableColumn> identityTableColumns = new List<TableColumn>();
 
                     if (generateIdentity)
@@ -491,7 +544,29 @@ namespace DatabaseConverter.Core
                                         {
                                             (Dictionary<string, object> Paramters, string Script) scriptResult = this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
 
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(scriptResult.Script, scriptResult.Paramters, this.transaction));
+                                            string script = scriptResult.Script;
+
+                                            string delimiter = ");" + Environment.NewLine;
+
+                                            if (!script.Contains(delimiter))
+                                            {
+                                                await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, scriptResult.Paramters, this.transaction));
+                                            }
+                                            else
+                                            {
+                                                var items = script.Split(delimiter);
+
+                                                int count = 0;
+
+                                                foreach (var item in items)
+                                                {
+                                                    count++;
+
+                                                    var cmd = count < items.Length?  (item + delimiter).Trim().Trim(';'): item;
+
+                                                    await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Paramters, this.transaction));
+                                                }
+                                            }
                                         }
 
                                         if (!dictTableDataTransferredCount.ContainsKey(table))

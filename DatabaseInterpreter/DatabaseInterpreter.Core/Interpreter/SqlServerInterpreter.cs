@@ -8,6 +8,7 @@ using NpgsqlTypes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -68,10 +69,19 @@ namespace DatabaseInterpreter.Core
         #region Database Schema
         public override Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
-            string sql = @"select name as [Name], name as [Schema]  from sys.schemas
-                           where name not in ('guest', 'sys', 'INFORMATION_SCHEMA') and name not like 'db[_]%'";
+            return base.GetDbObjectsAsync<DatabaseSchema>(this.GetSqlForDatabaseSchemas());
+        }
 
-            return base.GetDbObjectsAsync<DatabaseSchema>(sql);
+        public override Task<List<DatabaseSchema>> GetDatabaseSchemasAsync(DbConnection dbConnection)
+        {
+            return base.GetDbObjectsAsync<DatabaseSchema>(dbConnection, this.GetSqlForDatabaseSchemas());
+        }
+
+        private string GetSqlForDatabaseSchemas()
+        {
+            string sql = "select name as [Name], name as [Schema] from sys.schemas  where name not in ('guest', 'sys', 'INFORMATION_SCHEMA') and name not like 'db[_]%'";
+
+            return sql;
         }
         #endregion
 

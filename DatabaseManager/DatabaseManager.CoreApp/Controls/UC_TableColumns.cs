@@ -39,13 +39,7 @@ namespace DatabaseManager.Controls
 
         public void InitControls()
         {
-            this.LoadDataTypes();
-
-            if (this.DatabaseType == DatabaseType.Oracle)
-            {
-                this.colIdentity.Visible = false;
-                this.colDataType.Width = 200;
-            }
+            this.LoadDataTypes();           
         }
 
         private void InitColumnsGrid()
@@ -482,11 +476,15 @@ namespace DatabaseManager.Controls
 
         private void tsmiInsertColumn_Click(object sender, EventArgs e)
         {
-            DataGridViewRow row = DataGridViewHelper.GetCurrentRow(this.dgvColumns);
+            DataGridViewRow row = DataGridViewHelper.GetSelectedRow(this.dgvColumns);
 
             if (row != null)
             {
-                this.dgvColumns.Rows.Insert(row.Index - 1 < 0 ? 0 : row.Index - 1);
+                int rowIndex = row.Index< 0 ? 0 : row.Index;
+
+                this.dgvColumns.Rows.Insert(rowIndex);
+                this.dgvColumns.Rows[rowIndex].Selected = true;
+                this.dgvColumns.Rows[rowIndex].Cells[this.colNullable.Name].Value = this.defaultNullable;
             }
         }
 
@@ -575,6 +573,11 @@ namespace DatabaseManager.Controls
                     combo.DropDownStyle = ComboBoxStyle.DropDown;                    
                 }
             }
+        }
+
+        private void dgvColumns_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
+        {
+            e.Row.Cells[this.colNullable.Name].Value = this.defaultNullable;
         }
     }
 }

@@ -19,6 +19,8 @@ namespace DatabaseManager.Controls
         private ScriptRunner scriptRunner;
         private bool readOnly;
         private bool showEditorMessage = true;
+        private string originalText = "";
+
 
         public bool ReadOnly
         {
@@ -85,7 +87,7 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.displayInfo = displayInfo;
+            this.displayInfo = displayInfo;          
 
             if (this.Editor.Text.Length > 0)
             {
@@ -107,6 +109,8 @@ namespace DatabaseManager.Controls
             {
                 this.SetupIntellisence();
             }
+
+            this.originalText = this.Editor.Text;
         }
 
         private async void SetupIntellisence()
@@ -308,6 +312,9 @@ namespace DatabaseManager.Controls
             this.splitContainer1.SplitterWidth = visible ? 3 : 1;
         }
 
-
+        internal bool IsTextChanged()
+        {
+            return this.originalText != this.Editor.Text;
+        }
     }
 }

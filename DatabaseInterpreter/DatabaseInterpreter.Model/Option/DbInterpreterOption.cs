@@ -12,6 +12,8 @@ namespace DatabaseInterpreter.Model
         public bool TreatBytesAsNullForExecuting { get; set; }
         public bool TreatBytesAsHexStringForFile { get; set; }     
         public bool ExcludeGeometryForData { get; set; }
+        public bool ExcludeIdentityForData { get; set; }
+        public bool ShowTextForGeometry { get; set; }
         public DatabaseObjectFetchMode ObjectFetchMode = DatabaseObjectFetchMode.Details;
         public GenerateScriptMode ScriptMode { get; set; }
         public GenerateScriptOutputMode ScriptOutputMode { get; set; }

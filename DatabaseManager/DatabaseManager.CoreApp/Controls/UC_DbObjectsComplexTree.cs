@@ -630,6 +630,7 @@ namespace DatabaseManager.Controls
         private async Task EmptyDatabase(string database, DatabaseObjectType databaseObjectType)
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            dbInterpreter.Option.ThrowExceptionWhenErrorOccurs = false;
             DbManager dbManager = new DbManager(dbInterpreter);
 
             dbInterpreter.Subscribe(this);

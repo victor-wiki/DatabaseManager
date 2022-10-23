@@ -327,6 +327,12 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         #endregion
 
         #region Database Operation
+        public override Script CreateSchema(DatabaseSchema schema)
+        {
+            string script = $"CREATE SCHEMA IF NOT EXISTS {this.GetQuotedString(schema.Name)};";
+
+            return new CreateDbObjectScript<DatabaseSchema>(script);
+        }
 
         public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
         {

@@ -60,7 +60,7 @@ namespace DatabaseManager.Core
                 {
                     dbConnection.Open();
 
-                    await this.SetConstrainsEnabled(dbConnection, false);                   
+                    await this.SetConstrainsEnabled(dbConnection, false);
 
                     transaction = dbConnection.BeginTransaction();
 
@@ -111,7 +111,7 @@ namespace DatabaseManager.Core
                 {
                     this.FeedbackInfo("Enable constrains.");
 
-                    await this.SetConstrainsEnabled(null, true);                    
+                    await this.SetConstrainsEnabled(null, true);
                 }
             }
 
@@ -122,11 +122,11 @@ namespace DatabaseManager.Core
         {
             bool needDispose = false;
 
-            if(dbConnection == null)
+            if (dbConnection == null)
             {
                 needDispose = true;
                 dbConnection = this.dbInterpreter.CreateConnection();
-            }           
+            }
 
             IEnumerable<Script> scripts = this.scriptGenerator.SetConstrainsEnabled(enabled);
 
@@ -135,7 +135,7 @@ namespace DatabaseManager.Core
                 await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, script.Content);
             }
 
-            if(needDispose)
+            if (needDispose)
             {
                 using (dbConnection) { };
             }
@@ -187,14 +187,23 @@ namespace DatabaseManager.Core
             {
                 if (!names.Contains(obj.Name))
                 {
-                    await this.DropDbObject(obj, connection);
+                    try
+                    {
+                        await this.DropDbObject(obj, connection, true);
 
-                    names.Add(obj.Name);
+                        names.Add(obj.Name);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.FeedbackError($@"Error occurs when drop ""{obj.Name}"":{ex.Message}", true);
+
+                        continue;
+                    }
                 }
             }
         }
 
-        private async Task DropDbObject(DatabaseObject dbObject, DbConnection connection = null)
+        private async Task DropDbObject(DatabaseObject dbObject, DbConnection connection = null, bool continueWhenErrorOccurs = false)
         {
             string typeName = dbObject.GetType().Name;
 
@@ -211,13 +220,15 @@ namespace DatabaseManager.Core
                     sql = sql.TrimEnd(this.dbInterpreter.ScriptsDelimiter.ToCharArray());
                 }
 
+                var commandInfo = new CommandInfo() { CommandText = sql, ContinueWhenErrorOccurs = continueWhenErrorOccurs };
+
                 if (connection != null)
                 {
-                    await this.dbInterpreter.ExecuteNonQueryAsync(connection, sql);
+                    await this.dbInterpreter.ExecuteNonQueryAsync(connection, commandInfo);
                 }
                 else
                 {
-                    await this.dbInterpreter.ExecuteNonQueryAsync(sql);
+                    await this.dbInterpreter.ExecuteNonQueryAsync(commandInfo);
                 }
             }
         }
@@ -232,7 +243,7 @@ namespace DatabaseManager.Core
             {
                 this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
             }
-        }       
+        }
 
         public bool Backup(BackupSetting setting, ConnectionInfo connectionInfo)
         {
@@ -298,7 +309,7 @@ namespace DatabaseManager.Core
 
         public void FeedbackError(string message, bool skipError = false)
         {
-            this.Feedback(FeedbackInfoType.Error, message);
+            this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = message, IgnoreError = skipError });
         }
     }
 }

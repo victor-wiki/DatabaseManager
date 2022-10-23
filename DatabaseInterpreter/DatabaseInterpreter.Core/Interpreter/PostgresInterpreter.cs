@@ -70,9 +70,19 @@ namespace DatabaseInterpreter.Core
         #region Database Schema
         public override Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
+            return base.GetDbObjectsAsync<DatabaseSchema>(this.GetSqlForDatabaseSchemas());
+        }
+
+        public override Task<List<DatabaseSchema>> GetDatabaseSchemasAsync(DbConnection dbConnection)
+        {
+            return base.GetDbObjectsAsync<DatabaseSchema>(dbConnection, this.GetSqlForDatabaseSchemas());
+        }
+        
+        private string GetSqlForDatabaseSchemas()
+        {
             string sql = @"SELECT nspname AS ""Name"",nspname AS ""Schema"" FROM pg_catalog.pg_namespace WHERE nspname NOT IN ('information_schema','pg_catalog', 'pg_toast') ORDER BY nspname";
 
-            return base.GetDbObjectsAsync<DatabaseSchema>(sql);
+            return sql;
         }
         #endregion
 
@@ -661,13 +671,28 @@ namespace DatabaseInterpreter.Core
 
                                 SqlGeography geography = (SqlGeography)value;
 
-                                newValue = GeometryHelper.SqlGeographyToPostgresGeography(geography);
+                                if(!geography.IsNull)
+                                {
+                                    newValue = GeometryHelper.SqlGeographyToPostgresGeography(geography);
+                                }
+                                else
+                                {
+                                    newValue = DBNull.Value;
+                                }
                             }
                             else if (type == typeof(SqlGeometry))
                             {
                                 newColumnType = typeof(Geometry);
                                 SqlGeometry geometry = (SqlGeometry)value;
-                                newValue = GeometryHelper.SqlGeometryToPostgresGeometry(geometry);
+
+                                if(!geometry.IsNull)
+                                {
+                                    newValue = GeometryHelper.SqlGeometryToPostgresGeometry(geometry);
+                                }
+                                else
+                                {
+                                    newValue = DBNull.Value;
+                                }
                             }
                             else if (type == typeof(byte[]))
                             {

@@ -24,6 +24,7 @@ namespace DatabaseConverter.Core.Model
         public bool IgnoreNotSelfForeignKey { get; set; }
         public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;
         public bool RemoveCarriagRreturnChar { get; set; }
+        public bool CreateSchemaIfNotExists { get; set; }
 
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
     }

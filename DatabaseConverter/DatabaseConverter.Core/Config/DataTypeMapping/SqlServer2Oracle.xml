@@ -57,7 +57,7 @@
   </mapping>
   <mapping>
     <source type="int" />
-    <target type="number" />
+    <target type="int" />
   </mapping>
   <mapping>
     <source type="money" />
@@ -93,7 +93,7 @@
   </mapping>
   <mapping>
     <source type="smallint" />
-    <target type="number" />
+    <target type="smallint" />
   </mapping>
   <mapping>
     <source type="smallmoney" />

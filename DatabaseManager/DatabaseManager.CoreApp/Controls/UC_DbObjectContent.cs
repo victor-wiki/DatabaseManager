@@ -60,7 +60,7 @@ namespace DatabaseManager.Controls
 
         private string GetFormatTabHeaderText(string text)
         {
-            return $" { text}  ";
+            return $" {text}  ";
         }
 
         private void SetTabPageTooltip(TabPage page)
@@ -272,17 +272,17 @@ namespace DatabaseManager.Controls
             this.tsmiCloseAll.Visible = this.tabControl1.TabPages.Count > 1;
         }
 
-        private void tsmiClose_Click(object sender, EventArgs e)
+        private async void tsmiClose_Click(object sender, EventArgs e)
         {
             if (this.tabControl1.SelectedIndex >= 0)
             {
-                this.CloseTabPage(this.tabControl1.SelectedIndex);
+                await this.CloseTabPage(this.tabControl1.SelectedIndex);
             }
 
             this.SetControlVisible();
         }
 
-        private bool CloseTabPage(int tabPageIndex)
+        private async Task<bool> CloseTabPage(int tabPageIndex)
         {
             bool canClose = true;
 
@@ -290,7 +290,9 @@ namespace DatabaseManager.Controls
 
             DatabaseObjectDisplayInfo info = tabPage.Tag as DatabaseObjectDisplayInfo;
 
-            if (info != null && info.IsNew)
+            bool isNew = info.IsNew;
+
+            if (info != null)
             {
                 IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
 
@@ -298,7 +300,24 @@ namespace DatabaseManager.Controls
 
                 if (control is UC_SqlQuery sqlQuery)
                 {
-                    if (sqlQuery.Editor.Text.Trim().Length > 0)
+                    if (isNew)
+                    {
+                        if (sqlQuery.Editor.Text.Trim().Length > 0)
+                        {
+                            saveRequired = true;
+                        }
+                    }
+                    else
+                    {
+                        if(sqlQuery.IsTextChanged())
+                        {
+                            saveRequired = true;
+                        }
+                    }
+                }
+                else if(control is UC_TableDesigner tableDesigner)
+                {
+                    if(await tableDesigner.IsChanged())
                     {
                         saveRequired = true;
                     }
@@ -481,6 +500,12 @@ namespace DatabaseManager.Controls
         private string GetInfoName(DatabaseObjectDisplayInfo info)
         {
             string name = info.Name;
+            bool isOpenFile = !string.IsNullOrEmpty(info.FilePath);
+
+            if (isOpenFile)
+            {
+                return name;
+            }
 
             if (string.IsNullOrEmpty(name))
             {
@@ -510,8 +535,11 @@ namespace DatabaseManager.Controls
                 {
                     var dbObject = info.DatabaseObject;
 
-                    name = $"{dbObject.Schema}.{dbObject.Name}";
-                }               
+                    if (dbObject != null)
+                    {
+                        name = $"{dbObject.Schema}.{dbObject.Name}";
+                    }
+                }
             }
 
             return name;

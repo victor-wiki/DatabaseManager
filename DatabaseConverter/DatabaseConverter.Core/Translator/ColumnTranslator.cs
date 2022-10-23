@@ -88,10 +88,12 @@ namespace DatabaseConverter.Core
 
             if (SequenceTranslator.IsSequenceValueFlag(this.sourceDbType, defaultValue))
             {
-                if (this.targetDbType == DatabaseType.MySql)
+                if (this.targetDbType == DatabaseType.MySql 
+                    || this.Option.OnlyForTableCopy
+                    || column.IsIdentity)
                 {
                     column.DefaultValue = null;
-                }
+                }                
                 else
                 {
                     column.DefaultValue = this.sequenceTranslator.HandleSequenceValue(defaultValue);

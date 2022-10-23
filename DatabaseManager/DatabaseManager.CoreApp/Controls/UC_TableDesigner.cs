@@ -27,7 +27,7 @@ namespace DatabaseManager.Controls
 
         public UC_TableDesigner()
         {
-            InitializeComponent();           
+            InitializeComponent();
 
             this.ucIndexes.OnColumnSelect += this.ShowColumnSelector;
             this.ucForeignKeys.OnColumnMappingSelect += this.ShowColumnMappingSelector;
@@ -46,7 +46,7 @@ namespace DatabaseManager.Controls
             if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
             {
                 this.lblSchema.Text = "Owner:";
-            }           
+            }
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
@@ -61,9 +61,9 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.cboSchema.Enabled = false;               
+                this.cboSchema.Enabled = false;
 
-                SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, Schema =this.displayInfo.Schema, TableNames = new string[] { this.displayInfo.Name } };
+                SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, Schema = this.displayInfo.Schema, TableNames = new string[] { this.displayInfo.Name } };
                 filter.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column | DatabaseObjectType.PrimaryKey;
 
                 SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
@@ -223,7 +223,7 @@ namespace DatabaseManager.Controls
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
-            this.EndControlsEdit();           
+            this.EndControlsEdit();
 
             ContentSaveResult result = Task.Run(() => this.SaveTable()).Result;
 
@@ -283,7 +283,24 @@ namespace DatabaseManager.Controls
             this.ucConstraints.EndEdit();
         }
 
-        private async void GeneateChangeScripts()
+        internal async Task<bool> IsChanged()
+        {
+            ContentSaveResult result = await this.GetChangedScripts();
+
+            if (result.IsOK)
+            {
+                TableDesignerGenerateScriptsData scriptsData = result.ResultData as TableDesignerGenerateScriptsData;
+
+                if (scriptsData.Scripts.Count > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private async Task<ContentSaveResult> GetChangedScripts()
         {
             this.EndControlsEdit();
 
@@ -296,6 +313,13 @@ namespace DatabaseManager.Controls
             ContentSaveResult result = await tableManager.GenerateChangeScripts(schemaDesignerInfo, this.displayInfo.IsNew);
 
             this.Feedback("End generate changed scripts.");
+
+            return result;
+        }
+
+        private async void GeneateChangeScripts()
+        {
+            ContentSaveResult result = await this.GetChangedScripts();
 
             if (!result.IsOK)
             {
@@ -461,7 +485,7 @@ namespace DatabaseManager.Controls
 
             IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name));
 
-            form.TableColumns = columns.OrderBy(item => item.Name).Select(item => item.Name).ToList();           
+            form.TableColumns = columns.OrderBy(item => item.Name).Select(item => item.Name).ToList();
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
             dbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
@@ -476,7 +500,7 @@ namespace DatabaseManager.Controls
             else
             {
                 form.ReferenceTableColumns = referenceTableColumns.Select(item => item.Name).ToList();
-            }           
+            }
 
             if (form.ShowDialog() == DialogResult.OK)
             {

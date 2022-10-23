@@ -12,6 +12,7 @@ using NetTopologySuite.Index.Strtree;
 using NetTopologySuite.IO;
 using System.Runtime.CompilerServices;
 using System.IO;
+using DatabaseInterpreter.Utility;
 
 namespace DatabaseInterpreter.Core
 {
@@ -29,12 +30,30 @@ namespace DatabaseInterpreter.Core
             OpenGisGeometryType geometryType = (OpenGisGeometryType)Enum.Parse(typeof(OpenGisGeometryType), geometry.STGeometryType().Value);
             return geometryType;
         }
+
+        private static void ValidateSqlGeography(SqlGeography geography)
+        {
+            if (!geography.STIsValid())
+            {
+                LogHelper.LogError("SqlGeography is invalid!" + Environment.NewLine + geography.ToString());                
+            }            
+        }
+
+        private static void ValidateSqlGeometry(SqlGeometry geometry)
+        {
+            if (!geometry.STIsValid())
+            {
+                LogHelper.LogError("SqlGeometry is invalid!" + Environment.NewLine + geometry.ToString());
+            }
+        }
         #endregion
 
         #region SqlSever -> Postgres
         #region SqlGeography
         public static Geometry SqlGeographyToPostgresGeography(SqlGeography geography)
         {
+            ValidateSqlGeography(geography);
+
             OpenGisGeometryType geometryType = (OpenGisGeometryType)Enum.Parse(typeof(OpenGisGeometryType), geography.STGeometryType().Value);
 
             switch (geometryType)
@@ -91,14 +110,17 @@ namespace DatabaseInterpreter.Core
 
         public static Polygon SqlGeometryToPostgresPolygon(SqlGeography geography)
         {
-            LinearRing exterior = new LinearRing(SqlGeographyToPostgresPoints(geography));
+            var ringsNum = geography.NumRings().Value;
+
+            LinearRing exterior = new LinearRing(SqlGeographyToPostgresPoints(geography.RingN(1)));
 
             LinearRing[] interior = null;
-            if (geography.NumRings() > 0)
+
+            if (ringsNum > 1)
             {
-                interior = new LinearRing[geography.NumRings().Value];
+                interior = new LinearRing[ringsNum-1];
                 for (int i = 1; i <= interior.Length; i++)
-                    interior[i - 1] = new LinearRing(SqlGeographyToPostgresPoints(geography.RingN(i)));
+                    interior[i - 1] = new LinearRing(SqlGeographyToPostgresPoints(geography.RingN(i+1)));
             }
 
             return new Polygon(exterior, interior);
@@ -108,7 +130,7 @@ namespace DatabaseInterpreter.Core
         {
             Polygon[] polygons = new Polygon[geography.STNumGeometries().Value];
             for (var i = 1; i <= polygons.Length; i++)
-                polygons[i - 1] = SqlGeometryToPostgresPolygon(geography);
+                polygons[i - 1] = SqlGeometryToPostgresPolygon(geography.STGeometryN(i));
 
             return new MultiPolygon(polygons);
         }
@@ -117,7 +139,7 @@ namespace DatabaseInterpreter.Core
         {
             Geometry[] geoms = new Geometry[geography.STNumGeometries().Value];
             for (int i = 1; i <= geoms.Length; i++)
-                geoms[i - 1] = SqlGeographyToPostgresGeography(geography);
+                geoms[i - 1] = SqlGeographyToPostgresGeography(geography.STGeometryN(i));
 
             return new GeometryCollection(geoms);
         }
@@ -125,6 +147,8 @@ namespace DatabaseInterpreter.Core
         #region SqlGeometry       
         public static Geometry SqlGeometryToPostgresGeometry(SqlGeometry geometry)
         {
+            ValidateSqlGeometry(geometry);
+
             OpenGisGeometryType geometryType = GetGeometryType(geometry);
 
             switch (geometryType)
@@ -217,37 +241,37 @@ namespace DatabaseInterpreter.Core
         {
             string geometryType = geometry.GeometryType;
 
-            if (geometryType == "Point")
+            if (geometryType == nameof(Point))
             {
                 NetTopologySuite.Geometries.Point point = geometry as NetTopologySuite.Geometries.Point;
                 return SqlGeography.Point(point.X, point.Y, point.SRID);
             }
-            else if (geometryType == "LineString")
+            else if (geometryType == nameof(OpenGisGeometryType.LineString))
             {
                 NetTopologySuite.Geometries.LineString lineString = geometry as NetTopologySuite.Geometries.LineString;
                 return SqlGeography.STLineFromText(new SqlChars(new SqlString(lineString.AsText())), lineString.SRID < 0 ? 0 : lineString.SRID);
             }
-            else if (geometryType == "Polygon")
+            else if (geometryType == nameof(OpenGisGeometryType.Polygon))
             {
                 NetTopologySuite.Geometries.Polygon polygon = geometry as NetTopologySuite.Geometries.Polygon;
                 return SqlGeography.STPolyFromText(new SqlChars(new SqlString(polygon.AsText())), polygon.SRID < 0 ? 0 : polygon.SRID);
             }
-            else if (geometryType == "MultiPoint")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiPoint))
             {
                 NetTopologySuite.Geometries.MultiPoint multiPoint = geometry as NetTopologySuite.Geometries.MultiPoint;
                 return SqlGeography.STMPointFromText(new SqlChars(new SqlString(multiPoint.AsText())), multiPoint.SRID < 0 ? 0 : multiPoint.SRID);
             }
-            else if (geometryType == "MultiLineString")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiLineString))
             {
                 NetTopologySuite.Geometries.MultiLineString multiLineString = geometry as NetTopologySuite.Geometries.MultiLineString;
                 return SqlGeography.STMLineFromText(new SqlChars(new SqlString(multiLineString.AsText())), multiLineString.SRID < 0 ? 0 : multiLineString.SRID);
             }
-            else if (geometryType == "MultiLineString")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiPolygon))
             {
                 NetTopologySuite.Geometries.MultiPolygon multiPolygon = geometry as NetTopologySuite.Geometries.MultiPolygon;
                 return SqlGeography.STMPolyFromText(new SqlChars(new SqlString(multiPolygon.AsText())), multiPolygon.SRID < 0 ? 0 : multiPolygon.SRID);
-            }
-            else if (geometryType == "GeometryCollection")
+            }            
+            else if (geometryType == nameof(OpenGisGeometryType.GeometryCollection))
             {
                 NetTopologySuite.Geometries.GeometryCollection geometryCollection = geometry as NetTopologySuite.Geometries.GeometryCollection;
                 return SqlGeography.STGeomCollFromText(new SqlChars(new SqlString(geometryCollection.AsText())), geometryCollection.SRID < 0 ? 0 : geometryCollection.SRID);
@@ -259,37 +283,37 @@ namespace DatabaseInterpreter.Core
         {
             string geometryType = geometry.GeometryType;
 
-            if (geometryType == "Point")
+            if (geometryType == nameof(OpenGisGeometryType.Point))
             {
                 NetTopologySuite.Geometries.Point point = geometry as NetTopologySuite.Geometries.Point;
                 return SqlGeometry.STMPointFromText(new SqlChars(new SqlString(point.AsText())), point.SRID < 0 ? 0 : point.SRID);
             }
-            else if (geometryType == "LineString")
+            else if (geometryType == nameof(OpenGisGeometryType.LineString))
             {
                 NetTopologySuite.Geometries.LineString lineString = geometry as NetTopologySuite.Geometries.LineString;
                 return SqlGeometry.STLineFromText(new SqlChars(new SqlString(lineString.AsText())), lineString.SRID < 0 ? 0 : lineString.SRID);
             }
-            else if (geometryType == "Polygon")
+            else if (geometryType == nameof(OpenGisGeometryType.Polygon))
             {
                 NetTopologySuite.Geometries.Polygon polygon = geometry as NetTopologySuite.Geometries.Polygon;
                 return SqlGeometry.STPolyFromText(new SqlChars(new SqlString(polygon.AsText())), polygon.SRID < 0 ? 0 : polygon.SRID);
             }
-            else if (geometryType == "MultiPoint")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiPoint))
             {
                 NetTopologySuite.Geometries.MultiPoint multiPoint = geometry as NetTopologySuite.Geometries.MultiPoint;
                 return SqlGeometry.STMPointFromText(new SqlChars(new SqlString(multiPoint.AsText())), multiPoint.SRID < 0 ? 0 : multiPoint.SRID);
             }
-            else if (geometryType == "MultiLineString")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiLineString))
             {
                 NetTopologySuite.Geometries.MultiLineString multiLineString = geometry as NetTopologySuite.Geometries.MultiLineString;
                 return SqlGeometry.STMLineFromText(new SqlChars(new SqlString(multiLineString.AsText())), multiLineString.SRID < 0 ? 0 : multiLineString.SRID);
             }
-            else if (geometryType == "MultiLineString")
+            else if (geometryType == nameof(OpenGisGeometryType.MultiPolygon))
             {
                 NetTopologySuite.Geometries.MultiPolygon multiPolygon = geometry as NetTopologySuite.Geometries.MultiPolygon;
                 return SqlGeometry.STMPolyFromText(new SqlChars(new SqlString(multiPolygon.AsText())), multiPolygon.SRID < 0 ? 0 : multiPolygon.SRID);
             }
-            else if (geometryType == "GeometryCollection")
+            else if (geometryType == nameof(OpenGisGeometryType.GeometryCollection))
             {
                 NetTopologySuite.Geometries.GeometryCollection geometryCollection = geometry as NetTopologySuite.Geometries.GeometryCollection;
                 return SqlGeometry.STGeomCollFromText(new SqlChars(new SqlString(geometryCollection.AsText())), geometryCollection.SRID < 0 ? 0 : geometryCollection.SRID);
@@ -302,6 +326,8 @@ namespace DatabaseInterpreter.Core
         #region SqlSever -> MySql
         public static MySqlGeometry SqlGeographyToMySqlGeometry(SqlGeography geography)
         {
+            ValidateSqlGeography(geography);
+
             SqlGeometry geometry = SqlGeometry.STGeomFromText(geography.STAsText(), geography.STSrid.Value);
 
             return MySqlGeometry.FromMySql(SqlGeometryToMySqlBytes(geometry));
@@ -309,6 +335,8 @@ namespace DatabaseInterpreter.Core
 
         public static MySqlGeometry SqlGeometryToMySqlGeometry(SqlGeometry geometry)
         {
+            ValidateSqlGeometry(geometry);
+
             return MySqlGeometry.FromMySql(SqlGeometryToMySqlBytes(geometry));
         }
 
@@ -330,10 +358,9 @@ namespace DatabaseInterpreter.Core
                 return (pointNum > (int)geoType ? pointNum : (int)geoType);
             };
 
-            Action<byte, int> AppendToByteList = (value, size) =>
+            Action<int> AppendToByteList = (value) =>
             {
-                bytes.Add(value);
-                bytes.AddRange(new byte[size - 1]);
+                bytes.AddRange(BitConverter.GetBytes(value));
             };
 
             Action<int, SqlGeometry> AppendPointsToByteList = (pointNum, sqlGeom) =>
@@ -362,35 +389,37 @@ namespace DatabaseInterpreter.Core
             switch (geometryType)
             {
                 case OpenGisGeometryType.Point:
-                    AppendToByteList((byte)geometryType, 4);
+                    AppendToByteList((int)geometryType);
                     AppendPointsToByteList(geometry.STNumPoints().Value, geometry);
                     break;
                 case OpenGisGeometryType.LineString:
-                    AppendToByteList((byte)geometryType, 4);
-                    AppendToByteList((byte)ComparePointNum(geometryType, geometry.STNumPoints().Value), 4);
+                    AppendToByteList((int)geometryType);
+                    AppendToByteList(ComparePointNum(geometryType, geometry.STNumPoints().Value));
                     AppendPointsToByteList(geometry.STNumPoints().Value, geometry);
                     break;
                 case OpenGisGeometryType.Polygon:
                     int interiorRingNum = geometry.STNumInteriorRing().Value;
 
-                    AppendToByteList((byte)geometryType, 4);
-                    AppendToByteList((byte)(geometry.STNumGeometries().Value + interiorRingNum), 4);
+                    AppendToByteList((int)geometryType);
+                    AppendToByteList((geometry.STNumGeometries().Value + interiorRingNum));
 
                     int exteriorPointNum = geometry.STExteriorRing().STNumPoints().Value;
-                    AppendToByteList((byte)ComparePointNum(geometryType, exteriorPointNum), 4);
-                    AppendPointsToByteList((byte)ComparePointNum(geometryType, exteriorPointNum), geometry.STExteriorRing());
+                    var cpm = ComparePointNum(geometryType, exteriorPointNum);
+
+                    AppendToByteList(cpm);
+                    AppendPointsToByteList(cpm, geometry.STExteriorRing());
 
                     for (int i = 1; i <= interiorRingNum; i++)
                     {
                         var geom = geometry.STInteriorRingN(i);
-                        AppendToByteList((byte)ComparePointNum(geometryType, geom.STNumPoints().Value), 4);
-                        AppendPointsToByteList((byte)ComparePointNum(geometryType, geom.STNumPoints().Value), geom);
+                        AppendToByteList(ComparePointNum(geometryType, geom.STNumPoints().Value));
+                        AppendPointsToByteList(ComparePointNum(geometryType, geom.STNumPoints().Value), geom);
                     }
                     break;
                 case OpenGisGeometryType.MultiPoint:
                     int pointNum = geometry.STNumGeometries().Value;
-                    AppendToByteList((byte)geometryType, 4); //type
-                    AppendToByteList((byte)pointNum, 4); //point num
+                    AppendToByteList((int)geometryType); //type
+                    AppendToByteList(pointNum); //point num
 
                     for (int i = 1; i <= pointNum; i++)
                     {
@@ -401,8 +430,8 @@ namespace DatabaseInterpreter.Core
                     break;
                 case OpenGisGeometryType.MultiLineString:
                     int linestringNum = geometry.STNumGeometries().Value;
-                    AppendToByteList((byte)geometryType, 4); //type
-                    AppendToByteList((byte)linestringNum, 4); //linestring num
+                    AppendToByteList((int)geometryType); //type
+                    AppendToByteList(linestringNum); //linestring num
 
                     for (int i = 1; i <= linestringNum; i++)
                     {
@@ -413,8 +442,8 @@ namespace DatabaseInterpreter.Core
                     break;
                 case OpenGisGeometryType.MultiPolygon:
                     int polygonNum = geometry.STNumGeometries().Value;
-                    AppendToByteList((byte)geometryType, 4); //type
-                    AppendToByteList((byte)polygonNum, 4); //polygon num
+                    AppendToByteList((int)geometryType); //type
+                    AppendToByteList(polygonNum); //polygon num
 
                     for (int i = 1; i <= polygonNum; i++)
                     {
@@ -425,8 +454,8 @@ namespace DatabaseInterpreter.Core
                     break;
                 case OpenGisGeometryType.GeometryCollection:
                     int geometryNum = geometry.STNumGeometries().Value;
-                    AppendToByteList((byte)geometryType, 4); //type
-                    AppendToByteList((byte)geometryNum, 4); //geometry num
+                    AppendToByteList((int)geometryType); //type
+                    AppendToByteList(geometryNum); //geometry num
 
                     for (int i = 1; i <= geometryNum; i++)
                     {
@@ -435,7 +464,7 @@ namespace DatabaseInterpreter.Core
                         bytes.AddRange(SqlGeometryToMySqlBytes(geom, false));
                     }
                     break;
-            }
+            }           
 
             return bytes.ToArray();
         }

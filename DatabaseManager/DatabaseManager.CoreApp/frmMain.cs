@@ -27,6 +27,7 @@ namespace DatabaseManager
             this.InitControls();
 
             TreeView.CheckForIllegalCrossThreadCalls = false;
+            TextBox.CheckForIllegalCrossThreadCalls = false;            
 
             FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
             LogHelper.LogType = SettingManager.Setting.LogType;
@@ -59,8 +60,7 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            //Task.Run(new Action(() =>
-            //{
+            
             this.txtMessage.ForeColor = Color.Black;
 
             if (info.InfoType == FeedbackInfoType.Error)
@@ -72,14 +72,13 @@ namespace DatabaseManager
 
                 this.txtMessage.Text = info.Message;
                 this.txtMessage.BackColor = this.BackColor;
-                this.txtMessage.ForeColor = Color.Red;
-                this.toolTip1.SetToolTip(this.txtMessage, info.Message);
+                this.txtMessage.ForeColor = Color.Red;       
             }
             else
             {
                 this.txtMessage.Text = info.Message;
             }
-            //}));
+            
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)
@@ -198,7 +197,7 @@ namespace DatabaseManager
 
             info.DisplayType = DatabaseObjectDisplayType.Script;
             info.FilePath = filePath;
-            info.Name = Path.GetFileNameWithoutExtension(info.FilePath);
+            info.Name = Path.GetFileName(info.FilePath);
 
             this.ucContent.ShowContent(info);
         }
@@ -254,6 +253,11 @@ namespace DatabaseManager
         {
             frmLockApp lockApp = new frmLockApp();
             lockApp.ShowDialog();
+        }
+
+        private void txtMessage_MouseHover(object sender, EventArgs e)
+        {
+            this.toolTip1.SetToolTip(this.txtMessage, this.txtMessage.Text);
         }
     }
 }

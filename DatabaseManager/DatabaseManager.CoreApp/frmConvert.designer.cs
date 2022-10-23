@@ -40,6 +40,7 @@ namespace DatabaseManager
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
             this.gbOption = new System.Windows.Forms.GroupBox();
+            this.chkExcludeGeometryForData = new System.Windows.Forms.CheckBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.btnSetSchemaMappings = new System.Windows.Forms.Button();
             this.chkGenerateComment = new System.Windows.Forms.CheckBox();
@@ -70,7 +71,7 @@ namespace DatabaseManager
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
-            this.chkExcludeGeometryForData = new System.Windows.Forms.CheckBox();
+            this.chkCreateSchemaIfNotExists = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -185,6 +186,7 @@ namespace DatabaseManager
             // 
             // gbOption
             // 
+            this.gbOption.Controls.Add(this.chkCreateSchemaIfNotExists);
             this.gbOption.Controls.Add(this.chkExcludeGeometryForData);
             this.gbOption.Controls.Add(this.pictureBox2);
             this.gbOption.Controls.Add(this.btnSetSchemaMappings);
@@ -216,6 +218,17 @@ namespace DatabaseManager
             this.gbOption.TabIndex = 21;
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
+            // 
+            // chkExcludeGeometryForData
+            // 
+            this.chkExcludeGeometryForData.AutoSize = true;
+            this.chkExcludeGeometryForData.Location = new System.Drawing.Point(293, 175);
+            this.chkExcludeGeometryForData.Margin = new System.Windows.Forms.Padding(4);
+            this.chkExcludeGeometryForData.Name = "chkExcludeGeometryForData";
+            this.chkExcludeGeometryForData.Size = new System.Drawing.Size(156, 21);
+            this.chkExcludeGeometryForData.TabIndex = 60;
+            this.chkExcludeGeometryForData.Text = "Ignore geometry data";
+            this.chkExcludeGeometryForData.UseVisualStyleBackColor = true;
             // 
             // pictureBox2
             // 
@@ -542,16 +555,18 @@ namespace DatabaseManager
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
-            // chkExcludeGeometryForData
+            // chkCreateSchemaIfNotExists
             // 
-            this.chkExcludeGeometryForData.AutoSize = true;
-            this.chkExcludeGeometryForData.Location = new System.Drawing.Point(293, 175);
-            this.chkExcludeGeometryForData.Margin = new System.Windows.Forms.Padding(4);
-            this.chkExcludeGeometryForData.Name = "chkExcludeGeometryForData";
-            this.chkExcludeGeometryForData.Size = new System.Drawing.Size(156, 21);
-            this.chkExcludeGeometryForData.TabIndex = 60;
-            this.chkExcludeGeometryForData.Text = "Ignore geometry data";
-            this.chkExcludeGeometryForData.UseVisualStyleBackColor = true;
+            this.chkCreateSchemaIfNotExists.AutoSize = true;
+            this.chkCreateSchemaIfNotExists.Checked = true;
+            this.chkCreateSchemaIfNotExists.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkCreateSchemaIfNotExists.Location = new System.Drawing.Point(246, 53);
+            this.chkCreateSchemaIfNotExists.Margin = new System.Windows.Forms.Padding(4);
+            this.chkCreateSchemaIfNotExists.Name = "chkCreateSchemaIfNotExists";
+            this.chkCreateSchemaIfNotExists.Size = new System.Drawing.Size(183, 21);
+            this.chkCreateSchemaIfNotExists.TabIndex = 61;
+            this.chkCreateSchemaIfNotExists.Text = "Create schema if not exists";
+            this.chkCreateSchemaIfNotExists.UseVisualStyleBackColor = true;
             // 
             // frmConvert
             // 
@@ -623,6 +638,7 @@ namespace DatabaseManager
         private System.Windows.Forms.Label lblScriptsMode;
         private System.Windows.Forms.CheckBox chkOutputScripts;
         private System.Windows.Forms.CheckBox chkExcludeGeometryForData;
+        private System.Windows.Forms.CheckBox chkCreateSchemaIfNotExists;
     }
 }
 

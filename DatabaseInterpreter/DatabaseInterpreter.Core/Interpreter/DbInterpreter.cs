@@ -4,6 +4,7 @@ using DatabaseInterpreter.Utility;
 using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -67,6 +68,7 @@ namespace DatabaseInterpreter.Core
 
         #region Database Schema
         public abstract Task<List<DatabaseSchema>> GetDatabaseSchemasAsync();
+        public abstract Task<List<DatabaseSchema>> GetDatabaseSchemasAsync(DbConnection dbConnection);
         #endregion
 
         #region User Defined Type     
@@ -218,12 +220,12 @@ namespace DatabaseInterpreter.Core
                 }
                 catch (Exception ex)
                 {
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+
                     if (this.Option.ThrowExceptionWhenErrorOccurs)
                     {
                         throw ex;
-                    }
-
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+                    }                    
                 }
             }
 
@@ -454,12 +456,12 @@ namespace DatabaseInterpreter.Core
                         }
                     }
 
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.ContinueWhenErrorOccurs);
+
                     if (this.Option.ThrowExceptionWhenErrorOccurs)
                     {
                         throw ex;
                     }
-
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.ContinueWhenErrorOccurs);
 
                     return 0;
                 }
@@ -597,7 +599,7 @@ namespace DatabaseInterpreter.Core
             return sql;
         }
 
-        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, long total, int pageSize, long pageNumber, string whereClause = "")
+        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
 
@@ -605,16 +607,19 @@ namespace DatabaseInterpreter.Core
 
             foreach (TableColumn column in columns)
             {
-                if(this.Option.ExcludeGeometryForData)
+                if (this.Option.ExcludeGeometryForData && DataTypeHelper.IsGeometryType(column.DataType))
                 {
-                    if(DataTypeHelper.IsGeometryType(column.DataType))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
+
+                if (this.Option.ExcludeIdentityForData && column.IsIdentity)
+                {
+                    continue;
                 }
 
                 string columnName = this.GetQuotedString(column.Name);
                 string dataType = column.DataType.ToLower();
+
                 #region MySql
                 if (this.DatabaseType == DatabaseType.MySql)
                 {
@@ -644,22 +649,27 @@ namespace DatabaseInterpreter.Core
                             }
                         }
                     }
+                    else if (dataType == "geometry")
+                    {
+                        if (this.Option.ShowTextForGeometry)
+                        {
+                            columnName = $"ST_ASTEXT({columnName}) AS {columnName}";
+                        }
+                    }
                 }
                 #endregion
 
                 #region Oralce
                 else if (this.DatabaseType == DatabaseType.Oracle)
                 {
-                    if (dataType == "st_geometry")
+                    if (this.Option.ShowTextForGeometry)
                     {
-                        string geometryMode = Setting.OracleGeometryMode;
-
-                        if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                        if (dataType == "sdo_geometry" || (dataType == "st_geometry" && column.DataTypeSchema == "PUBLIC"))
                         {
                             quotedTableName += " t"; //must use alias
                             columnName = $"t.{columnName}.GET_WKT() AS {columnName}";
                         }
-                        else if (geometryMode == "SDE")
+                        else if (dataType == "st_geometry" && column.DataTypeSchema == "SDE")
                         {
                             columnName = $"SDE.ST_ASTEXT({columnName}) AS {columnName}";
                         }
@@ -668,6 +678,11 @@ namespace DatabaseInterpreter.Core
                 #endregion
 
                 columnNames.Add(columnName);
+            }
+
+            if (columnNames.Count == 0)
+            {
+                return new DataTable();
             }
 
             string strColumnNames = string.Join(",", columnNames);
@@ -692,17 +707,17 @@ namespace DatabaseInterpreter.Core
 
                 List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { Schema = table.Schema, TableNames = new string[] { table.Name } });
 
-                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, total, pageSize, pageNumber, whereClause);
+                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, pageSize, pageNumber, whereClause);
 
                 return (total, dt);
             }
         }
 
-        public async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, int pageSize, string whereClause = "")
+        public async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, long batchCount, int pageSize, string whereClause = "")
         {
             var dictPagedData = new Dictionary<long, List<Dictionary<string, object>>>();
 
-            long pageCount = PaginationHelper.GetPageCount(total, pageSize);
+            long pageCount = PaginationHelper.GetPageCount(batchCount, pageSize);
 
             for (long pageNumber = 1; pageNumber <= pageCount; pageNumber++)
             {
@@ -711,7 +726,7 @@ namespace DatabaseInterpreter.Core
                     break;
                 }
 
-                DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, total, pageSize, pageNumber, whereClause);
+                DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, pageSize, pageNumber, whereClause);
 
                 List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
 
@@ -1040,9 +1055,9 @@ namespace DatabaseInterpreter.Core
             this.observer = observer;
         }
 
-        public void Feedback(FeedbackInfoType infoType, string message)
+        public void Feedback(FeedbackInfoType infoType, string message, bool skipError = false)
         {
-            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message) };
+            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message), IgnoreError = skipError };
 
             if (this.observer != null)
             {
@@ -1062,7 +1077,7 @@ namespace DatabaseInterpreter.Core
                 this.hasError = true;
             }
 
-            this.Feedback(FeedbackInfoType.Error, message);
+            this.Feedback(FeedbackInfoType.Error, message, skipError);
         }
 
         public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
