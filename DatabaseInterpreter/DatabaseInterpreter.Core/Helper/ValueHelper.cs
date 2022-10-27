@@ -4,6 +4,7 @@ using Microsoft.SqlServer.Types;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 
 namespace DatabaseInterpreter.Core
@@ -171,6 +172,6 @@ namespace DatabaseInterpreter.Core
         public static bool IsSequenceNextVal(string value)
         {
             return value?.Contains("nextval") == true;
-        }
+        }        
     }
 }

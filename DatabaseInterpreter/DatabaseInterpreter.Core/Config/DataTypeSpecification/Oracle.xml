@@ -16,6 +16,7 @@
 	<item name="number" args="precision,scale" range="1~38,0~38" optional="true" allowIdentity="true"></item>
 	<item name="nvarchar2" args="length" range="1~2000"></item>
 	<item name="raw" args="length" range="1~2000"></item>
+	<item name="sdo_geometry" args=""></item>
 	<item name="smallint" args="" mapTo="number" allowIdentity="true"></item>
 	<item name="st_geometry" args=""></item>
 	<item name="timestamp" args="scale" range="0~9" optional="true" default="6"></item>

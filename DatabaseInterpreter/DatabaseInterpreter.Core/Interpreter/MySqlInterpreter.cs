@@ -1,10 +1,9 @@
 ﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using MySqlConnector;
-using NetTopologySuite.Geometries;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -29,7 +28,7 @@ namespace DatabaseInterpreter.Core
         public override string CommentString => "#";
         public override DatabaseType DatabaseType => DatabaseType.MySql;
         public override string DefaultDataType => "varchar";
-        public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07"); 
+        public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07");
         public override string DefaultSchema => this.ConnectionInfo.Database;
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
         public override bool SupportBulkCopy { get { return true; } }
@@ -509,7 +508,10 @@ namespace DatabaseInterpreter.Core
                 i++;
             }
 
-            await this.OpenConnectionAsync(connection);
+            if (connection.State != ConnectionState.Open)
+            {
+                await this.OpenConnectionAsync(connection);
+            }
 
             await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
         }
@@ -518,10 +520,13 @@ namespace DatabaseInterpreter.Core
         {
             var columns = dataTable.Columns.Cast<DataColumn>();
 
-            if (!columns.Any(item => DataTypeHelper.SpecialDataTypes.Contains(item.DataType.Name)
+            if (!columns.Any(item => DataTypeHelper.IsGeometryType(item.DataType.Name.ToLower())
                 || item.DataType.Name == nameof(BitArray)
                 || item.DataType.Name == nameof(String)
                 || item.DataType.Name == nameof(DateTime)
+                || item.DataType == typeof(byte[])
+                || item.DataType == typeof(SdoGeometry)
+                || item.DataType == typeof(StGeometry)
                 )
                )
             {
@@ -584,7 +589,7 @@ namespace DatabaseInterpreter.Core
                     }
                     else if (dataType == "timestamp")
                     {
-                        DateTime dt = DateTime.Parse(value.ToString());                       
+                        DateTime dt = DateTime.Parse(value.ToString());
 
                         if (dt > Timestamp_Max_Value.ToLocalTime())
                         {
@@ -600,7 +605,7 @@ namespace DatabaseInterpreter.Core
                         {
                             if (!geography.IsNull)
                             {
-                                newValue = GeometryHelper.SqlGeographyToMySqlGeometry(geography);
+                                newValue = SqlGeographyHelper.ToMySqlGeometry(geography);
                             }
                             else
                             {
@@ -611,25 +616,43 @@ namespace DatabaseInterpreter.Core
                         {
                             if (!sqlGeom.IsNull)
                             {
-                                newValue = GeometryHelper.SqlGeometryToMySqlGeometry(sqlGeom);
+                                newValue = SqlGeometryHelper.ToMySqlGeometry(sqlGeom);
                             }
                             else
                             {
                                 newValue = DBNull.Value;
                             }
                         }
-                        else if (value is Geometry geom)
+                        else if (value is PgGeom.Geometry geom)
                         {
-                            newValue = GeometryHelper.PostgresGeometryToMySqlGeometry(geom);
+                            newValue = PostgresGeometryHelper.ToMySqlGeometry(geom);
+                        }
+                        else if (value is SdoGeometry sdo)
+                        {
+                            newValue = OracleSdoGeometryHelper.ToMySqlGeometry(sdo);
+                        }
+                        else if (value is StGeometry st)
+                        {
+                            newValue = OracleStGeometryHelper.ToMySqlGeometry(st);
                         }
                         else if (value is byte[] bytes)
                         {
-                            newValue = SqlGeometry.STGeomCollFromWKB(new System.Data.SqlTypes.SqlBytes(bytes), 0);
+                            DatabaseType sourcedDbType = bulkCopyInfo.SourceDatabaseType;
+
+                            if (sourcedDbType == DatabaseType.MySql)
+                            {
+                                newValue = MySqlGeometry.FromMySql(bytes);
+                            }
                         }
                         else if (value is string)
                         {
-                            newValue = GeometryHelper.SqlGeometryToMySqlGeometry(SqlGeometry.STGeomFromText(new System.Data.SqlTypes.SqlChars(value as string), 0));
+                            newValue = SqlGeometryHelper.ToMySqlGeometry(value as string);
                         }
+                    }
+
+                    if (DataTypeHelper.IsGeometryType(dataType) && newColumnType != null && newValue == null)
+                    {
+                        newValue = DBNull.Value;
                     }
 
                     if (newColumnType != null && !changedColumns.ContainsKey(i))
@@ -641,7 +664,6 @@ namespace DatabaseInterpreter.Core
                     {
                         changedValues.Add((rowIndex, i), newValue);
                     }
-
                 }
 
                 rowIndex++;

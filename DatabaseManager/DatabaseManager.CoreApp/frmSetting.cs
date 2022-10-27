@@ -46,8 +46,7 @@ namespace DatabaseManager
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
             this.chkRememberPasswordDuringSession.Checked = setting.RememberPasswordDuringSession;
 
-            this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
-            this.cboOracleGeometryType.Text = setting.OracleGeometryMode;
+            this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();            
 
             if(!string.IsNullOrEmpty(setting.LockPassword))
             {
@@ -67,7 +66,6 @@ namespace DatabaseManager
             setting.NotCreateIfExists = this.chkNotCreateIfExists.Checked;
             setting.EnableLog = this.chkEnableLog.Checked;
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
-            setting.OracleGeometryMode = this.cboOracleGeometryType.Text;
             setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
             setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
 

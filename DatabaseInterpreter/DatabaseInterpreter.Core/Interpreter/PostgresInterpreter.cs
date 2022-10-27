@@ -1,17 +1,16 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Geometry;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using MySqlConnector;
-using NetTopologySuite.Geometries;
 using Npgsql;
-using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -77,7 +76,7 @@ namespace DatabaseInterpreter.Core
         {
             return base.GetDbObjectsAsync<DatabaseSchema>(dbConnection, this.GetSqlForDatabaseSchemas());
         }
-        
+
         private string GetSqlForDatabaseSchemas()
         {
             string sql = @"SELECT nspname AS ""Name"",nspname AS ""Schema"" FROM pg_catalog.pg_namespace WHERE nspname NOT IN ('information_schema','pg_catalog', 'pg_toast') ORDER BY nspname";
@@ -154,7 +153,7 @@ namespace DatabaseInterpreter.Core
 
             bool isLowDbVersion = this.IsLowDbVersion(this.ServerVersion, 10);
 
-            if(!isLowDbVersion)
+            if (!isLowDbVersion)
             {
                 sb.Append($@"SELECT sequence_schema AS ""Schema"",sequence_name AS ""Name"",'numeric' AS ""DataType"",
                             start_value AS ""StartValue"",increment AS ""Increment"",minimum_value AS ""MinValue"",maximum_value AS ""MaxValue"",
@@ -175,7 +174,7 @@ namespace DatabaseInterpreter.Core
                 bool isSingle = filter.SequenceNames?.Length == 1;
 
                 string sequenceName = this.GetQuotedDbObjectNameWithSchema(filter.Schema, filter.SequenceNames?.FirstOrDefault());
-                string cacheClause = (!isSimpleMode && isSingle) ? $@"{Environment.NewLine},(SELECT CASE WHEN cache_value>0 THEN 1 ELSE 0 END FROM {sequenceName}) AS ""UseCache"",(SELECT cache_value FROM {sequenceName}) AS ""CacheSize""":"";
+                string cacheClause = (!isSimpleMode && isSingle) ? $@"{Environment.NewLine},(SELECT CASE WHEN cache_value>0 THEN 1 ELSE 0 END FROM {sequenceName}) AS ""UseCache"",(SELECT cache_value FROM {sequenceName}) AS ""CacheSize""" : "";
 
                 sb.Append($@"SELECT sequence_schema AS ""Schema"",sequence_name AS ""Name"",('numeric' :: CHARACTER VARYING) AS ""DataType"",
                 start_value AS ""StartValue"",increment AS ""Increment"",minimum_value AS ""MinValue"",maximum_value AS ""MaxValue"",
@@ -185,7 +184,7 @@ namespace DatabaseInterpreter.Core
                 LEFT JOIN pg_catalog.pg_depend d ON d.objid=c.oid AND d.deptype='a'
                 LEFT JOIN pg_catalog.pg_class dc ON d.refobjid=dc.oid
                 LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid=dc.oid AND d.refobjsubid=a.attnum");
-            }            
+            }
 
             sb.Append($"WHERE UPPER(sequence_catalog)=UPPER('{this.ConnectionInfo.Database}')");
             sb.Append(this.GetFilterSchemaCondition(filter, "sequence_schema"));
@@ -571,7 +570,7 @@ namespace DatabaseInterpreter.Core
                 sb.Append($@"SELECT r.routine_schema AS ""Schema"", r.routine_name AS ""Name"",CASE WHEN r.data_type='trigger' THEN 1 ELSE 0 END AS ""IsTriggerFunction"",
                         concat('CREATE OR REPLACE {type} ', routine_schema,'.""',r.routine_name, '""(', array_to_string(
                         array_agg(concat(CASE p.parameter_mode WHEN 'IN' THEN '' ELSE p.parameter_mode END,' ',p.parameter_name,' ',p.data_type)),','),')'
-                        {(isFunction? "' RETURNS ',r.data_type": "")},CHR(10),'LANGUAGE ''plpgsql''',CHR(10),'AS',CHR(10),'$$',r.routine_definition,'$$;') AS ""Definition""
+                        {(isFunction ? "' RETURNS ',r.data_type" : "")},CHR(10),'LANGUAGE ''plpgsql''',CHR(10),'AS',CHR(10),'$$',r.routine_definition,'$$;') AS ""Definition""
                         FROM information_schema.routines r
                         LEFT JOIN information_schema.parameters p ON p.specific_name=r.specific_name
                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')
@@ -614,12 +613,11 @@ namespace DatabaseInterpreter.Core
             var columns = dataTable.Columns.Cast<DataColumn>();
 
             if (!columns.Any(item => item.DataType == typeof(MySqlDateTime)
-                || item.DataType == typeof(SqlHierarchyId)
-                || item.DataType == typeof(SqlGeography)
-                || item.DataType == typeof(SqlGeometry)
                 || item.DataType == typeof(byte[])
                 || item.DataType == typeof(string)
                 || item.DataType == typeof(Guid)
+                || item.DataType == typeof(SqlHierarchyId)
+                || DataTypeHelper.IsGeometryType(item.DataType.Name)               
                 ))
             {
                 return dataTable;
@@ -667,13 +665,20 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (type == typeof(SqlGeography))
                             {
-                                newColumnType = typeof(Geometry);
+                                newColumnType = typeof(PgGeom.Geometry);
 
                                 SqlGeography geography = (SqlGeography)value;
 
-                                if(!geography.IsNull)
+                                if (!geography.IsNull)
                                 {
-                                    newValue = GeometryHelper.SqlGeographyToPostgresGeography(geography);
+                                    if (dataType == "geography")
+                                    {
+                                        newValue = SqlGeographyHelper.ToPostgresGeography(geography);
+                                    }
+                                    else if (dataType == "geometry")
+                                    {
+                                        newValue = SqlGeographyHelper.ToPostgresGeometry(geography);
+                                    }
                                 }
                                 else
                                 {
@@ -682,12 +687,19 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (type == typeof(SqlGeometry))
                             {
-                                newColumnType = typeof(Geometry);
+                                newColumnType = typeof(PgGeom.Geometry);
                                 SqlGeometry geometry = (SqlGeometry)value;
 
-                                if(!geometry.IsNull)
+                                if (!geometry.IsNull)
                                 {
-                                    newValue = GeometryHelper.SqlGeometryToPostgresGeometry(geometry);
+                                    if (dataType == "geography")
+                                    {
+                                        newValue = SqlGeometryHelper.ToPostgresGeography(geometry);
+                                    }
+                                    else if (dataType == "geometry")
+                                    {
+                                        newValue = SqlGeometryHelper.ToPostgresGeometry(geometry);
+                                    }                                    
                                 }
                                 else
                                 {
@@ -696,24 +708,70 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (type == typeof(byte[]))
                             {
-                                if (dataType == "geometry")
+                                DatabaseType sourcedDbType = bulkCopyInfo.SourceDatabaseType;
+
+                                if (sourcedDbType == DatabaseType.MySql)
                                 {
-                                    newColumnType = typeof(Geometry);
-                                    newValue = GeometryHelper.MySqlGeometryToPostgresGeometry(value as byte[]);
+                                    if (dataType == "geography")
+                                    {
+                                        newColumnType = typeof(PgGeom.Geometry);
+                                        newValue = MySqlGeometryHelper.ToPostgresGeography(value as byte[]);
+                                    }
+                                    else if (dataType == "geometry")
+                                    {
+                                        newColumnType = typeof(PgGeom.Geometry);
+                                        newValue = MySqlGeometryHelper.ToPostgresGeometry(value as byte[]);
+                                    }
                                 }
+                            }
+                            else if (value is SdoGeometry)
+                            {
+                                newColumnType = typeof(PgGeom.Geometry);
+
+                                if (dataType == "geography")
+                                {
+                                    newValue = OracleSdoGeometryHelper.ToPostgresGeography(value as SdoGeometry);
+                                }
+                                else if (dataType == "geometry")
+                                {
+                                    newValue = OracleSdoGeometryHelper.ToPostgresGeometry(value as SdoGeometry);
+                                }                               
+                            }
+                            else if (value is StGeometry)
+                            {
+                                newColumnType = typeof(PgGeom.Geometry);
+
+                                if (dataType == "geography")
+                                {
+                                    newValue = OracleStGeometryHelper.ToPostgresGeography(value as StGeometry);
+                                }
+                                else if (dataType == "geometry")
+                                {
+                                    newValue = OracleStGeometryHelper.ToPostgresGeometry(value as StGeometry);
+                                }                                
                             }
                             else if (type == typeof(string))
                             {
-                                if (dataType == "geometry")
+                                if (dataType == "geography")
                                 {
-                                    newColumnType = typeof(Geometry);
-                                    newValue = GeometryHelper.SqlGeometryToPostgresGeometry(SqlGeometry.STGeomFromText(new System.Data.SqlTypes.SqlChars(value as string), 0));
+                                    newColumnType = typeof(PgGeom.Geometry);
+                                    newValue = SqlGeometryHelper.ToPostgresGeography(value as string);
+                                }
+                                else if (dataType == "geometry")
+                                {
+                                    newColumnType = typeof(PgGeom.Geometry);
+                                    newValue = SqlGeometryHelper.ToPostgresGeometry(value as string);
                                 }
                             }
                             else if (type == typeof(Guid))
                             {
                                 newColumnType = typeof(string);
                                 newValue = value.ToString();
+                            }
+
+                            if (DataTypeHelper.IsGeometryType(dataType) && newColumnType != null && newValue == null)
+                            {
+                                newValue = DBNull.Value;
                             }
 
                             if (newColumnType != null && !changedColumns.ContainsKey(i))
@@ -741,8 +799,6 @@ namespace DatabaseInterpreter.Core
 
             return dtChanged;
         }
-
-
         #endregion
 
         #region Sql Clause    

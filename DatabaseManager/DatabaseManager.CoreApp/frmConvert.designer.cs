@@ -40,11 +40,11 @@ namespace DatabaseManager
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
             this.gbOption = new System.Windows.Forms.GroupBox();
+            this.chkCreateSchemaIfNotExists = new System.Windows.Forms.CheckBox();
             this.chkExcludeGeometryForData = new System.Windows.Forms.CheckBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.btnSetSchemaMappings = new System.Windows.Forms.Button();
             this.chkGenerateComment = new System.Windows.Forms.CheckBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
             this.chkOnlyCommentComputeExpression = new System.Windows.Forms.CheckBox();
             this.chkComputeColumn = new System.Windows.Forms.CheckBox();
@@ -71,7 +71,6 @@ namespace DatabaseManager
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
-            this.chkCreateSchemaIfNotExists = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -82,7 +81,6 @@ namespace DatabaseManager
             this.splitContainer2.SuspendLayout();
             this.gbOption.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -191,7 +189,6 @@ namespace DatabaseManager
             this.gbOption.Controls.Add(this.pictureBox2);
             this.gbOption.Controls.Add(this.btnSetSchemaMappings);
             this.gbOption.Controls.Add(this.chkGenerateComment);
-            this.gbOption.Controls.Add(this.pictureBox1);
             this.gbOption.Controls.Add(this.chkTreatBytesAsNull);
             this.gbOption.Controls.Add(this.chkOnlyCommentComputeExpression);
             this.gbOption.Controls.Add(this.chkComputeColumn);
@@ -218,6 +215,19 @@ namespace DatabaseManager
             this.gbOption.TabIndex = 21;
             this.gbOption.TabStop = false;
             this.gbOption.Text = "Options";
+            // 
+            // chkCreateSchemaIfNotExists
+            // 
+            this.chkCreateSchemaIfNotExists.AutoSize = true;
+            this.chkCreateSchemaIfNotExists.Checked = true;
+            this.chkCreateSchemaIfNotExists.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkCreateSchemaIfNotExists.Location = new System.Drawing.Point(246, 53);
+            this.chkCreateSchemaIfNotExists.Margin = new System.Windows.Forms.Padding(4);
+            this.chkCreateSchemaIfNotExists.Name = "chkCreateSchemaIfNotExists";
+            this.chkCreateSchemaIfNotExists.Size = new System.Drawing.Size(183, 21);
+            this.chkCreateSchemaIfNotExists.TabIndex = 61;
+            this.chkCreateSchemaIfNotExists.Text = "Create schema if not exists";
+            this.chkCreateSchemaIfNotExists.UseVisualStyleBackColor = true;
             // 
             // chkExcludeGeometryForData
             // 
@@ -264,18 +274,6 @@ namespace DatabaseManager
             this.chkGenerateComment.TabIndex = 57;
             this.chkGenerateComment.Text = "Generate Comment";
             this.chkGenerateComment.UseVisualStyleBackColor = true;
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = global::DatabaseManager.Resources.Info16;
-            this.pictureBox1.Location = new System.Drawing.Point(202, 146);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(17, 19);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBox1.TabIndex = 56;
-            this.pictureBox1.TabStop = false;
-            this.toolTip1.SetToolTip(this.pictureBox1, "If the target database is Oracle and it has geometry data type, don\'t check this." +
-        "");
             // 
             // chkTreatBytesAsNull
             // 
@@ -555,19 +553,6 @@ namespace DatabaseManager
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
-            // chkCreateSchemaIfNotExists
-            // 
-            this.chkCreateSchemaIfNotExists.AutoSize = true;
-            this.chkCreateSchemaIfNotExists.Checked = true;
-            this.chkCreateSchemaIfNotExists.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkCreateSchemaIfNotExists.Location = new System.Drawing.Point(246, 53);
-            this.chkCreateSchemaIfNotExists.Margin = new System.Windows.Forms.Padding(4);
-            this.chkCreateSchemaIfNotExists.Name = "chkCreateSchemaIfNotExists";
-            this.chkCreateSchemaIfNotExists.Size = new System.Drawing.Size(183, 21);
-            this.chkCreateSchemaIfNotExists.TabIndex = 61;
-            this.chkCreateSchemaIfNotExists.Text = "Create schema if not exists";
-            this.chkCreateSchemaIfNotExists.UseVisualStyleBackColor = true;
-            // 
             // frmConvert
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -592,7 +577,6 @@ namespace DatabaseManager
             this.gbOption.ResumeLayout(false);
             this.gbOption.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -619,7 +603,6 @@ namespace DatabaseManager
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.Button btnSetSchemaMappings;
         private System.Windows.Forms.CheckBox chkGenerateComment;
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.CheckBox chkTreatBytesAsNull;
         private System.Windows.Forms.CheckBox chkOnlyCommentComputeExpression;
         private System.Windows.Forms.CheckBox chkComputeColumn;

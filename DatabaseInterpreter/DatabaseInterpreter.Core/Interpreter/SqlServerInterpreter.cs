@@ -1,7 +1,9 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Geometry;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Types;
+using MySqlConnector;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NpgsqlTypes;
@@ -11,9 +13,11 @@ using System.Collections.Generic;
 using System.ComponentModel.Design.Serialization;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -21,7 +25,7 @@ namespace DatabaseInterpreter.Core
     {
         #region Field & Property
         public const string AzureSQLFlag = "SQL Azure";
-        public override string CommandParameterChar => "@"; 
+        public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '[';
         public const char QuotedRightChar = ']';
         public override char QuotationLeftChar { get { return QuotedLeftChar; } }
@@ -105,7 +109,7 @@ namespace DatabaseInterpreter.Core
                             WHERE is_user_defined=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(T.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "T.name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "T.name"));
 
             sb.Append("ORDER BY T.name");
 
@@ -133,7 +137,7 @@ namespace DatabaseInterpreter.Core
                             join sys.types t on s.system_type_id = t.system_type_id");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(s.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.name"));          
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.name"));
 
             sb.Append("ORDER BY s.name");
 
@@ -165,7 +169,7 @@ namespace DatabaseInterpreter.Core
                            AND SCHEMA_NAME(schema_id) NOT IN('sys')");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(o.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.FunctionNames, "o.name"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.FunctionNames, "o.name"));
 
             sb.Append("ORDER BY o.name");
 
@@ -207,7 +211,7 @@ namespace DatabaseInterpreter.Core
             }
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));         
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
             sb.Append("ORDER BY t.name");
 
             return sb.Content;
@@ -275,7 +279,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append("WHERE 1=1");
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
 
             return sb.Content;
         }
@@ -313,7 +317,7 @@ namespace DatabaseInterpreter.Core
                          WHERE i.is_primary_key=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
 
             return sb.Content;
         }
@@ -352,7 +356,7 @@ namespace DatabaseInterpreter.Core
                          WHERE 1=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "object_name(fk.parent_object_id)"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "object_name(fk.parent_object_id)"));
 
             return sb.Content;
         }
@@ -395,7 +399,7 @@ namespace DatabaseInterpreter.Core
                         WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0))");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
 
             return sb.Content;
         }
@@ -470,7 +474,7 @@ namespace DatabaseInterpreter.Core
                          WHERE 1=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
 
             return sb.Content;
         }
@@ -499,7 +503,7 @@ namespace DatabaseInterpreter.Core
                             WHERE 1=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(v.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.name"));
 
             sb.Append("ORDER BY v.name");
 
@@ -531,7 +535,7 @@ namespace DatabaseInterpreter.Core
                             WHERE name not like 'sp[_]%'");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.ProcedureNames, "name"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ProcedureNames, "name"));
 
             sb.Append("ORDER BY name");
 
@@ -560,7 +564,7 @@ namespace DatabaseInterpreter.Core
                         inner join sys.tables t on c.parent_object_id = t.object_id");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));            
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
 
             return sb.Content;
         }
@@ -595,7 +599,7 @@ namespace DatabaseInterpreter.Core
         {
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
-                foreach(DataColumn column in dataTable.Columns)
+                foreach (DataColumn column in dataTable.Columns)
                 {
                     bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
                 }
@@ -621,15 +625,17 @@ namespace DatabaseInterpreter.Core
                    || item.DataType == typeof(NpgsqlCircle)
                    || item.DataType == typeof(NpgsqlPath)
                    || item.DataType == typeof(NpgsqlLSeg)
+                   || item.DataType == typeof(SdoGeometry)
+                   || item.DataType == typeof(StGeometry)
                    )
                 )
             {
-                 return dataTable;
+                return dataTable;
             }
 
             Dictionary<int, DataTableColumnChangeInfo> changedColumns = new Dictionary<int, DataTableColumnChangeInfo>();
             Dictionary<(int RowIndex, int ColumnIndex), dynamic> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), dynamic>();
-            
+
             int rowIndex = 0;
 
             Func<DataColumn, TableColumn> getTableColumn = (column) =>
@@ -664,7 +670,7 @@ namespace DatabaseInterpreter.Core
                                     newMaxLength = -1;
                                     newValue = new Guid(value.ToString());
                                 }
-                                else if(dataType == "geometry")
+                                else if (dataType == "geometry")
                                 {
                                     newColumnType = typeof(SqlGeometry);
                                     newValue = SqlGeometry.STGeomFromText(new System.Data.SqlTypes.SqlChars(value as string), 0);
@@ -697,21 +703,24 @@ namespace DatabaseInterpreter.Core
                                     newColumnType = typeof(Guid);
                                     newValue = ValueHelper.ConvertGuidBytesToString(value as byte[], this.DatabaseType, tableColumn.DataType, tableColumn.MaxLength, true);
                                 }
-                                else if (dataType == "geometry")
-                                {
-                                    newColumnType = typeof(SqlGeometry);
-                                    newValue = GeometryHelper.MySqlGeometryBytesToSqlGeometry(value as byte[]);
-                                }
-                                else if (dataType == "geography")
-                                {
-                                    newColumnType = typeof(SqlGeography);
 
-                                    SqlGeometry geometry = GeometryHelper.MySqlGeometryBytesToSqlGeometry(value as byte[]);
+                                DatabaseType sourcedDbType = bulkCopyInfo.SourceDatabaseType;
 
-                                    newValue = SqlGeography.STGeomFromText(geometry.STAsText(), geometry.STSrid.Value);
-                                }
+                                if (sourcedDbType == DatabaseType.MySql)
+                                {
+                                    if (dataType == "geometry")
+                                    {
+                                        newColumnType = typeof(SqlGeometry);
+                                        newValue = MySqlGeometryHelper.ToSqlGeometry(value as byte[]);
+                                    }
+                                    else if (dataType == "geography")
+                                    {
+                                        newColumnType = typeof(SqlGeography);
+                                        newValue = MySqlGeometryHelper.ToSqlGeography(value as byte[]);                                        
+                                    }
+                                }                               
                             }
-                            else if(type== typeof(BitArray))
+                            else if (type == typeof(BitArray))
                             {
                                 var bitArray = value as BitArray;
                                 byte[] bytes = new byte[bitArray.Length];
@@ -757,29 +766,55 @@ namespace DatabaseInterpreter.Core
                                     //
                                 }
                             }
-                            else if (value is NetTopologySuite.Geometries.Geometry)
+                            else if (value is PgGeom.Geometry)
                             {
                                 if (dataType == "geography")
                                 {
                                     newColumnType = typeof(SqlGeography);
-                                    newValue = GeometryHelper.PostgresGeographyToSqlGeography(value as NetTopologySuite.Geometries.Geometry);
+                                    newValue = PostgresGeometryHelper.ToSqlGeography(value as PgGeom.Geometry);
                                 }
                                 else
                                 {
                                     newColumnType = typeof(SqlGeometry);
-                                    newValue = GeometryHelper.PostgresGeometryToSqlGeometry(value as NetTopologySuite.Geometries.Geometry);
+                                    newValue = PostgresGeometryHelper.ToSqlGeometry(value as PgGeom.Geometry);
                                 }
                             }
                             else if (value is NpgsqlTsVector || value is NpgsqlLine || value is NpgsqlBox || value is NpgsqlCircle
-                                   ||value is NpgsqlPath || value is NpgsqlLSeg)
+                                   || value is NpgsqlPath || value is NpgsqlLSeg)
                             {
                                 newColumnType = typeof(String);
                                 newValue = value.ToString();
                             }
+                            else if (value is SdoGeometry)
+                            {
+                                if (dataType == "geography")
+                                {
+                                    newColumnType = typeof(SqlGeography);
+                                    newValue = OracleSdoGeometryHelper.ToSqlGeography(value as SdoGeometry);
+                                }
+                                else
+                                {
+                                    newColumnType = typeof(SqlGeometry);
+                                    newValue = OracleSdoGeometryHelper.ToSqlGeometry(value as SdoGeometry);
+                                }
+                            }
+                            else if (value is StGeometry)
+                            {
+                                if (dataType == "geography")
+                                {
+                                    newColumnType = typeof(SqlGeography);
+                                    newValue = OracleStGeometryHelper.ToSqlGeography(value as StGeometry);
+                                }
+                                else
+                                {
+                                    newColumnType = typeof(SqlGeometry);
+                                    newValue = OracleStGeometryHelper.ToSqlGeometry(value as StGeometry);
+                                }
+                            }
 
                             if (newColumnType != null && !changedColumns.ContainsKey(i))
                             {
-                                changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType, MaxLength= newMaxLength });
+                                changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType, MaxLength = newMaxLength });
                             }
 
                             if (newValue != null)
@@ -814,9 +849,12 @@ namespace DatabaseInterpreter.Core
 
             SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, option, bulkCopyInfo.Transaction as SqlTransaction);
 
-            await this.OpenConnectionAsync(connection);
+            if (connection.State != ConnectionState.Open)
+            {
+                await this.OpenConnectionAsync(connection);
+            }
 
-            string tableName = this.GetQuotedDbObjectNameWithSchema(bulkCopyInfo.DestinationTableSchema, bulkCopyInfo.DestinationTableName);            
+            string tableName = this.GetQuotedDbObjectNameWithSchema(bulkCopyInfo.DestinationTableSchema, bulkCopyInfo.DestinationTableName);
 
             bulkCopy.DestinationTableName = tableName;
             bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : Setting.CommandTimeout;
@@ -831,8 +869,8 @@ namespace DatabaseInterpreter.Core
         {
             if (column.IsUserDefined)
             {
-                string dataType = string.IsNullOrEmpty(column.DataTypeSchema) ? this.GetQuotedString(column.DataType): $"{this.GetQuotedString(column.DataTypeSchema)}.{this.GetQuotedString(column.DataType)}";
-                
+                string dataType = string.IsNullOrEmpty(column.DataTypeSchema) ? this.GetQuotedString(column.DataType) : $"{this.GetQuotedString(column.DataTypeSchema)}.{this.GetQuotedString(column.DataType)}";
+
                 return $"{this.GetQuotedString(column.Name)} {dataType} {(column.IsRequired ? "NOT NULL" : "NULL")}";
             }
 

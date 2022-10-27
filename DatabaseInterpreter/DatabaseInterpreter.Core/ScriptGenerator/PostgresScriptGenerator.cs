@@ -140,7 +140,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedFullTableName(table)} RENAME {this.GetQuotedString(column.Name)} TO {newName};");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedFullTableName(table)} RENAME {this.GetQuotedString(column.Name)} TO { this.GetQuotedString(newName) };");
         }
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)

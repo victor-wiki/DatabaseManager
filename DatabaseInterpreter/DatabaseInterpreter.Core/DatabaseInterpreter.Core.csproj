@@ -3,15 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.12</AssemblyVersion>
-    <FileVersion>2.0.12</FileVersion>
-    <Version>2.0.12</Version>
+    <AssemblyVersion>2.0.13</AssemblyVersion>
+    <FileVersion>2.0.13</FileVersion>
+    <Version>2.0.13</Version>
     <PackageReleaseNotes>1.fix bugs:
-(1)sqlserver create sequence: cach size
+(1)rename oracle table, rename column name
 (2)geometry convert
-2.oracle:
-(1)add data types(int, integer, smallint)
-(2)add identity</PackageReleaseNotes>
+2.move "GeometryHelper" to "DatabaseInterpreter.Geometry"</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle and Postgres.</Description>
   </PropertyGroup>
@@ -23,12 +21,13 @@
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.900.6-rc0" />
     <PackageReference Include="MySqlConnector" Version="2.1.13" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="Npgsql" Version="6.0.6" />
-    <PackageReference Include="Npgsql.NetTopologySuite" Version="6.0.6" />
+    <PackageReference Include="Npgsql" Version="6.0.7" />
+    <PackageReference Include="Npgsql.NetTopologySuite" Version="6.0.7" />
     <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.80" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DatabaseInterpreter.Geometry\DatabaseInterpreter.Geometry.csproj" />
     <ProjectReference Include="..\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
     <ProjectReference Include="..\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
   </ItemGroup>

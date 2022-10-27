@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -34,6 +35,8 @@ namespace DatabaseManager.Controls
             this.pagination.PageSize = 50;
 
             this.dgvData.AutoGenerateColumns = true;
+
+            typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic |BindingFlags.Instance | BindingFlags.SetProperty, null, this.dgvData, new object[] { true });
         }
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)

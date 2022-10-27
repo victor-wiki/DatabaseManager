@@ -1,10 +1,10 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Geometry;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Noding.Snapround;
-using NetTopologySuite.Operation;
 using NpgsqlTypes;
 using System;
 using System.Collections;
@@ -15,7 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -147,25 +147,31 @@ namespace DatabaseInterpreter.Core
 
                     this.FeedbackInfo($"{strTableCount}Table \"{this.GetQuotedFullTableName(table)}\":data read finished.");
 
+                    GenerateScriptOutputMode scriptOutputMode = this.option.ScriptOutputMode;
+
                     if (count > 1)
                     {
-                        if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToString))
+                        if (scriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToString))
                         {
                             sb.AppendLine();
                         }
-                        else if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
+
+                        if (scriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                         {
                             this.AppendScriptsToFile(Environment.NewLine, GenerateScriptMode.Data);
                         }
                     }
 
-                    if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
+                    if (this.option.BulkCopy && this.dbInterpreter.SupportBulkCopy && !scriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                     {
                         continue;
                     }
                     else
                     {
-                        this.AppendDataScripts(sb, table, columns, dictPagedData);
+                        if (scriptOutputMode != GenerateScriptOutputMode.None)
+                        {
+                            this.AppendDataScripts(sb, table, columns, dictPagedData);
+                        }
                     }
                 }
             }
@@ -439,9 +445,9 @@ namespace DatabaseInterpreter.Core
                     object parsedValue = this.ParseValue(column, value);
                     bool isBitArray = row[column.Name]?.GetType() == typeof(BitArray);
                     bool isBytes = ValueHelper.IsBytes(parsedValue) || isBitArray;
-                    bool isNullValue = value == DBNull.Value || parsedValue == "NULL";
+                    bool isNullValue = value == DBNull.Value || parsedValue?.ToString() == "NULL";
 
-                    if(!isNullValue)
+                    if (!isNullValue)
                     {
                         if (!isAppendToFile)
                         {
@@ -461,17 +467,6 @@ namespace DatabaseInterpreter.Core
 
                                     parsedValue = bytes;
                                 }
-
-                                //if(this.databaseType == DatabaseType.Oracle)
-                                //{
-                                //    if(needInsertParaeter)
-                                //    {
-                                //        if(DataTypeHelper.IsGeometryType(column.DataType))
-                                //        {
-                                //            parsedValue = null; //TODO
-                                //        }
-                                //    }
-                                //}
 
                                 parameters.Add(parameterPlaceholder, parsedValue);
 
@@ -496,7 +491,7 @@ namespace DatabaseInterpreter.Core
                                 }
                             }
                         }
-                    }                 
+                    }
 
                     if (DataTypeHelper.IsUserDefinedType(column))
                     {
@@ -597,6 +592,11 @@ namespace DatabaseInterpreter.Core
                             if (strValue.Contains(";"))
                             {
                                 oracleSemicolon = true;
+                            }
+                            else if (DataTypeHelper.IsGeometryType(dataType))
+                            {
+                                needQuotated = false;
+                                strValue = this.GetOracleGeometryInsertValue(column, value);
                             }
                         }
                         break;
@@ -711,33 +711,15 @@ namespace DatabaseInterpreter.Core
 
                         if (value is SqlGeography sgg) srid = sgg.STSrid.Value;
                         else if (value is SqlGeometry sgm) srid = sgm.STSrid.Value;
-                        else if (value is Geometry g) srid = g.SRID;
+                        else if (value is PgGeom.Geometry g) srid = g.SRID;
 
                         if (this.databaseType == DatabaseType.MySql)
                         {
-                            strValue = $"ST_GeomFromText('{value.ToString()}',{srid})";
+                            strValue = $"ST_GeomFromText('{this.GetCorrectGeometryText(value, dataType)}',{srid})";
                         }
                         else if (this.databaseType == DatabaseType.Oracle)
                         {
-                            string str = value.ToString();
-
-                            if (str.Length > 4000) //oracle allow max char length
-                            {
-                                strValue = "NULL";
-                            }
-                            else
-                            {
-                                string geometryMode = DbInterpreter.Setting.OracleGeometryMode;
-
-                                if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
-                                {
-                                    strValue = $"MDSYS.ST_GEOMETRY(SDO_GEOMETRY('{str}',{srid}))";
-                                }
-                                else if (geometryMode == "SDE")
-                                {
-                                    strValue = $"SDE.ST_GEOMETRY('{str}', {srid})"; //sde geometry
-                                }
-                            }
+                            strValue = this.GetOracleGeometryInsertValue(column, value, srid);
                         }
                         else
                         {
@@ -757,6 +739,13 @@ namespace DatabaseInterpreter.Core
                         strValue = value.ToString();
 
                         break;
+
+                    case nameof(SdoGeometry):
+                    case nameof(StGeometry):
+                        strValue = this.GetOracleGeometryInsertValue(column, value);
+
+                        break;
+
                     default:
                         if (string.IsNullOrEmpty(strValue))
                         {
@@ -787,6 +776,43 @@ namespace DatabaseInterpreter.Core
             }
         }
 
+        private string GetOracleGeometryInsertValue(TableColumn column, object value, int? srid = null)
+        {
+            string str = this.GetCorrectGeometryText(value, column.DataType.ToLower());
+
+            string strValue = "";
+
+            if (str.Length > 4000) //oracle allow max char length
+            {
+                strValue = "NULL";
+            }
+            else
+            {
+                string dataType = column.DataType.ToUpper();
+                string dataTypeSchema = column.DataTypeSchema?.ToUpper();
+
+                string strSrid = srid.HasValue ? $",{srid.Value}" : "";
+
+                if (dataType == "SDO_GEOMETRY")
+                {
+                    strValue = $"SDO_GEOMETRY('{str}'{strSrid})";
+                }
+                else if (dataType == "ST_GEOMETRY")
+                {
+                    if (string.IsNullOrEmpty(dataTypeSchema) || dataTypeSchema == "MDSYS" || dataTypeSchema == "PUBLIC") //PUBLIC is synonyms of MDSYS
+                    {
+                        strValue = $"MDSYS.ST_GEOMETRY(SDO_GEOMETRY('{str}'{strSrid}))";
+                    }
+                    else if (dataTypeSchema == "SDE")
+                    {
+                        strValue = $"SDE.ST_GEOMETRY('{str}'{strSrid})";
+                    }
+                }
+            }
+
+            return strValue;
+        }
+
         private string GetOracleDatetimeConvertString(DateTime dateTime)
         {
             int millisecondLength = dateTime.Millisecond.ToString().Length;
@@ -794,6 +820,34 @@ namespace DatabaseInterpreter.Core
             string format = $"yyyy-MM-dd HH:mm:ss{strMillisecond}";
 
             return $"TO_TIMESTAMP('{dateTime.ToString(format)}','yyyy-MM-dd hh24:mi:ssxff')";
+        }
+
+        private string GetCorrectGeometryText(object value, string dataType)
+        {
+            if (value is SqlGeography sg)
+            {
+                if (this.databaseType != DatabaseType.SqlServer && dataType != "geography")
+                {
+                    return SqlGeographyHelper.ToPostgresGeometry(sg).AsText();
+                }
+            }
+            else if (value is PgGeom.Geometry pg)
+            {
+                if (pg.UserData != null && pg.UserData is PostgresGeometryCustomInfo pgi)
+                {
+                    if (pgi.IsGeography)
+                    {
+                        if (this.databaseType != DatabaseType.Postgres && dataType != "geography")
+                        {
+                            PostgresGeometryHelper.ReverseCoordinates(pg);
+
+                            return pg.ToString();
+                        }
+                    }
+                }
+            }
+
+            return value.ToString();
         }
         #endregion
 

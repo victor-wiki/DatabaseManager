@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using static Humanizer.In;
 
 
 namespace DatabaseManager.Core
@@ -76,19 +77,19 @@ namespace DatabaseManager.Core
             }
 
             return dataTypeDesignerInfos;
-        }     
+        }
 
         public static bool ValidateDataType(DatabaseType databaseType, TableColumnDesingerInfo columnDesingerInfo, out string message)
         {
             message = "";
 
-            if(DataTypeHelper.IsUserDefinedType(columnDesingerInfo))
+            if (DataTypeHelper.IsUserDefinedType(columnDesingerInfo))
             {
                 return true;
             }
 
             string columName = columnDesingerInfo.Name;
-            string dataType = columnDesingerInfo.DataType;          
+            string dataType = columnDesingerInfo.DataType;
 
             DataTypeSpecification dataTypeSpec = DataTypeManager.GetDataTypeSpecification(databaseType, dataType);
 
@@ -142,9 +143,15 @@ namespace DatabaseManager.Core
                     {
                         int lenValue;
 
+                        if (string.IsNullOrEmpty(lengthItem))
+                        {
+                            message = $"{argName} can't be empty!";
+                            return false;
+                        }
+
                         if (!int.TryParse(lengthItem, out lenValue))
                         {
-                            message = $"\"{lengthItem}\" isn't a valid integer value";
+                            message = $"\"{lengthItem}\" isn't a valid integer value for {argName}";
                             return false;
                         }
 
@@ -216,7 +223,7 @@ namespace DatabaseManager.Core
                     }
                     else
                     {
-                        if(lengthItem != "max")
+                        if (lengthItem != "max")
                         {
                             column.MaxLength = long.Parse(lengthItem);
                         }

@@ -1,7 +1,9 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseInterpreter.Geometry;
 using Npgsql;
+using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -11,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -225,7 +228,7 @@ namespace DatabaseInterpreter.Core
                     if (this.Option.ThrowExceptionWhenErrorOccurs)
                     {
                         throw ex;
-                    }                    
+                    }
                 }
             }
 
@@ -543,6 +546,11 @@ namespace DatabaseInterpreter.Core
                 NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite(geographyAsDefault: false);
             }
 
+            if (this.DatabaseType == DatabaseType.Oracle)
+            {
+                GeometryUtility.Hook();
+            }
+
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
 
             DataTable table = new DataTable();
@@ -662,17 +670,9 @@ namespace DatabaseInterpreter.Core
                 #region Oralce
                 else if (this.DatabaseType == DatabaseType.Oracle)
                 {
-                    if (this.Option.ShowTextForGeometry)
+                    if (dataType == "st_geometry" && column.DataTypeSchema == "SDE")
                     {
-                        if (dataType == "sdo_geometry" || (dataType == "st_geometry" && column.DataTypeSchema == "PUBLIC"))
-                        {
-                            quotedTableName += " t"; //must use alias
-                            columnName = $"t.{columnName}.GET_WKT() AS {columnName}";
-                        }
-                        else if (dataType == "st_geometry" && column.DataTypeSchema == "SDE")
-                        {
-                            columnName = $"SDE.ST_ASTEXT({columnName}) AS {columnName}";
-                        }
+                        columnName = $"SDE.ST_ASTEXT({columnName}) AS {columnName}";
                     }
                 }
                 #endregion
@@ -764,6 +764,11 @@ namespace DatabaseInterpreter.Core
                                     row[i] = null;
                                 }
                             }
+                        }
+
+                        if (value is PgGeom.Geometry pg && tableColumn.DataType == "geography")
+                        {
+                            pg.UserData = new PostgresGeometryCustomInfo() { IsGeography = true };
                         }
 
                         dicField.Add(columnName, value);

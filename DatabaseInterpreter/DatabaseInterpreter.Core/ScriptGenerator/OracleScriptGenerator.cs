@@ -165,7 +165,7 @@ namespace DatabaseInterpreter.Core
         #region Alter Table
         public override Script RenameTable(Table table, string newName)
         {
-            return new AlterDbObjectScript<Table>($"RENAME TABLE {this.GetQuotedFullTableName(table)} TO {this.GetQuotedString(newName)};");
+            return new AlterDbObjectScript<Table>($"RENAME {this.GetQuotedFullTableName(table)} TO {this.GetQuotedString(newName)};");
         }
 
         public override Script SetTableComment(Table table, bool isNew = true)
@@ -180,7 +180,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} RENAME COLUMN {this.GetQuotedString(column.Name)} TO {newName};");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} RENAME COLUMN {this.GetQuotedString(column.Name)} TO {this.GetQuotedString(newName)};");
         }
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)

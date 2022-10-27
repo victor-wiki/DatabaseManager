@@ -6,6 +6,7 @@ namespace DatabaseInterpreter.Model
 {
     public class BulkCopyInfo
     {
+        public DatabaseType SourceDatabaseType { get; set; } = DatabaseType.Unknown;
         public string DestinationTableSchema { get; set; }
         public string DestinationTableName { get; set; }
         public int? Timeout { get; set; }

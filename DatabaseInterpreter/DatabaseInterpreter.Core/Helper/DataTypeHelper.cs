@@ -34,7 +34,6 @@ namespace DatabaseInterpreter.Core
             return GeometryTypeFlags.Any(item => dataType.ToLower().Contains(item));
         }
 
-
         public static bool StartsWithN(string dataType)
         {
             return dataType.StartsWith("n", StringComparison.OrdinalIgnoreCase);

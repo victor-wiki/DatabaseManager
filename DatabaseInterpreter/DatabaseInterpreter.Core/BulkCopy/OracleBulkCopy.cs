@@ -2,7 +2,9 @@
  * This file refer to: https://github.com/TylerHaigh/OracleBulkCopy/blob/master/OracleBulkCopy.Standard/OracleBulkCopy.cs
  * 
 ***/
+using DatabaseInterpreter.Geometry;
 using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -38,7 +40,7 @@ namespace DatabaseInterpreter.Core
         public OracleBulkCopy(OracleConnection connection, OracleTransaction transation = null)
         {
             this._connection = connection;
-            this._externalTransaction = transation;
+            this._externalTransaction = transation;            
         }
 
         private string _destinationTableName;
@@ -55,7 +57,7 @@ namespace DatabaseInterpreter.Core
 
                 _destinationTableName = value;
             }
-        }        
+        }
 
         private int _batchSize = 0;
 
@@ -99,7 +101,7 @@ namespace DatabaseInterpreter.Core
             {
                 await this._connection.OpenAsync();
             }
-        }       
+        }
 
         public async Task<int> WriteToServerAsync(DataTable table)
         {
@@ -168,7 +170,6 @@ namespace DatabaseInterpreter.Core
             return commandText;
         }
 
-
         private async Task<int> WriteSingleBatchOfData(DataTable table, int skipOffset, string commandText, int batchSize)
         {
             List<OracleParameter> parameters = this.GetParameters(table, batchSize, skipOffset);
@@ -203,11 +204,11 @@ namespace DatabaseInterpreter.Core
                     ? columnData.ToArray()
                     : columnData.Skip(skipOffset).Take(batchSize).ToArray();
 
-                if(this.DetectDateTimeTypeByValues)
+                if (this.DetectDateTimeTypeByValues)
                 {
                     if (dbType == OracleDbType.Date)
                     {
-                        if(c.AllowDBNull)
+                        if (c.AllowDBNull)
                         {
                             if (paramDataArray.Cast<DateTime?>().Any(item => item.HasValue && item.Value.Millisecond > 0))
                             {
@@ -222,11 +223,23 @@ namespace DatabaseInterpreter.Core
                             }
                         }
                     }
-                }                
+                }
 
                 OracleParameter param = new OracleParameter();
                 param.OracleDbType = dbType;
                 param.Value = paramDataArray;
+
+                if(c.DataType.CustomAttributes!=null)
+                {
+                    foreach(var customAttrType in c.DataType.CustomAttributes)
+                    {
+                        if(customAttrType.AttributeType == typeof(OracleCustomTypeMappingAttribute))
+                        {
+                            param.UdtTypeName = customAttrType.ConstructorArguments.FirstOrDefault().ToString();
+                            break;
+                        }
+                    }
+                }                
 
                 parameters.Add(param);
             }
@@ -271,7 +284,7 @@ namespace DatabaseInterpreter.Core
 
             string valueList = sb.ToString();
             return valueList;
-        }       
+        }
 
         public void Dispose()
         {
@@ -309,12 +322,16 @@ namespace DatabaseInterpreter.Core
             if (t == typeof(float)) return OracleDbType.Single;
             if (t == typeof(double)) return OracleDbType.Double;
             if (t == typeof(TimeSpan)) return OracleDbType.IntervalDS;
-            if (t == typeof(bool)) return OracleDbType.Int16;            
+            if (t == typeof(bool)) return OracleDbType.Int16;
+
+            if (t.BaseType?.Name?.Contains("OracleCustomType") == true)
+            {
+                return OracleDbType.Object;
+            }
 
             // Tylers
             //if (o is bool) return OracleDbType.Boolean;
             //if (o is char) return OracleDbType.Char;
-
 
             return OracleDbType.Varchar2;
         }

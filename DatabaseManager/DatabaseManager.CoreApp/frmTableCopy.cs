@@ -58,16 +58,27 @@ namespace DatabaseManager
                 GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
 
                 bool isTableExisted = false;
+                bool isDifferentTableName = false;
 
-                if (scriptMode.HasFlag(GenerateScriptMode.Schema))
+                Action checkTableName = async () =>
                 {
-                    isTableExisted = await this.IsNameExisted();
-                }
+                    if (scriptMode.HasFlag(GenerateScriptMode.Schema))
+                    {
+                        isTableExisted = await this.IsNameExisted(name);
+                    }
 
-                if (isTableExisted)
+                    if (isTableExisted)
+                    {
+                        name = name + "_copy";
+                        isDifferentTableName = true;
+                    }
+                };
+
+                do
                 {
-                    name = name + "_copy";
+                    checkTableName();
                 }
+                while (isTableExisted);
 
                 SchemaInfo schemaInfo = new SchemaInfo();
                 schemaInfo.Tables.Add(this.Table);
@@ -103,7 +114,6 @@ namespace DatabaseManager
                     this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
                     this.dbConverter.Option.OnlyForTableCopy = true;
 
-
                     if (this.cboSchema.Visible)
                     {
                         string targetSchema = string.IsNullOrEmpty(this.cboSchema.Text) ? target.DbInterpreter.DefaultSchema : this.cboSchema.Text;
@@ -125,7 +135,9 @@ namespace DatabaseManager
                     {
                         if (!this.dbConverter.CancelRequested)
                         {
-                            MessageBox.Show("Table copied.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            string msg = "Table copied." + (isDifferentTableName ? $@"{Environment.NewLine}The target table name is ""{name}""." : "");
+
+                            MessageBox.Show(msg, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
@@ -223,7 +235,7 @@ namespace DatabaseManager
         {
             if (this.cboSchema.Visible)
             {
-                if(this.rbAnotherDatabase.Checked && !this.ucConnection.ValidateProfile())
+                if (this.rbAnotherDatabase.Checked && !this.ucConnection.ValidateProfile())
                 {
                     return;
                 }
@@ -244,7 +256,7 @@ namespace DatabaseManager
                 }
                 catch (Exception ex)
                 {
-                    
+
                 }
             }
         }
@@ -292,11 +304,11 @@ namespace DatabaseManager
             return dbInterpreter;
         }
 
-        private async Task<bool> IsNameExisted()
+        private async Task<bool> IsNameExisted(string name)
         {
             DbInterpreter dbInterpreter = this.GetTargetDbInterpreter();
 
-            SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { this.txtName.Text.Trim() } };
+            SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = new string[] { name } };
 
             if (!string.IsNullOrEmpty(this.cboSchema.Text))
             {

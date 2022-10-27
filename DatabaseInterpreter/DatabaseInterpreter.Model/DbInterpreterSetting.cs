@@ -12,8 +12,7 @@ namespace DatabaseInterpreter.Model
         public bool EnableLog { get; set; } = true;
         public DbObjectNameMode DbObjectNameMode { get; set; } = DbObjectNameMode.WithQuotation;
         public LogType LogType { get; set; } = LogType.Info | LogType.Error;
-        public bool NotCreateIfExists { get; set; }
-        public string OracleGeometryMode { get; set; }
+        public bool NotCreateIfExists { get; set; }      
         public string LockPassword { get; set; }
     }
 

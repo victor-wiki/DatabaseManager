@@ -199,7 +199,7 @@ namespace DatabaseConverter.Core
                 {
                     if (dbConnection.State != ConnectionState.Open)
                     {
-                        dbConnection.Open();
+                        await dbConnection.OpenAsync();
                     }                   
 
                     var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
@@ -326,7 +326,7 @@ namespace DatabaseConverter.Core
                 {
                     if (dbConnection.State != ConnectionState.Open)
                     {
-                        dbConnection.Open();
+                        await dbConnection.OpenAsync();
                     }
 
                     if (this.Option.UseTransaction)
@@ -748,6 +748,7 @@ namespace DatabaseConverter.Core
 
             BulkCopyInfo bulkCopyInfo = new BulkCopyInfo()
             {
+                SourceDatabaseType = this.Source.DbInterpreter.DatabaseType,
                 KeepIdentity = this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity,
                 DestinationTableName = tableName,
                 Transaction = transaction,

@@ -1,6 +1,8 @@
 ﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using Oracle.ManagedDataAccess.Client;
 using System;
@@ -11,6 +13,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
 {
@@ -21,7 +24,7 @@ namespace DatabaseInterpreter.Core
         public const int DEFAULT_PORT = 1521;
         public const string DEFAULT_SERVICE_NAME = "ORCL";
         public const string SEMICOLON_FUNC = "CHR(59)";
-        public override string STR_CONCAT_CHARS => "||";       
+        public override string STR_CONCAT_CHARS => "||";
         public override string UnicodeLeadingFlag => "";
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
@@ -35,13 +38,14 @@ namespace DatabaseInterpreter.Core
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
         public override bool SupportBulkCopy { get { return true; } }
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
+        public static readonly string[] GeometryTypeSchemas = { "PUBLIC", "SDE" };
         #endregion
 
         #region Constructor
         public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
         {
             this.dbSchema = connectionInfo.UserId;
-            this.dbConnector = this.GetDbConnector();
+            this.dbConnector = this.GetDbConnector();            
         }
         #endregion
 
@@ -89,7 +93,7 @@ namespace DatabaseInterpreter.Core
 
             if (!string.IsNullOrEmpty(notShowBuiltinDatabaseCondition))
             {
-                notShowBuiltinDatabaseCondition +=" AND CONTENTS <>'UNDO'";
+                notShowBuiltinDatabaseCondition += " AND CONTENTS <>'UNDO'";
             }
 
             string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbSchema()}')) {notShowBuiltinDatabaseCondition}";
@@ -114,7 +118,7 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
 
-            #region User Defined Type       
+        #region User Defined Type       
 
         public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
         {
@@ -174,7 +178,7 @@ namespace DatabaseInterpreter.Core
                             FROM all_sequences s
                             WHERE SEQUENCE_NAME NOT LIKE 'ISEQ$$_%' AND UPPER(SEQUENCE_OWNER)=UPPER('{this.ConnectionInfo.Database}')");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.SEQUENCE_NAME"));           
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.SEQUENCE_NAME"));
 
             sb.Append("ORDER BY s.SEQUENCE_NAME");
 
@@ -196,10 +200,10 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForRoutines(string type, SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            bool isFunction = type.ToUpper() == "FUNCTION";         
+            bool isFunction = type.ToUpper() == "FUNCTION";
 
-            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";    
-            string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;           
+            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";
+            string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
 
             var sb = this.CreateSqlBuilder();
 
@@ -258,7 +262,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
             string tablespaceCondition = string.IsNullOrEmpty(this.ConnectionInfo.Database) ? "" : $" AND UPPER(T.TABLESPACE_NAME)=UPPER('{this.ConnectionInfo.Database}')";
-            
+
             var sb = this.CreateSqlBuilder();
 
             if (isSimpleMode)
@@ -404,7 +408,7 @@ namespace DatabaseInterpreter.Core
                 WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbSchema()}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "UI.TABLE_NAME"));
-           
+
             return sb.Content;
         }
         #endregion
@@ -501,7 +505,7 @@ namespace DatabaseInterpreter.Core
                          AND CONSTRAINT_TYPE = 'C' AND GENERATED = 'USER NAME'");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
-            
+
             sb.Append("ORDER BY CONSTRAINT_NAME");
 
             return sb.Content;
@@ -536,7 +540,7 @@ namespace DatabaseInterpreter.Core
                         WHERE UPPER(OWNER) = UPPER('{this.GetDbSchema()}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "V.VIEW_NAME"));
-            
+
             sb.Append("ORDER BY VIEW_NAME");
 
             return sb.Content;
@@ -582,8 +586,12 @@ namespace DatabaseInterpreter.Core
             var columns = dataTable.Columns.Cast<DataColumn>();
 
             if (!columns.Any(item => item.DataType == typeof(MySqlDateTime)
-               || item.DataType.Name == "SqlGeography"
-               || item.DataType.Name == nameof(System.Collections.BitArray)))
+               || item.DataType.Name == nameof(System.Collections.BitArray)
+               || item.DataType.Name == nameof(SqlGeography)
+               || item.DataType.Name == nameof(SqlGeometry)
+               || item.DataType == typeof(byte[])
+               || item.DataType == typeof(PgGeom.Geometry)
+              ))
             {
                 return dataTable;
             }
@@ -603,12 +611,14 @@ namespace DatabaseInterpreter.Core
                     {
                         Type type = value.GetType();
 
+                        TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
+                        string dataType = tableColumn.DataType.ToLower();
+
+                        Type newColumnType = null;
+                        dynamic newValue = null;
+
                         if (type != typeof(DBNull))
                         {
-                            Type newColumnType = null;
-                            TableColumn tableColumn = bulkCopyInfo.Columns.FirstOrDefault(item => item.Name == dataTable.Columns[i].ColumnName);
-                            string dataType = tableColumn.DataType.ToLower();
-
                             if (type == typeof(MySqlDateTime))
                             {
                                 MySqlDateTime mySqlDateTime = (MySqlDateTime)value;
@@ -619,7 +629,7 @@ namespace DatabaseInterpreter.Core
 
                                     newColumnType = typeof(DateTime);
 
-                                    changedValues.Add((rowIndex, i), dateTime);
+                                    newValue = dateTime;
                                 }
                             }
                             else if (type == typeof(System.Collections.BitArray))
@@ -630,15 +640,101 @@ namespace DatabaseInterpreter.Core
                                 byte[] bytes = new byte[bitArray.Length];
                                 bitArray.CopyTo(bytes, 0);
 
-                                changedValues.Add((rowIndex, i), bytes);
+                                newValue = bytes;
                             }
-
-                            if (newColumnType != null && !changedColumns.ContainsKey(i))
+                            else if (type == typeof(SqlGeography))
                             {
-                                changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType });
+                                if (dataType == "sdo_geometry")
+                                {
+                                    newColumnType = typeof(StGeometry);
+
+                                    newValue = SqlGeographyHelper.ToOracleSdoGeometry(value as SqlGeography);
+                                }
+                                else if (dataType == "st_geometry")
+                                {
+                                    newColumnType = typeof(StGeometry);
+
+                                    newValue = SqlGeographyHelper.ToOracleStGeometry(value as SqlGeography);
+                                }
+                            }
+                            else if (type == typeof(SqlGeometry))
+                            {
+                                if (dataType == "sdo_geometry")
+                                {
+                                    newColumnType = typeof(SdoGeometry);
+
+                                    newValue = SqlGeometryHelper.ToOracleSdoGeometry(value as SqlGeometry);
+                                }
+                                else if (dataType == "st_geometry")
+                                {
+                                    newColumnType = typeof(StGeometry);
+
+                                    newValue = SqlGeometryHelper.ToOracleStGeometry(value as SqlGeometry);
+                                }
+                            }
+                            else if (type == typeof(byte[]))
+                            {
+                                DatabaseType sourcedDbType = bulkCopyInfo.SourceDatabaseType;
+
+                                if(sourcedDbType == DatabaseType.MySql)
+                                {
+                                    if (dataType == "sdo_geometry")
+                                    {
+                                        newColumnType = typeof(SdoGeometry);
+
+                                        newValue = MySqlGeometryHelper.ToOracleSdoGeometry(value as byte[]);
+                                    }
+                                    else if (dataType == "st_geometry")
+                                    {
+                                        newColumnType = typeof(StGeometry);
+
+                                        newValue = MySqlGeometryHelper.ToOracleStGeometry(value as byte[]);
+                                    }
+                                }                                
+                            }
+                            else if (value is PgGeom.Geometry)
+                            {
+                                if (dataType == "sdo_geometry")
+                                {
+                                    newColumnType = typeof(SdoGeometry);
+
+                                    newValue = PostgresGeometryHelper.ToOracleSdoGeometry(value as PgGeom.Geometry);
+                                }
+                                else if (dataType == "st_geometry")
+                                {
+                                    newColumnType = typeof(StGeometry);
+
+                                    newValue = PostgresGeometryHelper.ToOracleStGeometry(value as PgGeom.Geometry);
+                                }
+                            }                            
+                        }
+                        else
+                        {
+                            if (dataType == "sdo_geometry")
+                            {
+                                newColumnType = typeof(SdoGeometry);                               
+                            }
+                            else if (dataType == "st_geometry")
+                            {
+                                newColumnType = typeof(StGeometry);                                
                             }
                         }
-                    }
+
+                        if (DataTypeHelper.IsGeometryType(dataType) && newColumnType != null && newValue == null)
+                        {
+                            newValue = DBNull.Value;
+                        }
+
+                        if (newColumnType != null && !changedColumns.ContainsKey(i))
+                        {
+                            changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType });
+                        }
+
+                        if (newValue != null)
+                        {
+                            changedValues.Add((rowIndex, i), newValue);
+                        }
+                    }                    
                 }
 
                 rowIndex++;
@@ -745,11 +841,11 @@ namespace DatabaseInterpreter.Core
                 if (dataTypeSpec != null)
                 {
                     string format = dataTypeSpec.Format;
-                    string args = dataTypeSpec.Args;                    
+                    string args = dataTypeSpec.Args;
 
                     if (!string.IsNullOrEmpty(args))
                     {
-                        if(!string.IsNullOrEmpty(format))
+                        if (!string.IsNullOrEmpty(format))
                         {
                             string[] argItems = args.Split(',');
 
@@ -771,21 +867,21 @@ namespace DatabaseInterpreter.Core
 
                             dataType = format;
                             applied = true;
-                        }                       
+                        }
                     }
                     else
                     {
                         if (dataType.ToLower() == "st_geometry")
                         {
-                            string geometryMode = Setting.OracleGeometryMode;
+                            string dataTypeSchema = column.DataTypeSchema?.ToUpper();
 
-                            if (string.IsNullOrEmpty(geometryMode) || geometryMode == "MDSYS")
+                            if (!string.IsNullOrEmpty(dataTypeSchema) && GeometryTypeSchemas.Contains(dataTypeSchema))
                             {
-                                dataType = $@"""PUBLIC"".{dataType}";
+                                dataType = $"{dataTypeSchema}.{dataType}";
                             }
                             else
                             {
-                                dataType = $"{geometryMode}.{dataType}";
+                                dataType = $@"MDSYS.{dataType}";
                             }
 
                             applied = true;
@@ -793,7 +889,7 @@ namespace DatabaseInterpreter.Core
                     }
                 }
 
-                if(!applied)
+                if (!applied)
                 {
                     string dataLength = this.GetColumnDataLength(column);
 
@@ -853,10 +949,10 @@ namespace DatabaseInterpreter.Core
                             }
                             else if (column.MaxLength > 0)
                             {
-                                if(dataTypeSpec.Args == "length")
+                                if (dataTypeSpec.Args == "length")
                                 {
                                     dataLength = column.MaxLength.ToString();
-                                }                                
+                                }
                             }
                         }
                     }

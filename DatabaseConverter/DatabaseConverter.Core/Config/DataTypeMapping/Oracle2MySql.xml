@@ -63,6 +63,10 @@
 		<special name="maxLength" value="16" type="char" targetMaxLength="36"></special>
 	</mapping>
 	<mapping>
+		<source type="sdo_geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
 		<source type="st_geometry" />
 		<target type="geometry" />
 	</mapping>	

@@ -10,6 +10,7 @@ using System.Data.Common;
 using System.Data;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 
 namespace DatabaseManager.Core
@@ -146,9 +147,13 @@ namespace DatabaseManager.Core
 
                     List<TableDefaultValueConstraint> defaultValueConstraints = await this.GetTableDefaultConstraints(filter);
 
+                    List<string> renamedColNames = new List<string>();
+
                     foreach (TableColumnDesingerInfo columnDesignerInfo in columnDesingerInfos)
                     {
-                        TableColumn oldColumn = oldColumns.FirstOrDefault(item => item.Name.ToLower() == columnDesignerInfo.Name.ToLower());
+                        string oldName = columnDesignerInfo.OldName;
+
+                        TableColumn oldColumn = oldColumns.FirstOrDefault(item => item.Name == oldName);
                         TableColumn newColumn = schemaInfo.TableColumns.FirstOrDefault(item => item.Name == columnDesignerInfo.Name);
 
                         if (oldColumn == null)
@@ -157,9 +162,11 @@ namespace DatabaseManager.Core
                         }
                         else
                         {
-                            if (!this.IsValueEqualsIgnoreCase(columnDesignerInfo.OldName, columnDesignerInfo.Name))
+                            if (this.IsNameChanged(columnDesignerInfo.OldName, columnDesignerInfo.Name))
                             {
                                 scripts.Add(this.scriptGenerator.RenameTableColumn(table, oldColumn, newColumn.Name));
+
+                                renamedColNames.Add(oldColumn.Name);
                             }
 
                             scripts.AddRange(this.GetColumnAlterScripts(oldTable, table, oldColumn, newColumn, defaultValueConstraints));
@@ -168,7 +175,7 @@ namespace DatabaseManager.Core
 
                     foreach (TableColumn oldColumn in oldColumns)
                     {
-                        if (!columnDesingerInfos.Any(item => item.Name == oldColumn.Name))
+                        if (!renamedColNames.Contains(oldColumn.Name) && !columnDesingerInfos.Any(item => item.Name == oldColumn.Name))
                         {
                             scripts.Add(this.scriptGenerator.DropTableColumn(oldColumn));
                         }
@@ -389,7 +396,7 @@ namespace DatabaseManager.Core
                     {
                         this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
                     }
-                }                
+                }
             };
 
             if (primaryKeyChanged)
@@ -471,6 +478,41 @@ namespace DatabaseManager.Core
         private bool IsValueEqualsIgnoreCase(string value1, string value2)
         {
             return !string.IsNullOrEmpty(value1) && !string.IsNullOrEmpty(value2) && value1.ToLower() == value2.ToLower();
+        }
+
+        private bool IsNameChanged(string name1, string name2)
+        {
+            if (SettingManager.Setting.DbObjectNameMode == DbObjectNameMode.WithoutQuotation)
+            {
+                if(this.IsValueEqualsIgnoreCase(name1, name2))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }  
+            else
+            {
+                DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+
+                if(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.Postgres)
+                {
+                    if (name1 == name2)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    return !this.IsValueEqualsIgnoreCase(name1, name2);
+                }               
+            }              
         }
 
         private void SetTableChildComment(List<Script> scripts, DbScriptGenerator scriptGenerator, TableChild tableChild, bool isNew)
