@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.7</Version>
-    <AssemblyVersion>1.0.7</AssemblyVersion>
-    <FileVersion>1.0.7</FileVersion>
+    <Version>1.0.8</Version>
+    <AssemblyVersion>1.0.8</AssemblyVersion>
+    <FileVersion>1.0.8</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>"DbInterpreterOption" class: remove "OracleGeometryMode", not use sde geometry</PackageReleaseNotes>
+    <PackageReleaseNotes>rename "UserDefinedTypeItem" to "UserDefinedTypeAttribute", and change "Name" of "UserDefinedTypeAttribute" to "TypeName"</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

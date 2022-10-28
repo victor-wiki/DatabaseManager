@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PgGeom = NetTopologySuite.Geometries;
+using System.Xml.Linq;
 
 namespace DatabaseInterpreter.Core
 {
@@ -75,18 +76,18 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region User Defined Type     
-        public abstract Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        public abstract Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
 
         public virtual async Task<List<UserDefinedType>> GetUserDefinedTypesAsync(SchemaInfoFilter filter = null)
         {
-            List<UserDefinedTypeItem> items = await this.GetUserDefinedTypeItemsAsync(filter);
-            return SchemaInfoHelper.GetUserDefinedTypes(items);
+            List<UserDefinedTypeAttribute> attributes = await this.GetUserDefinedTypeAttributesAsync(filter);
+            return SchemaInfoHelper.GetUserDefinedTypes(attributes);
         }
         public virtual async Task<List<UserDefinedType>> GetUserDefinedTypesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            List<UserDefinedTypeItem> items = await this.GetUserDefinedTypeItemsAsync(dbConnection, filter);
-            return SchemaInfoHelper.GetUserDefinedTypes(items);
+            List<UserDefinedTypeAttribute> attributes = await this.GetUserDefinedTypeAttributesAsync(dbConnection, filter);
+            return SchemaInfoHelper.GetUserDefinedTypes(attributes);
         }
         #endregion
 
@@ -677,6 +678,61 @@ namespace DatabaseInterpreter.Core
                 }
                 #endregion
 
+                #region User defined type
+                if (column.IsUserDefined)
+                {
+                    if (this.DatabaseType == DatabaseType.Postgres)
+                    {
+                        columnName = $@"{columnName}::CHARACTER VARYING AS {columnName}";
+                    }
+                    else if (this.DatabaseType == DatabaseType.Oracle)
+                    {
+                        if (!this.IsLowDbVersion())
+                        {
+                            columnName = $@"JSON_OBJECT({columnName}) AS {columnName}"; //JSON_OBJECT -> v12.2
+                        }
+                        else
+                        {
+                            quotedTableName += " t";
+
+                            OracleInterpreter oracleInterpreter = this as OracleInterpreter;
+
+                            var attributes = await oracleInterpreter.GetUserDefinedTypeAttributesAsync(connection, new SchemaInfoFilter() { UserDefinedTypeNames = new string[] { column.DataType } });
+
+                            StringBuilder sb = new StringBuilder();
+                            sb.Append("('('||");
+
+                            int count = 0;
+
+                            foreach (var atrribute in attributes)
+                            {
+                                if (count > 0)
+                                {
+                                    sb.Append("||','||");
+                                }
+
+                                string attrName = this.GetQuotedString(atrribute.Name);
+
+                                if (!DataTypeHelper.IsCharType(atrribute.DataType))
+                                {
+                                    sb.Append($"TO_CHAR(t.{columnName}.{attrName})");
+                                }
+                                else
+                                {
+                                    sb.Append($"t.{columnName}.{attrName}");
+                                }
+
+                                count++;
+                            }
+
+                            sb.Append($"||')') AS {columnName}");
+
+                            columnName = sb.ToString();
+                        }
+                    }
+                }
+                #endregion
+
                 columnNames.Add(columnName);
             }
 
@@ -765,8 +821,7 @@ namespace DatabaseInterpreter.Core
                                 }
                             }
                         }
-
-                        if (value is PgGeom.Geometry pg && tableColumn.DataType == "geography")
+                        else if (value is PgGeom.Geometry pg && tableColumn.DataType == "geography")
                         {
                             pg.UserData = new PostgresGeometryCustomInfo() { IsGeography = true };
                         }

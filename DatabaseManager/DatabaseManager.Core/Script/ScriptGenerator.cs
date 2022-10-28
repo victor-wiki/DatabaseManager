@@ -24,7 +24,7 @@ namespace DatabaseManager.Core
         {
             string typeName = dbObject.GetType().Name;
 
-            DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
+            var databaseObjectType = DbObjectHelper.GetDatabaseObjectType(dbObject);
 
             if (dbObject is Table)
             {

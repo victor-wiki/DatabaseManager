@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -49,6 +50,22 @@ namespace DatabaseInterpreter.Core
             }
 
             return sortedColumns;
+        }
+
+        public static DatabaseObjectType GetDatabaseObjectType(DatabaseObject dbObject)
+        {
+            string typeName = dbObject.GetType().Name;
+
+            if(typeName == nameof(UserDefinedType))
+            {
+                return DatabaseObjectType.Type;
+            }
+            else
+            {
+                DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
+
+                return databaseObjectType;
+            }            
         }
     }
 }

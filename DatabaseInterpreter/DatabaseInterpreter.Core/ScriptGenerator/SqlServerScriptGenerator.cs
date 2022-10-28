@@ -424,12 +424,12 @@ CREATE TABLE {quotedTableName}(
         public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
         {
             //only fetch first one, because SQLServer UDT is single attribute
-            UserDefinedTypeItem item = userDefinedType.Attributes.First();
+            UserDefinedTypeAttribute attribute = userDefinedType.Attributes.First();
 
-            TableColumn column = new TableColumn() { DataType = item.DataType, MaxLength = item.MaxLength, Precision = item.Precision, Scale = item.Scale };
+            TableColumn column = new TableColumn() { DataType = attribute.DataType, MaxLength = attribute.MaxLength, Precision = attribute.Precision, Scale = attribute.Scale };
             string dataLength = this.dbInterpreter.GetColumnDataLength(column);
 
-            string script = $@"CREATE TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)} FROM {this.GetQuotedString(item.DataType)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(item.IsRequired ? "NOT NULL" : "NULL")};";
+            string script = $@"CREATE TYPE {this.GetQuotedDbObjectNameWithSchema(userDefinedType)} FROM {this.GetQuotedString(attribute.DataType)}{(dataLength == "" ? "" : "(" + dataLength + ")")} {(attribute.IsRequired ? "NOT NULL" : "NULL")};";
 
             return new CreateDbObjectScript<UserDefinedType>(script);
         }

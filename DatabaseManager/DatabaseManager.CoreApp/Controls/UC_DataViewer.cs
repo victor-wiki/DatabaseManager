@@ -76,20 +76,24 @@ namespace DatabaseManager.Controls
                 conditionClause = "WHERE " + this.conditionBuilder.ToString();
             }
 
-            (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(table, orderColumns, pageSize, pageNum, conditionClause);
+            try
+            {
+                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(table, orderColumns, pageSize, pageNum, conditionClause);
 
-            this.pagination.TotalCount = result.Total;
+                this.pagination.TotalCount = result.Total;
 
-            this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
+                this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             foreach (DataGridViewColumn column in this.dgvData.Columns)
             {
                 Type valueType = column.ValueType;
 
-                if (valueType == typeof(byte[]) || 
-                    valueType.Name.Contains("Geography") ||
-                    valueType.Name.Contains("Geometry") 
-                   )
+                if (valueType == typeof(byte[]) || DataTypeHelper.IsGeometryType(valueType.Name))
                 {
                     column.SortMode = DataGridViewColumnSortMode.NotSortable;
                 }

@@ -336,7 +336,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script CreateUserDefinedType(UserDefinedType userDefinedType)
         {
-            string dataTypes = string.Join(",", userDefinedType.Attributes.Select(item => $"{this.GetQuotedString(item.AttrName)} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.DataType, Precision = item.Precision, Scale = item.Scale })}"));
+            string dataTypes = string.Join(",", userDefinedType.Attributes.Select(item => $"{this.GetQuotedString(item.Name)} {this.dbInterpreter.ParseDataType(new TableColumn() { MaxLength = item.MaxLength, DataType = item.DataType, Precision = item.Precision, Scale = item.Scale })}"));
 
             string script = $"CREATE TYPE {this.GetQuotedString(userDefinedType.Name)} AS ({dataTypes})" + this.dbInterpreter.ScriptsDelimiter;
 

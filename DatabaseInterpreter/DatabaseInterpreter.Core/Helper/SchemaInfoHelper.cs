@@ -340,23 +340,24 @@ namespace DatabaseInterpreter.Core
             return indexes;
         }
 
-        public static List<UserDefinedType> GetUserDefinedTypes(List<UserDefinedTypeItem> userDefinedTypeItems)
+        public static List<UserDefinedType> GetUserDefinedTypes(List<UserDefinedTypeAttribute> userDefinedTypeAttrs)
         {
             List<UserDefinedType> userDefinedTypes = new List<UserDefinedType>();
 
-            var groups = userDefinedTypeItems.GroupBy(item => new { item.Schema, item.Name });
+            var groups = userDefinedTypeAttrs.GroupBy(item => new { item.Schema, item.TypeName });
 
             foreach (var group in groups)
             {
                 UserDefinedType userDefinedType = new UserDefinedType()
                 {
                     Schema = group.Key.Schema,
-                    Name = group.Key.Name
+                    Name = group.Key.TypeName
                 };
 
-                userDefinedType.Attributes.AddRange(group.Select(item => new UserDefinedTypeItem()
+                userDefinedType.Attributes.AddRange(group.Select(item => new UserDefinedTypeAttribute()
                 {
-                    AttrName = item.AttrName,
+                    TypeName = item.TypeName,
+                    Name = item.Name,
                     DataType = item.DataType,
                     MaxLength = item.MaxLength,
                     Precision = item.Precision,

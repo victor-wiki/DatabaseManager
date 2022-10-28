@@ -33,7 +33,7 @@ namespace DatabaseConverter.Core
 
             foreach (UserDefinedType udt in this.userDefinedTypes)
             {
-                foreach(UserDefinedTypeItem attr in udt.Attributes)
+                foreach(UserDefinedTypeAttribute attr in udt.Attributes)
                 {
                     DataTypeInfo dataTypeInfo = new DataTypeInfo()
                     {

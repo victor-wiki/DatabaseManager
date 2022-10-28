@@ -120,14 +120,14 @@ namespace DatabaseInterpreter.Core
 
         #region User Defined Type       
 
-        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedTypeItem>(this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeAttribute>(this.GetSqlForUserDefinedTypes(filter));
         }
 
-        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeAttribute>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
@@ -137,12 +137,12 @@ namespace DatabaseInterpreter.Core
 
             if (isSimpleMode)
             {
-                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name""
+                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""TypeName""
                         FROM ALL_TYPES T");
             }
             else
             {
-                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""Name"",TA.ATTR_NAME AS ""AttrName"", TA.ATTR_TYPE_NAME AS ""DataType"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
+                sb.Append($@"SELECT T.OWNER AS ""Schema"",T.TYPE_NAME AS ""TypeName"",TA.ATTR_NAME AS ""Name"", TA.ATTR_TYPE_NAME AS ""DataType"",TA.LENGTH AS ""MaxLength"",TA.PRECISION AS ""Precision"",TA.SCALE AS ""Scale""
                         FROM ALL_TYPES T
                         JOIN ALL_TYPE_ATTRS TA ON T.OWNER = TA.OWNER AND T.TYPE_NAME = TA.TYPE_NAME");
             }
@@ -321,7 +321,7 @@ namespace DatabaseInterpreter.Core
                  FROM ALL_TAB_COLS C
                  LEFT JOIN ALL_TYPES T ON C.OWNER=T.OWNER AND C.DATA_TYPE=T.TYPE_NAME
                  LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
-                 WHERE UPPER(C.OWNER)=UPPER('{this.GetDbSchema()}'){userGeneratedCondition}");
+                 WHERE UPPER(C.OWNER)=UPPER('{this.GetDbSchema()}') AND C.HIDDEN_COLUMN='NO'{userGeneratedCondition}");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 

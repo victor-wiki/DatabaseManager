@@ -86,14 +86,14 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region User Defined Type  
-        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedTypeItem>(this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeAttribute>(this.GetSqlForUserDefinedTypes(filter));
         }
 
-        public override Task<List<UserDefinedTypeItem>> GetUserDefinedTypeItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<UserDefinedTypeAttribute>> GetUserDefinedTypeAttributesAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<UserDefinedTypeItem>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
+            return base.GetDbObjectsAsync<UserDefinedTypeAttribute>(dbConnection, this.GetSqlForUserDefinedTypes(filter));
         }
 
         private string GetSqlForUserDefinedTypes(SchemaInfoFilter filter = null)
@@ -103,14 +103,14 @@ namespace DatabaseInterpreter.Core
 
             if (isSimpleMode)
             {
-                sb.Append($@"SELECT n.nspname AS ""Schema"",t.typname AS ""Name""
+                sb.Append($@"SELECT n.nspname AS ""Schema"",t.typname AS ""TypeName""
                          FROM pg_catalog.pg_type t
                          JOIN pg_catalog.pg_namespace n ON  n.oid = t.typnamespace
                          WHERE 1=1");
             }
             else
             {
-                sb.Append($@"SELECT n.nspname AS ""Schema"",t.typname AS ""Name"",a.attname AS ""AttrName"",
+                sb.Append($@"SELECT n.nspname AS ""Schema"",t.typname AS ""TypeName"",a.attname AS ""Name"",
                         pg_catalog.format_type(a.atttypid, null) AS ""DataType"",
                         COALESCE(information_schema._pg_char_max_length(a.atttypid, a.atttypmod),-1) AS ""MaxLength"",
                         information_schema._pg_numeric_precision(a.atttypid, a.atttypmod) AS ""Precision"",
@@ -617,7 +617,7 @@ namespace DatabaseInterpreter.Core
                 || item.DataType == typeof(string)
                 || item.DataType == typeof(Guid)
                 || item.DataType == typeof(SqlHierarchyId)
-                || DataTypeHelper.IsGeometryType(item.DataType.Name)               
+                || DataTypeHelper.IsGeometryType(item.DataType.Name)
                 ))
             {
                 return dataTable;
@@ -699,7 +699,7 @@ namespace DatabaseInterpreter.Core
                                     else if (dataType == "geometry")
                                     {
                                         newValue = SqlGeometryHelper.ToPostgresGeometry(geometry);
-                                    }                                    
+                                    }
                                 }
                                 else
                                 {
@@ -735,7 +735,7 @@ namespace DatabaseInterpreter.Core
                                 else if (dataType == "geometry")
                                 {
                                     newValue = OracleSdoGeometryHelper.ToPostgresGeometry(value as SdoGeometry);
-                                }                               
+                                }
                             }
                             else if (value is StGeometry)
                             {
@@ -748,7 +748,7 @@ namespace DatabaseInterpreter.Core
                                 else if (dataType == "geometry")
                                 {
                                     newValue = OracleStGeometryHelper.ToPostgresGeometry(value as StGeometry);
-                                }                                
+                                }
                             }
                             else if (type == typeof(string))
                             {
@@ -937,7 +937,7 @@ namespace DatabaseInterpreter.Core
                 {
                     string dataLength = this.GetColumnDataLength(column);
 
-                    if (!string.IsNullOrEmpty(dataLength))
+                    if (!string.IsNullOrEmpty(dataLength) && dataLength != "-1")
                     {
                         dataType += $"({dataLength})";
                     }

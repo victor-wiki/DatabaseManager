@@ -2,9 +2,14 @@
 
 namespace DatabaseInterpreter.Model
 {
-    public class UserDefinedTypeItem : DatabaseObject
+    public class UserDefinedType : DatabaseObject
     {
-        public string AttrName { get; set; }
+        public List<UserDefinedTypeAttribute> Attributes = new List<UserDefinedTypeAttribute>();
+    }
+
+    public class UserDefinedTypeAttribute : DatabaseObject
+    {
+        public string TypeName { get; set; }
         public string DataType { get; set; }
         public long? MaxLength { get; set; }
         public int? Precision { get; set; }
@@ -13,10 +18,5 @@ namespace DatabaseInterpreter.Model
         public bool IsRequired => !IsNullable;
 
         public bool IsNullable { get; set; }
-    }
-
-    public class UserDefinedType : DatabaseObject
-    {
-        public List<UserDefinedTypeItem> Attributes = new List<UserDefinedTypeItem>();
     }
 }
