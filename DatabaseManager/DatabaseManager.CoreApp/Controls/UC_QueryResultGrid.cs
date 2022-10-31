@@ -2,6 +2,7 @@
 using DatabaseManager.Helper;
 using System;
 using System.Data;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -11,6 +12,8 @@ namespace DatabaseManager.Controls
         public UC_QueryResultGrid()
         {
             InitializeComponent();
+
+            typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, this.dgvData, new object[] { true });
         }
 
         public void LoadData(DataTable dataTable)
@@ -48,10 +51,7 @@ namespace DatabaseManager.Controls
         {
             if (e.Button == MouseButtons.Right)
             {
-                bool canCopy = this.dgvData.GetCellCount(DataGridViewElementStates.Selected) > 0;
-
-                this.tsmiCopy.Enabled = canCopy;
-                this.tsmiCopyWithHeader.Enabled = canCopy;
+                this.SetContextMenuItemVisible();
 
                 this.contextMenuStrip1.Show(this.dgvData, e.Location);
             }
@@ -82,6 +82,41 @@ namespace DatabaseManager.Controls
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
 
+        }
+
+        private void dgvData_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            DataGridViewHelper.FormatCell(this.dgvData, e);
+        }
+
+        private void SetContextMenuItemVisible()
+        {
+            int selectedCount = this.dgvData.GetCellCount(DataGridViewElementStates.Selected);
+            this.tsmiCopy.Visible = selectedCount > 1;
+            this.tsmiCopyWithHeader.Visible = selectedCount > 1;
+            this.tsmiViewGeometry.Visible = selectedCount ==1 && DataGridViewHelper.IsGeometryValue(this.dgvData);
+            this.tsmiCopyContent.Visible = selectedCount == 1;
+            this.tsmiShowContent.Visible = selectedCount == 1;
+        }
+
+        private void tsmiViewGeometry_Click(object sender, EventArgs e)
+        {
+            DataGridViewHelper.ShowGeometryViewer(this.dgvData);
+        }
+
+        private void tsmiCopyContent_Click(object sender, EventArgs e)
+        {
+            var value = DataGridViewHelper.GetCurrentCellValue(this.dgvData);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                Clipboard.SetDataObject(value);
+            }
+        }
+
+        private void tsmiShowContent_Click(object sender, EventArgs e)
+        {
+            DataGridViewHelper.ShowCellContent(this.dgvData);
         }
     }
 }

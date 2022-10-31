@@ -28,12 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DataViewer));
             this.dgvData = new System.Windows.Forms.DataGridView();
             this.btnFilter = new System.Windows.Forms.Button();
             this.pagination = new DatabaseManager.Controls.UC_Pagination();
+            this.cellContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
+            this.cellContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // dgvData
@@ -43,13 +49,13 @@
             this.dgvData.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvData.Location = new System.Drawing.Point(0, 0);
             this.dgvData.Margin = new System.Windows.Forms.Padding(4);
@@ -59,6 +65,8 @@
             this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgvData.Size = new System.Drawing.Size(818, 428);
             this.dgvData.TabIndex = 5;
+            this.dgvData.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dgvData_CellFormatting);
+            this.dgvData.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvData_CellMouseClick);
             this.dgvData.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvData_DataError);
             this.dgvData.Sorted += new System.EventHandler(this.dgvData_Sorted);
             // 
@@ -92,6 +100,36 @@
             this.pagination.TotalCount = ((long)(0));
             this.pagination.OnPageNumberChanged += new DatabaseManager.Controls.UC_Pagination.PageNumberChangeHandler(this.pagination_OnPageNumberChanged);
             // 
+            // cellContextMenu
+            // 
+            this.cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiCopy,
+            this.tsmiShowContent,
+            this.tsmiViewGeometry});
+            this.cellContextMenu.Name = "cellContextMenu";
+            this.cellContextMenu.Size = new System.Drawing.Size(181, 92);
+            // 
+            // tsmiCopy
+            // 
+            this.tsmiCopy.Name = "tsmiCopy";
+            this.tsmiCopy.Size = new System.Drawing.Size(164, 22);
+            this.tsmiCopy.Text = "Copy Content";
+            this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
+            // 
+            // tsmiViewGeometry
+            // 
+            this.tsmiViewGeometry.Name = "tsmiViewGeometry";
+            this.tsmiViewGeometry.Size = new System.Drawing.Size(164, 22);
+            this.tsmiViewGeometry.Text = "View Geometry";
+            this.tsmiViewGeometry.Click += new System.EventHandler(this.tsmiViewGeometry_Click);
+            // 
+            // tsmiShowContent
+            // 
+            this.tsmiShowContent.Name = "tsmiShowContent";
+            this.tsmiShowContent.Size = new System.Drawing.Size(180, 22);
+            this.tsmiShowContent.Text = "Show Content";
+            this.tsmiShowContent.Click += new System.EventHandler(this.tsmiShowContent_Click);
+            // 
             // UC_DataViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -104,6 +142,7 @@
             this.Name = "UC_DataViewer";
             this.Size = new System.Drawing.Size(825, 479);
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).EndInit();
+            this.cellContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -113,5 +152,9 @@
         private System.Windows.Forms.DataGridView dgvData;
         private UC_Pagination pagination;
         private System.Windows.Forms.Button btnFilter;
+        private System.Windows.Forms.ContextMenuStrip cellContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViewGeometry;
+        private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
     }
 }

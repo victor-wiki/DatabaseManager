@@ -1,11 +1,15 @@
 <mappings>
 	<mapping>
+		<source type="bfile" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
 		<source type="binary_double" />
 		<target type="double precision" />
 	</mapping>
 	<mapping>
 		<source type="binary_float" />
-		<target type="double precision" />
+		<target type="real" />
 	</mapping>
 	<mapping>
 		<source type="blob" />
@@ -22,6 +26,10 @@
 	<mapping>
 		<source type="date" />
 		<target type="timestamp without time zone" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="real" />
 	</mapping>
 	<mapping>
 		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
@@ -81,6 +89,10 @@
 	<mapping>
 		<source type="timestamp([(]\d[)])? with time zone" isExp="true"/>
 		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="character varying" />
 	</mapping>
 	<mapping>
 		<source type="varchar2" />

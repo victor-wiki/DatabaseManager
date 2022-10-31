@@ -1,4 +1,8 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using Microsoft.SqlServer.Types;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -7,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseManager.Helper
 {
@@ -28,39 +33,192 @@ namespace DatabaseManager.Helper
         }
         public static DataTable ConvertDataTable(DataTable dataTable)
         {
-            DataTable dt = dataTable.Clone();
+            Dictionary<int, DataTableColumnChangeInfo> changedColumns = new Dictionary<int, DataTableColumnChangeInfo>();
+            Dictionary<(int RowIndex, int ColumnIndex), dynamic> changedValues = new Dictionary<(int RowIndex, int ColumnIndex), dynamic>();
 
-            for (int i = 0; i < dataTable.Columns.Count; i++)
-            {
-                if (dataTable.Columns[i].DataType == typeof(byte[]))
-                {
-                    dt.Columns[i].DataType = typeof(string);
-                }
-            }
+            int rowIndex = 0;
 
             foreach (DataRow row in dataTable.Rows)
             {
-                DataRow r = dt.NewRow();
-
                 for (int i = 0; i < dataTable.Columns.Count; i++)
                 {
                     var value = row[i];
 
                     if (value != null)
                     {
-                        if (value.GetType() == typeof(byte[]))
+                        Type type = value.GetType();
+
+                        if (type != typeof(DBNull))
                         {
-                            value = ValueHelper.BytesToHexString(value as byte[]);
+                            Type newColumnType = null;
+                            object newValue = null;
+
+                            if (type == typeof(byte[]))
+                            {
+                                newColumnType = typeof(String);
+                                newValue = ValueHelper.BytesToHexString(value as byte[]);
+                            }
+                            else if (type == typeof(SqlGeography))
+                            {
+                                newColumnType = typeof(String);
+                                SqlGeography geography = value as SqlGeography;
+                                newValue = geography.IsNull ? "" : geography.ToString();
+                            }
+                            else if (type == typeof(SqlGeometry))
+                            {
+                                newColumnType = typeof(String);
+                                SqlGeometry geom = value as SqlGeometry;
+                                newValue = geom.IsNull ? "" : geom.ToString();
+                            }
+                            else if (type == typeof(PgGeom.Geometry))
+                            {
+                                newColumnType = typeof(String);
+                                newValue = (value as PgGeom.Geometry)?.AsText();
+                            }
+
+                            if (newColumnType != null && !changedColumns.ContainsKey(i))
+                            {
+                                changedColumns.Add(i, new DataTableColumnChangeInfo() { Type = newColumnType });
+                            }
+
+                            if (newValue != null)
+                            {
+                                changedValues.Add((rowIndex, i), newValue);
+                            }
                         }
                     }
-
-                    r[i] = value;
                 }
 
-                dt.Rows.Add(r);
+                rowIndex++;
             }
 
-            return dt;
+            if (changedColumns.Count == 0)
+            {
+                return dataTable;
+            }
+            else
+            {
+                foreach (var i in changedColumns.Keys)
+                {
+                    DataColumn column = dataTable.Columns[i];
+
+                    var dataTypeInfo = column.ExtendedProperties[nameof(DataTypeInfo)];
+
+                    if (dataTypeInfo == null)
+                    {
+                        column.ExtendedProperties[nameof(DataTypeInfo)] = new DataTypeInfo() { DataType = column.DataType.Name };
+                    }
+                }
+            }
+
+            DataTable dtChanged = DataTableHelper.GetChangedDataTable(dataTable, changedColumns, changedValues);
+
+            return dtChanged;
+        }
+
+        public static void FormatCell(DataGridView gridView, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.Value != null)
+            {
+                Type type = e.Value.GetType();
+
+                if (type != typeof(DBNull))
+                {
+                    if (type == typeof(string))
+                    {
+                        string content = e.Value.ToString();
+
+                        if (content.Length > 1000)
+                        {
+                            DataGridViewCell cell = gridView.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                            cell.Tag = content;
+
+                            e.Value = content.Substring(0, 1000) + "...";
+
+                            e.CellStyle.ForeColor = Color.Red;
+
+                            cell.ToolTipText = $"The text has been truncated, it's original length is {content.Length}.";
+                        }
+                    }
+                }
+            }
+        }
+
+        public static string GetCurrentCellValue(DataGridView gridView)
+        {
+            var cell = gridView.CurrentCell;
+
+            if (cell != null)
+            {
+                string value = cell.Tag == null ? cell.Value?.ToString() : cell.Tag?.ToString();
+
+                return value;
+            }
+
+            return string.Empty;
+        }
+
+        public static bool IsGeometryValue(DataGridView gridView)
+        {
+            string value = GetCurrentCellValue(gridView);
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+
+            var typeNames = Enum.GetNames(typeof(OpenGisGeometryType));
+
+            return typeNames.Any(item => value.StartsWith($"{item.ToUpper()}(") || value.StartsWith($"{item.ToUpper()} ("));
+        }
+
+        public static void ShowGeometryViewer(DataGridView gridView)
+        {
+            var cell = gridView.CurrentCell;
+
+            if (cell != null)
+            {
+                string value = GetCurrentCellValue(gridView);
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    return;
+                }
+
+                var column = gridView.Columns[cell.ColumnIndex];
+
+                DataTable table = gridView.DataSource as DataTable;
+
+                DataColumn dc = table.Columns.Cast<DataColumn>().FirstOrDefault(item => item.ColumnName == column.Name);
+
+                if (dc != null)
+                {
+                    var property = dc.ExtendedProperties[nameof(DataTypeInfo)];
+
+                    if (property is DataTypeInfo dti)
+                    {
+                        string dataType = dti.DataType;
+
+                        bool isGeography = dataType.ToLower().Contains("geography");
+
+                        frmGeometryViewer viewer = new frmGeometryViewer(isGeography, value);
+                        viewer.Show();
+                    }
+                }
+            }
+        }
+
+        public static void ShowCellContent(DataGridView gridView)
+        {
+            string value = GetCurrentCellValue(gridView);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                frmTextContent frm = new frmTextContent(value);
+
+                frm.Show();
+            }
         }
 
         public static void AutoSizeLastColumn(DataGridView dgv)
@@ -156,7 +314,7 @@ namespace DatabaseManager.Helper
 
         public static bool IsEmptyRow(DataGridViewRow row)
         {
-            if(row == null)
+            if (row == null)
             {
                 return true;
             }
@@ -164,13 +322,13 @@ namespace DatabaseManager.Helper
             int visibleCount = 0;
             int emptyCount = 0;
 
-            foreach(DataGridViewCell cell in row.Cells)
+            foreach (DataGridViewCell cell in row.Cells)
             {
-                if(cell.Visible)
+                if (cell.Visible)
                 {
                     visibleCount++;
 
-                    if(string.IsNullOrEmpty(cell.Value?.ToString()))
+                    if (string.IsNullOrEmpty(cell.Value?.ToString()))
                     {
                         emptyCount++;
                     }

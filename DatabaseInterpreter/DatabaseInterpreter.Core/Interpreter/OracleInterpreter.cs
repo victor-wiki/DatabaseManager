@@ -59,6 +59,11 @@ namespace DatabaseInterpreter.Core
         {
             return this.IsLowDbVersion(version, 12);
         }
+
+        private bool IsBuiltinDatabase()
+        {
+            return this.BuiltinDatabases.Any(item=>item.ToUpper() == this.ConnectionInfo.Database?.ToUpper());
+        }
         #endregion
 
         #region Schema Information
@@ -307,21 +312,34 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null, bool isLowDbVersion = false)
         {
+            bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string userGeneratedCondition = isLowDbVersion ? "" : " AND C.USER_GENERATED='YES'";
             string identityColumn = isLowDbVersion ? "0" : "CASE C.IDENTITY_COLUMN  WHEN 'YES' THEN 1 ELSE 0 END";
+
+            string commentColumn = isSimpleMode ? "" : @", CC.COMMENTS AS ""Comment""";
+            string commentClause = isSimpleMode? "": "LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME";
+
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT C.OWNER AS ""Schema"", C.TABLE_NAME AS ""TableName"",C.COLUMN_NAME AS ""Name"",DATA_TYPE AS ""DataType"",C.DATA_TYPE_OWNER AS ""DataTypeSchema"",
                  CASE NULLABLE WHEN 'Y' THEN 1 ELSE 0 END AS ""IsNullable"", DATA_LENGTH AS ""MaxLength"",
-                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order"", CC.COMMENTS AS ""Comment"" ,
+                 DATA_PRECISION AS ""Precision"",DATA_SCALE AS ""Scale"", COLUMN_ID AS ""Order""{commentColumn},
                  {identityColumn} AS ""IsIdentity"",
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN NULL ELSE DATA_DEFAULT END AS ""DefaultValue"",
                  CASE WHEN C.VIRTUAL_COLUMN='YES' THEN DATA_DEFAULT ELSE NULL END AS ""ComputeExp"",
                  CASE WHEN T.TYPE_NAME IS NULL THEN 0 ELSE 1 END AS ""IsUserDefined""
                  FROM ALL_TAB_COLS C
                  LEFT JOIN ALL_TYPES T ON C.OWNER=T.OWNER AND C.DATA_TYPE=T.TYPE_NAME
-                 LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME
+                 {commentClause}
                  WHERE UPPER(C.OWNER)=UPPER('{this.GetDbSchema()}') AND C.HIDDEN_COLUMN='NO'{userGeneratedCondition}");
+
+            if(this.IsBuiltinDatabase())
+            {
+                if(isSimpleMode)
+                {
+                    sb.Append("AND C.TABLE_NAME NOT LIKE '%$%' AND C.COLUMN_NAME NOT LIKE '%#%'");
+                }                
+            }
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
 

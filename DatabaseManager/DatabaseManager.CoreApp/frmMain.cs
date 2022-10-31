@@ -259,5 +259,11 @@ namespace DatabaseManager
         {
             this.toolTip1.SetToolTip(this.txtMessage, this.txtMessage.Text);
         }
+
+        private void tsmiGeometryView_Click(object sender, EventArgs e)
+        {
+            frmGeometryViewer geomViewer = new frmGeometryViewer();
+            geomViewer.Show();
+        }
     }
 }

@@ -1,5 +1,9 @@
 <mappings>
 	<mapping>
+		<source type="bfile" />
+		<target type="longblob" />
+	</mapping>
+	<mapping>
 		<source type="binary_double" />
 		<target type="double" />
 	</mapping>
@@ -22,6 +26,10 @@
 	<mapping>
 		<source type="date" />
 		<target type="datetime" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="float" />
 	</mapping>
 	<mapping>
 		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
@@ -81,6 +89,10 @@
 	<mapping>
 		<source type="timestamp([(]\d[)])? with time zone" isExp="true"/>
 		<target type="timestamp" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="varchar" />
 	</mapping>
 	<mapping>
 		<source type="varchar2" />

@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Data;
 using System.Drawing;
+using System.Linq;
 
 namespace DatabaseManager.Controls
 {
@@ -87,7 +88,7 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.displayInfo = displayInfo;          
+            this.displayInfo = displayInfo;
 
             if (this.Editor.Text.Length > 0)
             {
@@ -107,19 +108,31 @@ namespace DatabaseManager.Controls
 
             if (displayInfo.ConnectionInfo != null && !string.IsNullOrEmpty(displayInfo.ConnectionInfo.Database))
             {
+                DbInterpreter dbInterpreter = this.GetDbInterpreter();
+
+                if (dbInterpreter.BuiltinDatabases.Any(item => item.ToUpper() == this.displayInfo.ConnectionInfo.Database.ToUpper()))
+                {
+                    return;
+                }
+
                 this.SetupIntellisence();
             }
 
             this.originalText = this.Editor.Text;
         }
 
+        private DbInterpreter GetDbInterpreter()
+        {
+            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
+
+            return DbInterpreterHelper.GetDbInterpreter(this.displayInfo.DatabaseType, this.displayInfo.ConnectionInfo, option);
+        }
+
         private async void SetupIntellisence()
         {
             if (this.CheckConnection())
             {
-                DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
-
-                DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.displayInfo.DatabaseType, this.displayInfo.ConnectionInfo, option);
+                DbInterpreter dbInterpreter = this.GetDbInterpreter();               
 
                 this.queryEditor.DbInterpreter = dbInterpreter;
 

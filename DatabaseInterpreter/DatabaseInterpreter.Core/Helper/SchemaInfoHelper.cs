@@ -279,11 +279,6 @@ namespace DatabaseInterpreter.Core
                 filter.ProcedureNames = schemaInfo.Procedures.Select(item => item.Name).ToArray();
                 filter.TableTriggerNames = schemaInfo.TableTriggers.Select(item => item.Name).ToArray();
                 filter.SequenceNames = schemaInfo.Sequences.Select(item => item.Name).ToArray();
-
-                if (filter.Schema == null)
-                {
-
-                }
             }
         }
 

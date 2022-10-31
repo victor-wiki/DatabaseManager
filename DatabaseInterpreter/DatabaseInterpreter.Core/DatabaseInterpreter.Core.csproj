@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.14</AssemblyVersion>
-    <FileVersion>2.0.14</FileVersion>
-    <Version>2.0.14</Version>
-    <PackageReleaseNotes>fix bugs:
-(1) user defined type of postgres and oracle query error (change to return string in query)
-(2) create script of user defined type: enum cast error </PackageReleaseNotes>
+    <AssemblyVersion>2.0.15</AssemblyVersion>
+    <FileVersion>2.0.15</FileVersion>
+    <Version>2.0.15</Version>
+    <PackageReleaseNotes>1. add: oracle data type(float, varchar)
+2. fix bug: oracle bulkcopy to postgres when type is binary_float</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle and Postgres.</Description>
   </PropertyGroup>

@@ -14,6 +14,7 @@ namespace DatabaseManager
     public partial class frmLockApp : Form
     {
         private bool confirmClose = false;
+        private bool isLocked = false;
 
         public frmLockApp()
         {
@@ -24,7 +25,7 @@ namespace DatabaseManager
         {
             string password = SettingManager.Setting.LockPassword;
 
-            if(!string.IsNullOrEmpty(password))
+            if (!string.IsNullOrEmpty(password))
             {
                 this.txtPassword.Text = AesHelper.Decrypt(password);
             }
@@ -32,6 +33,12 @@ namespace DatabaseManager
 
         private void frmLockApp_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (!this.isLocked)
+            {
+                e.Cancel = false;
+                return;
+            }
+
             if (!this.confirmClose)
             {
                 MessageBox.Show("Please enter password to unlock!");
@@ -41,11 +48,16 @@ namespace DatabaseManager
 
         private void btnLock_Click(object sender, EventArgs e)
         {
+            this.LockOrUnlock();
+        }
+
+        private void LockOrUnlock()
+        {
             string password = this.txtPassword.Text.Trim();
 
             bool isLock = this.btnLock.Text == "Lock";
 
-            if(isLock)
+            if (isLock)
             {
                 if (string.IsNullOrEmpty(password))
                 {
@@ -58,7 +70,9 @@ namespace DatabaseManager
                 this.txtPassword.Text = "";
 
                 this.btnLock.Text = "Unlock";
+                this.btnExit.Text = "Exit";
                 this.lblMessage.Visible = true;
+                this.isLocked = true;
             }
             else
             {
@@ -67,7 +81,7 @@ namespace DatabaseManager
                     MessageBox.Show("Please enter the lock password!");
                     return;
                 }
-                else if(password != DataStore.LockPassword)
+                else if (password != DataStore.LockPassword)
                 {
                     MessageBox.Show("The lock password is incorrect!");
                     return;
@@ -83,6 +97,12 @@ namespace DatabaseManager
 
         private void btnExit_Click(object sender, EventArgs e)
         {
+            if (!this.isLocked)
+            {
+                this.Close();
+                return;
+            }
+
             DialogResult result = MessageBox.Show("Are you sure to exit the application?", "Confirm", MessageBoxButtons.YesNo);
 
             if (result == DialogResult.Yes)
@@ -91,6 +111,13 @@ namespace DatabaseManager
 
                 Application.Exit();
             }
-        }       
+        }      
+        private void txtPassword_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.Enter)
+            {
+                this.LockOrUnlock();
+            }
+        }
     }
 }

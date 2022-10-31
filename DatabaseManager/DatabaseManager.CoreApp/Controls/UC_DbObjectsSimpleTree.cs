@@ -28,9 +28,7 @@ namespace DatabaseManager.Controls
 
             DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };          
 
-            DatabaseObjectType databaseObjectType = DatabaseObjectType.None;
-
-            databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;           
+            DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;           
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };

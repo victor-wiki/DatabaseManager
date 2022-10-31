@@ -35,6 +35,7 @@
             this.tsmiSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiBackupSetting = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiGeometryView = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLock = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
@@ -80,6 +81,7 @@
             this.tsmiSetting,
             this.tsmiDbConnection,
             this.tsmiBackupSetting,
+            this.tsmiGeometryView,
             this.tsmiLock});
             this.toolStripMenuItem1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripMenuItem1.Image")));
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
@@ -90,7 +92,7 @@
             // 
             this.tsmiSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiSetting.Image")));
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(163, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(176, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -98,7 +100,7 @@
             // 
             this.tsmiDbConnection.Image = ((System.Drawing.Image)(resources.GetObject("tsmiDbConnection.Image")));
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(163, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(176, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -106,15 +108,23 @@
             // 
             this.tsmiBackupSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiBackupSetting.Image")));
             this.tsmiBackupSetting.Name = "tsmiBackupSetting";
-            this.tsmiBackupSetting.Size = new System.Drawing.Size(163, 22);
+            this.tsmiBackupSetting.Size = new System.Drawing.Size(176, 22);
             this.tsmiBackupSetting.Text = "Backup Setting";
             this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
+            // 
+            // tsmiGeometryView
+            // 
+            this.tsmiGeometryView.Image = global::DatabaseManager.Resources.Polygon;
+            this.tsmiGeometryView.Name = "tsmiGeometryView";
+            this.tsmiGeometryView.Size = new System.Drawing.Size(176, 22);
+            this.tsmiGeometryView.Text = "Geometry Viewer";
+            this.tsmiGeometryView.Click += new System.EventHandler(this.tsmiGeometryView_Click);
             // 
             // tsmiLock
             // 
             this.tsmiLock.Image = global::DatabaseManager.Resources.Lock;
             this.tsmiLock.Name = "tsmiLock";
-            this.tsmiLock.Size = new System.Drawing.Size(163, 22);
+            this.tsmiLock.Size = new System.Drawing.Size(176, 22);
             this.tsmiLock.Text = "Lock";
             this.tsmiLock.Click += new System.EventHandler(this.tsmiLock_Click);
             // 
@@ -352,6 +362,7 @@
         private System.Windows.Forms.ToolStripButton tsBtnCompare;
         private System.Windows.Forms.ToolStripMenuItem tsmiLock;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGeometryView;
     }
 }
 

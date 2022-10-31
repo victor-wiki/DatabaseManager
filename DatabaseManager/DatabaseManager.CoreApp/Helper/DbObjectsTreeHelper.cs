@@ -11,7 +11,7 @@ namespace DatabaseManager.Helper
     public static class DbObjectsTreeHelper
     {
         public static readonly string FakeNodeName = "_FakeNode_";
-        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.Type | DatabaseObjectType.Sequence | DatabaseObjectType.Table 
+        public static DatabaseObjectType DefaultObjectType = DatabaseObjectType.Type | DatabaseObjectType.Sequence | DatabaseObjectType.Table
                                                            | DatabaseObjectType.View | DatabaseObjectType.Procedure | DatabaseObjectType.Function | DatabaseObjectType.Trigger;
 
         public static string GetFolderNameByDbObjectType(DatabaseObjectType databaseObjectType)
@@ -137,7 +137,7 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects)
+        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects, bool alwaysShowSchema = false)
            where T : DatabaseObject
         {
             bool isUniqueDbSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
@@ -149,7 +149,7 @@ namespace DatabaseManager.Helper
 
             foreach (var dbObj in dbObjects)
             {
-                string text = isUniqueDbSchema ? dbObj.Name : $"{dbObj.Schema}.{dbObj.Name}";
+                string text = (alwaysShowSchema || !isUniqueDbSchema) ? $"{dbObj.Schema}.{dbObj.Name}" : dbObj.Name;
                 TreeNode node = CreateTreeNode(dbObj.Name, text, dbObj.GetType().Name);
                 node.Tag = dbObj;
 

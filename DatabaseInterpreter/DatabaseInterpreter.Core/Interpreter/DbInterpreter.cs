@@ -1,12 +1,10 @@
 ﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseInterpreter.Geometry;
 using Npgsql;
-using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -14,7 +12,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PgGeom = NetTopologySuite.Geometries;
-using System.Xml.Linq;
 
 namespace DatabaseInterpreter.Core
 {
@@ -683,7 +680,10 @@ namespace DatabaseInterpreter.Core
                 {
                     if (this.DatabaseType == DatabaseType.Postgres)
                     {
-                        columnName = $@"{columnName}::CHARACTER VARYING AS {columnName}";
+                        if (!DataTypeHelper.IsGeometryType(column.DataType))
+                        {
+                            columnName = $@"{columnName}::CHARACTER VARYING AS {columnName}";
+                        }
                     }
                     else if (this.DatabaseType == DatabaseType.Oracle)
                     {
@@ -747,9 +747,21 @@ namespace DatabaseInterpreter.Core
 
             DataTable dt = await this.GetDataTableAsync(connection, pagedSql);
 
-            if (dt.Columns.OfType<DataColumn>().Any(item => item.ColumnName == RowNumberColumnName))
+            var dtColumns = dt.Columns.OfType<DataColumn>();
+
+            if (dtColumns.Any(item => item.ColumnName == RowNumberColumnName))
             {
                 dt.Columns.Remove(RowNumberColumnName);
+            }
+
+            foreach (var col in dtColumns)
+            {
+                TableColumn tc = columns.FirstOrDefault(item => item.Name == col.ColumnName);
+
+                if (tc != null)
+                {
+                    col.ExtendedProperties.Add(nameof(DataTypeInfo), new DataTypeInfo() { DataType = tc.DataType });
+                }
             }
 
             return dt;

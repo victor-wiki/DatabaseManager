@@ -63,6 +63,7 @@
             this.txtPassword.PasswordChar = '*';
             this.txtPassword.Size = new System.Drawing.Size(193, 23);
             this.txtPassword.TabIndex = 6;
+            this.txtPassword.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtPassword_KeyUp);           
             // 
             // btnExit
             // 
@@ -70,7 +71,7 @@
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(75, 23);
             this.btnExit.TabIndex = 7;
-            this.btnExit.Text = "Exit";
+            this.btnExit.Text = "Cancel";
             this.btnExit.UseVisualStyleBackColor = true;
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             // 

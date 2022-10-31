@@ -1,7 +1,11 @@
 <mappings>
 	<mapping>
+		<source type="bfile" />
+		<target type="image" />
+	</mapping>
+	<mapping>
 		<source type="binary_double" />
-		<target type="float" />
+		<target type="decimal" />
 	</mapping>
 	<mapping>
 		<source type="binary_float" />
@@ -22,6 +26,10 @@
 	<mapping>
 		<source type="date" />
 		<target type="datetime" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="float" />
 	</mapping>
 	<mapping>
 		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
@@ -81,6 +89,10 @@
 	<mapping>
 		<source type="timestamp([(]\d[)])? with time zone" isExp="true"/>
 		<target type="datetimeoffset" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="varchar" />
 	</mapping>
 	<mapping>
 		<source type="varchar2" />

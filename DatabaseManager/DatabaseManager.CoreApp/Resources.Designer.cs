@@ -173,6 +173,16 @@ namespace DatabaseManager {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _polygon {
+            get {
+                object obj = ResourceManager.GetObject("_polygon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _sqlQuery {
             get {
                 object obj = ResourceManager.GetObject("_sqlQuery", resourceCulture);
@@ -416,6 +426,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap OpenFile {
             get {
                 object obj = ResourceManager.GetObject("OpenFile", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap Polygon {
+            get {
+                object obj = ResourceManager.GetObject("Polygon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

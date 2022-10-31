@@ -6,22 +6,35 @@ namespace DatabaseInterpreter.Core
 {
     public class TableReferenceHelper
     {
+        public static IEnumerable<string> GetTopReferencedTableNames(IEnumerable<TableForeignKey> tableForeignKeys)
+        {
+            IEnumerable<string> foreignTableNames = tableForeignKeys.Select(item => item.TableName);
+
+            IEnumerable<string> topReferencedTableNames = tableForeignKeys.Where(item => (!foreignTableNames.Contains(item.ReferencedTableName))
+                || (item.TableName == item.ReferencedTableName && tableForeignKeys.Any(t => t.Name != item.Name && item.TableName == t.ReferencedTableName)
+                && !tableForeignKeys.Any(t => t.Name != item.Name && item.ReferencedTableName == t.TableName)))
+               .Select(item => item.ReferencedTableName).Distinct().OrderBy(item => item);
+
+            return topReferencedTableNames;
+        }
+
+
         public static List<string> ResortTableNames(string[] tableNames, List<TableForeignKey> tableForeignKeys)
         {
             List<string> sortedTableNames = new List<string>();
             IEnumerable<string> primaryTableNames = tableForeignKeys.Select(item => item.ReferencedTableName);
             IEnumerable<string> foreignTableNames = tableForeignKeys.Select(item => item.TableName);
 
-            IEnumerable<string> noReferenceTableNames = tableNames.Where(item => !primaryTableNames.Contains(item) && !foreignTableNames.Contains(item)).OrderBy(item => item);
-            sortedTableNames.AddRange(noReferenceTableNames);
+            IEnumerable<string> notReferencedTableNames = tableNames.Where(item => !primaryTableNames.Contains(item) && !foreignTableNames.Contains(item)).OrderBy(item => item);
+            
+            sortedTableNames.AddRange(notReferencedTableNames);
 
-            IEnumerable<string> topReferencedTableNames = tableForeignKeys.Where(item => (!foreignTableNames.Contains(item.ReferencedTableName))
-                 || (item.TableName == item.ReferencedTableName && tableForeignKeys.Any(t => t.Name != item.Name && item.TableName == t.ReferencedTableName)
-                 && !tableForeignKeys.Any(t => t.Name != item.Name && item.ReferencedTableName == t.TableName)))
-                .Select(item => item.ReferencedTableName).Distinct().OrderBy(item => item);
+            IEnumerable<string> topReferencedTableNames = GetTopReferencedTableNames(tableForeignKeys);
 
             sortedTableNames.AddRange(topReferencedTableNames);
+
             List<string> childTableNames = new List<string>();
+
             foreach (string tableName in topReferencedTableNames)
             {
                 childTableNames.AddRange(GetForeignTables(tableName, tableForeignKeys, sortedTableNames.Concat(childTableNames)));
@@ -33,7 +46,9 @@ namespace DatabaseInterpreter.Core
 
             sortedTableNames.AddRange(sortedChildTableNames);
 
-            IEnumerable<string> selfReferencedTableNames = tableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).Select(item => item.TableName).OrderBy(item => item);
+            IEnumerable<string> selfReferencedTableNames = tableForeignKeys.Where(item => item.TableName == item.ReferencedTableName)
+                                                           .Select(item => item.TableName).OrderBy(item => item);
+            
             sortedTableNames.AddRange(selfReferencedTableNames.Where(item => !sortedTableNames.Contains(item)));
 
             return sortedTableNames;
@@ -46,6 +61,7 @@ namespace DatabaseInterpreter.Core
             for (int i = 0; i <= tableNames.Count - 1; i++)
             {
                 string tableName = tableNames[i];
+
                 IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => item.TableName == tableName && item.TableName != item.ReferencedTableName);
                                
                 if (foreignKeys.Any())
@@ -53,6 +69,7 @@ namespace DatabaseInterpreter.Core
                     foreach (TableForeignKey foreignKey in foreignKeys)
                     {
                         int referencedTableIndex = tableNames.IndexOf(foreignKey.ReferencedTableName);
+
                         if (referencedTableIndex >= 0 && referencedTableIndex > i)
                         {
                             sortedTableNames.Add(foreignKey.ReferencedTableName);                          
@@ -66,9 +83,11 @@ namespace DatabaseInterpreter.Core
             sortedTableNames = sortedTableNames.Distinct().ToList();
 
             bool needSort = false;
+
             for (int i = 0; i <= sortedTableNames.Count - 1; i++)
             {
                 string tableName = sortedTableNames[i];
+
                 IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => item.TableName == tableName && item.TableName != item.ReferencedTableName);
                                
                 if (foreignKeys.Any())
@@ -76,6 +95,7 @@ namespace DatabaseInterpreter.Core
                     foreach (TableForeignKey foreignKey in foreignKeys)
                     {
                         int referencedTableIndex = sortedTableNames.IndexOf(foreignKey.ReferencedTableName);
+
                         if (referencedTableIndex >= 0 && referencedTableIndex > i)
                         {
                             needSort = true;
@@ -102,6 +122,7 @@ namespace DatabaseInterpreter.Core
             tableNames.AddRange(foreignTableNames);
 
             IEnumerable<string> childForeignTableNames = tableForeignKeys.Where(item => foreignTableNames.Contains(item.ReferencedTableName)).Select(item => item.TableName);
+            
             if (childForeignTableNames.Count() > 0)
             {
                 List<string> childNames = foreignTableNames.SelectMany(item => GetForeignTables(item, tableForeignKeys, sortedTableNames)).ToList();
@@ -123,9 +144,11 @@ namespace DatabaseInterpreter.Core
             List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, foreignKeys);
 
             int i = 1;
+
             foreach (string tableName in sortedTableNames)
             {
                 Table table = tables.FirstOrDefault(item => item.Name == tableName);
+
                 if (table != null)
                 {
                     table.Order = i++;

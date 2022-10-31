@@ -616,6 +616,7 @@ namespace DatabaseInterpreter.Core
                 || item.DataType == typeof(byte[])
                 || item.DataType == typeof(string)
                 || item.DataType == typeof(Guid)
+                || item.DataType == typeof(Decimal)
                 || item.DataType == typeof(SqlHierarchyId)
                 || DataTypeHelper.IsGeometryType(item.DataType.Name)
                 ))
@@ -767,6 +768,19 @@ namespace DatabaseInterpreter.Core
                             {
                                 newColumnType = typeof(string);
                                 newValue = value.ToString();
+                            }
+                            else if (type == typeof(decimal))
+                            {
+                                if (dataType == "real")
+                                {
+                                    newColumnType = typeof(float);
+                                    newValue = Convert.ToSingle(value);
+                                }
+                                else if(dataType == "double precision")
+                                {
+                                    newColumnType = typeof(double);
+                                    newValue = Convert.ToDouble(value);
+                                }
                             }
 
                             if (DataTypeHelper.IsGeometryType(dataType) && newColumnType != null && newValue == null)

@@ -132,6 +132,7 @@ namespace DatabaseManager.Controls
             this.tsmiInsertScript.Visible = isTable;
             this.tsmiUpdateScript.Visible = isTable;
             this.tsmiDeleteScript.Visible = isTable;
+            this.tsmiViewDependency.Visible = isDatabase || isTable;
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -1069,6 +1070,33 @@ namespace DatabaseManager.Controls
         private void tsmiDeleteScript_Click(object sender, EventArgs e)
         {
             this.GenerateScripts(ScriptAction.DELETE);
+        }
+
+        private void tsmiViewDependency_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            var tag = node.Tag;
+            Database database = null;
+            DatabaseObject dbObject = null;
+
+            if (tag is Database)
+            {
+                database = tag as Database;               
+            }
+            else if (tag is DatabaseObject dbObj)
+            {
+                database = this.GetDatabaseNode(node).Tag as Database;
+                dbObject = dbObj;
+            }
+
+            frmDependency frm = new frmDependency(this.databaseType, this.GetConnectionInfo(database.Name), dbObject);
+            frm.Show();
         }
     }
 }

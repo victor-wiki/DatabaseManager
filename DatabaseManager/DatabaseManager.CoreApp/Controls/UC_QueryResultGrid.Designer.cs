@@ -34,6 +34,9 @@
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiCopyContent = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             this.dlgSave = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
@@ -63,6 +66,7 @@
             this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgvData.Size = new System.Drawing.Size(658, 329);
             this.dgvData.TabIndex = 6;
+            this.dgvData.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dgvData_CellFormatting);
             this.dgvData.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvData_DataBindingComplete);
             this.dgvData.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvData_DataError);
             this.dgvData.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvData_MouseUp);
@@ -72,9 +76,12 @@
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiCopy,
             this.tsmiCopyWithHeader,
+            this.tsmiCopyContent,
+            this.tsmiShowContent,
+            this.tsmiViewGeometry,
             this.tsmiSave});
             this.contextMenuStrip1.Name = "contextMenuStrip2";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 70);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(179, 136);
             // 
             // tsmiCopy
             // 
@@ -89,6 +96,27 @@
             this.tsmiCopyWithHeader.Size = new System.Drawing.Size(178, 22);
             this.tsmiCopyWithHeader.Text = "Copy with header";
             this.tsmiCopyWithHeader.Click += new System.EventHandler(this.tsmiCopyWithHeader_Click);
+            // 
+            // tsmiCopyContent
+            // 
+            this.tsmiCopyContent.Name = "tsmiCopyContent";
+            this.tsmiCopyContent.Size = new System.Drawing.Size(178, 22);
+            this.tsmiCopyContent.Text = "Copy Content";
+            this.tsmiCopyContent.Click += new System.EventHandler(this.tsmiCopyContent_Click);
+            // 
+            // tsmiShowContent
+            // 
+            this.tsmiShowContent.Name = "tsmiShowContent";
+            this.tsmiShowContent.Size = new System.Drawing.Size(178, 22);
+            this.tsmiShowContent.Text = "Show Content";
+            this.tsmiShowContent.Click += new System.EventHandler(this.tsmiShowContent_Click);
+            // 
+            // tsmiViewGeometry
+            // 
+            this.tsmiViewGeometry.Name = "tsmiViewGeometry";
+            this.tsmiViewGeometry.Size = new System.Drawing.Size(178, 22);
+            this.tsmiViewGeometry.Text = "View Geometry";
+            this.tsmiViewGeometry.Click += new System.EventHandler(this.tsmiViewGeometry_Click);
             // 
             // tsmiSave
             // 
@@ -123,5 +151,8 @@
         private System.Windows.Forms.SaveFileDialog dlgSave;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyWithHeader;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViewGeometry;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCopyContent;
+        private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
     }
 }

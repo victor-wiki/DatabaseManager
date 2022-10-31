@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
@@ -36,7 +37,7 @@ namespace DatabaseManager.Controls
 
             this.dgvData.AutoGenerateColumns = true;
 
-            typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic |BindingFlags.Instance | BindingFlags.SetProperty, null, this.dgvData, new object[] { true });
+            typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, this.dgvData, new object[] { true });
         }
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
@@ -121,7 +122,7 @@ namespace DatabaseManager.Controls
         private void pagination_OnPageNumberChanged(long pageNum)
         {
             this.LoadData(this.displayInfo, pageNum);
-        }       
+        }
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
@@ -161,6 +162,60 @@ namespace DatabaseManager.Controls
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
 
-        }       
+        }
+        private void dgvData_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            DataGridViewHelper.FormatCell(this.dgvData, e);
+        }
+
+        private void dgvData_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            var value = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+
+            if (value != null)
+            {
+                if (value.GetType() != typeof(DBNull))
+                {
+                    if (e.Button == MouseButtons.Right)
+                    {
+                        this.dgvData.CurrentCell = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                        this.SetContextMenuItemVisible();
+
+                        this.cellContextMenu.Show(Cursor.Position);
+                    }
+                }
+            }
+        }
+
+        private void SetContextMenuItemVisible()
+        {
+            this.tsmiViewGeometry.Visible = DataGridViewHelper.IsGeometryValue(this.dgvData);
+        }
+
+        private void tsmiCopy_Click(object sender, EventArgs e)
+        {
+            var value = DataGridViewHelper.GetCurrentCellValue(this.dgvData);
+
+            if (!string.IsNullOrEmpty(value))
+            {
+                Clipboard.SetDataObject(value);
+            }
+        }
+
+        private void tsmiViewGeometry_Click(object sender, EventArgs e)
+        {
+            DataGridViewHelper.ShowGeometryViewer(this.dgvData);
+        }
+
+        private void tsmiShowContent_Click(object sender, EventArgs e)
+        {
+            DataGridViewHelper.ShowCellContent(this.dgvData);
+        }
     }
 }

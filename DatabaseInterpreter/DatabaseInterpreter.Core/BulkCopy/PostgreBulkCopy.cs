@@ -260,6 +260,10 @@ namespace DatabaseInterpreter.Core
                     {
                         dbType = NpgsqlDbType.Money;
                     }
+                    else if (targetColumnDataType == "real")
+                    {
+                        dbType = NpgsqlDbType.Real;
+                    }
                     else if (targetColumnDataType == "double precision")
                     {
                         dbType = NpgsqlDbType.Double;
