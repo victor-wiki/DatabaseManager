@@ -20,22 +20,22 @@ namespace SqlAnalyser.Core
 
         public override AnalyseResult AnalyseView(string content)
         {
-            return this.ruleAnalyser.AnalyseView(content);            
+            return this.ruleAnalyser.AnalyseView(content);
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
         {
-            return this.ruleAnalyser.AnalyseProcedure(content);           
+            return this.ruleAnalyser.AnalyseProcedure(content);
         }
 
         public override AnalyseResult AnalyseFunction(string content)
         {
-            return this.ruleAnalyser.AnalyseFunction(content);          
+            return this.ruleAnalyser.AnalyseFunction(content);
         }
 
         public override AnalyseResult AnalyseTrigger(string content)
         {
-            return this.ruleAnalyser.AnalyseTrigger(content);           
+            return this.ruleAnalyser.AnalyseTrigger(content);
         }
 
         public override ScriptBuildResult GenerateScripts(CommonScript script)
@@ -181,8 +181,8 @@ namespace SqlAnalyser.Core
                 {
                     hasLeaveStatement = true;
                 }
-
-                sbBody.AppendLine(this.BuildStatement(statement));
+          
+                sbBody.AppendLine(this.BuildStatement(statement, script.Type));
             }
 
             sb.Append(sbBody);
@@ -269,6 +269,6 @@ namespace SqlAnalyser.Core
             result.Body = sbBody.ToString();
 
             return result;
-        }     
+        }
     }
 }

@@ -26,15 +26,15 @@ namespace DatabaseManager.Controls
         {
             this.tvDbObjects.Nodes.Clear();
 
-            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };          
+            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple };
 
-            DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;           
+            DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
-            
+
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Sequence), "Sequences", schemaInfo.Sequences);
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
@@ -117,6 +117,44 @@ namespace DatabaseManager.Controls
                 }
             }
             return false;
+        }
+
+        private void tsmiShowSortedNames_Click(object sender, EventArgs e)
+        {
+            TreeNode node = this.contextMenuStrip1.Tag as TreeNode;
+
+            if (node != null)
+            {
+                var dbObjects = node.Nodes.Cast<TreeNode>().Select(item => item.Tag as DatabaseObject).OrderBy(item => item.Order);
+
+                bool isUniqueSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
+
+                var names = dbObjects.Select(item => (isUniqueSchema ? item.Name : $"{item.Schema}.{item.Name}"));
+
+                string content = string.Join(Environment.NewLine, names);
+
+                frmTextContent frm = new frmTextContent(content);
+                frm.Show();
+            }
+        }
+
+        private void tvDbObjects_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                var isIn = e.Node.Bounds.Contains(new Point(e.X, e.Y));
+
+                if (isIn)
+                {
+                    if (e.Node.Parent == null)
+                    {
+                        this.contextMenuStrip1.Show(Cursor.Position);
+
+                        this.tvDbObjects.SelectedNode = e.Node;
+                        this.contextMenuStrip1.Tag = e.Node;
+                    }
+                }
+            }
         }
     }
 }

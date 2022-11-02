@@ -51,7 +51,12 @@ namespace SqlAnalyser.Core
 
                 Func<string, bool, string> getNoAliasString = (str, useOldName) =>
                 {
-                    return alias == null ? str : str.Replace($"{alias}.", (useOldName ? $"{tableName}." : ""));
+                    if(str!= null)
+                    {
+                        return alias == null ? str : str.Replace($"{alias}.", (useOldName ? $"{tableName}." : ""));
+                    }
+
+                    return str;
                 };
 
                 if (update.FromItems != null)

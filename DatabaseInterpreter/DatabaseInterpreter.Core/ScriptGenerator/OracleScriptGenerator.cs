@@ -132,17 +132,7 @@ namespace DatabaseInterpreter.Core
                 {
                     return true;
                 }
-                else if (DataTypeHelper.IsGeometryType(dataType))
-                {
-                    //string str = value.ToString();
-
-                    //if (str.Length > 1000)
-                    //{
-                    //    return true;
-                    //}
-                    return false;
-                }
-
+                
                 if (type == typeof(string))
                 {
                     string str = value.ToString();
@@ -370,7 +360,7 @@ CREATE TABLE {quotedTableName}(
             }
             #endregion
 
-            #region Primary Key
+            #region Primary Key            
             if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
             {
                 sb.AppendLine(this.AddPrimaryKey(primaryKey));
@@ -392,21 +382,31 @@ CREATE TABLE {quotedTableName}(
             {
                 List<string> indexColumns = new List<string>();
 
+                var primaryKeyColumnNames = primaryKey?.Columns?.OrderBy(item => item.ColumnName)?.Select(item => item.ColumnName);
+
                 foreach (TableIndex index in indexes)
                 {
-                    string columnNames = string.Join(",", index.Columns.OrderBy(item => item.ColumnName).Select(item => item.ColumnName));
+                    var indexColumnNames = index.Columns.OrderBy(item => item.ColumnName).Select(item => item.ColumnName);
+
+                    //primary key column can't be indexed twice if they have same name and same order
+                    if (primaryKeyColumnNames != null && primaryKeyColumnNames.SequenceEqual(indexColumnNames))
+                    {
+                        continue;
+                    }
+
+                    string strIndexColumnNames = string.Join(",", indexColumnNames);
 
                     //Avoid duplicated indexes for one index.
-                    if (indexColumns.Contains(columnNames))
+                    if (indexColumns.Contains(strIndexColumnNames))
                     {
                         continue;
                     }
 
                     sb.AppendLine(this.AddIndex(index));
 
-                    if (!indexColumns.Contains(columnNames))
+                    if (!indexColumns.Contains(strIndexColumnNames))
                     {
-                        indexColumns.Add(columnNames);
+                        indexColumns.Add(strIndexColumnNames);
                     }
                 }
             }

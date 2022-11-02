@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmGeometryViewer
+    partial class frmWktViewer
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmGeometryViewer));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmWktViewer));
             this.panelContent = new System.Windows.Forms.Panel();
             this.picGeometry = new System.Windows.Forms.PictureBox();
             this.tbZoom = new System.Windows.Forms.TrackBar();
@@ -134,7 +134,7 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
-            // frmGeometryViewer
+            // frmWktViewer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -147,9 +147,9 @@
             this.Controls.Add(this.tbZoom);
             this.Controls.Add(this.panelContent);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "frmGeometryViewer";
+            this.Name = "frmWktViewer";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Geometry Viewer";
+            this.Text = "WKT Viewer";
             this.Load += new System.EventHandler(this.frmGeometryViewer_Load);
             this.panelContent.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.picGeometry)).EndInit();

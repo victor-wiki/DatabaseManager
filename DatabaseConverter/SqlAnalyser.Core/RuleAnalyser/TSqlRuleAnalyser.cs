@@ -291,9 +291,9 @@ namespace SqlAnalyser.Core
                         }
                     }
 
-                    #region Body
+                    #region Body                
 
-                    this.SetScriptBody(script, trigger.sql_clauses().FirstOrDefault()?.cfl_statement().block_statement().sql_clauses());
+                    this.SetScriptBody(script, trigger.sql_clauses());
 
                     #endregion
                 }
@@ -1507,7 +1507,24 @@ namespace SqlAnalyser.Core
         {
             DeclareCursorStatement statement = new DeclareCursorStatement();
             statement.CursorName = new TokenInfo(node.cursor_name()) { Type = TokenType.CursorName };
-            statement.SelectStatement = this.ParseSelectStatement(node.declare_set_cursor_common().select_statement_standalone().select_statement()).FirstOrDefault();
+
+            var cursor = node.declare_set_cursor_common();
+
+            Select_statementContext select = null;
+
+            if (cursor != null)
+            {
+                select = cursor.select_statement_standalone()?.select_statement();
+            }
+            else
+            {
+                select = node.select_statement_standalone()?.select_statement();
+            }
+
+            if (select != null)
+            {
+                statement.SelectStatement = this.ParseSelectStatement(select).FirstOrDefault();
+            }
 
             return statement;
         }

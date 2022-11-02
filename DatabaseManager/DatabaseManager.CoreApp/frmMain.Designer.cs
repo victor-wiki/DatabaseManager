@@ -92,7 +92,7 @@
             // 
             this.tsmiSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiSetting.Image")));
             this.tsmiSetting.Name = "tsmiSetting";
-            this.tsmiSetting.Size = new System.Drawing.Size(176, 22);
+            this.tsmiSetting.Size = new System.Drawing.Size(180, 22);
             this.tsmiSetting.Text = "Setting";
             this.tsmiSetting.Click += new System.EventHandler(this.tsmiSetting_Click);
             // 
@@ -100,7 +100,7 @@
             // 
             this.tsmiDbConnection.Image = ((System.Drawing.Image)(resources.GetObject("tsmiDbConnection.Image")));
             this.tsmiDbConnection.Name = "tsmiDbConnection";
-            this.tsmiDbConnection.Size = new System.Drawing.Size(176, 22);
+            this.tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
             this.tsmiDbConnection.Text = "Connection";
             this.tsmiDbConnection.Click += new System.EventHandler(this.tsmiDbConnection_Click);
             // 
@@ -108,7 +108,7 @@
             // 
             this.tsmiBackupSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiBackupSetting.Image")));
             this.tsmiBackupSetting.Name = "tsmiBackupSetting";
-            this.tsmiBackupSetting.Size = new System.Drawing.Size(176, 22);
+            this.tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
             this.tsmiBackupSetting.Text = "Backup Setting";
             this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
             // 
@@ -116,15 +116,15 @@
             // 
             this.tsmiGeometryView.Image = global::DatabaseManager.Resources.Polygon;
             this.tsmiGeometryView.Name = "tsmiGeometryView";
-            this.tsmiGeometryView.Size = new System.Drawing.Size(176, 22);
-            this.tsmiGeometryView.Text = "Geometry Viewer";
+            this.tsmiGeometryView.Size = new System.Drawing.Size(180, 22);
+            this.tsmiGeometryView.Text = "WKT Viewer";
             this.tsmiGeometryView.Click += new System.EventHandler(this.tsmiGeometryView_Click);
             // 
             // tsmiLock
             // 
             this.tsmiLock.Image = global::DatabaseManager.Resources.Lock;
             this.tsmiLock.Name = "tsmiLock";
-            this.tsmiLock.Size = new System.Drawing.Size(176, 22);
+            this.tsmiLock.Size = new System.Drawing.Size(180, 22);
             this.tsmiLock.Text = "Lock";
             this.tsmiLock.Click += new System.EventHandler(this.tsmiLock_Click);
             // 

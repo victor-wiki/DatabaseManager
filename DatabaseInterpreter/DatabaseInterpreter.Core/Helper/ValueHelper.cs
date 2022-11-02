@@ -93,6 +93,13 @@ namespace DatabaseInterpreter.Core
             return hex;
         }
 
+        public static byte[] HexStringToBytes(string value)
+        {
+            string content = value.Substring(2);
+
+            return Enumerable.Range(0, content.Length).Where(x => x % 2 == 0).Select(x => Convert.ToByte(content.Substring(x, 2), 16)).ToArray();
+        }
+
         public static string GetTrimedParenthesisValue(string value)
         {
             if (!string.IsNullOrEmpty(value) && value.StartsWith('(') && value.EndsWith(')'))

@@ -4,6 +4,7 @@ using DatabaseConverter.Profile;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Microsoft.IdentityModel.Tokens;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -95,7 +96,7 @@ namespace DatabaseConverter.Core
             sourceInterpreter.Option.BulkCopy = this.Option.BulkCopy;
             sourceInterpreter.Subscribe(this.observer);
 
-            sourceInterpreter.Option.GetTableAllObjects = false;           
+            sourceInterpreter.Option.GetTableAllObjects = false;
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
 
@@ -200,7 +201,7 @@ namespace DatabaseConverter.Core
                     if (dbConnection.State != ConnectionState.Open)
                     {
                         await dbConnection.OpenAsync();
-                    }                   
+                    }
 
                     var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
                     var targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
@@ -214,7 +215,7 @@ namespace DatabaseConverter.Core
                         string createSchemaScript = targetDbScriptGenerator.CreateSchema(new DatabaseSchema() { Name = schemaName }).Content;
 
                         await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(createSchemaScript));
-                    }                 
+                    }
 
                     if (this.Option.SchemaMappings.Count == 1 && this.Option.SchemaMappings.First().SourceSchema == "")
                     {
@@ -232,7 +233,7 @@ namespace DatabaseConverter.Core
                             this.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = ss, TargetSchema = targetSchema });
                         }
                     }
-                }                
+                }
             }
             #endregion
 
@@ -271,7 +272,7 @@ namespace DatabaseConverter.Core
                 {
                     SchemaInfoHelper.EnsureIndexNameUnique(targetSchemaInfo);
                 }
-            }           
+            }
 
             bool generateIdentity = targetInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity;
 
@@ -281,9 +282,11 @@ namespace DatabaseConverter.Core
 
             DataTransferErrorProfile dataErrorProfile = null;
 
+            Script currentScript = null;
+
             using (DbConnection dbConnection = this.Option.ExecuteScriptOnTargetServer ? targetInterpreter.CreateConnection() : null)
             {
-                ScriptBuilder scriptBuilder = null;                
+                ScriptBuilder scriptBuilder = null;
 
                 if (this.Option.GenerateScriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
@@ -336,7 +339,7 @@ namespace DatabaseConverter.Core
                     }
                 }
 
-                #region Schema sync        
+                #region Schema sync             
 
                 if (scriptBuilder != null && this.Option.ExecuteScriptOnTargetServer)
                 {
@@ -374,25 +377,9 @@ namespace DatabaseConverter.Core
 
                             foreach (Script s in scripts)
                             {
-                                bool isCreateScript = s.ObjectType == nameof(Function) || s.ObjectType == nameof(Procedure) || s.ObjectType == nameof(TableTrigger);
+                                currentScript = s;
 
-                                bool continueWhenErrorOccurs = false;
-
-                                if (targetInterpreter.HasError)
-                                {
-                                    if (!this.Option.ContinueWhenErrorOccurs)
-                                    {
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        if (isCreateScript)
-                                        {
-                                            continueWhenErrorOccurs = true;
-                                            continuedWhenErrorOccured = true;
-                                        }
-                                    }
-                                }
+                                bool isRoutineScript = this.IsRoutineScript(s);       
 
                                 if (!isValidScript(s))
                                 {
@@ -405,23 +392,35 @@ namespace DatabaseConverter.Core
                                 {
                                     i++;
 
-                                    if (!isCreateScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
+                                    if (!isRoutineScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
                                     {
                                         sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
                                     }
 
-                                    if (!targetInterpreter.HasError || continueWhenErrorOccurs)
+                                    if (!targetInterpreter.HasError || (isRoutineScript && this.Option.ContinueWhenErrorOccurs))
                                     {
                                         targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
 
                                         CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
-                                        commandInfo.ContinueWhenErrorOccurs = continueWhenErrorOccurs;
+                                        commandInfo.ContinueWhenErrorOccurs = isRoutineScript && this.Option.ContinueWhenErrorOccurs;
 
                                         await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
                                         if (commandInfo.HasError)
                                         {
                                             this.hasError = true;
+
+                                            if (!this.Option.ContinueWhenErrorOccurs)
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if (isRoutineScript)
+                                                {
+                                                    continuedWhenErrorOccured = true;
+                                                }
+                                            }
                                         }
 
                                         if (commandInfo.TransactionRollbacked)
@@ -562,7 +561,7 @@ namespace DatabaseConverter.Core
                                                 {
                                                     count++;
 
-                                                    var cmd = count < items.Length?  (item + delimiter).Trim().Trim(';'): item;
+                                                    var cmd = count < items.Length ? (item + delimiter).Trim().Trim(';') : item;
 
                                                     await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Paramters, this.transaction));
                                                 }
@@ -679,6 +678,11 @@ namespace DatabaseConverter.Core
             }
 
             return result;
+        }
+
+        private bool IsRoutineScript(Script script)
+        {
+            return script.ObjectType == nameof(View) || script.ObjectType == nameof(Function) || script.ObjectType == nameof(Procedure) || script.ObjectType == nameof(TableTrigger);
         }
 
         private (Dictionary<string, object> Paramters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)

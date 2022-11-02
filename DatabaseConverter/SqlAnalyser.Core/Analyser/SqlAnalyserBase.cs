@@ -37,39 +37,44 @@ namespace SqlAnalyser.Core
             else
             {
                 throw new NotSupportedException($"Not support analyse for type:{typeof(T).Name}");
-            }            
+            }
 
             return result;
-        }     
+        }
 
-        public string BuildStatement(Statement statement)
+        public string BuildStatement(Statement statement, RoutineType routineType = RoutineType.UNKNOWN)
         {
             StatementScriptBuilder sb = null;
 
             if (this.DatabaseType == DatabaseType.SqlServer)
             {
-                sb = new TSqlStatementScriptBuilder();               
+                sb = new TSqlStatementScriptBuilder();
             }
             else if (this.DatabaseType == DatabaseType.MySql)
             {
-                sb = new MySqlStatementScriptBuilder();               
+                sb = new MySqlStatementScriptBuilder();
             }
             else if (this.DatabaseType == DatabaseType.Oracle)
             {
-                sb = new PlSqlStatementScriptBuilder();               
+                sb = new PlSqlStatementScriptBuilder();
             }
-            else if(this.DatabaseType == DatabaseType.Postgres)
+            else if (this.DatabaseType == DatabaseType.Postgres)
             {
                 sb = new PostgreSqlStatementScriptBuilder();
             }
             else
             {
                 throw new NotSupportedException($"Not support buid statement for: {this.DatabaseType}");
-            }          
+            }
+
+            if (sb != null)
+            {
+                sb.RoutineType = routineType;
+            }
 
             sb.Build(statement);
 
             return sb.ToString();
-        }       
+        }
     }
 }

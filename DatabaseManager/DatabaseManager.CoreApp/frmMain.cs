@@ -262,7 +262,7 @@ namespace DatabaseManager
 
         private void tsmiGeometryView_Click(object sender, EventArgs e)
         {
-            frmGeometryViewer geomViewer = new frmGeometryViewer();
+            frmWktViewer geomViewer = new frmWktViewer();
             geomViewer.Show();
         }
     }

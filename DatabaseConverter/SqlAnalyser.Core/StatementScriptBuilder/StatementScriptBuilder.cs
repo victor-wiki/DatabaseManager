@@ -14,6 +14,8 @@ namespace SqlAnalyser.Core
 
         public StringBuilder Script => this.sb;
 
+        public RoutineType RoutineType { get; set; }
+
         protected void Append(string value, bool appendIndent = true)
         {
             sb.Append($"{(appendIndent ? this.indent : "")}{value}");

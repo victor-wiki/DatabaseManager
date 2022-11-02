@@ -44,6 +44,7 @@
             this.tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             this.dlgSave = new System.Windows.Forms.SaveFileDialog();
+            this.btnSave = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -127,8 +128,8 @@
             // 
             // btnClose
             // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClose.Location = new System.Drawing.Point(298, 334);
+            this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btnClose.Location = new System.Drawing.Point(353, 334);
             this.btnClose.Margin = new System.Windows.Forms.Padding(4);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(88, 33);
@@ -171,11 +172,24 @@
             // 
             this.dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
             // 
+            // btnSave
+            // 
+            this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btnSave.Location = new System.Drawing.Point(227, 334);
+            this.btnSave.Margin = new System.Windows.Forms.Padding(4);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(88, 33);
+            this.btnSave.TabIndex = 10;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
             // frmDiagnoseResult
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(697, 376);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.dgvResult);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -203,5 +217,6 @@
         private System.Windows.Forms.DataGridViewLinkColumn colInvalidRecordCount;
         private System.Windows.Forms.ToolStripMenuItem tsmiSave;
         private System.Windows.Forms.SaveFileDialog dlgSave;
+        private System.Windows.Forms.Button btnSave;
     }
 }

@@ -74,6 +74,7 @@
   <mapping>
     <source type="numeric" />
     <target type="decimal" />
+	<special name="isIdentity" type="bigint"></special>
   </mapping>
   <mapping>
     <source type="nvarchar" />

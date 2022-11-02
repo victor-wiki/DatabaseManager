@@ -10,7 +10,7 @@ namespace DatabaseManager
     public partial class frmDiagnoseResult : Form
     {
         public DatabaseType DatabaseType { get; set; }
-        public ConnectionInfo ConnectionInfo { get; set; }      
+        public ConnectionInfo ConnectionInfo { get; set; }
 
         public frmDiagnoseResult()
         {
@@ -105,7 +105,7 @@ namespace DatabaseManager
                 return;
             }
 
-            if(e.ColumnIndex == this.colInvalidRecordCount.Index)
+            if (e.ColumnIndex == this.colInvalidRecordCount.Index)
             {
                 DiagnoseResultItem resultItem = this.dgvResult.Rows[e.RowIndex].Tag as DiagnoseResultItem;
 
@@ -143,10 +143,33 @@ namespace DatabaseManager
             this.dlgSave.FileName = "";
 
             DialogResult result = this.dlgSave.ShowDialog();
+
             if (result == DialogResult.OK)
             {
-                DataTableHelper.WriteToFile(this.dgvResult.DataSource as DataTable, this.dlgSave.FileName);
+                DataTable table = new DataTable();
+
+                foreach (DataGridViewColumn column in this.dgvResult.Columns)
+                {
+                    table.Columns.Add(new DataColumn() { ColumnName = column.HeaderText });
+                }
+
+                foreach (DataGridViewRow row in this.dgvResult.Rows)
+                {
+                    var r = table.Rows.Add();
+
+                    foreach (DataGridViewCell cell in row.Cells)
+                    {
+                        r[cell.ColumnIndex] = cell.Value;
+                    }
+                }
+
+                DataTableHelper.WriteToFile(table, this.dlgSave.FileName);
             }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            this.Save();
         }
     }
 }

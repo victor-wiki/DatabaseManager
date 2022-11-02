@@ -459,7 +459,7 @@ namespace DatabaseInterpreter.Core
 
                     this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.ContinueWhenErrorOccurs);
 
-                    if (this.Option.ThrowExceptionWhenErrorOccurs)
+                    if (this.Option.ThrowExceptionWhenErrorOccurs && !commandInfo.ContinueWhenErrorOccurs)
                     {
                         throw ex;
                     }

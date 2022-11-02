@@ -776,7 +776,7 @@ namespace DatabaseInterpreter.Core
                                     newColumnType = typeof(float);
                                     newValue = Convert.ToSingle(value);
                                 }
-                                else if(dataType == "double precision")
+                                else if (dataType == "double precision")
                                 {
                                     newColumnType = typeof(double);
                                     newValue = Convert.ToDouble(value);
@@ -871,12 +871,13 @@ namespace DatabaseInterpreter.Core
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
 
                 bool isIdentity = this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity;
+                bool allowIdentity = this.AllowIdentity(column);
 
                 string identityClause = "";
 
                 if (isIdentity)
                 {
-                    if (!isLowDbVersion)
+                    if (!isLowDbVersion && allowIdentity)
                     {
                         identityClause = " GENERATED ALWAYS AS IDENTITY ";
                     }
@@ -996,7 +997,18 @@ namespace DatabaseInterpreter.Core
 
             return dataLength;
         }
-        #endregion
 
+        private bool AllowIdentity(TableColumn column)
+        {
+            DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(column.DataType.ToLower());
+
+            if (dataTypeSpec != null)
+            {
+                return dataTypeSpec.AllowIdentity;
+            }
+
+            return false;
+        }
+        #endregion
     }
 }

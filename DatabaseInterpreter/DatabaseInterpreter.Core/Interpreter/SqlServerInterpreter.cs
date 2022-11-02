@@ -885,8 +885,7 @@ namespace DatabaseInterpreter.Core
                 string dataType = this.ParseDataType(column);
 
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
-                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
-                //string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");               
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}{scriptComment}";

@@ -330,7 +330,10 @@ namespace DatabaseConverter.Core
                     {
                         string newSymbol = getNewSymbol(items);
 
-                        token.Symbol = this.RemoveRepeatedQuotationChars(newSymbol);
+                        if(!string.IsNullOrEmpty(newSymbol))
+                        {
+                            token.Symbol = this.RemoveRepeatedQuotationChars(newSymbol);
+                        }                        
                     }
                 }
             }

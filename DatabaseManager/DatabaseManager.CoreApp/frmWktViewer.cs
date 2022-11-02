@@ -1,23 +1,15 @@
-﻿using System;
+﻿using DatabaseInterpreter.Geometry;
+using Microsoft.SqlServer.Types;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Windows.Forms;
-using DatabaseInterpreter.Geometry;
-using Microsoft.SqlServer.Types;
-using NetTopologySuite.Geometries;
-using static Humanizer.On;
-using static System.Windows.Forms.AxHost;
-using MySqlConnector;
 
 namespace DatabaseManager
 {
-    public partial class frmGeometryViewer : Form
+    public partial class frmWktViewer : Form
     {
         private Color linePenColor = Color.Red;
         private Color polygonPenColor = Color.Green;
@@ -28,12 +20,12 @@ namespace DatabaseManager
         private float? scale = default(float?);
         private float defaultLimitMaxScale = 30;
         private bool isSettingZoomBar = false;
-        public frmGeometryViewer()
+        public frmWktViewer()
         {
             InitializeComponent();
         }
 
-        public frmGeometryViewer(bool isGeography, string content)
+        public frmWktViewer(bool isGeography, string content)
         {
             InitializeComponent();
 
@@ -679,26 +671,25 @@ namespace DatabaseManager
 
     internal class GeometryInfo
     {
-        public OpenGisGeometryType Type { get; set; }
+        internal OpenGisGeometryType Type { get; set; }
 
-        public List<PointF> Points = new List<PointF>();
-        public List<GeometryInfoItem> Items { get; set; } = new List<GeometryInfoItem>();
+        internal List<PointF> Points = new List<PointF>();
+        internal List<GeometryInfoItem> Items { get; set; } = new List<GeometryInfoItem>();
 
-        public List<GeometryInfo> Collection = new List<GeometryInfo>();
+        internal List<GeometryInfo> Collection = new List<GeometryInfo>();
 
     }
 
     internal class GeometryInfoItem
     {
-        public List<PointF> Points = new List<PointF>();
+        internal List<PointF> Points = new List<PointF>();
     }
 
     internal struct GeometryViewportInfo
     {
-        public float Width { get; set; }
-        public float Height { get; set; }
-
-        public float MaxX { get { return this.Width / 2; } }
-        public float MaxY { get { return this.Height / 2; } }
+        internal float Width { get; set; }
+        internal float Height { get; set; }
+        internal float MaxX { get { return this.Width / 2; } }
+        internal float MaxY { get { return this.Height / 2; } }
     }
 }

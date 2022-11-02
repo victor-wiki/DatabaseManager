@@ -56,7 +56,12 @@ namespace DatabaseInterpreter.Core
         {
             string typeName = dbObject.GetType().Name;
 
-            if(typeName == nameof(UserDefinedType))
+            if (typeName.StartsWith(nameof(Table)) && typeName != nameof(Table))
+            {
+                typeName = typeName.Replace(nameof(Table), "");
+            }
+
+            if (typeName == nameof(UserDefinedType))
             {
                 return DatabaseObjectType.Type;
             }
@@ -65,7 +70,7 @@ namespace DatabaseInterpreter.Core
                 DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.Parse(typeof(DatabaseObjectType), typeName);
 
                 return databaseObjectType;
-            }            
+            }
         }
     }
 }

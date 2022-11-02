@@ -98,6 +98,9 @@ namespace DatabaseConverter.Core
                 }
             };
 
+            int total = this.scripts.Count();
+            int count = 0;
+
             foreach (T dbObj in this.scripts)
             {
                 if (this.hasError)
@@ -109,7 +112,9 @@ namespace DatabaseConverter.Core
                 {
                     Type type = typeof(T);
 
-                    this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\".");
+                    count++;
+
+                    this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\"({count}/{total}).");
 
                     bool tokenProcessed = false;
                     

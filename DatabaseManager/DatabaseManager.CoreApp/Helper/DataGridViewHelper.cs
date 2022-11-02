@@ -202,7 +202,7 @@ namespace DatabaseManager.Helper
 
                         bool isGeography = dataType.ToLower().Contains("geography");
 
-                        frmGeometryViewer viewer = new frmGeometryViewer(isGeography, value);
+                        frmWktViewer viewer = new frmWktViewer(isGeography, value);
                         viewer.Show();
                     }
                 }

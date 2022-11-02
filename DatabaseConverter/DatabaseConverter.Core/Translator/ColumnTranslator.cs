@@ -86,20 +86,36 @@ namespace DatabaseConverter.Core
         {
             string defaultValue = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
 
+            Func<string> getTrimedValue = () =>
+            {
+                return defaultValue.Trim().Trim('\'');
+            };
+
+            string trimedValue = getTrimedValue();
+
             if (SequenceTranslator.IsSequenceValueFlag(this.sourceDbType, defaultValue))
             {
-                if (this.targetDbType == DatabaseType.MySql 
+                if (this.targetDbType == DatabaseType.MySql
                     || this.Option.OnlyForTableCopy
                     || column.IsIdentity)
                 {
                     column.DefaultValue = null;
-                }                
+                }
                 else
                 {
                     column.DefaultValue = this.sequenceTranslator.HandleSequenceValue(defaultValue);
                 }
 
                 return;
+            }
+
+            if (defaultValue == "''")
+            {
+                if (this.targetDbType == DatabaseType.Oracle)
+                {
+                    column.IsNullable = true;
+                    return;
+                }
             }
 
             bool hasScale = false;
@@ -144,7 +160,7 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                if (this.sourceDbType == DatabaseType.Postgres)
                 {
                     if (defaultValue.Contains("::")) //remove Postgres type reference
                     {
@@ -157,6 +173,7 @@ namespace DatabaseConverter.Core
                         }
 
                         defaultValue = string.Join(" ", list);
+                        trimedValue = getTrimedValue();
                     }
 
                     if (defaultValue.Trim() == "true" || defaultValue.Trim() == "false")
@@ -164,10 +181,207 @@ namespace DatabaseConverter.Core
                         defaultValue = defaultValue.Replace("true", "1").Replace("false", "0");
                     }
                 }
+                else if (this.sourceDbType == DatabaseType.SqlServer)
+                {
+                    //if it uses defined default value
+                    if (defaultValue.Contains("CREATE DEFAULT ") && defaultValue.Contains(" AS "))
+                    {
+                        int asIndex = defaultValue.LastIndexOf("AS");
+                        defaultValue = defaultValue.Substring(asIndex + 3);
+                    }
+
+                    if (trimedValue.ToLower() == "newid()")
+                    {
+                        column.DefaultValue = null;
+
+                        return;
+                    }
+                }
+
+                #region handle date/time string
+                if (this.sourceDbType == DatabaseType.SqlServer)
+                {
+                    //target data type is datetime or timestamp, but default value is time ('HH:mm:ss')
+                    if (DataTypeHelper.IsDatetimeOrTimestampType(column.DataType))
+                    {
+                        if (TimeSpan.TryParse(trimedValue, out _))
+                        {
+                            if (this.targetDbType == DatabaseType.MySql || this.targetDbType == DatabaseType.Postgres)
+                            {
+                                defaultValue = $"'{DateTime.MinValue.Date.ToLongDateString()} {trimedValue}'";
+                            }
+                            else if (this.targetDbType == DatabaseType.Oracle)
+                            {
+                                defaultValue = $"TO_TIMESTAMP('{DateTime.MinValue.Date.ToString("yyyy-MM-dd")} {TimeSpan.Parse(trimedValue).ToString("HH:mm:ss")}','yyyy-MM-dd hh24:mi:ss')";
+                            }
+                        }
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.Oracle)
+                {
+                    if (DataTypeHelper.IsDateOrTimeType(column.DataType) && trimedValue.StartsWith("TO_TIMESTAMP"))
+                    {
+                        int index = trimedValue.IndexOf('(');
+
+                        defaultValue = defaultValue.Split(',')[0].Substring(index + 1);
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.MySql)
+                {
+                    if (trimedValue == "0000-00-00 00:00:00")
+                    {
+                        column.DefaultValue = null;
+                        return;
+                    }
+                    else
+                    {
+                        if (this.targetDbType == DatabaseType.SqlServer || this.targetDbType == DatabaseType.Postgres)
+                        {
+                            defaultValue = $"'{trimedValue}'";
+                        }
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.Postgres)
+                {
+                    defaultValue = defaultValue.Replace("without time zone", "");
+                    trimedValue = getTrimedValue();
+                }
+
+                if (DataTypeHelper.IsDateOrTimeType(column.DataType))
+                {
+                    if (this.targetDbType == DatabaseType.Oracle) //datetime string to TO_TIMESTAMP(value)
+                    {
+                        if (DateTime.TryParse(trimedValue, out _))
+                        {
+                            if (trimedValue.Contains(" ")) // date & time
+                            {
+                                defaultValue = $"TO_TIMESTAMP('{DateTime.Parse(trimedValue).ToString("yyyy-MM-dd HH:mm:ss")}','yyyy-MM-dd hh24:mi:ss')";
+                            }
+                            else
+                            {
+                                if (trimedValue.Contains(":")) //time
+                                {
+                                    defaultValue = $"TO_TIMESTAMP('{DateTime.MinValue.ToString("yyyy-MM-dd")} {DateTime.Parse(trimedValue).ToString("HH:mm:ss")}','yyyy-MM-dd hh24:mi:ss')";
+                                }
+                                else //date
+                                {
+                                    defaultValue = $"TO_TIMESTAMP('{DateTime.Parse(trimedValue).ToString("yyyy-MM-dd")}','yyyy-MM-dd')";
+                                }
+                            }
+                        }
+                    }
+                }
+                #endregion
+
+                #region handle binary type
+                if (this.sourceDbType == DatabaseType.SqlServer)
+                {
+                    if (this.targetDbType == DatabaseType.Postgres)
+                    {
+                        if (column.DataType == "bytea" && column.MaxLength > 0)
+                        {
+                            long value = 0;
+
+                            if (long.TryParse(defaultValue, out value))
+                            {
+                                //integer hex string to bytea
+                                string hex = value.ToString("X").PadLeft((int)column.MaxLength.Value * 2, '0');
+
+                                defaultValue = $"'\\x{hex}'::bytea";
+                            }
+                            else if (defaultValue.StartsWith("0x"))
+                            {
+                                defaultValue = $"'\\x{defaultValue.Substring(2)}'::bytea";
+                            }
+                        }
+                    }
+                    else if (this.targetDbType == DatabaseType.Oracle || this.targetDbType == DatabaseType.MySql)
+                    {
+                        if (DataTypeHelper.IsBinaryType(column.DataType) && column.MaxLength > 0)
+                        {
+                            long value = 0;
+
+                            if (long.TryParse(defaultValue, out value))
+                            {
+                                string hex = value.ToString("X").PadLeft((int)column.MaxLength.Value * 2, '0');
+
+                                if (this.targetDbType == DatabaseType.Oracle)
+                                {
+                                    defaultValue = $"'{hex}'";
+                                }
+                                else if (this.targetDbType == DatabaseType.MySql)
+                                {
+                                    defaultValue = $"0x{hex}";
+                                }
+                            }
+                            else if (defaultValue.StartsWith("0x"))
+                            {
+                                if (this.targetDbType == DatabaseType.Oracle)
+                                {
+                                    defaultValue = $"'{defaultValue.Substring(2)}'";
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.Postgres)
+                {
+                    if (DataTypeHelper.IsBinaryType(column.DataType) && trimedValue.StartsWith("\\x"))
+                    {
+                        if (this.targetDbType == DatabaseType.SqlServer || this.targetDbType == DatabaseType.MySql)
+                        {
+                            defaultValue = $"0x{trimedValue.Substring(2)}";
+                        }
+                        else if (this.targetDbType == DatabaseType.Oracle)
+                        {
+                            defaultValue = $"'{trimedValue.Substring(2)}'";
+                        }
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.MySql)
+                {
+                    if (DataTypeHelper.IsBinaryType(column.DataType))
+                    {
+                        if (trimedValue == "0x")
+                        {
+                            //when type is binary(10) and default value is 0x00000000000000000001 or b'00000000000000000001',
+                            //the column "COLUMN_DEFAULT" of "INFORMATION_SCHEMA.COLUMNS" always is "0x", but use "insert into table values(default)" is correct result.
+
+                            column.DefaultValue = null; //TODO                            
+                            return;
+                        }
+                        else if (trimedValue.StartsWith("0x"))
+                        {
+                            if (targetDbType == DatabaseType.Postgres)
+                            {
+                                defaultValue = $"'\\x{trimedValue.Substring(2)}'::bytea";
+                            }
+                            else if (targetDbType == DatabaseType.Oracle)
+                            {
+                                defaultValue = $"'{trimedValue.Substring(2)}'";
+                            }
+                        }
+                    }
+                }
+                else if (this.sourceDbType == DatabaseType.Oracle)
+                {
+                    if (DataTypeHelper.IsBinaryType(column.DataType))
+                    {
+                        if (this.targetDbType == DatabaseType.SqlServer || this.targetDbType == DatabaseType.MySql)
+                        {
+                            defaultValue = $"0x{trimedValue}";
+                        }
+                        if (this.targetDbType == DatabaseType.Postgres && column.DataType == "bytea")
+                        {
+                            defaultValue = $"'\\x{trimedValue}'::bytea";
+                        }
+                    }
+                }
+                #endregion
 
                 if (column.DataType == "boolean")
                 {
-                    if (this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                    if (this.targetDbType == DatabaseType.Postgres)
                     {
                         defaultValue = defaultValue.Replace("0", "false").Replace("1", "true");
                     }
@@ -184,20 +398,57 @@ namespace DatabaseConverter.Core
 
                         this.dataTypeTranslator.Translate(dataTypeInfo);
 
-                        if (this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                        if (this.targetDbType == DatabaseType.Postgres)
                         {
                             if (dataTypeInfo.DataType == "boolean")
                             {
                                 defaultValue = defaultValue.Replace("0", "row(false)").Replace("1", "row(true)");
                             }
                         }
-                        else if (this.targetDbInterpreter.DatabaseType == DatabaseType.Oracle)
+                        else if (this.targetDbType == DatabaseType.Oracle)
                         {
                             if ((attr.DataType == "bit" || attr.DataType == "boolean") && dataTypeInfo.DataType == "number")
                             {
                                 string dataType = this.targetDbInterpreter.GetQuotedString(udt.Name);
 
                                 defaultValue = defaultValue.Replace("0", $"{dataType}(0)").Replace("1", $"{dataType}(1)");
+                            }
+                        }
+                    }
+                }
+
+                //custom function
+                if (defaultValue.Contains(this.sourceDbInterpreter.QuotationLeftChar) && this.sourceDbInterpreter.QuotationLeftChar != this.targetDbInterpreter.QuotationLeftChar)
+                {
+                    defaultValue = this.ParseDefinition(defaultValue);
+
+                    if (defaultValue.Contains("."))
+                    {
+                        if (this.targetDbType == DatabaseType.MySql || this.targetDbType == DatabaseType.Oracle)
+                        {
+                            defaultValue = null;
+                        }
+                        else
+                        {
+                            string[] items = defaultValue.Split(".");
+                            string schema = items[0].Trim();
+
+                            if (this.Option.SchemaMappings.Any())
+                            {
+                                string mappedSchema = this.Option.SchemaMappings.FirstOrDefault(item => this.GetTrimedName(item.SourceSchema) == this.GetTrimedName(schema))?.TargetSchema;
+
+                                if (!string.IsNullOrEmpty(mappedSchema))
+                                {
+                                    defaultValue = $"{this.targetDbInterpreter.GetQuotedString(mappedSchema)}.{string.Join(".", items.Skip(1))}";
+                                }
+                                else
+                                {
+                                    defaultValue = string.Join(".", items.Skip(1));
+                                }
+                            }
+                            else
+                            {
+                                defaultValue = string.Join(".", items.Skip(1));
                             }
                         }
                     }
@@ -246,7 +497,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            if (this.targetDbInterpreter.DatabaseType == DatabaseType.Postgres)
+            if (this.targetDbType == DatabaseType.Postgres)
             {
                 if (column.DataType == "money" && !column.ComputeExp.ToLower().Contains("::money"))
                 {
@@ -254,7 +505,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+            if (this.sourceDbType == DatabaseType.Postgres)
             {
                 if (column.ComputeExp.Contains("::")) //datatype convert operator
                 {
@@ -370,7 +621,7 @@ namespace DatabaseConverter.Core
                         setToNull = true;
                     }
 
-                    if (!setToNull && (this.targetDbInterpreter.DatabaseType == DatabaseType.MySql || this.targetDbInterpreter.DatabaseType == DatabaseType.Oracle))
+                    if (!setToNull && (this.targetDbType == DatabaseType.MySql || this.targetDbType == DatabaseType.Oracle))
                     {
                         if (customFunctions == null || customFunctions.Count() == 0)
                         {

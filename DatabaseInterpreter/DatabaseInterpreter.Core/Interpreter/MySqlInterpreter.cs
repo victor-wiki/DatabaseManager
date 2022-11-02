@@ -727,7 +727,7 @@ namespace DatabaseInterpreter.Core
                 string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
                 string commentClause = (!string.IsNullOrEmpty(column.Comment) && this.Option.TableScriptsGenerateOption.GenerateComment ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
-                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && this.AllowDefaultValue(column) && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {scriptComment}{commentClause}";
@@ -785,6 +785,35 @@ namespace DatabaseInterpreter.Core
             }
 
             return dataLength;
+        }
+
+        private bool AllowDefaultValue(TableColumn column)
+        {
+            string dataType = column.DataType.ToLower();
+
+            switch(dataType)
+            {
+                case "blob":
+                case "tinyblob":
+                case "mediumblob":
+                case "longblob":
+                case "text":
+                case "tinytext":
+                case "mediumtext":
+                case "longtext":
+                case "geometry":
+                case "geomcollection":
+                case "point":
+                case "multipoint":
+                case "linestring":
+                case "multilinestring":
+                case "polygon":
+                case "multipolygon":
+                case "json":
+                    return false;
+            }
+
+            return true;
         }
         #endregion     
     }

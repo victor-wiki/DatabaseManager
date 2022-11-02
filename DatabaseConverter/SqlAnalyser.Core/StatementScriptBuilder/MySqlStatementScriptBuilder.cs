@@ -28,7 +28,7 @@ namespace SqlAnalyser.Core
 
                 if (insert.Columns.Count > 0)
                 {
-                    this.AppendLine($"({ string.Join(",", insert.Columns.Select(item => item))})");
+                    this.AppendLine($"({string.Join(",", insert.Columns.Select(item => item))})");
                 }
 
                 if (insert.SelectStatements != null && insert.SelectStatements.Count > 0)
@@ -55,7 +55,7 @@ namespace SqlAnalyser.Core
                     tableNames.AddRange(update.TableNames);
                 }
 
-                this.Append($" {string.Join(",", tableNames.Select(item=> item.NameWithAlias))}");
+                this.Append($" {string.Join(",", tableNames.Where(item => item != null).Select(item => item.NameWithAlias))}");
 
                 if (update.FromItems != null && update.FromItems.Count > 0)
                 {
@@ -160,7 +160,7 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null && set.Value != null)
                 {
-                    this.AppendLine($"SET {set.Key } = {set.Value };");
+                    this.AppendLine($"SET {set.Key} = {set.Value};");
                 }
             }
             else if (statement is LoopStatement loop)
@@ -208,14 +208,14 @@ namespace SqlAnalyser.Core
             }
             else if (statement is LoopExitStatement whileExit)
             {
-                if(!whileExit.IsCursorLoopExit)
+                if (!whileExit.IsCursorLoopExit)
                 {
                     this.AppendLine($"IF {whileExit.Condition} THEN");
                     this.AppendLine("BEGIN");
                     this.AppendLine("BREAK;");
                     this.AppendLine("END;");
                     this.AppendLine("END IF;");
-                }               
+                }
             }
             else if (statement is ReturnStatement @return)
             {
@@ -229,7 +229,7 @@ namespace SqlAnalyser.Core
             {
                 string content = string.Join(",", call.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()));
 
-                if(call.IsExecuteSql)
+                if (call.IsExecuteSql)
                 {
                     this.AppendLine($"PREPARE dynamicSQL FROM {content};");
                     this.AppendLine("EXECUTE dynamicSQL;");
@@ -237,7 +237,7 @@ namespace SqlAnalyser.Core
                 else
                 {
                     this.AppendLine($"CALL {call.Name}({content});");
-                }               
+                }
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -313,11 +313,11 @@ namespace SqlAnalyser.Core
             }
             else if (statement is TruncateStatement truncate)
             {
-                this.AppendLine($"TRUNCATE TABLE { truncate.TableName};");
+                this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
             }
             else if (statement is DropStatement drop)
             {
-                string objectType = drop.ObjectType.ToString().ToUpper();                
+                string objectType = drop.ObjectType.ToString().ToUpper();
 
                 this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
             }
@@ -330,14 +330,24 @@ namespace SqlAnalyser.Core
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
+            bool isAssignColumn = select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("=");
+            bool handled = false;
 
-            if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
+            if (select.TableName == null && isAssignColumn)
             {
                 ColumnName columnName = select.Columns.First();
 
                 this.AppendLine($"SET {columnName}");
             }
-            else if(!isWith)
+            else if (select.TableName != null && select.FromItems.Count == 1 && isAssignColumn && this.RoutineType == RoutineType.FUNCTION)
+            {
+                string[] items = select.Columns.First().Symbol.Split('=');
+                string variableName = items[0];
+
+                this.AppendLine($"SET {variableName}=(SELECT {items[1]} FROM {select.TableName})");
+                handled = true;
+            }
+            else if (!isWith)
             {
                 this.AppendLine(selectColumns);
             }
@@ -391,7 +401,10 @@ namespace SqlAnalyser.Core
                 this.AppendLine(selectColumns);
             }
 
-            appendFrom();
+            if (!handled)
+            {
+                appendFrom();
+            }
 
             if (select.Where != null)
             {
@@ -400,7 +413,7 @@ namespace SqlAnalyser.Core
 
             if (select.GroupBy != null && select.GroupBy.Count > 0)
             {
-                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy.Select(item=>item))}");
+                this.AppendLine($"GROUP BY {string.Join(",", select.GroupBy.Select(item => item))}");
             }
 
             if (select.Having != null)
@@ -410,7 +423,7 @@ namespace SqlAnalyser.Core
 
             if (select.OrderBy != null && select.OrderBy.Count > 0)
             {
-                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy.Select(item=>item))}");
+                this.AppendLine($"ORDER BY {string.Join(",", select.OrderBy.Select(item => item))}");
             }
 
             if (select.TopInfo != null)

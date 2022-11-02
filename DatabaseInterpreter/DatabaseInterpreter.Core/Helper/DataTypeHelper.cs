@@ -12,8 +12,9 @@ namespace DatabaseInterpreter.Core
     {
         public static readonly string[] CharTypeFlags = { "char" };
         public static readonly string[] TextTypeFlags = { "text" };
-        public static readonly string[] BinaryTypeFlags = { "binary", "bytea" };
-        public static readonly string[] DatetimeTypeFlags = { "date", "time" };
+        public static readonly string[] BinaryTypeFlags = { "binary", "bytea", "raw", "blob" };
+        public static readonly string[] DateOrTimeTypeFlags = { "date", "time" };
+        public static readonly string[] DatetimeOrTimestampTypeFlags = { "datetime", "timestamp"};
         public static readonly string[] GeometryTypeFlags = { "geometry", "geography"};
         public static List<string> SpecialDataTypes = new List<string>() { 
             nameof(SqlHierarchyId), nameof(SqlGeography), nameof(SqlGeometry),nameof(Geometry), "Byte[]"
@@ -44,9 +45,14 @@ namespace DatabaseInterpreter.Core
             return TextTypeFlags.Any(item => dataType.ToLower().Contains(item));
         }
 
-        public static bool IsDatetimeType(string dataType)
+        public static bool IsDateOrTimeType(string dataType)
         {
-            return DatetimeTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return DateOrTimeTypeFlags.Any(item => dataType.ToLower().Contains(item));
+        }
+
+        public static bool IsDatetimeOrTimestampType(string dataType)
+        {
+            return DatetimeOrTimestampTypeFlags.Any(item => dataType.ToLower().Contains(item));
         }
 
         public static bool IsUserDefinedType(TableColumn column)

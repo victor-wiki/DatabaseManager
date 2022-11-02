@@ -8,17 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.13</Version>
+    <Version>2.0.14</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add
-(1) view table dependency
-(2) geometry viewer
-2. optimize
-(1) datagridview : truncate long text of cell
-(2) query editor: not use intellisence default if it's a builtin database</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add: show sorted names using context menu in simple treeview
+2. rename: frmGeometryViewer to frmWktViewer</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.13</AssemblyVersion>
-    <FileVersion>2.0.13</FileVersion>
+    <AssemblyVersion>2.0.14</AssemblyVersion>
+    <FileVersion>2.0.14</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

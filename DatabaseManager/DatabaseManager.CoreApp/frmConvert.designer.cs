@@ -71,6 +71,7 @@ namespace DatabaseManager
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -82,6 +83,7 @@ namespace DatabaseManager
             this.gbOption.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // btnSaveMessage
@@ -184,6 +186,7 @@ namespace DatabaseManager
             // 
             // gbOption
             // 
+            this.gbOption.Controls.Add(this.pictureBox1);
             this.gbOption.Controls.Add(this.chkCreateSchemaIfNotExists);
             this.gbOption.Controls.Add(this.chkExcludeGeometryForData);
             this.gbOption.Controls.Add(this.pictureBox2);
@@ -553,6 +556,17 @@ namespace DatabaseManager
             this.tsmiCopySelection.Text = "Copy selection";
             this.tsmiCopySelection.Click += new System.EventHandler(this.tsmiCopySelection_Click);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::DatabaseManager.Resources.Info16;
+            this.pictureBox1.Location = new System.Drawing.Point(445, 294);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(17, 19);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBox1.TabIndex = 62;
+            this.pictureBox1.TabStop = false;
+            this.toolTip1.SetToolTip(this.pictureBox1, "It works without transaction");
+            // 
             // frmConvert
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -578,6 +592,7 @@ namespace DatabaseManager
             this.gbOption.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -622,6 +637,7 @@ namespace DatabaseManager
         private System.Windows.Forms.CheckBox chkOutputScripts;
         private System.Windows.Forms.CheckBox chkExcludeGeometryForData;
         private System.Windows.Forms.CheckBox chkCreateSchemaIfNotExists;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
 
