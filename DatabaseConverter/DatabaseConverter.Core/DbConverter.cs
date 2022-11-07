@@ -240,7 +240,7 @@ namespace DatabaseConverter.Core
             #region Translate
             TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Option);
 
-            translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || this.Option.OnlyForTranslate || !this.Option.ExecuteScriptOnTargetServer;
+            translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!this.Option.ExecuteScriptOnTargetServer && !this.Option.OnlyForTranslate);
 
             DatabaseObjectType translateDbObjectType = TranslateEngine.SupportDatabaseObjectType;
 
@@ -334,7 +334,7 @@ namespace DatabaseConverter.Core
 
                     if (this.Option.UseTransaction)
                     {
-                        this.transaction = dbConnection.BeginTransaction();
+                        this.transaction = await dbConnection.BeginTransactionAsync();
                         canCommit = true;
                     }
                 }
@@ -379,7 +379,8 @@ namespace DatabaseConverter.Core
                             {
                                 currentScript = s;
 
-                                bool isRoutineScript = this.IsRoutineScript(s);       
+                                bool isRoutineScript = this.IsRoutineScript(s);
+                                bool isView = s.ObjectType == nameof(View);
 
                                 if (!isValidScript(s))
                                 {
@@ -392,7 +393,7 @@ namespace DatabaseConverter.Core
                                 {
                                     i++;
 
-                                    if (!isRoutineScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
+                                    if ((!isRoutineScript || isView) && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
                                     {
                                         sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
                                     }
@@ -434,9 +435,9 @@ namespace DatabaseConverter.Core
                     }
                     catch (Exception ex)
                     {
-                        targetInterpreter.CancelRequested = true;
+                        targetInterpreter.CancelRequested = true;                        
 
-                        this.Rollback();
+                        this.Rollback(ex);
 
                         ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
                         ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
@@ -594,7 +595,7 @@ namespace DatabaseConverter.Core
                                 {
                                     sourceInterpreter.CancelRequested = true;
 
-                                    this.Rollback();
+                                    this.Rollback(ex);
 
                                     ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
                                     ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
@@ -715,7 +716,7 @@ namespace DatabaseConverter.Core
         }
         #endregion
 
-        private void Rollback()
+        private void Rollback(Exception ex = null)
         {
             if (this.transaction != null && this.transaction.Connection != null && this.transaction.Connection.State == ConnectionState.Open)
             {
@@ -723,9 +724,19 @@ namespace DatabaseConverter.Core
                 {
                     this.cancelRequested = true;
 
-                    this.transaction.Rollback();
+                    bool hasRollbacked = false;
+
+                    if (ex!= null && ex is DbCommandException dbe)
+                    {
+                        hasRollbacked = dbe.HasRollbackedTransaction;
+                    }
+
+                    if(!hasRollbacked)
+                    {
+                        this.transaction.Rollback();
+                    }                    
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
                     //throw;
                 }
@@ -873,7 +884,7 @@ namespace DatabaseConverter.Core
         {
             this.Source = null;
             this.Target = null;
-            this.transaction = null;
+            this.transaction = null;           
         }
     }
 }

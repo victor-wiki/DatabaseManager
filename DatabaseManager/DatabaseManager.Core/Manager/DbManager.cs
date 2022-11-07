@@ -58,11 +58,11 @@ namespace DatabaseManager.Core
 
                 using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
                 {
-                    dbConnection.Open();
+                    await dbConnection.OpenAsync();
 
                     await this.SetConstrainsEnabled(dbConnection, false);
 
-                    transaction = dbConnection.BeginTransaction();
+                    transaction = await dbConnection.BeginTransactionAsync();
 
                     foreach (Table table in tables)
                     {
@@ -157,9 +157,11 @@ namespace DatabaseManager.Core
             {
                 using (DbConnection connection = this.dbInterpreter.CreateConnection())
                 {
+                    await this.DropDbObjects(connection, schemaInfo.TableTriggers);
                     await this.DropDbObjects(connection, schemaInfo.Procedures);
                     await this.DropDbObjects(connection, schemaInfo.Views);
-                    await this.DropDbObjects(connection, schemaInfo.TableForeignKeys);
+                    await this.DropDbObjects(connection, schemaInfo.TableTriggers);
+                    await this.DropDbObjects(connection, schemaInfo.TableForeignKeys);              
                     await this.DropDbObjects(connection, schemaInfo.Tables);
                     await this.DropDbObjects(connection, schemaInfo.Functions);
                     await this.DropDbObjects(connection, schemaInfo.UserDefinedTypes);

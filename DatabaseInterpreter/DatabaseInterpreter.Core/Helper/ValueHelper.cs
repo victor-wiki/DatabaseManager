@@ -108,7 +108,7 @@ namespace DatabaseInterpreter.Core
                 {
                     string trimedValue = value.Substring(1, value.Length - 2);
 
-                    if(!IsParenthesisBalanced(trimedValue))
+                    if (!IsParenthesisBalanced(trimedValue))
                     {
                         return value;
                     }
@@ -118,10 +118,10 @@ namespace DatabaseInterpreter.Core
                     }
                 }
 
-                return value;
+                return value.Trim();
             }
 
-            return value;
+            return value?.Trim();
         }
 
         public static bool IsParenthesisBalanced(string value)
@@ -179,6 +179,11 @@ namespace DatabaseInterpreter.Core
         public static bool IsSequenceNextVal(string value)
         {
             return value?.Contains("nextval") == true;
-        }        
+        }
+
+        public static bool IsTrueValue(string value, bool includeInteger = true)
+        {
+            return value?.ToLower() == "true" || (includeInteger && value?.Trim() == "1");
+        }
     }
 }

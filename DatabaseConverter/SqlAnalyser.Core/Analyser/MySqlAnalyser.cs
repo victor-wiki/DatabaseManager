@@ -12,6 +12,7 @@ namespace SqlAnalyser.Core
         private MySqlRuleAnalyser ruleAnalyser = null;
 
         public override DatabaseType DatabaseType => DatabaseType.MySql;
+        public override SqlRuleAnalyser RuleAnalyser => this.ruleAnalyser;
 
         public MySqlAnalyser()
         {
@@ -62,8 +63,7 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();          
 
             sb.AppendLine($"CREATE {script.Type.ToString()} {script.NameWithSchema}");
 
@@ -105,9 +105,11 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
             #region Cursor
@@ -116,7 +118,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (Statement statement in script.Statements.Where(item => item is DeclareCursorStatement))
                 {
-                    sbBody.AppendLine(this.BuildStatement(statement));
+                    sb.AppendLine(this.BuildStatement(statement));
                 }
             };
 
@@ -131,7 +133,7 @@ namespace SqlAnalyser.Core
                         DefaultValue = new TokenInfo("0")
                     };
 
-                    sbBody.AppendLine(this.BuildStatement(declareStatement));
+                    sb.AppendLine(this.BuildStatement(declareStatement));
                 }
 
                 appendDeclareCursor();
@@ -139,7 +141,7 @@ namespace SqlAnalyser.Core
                 DeclareCursorHandlerStatement handler = new DeclareCursorHandlerStatement();
                 handler.Statements.Add(new SetStatement() { Key = new TokenInfo("FINISHED") { Type = TokenType.VariableName }, Value = new TokenInfo("1") });
 
-                sbBody.AppendLine(this.BuildStatement(handler));
+                sb.AppendLine(this.BuildStatement(handler));
             }
             else
             {
@@ -150,7 +152,7 @@ namespace SqlAnalyser.Core
 
             if (script.ReturnTable != null)
             {
-                sbBody.AppendLine(MySqlStatementScriptBuilder.BuildTemporaryTable(script.ReturnTable));
+                sb.AppendLine(MySqlStatementScriptBuilder.BuildTemporaryTable(script.ReturnTable));
             }
 
             FetchCursorStatement fetchCursorStatement = null;
@@ -182,10 +184,10 @@ namespace SqlAnalyser.Core
                     hasLeaveStatement = true;
                 }
           
-                sbBody.AppendLine(this.BuildStatement(statement, script.Type));
+                sb.AppendLine(this.BuildStatement(statement, script.Type));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine("END");
 
@@ -193,8 +195,7 @@ namespace SqlAnalyser.Core
             {
                 sb.Insert(beginIndex, "sp:");
             }
-
-            result.Body = sbBody.ToString();
+           
             result.Script = sb.ToString();
 
             return result;
@@ -204,19 +205,19 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();          
 
             sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements)
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
-            result.Body = sbBody.ToString();
             result.Script = sb.ToString();
 
             return result;
@@ -226,10 +227,10 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();           
 
-            string events = string.Join(",", script.Events);
+            //only allow one event type: INSERT, UPDATE OR DELETE
+            var events = script.Events.FirstOrDefault(); // string.Join(",", script.Events);
 
             string time = script.Time == TriggerTime.INSTEAD_OF ? "AFTER" : script.Time.ToString();
 
@@ -241,9 +242,11 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
@@ -253,20 +256,19 @@ namespace SqlAnalyser.Core
                     hasLeaveStatement = true;
                 }
 
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement, RoutineType.TRIGGER));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
-            sbBody.AppendLine("END");
+            sb.AppendLine("END");
 
             if (hasLeaveStatement)
             {
                 sb.Insert(beginIndex, "sp:");
             }
 
-            result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();            
 
             return result;
         }

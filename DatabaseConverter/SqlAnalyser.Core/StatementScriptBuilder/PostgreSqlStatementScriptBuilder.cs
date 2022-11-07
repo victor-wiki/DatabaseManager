@@ -51,7 +51,7 @@ namespace SqlAnalyser.Core
 
                 Func<string, bool, string> getNoAliasString = (str, useOldName) =>
                 {
-                    if(str!= null)
+                    if (str != null)
                     {
                         return alias == null ? str : str.Replace($"{alias}.", (useOldName ? $"{tableName}." : ""));
                     }
@@ -138,15 +138,23 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareStatement declare)
             {
-                if (declare.Type == DeclareType.Variable)
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    string defaultValue = (declare.DefaultValue == null ? "" : $" DEFAULT {declare.DefaultValue}");
+                    if (declare.Type == DeclareType.Variable)
+                    {
+                        string defaultValue = (declare.DefaultValue == null ? "" : $" DEFAULT {declare.DefaultValue}");
 
-                    this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
+                        this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
+                    }
+                    else if (declare.Type == DeclareType.Table)
+                    {
+
+                    }
                 }
-                else if (declare.Type == DeclareType.Table)
-                {
 
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declare);
                 }
             }
             else if (statement is IfStatement @if)
@@ -243,7 +251,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement execute)
             {
-                this.AppendLine($"{(execute.IsExecuteSql? "EXECUTE":"CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                this.AppendLine($"{(execute.IsExecuteSql ? "EXECUTE" : "CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -287,8 +295,20 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
-                this.Build(declareCursor.SelectStatement);
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
+                {
+                    this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+
+                    if (declareCursor.SelectStatement != null)
+                    {
+                        this.Build(declareCursor.SelectStatement);
+                    }
+                }
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declareCursor);
+                }
             }
             else if (statement is OpenCursorStatement openCursor)
             {
@@ -325,9 +345,21 @@ namespace SqlAnalyser.Core
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
-            if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
+            if (select.TableName == null && select.Columns.Any(item => item.Symbol.Contains("=")))
             {
-                this.AppendLine($"{select.Columns.First().Symbol.Replace("=", ":=")}");
+                foreach (var column in select.Columns)
+                {
+                    string symbol = column.Symbol;
+
+                    if (this.IsIdentifierNameBeforeEqualMark(symbol))
+                    {
+                        string[] items = symbol.Split('=');
+
+                        symbol = $"{items[0]}:={string.Join("=", items.Skip(1))}";
+                    }
+
+                    this.AppendLine($"{symbol};");
+                }
             }
             else if (!isWith)
             {

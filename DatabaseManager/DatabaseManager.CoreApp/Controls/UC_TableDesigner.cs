@@ -45,7 +45,7 @@ namespace DatabaseManager.Controls
         {
             if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
             {
-                this.lblSchema.Text = "Owner:";
+                this.lblSchema.Text = "Tablespace:";
             }
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
@@ -96,24 +96,21 @@ namespace DatabaseManager.Controls
             List<string> items = new List<string>();
             string defaultItem = null;
 
-            List<DatabaseSchema> owners = await dbInterpreter.GetDatabaseSchemasAsync();
+            List<DatabaseSchema> schemas = await dbInterpreter.GetDatabaseSchemasAsync();
 
-            items.AddRange(owners.Select(item => item.Name));
+            items.AddRange(schemas.Select(item => item.Name));
 
-            if (this.displayInfo.DatabaseType == DatabaseType.SqlServer)
+            string defaultSchema = dbInterpreter.DefaultSchema;
+
+            if(!string.IsNullOrEmpty(defaultSchema) && schemas.Any(item=> item.Name == defaultSchema))
             {
-                defaultItem = "dbo";
-            }
-            else if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+                defaultItem = defaultSchema;
+            }           
+            
+            if (this.displayInfo.DatabaseType == DatabaseType.Oracle || this.displayInfo.DatabaseType == DatabaseType.MySql)
             {
-                this.cboSchema.Enabled = false;
-                defaultItem = (this.GetDbInterpreter() as OracleInterpreter).GetDbSchema();
-            }
-            else if (this.displayInfo.DatabaseType == DatabaseType.MySql)
-            {
-                this.cboSchema.Enabled = false;
-                defaultItem = dbInterpreter.ConnectionInfo.Database;
-            }
+                this.cboSchema.Enabled = false;               
+            }           
 
             cboSchema.Items.AddRange(items.ToArray());
 

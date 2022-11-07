@@ -13,6 +13,7 @@ namespace SqlAnalyser.Core
         private PlSqlRuleAnalyser ruleAnalyser = null;
 
         public override DatabaseType DatabaseType => DatabaseType.Oracle;
+        public override SqlRuleAnalyser RuleAnalyser => this.ruleAnalyser;
 
         public PlSqlAnalyser()
         {
@@ -63,8 +64,9 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StatementScriptBuilderOption option = new StatementScriptBuilderOption() { NotBuildDeclareStatement = true, CollectDeclareStatement = true };
+
+            StringBuilder sb = new StringBuilder();          
 
             sb.AppendLine($"CREATE OR REPLACE {script.Type.ToString()} {script.Name}");
 
@@ -124,12 +126,9 @@ namespace SqlAnalyser.Core
                 }
             }
 
-            sb.AppendLine("AS");
+            sb.AppendLine("AS");           
 
-            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement || item is DeclareCursorStatement))
-            {
-                sb.Append(this.BuildStatement(statement).Replace("DECLARE ", ""));
-            }
+            int declareStartIndex = sb.Length - 1;
 
             sb.AppendLine("BEGIN");
 
@@ -138,7 +137,9 @@ namespace SqlAnalyser.Core
 
             }
 
-            foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement || item is DeclareCursorStatement)))
+            result.BodyStartIndex = sb.Length;
+
+            foreach (Statement statement in script.Statements)
             {
                 if (statement is WhileStatement @while)
                 {
@@ -152,15 +153,38 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement, script.Type, option));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine($"END {script.Name};");
 
-            result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
+            if (this.StatementBuilder.DeclareStatements.Count > 0)
+            {
+                this.StatementBuilder.Clear();
+
+                StringBuilder sbDeclare = new StringBuilder();
+
+                foreach (var declareStatement in this.StatementBuilder.DeclareStatements)
+                {
+                    option.NotBuildDeclareStatement = false;
+                    option.CollectDeclareStatement = false;
+
+                    string content = this.BuildStatement(declareStatement, script.Type, option).Trim();
+
+                    sbDeclare.AppendLine(content.Replace("DECLARE ", ""));
+                }
+
+                sb.Insert(declareStartIndex, sbDeclare.ToString());
+
+                result.BodyStartIndex += sbDeclare.Length;
+                result.BodyStopIndex += sbDeclare.Length;
+
+                this.StatementBuilder.DeclareStatements.Clear();
+            }
+
+            result.Script = sb.ToString();           
 
             return result;
         }
@@ -169,20 +193,20 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();            
 
             sb.AppendLine($"CREATE OR REPLACE VIEW {script.NameWithSchema} AS");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements)
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
-            result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
+            result.Script = sb.ToString();           
 
             return result;
         }
@@ -191,8 +215,7 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();          
 
             string events = string.Join(" OR ", script.Events);
 
@@ -212,17 +235,18 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine("END;");
 
-            result.Script = sb.ToString();
-            result.Body = sb.ToString();
+            result.Script = sb.ToString();           
 
             return result;
         }

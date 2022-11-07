@@ -30,6 +30,7 @@ namespace DatabaseManager.Controls
         private bool isPasting = false;
         private List<string> dbSchemas;
         private const int WordListMinWidth = 160;
+        private string commentString { get { return RichTextBoxHelper.GetCommentString(this.DatabaseType); } }
 
         public DatabaseType DatabaseType { get; set; }
         public DbInterpreter DbInterpreter { get; set; }
@@ -42,7 +43,13 @@ namespace DatabaseManager.Controls
 
             this.lvWords.MouseWheel += LvWords_MouseWheel;
             this.panelWords.VerticalScroll.Enabled = true;
-            this.panelWords.VerticalScroll.Visible = true;
+            this.panelWords.VerticalScroll.Visible = true;            
+        }       
+
+        public void Init()
+        {
+            this.keywords = KeywordManager.GetKeywords(this.DatabaseType);
+            this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
         }
 
         private void LvWords_MouseWheel(object sender, MouseEventArgs e)
@@ -58,9 +65,7 @@ namespace DatabaseManager.Controls
         public void SetupIntellisence()
         {
             this.intellisenseSetuped = true;
-            this.enableIntellisense = true;
-            this.keywords = KeywordManager.GetKeywords(this.DatabaseType);
-            this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
+            this.enableIntellisense = true;            
             this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
             this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
             this.dbSchemas = this.allWords.Where(item => item.Type == SqlWordTokenType.Schema).Select(item => item.Text).ToList();
@@ -127,11 +132,6 @@ namespace DatabaseManager.Controls
         {
             this.ShowCurrentPosition();
 
-            if (!this.enableIntellisense)
-            {
-                return;
-            }
-
             if (this.isPasting)
             {
                 return;
@@ -157,6 +157,7 @@ namespace DatabaseManager.Controls
             if (e.KeyCode == Keys.Space)
             {
                 this.ClearStyleForSpace();
+
                 this.SetWordListViewVisible(false);
             }
 
@@ -175,7 +176,7 @@ namespace DatabaseManager.Controls
                 }
             }
 
-            if (this.panelWords.Visible)
+            if (this.enableIntellisense && this.panelWords.Visible)
             {
                 if (this.lvWords.Tag is SqlWord word)
                 {
@@ -204,22 +205,25 @@ namespace DatabaseManager.Controls
 
             if (e.KeyData == Keys.OemPeriod)
             {
-                SqlWord word = this.FindWord(token.Text);
+                if (this.enableIntellisense)
+                {
+                    SqlWord word = this.FindWord(token.Text);
 
-                if (word.Type == SqlWordTokenType.Table)
-                {
-                    this.ShowTableColumns(word.Text);
-                    this.lvWords.Tag = word;
-                }
-                else if (word.Type == SqlWordTokenType.Schema)
-                {
-                    this.ShowDbObjects(null, word.Text);
-                    this.lvWords.Tag = word;
+                    if (word.Type == SqlWordTokenType.Table)
+                    {
+                        this.ShowTableColumns(word.Text);
+                        this.lvWords.Tag = word;
+                    }
+                    else if (word.Type == SqlWordTokenType.Schema)
+                    {
+                        this.ShowDbObjects(null, word.Text);
+                        this.lvWords.Tag = word;
+                    }
                 }
             }
             else if (e.KeyCode == Keys.Back)
             {
-                if (this.panelWords.Visible)
+                if (this.enableIntellisense && this.panelWords.Visible)
                 {
                     if (!this.IsMatchWord(token.Text) || this.txtEditor.Text.Length == 0)
                     {
@@ -231,13 +235,9 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if (token != null && token.Text.Length > 0 && this.DbInterpreter.CommentString.Contains(token.Text.Last()))
+                if (token != null && token.Text.Length > 0 && this.commentString.Contains(token.Text.Last()))
                 {
-                    int start = this.txtEditor.SelectionStart;
-                    int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
-                    int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
-
-                    RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop); ;
+                    this.HighlightingWord(token);
                 }
             }
             else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
@@ -246,13 +246,25 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.ShowWordListByToken(token);
+                if(this.enableIntellisense)
+                {
+                    this.ShowWordListByToken(token);
+                }                
             }
+        }
+
+        private void HighlightingWord(SqlWordToken token)
+        {
+            int start = this.txtEditor.SelectionStart;
+            int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
+            int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
+
+            RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop); ;
         }
 
         private void ShowWordListByToken(SqlWordToken token)
         {
-            if (token== null || string.IsNullOrEmpty(token.Text) || token.Type == SqlWordTokenType.Number)
+            if (token == null || string.IsNullOrEmpty(token.Text) || token.Type == SqlWordTokenType.Number)
             {
                 this.SetWordListViewVisible(false);
 
@@ -456,7 +468,7 @@ namespace DatabaseManager.Controls
 
             bool isComment = false;
 
-            if (lineBefore.Contains(this.DbInterpreter.CommentString))
+            if (this.DbInterpreter != null && lineBefore.Contains(this.commentString))
             {
                 isComment = true;
             }
@@ -568,7 +580,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                int firstIndexOfComment = lineFirstCharIndex + lineBefore.IndexOf(this.DbInterpreter.CommentString);
+                int firstIndexOfComment = lineFirstCharIndex + lineBefore.IndexOf(this.commentString);
 
                 token.StartIndex = firstIndexOfComment;
                 token.StopIndex = lineFirstCharIndex + this.txtEditor.Lines[lineIndex].Length - 1;
@@ -578,7 +590,7 @@ namespace DatabaseManager.Controls
 
             if (!noAction)
             {
-                if (this.dbSchemas.Any(item => item.ToUpper() == trimedWord.ToUpper()))
+                if (this.enableIntellisense && this.dbSchemas.Any(item => item.ToUpper() == trimedWord.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.Schema;
                 }
@@ -587,7 +599,6 @@ namespace DatabaseManager.Controls
                     token.Type = SqlWordTokenType.Keyword;
 
                     this.SetWordColor(token);
-
                 }
                 else if (this.builtinFunctions.Any(item => item.Name.ToUpper() == trimedWord.ToUpper()))
                 {
@@ -610,7 +621,7 @@ namespace DatabaseManager.Controls
                     {
                         this.ClearStyle(token);
                     }
-                }
+                }                             
             }
 
             return token;
@@ -683,7 +694,12 @@ namespace DatabaseManager.Controls
 
         private string TrimQuotationChars(string value)
         {
-            return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar, '"');
+            if (this.DbInterpreter != null)
+            {
+                return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar, '"');
+            }
+
+            return value;
         }
 
         private void SetWordColor(SqlWordToken token, bool keepCurrentPos = false)
@@ -796,7 +812,7 @@ namespace DatabaseManager.Controls
                     this.txtEditor.Focus();
                 }
             }
-        }
+        }       
 
         private void tsmiDisableIntellisense_Click(object sender, EventArgs e)
         {
@@ -910,6 +926,6 @@ namespace DatabaseManager.Controls
                 this.lvWords.Items.Clear();
                 this.lvWords.Tag = null;
             }
-        }
+        }       
     }
 }

@@ -13,6 +13,11 @@ namespace DatabaseManager.Helper
 {
     public class RichTextBoxHelper
     {
+        public static string GetCommentString(DatabaseType databaseType)
+        {
+            return databaseType == DatabaseType.MySql ? "#" : "--";
+        }
+
         public static void AppendMessage(RichTextBox richTextBox, string message, bool isError = false, bool scrollToCaret = true)
         {
             int start = richTextBox.Text.Length;
@@ -61,7 +66,7 @@ namespace DatabaseManager.Helper
             Highlighting(richTextBox, functionsRegex, RegexOptions.IgnoreCase, ColorTranslator.FromHtml("#FF00FF"));
             Highlighting(richTextBox, stringRegex, RegexOptions.IgnoreCase, Color.Red);
 
-            string commentString = databaseType == DatabaseType.MySql ? "#" : "--";
+            string commentString = GetCommentString(databaseType);
             string commentRegex = $@"({commentString}).*[\n]?";
             Highlighting(richTextBox, commentRegex, RegexOptions.IgnoreCase, Color.Green);
 

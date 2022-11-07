@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
@@ -15,6 +16,10 @@ namespace SqlAnalyser.Core
         public StringBuilder Script => this.sb;
 
         public RoutineType RoutineType { get; set; }
+
+        public List<Statement> DeclareStatements { get; set; } = new List<Statement>();
+
+        public StatementScriptBuilderOption Option { get; set; }
 
         protected void Append(string value, bool appendIndent = true)
         {
@@ -83,6 +88,11 @@ namespace SqlAnalyser.Core
             return this.sb.ToString();
         }
 
+        public void Clear()
+        {
+            this.sb.Clear();
+        }
+
         protected virtual void BuildSelectStatement(SelectStatement select, bool appendSeparator = true) { }
         
         protected void BuildSelectStatementFromItems(SelectStatement selectStatement)
@@ -107,13 +117,19 @@ namespace SqlAnalyser.Core
                 }
 
                 NameToken fromTableName = fromItem.TableName;
+                TokenInfo alias = fromItem.Alias;
 
                 if (fromTableName == null)
                 {
                     fromTableName = selectStatement.TableName;
-                }             
+                }
 
-                this.Append($"{this.GetNameWithAlias(fromTableName)}{(hasJoins ? Environment.NewLine : "")}", false);
+                string nameWithAlias = this.GetNameWithAlias(fromTableName);
+
+                if (nameWithAlias?.Trim() != alias?.Symbol?.Trim())
+                {
+                    this.Append($"{nameWithAlias}{(hasJoins ? Environment.NewLine : "")}", false);
+                }                
 
                 bool hasSubSelect = false;
 
@@ -126,9 +142,9 @@ namespace SqlAnalyser.Core
                     this.BuildSelectStatement(fromItem.SubSelectStatement, false);
                     this.Append(")");
 
-                    if (fromItem.Alias != null)
+                    if (alias != null)
                     {
-                        this.Append($"{fromItem.Alias}", false);
+                        this.Append($"{alias}", false);
                     }
                 }
 
@@ -209,6 +225,32 @@ namespace SqlAnalyser.Core
             this.AppendLine($"{unpivotItem.ValueColumnName}");
             this.AppendLine($"FOR {unpivotItem.ForColumnName} IN ({(string.Join(",", unpivotItem.InColumnNames.Select(item => $"{item}")))})");
             this.AppendLine(")");
+        }
+
+        protected bool IsIdentifierNameBeforeEqualMark(string value)
+        {
+            if(!string.IsNullOrEmpty(value))
+            {
+                string name = value.Split('=')[0].Trim();
+
+                string  pattern= @"^([a-zA-Z_$][a-zA-Z\\d_$]*)$";
+
+                return Regex.IsMatch(name, pattern);
+            }
+
+            return false;
+        }
+
+        protected bool HasAssignVariableColumn(SelectStatement statement)
+        {
+            var columns = statement.Columns;
+
+            if (columns.Any(item => item.Symbol.Contains("=") && this.IsIdentifierNameBeforeEqualMark(item.Symbol)))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

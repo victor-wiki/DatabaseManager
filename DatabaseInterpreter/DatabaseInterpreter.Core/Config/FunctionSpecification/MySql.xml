@@ -1,7 +1,7 @@
 ﻿<items>   
   <item name="ABS" args="EXP"></item>
   <item name="ACOS" args="EXP"></item>
-  <item name="ADDDATE" args="DATE,INTERVAL"></item>
+  <item name="ADDDATE" args="DATE,NUMBER"></item>
   <item name="ADDTIME" args="DATE,TIME"></item>
   <item name="ASCII" args="EXP"></item>
   <item name="ASIN" args="EXP"></item>
@@ -13,6 +13,7 @@
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEIL" args="EXP"></item>
   <item name="CEILING" args="EXP"></item>
+  <item name="CHAR" args="NUMBER"></item>
   <item name="CHAR_LENGTH" args="EXP"></item>
   <item name="CHARACTER_LENGTH" args=""></item>
   <item name="COALESCE" args="EXP1,EXP2,..."></item>
@@ -45,7 +46,7 @@
   <!--<item name="DIV" args=""></item>-->
   <item name="ENCRYPT" args="EXP[,SALT]"></item>
   <item name="EXP" args="EXP"></item>
-  <item name="EXTRACT" args="UNIT FROM EXP" delimiter="AS"></item>
+  <item name="EXTRACT" args="UNIT FROM DATE" delimiter=" "></item>
   <item name="FIELD" args="SEARCH,EXP1,EXP2,..."></item>
   <item name="FIND_IN_SET" args="SEARCH,EXP"></item>
   <item name="FLOOR" args="EXP"></item>
@@ -59,7 +60,7 @@
   <item name="INSTR" args="EXP,SEARCH"></item>
   <item name="ISNULL" args="EXP"></item>
   <item name="LAST_DAY" args="DATE"></item>
-  <item name="LAST_INSERT_ID" args="[EXP]"></item>
+  <item name="LAST_INSERT_ID" args=""></item>
   <item name="LCASE" args="EXP"></item>
   <item name="LEAST" args="EXP1,EXP2,..."></item>
   <item name="LEFT" args="EXP,LENGTH"></item>
@@ -98,7 +99,7 @@
   <item name="QUARTER" args="DATE"></item>
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
-  <item name="REPEAT" args="EXP,LENGTH"></item> 
+  <item name="REPEAT" args="PAD,LENGTH"></item> 
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
@@ -128,13 +129,15 @@
   <item name="TIME_FORMAT" args="TIME,FORMAT"></item>
   <item name="TIME_TO_SEC" args="TIME"></item>
   <item name="TIMEDIFF" args="TIME1,TIME2"></item>
-  <item name="TIMESTAMP" args="EXP[,INTERVAL]"></item>
+  <item name="TIMESTAMP" args="EXP[,NUMBER]"></item>
   <item name="TO_DAYS" args="DATE"></item>
   <item name="TRIM" args="EXP"></item>
   <item name="TRUNCATE" args="EXP,DECIMAL"></item>
   <item name="UCASE" args="EXP"></item>
   <item name="UPPER" args="EXP"></item>
   <item name="USER" args=""></item>
+  <item name="UTC_DATE" args=""></item>
+  <item name="UTC_TIMESTAMP" args=""></item>
   <item name="VERSION" args=""></item>
   <item name="WEEK" args="DATE[,MODE]"></item>
   <item name="WEEKDAY" args="DATE"></item>

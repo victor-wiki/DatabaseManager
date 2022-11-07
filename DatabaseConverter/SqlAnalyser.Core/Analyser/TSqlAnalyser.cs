@@ -13,6 +13,7 @@ namespace SqlAnalyser.Core
         private TSqlRuleAnalyser ruleAnalyser = null;
 
         public override DatabaseType DatabaseType => DatabaseType.SqlServer;
+        public override SqlRuleAnalyser RuleAnalyser => this.ruleAnalyser;
 
         public TSqlAnalyser()
         {
@@ -123,7 +124,7 @@ namespace SqlAnalyser.Core
 
             sb.AppendLine("BEGIN");
 
-            StringBuilder sbBody = new StringBuilder();
+            result.BodyStartIndex = sb.Length;
 
             Action<IEnumerable<Statement>> appendStatements = (statements) =>
             {
@@ -149,11 +150,11 @@ namespace SqlAnalyser.Core
                                 @while.Condition.Symbol += " AND " + condition;
                             }
 
-                            sbBody.AppendLine(this.BuildStatement(fetchCursorStatement));
+                            sb.AppendLine(this.BuildStatement(fetchCursorStatement));
                         }
                     }
 
-                    sbBody.AppendLine(this.BuildStatement(statement));
+                    sb.AppendLine(this.BuildStatement(statement));
                 }
             };
 
@@ -161,32 +162,30 @@ namespace SqlAnalyser.Core
 
             if (exceptionStatement != null)
             {
-                sbBody.AppendLine("BEGIN TRY");
+                sb.AppendLine("BEGIN TRY");
                 appendStatements(script.Statements.Where(item => !(item is ExceptionStatement)));
-                sbBody.AppendLine("END TRY");
+                sb.AppendLine("END TRY");
 
-                sbBody.AppendLine("BEGIN CATCH");
+                sb.AppendLine("BEGIN CATCH");
 
                 foreach (ExceptionItem exceptionItem in exceptionStatement.Items)
                 {
-                    sbBody.AppendLine($"IF {exceptionItem.Name} = ERROR_PROCEDURE() OR {exceptionItem.Name} = ERROR_NUMBER()");
-                    sbBody.AppendLine("BEGIN");
+                    sb.AppendLine($"IF {exceptionItem.Name} = ERROR_PROCEDURE() OR {exceptionItem.Name} = ERROR_NUMBER()");
+                    sb.AppendLine("BEGIN");
 
                     appendStatements(exceptionItem.Statements);
 
-                    sbBody.AppendLine("END");
+                    sb.AppendLine("END");
                 }
 
-                sbBody.AppendLine("END CATCH");
+                sb.AppendLine("END CATCH");
             }
             else
             {
                 appendStatements(script.Statements);
             }
 
-            result.Body = sbBody.ToString();
-
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine("END");
 
@@ -199,19 +198,19 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();            
 
             sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements)
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length-1;
 
-            result.Body = sbBody.ToString();
             result.Script = sb.ToString();
 
             return result;
@@ -221,8 +220,7 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
+            StringBuilder sb = new StringBuilder();            
 
             string time = (script.Time == TriggerTime.BEFORE || script.Time == TriggerTime.INSTEAD_OF) ? "INSTEAD OF" : script.Time.ToString();
             string events = string.Join(",", script.Events);
@@ -233,16 +231,17 @@ namespace SqlAnalyser.Core
             sb.AppendLine("AS");
             sb.AppendLine("BEGIN");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements)
             {
-                sbBody.Append(this.BuildStatement(statement));
+                sb.Append(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
-            sb.AppendLine("END");            
-
-            result.Body = sbBody.ToString();
+            sb.AppendLine("END");
+            
             result.Script = sb.ToString();
 
             return result;

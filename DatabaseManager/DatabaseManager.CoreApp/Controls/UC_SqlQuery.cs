@@ -106,6 +106,8 @@ namespace DatabaseManager.Controls
 
             this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
 
+            this.queryEditor.Init();
+
             if (displayInfo.ConnectionInfo != null && !string.IsNullOrEmpty(displayInfo.ConnectionInfo.Database))
             {
                 DbInterpreter dbInterpreter = this.GetDbInterpreter();
@@ -115,7 +117,10 @@ namespace DatabaseManager.Controls
                     return;
                 }
 
-                this.SetupIntellisence();
+                if(SettingManager.Setting.EnableEditorIntellisence)
+                {
+                    this.SetupIntellisence();
+                }               
             }
 
             this.originalText = this.Editor.Text;
@@ -255,6 +260,11 @@ namespace DatabaseManager.Controls
                 if (dbConnect.ShowDialog() == DialogResult.OK)
                 {
                     this.displayInfo.ConnectionInfo = dbConnect.ConnectionInfo;
+
+                    if (SettingManager.Setting.EnableEditorIntellisence)
+                    {
+                        this.SetupIntellisence();
+                    }
                 }
             }
 

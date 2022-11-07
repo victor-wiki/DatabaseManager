@@ -76,22 +76,22 @@ namespace DatabaseConverter.Core
                 if (!string.IsNullOrEmpty(functionExpression))
                 {
                     bool useBrackets = false;
-                    MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, out useBrackets);
+                    MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, null, out useBrackets);
 
-                    FunctionFomular fomular = new FunctionFomular(functionExpression);
+                    FunctionFormula formula = new FunctionFormula(functionExpression);
 
                     Dictionary<string, string> dictDataType = null;
 
-                    if (fomular.Name == null)
+                    if (formula.Name == null)
                     {
                         continue;
                     }
 
-                    string newExpression = ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
+                    string newExpression = ParseFormula(this.sourceFuncSpecs, this.targetFuncSpecs, formula, targetFunctionInfo, out dictDataType);
 
-                    if (newExpression != fomular.Expression)
+                    if (newExpression != formula.Expression)
                     {
-                        newDefinition = ReplaceValue(newDefinition, fomular.Expression, newExpression);
+                        newDefinition = ReplaceValue(newDefinition, formula.Expression, newExpression);
 
                         changed = true;
                     }
@@ -215,7 +215,7 @@ namespace DatabaseConverter.Core
 
                             bool useBrackets = false;
 
-                            MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, out useBrackets);
+                            MappingFunctionInfo targetFunctionInfo = GetMappingFunctionInfo(text, null, out useBrackets);
 
                             if (targetFunctionInfo.Name.ToLower() != text.ToLower())
                             {

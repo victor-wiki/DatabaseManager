@@ -79,7 +79,7 @@
     <value>1. For SqlServer, if it's remote backup, the save folder should be a shared network folder;
 2. For MySql, it should use mysqldump.exe as the backup tool;
 3. For Oracle, it should use exp.exe  as the backup tool;
-3. For Postgres, it should use pg_dump as the backup tool.</value>
+4. For Postgres, it should use pg_dump as the backup tool.</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace DatabaseInterpreter.Core
@@ -26,7 +27,7 @@ namespace DatabaseInterpreter.Core
                 Name = item.Attribute("name").Value,
                 Args = item.Attribute("args").Value,
                 Delimiter = item.Attribute("delimiter")?.Value,
-                NoParenthesess = item.Attribute("noParenthesess")?.Value == "1"
+                NoParenthesess = ValueHelper.IsTrueValue(item.Attribute("noParenthesess")?.Value)
             }).ToList();
 
             if (_functionSpecifications == null)
@@ -37,6 +38,6 @@ namespace DatabaseInterpreter.Core
             _functionSpecifications.Add(dbType, functionSpecs);
 
             return functionSpecs;
-        }
+        }        
     }
 }

@@ -1,19 +1,16 @@
-﻿using Antlr.Runtime;
-using DatabaseConverter.Core.Model;
+﻿using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using Newtonsoft.Json.Linq;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
-    public class ScriptTokenProcessor
+    public class ScriptTokenProcessor : IDisposable
     {
         private const string NameExpression = @"^([a-zA-Z_\s]+)$";
         private DataTypeTranslator dataTypeTranslator;
@@ -76,7 +73,7 @@ namespace DatabaseConverter.Core
 
                         if (pv.Parent != null)
                         {
-                            pv.Parent.Symbol = pv.Parent.Symbol.Replace("@", "V_");
+                            pv.Parent.Symbol = pv.Parent.Symbol.Replace(name, pv.Symbol);
                         }
                     }
                 }
@@ -85,20 +82,16 @@ namespace DatabaseConverter.Core
                     pv.Symbol = "@" + pv.Symbol;
                 }
 
-                this.AddChangedValue(dictChangedValues, name, pv.Symbol);
+                this.AddChangedValue(this.dictChangedValues, name, pv.Symbol);
             };
 
             Action<TokenInfo> changeDataType = (token) =>
             {
                 if (token.Symbol != null)
                 {
-                    TableColumn column = this.CreateTableColumn(token.Symbol);
+                    TableColumn column = TranslateHelper.SimulateTableColumn(this.SourceDbInterpreter, token.Symbol, this.Option, this.UserDefinedTypes, this.TrimChars);
 
-                    DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfoByTableColumn(column);
-
-                    dataTypeTranslator.Translate(dataTypeInfo);
-
-                    DataTypeHelper.SetDataTypeInfoToTableColumn(dataTypeInfo, column);
+                    TranslateHelper.TranslateTableColumnDataType(this.dataTypeTranslator, column);
 
                     token.Symbol = this.TargetDbInterpreter.ParseDataType(column);
                 }
@@ -119,6 +112,9 @@ namespace DatabaseConverter.Core
                     changeDataType(routineScript.ReturnDataType);
                 }
             }
+
+            this.ProcessFunctions();
+            this.ProcessSequences();
 
             foreach (Statement statement in this.Script.Statements)
             {
@@ -146,7 +142,7 @@ namespace DatabaseConverter.Core
                         {
                             if (statement is SelectStatement select)
                             {
-                                if (select.TableName == null && select.FromItems == null && dictChangedValues.ContainsKey(token.Symbol))
+                                if (select.TableName == null && select.FromItems == null && this.dictChangedValues.ContainsKey(token.Symbol))
                                 {
                                     changeParaVarName(token);
                                 }
@@ -155,7 +151,9 @@ namespace DatabaseConverter.Core
 
                         this.HandleQuotationChar(statement, token, tokens);
                     }
-                    else if (tokenType == TokenType.VariableName)
+                    else if (tokenType == TokenType.VariableName 
+                        || (tokenType == TokenType.CursorName && token.Symbol?.StartsWith("@") == true )
+                      )
                     {
                         if (token.Symbol?.StartsWith("@@") == false)
                         {
@@ -168,14 +166,14 @@ namespace DatabaseConverter.Core
                     }
                     else
                     {
-                        this.ReplaceTokenSymbol(dictChangedValues, token);
+                        this.ReplaceTokenSymbol(this.dictChangedValues, token);
 
                         this.HandleQuotationChar(statement, token, tokens);
                     }
 
                     this.HandleConcatChars(token);
                 }
-            }
+            }            
 
             this.Script.Schema = this.GetQuotedString(this.DbObject.Schema);
             this.Script.Name.Symbol = this.GetQuotedString(this.DbObject.Name);
@@ -184,18 +182,18 @@ namespace DatabaseConverter.Core
             if (this.Script is TriggerScript ts)
             {
                 this.RestoreValue(ts.TableName);
-                ts.TableName.Symbol = this.GetQuotedString(ts.TableName.Symbol);
+                ts.TableName.Symbol = this.GetQuotedDbObjectNameWithSchema(ts.TableName.Symbol);
 
                 if (ts.OtherTriggerName != null)
                 {
                     this.RestoreValue(ts.OtherTriggerName);
-                    ts.OtherTriggerName.Symbol = this.GetQuotedString(ts.OtherTriggerName?.Symbol);
+                    ts.OtherTriggerName.Symbol = this.GetQuotedDbObjectNameWithSchema(ts.OtherTriggerName?.Symbol);
                 }
 
                 if (ts.FunctionName != null)
                 {
                     this.RestoreValue(ts.FunctionName);
-                    ts.FunctionName.Symbol = this.GetQuotedString(ts.FunctionName?.Symbol);
+                    ts.FunctionName.Symbol = this.GetQuotedDbObjectNameWithSchema(ts.FunctionName?.Symbol);
                 }
             }
             #endregion
@@ -204,7 +202,7 @@ namespace DatabaseConverter.Core
         private void HandleConcatChars(TokenInfo token)
         {
             token.Symbol = TranslateHelper.ConvertConcatChars(token.Symbol, this.SourceDbInterpreter.STR_CONCAT_CHARS, this.TargetDbInterpreter.STR_CONCAT_CHARS);
-        }       
+        }
 
         private void HandleQuotationChar(Statement statement, TokenInfo token, IEnumerable<TokenInfo> tokens)
         {
@@ -271,7 +269,7 @@ namespace DatabaseConverter.Core
                     {
                         string schema = null, tableName = null, columnName = null;
 
-                        if (token.Type == TokenType.ColumnName || token.Type == TokenType.OrderBy || token.Type == TokenType.GroupBy || token.Type == TokenType.Condition)
+                        if (token.Type == TokenType.ColumnName || token.Type == TokenType.OrderBy || token.Type == TokenType.GroupBy || token.Type == TokenType.SearchCondition)
                         {
                             if (items.Length == 2)
                             {
@@ -330,10 +328,10 @@ namespace DatabaseConverter.Core
                     {
                         string newSymbol = getNewSymbol(items);
 
-                        if(!string.IsNullOrEmpty(newSymbol))
+                        if (!string.IsNullOrEmpty(newSymbol))
                         {
                             token.Symbol = this.RemoveRepeatedQuotationChars(newSymbol);
-                        }                        
+                        }
                     }
                 }
             }
@@ -431,7 +429,14 @@ namespace DatabaseConverter.Core
                 pattern = pattern.Replace("[", "\\[").Replace("]", "\\]");
             }
 
-            return Regex.Replace(value, pattern, newSymbol, RegexOptions.Multiline);
+            string result = Regex.Replace(value, pattern, newSymbol, RegexOptions.Multiline);
+
+            if (value.Contains("@" + oldSymbol)) //restore variable name
+            {
+                result = result.Replace("@" + newSymbol, "@" + oldSymbol);
+            }
+
+            return this.ValidateValue(result);
         }
 
         private bool CanQuote(Statement statement, TokenInfo token)
@@ -442,10 +447,12 @@ namespace DatabaseConverter.Core
                 return false;
             }
 
-            if (token.Type == TokenType.Condition
-                && (statement is IfStatement || statement is WhileStatement
-                || statement is LoopStatement || statement is LeaveStatement)
-                )
+            if (token.Type == TokenType.InsertValue)
+            {
+                return false;
+            }
+
+            if (token.Type == TokenType.IfCondition || token.Type == TokenType.ExitCondition)
             {
                 return false;
             }
@@ -463,6 +470,14 @@ namespace DatabaseConverter.Core
             if (token.Type == TokenType.ColumnName && statement is SelectStatement select)
             {
                 if (select.TableName == null && select.FromItems == null && select.Where == null)
+                {
+                    return false;
+                }
+            }
+
+            if (token.Type == TokenType.UpdateSetValue)
+            {
+                if (token.Symbol.EndsWith('\'') || decimal.TryParse(token.Symbol, out _))
                 {
                     return false;
                 }
@@ -490,10 +505,9 @@ namespace DatabaseConverter.Core
             return tokens.Any(item => item.Type == TokenType.Alias && item.Symbol == symbol);
         }
 
-
         private string GetNewQuotedString(string value)
         {
-            if (value == "*" || value?.StartsWith("'") == true)
+            if (value == "*" || value?.EndsWith("'") == true)
             {
                 return value;
             }
@@ -519,6 +533,37 @@ namespace DatabaseConverter.Core
         private string GetQuotedString(string value)
         {
             return this.TargetDbInterpreter.GetQuotedString(value);
+        }
+
+        private string GetQuotedDbObjectNameWithSchema(string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                if (value.Contains("."))
+                {
+                    string[] items = value.Split('.');
+                    string schema = this.GetTrimedName(items[0]).Trim();
+
+                    string mappedSchema = this.GetMappedSchema(schema);
+
+                    if (!string.IsNullOrEmpty(mappedSchema))
+                    {
+                        items[0] = mappedSchema;
+
+                        return string.Join(".", items.Select(item => this.GetNewQuotedString(item)));
+                    }
+                    else
+                    {
+                        return string.Join(".", items.Skip(1).Select(item => this.GetNewQuotedString(item)));
+                    }
+                }
+                else
+                {
+                    return this.GetQuotedString(value.Trim());
+                }
+            }
+
+            return string.Empty;
         }
 
         private string GetQuotedFullTableName(string schema, string tableName, bool isAlias = false)
@@ -603,7 +648,7 @@ namespace DatabaseConverter.Core
             {
                 token.Symbol = this.DbObject.Definition.Substring(token.StartIndex.Value, token.Length);
             }
-        }
+        }       
 
         private void ReplaceTokens(IEnumerable<TokenInfo> tokens)
         {
@@ -611,27 +656,6 @@ namespace DatabaseConverter.Core
              {
                  this.RestoreValue(token);
              };
-
-            this.Script.Functions.ForEach(item =>
-            {
-                if (item != null)
-                {
-                    changeValue(item);
-
-                    if (item.Children != null)
-                    {
-                        item.Children.ForEach(t => changeValue(t));
-                    }
-                }
-            });
-
-            var functions = this.Script.Functions.Where(item => !item.Children.Any(t => t.Type == TokenType.SequenceName));
-
-            this.TranslateFunctions(functions);
-
-            var sequences = this.Script.Functions.Where(item => item.Children.Any(t => t.Type == TokenType.SequenceName));
-
-            this.TranslateSequences(sequences);
 
             foreach (var token in tokens)
             {
@@ -655,7 +679,7 @@ namespace DatabaseConverter.Core
                     }
                 }
             }
-        }
+        }        
 
         private bool IsFunctionToken(TokenInfo token)
         {
@@ -664,12 +688,53 @@ namespace DatabaseConverter.Core
 
         private string ReplaceValue(string source, string oldValue, string newValue)
         {
-            return Regex.Replace(source, Regex.Escape(oldValue), newValue, RegexOptions.IgnoreCase);
+            return this.ValidateValue(Regex.Replace(source, Regex.Escape(oldValue), newValue, RegexOptions.IgnoreCase));
+        }
+
+        private string ValidateValue(string value)
+        {
+            if (value != null)
+            {
+                while (value.Contains("()()"))
+                {
+                    value = value.Replace("()()", "()");
+                }
+            }
+
+            return value;
+        }
+
+        private void ProcessFunctions()
+        {
+            this.Script.Functions.ForEach(item =>
+            {
+                if (item != null)
+                {
+                    this.RestoreValue(item);
+
+                    if (item.Children != null)
+                    {
+                        item.Children.ForEach(t => this.RestoreValue(t));
+                    }
+                }
+            });
+
+            var functions = this.Script.Functions.Where(item => !item.Children.Any(t => t.Type == TokenType.SequenceName));
+
+            this.TranslateFunctions(functions);
+        }
+
+        private void ProcessSequences()
+        {
+            var sequences = this.Script.Functions.Where(item => item.Children.Any(t => t.Type == TokenType.SequenceName));
+
+            this.TranslateSequences(sequences);
         }
 
         private void TranslateFunctions(IEnumerable<TokenInfo> tokens)
         {
             FunctionTranslator functionTranslator = new FunctionTranslator(this.SourceDbInterpreter, this.TargetDbInterpreter, tokens);
+            functionTranslator.UserDefinedTypes = this.UserDefinedTypes;
 
             functionTranslator.Translate();
         }
@@ -708,82 +773,11 @@ namespace DatabaseConverter.Core
             return mappedSchema;
         }
 
-        private TableColumn CreateTableColumn(string dataType)
+
+
+        public void Dispose()
         {
-            TableColumn column = new TableColumn();
-
-            if (dataType.IndexOf("(") > 0)
-            {
-                DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this.SourceDbInterpreter, dataType);
-                column.DataType = dataTypeInfo.DataType;
-
-                bool isChar = DataTypeHelper.IsCharType(dataType);
-
-                string dataLength = dataTypeInfo.Args;
-
-                string[] lengthItems = dataLength.Split(',');
-
-                int length;
-
-                if (!int.TryParse(lengthItems[0], out length))
-                {
-                    length = -1;
-                }
-
-                if (isChar || DataTypeHelper.IsBinaryType(dataType))
-                {
-                    column.MaxLength = length;
-
-                    if (isChar && length != -1)
-                    {
-                        if (DataTypeHelper.StartsWithN(dataType))
-                        {
-                            column.MaxLength = length * 2;
-                        }
-                    }
-                }
-                else if (length > 0)
-                {
-                    DataTypeSpecification dataTypeSpecification = this.SourceDbInterpreter.GetDataTypeSpecification(dataType);
-
-                    if (dataTypeSpecification != null)
-                    {
-                        string args = dataTypeSpecification.Args;
-
-                        if (args=="scale")
-                        {
-                            column.Scale = length;
-                        }
-                        else if(args == "precision,scale")
-                        {
-                            column.Precision = length;
-
-                            if (lengthItems.Length > 1)
-                            {
-                                column.Scale = int.Parse(lengthItems[1]);
-                            }
-                        }
-                    }                    
-                }
-            }
-            else
-            {
-                UserDefinedType userDefinedType = this.UserDefinedTypes.FirstOrDefault(item => item.Name.Trim(this.TrimChars).ToUpper() == dataType.Trim(this.TrimChars).ToUpper());
-
-                if (userDefinedType != null)
-                {
-                    var attr = userDefinedType.Attributes.First();
-
-                    column.DataType = attr.DataType;
-                    column.MaxLength = attr.MaxLength;
-                }
-                else
-                {
-                    column.DataType = dataType;
-                }
-            }
-
-            return column;
+            this.dictChangedValues = null;
         }
     }
 }

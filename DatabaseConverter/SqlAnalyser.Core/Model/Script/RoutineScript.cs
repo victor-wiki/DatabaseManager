@@ -17,6 +17,7 @@ namespace SqlAnalyser.Model
     {
         UNKNOWN = 0,
         FUNCTION = 1,
-        PROCEDURE = 2
+        PROCEDURE = 2,
+        TRIGGER = 3
     }
 }

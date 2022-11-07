@@ -34,6 +34,7 @@ namespace DatabaseManager
         {
             List<DatabaseObjectType> dbObjTypes = new List<DatabaseObjectType>()
             {
+                DatabaseObjectType.Trigger,
                 DatabaseObjectType.Table,
                 DatabaseObjectType.View,
                 DatabaseObjectType.Function,

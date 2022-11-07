@@ -277,6 +277,7 @@ namespace DatabaseManager
                     option.SplitScriptsToExecute = true;
                     option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
                     option.CreateSchemaIfNotExists = this.chkCreateSchemaIfNotExists.Checked;
+                    option.NcharToDoubleChar = this.chkNcharToDoubleChar.Checked;
 
                     option.SchemaMappings = this.schemaMappings;
 
@@ -328,6 +329,10 @@ namespace DatabaseManager
                 }
 
                 this.HandleException(ex);
+            }
+            finally
+            {
+                GC.Collect();
             }
         }
 
@@ -500,7 +505,7 @@ namespace DatabaseManager
 
             if (useSourceConnector)
             {
-                this.SetSchemaMappingSetControl();
+                this.SetControlsStatus();
             }
         }
 
@@ -508,10 +513,10 @@ namespace DatabaseManager
         {
             this.targetDbConnectionInfo = connectionInfo;
 
-            this.SetSchemaMappingSetControl();
+            this.SetControlsStatus();
         }
 
-        private void SetSchemaMappingSetControl()
+        private void SetControlsStatus()
         {
             UC_DbConnectionProfile targetProfile = this.targetDbProfile as UC_DbConnectionProfile;
 
@@ -523,6 +528,14 @@ namespace DatabaseManager
 
                 enable = !(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.MySql
                      || this.sourceDatabaseType == DatabaseType.Oracle || this.sourceDatabaseType == DatabaseType.MySql);
+
+                var targetDbInterpreter = DbInterpreterHelper.GetDbInterpreter(databaseType, this.targetDbConnectionInfo, new DbInterpreterOption());
+
+                this.chkNcharToDoubleChar.Enabled = !targetDbInterpreter.SupportNchar;                
+            }
+            else
+            {
+                this.chkNcharToDoubleChar.Enabled = false;
             }
 
             this.btnSetSchemaMappings.Enabled = enable;
@@ -535,6 +548,11 @@ namespace DatabaseManager
             else
             {
                 this.chkCreateSchemaIfNotExists.Enabled = true;
+            }   
+            
+            if(!this.chkNcharToDoubleChar.Enabled)
+            {
+                this.chkNcharToDoubleChar.Checked = true;
             }
 
             this.schemaMappings = new List<SchemaMappingInfo>();

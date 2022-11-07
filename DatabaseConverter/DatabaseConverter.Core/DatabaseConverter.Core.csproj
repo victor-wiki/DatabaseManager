@@ -7,12 +7,12 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.0.15</Version>
+    <Version>2.0.16</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.15</AssemblyVersion>
-    <FileVersion>2.0.15</FileVersion>
-    <PackageReleaseNotes>1. handle default value convert for binary and datetime
-2. fix bug: continue to execute doesn't work when error occurs if execute script convert</PackageReleaseNotes>
+    <AssemblyVersion>2.0.16</AssemblyVersion>
+    <FileVersion>2.0.16</FileVersion>
+    <PackageReleaseNotes>1. optimize: builtin function convert
+2. add convert option: whether nchar to two char or not</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -55,6 +55,7 @@ namespace DatabaseConverter.Core
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Column))
             {
                 ColumnTranslator columnTranslator = new ColumnTranslator(this.sourceInterpreter, this.targetInerpreter, this.targetSchemaInfo.TableColumns);
+                columnTranslator.Option = this.option;
                 columnTranslator.UserDefinedTypes = this.UserDefinedTypes;
                 this.Translate(columnTranslator);
             }

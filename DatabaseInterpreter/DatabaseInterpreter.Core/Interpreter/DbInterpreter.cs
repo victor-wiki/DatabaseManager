@@ -32,7 +32,7 @@ namespace DatabaseInterpreter.Core
         public bool ShowBuiltinDatabase => Setting.ShowBuiltinDatabase;
         public DbObjectNameMode DbObjectNameMode => Setting.DbObjectNameMode;
         public int DataBatchSize => Setting.DataBatchSize;
-        public bool NotCreateIfExists => Setting.NotCreateIfExists;
+        public bool NotCreateIfExists => Setting.NotCreateIfExists;       
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
@@ -41,6 +41,7 @@ namespace DatabaseInterpreter.Core
         public abstract string DefaultDataType { get; }
         public abstract string DefaultSchema { get; }
         public abstract bool SupportBulkCopy { get; }
+        public abstract bool SupportNchar { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
@@ -431,11 +432,11 @@ namespace DatabaseInterpreter.Core
 
             Func<Task<int>> exec = async () =>
             {
-                bool wasClosed = dbConnection.State == ConnectionState.Closed;
+                bool isClosed = dbConnection.State == ConnectionState.Closed;
 
                 try
                 {
-                    if (wasClosed)
+                    if (isClosed)
                     {
                         await dbConnection.OpenAsync(commandInfo.CancellationToken).ConfigureAwait(false);
                     }
@@ -448,12 +449,16 @@ namespace DatabaseInterpreter.Core
                 {
                     commandInfo.HasError = true;
 
+                    bool hasRollbackedTransaction = false;
+
                     if (!commandInfo.ContinueWhenErrorOccurs)
                     {
                         if (dbConnection.State == ConnectionState.Open && command.Transaction != null)
                         {
                             command.Transaction.Rollback();
                             commandInfo.TransactionRollbacked = true;
+
+                            hasRollbackedTransaction = true;
                         }
                     }
 
@@ -461,14 +466,14 @@ namespace DatabaseInterpreter.Core
 
                     if (this.Option.ThrowExceptionWhenErrorOccurs && !commandInfo.ContinueWhenErrorOccurs)
                     {
-                        throw ex;
+                        throw new DbCommandException(ex) { HasRollbackedTransaction = hasRollbackedTransaction };
                     }
 
                     return 0;
                 }
                 finally
                 {
-                    if (disposeConnection && wasClosed && dbConnection != null && dbConnection.State != ConnectionState.Closed)
+                    if (disposeConnection && isClosed && dbConnection != null && dbConnection.State != ConnectionState.Closed)
                     {
                         dbConnection.Close();
                     }

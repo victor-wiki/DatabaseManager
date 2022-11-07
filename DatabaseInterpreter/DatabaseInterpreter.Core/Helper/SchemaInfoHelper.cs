@@ -569,7 +569,7 @@ namespace DatabaseInterpreter.Core
 
         public static string GetMappedSchema(string schema, List<SchemaMappingInfo> schemaMappings)
         {
-            string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema == schema)?.TargetSchema;
+            string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema.ToUpper() == schema.ToUpper())?.TargetSchema;
 
             if (mappedSchema == null)
             {

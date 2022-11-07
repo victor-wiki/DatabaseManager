@@ -4,6 +4,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Model;
 using System;
+using System.Configuration;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -41,6 +42,7 @@ namespace DatabaseManager
             this.chkLogInfo.Checked = setting.LogType.HasFlag(LogType.Info);
             this.chkLogError.Checked = setting.LogType.HasFlag(LogType.Error);
             this.chkEnableEditorHighlighting.Checked = setting.EnableEditorHighlighting;
+            this.chkEditorEnableIntellisence.Checked = setting.EnableEditorIntellisence;           
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
@@ -68,6 +70,7 @@ namespace DatabaseManager
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
             setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
             setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
+            setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;       
 
             string password = this.txtLockPassword.Text.Trim();
 

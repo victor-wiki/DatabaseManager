@@ -1,145 +1,149 @@
 <mappings>
-  <mapping>
-    <source type="bigint" />
-    <target type="bigint" />
-  </mapping>
-  <mapping>
-    <source type="binary" />
-    <target type="binary" substitute="varbinary" />
-  </mapping>
-  <mapping>
-    <source type="bit" />
-    <target type="tinyint"  length="1"/>
-  </mapping>
-  <mapping>
-    <source type="char" />
-    <target type="char" substitute="varchar"/>    
-  </mapping>
-  <mapping>
-    <source type="date" />
-    <target type="date" />
-  </mapping>
-  <mapping>
-    <source type="datetime" />
-    <target type="datetime" />
-  </mapping>
-  <mapping>
-    <source type="datetime2" />
-    <target type="timestamp" />
-  </mapping>
-  <mapping>
-    <source type="datetimeoffset" />
-    <target type="timestamp" />
-  </mapping>
-  <mapping>
-    <source type="decimal" />
-    <target type="decimal" />
-  </mapping>
-  <mapping>
-    <source type="float" />
-    <target type="float" scale="4"/>
-  </mapping>
-  <mapping>
-    <source type="geography" />
-    <target type="geometry" />
-  </mapping>
-  <mapping>
-    <source type="geometry" />
-    <target type="geometry" />
-  </mapping>
-  <mapping>
-    <source type="hierarchyid" />
-    <target type="varchar" length="4000" />
-  </mapping>
-  <mapping>
-    <source type="image" />
-    <target type="longblob" />
-  </mapping>
-  <mapping>
-    <source type="int" />
-    <target type="int" />
-  </mapping>
-  <mapping>
-    <source type="money" />
-    <target type="decimal" precision="19" scale="4" />
-  </mapping>
-  <mapping>
-    <source type="nchar" />
-    <target type="char" substitute="varchar,mediumtext"/>   
-  </mapping>
-  <mapping>
-    <source type="ntext" />
-    <target type="longtext" />
-  </mapping>
-  <mapping>
-    <source type="numeric" />
-    <target type="decimal" />
-	<special name="isIdentity" type="bigint"></special>
-  </mapping>
-  <mapping>
-    <source type="nvarchar" />
-    <target type="varchar" />
-    <special name="maxLength" value="-1" type="text"></special>
-  </mapping>
-  <mapping>
-    <source type="real" />
-    <target type="float"/>
-  </mapping>
-  <mapping>
-    <source type="rowversion" />
-    <target type="binary" length="8"/>
-  </mapping>
-  <mapping>
-    <source type="smalldatetime" />
-    <target type="datetime" />
-  </mapping>
-  <mapping>
-    <source type="smallint" />
-    <target type="smallint" />
-  </mapping>
-  <mapping>
-    <source type="smallmoney" />
-    <target type="decimal" precision="10" scale="4" />
-  </mapping>
-  <mapping>
-    <source type="sql_variant" />
-    <target type="varchar" />
-  </mapping>
-  <mapping>
-    <source type="sysname" />
-    <target type="varchar" length="128" />
-  </mapping> 
-  <mapping>
-    <source type="text" />
-    <target type="longtext"/>
-  </mapping>
-  <mapping>
-    <source type="time" />
-    <target type="time" />
-  </mapping>
-  <mapping>
-    <source type="timestamp" />
-    <target type="binary" length="8"/>
-  </mapping>
-  <mapping>
-    <source type="tinyint" />
-    <target type="int"/>
-  </mapping>
-  <mapping>
-    <source type="uniqueidentifier" />
-    <target type="char" length="36" />
-  </mapping>
-  <mapping>
-    <source type="varbinary" />
-    <target type="varbinary" />    
-  </mapping>
-  <mapping>
-    <source type="varchar" />
-    <target type="varchar" />
-    <special name="maxLength" value="-1" type="text"></special>
-  </mapping>
-  <mapping>
-    <source type="xml" />
-    <target type="longtext" />
-  </mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="bigint" />
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="binary" substitute="varbinary" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="tinyint"  length="1"/>
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="char" substitute="varchar"/>
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="datetime" />
+	</mapping>
+	<mapping>
+		<source type="datetime2" />
+		<target type="timestamp" />
+	</mapping>
+	<mapping>
+		<source type="datetimeoffset" />
+		<target type="timestamp" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="decimal" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="float" scale="4"/>
+	</mapping>
+	<mapping>
+		<source type="geography" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="hierarchyid" />
+		<target type="varchar" length="4000" />
+	</mapping>
+	<mapping>
+		<source type="image" />
+		<target type="longblob" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="int" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="int" />
+	</mapping>
+	<mapping>
+		<source type="money" />
+		<target type="decimal" precision="19" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="nchar" />
+		<target type="char" substitute="varchar,mediumtext"/>
+	</mapping>
+	<mapping>
+		<source type="ntext" />
+		<target type="longtext" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="decimal" />
+		<special name="isIdentity" type="bigint"></special>
+	</mapping>
+	<mapping>
+		<source type="nvarchar" />
+		<target type="varchar" />
+		<special name="maxLength" value="-1" type="text"></special>
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="float"/>
+	</mapping>
+	<mapping>
+		<source type="rowversion" />
+		<target type="binary" length="8"/>
+	</mapping>
+	<mapping>
+		<source type="smalldatetime" />
+		<target type="datetime" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="smallmoney" />
+		<target type="decimal" precision="10" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="sql_variant" />
+		<target type="varchar" />
+	</mapping>
+	<mapping>
+		<source type="sysname" />
+		<target type="varchar" length="128" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="longtext"/>
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="time" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="binary" length="8"/>
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="int"/>
+	</mapping>
+	<mapping>
+		<source type="uniqueidentifier" />
+		<target type="char" length="36" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="varbinary" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="varchar" />
+		<special name="maxLength" value="-1" type="text"></special>
+	</mapping>
+	<mapping>
+		<source type="xml" />
+		<target type="longtext" />
+	</mapping>
 </mappings>

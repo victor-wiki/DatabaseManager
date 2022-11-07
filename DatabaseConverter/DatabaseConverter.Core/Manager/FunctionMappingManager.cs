@@ -38,7 +38,9 @@ namespace DatabaseConverter.Core
                 DbType = t.Name.ToString(),
                 Function = t.Value,
                 Direction = ParseDirection(t),
-                Args = t.Attribute("args")?.Value
+                Args = t.Attribute("args")?.Value,
+                Expression = t.Attribute("expression")?.Value,
+                Defaults = t.Attribute("defaults")?.Value
             }))
             .ToList();
         }

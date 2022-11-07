@@ -14,7 +14,7 @@
   <item name="CEIL" args="EXP"></item>
   <item name="CEILING" args="EXP"></item>
   <item name="CHAR_LENGTH" args="EXP"></item>
-  <item name="CHAR" args="EXP"></item>
+  <item name="CHR" args="NUMBER"></item>
   <item name="CHARACTER_LENGTH" args="EXP"></item>
   <item name="COALESCE" args="EXP,DEFAULT"></item>
   <item name="CONCAT" args="EXP1,EXP2,..."></item>
@@ -23,15 +23,19 @@
   <item name="COSD" args="EXP"></item>
   <item name="COT" args="EXP"></item>
   <item name="COTD" args="EXP"></item>
-  <item name="DATE_PART" args="UNIT,TIMESTAMP VALUE"></item>
+  <item name="CURRENT_DATABASE" args=""></item>
+  <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
+  <item name="CURRENT_USER" args="" noParenthesess="true"></item>
+  <item name="DATE_PART" args="'UNIT',DATE"></item>
   <item name="DEGREES" args="EXP"></item>
   <item name="EXP" args="EXP"></item>
-  <item name="EXTRACT" args="UNIT FROM DATE EXP"></item>
+  <item name="EXTRACT" args="UNIT FROM INTERVAL DATE"></item>
   <item name="FACTORIAL" args="EXP"></item>
   <item name="FLOOR" args="EXP"></item>
   <item name="FORMAT" args="FORAMT,EXP"></item>
   <item name="GCD" args="EXP1,EXP2"></item>
   <item name="INITCAP" args="EXP"></item>
+  <item name="LASTVAL" args=""></item>
   <item name="LCM" args="EXP1,EXP2"></item>
   <item name="LEFT" args="EXP,LENGTH"></item>
   <item name="LENGTH" args="EXP"></item>
@@ -46,6 +50,7 @@
   <item name="MOD" args="EXP1,EXP2"></item>
   <item name="NORMALIZE" args="EXP,FORM"></item>
   <item name="OCTET_LENGTH" args="EXP"></item>
+  <item name="OVERLAY" args ="EXP PLACING VALUE FROM START FOR LENGTH" delimiter=" "></item>
   <item name="PI" args=""></item>
   <item name="POSITION" args="SEARCH IN EXP" delimiter="IN"></item>
   <item name="POWER" args="EXP,Y"></item>

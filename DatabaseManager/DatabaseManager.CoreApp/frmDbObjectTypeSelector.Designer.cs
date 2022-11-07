@@ -77,9 +77,9 @@
             this.chkSelectAll.Location = new System.Drawing.Point(16, 11);
             this.chkSelectAll.Margin = new System.Windows.Forms.Padding(4);
             this.chkSelectAll.Name = "chkSelectAll";
-            this.chkSelectAll.Size = new System.Drawing.Size(78, 21);
+            this.chkSelectAll.Size = new System.Drawing.Size(79, 21);
             this.chkSelectAll.TabIndex = 4;
-            this.chkSelectAll.Text = "Select all";
+            this.chkSelectAll.Text = "Select All";
             this.chkSelectAll.UseVisualStyleBackColor = true;
             this.chkSelectAll.CheckedChanged += new System.EventHandler(this.chkSelectAll_CheckedChanged);
             // 
@@ -92,6 +92,7 @@
             this.Controls.Add(this.chkDbObjectTypes);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;

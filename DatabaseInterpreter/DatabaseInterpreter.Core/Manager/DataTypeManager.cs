@@ -40,7 +40,7 @@ namespace DatabaseInterpreter.Core
                 AllowMax = IsTrueValue(item.Attribute("allowMax")),
                 MapTo = item.Attribute("mapTo")?.Value,
                 IndexForbidden = IsTrueValue(item.Attribute("indexForbidden")),
-                AllowIdentity = IsTrueValue(item.Attribute("allowIdentity"))                 
+                AllowIdentity = IsTrueValue(item.Attribute("allowIdentity"))
             }).ToList();
 
             functionSpecs.ForEach(item => ParseArgument(item));
@@ -62,7 +62,9 @@ namespace DatabaseInterpreter.Core
 
         private static bool IsTrueValue(XAttribute attribute)
         {
-            return attribute?.Value == "true";
+            string value = attribute?.Value;
+
+            return value?.ToLower() == "true" || value == "1";
         }
 
         public static DataTypeSpecification ParseArgument(DataTypeSpecification dataTypeSpecification)

@@ -5,11 +5,12 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.13</Version>
-    <PackageReleaseNotes>call DbObjectHelper.GetDatabaseObjectType instead of casting it directly</PackageReleaseNotes>
+    <Version>2.0.14</Version>
+    <PackageReleaseNotes>1. add: trigger batch drop
+2. fix bug: table designer for index</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.13</AssemblyVersion>
-    <FileVersion>2.0.13</FileVersion>
+    <AssemblyVersion>2.0.14</AssemblyVersion>
+    <FileVersion>2.0.14</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

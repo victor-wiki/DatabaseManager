@@ -285,7 +285,7 @@ namespace DatabaseManager.Controls
 
                 if (string.IsNullOrEmpty(indexName))
                 {
-                    nameCell.Value = type == IndexType.Primary.ToString() ? IndexManager.GetPrimaryKeyDefaultName(this.Table) : IndexManager.GetIndexDefaultName(this.Table);
+                    nameCell.Value = type == IndexType.Primary.ToString() ? IndexManager.GetPrimaryKeyDefaultName(this.Table) : IndexManager.GetIndexDefaultName(type, this.Table);
                 }
 
                 if(row.Tag !=null)

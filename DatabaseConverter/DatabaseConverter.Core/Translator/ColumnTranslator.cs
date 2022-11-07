@@ -19,6 +19,7 @@ namespace DatabaseConverter.Core
         private DataTypeTranslator dataTypeTranslator;
         private FunctionTranslator functionTranslator;
         private SequenceTranslator sequenceTranslator;
+        private List<FunctionSpecification> targetFuncSpecs;
 
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
@@ -29,6 +30,7 @@ namespace DatabaseConverter.Core
             this.functionTranslator = new FunctionTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
             this.dataTypeTranslator = new DataTypeTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
             this.sequenceTranslator = new SequenceTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
+            this.targetFuncSpecs = FunctionManager.GetFunctionSpecifications(this.targetDbType);           
         }
 
         public override void Translate()
@@ -54,6 +56,7 @@ namespace DatabaseConverter.Core
             this.functionTranslator.LoadMappings();
             this.functionTranslator.LoadFunctionSpecifications();
             this.sequenceTranslator.Option = this.Option;
+            this.dataTypeTranslator.Option = this.Option;
 
             this.CheckComputeExpression();
 
@@ -61,11 +64,7 @@ namespace DatabaseConverter.Core
             {
                 if (!DataTypeHelper.IsUserDefinedType(column))
                 {
-                    DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfoByTableColumn(column);
-
-                    this.dataTypeTranslator.Translate(dataTypeInfo);
-
-                    DataTypeHelper.SetDataTypeInfoToTableColumn(dataTypeInfo, column);
+                    TranslateHelper.TranslateTableColumnDataType(this.dataTypeTranslator, column);
                 }
 
                 if (!string.IsNullOrEmpty(column.DefaultValue))
@@ -85,6 +84,13 @@ namespace DatabaseConverter.Core
         public void ConvertDefaultValue(TableColumn column)
         {
             string defaultValue = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
+            bool hasParenthesis = defaultValue != column.DefaultValue;
+
+            if (defaultValue.ToUpper() == "NULL")
+            {
+                column.DefaultValue = null;
+                return;
+            }
 
             Func<string> getTrimedValue = () =>
             {
@@ -121,7 +127,7 @@ namespace DatabaseConverter.Core
             bool hasScale = false;
             string scale = null;
 
-            if (defaultValue.EndsWith(')') && !defaultValue.EndsWith("()")) //timestamp(scale)
+            if (DataTypeHelper.IsDateOrTimeType(column.DataType) && defaultValue.Count(item => item == '(') == 1 && defaultValue.EndsWith(')')) //timestamp(scale)
             {
                 int index = defaultValue.IndexOf('(');
                 hasScale = true;
@@ -129,33 +135,51 @@ namespace DatabaseConverter.Core
                 defaultValue = defaultValue.Substring(0, index).Trim();
             }
 
+            string functionName = defaultValue;
+
+            List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(defaultValue);
+
+            if (formulas.Count > 0)
+            {
+                functionName = formulas.First().Name;
+            }
+
             IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t => t.DbType == this.sourceDbType.ToString()
-                                                        && t.Function.Split(',').Any(m => m.Trim().ToLower() == defaultValue.Trim().ToLower())));
+                                                        && t.Function.Split(',').Any(m => m.Trim().ToLower() == functionName.ToLower())));
 
             if (funcMappings != null)
             {
-                defaultValue = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
+                functionName = funcMappings.FirstOrDefault(item => item.DbType == this.targetDbType.ToString())?.Function.Split(',')?.FirstOrDefault();
+
+                bool handled = false;
 
                 if (this.targetDbType == DatabaseType.MySql || this.targetDbType == DatabaseType.Postgres)
                 {
-                    if (defaultValue.ToUpper() == "CURRENT_TIMESTAMP" && column.DataType.Contains("timestamp") && column.Scale > 0)
+                    if (functionName.ToUpper() == "CURRENT_TIMESTAMP" && column.DataType.Contains("timestamp") && column.Scale > 0)
                     {
-                        defaultValue += $"({column.Scale})";
+                        defaultValue = $"{functionName}({column.Scale})";
+                        handled = true;
                     }
                 }
 
                 if (this.targetDbType == DatabaseType.SqlServer)
                 {
-                    if (defaultValue == "GETDATE()")
+                    if (functionName == "GETDATE")
                     {
                         if (hasScale && int.TryParse(scale, out _))
                         {
                             if (int.Parse(scale) > 3)
                             {
-                                defaultValue = "SYSDATETIME()";
+                                defaultValue = "SYSDATETIME";
+                                handled = true;
                             }
                         }
                     }
+                }
+
+                if (!handled)
+                {
+                    defaultValue = this.functionTranslator.GetMappedFunction(defaultValue);
                 }
             }
             else
@@ -187,7 +211,7 @@ namespace DatabaseConverter.Core
                     if (defaultValue.Contains("CREATE DEFAULT ") && defaultValue.Contains(" AS "))
                     {
                         int asIndex = defaultValue.LastIndexOf("AS");
-                        defaultValue = defaultValue.Substring(asIndex + 3);
+                        defaultValue = defaultValue.Substring(asIndex + 3).Trim();
                     }
 
                     if (trimedValue.ToLower() == "newid()")
@@ -455,7 +479,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            column.DefaultValue = defaultValue;
+            column.DefaultValue = hasParenthesis ? $"({defaultValue})" : defaultValue;
         }
 
         public void ConvertComputeExpression(TableColumn column)
@@ -487,11 +511,16 @@ namespace DatabaseConverter.Core
                             exp = exp.Substring(1, computeExp.Length - 1);
                         }
 
-                        List<FunctionFomular> fomulars = FunctionTranslator.GetFunctionFomulars(exp);
+                        List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(exp);
 
-                        if (fomulars.Count > 0 && fomulars.First().Args.Count > 0)
+                        if (formulas.Count > 0)
                         {
-                            column.ComputeExp = fomulars.First().Args[0];
+                            var args = formulas.First().GetArgs();
+
+                            if (args.Count > 0)
+                            {
+                                column.ComputeExp = args[0];
+                            }
                         }
                     }
                 }

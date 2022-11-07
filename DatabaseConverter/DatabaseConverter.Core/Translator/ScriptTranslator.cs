@@ -21,7 +21,7 @@ namespace DatabaseConverter.Core
     {
         private IEnumerable<T> scripts;
 
-        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
+      
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
             this.scripts = scripts;
@@ -61,41 +61,43 @@ namespace DatabaseConverter.Core
                     }
                 }
 
-                ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter);
-                tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
-                tokenProcessor.Option = this.Option;
-
-                tokenProcessor.Process();
-
-                string anotherDefinition = null;
-
-                if (typeof(T) == typeof(TableTrigger))
+                using (ScriptTokenProcessor tokenProcessor = new ScriptTokenProcessor(script, dbObj, this.sourceDbInterpreter, this.targetDbInterpreter))
                 {
-                    //make up a trigger function
-                    if (this.targetDbType == DatabaseType.Postgres)
+                    tokenProcessor.UserDefinedTypes = this.UserDefinedTypes;
+                    tokenProcessor.Option = this.Option;
+
+                    tokenProcessor.Process();
+
+                    string anotherDefinition = null;
+
+                    if (typeof(T) == typeof(TableTrigger))
                     {
-                        string name = this.targetDbInterpreter.GetQuotedString($"func_{dbObj.Name}");
-                        string nameWithSchema = string.IsNullOrEmpty(script.Schema) ? this.targetDbInterpreter.GetQuotedString(name) : $"{script.Schema}.{name}";
+                        //make up a trigger function
+                        if (this.targetDbType == DatabaseType.Postgres)
+                        {
+                            string name = this.targetDbInterpreter.GetQuotedString($"func_{dbObj.Name}");
+                            string nameWithSchema = string.IsNullOrEmpty(script.Schema) ? this.targetDbInterpreter.GetQuotedString(name) : $"{script.Schema}.{name}";
 
-                        NameToken triggerFunctionName = new NameToken(nameWithSchema);
+                            NameToken triggerFunctionName = new NameToken(nameWithSchema);
 
-                        RoutineScript rs = new RoutineScript() { Name = triggerFunctionName, Type = RoutineType.FUNCTION, ReturnDataType = new TokenInfo("trigger") };
-                        rs.Statements.AddRange(script.Statements);
+                            RoutineScript rs = new RoutineScript() { Name = triggerFunctionName, Type = RoutineType.FUNCTION, ReturnDataType = new TokenInfo("trigger") };
+                            rs.Statements.AddRange(script.Statements);
 
-                        (script as TriggerScript).FunctionName = triggerFunctionName;
+                            (script as TriggerScript).FunctionName = triggerFunctionName;
 
-                        anotherDefinition = StringHelper.FormatScript(targetAnalyser.GenerateScripts(rs).Script);
+                            anotherDefinition = StringHelper.FormatScript(targetAnalyser.GenerateScripts(rs).Script);
+                        }
                     }
-                }
 
-                ScriptBuildResult scriptBuildResult = targetAnalyser.GenerateScripts(script);
+                    ScriptBuildResult scriptBuildResult = targetAnalyser.GenerateScripts(script);
 
-                dbObj.Definition = StringHelper.FormatScript(scriptBuildResult.Script);
+                    dbObj.Definition = StringHelper.FormatScript(scriptBuildResult.Script);
 
-                if (anotherDefinition != null)
-                {
-                    dbObj.Definition = anotherDefinition + Environment.NewLine + dbObj.Definition;
-                }
+                    if (anotherDefinition != null)
+                    {
+                        dbObj.Definition = anotherDefinition + Environment.NewLine + dbObj.Definition;
+                    }
+                };
             };
 
             int total = this.scripts.Count();
@@ -307,6 +309,13 @@ namespace DatabaseConverter.Core
             {
                 sqlAnalyser = new PostgreSqlAnalyser();
             }
+
+            sqlAnalyser.RuleAnalyser.Option = new SqlRuleAnalyserOption()
+            {
+                ParseTokenChildren = true,
+                ExtractFunctions = true,
+                ExtractFunctionChildren = false
+            };
 
             return sqlAnalyser;
         }

@@ -436,7 +436,7 @@ namespace SqlAnalyser.Core
         {
             DeclareCursorHandlerStatement statement = new DeclareCursorHandlerStatement();
 
-            statement.Conditions.AddRange(node.handlerCondition().Select(item => new TokenInfo(item) { Type = TokenType.Condition }));
+            statement.Conditions.AddRange(node.handlerCondition().Select(item => new TokenInfo(item) { Type = TokenType.SearchCondition }));
             statement.Statements.AddRange(this.ParseCompoundStatement(node.compoundStatement()));
 
             return statement;
@@ -539,7 +539,7 @@ namespace SqlAnalyser.Core
 
                     JoinItem joinItem = new JoinItem();
                     joinItem.TableName = fromItem.TableName;
-                    joinItem.Condition = new TokenInfo(joinTable.expr()) { Type = TokenType.Condition };
+                    joinItem.Condition = new TokenInfo(joinTable.expr()) { Type = TokenType.SearchCondition };
 
                     fromItem.JoinItems.Add(joinItem);
                 }
@@ -894,7 +894,7 @@ namespace SqlAnalyser.Core
             while (ifBody != null)
             {
                 IfStatementItem item = new IfStatementItem() { Type = isFirst ? IfStatementType.IF : IfStatementType.ELSEIF };
-                item.Condition = new TokenInfo(ifBody.expr()) { Type = TokenType.Condition };
+                item.Condition = new TokenInfo(ifBody.expr()) { Type = TokenType.IfCondition };
                 item.Statements.AddRange(this.ParseCompoundStatementList(ifBody.thenStatement().compoundStatementList()));
 
                 statement.Items.Add(item);
@@ -928,7 +928,7 @@ namespace SqlAnalyser.Core
             {
                 IfStatementItem elseIfItem = new IfStatementItem() { Type = i == 0 ? IfStatementType.IF : IfStatementType.ELSEIF };
 
-                elseIfItem.Condition = new TokenInfo(whens[i].expr()) { Type = TokenType.Condition };
+                elseIfItem.Condition = new TokenInfo(whens[i].expr()) { Type = TokenType.IfCondition };
                 elseIfItem.Statements.AddRange(this.ParseCompoundStatementList(thens[i].compoundStatementList()));
 
                 statement.Items.Add(elseIfItem);
@@ -963,7 +963,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is ExprContext condition)
                 {
-                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    statement.Condition = new TokenInfo(condition) { Type = TokenType.IfCondition };
                 }
             }
 
@@ -1220,9 +1220,11 @@ namespace SqlAnalyser.Core
             {
                 if (node is ExprContext || node is ExprIsContext)
                 {
-                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node);
 
                     bool isIfCondition = node.Parent != null && (node.Parent is IfBodyContext || node.Parent is LeaveStatementContext);
+
+                    token.Type = isIfCondition ? TokenType.IfCondition : TokenType.SearchCondition;
 
                     if (!isIfCondition)
                     {
@@ -1238,7 +1240,8 @@ namespace SqlAnalyser.Core
 
         public override bool IsFunction(IParseTree node)
         {
-            if (node is FunctionCallContext || node is RuntimeFunctionCallContext)
+            if (node is FunctionCallContext || node is RuntimeFunctionCallContext 
+                || node is SimpleExprConvertContext || node is SimpleExprCastContext)
             {
                 return true;
             }

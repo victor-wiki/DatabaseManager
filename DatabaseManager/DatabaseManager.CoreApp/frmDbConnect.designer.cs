@@ -43,7 +43,7 @@
             // btnConfirm
             // 
             this.btnConfirm.Location = new System.Drawing.Point(144, 387);
-            this.btnConfirm.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(88, 33);
             this.btnConfirm.TabIndex = 9;
@@ -63,9 +63,13 @@
             // 
             // cboDatabase
             // 
+            this.cboDatabase.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.cboDatabase.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cboDatabase.DropDownHeight = 200;
             this.cboDatabase.FormattingEnabled = true;
+            this.cboDatabase.IntegralHeight = false;
             this.cboDatabase.Location = new System.Drawing.Point(144, 290);
-            this.cboDatabase.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.cboDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboDatabase.Name = "cboDatabase";
             this.cboDatabase.Size = new System.Drawing.Size(193, 25);
             this.cboDatabase.TabIndex = 7;
@@ -84,7 +88,7 @@
             // txtProfileName
             // 
             this.txtProfileName.Location = new System.Drawing.Point(143, 333);
-            this.txtProfileName.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtProfileName.Margin = new System.Windows.Forms.Padding(4);
             this.txtProfileName.Name = "txtProfileName";
             this.txtProfileName.Size = new System.Drawing.Size(193, 23);
             this.txtProfileName.TabIndex = 0;
@@ -92,7 +96,7 @@
             // btnCancel
             // 
             this.btnCancel.Location = new System.Drawing.Point(250, 387);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
             this.btnCancel.TabIndex = 17;
@@ -115,7 +119,7 @@
             this.rbInput.AutoSize = true;
             this.rbInput.Checked = true;
             this.rbInput.Location = new System.Drawing.Point(142, 21);
-            this.rbInput.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.rbInput.Margin = new System.Windows.Forms.Padding(4);
             this.rbInput.Name = "rbInput";
             this.rbInput.Size = new System.Drawing.Size(56, 21);
             this.rbInput.TabIndex = 20;
@@ -127,7 +131,7 @@
             // 
             this.rbChoose.AutoSize = true;
             this.rbChoose.Location = new System.Drawing.Point(265, 21);
-            this.rbChoose.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.rbChoose.Margin = new System.Windows.Forms.Padding(4);
             this.rbChoose.Name = "rbChoose";
             this.rbChoose.Size = new System.Drawing.Size(70, 21);
             this.rbChoose.TabIndex = 21;
@@ -159,7 +163,7 @@
             this.Controls.Add(this.cboDatabase);
             this.Controls.Add(this.lblDatabase);
             this.Controls.Add(this.btnConfirm);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "frmDbConnect";

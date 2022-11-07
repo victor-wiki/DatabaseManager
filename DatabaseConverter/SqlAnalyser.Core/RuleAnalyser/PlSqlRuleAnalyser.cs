@@ -288,7 +288,7 @@ namespace SqlAnalyser.Core
 
                     if (condition != null)
                     {
-                        script.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                        script.Condition = new TokenInfo(condition) { Type = TokenType.TriggerCondition };
                     }
 
                     #region Body
@@ -471,7 +471,7 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseReturnStatement(@return));
                 }
-                else if(child is Drop_tableContext drop_Table)
+                else if (child is Drop_tableContext drop_Table)
                 {
                     addDropStatement(DatabaseObjectType.Table, TokenType.TableName, drop_Table.tableview_name());
                 }
@@ -510,7 +510,7 @@ namespace SqlAnalyser.Core
 
             string condition = node.condition().GetText();
 
-            statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+            statement.Condition = new TokenInfo(condition) { Type = TokenType.ExitCondition };
 
             statement.IsCursorLoopExit = condition.Contains("%NOTFOUND");
 
@@ -1179,14 +1179,14 @@ namespace SqlAnalyser.Core
             IfStatement statement = new IfStatement();
 
             IfStatementItem ifItem = new IfStatementItem() { Type = IfStatementType.IF };
-            ifItem.Condition = new TokenInfo(node.condition()) { Type = TokenType.Condition };
+            ifItem.Condition = new TokenInfo(node.condition()) { Type = TokenType.IfCondition };
             ifItem.Statements.AddRange(this.ParseSeqStatement(node.seq_of_statements()));
             statement.Items.Add(ifItem);
 
             foreach (Elsif_partContext elseif in node.elsif_part())
             {
                 IfStatementItem elseIfItem = new IfStatementItem() { Type = IfStatementType.ELSEIF };
-                elseIfItem.Condition = new TokenInfo(elseif.condition()) { Type = TokenType.Condition };
+                elseIfItem.Condition = new TokenInfo(elseif.condition()) { Type = TokenType.IfCondition };
                 elseIfItem.Statements.AddRange(this.ParseSeqStatement(elseif.seq_of_statements()));
 
                 statement.Items.Add(elseIfItem);
@@ -1219,7 +1219,7 @@ namespace SqlAnalyser.Core
                 foreach (Simple_case_when_partContext when in whens)
                 {
                     IfStatementItem ifItem = new IfStatementItem() { Type = IfStatementType.IF };
-                    ifItem.Condition = new TokenInfo(when.expression().First()) { Type = TokenType.Condition };
+                    ifItem.Condition = new TokenInfo(when.expression().First()) { Type = TokenType.IfCondition };
                     ifItem.Statements.AddRange(this.ParseSeqStatement(when.seq_of_statements()));
                     statement.Items.Add(ifItem);
                 }
@@ -1272,11 +1272,11 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is ConditionContext condition)
                 {
-                    statement.Condition = new TokenInfo(condition) { Type = TokenType.Condition };
+                    statement.Condition = new TokenInfo(condition) { Type = TokenType.IfCondition };
                 }
                 else if (child is Cursor_loop_paramContext cursor)
                 {
-                    statement.Condition = new TokenInfo(cursor) { Type = TokenType.Condition };
+                    statement.Condition = new TokenInfo(cursor) { Type = TokenType.IfCondition };
                 }
 
                 i++;
@@ -1477,9 +1477,11 @@ namespace SqlAnalyser.Core
                     node is Where_clauseContext ||
                     node is ExpressionContext)
                 {
-                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node);
 
                     bool isIfCondition = node.Parent != null && (node.Parent is If_statementContext || node.Parent is Loop_statementContext);
+
+                    token.Type = isIfCondition ? TokenType.IfCondition : TokenType.SearchCondition;
 
                     if (!isIfCondition)
                     {
@@ -1512,10 +1514,21 @@ namespace SqlAnalyser.Core
             }
             else if (node is Variable_nameContext vn)
             {
-                if (vn.id_expression().Last().GetText() == "NEXTVAL")
+                string text = vn.id_expression().Last().GetText();
+
+                if (text == "NEXTVAL")
                 {
                     return true;
                 }
+            }
+            else if (node is Non_reserved_keywords_pre12cContext)
+            {
+                var parent = node.Parent?.Parent?.Parent;
+               
+                if (parent!= null && parent is Variable_nameContext)
+                {
+                    return true;
+                }                
             }
 
             return false;

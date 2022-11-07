@@ -19,7 +19,7 @@ namespace DatabaseInterpreter.Core
     {
         #region Field & Property           
         public const int DEFAULT_PORT = 3306;
-        public override string UnicodeLeadingFlag => "";
+        public override string UnicodeLeadingFlag => "";       
         public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '`';
         public const char QuotedRightChar = '`';
@@ -31,7 +31,8 @@ namespace DatabaseInterpreter.Core
         public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07");
         public override string DefaultSchema => this.ConnectionInfo.Database;
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
-        public override bool SupportBulkCopy { get { return true; } }
+        public override bool SupportBulkCopy => true;
+        public override bool SupportNchar => false;
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
 
         public const int NameMaxLength = 64;
@@ -64,7 +65,7 @@ namespace DatabaseInterpreter.Core
         #region Database
         public override Task<List<Database>> GetDatabasesAsync()
         {
-            string sql = $"SELECT SCHEMA_NAME AS `Name` FROM INFORMATION_SCHEMA.`SCHEMATA` {this.GetExcludeBuiltinDbNamesCondition("SCHEMA_NAME")}";
+            string sql = $"SELECT SCHEMA_NAME AS `Name` FROM INFORMATION_SCHEMA.`SCHEMATA` {this.GetExcludeBuiltinDbNamesCondition("SCHEMA_NAME")} ORDER BY SCHEMA_NAME";
 
             return base.GetDbObjectsAsync<Database>(sql);
         }

@@ -1,146 +1,150 @@
 <mappings>
-  <mapping>
-    <source type="bigint" />
-    <target type="bigint" />
-  </mapping>
-  <mapping>
-    <source type="binary" />
-    <target type="bytea" />
-  </mapping>
-  <mapping>
-    <source type="bit" />
-    <target type="boolean" />
-  </mapping>
-  <mapping>
-    <source type="char" />
-    <target type="character" />    
-  </mapping>
-  <mapping>
-    <source type="date" />
-    <target type="date" />
-  </mapping>
-  <mapping>
-    <source type="datetime" />
-    <target type="timestamp without time zone" />
-  </mapping>
-  <mapping>
-    <source type="datetime2" />
-    <target type="timestamp with time zone" />
-  </mapping>
-  <mapping>
-    <source type="datetimeoffset" />
-    <target type="timestamp with time zone" />
-  </mapping>
-  <mapping>
-    <source type="decimal" />
-    <target type="numeric" />
-  </mapping>
-  <mapping>
-    <source type="float" />
-    <target type="double precision" />
-  </mapping>
-  <mapping>
-    <source type="geography" />
-    <target type="geography" />
-  </mapping>
-  <mapping>
-    <source type="geometry" />
-    <target type="geometry" />
-  </mapping>
-  <mapping>
-    <source type="hierarchyid" />
-    <target type="character varying" length="4000" />
-  </mapping>
-  <mapping>
-    <source type="image" />
-    <target type="bytea" />
-  </mapping>
-  <mapping>
-    <source type="int" />
-    <target type="integer" />
-  </mapping>
-  <mapping>
-    <source type="money" />
-    <target type="money" />
-  </mapping>
-  <mapping>
-    <source type="nchar" />
-    <target type="character varying" />   
-  </mapping>
-  <mapping>
-    <source type="ntext" />
-    <target type="text" />
-  </mapping>
-  <mapping>
-    <source type="numeric" />
-    <target type="numeric" />
-	<special name="isIdentity" type="bigint"></special>
-  </mapping>
-  <mapping>
-    <source type="nvarchar" />
-    <target type="character varying" />
-    <special name="maxLength" value="-1" type="text"></special>
-  </mapping>
-  <mapping>
-    <source type="real" />
-    <target type="real"/>
-  </mapping>
-  <mapping>
-    <source type="rowversion" />
-    <target type="bytea" length="8"/>
-  </mapping>
-  <mapping>
-    <source type="smalldatetime" />
-    <target type="timestamp without time zone" />
-  </mapping>
-  <mapping>
-    <source type="smallint" />
-    <target type="smallint" />
-  </mapping>
-  <mapping>
-    <source type="smallmoney" />
-    <target type="money" precision="10" scale="4" />
-  </mapping>
-  <mapping>
-    <source type="sql_variant" />
-    <target type="character varying" />
-  </mapping>
-  <mapping>
-    <source type="sysname" />
-    <target type="character varying" length="128" />
-  </mapping> 
-  <mapping>
-    <source type="text" />
-    <target type="text"/>
-  </mapping>
-  <mapping>
-    <source type="time" />
-    <target type="time without time zone" />
-  </mapping>
-  <mapping>
-    <source type="timestamp" />
-    <target type="bytea"/>
-  </mapping>
-  <mapping>
-    <source type="tinyint" />
-    <target type="smallint"/>
-	<special name="isIdentity" type="integer"></special>
-  </mapping>
-  <mapping>
-    <source type="uniqueidentifier" />
-    <target type="character" length="36" />
-  </mapping>
-  <mapping>
-    <source type="varbinary" />
-    <target type="bytea" />    
-  </mapping>
-  <mapping>
-    <source type="varchar" />
-    <target type="character varying" />
-    <special name="maxLength" value="-1" type="text"></special>
-  </mapping>
-  <mapping>
-    <source type="xml" />
-    <target type="xml" />
-  </mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="bigint" />
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="boolean" />
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="character" />
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="date" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="timestamp without time zone" />
+	</mapping>
+	<mapping>
+		<source type="datetime2" />
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="datetimeoffset" />
+		<target type="timestamp with time zone" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="double precision" />
+	</mapping>
+	<mapping>
+		<source type="geography" />
+		<target type="geography" />
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="hierarchyid" />
+		<target type="character varying" length="4000" />
+	</mapping>
+	<mapping>
+		<source type="image" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="money" />
+		<target type="money" />
+	</mapping>
+	<mapping>
+		<source type="nchar" />
+		<target type="character varying" />
+	</mapping>
+	<mapping>
+		<source type="ntext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="numeric" />
+		<special name="isIdentity" type="bigint"></special>
+	</mapping>
+	<mapping>
+		<source type="nvarchar" />
+		<target type="character varying" />
+		<special name="maxLength" value="-1" type="text"></special>
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real"/>
+	</mapping>
+	<mapping>
+		<source type="rowversion" />
+		<target type="bytea" length="8"/>
+	</mapping>
+	<mapping>
+		<source type="smalldatetime" />
+		<target type="timestamp without time zone" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="smallint" />
+	</mapping>
+	<mapping>
+		<source type="smallmoney" />
+		<target type="money" precision="10" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="sql_variant" />
+		<target type="character varying" />
+	</mapping>
+	<mapping>
+		<source type="sysname" />
+		<target type="character varying" length="128" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="time without time zone" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="bytea"/>
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="smallint"/>
+		<special name="isIdentity" type="integer"></special>
+	</mapping>
+	<mapping>
+		<source type="uniqueidentifier" />
+		<target type="character" length="36" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="character varying" />
+		<special name="maxLength" value="-1" noLength="true"></special>
+	</mapping>
+	<mapping>
+		<source type="xml" />
+		<target type="xml" />
+	</mapping>
 </mappings>

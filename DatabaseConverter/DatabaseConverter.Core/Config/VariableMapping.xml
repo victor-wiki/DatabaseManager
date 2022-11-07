@@ -14,7 +14,25 @@
 	<mapping>
 		<SqlServer>@@VERSION</SqlServer>
 		<MySql>(SELECT VERSION())</MySql>
-		<Oracle></Oracle>
+		<Oracle>(SELECT VERSION FROM V$INSTANCE)</Oracle>
 		<Postgres>(SELECT VERSION())</Postgres>
 	</mapping>	
+	<mapping>
+		<SqlServer>@@SPID</SqlServer>
+		<MySql>(SELECT CONNECTION_ID())</MySql>
+		<Oracle>(SELECT SYS_CONTEXT('USERENV','SESSIONID') FROM DUAL)</Oracle>
+		<Postgres>(SELECT PG_BACKEND_PID())</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>@@ERROR</SqlServer>
+		<MySql>@@ERROR_COUNT</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>@@CURSOR_ROWS</SqlServer>
+		<MySql>(SELECT FOUND_ROWS())</MySql>
+		<Oracle></Oracle>
+		<Postgres></Postgres>
+	</mapping>
 </mappings>

@@ -239,7 +239,7 @@ namespace SqlAnalyser.Core
 
                     if (item.Type != IfStatementType.ELSE)
                     {
-                        ifItem.Condition = new TokenInfo($"{variableName}={item.Condition}") { Type = TokenType.Condition };
+                        ifItem.Condition = new TokenInfo($"{variableName}={item.Condition}") { Type = TokenType.IfCondition };
                     }
 
                     i++;
@@ -322,8 +322,13 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
-                this.Build(declareCursor.SelectStatement);
+                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+
+                if (declareCursor.SelectStatement != null)
+                {
+                    this.Build(declareCursor.SelectStatement);
+                }
+
                 this.AppendLine(Environment.NewLine);
             }
             else if (statement is OpenCursorStatement openCursor)
@@ -351,9 +356,9 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"TRUNCATE TABLE {truncate.TableName}");
             }
-            else if(statement is DropStatement drop)
+            else if (statement is DropStatement drop)
             {
-                string objectType = drop.ObjectType.ToString().ToUpper();                
+                string objectType = drop.ObjectType.ToString().ToUpper();
 
                 this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
             }

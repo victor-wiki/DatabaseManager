@@ -16,9 +16,9 @@ namespace DatabaseManager.Core
             return $"PK_{table.Name}";
         }
 
-        public static string GetIndexDefaultName(Table table)
+        public static string GetIndexDefaultName(string indexType, Table table)
         {
-            return $"IX_{table.Name}";
+            return $"{(indexType == nameof(IndexType.Unique)? "UK":"IX")}_{table.Name}";
         }
 
         public static string GetForeignKeyDefaultName(string tableName, string referencedTableName)

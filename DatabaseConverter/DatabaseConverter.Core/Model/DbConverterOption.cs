@@ -25,6 +25,7 @@ namespace DatabaseConverter.Core.Model
         public bool UseOriginalDataTypeIfUdtHasOnlyOneAttr { get; set; } = true;
         public bool RemoveCarriagRreturnChar { get; set; }
         public bool CreateSchemaIfNotExists { get; set; }
+        public bool NcharToDoubleChar { get; set; } = true;
 
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
     }

@@ -36,16 +36,16 @@ namespace DatabaseInterpreter.Core
         public override string DefaultDataType => "varchar2";
         public override string DefaultSchema => this.ConnectionInfo.UserId?.ToUpper();
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
-        public override bool SupportBulkCopy { get { return true; } }
+        public override bool SupportBulkCopy => true;
+        public override bool SupportNchar => true;
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
         public static readonly string[] GeometryTypeSchemas = { "PUBLIC", "SDE" };
         #endregion
 
         #region Constructor
         public OracleInterpreter(ConnectionInfo connectionInfo, DbInterpreterOption option) : base(connectionInfo, option)
-        {
-            this.dbSchema = connectionInfo.UserId;
-            this.dbConnector = this.GetDbConnector();            
+        {            
+            this.dbConnector = this.GetDbConnector();
         }
         #endregion
 
@@ -62,7 +62,17 @@ namespace DatabaseInterpreter.Core
 
         private bool IsBuiltinDatabase()
         {
-            return this.BuiltinDatabases.Any(item=>item.ToUpper() == this.ConnectionInfo.Database?.ToUpper());
+            return this.BuiltinDatabases.Any(item => item.ToUpper() == this.ConnectionInfo.Database?.ToUpper());
+        }
+
+        private string GetSchemaBySchemaFilter(SchemaInfoFilter filter)
+        {
+            if (filter != null && !string.IsNullOrEmpty(filter.Schema))
+            {
+                return filter.Schema;
+            }
+
+            return this.GetDbSchema();
         }
         #endregion
 
@@ -71,28 +81,38 @@ namespace DatabaseInterpreter.Core
 
         public string GetCurrentUserName()
         {
-            string sql = "SELECT sys_context('USERENV', 'CURRENT_USER') FROM dual";
+            string sql = "SELECT sys_context('USERENV', 'CURRENT_USER') FROM DUAL";
             return (this.GetScalar(this.CreateConnection(), sql))?.ToString();
         }
 
         public string GetDbSchema()
         {
-            if (this.ConnectionInfo != null && this.ConnectionInfo.IntegratedSecurity && (string.IsNullOrEmpty(this.dbSchema) || this.dbSchema == "/"))
+            if (string.IsNullOrEmpty(this.dbSchema))
             {
-                try
+                bool isValidConnection = this.ConnectionInfo != null 
+                    && (this.ConnectionInfo.IntegratedSecurity
+                    || (!string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                   );
+
+                if(isValidConnection)
                 {
-                    return this.dbSchema = this.GetCurrentUserName();
-                }
-                catch (Exception ex)
-                {
-                    this.Feedback(FeedbackInfoType.Error, ExceptionHelper.GetExceptionDetails(ex));
-                }
-            }
+                    string sql = this.GetSqlForTablespaces();
+
+                    this.dbSchema = (this.GetScalar(this.CreateConnection(), sql))?.ToString();
+                }                
+            }                     
 
             return this.dbSchema;
         }
 
         public override Task<List<Database>> GetDatabasesAsync()
+        {
+            string sql = this.GetSqlForTablespaces();
+
+            return base.GetDbObjectsAsync<Database>(sql);
+        }
+
+        private string GetSqlForTablespaces()
         {
             string notShowBuiltinDatabaseCondition = this.GetExcludeBuiltinDbNamesCondition("TABLESPACE_NAME", false);
 
@@ -101,18 +121,20 @@ namespace DatabaseInterpreter.Core
                 notShowBuiltinDatabaseCondition += " AND CONTENTS <>'UNDO'";
             }
 
-            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetDbSchema()}')) {notShowBuiltinDatabaseCondition}";
+            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetCurrentUserName()}')) {notShowBuiltinDatabaseCondition}";
 
-            return base.GetDbObjectsAsync<Database>(sql);
+            return sql;
         }
         #endregion
 
         #region Database Schema
         public override async Task<List<DatabaseSchema>> GetDatabaseSchemasAsync()
         {
-            string database = this.ConnectionInfo.UserId;
+            var tablespaces = await this.GetDatabasesAsync();
 
-            List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = database, Name = database } };
+            string tablesapce = tablespaces.FirstOrDefault().Name;
+
+            List<DatabaseSchema> databaseSchemas = new List<DatabaseSchema>() { new DatabaseSchema() { Schema = tablesapce, Name = tablesapce } };
 
             return await Task.Run(() => { return databaseSchemas; });
         }
@@ -152,7 +174,7 @@ namespace DatabaseInterpreter.Core
                         JOIN ALL_TYPE_ATTRS TA ON T.OWNER = TA.OWNER AND T.TYPE_NAME = TA.TYPE_NAME");
             }
 
-            sb.Append($"WHERE UPPER(T.OWNER)=UPPER('{this.GetDbSchema()}')");
+            sb.Append($"WHERE UPPER(T.OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "T.TYPE_NAME"));
 
@@ -207,7 +229,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             bool isFunction = type.ToUpper() == "FUNCTION";
 
-            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetDbSchema()}')";
+            string ownerCondition = $" AND UPPER(P.OWNER) = UPPER('{this.GetSchemaBySchemaFilter(filter)}')";
             string[] objectNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
 
             var sb = this.CreateSqlBuilder();
@@ -283,7 +305,7 @@ namespace DatabaseInterpreter.Core
                           LEFT JOIN USER_TAB_COMMENTS C ON T.TABLE_NAME= C.TABLE_NAME");
             }
 
-            sb.Append($" WHERE UPPER(OWNER)=UPPER('{this.GetDbSchema()}')" + tablespaceCondition);
+            sb.Append($" WHERE UPPER(OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')" + tablespaceCondition);
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "T.TABLE_NAME"));
 
@@ -317,7 +339,7 @@ namespace DatabaseInterpreter.Core
             string identityColumn = isLowDbVersion ? "0" : "CASE C.IDENTITY_COLUMN  WHEN 'YES' THEN 1 ELSE 0 END";
 
             string commentColumn = isSimpleMode ? "" : @", CC.COMMENTS AS ""Comment""";
-            string commentClause = isSimpleMode? "": "LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME";
+            string commentClause = isSimpleMode ? "" : "LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME";
 
             var sb = this.CreateSqlBuilder();
 
@@ -331,14 +353,14 @@ namespace DatabaseInterpreter.Core
                  FROM ALL_TAB_COLS C
                  LEFT JOIN ALL_TYPES T ON C.OWNER=T.OWNER AND C.DATA_TYPE=T.TYPE_NAME
                  {commentClause}
-                 WHERE UPPER(C.OWNER)=UPPER('{this.GetDbSchema()}') AND C.HIDDEN_COLUMN='NO'{userGeneratedCondition}");
+                 WHERE UPPER(C.OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}') AND C.HIDDEN_COLUMN='NO'{userGeneratedCondition}");
 
-            if(this.IsBuiltinDatabase())
+            if (this.IsBuiltinDatabase())
             {
-                if(isSimpleMode)
+                if (isSimpleMode)
                 {
                     sb.Append("AND C.TABLE_NAME NOT LIKE '%$%' AND C.COLUMN_NAME NOT LIKE '%#%'");
-                }                
+                }
             }
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
@@ -365,7 +387,7 @@ namespace DatabaseInterpreter.Core
             sb.Append($@"SELECT UC.OWNER AS ""Schema"", UC.TABLE_NAME AS ""TableName"",UC.CONSTRAINT_NAME AS ""Name"",UCC.COLUMN_NAME AS ""ColumnName"", UCC.POSITION AS ""Order"", 0 AS ""IsDesc""
                         FROM USER_CONSTRAINTS UC
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME  
-                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetDbSchema()}')");
+                        WHERE UC.CONSTRAINT_TYPE='P' AND UPPER(UC.OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "UC.TABLE_NAME"));
 
@@ -389,12 +411,12 @@ namespace DatabaseInterpreter.Core
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT UC.OWNER AS ""Schema"", UC.TABLE_NAME AS ""TableName"", UC.CONSTRAINT_NAME AS ""Name"", UCC.column_name AS ""ColumnName"",
-                        RUCC.TABLE_NAME AS ""ReferencedTableName"",RUCC.COLUMN_NAME AS ""ReferencedColumnName"",
+                        RUCC.OWNER AS ""ReferencedSchema"",RUCC.TABLE_NAME AS ""ReferencedTableName"",RUCC.COLUMN_NAME AS ""ReferencedColumnName"",
                         0 AS ""UpdateCascade"", CASE UC.DELETE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS ""DeleteCascade"" 
                         FROM USER_CONSTRAINTS UC                       
                         JOIN USER_CONS_COLUMNS UCC ON UC.OWNER=UCC.OWNER AND UC.TABLE_NAME=UCC.TABLE_NAME AND UC.CONSTRAINT_NAME=UCC.CONSTRAINT_NAME                       
                         JOIN USER_CONS_COLUMNS RUCC ON UC.OWNER=RUCC.OWNER AND UC.R_CONSTRAINT_NAME=RUCC.CONSTRAINT_NAME AND UCC.POSITION=RUCC.POSITION
-                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetDbSchema()}')");
+                        WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "UC.TABLE_NAME"));
 
@@ -423,7 +445,7 @@ namespace DatabaseInterpreter.Core
                 FROM USER_INDEXES UI
                 JOIN USER_IND_COLUMNS UIC ON UI.INDEX_NAME = UIC.INDEX_NAME AND UI.TABLE_NAME = UIC.TABLE_NAME
                 LEFT JOIN USER_CONSTRAINTS UC ON UI.TABLE_NAME = UC.TABLE_NAME AND UI.TABLE_OWNER = UC.OWNER AND UI.INDEX_NAME = UC.CONSTRAINT_NAME AND UC.CONSTRAINT_TYPE = 'P'
-                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetDbSchema()}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}");
+                WHERE UPPER(UI.TABLE_OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}'){(includePrimaryKey ? "" : " AND UC.CONSTRAINT_NAME IS NULL")}");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "UI.TABLE_NAME"));
 
@@ -476,7 +498,7 @@ namespace DatabaseInterpreter.Core
                          {(isSimpleMode ? "''" : "('CREATE OR REPLACE TRIGGER ' || DESCRIPTION)")} AS ""CreateClause"",
                          {(isSimpleMode ? "''" : "TRIGGER_BODY")} AS ""Definition""
                         FROM USER_TRIGGERS
-                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetDbSchema()}')");
+                        WHERE UPPER(TABLE_OWNER) = UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             if (filter != null)
             {
@@ -519,7 +541,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append($@"SELECT OWNER AS ""Schema"", CONSTRAINT_NAME AS ""Name"", TABLE_NAME AS ""TableName"", {definitionField} AS ""Definition""
                          FROM ALL_CONSTRAINTS C
-                         WHERE UPPER(OWNER) = UPPER('{this.GetDbSchema()}') 
+                         WHERE UPPER(OWNER) = UPPER('{this.GetSchemaBySchemaFilter(filter)}') 
                          AND CONSTRAINT_TYPE = 'C' AND GENERATED = 'USER NAME'");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
@@ -555,7 +577,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append($@"SELECT V.OWNER AS ""Schema"", V.VIEW_NAME AS ""Name"", {(isSimpleMode ? "''" : definitionField)} AS ""Definition"" 
                         FROM ALL_VIEWS V
-                        WHERE UPPER(OWNER) = UPPER('{this.GetDbSchema()}')");
+                        WHERE UPPER(OWNER) = UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "V.VIEW_NAME"));
 
@@ -694,7 +716,7 @@ namespace DatabaseInterpreter.Core
                             {
                                 DatabaseType sourcedDbType = bulkCopyInfo.SourceDatabaseType;
 
-                                if(sourcedDbType == DatabaseType.MySql)
+                                if (sourcedDbType == DatabaseType.MySql)
                                 {
                                     if (dataType == "sdo_geometry")
                                     {
@@ -708,7 +730,7 @@ namespace DatabaseInterpreter.Core
 
                                         newValue = MySqlGeometryHelper.ToOracleStGeometry(value as byte[]);
                                     }
-                                }                                
+                                }
                             }
                             else if (value is PgGeom.Geometry)
                             {
@@ -724,17 +746,17 @@ namespace DatabaseInterpreter.Core
 
                                     newValue = PostgresGeometryHelper.ToOracleStGeometry(value as PgGeom.Geometry);
                                 }
-                            }                            
+                            }
                         }
                         else
                         {
                             if (dataType == "sdo_geometry")
                             {
-                                newColumnType = typeof(SdoGeometry);                               
+                                newColumnType = typeof(SdoGeometry);
                             }
                             else if (dataType == "st_geometry")
                             {
-                                newColumnType = typeof(StGeometry);                                
+                                newColumnType = typeof(StGeometry);
                             }
                         }
 
@@ -752,7 +774,7 @@ namespace DatabaseInterpreter.Core
                         {
                             changedValues.Add((rowIndex, i), newValue);
                         }
-                    }                    
+                    }
                 }
 
                 rowIndex++;

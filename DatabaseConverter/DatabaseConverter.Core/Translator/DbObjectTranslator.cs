@@ -1,13 +1,17 @@
-﻿using DatabaseConverter.Core.Model;
+﻿using Antlr4.Runtime.Misc;
+using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using PoorMansTSqlFormatterRedux;
+using RTools_NTS.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -25,9 +29,10 @@ namespace DatabaseConverter.Core
         protected bool hasError = false;
 
         public bool ContinueWhenErrorOccurs { get; set; }
-        public bool HasError => this.hasError;      
+        public bool HasError => this.hasError;
         public SchemaInfo SourceSchemaInfo { get; set; }
         public DbConverterOption Option { get; set; }
+        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
         public TranslateHandler OnTranslated;
 
@@ -59,108 +64,118 @@ namespace DatabaseConverter.Core
         internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
         {
             dataType = this.GetTrimedValue(dataType.Trim());
+            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this.sourceDbInterpreter, dataType);
 
-            DatabaseType sourceDbType = this.sourceDbInterpreter.DatabaseType;
-            DatabaseType targetDbType = this.targetDbInterpreter.DatabaseType;
+            string upperDataTypeName = dataTypeInfo.DataType.ToUpper();
 
-            string cleanDataType = dataType.Split('(')[0].Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar);
-            string newDataType = cleanDataType;
-            bool hasPrecisionScale = false;
-
-            if (cleanDataType != dataType)
+            if (this.sourceDbType == DatabaseType.MySql)
             {
-                hasPrecisionScale = true;
+                if (upperDataTypeName == "SIGNED")
+                {
+                    if (this.targetDbType == DatabaseType.SqlServer)
+                    {
+                        return "DECIMAL";
+                    }
+                    else if (this.targetDbType == DatabaseType.Postgres)
+                    {
+                        return "NUMERIC";
+                    }
+                    else if (this.targetDbType == DatabaseType.Oracle)
+                    {
+                        return "NUMBER";
+                    }
+                }
             }
 
-            string upperTypeName = newDataType.ToUpper();
-
-            DataTypeMapping mapping = this.GetDataTypeMapping(mappings, cleanDataType);
-
-            if (mapping != null)
+            if (this.targetDbType == DatabaseType.Oracle)
             {
-                DataTypeMappingTarget targetDataType = mapping.Target;
-                newDataType = targetDataType.Type;
-
-                if (usedForFunction)
+                if (usedForFunction && this.GetType() == typeof(FunctionTranslator) && dataTypeInfo.Args?.ToLower() == "max")
                 {
-                    if (targetDbType == DatabaseType.MySql)
-                    {
-                        if (upperTypeName == "INT" || upperTypeName=="BIT")
-                        {
-                            newDataType = "SIGNED";
-                        }
-                        else if (upperTypeName == "FLOAT" || upperTypeName == "DOUBLE" || upperTypeName == "NUMBER")
-                        {
-                            newDataType = "DECIMAL";
-                        }
-                        else if (DataTypeHelper.IsCharType(newDataType))
-                        {
-                            newDataType = "CHAR";
-                        }
-                    }
-                    else if (targetDbType == DatabaseType.Oracle)
-                    {
-                        if (this.GetType() == typeof(FunctionTranslator))
-                        {
-                            if(DataTypeHelper.IsCharType(newDataType) || DataTypeHelper.IsBinaryType(newDataType))
-                            {
-                                int index = dataType.IndexOf('(');
+                    var mappedDataType = this.GetDataTypeMapping(mappings, dataTypeInfo.DataType)?.Target?.Type;
 
-                                if (index > 0)
-                                {
-                                    return $"{newDataType}{dataType.Substring(index)}"; 
-                                }
-                                else
-                                {
-                                    return newDataType;
-                                }
+                    if (DataTypeHelper.IsCharType(mappedDataType) || DataTypeHelper.IsBinaryType(mappedDataType))
+                    {
+                        var dataTypeSpec = this.targetDbInterpreter.GetDataTypeSpecification(mappedDataType);
+
+                        if (dataTypeSpec != null)
+                        {
+                            ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpec, "length");
+
+                            if (range.HasValue)
+                            {
+                                return $"{mappedDataType}({range.Value.Max})";
                             }
-                            else
-                            {
-                                return newDataType;
-                            }                           
                         }
                     }
-                    else if(targetDbType == DatabaseType.Postgres)
-                    {
-                        if(DataTypeHelper.IsBinaryType(newDataType))
-                        {
-                            return newDataType;
-                        }
-                    }
-                }
-
-                if (!hasPrecisionScale && !string.IsNullOrEmpty(targetDataType.Precision) && !string.IsNullOrEmpty(targetDataType.Scale))
-                {
-                    newDataType += $"({targetDataType.Precision},{targetDataType.Scale})";
-                }
-                else if (hasPrecisionScale)
-                {
-                    newDataType += "(" + dataType.Split('(')[1];
                 }
             }
-            else
+
+            var trimChars = TranslateHelper.GetTrimChars(this.sourceDbInterpreter, this.targetDbInterpreter).ToArray();
+
+            TableColumn column = TranslateHelper.SimulateTableColumn(this.sourceDbInterpreter, dataType, this.Option, this.UserDefinedTypes, trimChars);
+
+            DataTypeTranslator dataTypeTranslator = new DataTypeTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
+            dataTypeTranslator.Option = this.Option;
+
+            TranslateHelper.TranslateTableColumnDataType(dataTypeTranslator, column);
+
+            string newDataTypeName = column.DataType;
+            string newDataType = null;
+
+            if (usedForFunction)
             {
-                if (usedForFunction)
+                if (this.targetDbType == DatabaseType.MySql)
                 {
-                    if (sourceDbType == DatabaseType.MySql)
+                    var ndt = this.GetMySqlNewDataType(newDataTypeName);
+
+                    if (ndt != newDataTypeName)
                     {
-                        if (upperTypeName == "SIGNED")
-                        {
-                            if (targetDbType == DatabaseType.SqlServer)
-                            {
-                                newDataType = "DECIMAL";
-                            }
-                            else if (targetDbType == DatabaseType.Oracle)
-                            {
-                                newDataType = "NUMBER";
-                            }
-                        }
+                        newDataType = ndt;
                     }
                 }
+                else if (targetDbType == DatabaseType.Postgres)
+                {
+                    if (DataTypeHelper.IsBinaryType(newDataTypeName))
+                    {
+                        return newDataTypeName;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(newDataType))
+            {
+                newDataType = this.targetDbInterpreter.ParseDataType(column);
             }
 
             return newDataType;
+        }
+
+        private string GetMySqlNewDataType(string dataTypeName)
+        {
+            string upperTypeName = dataTypeName.ToUpper();
+
+            if (upperTypeName.Contains("INT") || upperTypeName == "BIT")
+            {
+                return "SIGNED";
+            }
+            else if (upperTypeName == "FLOAT" || upperTypeName == "DOUBLE" || upperTypeName == "NUMBER")
+            {
+                return "DECIMAL";
+            }
+            else if (DataTypeHelper.IsCharType(dataTypeName) || upperTypeName.Contains("TEXT"))
+            {
+                return "CHAR";
+            }
+            else if (DataTypeHelper.IsDateOrTimeType(dataTypeName))
+            {
+                return "DATETIME";
+            }
+            else if (DataTypeHelper.IsBinaryType(dataTypeName))
+            {
+                return "BINARY";
+            }
+
+            return dataTypeName;
         }
 
         private string GetTrimedValue(string value)
@@ -204,107 +219,93 @@ namespace DatabaseConverter.Core
             return script;
         }
 
-        public string ParseFomular(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,
-            FunctionFomular fomular, MappingFunctionInfo targetFunctionInfo, out Dictionary<string, string> dictDataType)
+        public string ParseFormula(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,
+            FunctionFormula formula, MappingFunctionInfo targetFunctionInfo, out Dictionary<string, string> dictDataType)
         {
             dictDataType = new Dictionary<string, string>();
 
-            string name = fomular.Name;
+            Dictionary<string, string> dataTypeDict = new Dictionary<string, string>();
+
+            string name = formula.Name;
 
             if (!string.IsNullOrEmpty(targetFunctionInfo.Args) && !targetFunctionInfo.Args.Contains("EXP"))
             {
                 return $"{targetFunctionInfo.Name}({targetFunctionInfo.Args})";
-            }           
+            }
 
             FunctionSpecification sourceFuncSpec = sourceFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == name.ToUpper());
             FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionInfo.Name.ToUpper());
 
-            string newExpression = fomular.Expression;
+            string newExpression = formula.Expression;
 
-            if (sourceFuncSpec != null && targetFuncSpec != null)
+            if (sourceFuncSpec != null)
             {
-                string delimiter = sourceFuncSpec.Delimiter == "," ? "," : $" {sourceFuncSpec.Delimiter} ";
-                fomular.Delimiter = delimiter;
+                string delimiter = sourceFuncSpec.Delimiter.Length == 1 ? sourceFuncSpec.Delimiter : $" {sourceFuncSpec.Delimiter} ";
 
-                List<string> fomularArgs = fomular.Args;
+                List<string> formulaArgs = formula.GetArgs(delimiter);
 
-                int fetchCount = string.IsNullOrEmpty(targetFunctionInfo.Args) ? fomularArgs.Count : -1;
-
-                Dictionary<int, string> sourceTokens = GetFunctionArgumentTokens(sourceFuncSpec, null, fetchCount);
-
-                int targetArgsLength = targetFuncSpec.Args.Split(new string[] { targetFuncSpec.Delimiter }, StringSplitOptions.RemoveEmptyEntries).Length;
-
-                Dictionary<int, string> targetTokens = GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args, fetchCount < targetArgsLength ? targetArgsLength : fetchCount);
+                List<FunctionArgumentItemInfo> sourceArgItems = GetFunctionArgumentTokens(sourceFuncSpec, null);
+                List<FunctionArgumentItemInfo> targetArgItems = targetFuncSpec == null ? null : GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args);
 
                 bool ignore = false;
 
-                if (fomularArgs.Count > 0 && (targetTokens.Count == 0 || sourceTokens.Count == 0))
+                if (targetArgItems == null || (formulaArgs.Count > 0 && (targetArgItems == null || targetArgItems.Count == 0 || sourceArgItems.Count == 0)))
                 {
                     ignore = true;
                 }
 
-                if (!ignore)
+                Func<FunctionArgumentItemInfo, string, string> getSourceArg = (source, content) =>
                 {
-                    List<string> args = new List<string>();
+                    int sourceIndex = source.Index;
 
-                    foreach (var kp in targetTokens)
+                    if (formulaArgs.Count > sourceIndex)
                     {
-                        int targetIndex = kp.Key;
-                        string token = kp.Value;
+                        string oldArg = formulaArgs[sourceIndex];
+                        string newArg = oldArg;
 
-                        if (sourceTokens.ContainsValue(token))
+                        switch (content.ToUpper())
                         {
-                            int sourceIndex = sourceTokens.FirstOrDefault(item => item.Value == token).Key;
+                            case "TYPE":
 
-                            if (fomularArgs.Count > sourceIndex)
-                            {
-                                string oldArg = fomular.Args[sourceIndex];
-                                string newArg = oldArg;
-
-                                switch (token.ToUpper())
+                                if (!dataTypeDict.ContainsKey(oldArg))
                                 {
-                                    case "TYPE":
+                                    newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
 
-                                        if (!dictDataType.ContainsKey(oldArg))
-                                        {
-                                            newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
-
-                                            dictDataType.Add(oldArg, newArg.Trim());
-                                        }
-                                        else
-                                        {
-                                            newArg = dictDataType[oldArg];
-                                        }
-                                        break;
+                                    dataTypeDict.Add(oldArg, newArg.Trim());
                                 }
+                                else
+                                {
+                                    newArg = dataTypeDict[oldArg];
+                                }
+                                break;
+                        }
 
-                                args.Add(newArg);
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(targetFunctionInfo.Args))
-                        {
-                            args.Add(token);
-                        }
-                        else if (token == "STR")
-                        {
-                            args.Add("''");
-                        }
-                        else if(token == "START")
-                        {
-                            args.Add("0");
-                        }
+                        return this.GetFunctionValue(targetFuncSpecs, newArg);
                     }
 
-                    string targetDelimiter = targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ";
+                    return string.Empty;
+                };
 
-                    string strArgs = string.Join(targetDelimiter, args);
+                Func<string, string> getTrimedContent = (content) =>
+                {
+                    return content.Trim('\'');
+                };
+
+                Func<string, bool> isQuoted = (content) =>
+                {
+                    return content.StartsWith('\'');
+                };
+
+                if (!ignore)
+                {
+                    Dictionary<string, string> defaults = this.GetFunctionDefaults(targetFunctionInfo);
                     string targetFunctionName = targetFunctionInfo.Name;
 
                     if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
                     {
-                        if (name == "TRIM" && fomularArgs.Count>1)
+                        if (name == "TRIM" && formulaArgs.Count > 1)
                         {
-                            switch(fomularArgs[0])
+                            switch (formulaArgs[0])
                             {
                                 case "LEADING":
                                     targetFunctionName = "LTRIM";
@@ -316,16 +317,205 @@ namespace DatabaseConverter.Core
                         }
                     }
 
-                    newExpression = $"{targetFunctionName}{(targetFuncSpec.NoParenthesess ? "" : $"({strArgs})")}";
+                    StringBuilder sbArgs = new StringBuilder();
+
+                    foreach (FunctionArgumentItemInfo tai in targetArgItems)
+                    {
+                        if (tai.Index > 0)
+                        {
+                            sbArgs.Append(targetFuncSpec.Delimiter == "," ? "," : $" {targetFuncSpec.Delimiter} ");
+                        }
+
+                        string content = tai.Content;
+                        string trimedContent = getTrimedContent(content);
+                        bool hasQuoted = content != trimedContent;
+
+                        var sourceItem = sourceArgItems.FirstOrDefault(item => getTrimedContent(item.Content) == trimedContent);
+
+                        if (sourceItem != null)
+                        {
+                            string value = getSourceArg(sourceItem, content);
+
+                            if (!string.IsNullOrEmpty(value))
+                            {
+                                if (isQuoted(sourceItem.Content) && !isQuoted(content))
+                                {
+                                    value = getTrimedContent(value);
+                                }
+
+                                sbArgs.Append(!hasQuoted ? value : $"'{value}'");
+                            }
+                            else
+                            {
+                                string defaultValue = this.GetFunctionDefaultValue(defaults, content);
+
+                                if (!string.IsNullOrEmpty(defaultValue))
+                                {
+                                    sbArgs.Append(defaultValue);
+                                }
+                            }
+                        }
+                        else if (sourceArgItems.Any(item => item.Details.Any(t => getTrimedContent(t.Content) == trimedContent)))
+                        {
+                            var sd = sourceArgItems.FirstOrDefault(item => item.Details.Any(t => getTrimedContent(t.Content) == trimedContent));
+
+                            var details = sd.Details;
+
+                            if (formulaArgs.Count > sd.Index)
+                            {
+                                var args = formulaArgs[sd.Index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                                if (details.Where(item => item.Type != FunctionArgumentItemDetailType.Whitespace).Count() == args.Length)
+                                {
+                                    int i = 0;
+                                    foreach (var detail in details)
+                                    {
+                                        if (detail.Type != FunctionArgumentItemDetailType.Whitespace)
+                                        {
+                                            if (getTrimedContent(detail.Content) == trimedContent)
+                                            {
+                                                sbArgs.Append(args[i]);
+                                                break;
+                                            }
+
+                                            i++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (content == "STR")
+                        {
+                            sbArgs.Append("''");
+                        }
+                        else if (content == "START")
+                        {
+                            sbArgs.Append("0");
+                        }
+                        else if (!string.IsNullOrEmpty(targetFunctionInfo.Args))
+                        {
+                            sbArgs.Append(content);
+                        }
+                        else if (tai.Details.Count > 0)
+                        {
+                            foreach (FunctionArgumentItemDetailInfo detail in tai.Details)
+                            {
+                                string dc = detail.Content;
+                                string trimedDc = getTrimedContent(dc);
+                                bool hasQuotedDc = dc != trimedDc;
+
+                                var si = sourceArgItems.FirstOrDefault(item => getTrimedContent(item.Content) == trimedDc);
+
+                                if (si != null)
+                                {
+                                    string value = getSourceArg(si, detail.Content);
+
+                                    if (isQuoted(si.Content) && !isQuoted(dc))
+                                    {
+                                        value = getTrimedContent(value);
+                                    }
+
+                                    sbArgs.Append(!hasQuotedDc ? value : $"'{value}'");
+                                }
+                                else
+                                {
+                                    sbArgs.Append(detail.Content);
+                                }
+                            }
+                        }
+                        else if (defaults.ContainsKey(content))
+                        {
+                            sbArgs.Append(defaults[content]);
+                        }
+                        else
+                        {
+                            sbArgs.Append(content);
+                        }
+                    }
+
+                    newExpression = $"{targetFunctionName}{(targetFuncSpec.NoParenthesess ? "" : $"({sbArgs.ToString()})")}";
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(targetFunctionInfo.Expression))
+                    {
+                        string expression = targetFunctionInfo.Expression;
+
+                        foreach (FunctionArgumentItemInfo sourceItem in sourceArgItems)
+                        {
+                            string value = getSourceArg(sourceItem, sourceItem.Content);
+
+                            expression = expression.Replace(sourceItem.Content, value);
+                        }
+
+                        newExpression = expression;
+                    }
                 }
             }
+
+            dictDataType = dataTypeDict;
 
             return newExpression;
         }
 
-        internal static Dictionary<int, string> GetFunctionArgumentTokens(FunctionSpecification spec, string functionArgs, int fetchCount = -1)
+        private string GetFunctionDefaultValue(Dictionary<string, string> defaults, string arg)
         {
-            Dictionary<int, string> dictTokenIndex = new Dictionary<int, string>();
+            if (defaults.ContainsKey(arg))
+            {
+                return defaults[arg];
+            }
+
+            return null;
+        }
+
+        private Dictionary<string, string> GetFunctionDefaults(MappingFunctionInfo targetFunctionInfo)
+        {
+            Dictionary<string, string> dictDefaults = new Dictionary<string, string>();
+
+            string defaults = targetFunctionInfo.Defaults;
+
+            if (!string.IsNullOrEmpty(defaults))
+            {
+                string[] items = defaults.Split(';');
+
+                foreach (string item in items)
+                {
+                    string[] subItems = item.Split(':');
+
+                    if (subItems.Length == 2)
+                    {
+                        string key = subItems[0];
+                        string value = subItems[1];
+
+                        if (!dictDefaults.ContainsKey(key))
+                        {
+                            dictDefaults.Add(key, value);
+                        }
+                    }
+                }
+            }
+
+            return dictDefaults;
+        }
+
+        private string GetFunctionValue(List<FunctionSpecification> targetFuncSpecs, string value)
+        {
+            FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == value.TrimEnd('(', ')').ToUpper());
+
+            if (targetFuncSpec != null)
+            {
+                if (targetFuncSpec.NoParenthesess && value.EndsWith("()"))
+                {
+                    value = value.Substring(0, value.Length - 2);
+                }
+            }
+
+            return value;
+        }
+
+        internal static List<FunctionArgumentItemInfo> GetFunctionArgumentTokens(FunctionSpecification spec, string functionArgs)
+        {
+            List<FunctionArgumentItemInfo> itemInfos = new List<FunctionArgumentItemInfo>();
 
             string specArgs = string.IsNullOrEmpty(functionArgs) ? spec.Args : functionArgs;
 
@@ -333,22 +523,39 @@ namespace DatabaseConverter.Core
             {
                 string str = Regex.Replace(specArgs, @"[\[\]]", "");
 
-                string[] args = str.Split(new string[] { spec.Delimiter, " " }, StringSplitOptions.RemoveEmptyEntries);
+                string[] items = str.Split(new string[] { spec.Delimiter }, StringSplitOptions.RemoveEmptyEntries);
 
-                int num = (fetchCount > 0 && args.Length > fetchCount) ? fetchCount : args.Length;
-
-                for (int i = 0; i < num; i++)
+                for (int i = 0; i < items.Length; i++)
                 {
-                    string arg = args[i];
+                    string item = items[i].Trim();
 
-                    dictTokenIndex.Add(i, arg.Trim());
+                    FunctionArgumentItemInfo itemInfo = new FunctionArgumentItemInfo() { Index = i, Content = item };
+
+                    if (item.Contains(" "))
+                    {
+                        string[] details = item.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                        for (int j = 0; j < details.Length; j++)
+                        {
+                            if (j > 0)
+                            {
+                                itemInfo.Details.Add(new FunctionArgumentItemDetailInfo() { Type = FunctionArgumentItemDetailType.Whitespace, Content = " " });
+                            }
+
+                            FunctionArgumentItemDetailInfo detail = new FunctionArgumentItemDetailInfo() { Type = FunctionArgumentItemDetailType.Text, Content = details[j] };
+
+                            itemInfo.Details.Add(detail);
+                        }
+                    }
+
+                    itemInfos.Add(itemInfo);
                 }
             }
 
-            return dictTokenIndex;
+            return itemInfos;
         }
 
-        public MappingFunctionInfo GetMappingFunctionInfo(string name, out bool useBrackets)
+        public MappingFunctionInfo GetMappingFunctionInfo(string name, string args, out bool useBrackets)
         {
             useBrackets = false;
 
@@ -365,9 +572,13 @@ namespace DatabaseConverter.Core
 
             MappingFunctionInfo functionInfo = new MappingFunctionInfo() { Name = name };
 
-            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item => item.Any(t =>
+            IEnumerable<FunctionMapping> funcMappings = this.functionMappings.FirstOrDefault(item =>
+            item.Any(t =>
              (t.Direction == FunctionMappingDirection.OUT || t.Direction == FunctionMappingDirection.INOUT)
-              && t.DbType == sourceDbInterpreter.DatabaseType.ToString() && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())));
+              && t.DbType == sourceDbInterpreter.DatabaseType.ToString()
+              && t.Function.Split(',').Any(m => m.ToLower() == text.ToLower())
+             )
+            );
 
             if (funcMappings != null)
             {
@@ -377,8 +588,23 @@ namespace DatabaseConverter.Core
 
                 if (mapping != null)
                 {
-                    functionInfo.Name = mapping.Function.Split(',')?.FirstOrDefault();
-                    functionInfo.Args = mapping.Args;
+                    bool matched = true;
+
+                    if (!string.IsNullOrEmpty(args) && !string.IsNullOrEmpty(mapping.Args))
+                    {
+                        if (args.Trim().ToLower() != mapping.Args.Trim().ToLower())
+                        {
+                            matched = false;
+                        }
+                    }
+
+                    if (matched)
+                    {
+                        functionInfo.Name = mapping.Function.Split(',')?.FirstOrDefault();
+                        functionInfo.Args = mapping.Args;
+                        functionInfo.Expression = mapping.Expression;
+                        functionInfo.Defaults = mapping.Defaults;
+                    }
                 }
             }
 
@@ -398,7 +624,7 @@ namespace DatabaseConverter.Core
 
         protected string GetTrimedName(string name)
         {
-            return name?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar , '"');
+            return name?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar, '"');
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

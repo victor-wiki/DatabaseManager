@@ -1535,9 +1535,11 @@ namespace SqlAnalyser.Core
             {
                 if (node is Search_conditionContext sc)
                 {
-                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node);
 
                     bool isIfCondition = node.Parent != null && (node.Parent is If_statementContext || node.Parent is While_statementContext);
+
+                    token.Type = isIfCondition ? TokenType.IfCondition : TokenType.SearchCondition;
 
                     if (!isIfCondition)
                     {
@@ -1548,7 +1550,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (node is Switch_search_condition_sectionContext)
                 {
-                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node, TokenType.SearchCondition);
 
                     return token;
                 }

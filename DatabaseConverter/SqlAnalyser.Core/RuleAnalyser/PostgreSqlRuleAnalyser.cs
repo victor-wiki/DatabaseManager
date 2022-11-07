@@ -445,9 +445,11 @@ namespace SqlAnalyser.Core
                     node is A_expr_qualContext
                     )
                 {
-                    TokenInfo token = this.CreateToken(node, TokenType.Condition);
+                    TokenInfo token = this.CreateToken(node);                    
 
                     bool isIfCondition = node.Parent != null && (node.Parent is Stmt_elsifsContext);
+
+                    token.Type = isIfCondition ? TokenType.IfCondition : TokenType.SearchCondition;
 
                     if (!isIfCondition)
                     {
@@ -465,15 +467,18 @@ namespace SqlAnalyser.Core
         {
             List<FromItem> fromItems = new List<FromItem>();
 
-            Table_refContext[] tableRefs = node.from_list().table_ref();
+            Table_refContext[] tableRefs = node.from_list()?.table_ref();
 
-            foreach (Table_refContext tableRef in tableRefs)
+            if (tableRefs != null)
             {
-                FromItem fromItem = new FromItem();
+                foreach (Table_refContext tableRef in tableRefs)
+                {
+                    FromItem fromItem = new FromItem();
 
-                this.ParseTableRef(fromItem, tableRef);
+                    this.ParseTableRef(fromItem, tableRef);
 
-                fromItems.Add(fromItem);
+                    fromItems.Add(fromItem);
+                }
             }
 
             return fromItems;
@@ -583,7 +588,7 @@ namespace SqlAnalyser.Core
         }
         public override bool IsFunction(IParseTree node)
         {
-            if (node is Func_exprContext)
+            if (node is Func_exprContext || node is Func_applicationContext)
             {
                 return true;
             }

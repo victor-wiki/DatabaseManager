@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
         private string dbSchema;
         public const int DEFAULT_PORT = 5432;
         public override string STR_CONCAT_CHARS => "||";
-        public override string UnicodeLeadingFlag => "";
+        public override string UnicodeLeadingFlag => "";       
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
         public const char QuotedRightChar = '"';
@@ -31,7 +31,8 @@ namespace DatabaseInterpreter.Core
         public override string DefaultDataType => "character varying";
         public override string DefaultSchema => "public";
         public override IndexType IndexType => IndexType.Primary | IndexType.Unique | IndexType.BTree | IndexType.Brin | IndexType.Hash | IndexType.Gin | IndexType.GiST | IndexType.SP_GiST;
-        public override bool SupportBulkCopy { get { return true; } }
+        public override bool SupportBulkCopy => true;
+        public override bool SupportNchar => false;
         public override List<string> BuiltinDatabases => new List<string> { "postgres" };
         public List<string> SystemSchemas => new List<string> { "pg_catalog", "pg_toast", "information_schema" };
         #endregion

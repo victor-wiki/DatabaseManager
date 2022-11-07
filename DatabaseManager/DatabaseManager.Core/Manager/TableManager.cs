@@ -203,7 +203,7 @@ namespace DatabaseManager.Core
                             TableIndex oldIndex = oldIndexes.FirstOrDefault(item => item.Name == indexDesignerInfo.OldName);
 
                             if (this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldName, indexDesignerInfo.Name)
-                                && this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldType, indexDesignerInfo.Type)
+                                && (this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldType, indexDesignerInfo.Type) || (indexDesignerInfo.Type== nameof(IndexType.Unique) && oldIndex.IsUnique))
                               )
                             {
                                 if (oldIndex != null && this.IsStringEquals(oldIndex.Comment, newIndex.Comment) && SchemaInfoHelper.IsIndexColumnsEquals(oldIndex.Columns, newIndex.Columns))

@@ -74,7 +74,7 @@ namespace DatabaseManager.Controls
             // lblSchema
             // 
             this.lblSchema.AutoSize = true;
-            this.lblSchema.Location = new System.Drawing.Point(601, 10);
+            this.lblSchema.Location = new System.Drawing.Point(579, 10);
             this.lblSchema.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblSchema.Name = "lblSchema";
             this.lblSchema.Size = new System.Drawing.Size(56, 17);
@@ -133,7 +133,7 @@ namespace DatabaseManager.Controls
             // ucColumns
             // 
             this.ucColumns.BackColor = System.Drawing.Color.White;
-            this.ucColumns.DatabaseType = DatabaseType.Unknown;
+            this.ucColumns.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.ucColumns.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucColumns.Location = new System.Drawing.Point(4, 4);
             this.ucColumns.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -156,7 +156,8 @@ namespace DatabaseManager.Controls
             // 
             // ucForeignKeys
             // 
-            this.ucForeignKeys.DatabaseType = DatabaseType.Unknown;
+            this.ucForeignKeys.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
+            this.ucForeignKeys.DefaultSchema = null;
             this.ucForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucForeignKeys.Location = new System.Drawing.Point(4, 4);
             this.ucForeignKeys.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -178,7 +179,7 @@ namespace DatabaseManager.Controls
             // 
             // ucIndexes
             // 
-            this.ucIndexes.DatabaseType = DatabaseType.Unknown;
+            this.ucIndexes.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.ucIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucIndexes.Location = new System.Drawing.Point(0, 0);
             this.ucIndexes.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
@@ -200,7 +201,7 @@ namespace DatabaseManager.Controls
             // 
             // ucConstraints
             // 
-            this.ucConstraints.DatabaseType = DatabaseType.Unknown;
+            this.ucConstraints.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.ucConstraints.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ucConstraints.Location = new System.Drawing.Point(0, 0);
             this.ucConstraints.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);

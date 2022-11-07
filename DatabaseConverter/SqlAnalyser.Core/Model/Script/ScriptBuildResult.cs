@@ -3,6 +3,8 @@
     public class ScriptBuildResult
     {
         public string Script { get; set; }
-        public string Body { get; set; }
+        public int BodyStartIndex { get; set; }
+        public int BodyStopIndex { get; set; }
+
     }
 }

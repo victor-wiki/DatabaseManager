@@ -2,17 +2,21 @@
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace SqlAnalyser.Core
 {
     public abstract class SqlAnalyserBase
     {
+        private StatementScriptBuilder statementBuilder;
+
         public abstract DatabaseType DatabaseType { get; }
         public abstract ScriptBuildResult GenerateScripts(CommonScript script);
         public abstract AnalyseResult AnalyseView(string content);
         public abstract AnalyseResult AnalyseProcedure(string content);
         public abstract AnalyseResult AnalyseFunction(string content);
         public abstract AnalyseResult AnalyseTrigger(string content);
+        public abstract SqlRuleAnalyser RuleAnalyser { get; }
 
         public AnalyseResult Analyse<T>(string content) where T : DatabaseObject
         {
@@ -42,39 +46,56 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public string BuildStatement(Statement statement, RoutineType routineType = RoutineType.UNKNOWN)
+        public StatementScriptBuilder StatementBuilder
         {
-            StatementScriptBuilder sb = null;
+            get
+            {
+                if (this.statementBuilder == null)
+                {
+                    this.statementBuilder = this.GetStatementBuilder();
+                }
+
+                return this.statementBuilder;
+            }
+        }
+
+        private StatementScriptBuilder GetStatementBuilder()
+        {
+            StatementScriptBuilder builder = null;
 
             if (this.DatabaseType == DatabaseType.SqlServer)
             {
-                sb = new TSqlStatementScriptBuilder();
+                builder = new TSqlStatementScriptBuilder();
             }
             else if (this.DatabaseType == DatabaseType.MySql)
             {
-                sb = new MySqlStatementScriptBuilder();
+                builder = new MySqlStatementScriptBuilder();
             }
             else if (this.DatabaseType == DatabaseType.Oracle)
             {
-                sb = new PlSqlStatementScriptBuilder();
+                builder = new PlSqlStatementScriptBuilder();
             }
             else if (this.DatabaseType == DatabaseType.Postgres)
             {
-                sb = new PostgreSqlStatementScriptBuilder();
+                builder = new PostgreSqlStatementScriptBuilder();
             }
             else
             {
                 throw new NotSupportedException($"Not support buid statement for: {this.DatabaseType}");
             }
 
-            if (sb != null)
-            {
-                sb.RoutineType = routineType;
-            }
+            return builder;
+        }
 
-            sb.Build(statement);
+        public string BuildStatement(Statement statement,RoutineType routineType = RoutineType.UNKNOWN, StatementScriptBuilderOption option = null)
+        {
+            this.StatementBuilder.RoutineType = routineType;
+            this.statementBuilder.Option = option;
+            this.StatementBuilder.Clear();
 
-            return sb.ToString();
+            this.StatementBuilder.Build(statement);
+
+            return this.StatementBuilder.ToString();
         }
     }
 }

@@ -24,7 +24,7 @@ namespace DatabaseInterpreter.Core
     public class SqlServerInterpreter : DbInterpreter
     {
         #region Field & Property
-        public const string AzureSQLFlag = "SQL Azure";
+        public const string AzureSQLFlag = "SQL Azure";       
         public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '[';
         public const char QuotedRightChar = ']';
@@ -35,7 +35,8 @@ namespace DatabaseInterpreter.Core
         public override string DefaultSchema => "dbo";
         public override string STR_CONCAT_CHARS => "+";
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.ColumnStore;
-        public override bool SupportBulkCopy { get { return true; } }
+        public override bool SupportBulkCopy => true;
+        public override bool SupportNchar => true;
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };
@@ -166,7 +167,7 @@ namespace DatabaseInterpreter.Core
                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(o.object_id)")} AS [Definition]
                            FROM sys.all_objects o 
                            WHERE o.type IN ('FN', 'IF', 'AF', 'FS', 'FT','TF')
-                           AND SCHEMA_NAME(schema_id) NOT IN('sys')");
+                           AND SCHEMA_NAME(schema_id) NOT IN('sys') AND o.name NOT IN('fn_diagramobjects')");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(o.schema_id)"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.FunctionNames, "o.name"));

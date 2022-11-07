@@ -13,6 +13,7 @@ namespace SqlAnalyser.Core
         private PostgreSqlRuleAnalyser ruleAnalyser = null;
 
         public override DatabaseType DatabaseType => DatabaseType.Postgres;
+        public override SqlRuleAnalyser RuleAnalyser => this.ruleAnalyser;
 
         public PostgreSqlAnalyser()
         {
@@ -63,8 +64,9 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
+            StatementScriptBuilderOption option = new StatementScriptBuilderOption() { NotBuildDeclareStatement = true, CollectDeclareStatement = true };
+
             StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
 
             sb.Append($"CREATE OR REPLACE {script.Type.ToString()} {script.NameWithSchema}");
 
@@ -127,7 +129,7 @@ namespace SqlAnalyser.Core
                 {
                     if (script.ReturnTable.Columns.Count > 0)
                     {
-                        sb.AppendLine($"RETURNS TABLE({string.Join(",", script.ReturnTable.Columns.Select(item =>this.GetColumnInfo(item)))})");
+                        sb.AppendLine($"RETURNS TABLE({string.Join(",", script.ReturnTable.Columns.Select(item => this.GetColumnInfo(item)))})");
                     }
                 }
                 else
@@ -135,7 +137,7 @@ namespace SqlAnalyser.Core
                     if (script.Statements.Count > 0 && script.Statements.First() is SelectStatement select)
                     {
                         sb.AppendLine($"RETURNS TABLE({string.Join(",", select.Columns.Select(item => $"{item.FieldName} character varying"))})");
-                    }                    
+                    }
                 }
             }
 
@@ -143,24 +145,23 @@ namespace SqlAnalyser.Core
             sb.AppendLine("AS");
             sb.AppendLine("$$");
 
-            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement || item is DeclareCursorStatement))
-            {
-                sb.Append(this.BuildStatement(statement));
-            }
+            int declareStartIndex = sb.Length;
 
             sb.AppendLine("BEGIN");
 
-            if(script.Type == RoutineType.FUNCTION)
+            result.BodyStartIndex = sb.Length;
+
+            if (script.Type == RoutineType.FUNCTION)
             {
                 if (script.ReturnDataType == null)
                 {
                     sb.Append("RETURN QUERY ");
                 }
-            }            
+            }
 
             FetchCursorStatement fetchCursorStatement = null;
 
-            foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement || item is DeclareCursorStatement)))
+            foreach (Statement statement in script.Statements)
             {
                 if (statement is FetchCursorStatement fetch)
                 {
@@ -183,16 +184,37 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement, script.Type, option));
             }
 
-            sb.Append(sbBody);
+            result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine($"END");
             sb.AppendLine("$$;");
 
+            if (this.StatementBuilder.DeclareStatements.Count > 0)
+            {
+                this.StatementBuilder.Clear();
+
+                StringBuilder sbDeclare = new StringBuilder();
+
+                foreach(var declareStatement in this.StatementBuilder.DeclareStatements)
+                {
+                    option.NotBuildDeclareStatement = false;
+                    option.CollectDeclareStatement = false;
+
+                    sbDeclare.AppendLine(this.BuildStatement(declareStatement, script.Type, option).Trim());
+                }
+
+                sb.Insert(declareStartIndex, sbDeclare.ToString());
+
+                result.BodyStartIndex += sbDeclare.Length;
+                result.BodyStopIndex += sbDeclare.Length;
+
+                this.StatementBuilder.DeclareStatements.Clear();
+            }
+
             result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
 
             return result;
         }
@@ -210,19 +232,18 @@ namespace SqlAnalyser.Core
             ScriptBuildResult result = new ScriptBuildResult();
 
             StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
 
             sb.AppendLine($"CREATE OR REPLACE VIEW {script.NameWithSchema} AS");
 
+            result.BodyStartIndex = sb.Length;
+
             foreach (Statement statement in script.Statements)
             {
-                sbBody.AppendLine(this.BuildStatement(statement));
+                sb.AppendLine(this.BuildStatement(statement));
             }
 
-            sb.Append(sbBody);
-
+            result.BodyStopIndex = sb.Length - 1;
             result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
 
             return result;
         }
@@ -232,7 +253,6 @@ namespace SqlAnalyser.Core
             ScriptBuildResult result = new ScriptBuildResult();
 
             StringBuilder sb = new StringBuilder();
-            StringBuilder sbBody = new StringBuilder();
 
             string events = string.Join(" OR ", script.Events);
 
@@ -240,12 +260,13 @@ namespace SqlAnalyser.Core
             sb.AppendLine($"{script.Time} {events} ON {script.TableName.NameWithSchema}");
             sb.AppendLine("FOR EACH ROW");
 
-            sbBody.AppendLine($"EXECUTE PROCEDURE {script.FunctionName?.NameWithSchema}();");
+            result.BodyStartIndex = sb.Length;
 
-            sb.Append(sbBody);
+            sb.AppendLine($"EXECUTE PROCEDURE {script.FunctionName?.NameWithSchema}();");
+
+            result.BodyStopIndex = sb.Length - 1;
 
             result.Script = sb.ToString();
-            result.Body = sbBody.ToString();
 
             return result;
         }

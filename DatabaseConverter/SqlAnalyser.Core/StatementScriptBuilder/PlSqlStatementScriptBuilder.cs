@@ -122,15 +122,23 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareStatement declare)
             {
-                if (declare.Type == DeclareType.Variable)
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    string defaultValue = (declare.DefaultValue == null ? "" : $" :={declare.DefaultValue}");
+                    if (declare.Type == DeclareType.Variable)
+                    {
+                        string defaultValue = (declare.DefaultValue == null ? "" : $" :={declare.DefaultValue}");
 
-                    this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
+                        this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
+                    }
+                    else if (declare.Type == DeclareType.Table)
+                    {
+
+                    }
                 }
-                else if (declare.Type == DeclareType.Table)
-                {
 
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declare);
                 }
             }
             else if (statement is IfStatement @if)
@@ -220,7 +228,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement execute)
             {
-                this.AppendLine($"{(execute.IsExecuteSql? "EXECUTE IMMEDIATE" : "CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                this.AppendLine($"{(execute.IsExecuteSql ? "EXECUTE IMMEDIATE" : "")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -267,8 +275,20 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                this.AppendLine($"DECLARE CURSOR {declareCursor.CursorName} IS");
-                this.Build(declareCursor.SelectStatement);
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
+                {
+                    this.AppendLine($"DECLARE CURSOR {declareCursor.CursorName}{(declareCursor.SelectStatement != null ? " IS" : "")}");
+
+                    if (declareCursor.SelectStatement != null)
+                    {
+                        this.Build(declareCursor.SelectStatement);
+                    }
+                }
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declareCursor);
+                }
             }
             else if (statement is OpenCursorStatement openCursor)
             {
@@ -302,21 +322,62 @@ namespace SqlAnalyser.Core
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
-
-            if (select.TableName == null)
-            {
-                select.TableName = new TableName("DUAL");
-            }
-
+            bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
-            if (select.TableName == null && select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("="))
+            bool handled = false;
+
+            if (select.TableName == null && hasAssignVariableColumn)
             {
-                this.AppendLine($"SET {select.Columns.First()}");
+                foreach (var column in select.Columns)
+                {
+                    string symbol = column.Symbol;
+
+                    if (this.IsIdentifierNameBeforeEqualMark(symbol))
+                    {
+                        string[] items = symbol.Split('=');
+
+                        symbol = $"{items[0]}:={string.Join("=", items.Skip(1))}";
+                    }
+
+                    this.AppendLine($"{symbol};");
+                }
+
+                handled = true;
+            }
+            else if (select.TableName != null && hasAssignVariableColumn && (this.RoutineType == RoutineType.PROCEDURE || this.RoutineType == RoutineType.FUNCTION || this.RoutineType == RoutineType.TRIGGER))
+            {
+                //use "select column1, column2 into var1, var2" instead of "select var1=column1, var2=column2"
+
+                List<string> variables = new List<string>();
+                List<string> columnNames = new List<string>();
+
+                foreach (var column in select.Columns)
+                {
+                    if (column.Symbol.Contains("="))
+                    {
+                        string[] items = column.Symbol.Split('=');
+                        string variable = items[0].Trim();
+                        string columName = items[1].Trim();
+
+                        variables.Add(variable);
+                        columnNames.Add(columName);
+                    }
+                }
+
+                this.AppendLine($"SELECT {string.Join(",", columnNames)} INTO {string.Join(",", variables)}");
             }
             else if (!isWith)
             {
                 this.AppendLine(selectColumns);
+            }
+
+            if (!handled)
+            {
+                if (select.TableName == null)
+                {
+                    select.TableName = new TableName("DUAL");
+                }
             }
 
             if (select.IntoTableName != null)

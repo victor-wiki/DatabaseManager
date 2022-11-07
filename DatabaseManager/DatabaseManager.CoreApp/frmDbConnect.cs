@@ -91,6 +91,7 @@ namespace DatabaseManager
                 this.cboDatabase.Items.Clear();
 
                 List<Database> databaseses = await dbInterpreter.GetDatabasesAsync();
+
                 databaseses.ForEach(item =>
                 {
                     this.cboDatabase.Items.Add(item.Name);

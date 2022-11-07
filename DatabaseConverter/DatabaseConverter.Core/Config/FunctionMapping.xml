@@ -1,9 +1,15 @@
 <mappings>
 	<mapping>
-		<SqlServer>GETDATE(),SYSDATETIME()</SqlServer>
+		<SqlServer>GETDATE,SYSDATETIME</SqlServer>
 		<MySql>CURRENT_TIMESTAMP</MySql>
 		<Oracle>SYSDATE</Oracle>
-		<Postgres>CURRENT_TIMESTAMP,NOW()</Postgres>
+		<Postgres>CURRENT_TIMESTAMP,NOW</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>GETUTCDATE</SqlServer>
+		<MySql>UTC_TIMESTAMP</MySql>
+		<Oracle args="SYSTIMESTAMP">SYS_EXTRACT_UTC</Oracle>
+		<Postgres direction="IN" args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>LEN</SqlServer>
@@ -19,21 +25,21 @@
 	</mapping>
 	<mapping>
 		<SqlServer>SUBSTRING</SqlServer>
-		<MySql>SUBSTR,SUBSTRING</MySql>
+		<MySql>SUBSTRING,SUBSTR</MySql>
 		<Oracle>SUBSTR</Oracle>
 		<Postgres>SUBSTRING,SUBSTR</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>CHARINDEX</SqlServer>
-		<MySql>INSTR,LOCATE,POSITION</MySql>
-		<Oracle>INSTR</Oracle>
+		<MySql defaults="START:1">LOCATE,INSTR,POSITION</MySql>
+		<Oracle defaults="START:1">INSTR</Oracle>
 		<Postgres>POSITION,STRPOS</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>STUFF</SqlServer>
 		<MySql>INSERT</MySql>
 		<Oracle></Oracle>
-		<Postgres></Postgres>
+		<Postgres>OVERLAY</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>ISNULL</SqlServer>
@@ -42,7 +48,7 @@
 		<Postgres>COALESCE</Postgres>
 	</mapping>
 	<mapping>
-		<SqlServer>DATEDIFF</SqlServer>
+		<SqlServer defaults="UNIT:day">DATEDIFF</SqlServer>
 		<MySql>DATEDIFF</MySql>
 		<Oracle></Oracle>
 		<Postgres></Postgres>
@@ -68,14 +74,14 @@
 	<mapping>
 		<SqlServer>SYSTEM_USER</SqlServer>
 		<MySql>CURRENT_USER</MySql>
-		<Oracle direction="IN" args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
+		<Oracle args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_USER</Postgres>
 	</mapping>
 	<mapping>
-		<SqlServer>DB_NAME()</SqlServer>
-		<MySql>DATABASE()</MySql>
-		<Oracle>ORA_DATABASE_NAME()</Oracle>
-		<Postgres>CURRENT_DATABASE()</Postgres>
+		<SqlServer>DB_NAME</SqlServer>
+		<MySql>DATABASE</MySql>
+		<Oracle>ORA_DATABASE_NAME</Oracle>
+		<Postgres>CURRENT_DATABASE</Postgres>
 	</mapping>
 	<!--<mapping>
 		<SqlServer>DAY</SqlServer>
@@ -87,7 +93,7 @@
 		<SqlServer>DATEPART</SqlServer>
 		<MySql>EXTRACT</MySql>
 		<Oracle>EXTRACT</Oracle>
-		<Postgres>EXTRACT,DATE_PART</Postgres>
+		<Postgres>DATE_PART,EXTRACT</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>IIF</SqlServer>
@@ -98,7 +104,7 @@
 	<mapping>
 		<SqlServer>LOWER</SqlServer>
 		<MySql>LCASE</MySql>
-		<Oracle>LOWER</Oracle>
+		<Oracle>LOWER</Oracle>f
 		<Postgres>LOWER</Postgres>
 	</mapping>
 	<mapping>
@@ -114,7 +120,7 @@
 		<Postgres>LN</Postgres>
 	</mapping>	
 	<mapping>
-		<SqlServer>REPLICATE</SqlServer>
+		<SqlServer direction="IN">REPLICATE</SqlServer>
 		<MySql>RPAD</MySql>
 		<Oracle>RPAD</Oracle>
 		<Postgres>RPAD</Postgres>
@@ -129,7 +135,7 @@
 		<SqlServer>CHAR</SqlServer>
 		<MySql>CHAR</MySql>
 		<Oracle>CHR,NCHR</Oracle>
-		<Postgres>CHAR</Postgres>
+		<Postgres>CHR</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer direction="IN" args="EXP,-1">ROUND</SqlServer>
@@ -142,5 +148,11 @@
 		<MySql direction="IN" args="EXP AS UNSIGNED">CAST</MySql>
 		<Oracle>TO_NUMBER</Oracle>
 		<Postgres direction="IN" args="EXP AS INTEGER">CAST</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>SCOPE_IDENTITY</SqlServer>
+		<MySql>LAST_INSERT_ID</MySql>
+		<Oracle></Oracle>
+		<Postgres>LASTVAL</Postgres>
 	</mapping>
 </mappings>

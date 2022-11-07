@@ -21,7 +21,7 @@ namespace DatabaseManager.Controls
     {
         private DatabaseType databaseType;
         private ConnectionInfo connectionInfo;
-        private DbInterpreterOption simpleInterpreterOption = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple, ThrowExceptionWhenErrorOccurs =true };
+        private DbInterpreterOption simpleInterpreterOption = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Simple, ThrowExceptionWhenErrorOccurs = true };
 
         public ShowDbObjectContentHandler OnShowContent;
         public DatabaseInterpreter.Utility.FeedbackHandler OnFeedback;
@@ -191,8 +191,15 @@ namespace DatabaseManager.Controls
         {
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
 
+            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
+
+            if (this.databaseType == DatabaseType.Oracle)
+            {
+                filter.Schema = database;
+            }
+
             SchemaInfo schemaInfo = databaseObjectType == DatabaseObjectType.None ? new SchemaInfo() :
-                                    await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType });
+                                    await dbInterpreter.GetSchemaInfoAsync(filter);
 
             this.ClearNodes(parentNode);
 
@@ -202,8 +209,8 @@ namespace DatabaseManager.Controls
             this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
 
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
-            {                
-                string dataType = userDefinedType.Attributes.Count > 1 ? "" :userDefinedType.Attributes.First().DataType;
+            {
+                string dataType = userDefinedType.Attributes.Count > 1 ? "" : userDefinedType.Attributes.First().DataType;
                 string strDataType = string.IsNullOrEmpty(dataType) ? "" : $"({dataType})";
 
                 string text = $"{userDefinedType.Name}{strDataType}";
@@ -363,7 +370,7 @@ namespace DatabaseManager.Controls
 
             int index = text.IndexOf(column.Name);
 
-            string displayText = text.Substring(index+column.Name.Length);
+            string displayText = text.Substring(index + column.Name.Length);
 
             return $"{column.Name} ({displayText.ToLower().Trim()})";
         }
@@ -1087,7 +1094,7 @@ namespace DatabaseManager.Controls
 
             if (tag is Database)
             {
-                database = tag as Database;               
+                database = tag as Database;
             }
             else if (tag is DatabaseObject dbObj)
             {

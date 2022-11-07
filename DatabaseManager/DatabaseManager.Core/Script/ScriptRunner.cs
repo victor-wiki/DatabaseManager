@@ -84,14 +84,19 @@ namespace DatabaseManager.Core
                         this.isBusy = true;
                         result.ResultType = QueryResultType.Text;
 
-                        dbConnection.Open();
+                        await dbConnection.OpenAsync();
 
-                        this.transaction = dbConnection.BeginTransaction();
+                        this.transaction = await dbConnection.BeginTransactionAsync();
 
                         IEnumerable<string> commands = Enumerable.Empty<string>();
 
                         if (scriptParser.IsCreateOrAlterScript())
                         {
+                            if (dbInterpreter.DatabaseType == DatabaseType.Oracle)
+                            {
+                                script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                            }
+
                             commands = new string[] { script };
                         }
                         else
@@ -114,7 +119,7 @@ namespace DatabaseManager.Core
                             {
                                 CommandType = CommandType.Text,
                                 CommandText = command,
-                                Transaction = transaction,
+                                Transaction = this.transaction,
                                 CancellationToken = this.CancellationTokenSource.Token
                             };
 
@@ -136,7 +141,7 @@ namespace DatabaseManager.Core
             }
             catch (Exception ex)
             {
-                this.Rollback();
+                this.Rollback(ex);
 
                 result.ResultType = QueryResultType.Text;
                 result.HasError = true;
@@ -152,9 +157,9 @@ namespace DatabaseManager.Core
         {
             using (DbConnection dbConnection = dbInterpreter.CreateConnection())
             {
-                dbConnection.Open();
+                await dbConnection.OpenAsync();
 
-                DbTransaction transaction = dbConnection.BeginTransaction();
+                DbTransaction transaction = await dbConnection.BeginTransactionAsync();
 
                 Func<Script, bool> isValidScript = (s) =>
                 {
@@ -221,19 +226,27 @@ namespace DatabaseManager.Core
             }
         }
 
-        private void Rollback()
+        private void Rollback(Exception ex = null)
         {
-            if (this.transaction != null && this.transaction.Connection != null)
+            if (this.transaction != null && this.transaction.Connection != null && this.transaction.Connection.State == ConnectionState.Open)
             {
                 try
                 {
                     this.cancelRequested = true;
 
-                    this.transaction.Rollback();
+                    bool hasRollbacked = false;
+
+                    if (ex != null && ex is DbCommandException dbe)
+                    {
+                        hasRollbacked = dbe.HasRollbackedTransaction;
+                    }
+
+                    if (!hasRollbacked)
+                    {
+                        this.transaction.Rollback();
+                    }
                 }
-#pragma warning disable CS0168 // 声明了变量“ex”，但从未使用过
-                catch (Exception ex)
-#pragma warning restore CS0168 // 声明了变量“ex”，但从未使用过
+                catch (Exception e)
                 {
                     //throw;
                 }

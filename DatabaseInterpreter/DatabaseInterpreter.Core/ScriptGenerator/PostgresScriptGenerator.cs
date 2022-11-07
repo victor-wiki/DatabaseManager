@@ -140,7 +140,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedFullTableName(table)} RENAME {this.GetQuotedString(column.Name)} TO { this.GetQuotedString(newName) };");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedFullTableName(table)} RENAME {this.GetQuotedString(column.Name)} TO {this.GetQuotedString(newName)};");
         }
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
@@ -257,17 +257,17 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
             string type = index.Type;
             IndexType indexType = IndexType.None;
-            
-            foreach(var name in Enum.GetNames(typeof(IndexType)))
+
+            foreach (var name in Enum.GetNames(typeof(IndexType)))
             {
-                if(name.ToUpper() == type.ToUpper())
+                if (name.ToUpper() == type.ToUpper())
                 {
-                    indexType =(IndexType) Enum.Parse(typeof(IndexType), name);
+                    indexType = (IndexType)Enum.Parse(typeof(IndexType), name);
                     break;
                 }
-            }  
-            
-            if(indexType == IndexType.None || ((indexType | this.dbInterpreter.IndexType)!= this.dbInterpreter.IndexType))
+            }
+
+            if (indexType == IndexType.None || ((indexType | this.dbInterpreter.IndexType) != this.dbInterpreter.IndexType))
             {
                 indexType = IndexType.BTree;
             }
@@ -276,7 +276,15 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
             Action addNormOrUnique = () =>
             {
-                sql = $"CREATE {(type == IndexType.Unique.ToString() ? "UNIQUE" : "")} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+                if(type == IndexType.Unique.ToString())
+                {
+                    //use unique constraint, it can be used for foreign key reference.
+                    sql = $"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {this.GetQuotedString(index.Name)} UNIQUE ({columnNames});";
+                }
+                else
+                {
+                    sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+                }               
             };
 
             if (indexType == IndexType.Unique)
@@ -285,12 +293,12 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             }
             else if (type != IndexType.Unique.ToString())
             {
-                if((indexType | this.dbInterpreter.IndexType) == this.dbInterpreter.IndexType)
+                if ((indexType | this.dbInterpreter.IndexType) == this.dbInterpreter.IndexType)
                 {
                     sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} USING {indexType.ToString().ToUpper()}({columnNames});";
                 }
                 else
-                {                    
+                {
                     addNormOrUnique();
                 }
             }
@@ -352,7 +360,7 @@ INCREMENT {sequence.Increment}
 MINVALUE {(long)sequence.MinValue}
 MAXVALUE {(long)sequence.MaxValue}
 {(sequence.Cycled ? "CYCLE" : "")}
-{(sequence.CacheSize > 0 ? $"CACHE {sequence.CacheSize}":"")}
+{(sequence.CacheSize > 0 ? $"CACHE {sequence.CacheSize}" : "")}
 {(sequence.OwnedByTable == null ? "" : $"OWNED BY {this.GetQuotedString(sequence.OwnedByTable)}.{this.GetQuotedString(sequence.OwnedByColumn)}")};";
 
             return new CreateDbObjectScript<Sequence>(script);
@@ -460,7 +468,7 @@ CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 
         public override Script DropSequence(Sequence sequence)
         {
-            return new DropDbObjectScript<Sequence>(this.GetDropSql(nameof(DatabaseObjectType.Sequence), sequence));           
+            return new DropDbObjectScript<Sequence>(this.GetDropSql(nameof(DatabaseObjectType.Sequence), sequence));
         }
 
         public override Script DropTable(Table table)
@@ -490,7 +498,10 @@ CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedDbObjectNameWithSchema(dbObject)};";
+            string cascadeOption = (typeName == nameof(Table) || typeName == nameof(View) || typeName == nameof(Function) 
+                || typeName == nameof(Procedure)) ? " CASCADE" : "";
+
+            return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedDbObjectNameWithSchema(dbObject)}{cascadeOption};";
         }
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)

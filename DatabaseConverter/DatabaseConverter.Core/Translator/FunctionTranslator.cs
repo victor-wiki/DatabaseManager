@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Microsoft.IdentityModel.Tokens;
 using SqlAnalyser.Model;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,21 +13,19 @@ namespace DatabaseConverter.Core
     public class FunctionTranslator : DbObjectTranslator
     {
         private IEnumerable<TokenInfo> functions;
-     
-
         private const string ParenthesesExpression = @"\(.*\)";
-        private const string NameExpression = @"\b([a-zA-Z]+)\b";
+        private const string NameExpression = @"^([a-zA-Z_$][a-zA-Z\\d_$]*)$";
 
         private List<FunctionSpecification> sourceFuncSpecs;
         private List<FunctionSpecification> targetFuncSpecs;
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter) : base(sourceInterpreter, targetInterpreter)
-        {           
+        {
         }
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TokenInfo> functions) : base(sourceInterpreter, targetInterpreter)
         {
-            this.functions = functions;           
+            this.functions = functions;
         }
 
         public override void Translate()
@@ -37,15 +36,13 @@ namespace DatabaseConverter.Core
             }
 
             this.LoadMappings();
-            this.LoadFunctionSpecifications();           
+            this.LoadFunctionSpecifications();
 
             if (this.functions != null)
             {
                 foreach (TokenInfo token in this.functions)
                 {
-                    List<FunctionFomular> fomulars = GetFunctionFomulars(token.Symbol);
-
-                    token.Symbol = GetMappedFunction(token.Symbol);
+                    token.Symbol = this.GetMappedFunction(token.Symbol);
                 }
             }
         }
@@ -58,69 +55,99 @@ namespace DatabaseConverter.Core
 
         public string GetMappedFunction(string value)
         {
-            List<FunctionFomular> fomulars = GetFunctionFomulars(value);
-
-            foreach (FunctionFomular fomular in fomulars)
+            if (this.sourceDbType == DatabaseType.Postgres)
             {
-                string name = fomular.Name;
+                value = value.Replace(@"""substring""", "substring", System.StringComparison.OrdinalIgnoreCase);
+            }
 
-                if(string.IsNullOrEmpty(name))
+            List<FunctionFormula> formulas = GetFunctionFormulas(value);
+
+            foreach (FunctionFormula formula in formulas)
+            {
+                string name = formula.Name;
+
+                if (string.IsNullOrEmpty(name))
                 {
                     continue;
                 }
 
-                if(!this.sourceFuncSpecs.Any(item=>item.Name == name.ToUpper()))
+                var sourceFuncSpec = this.sourceFuncSpecs.FirstOrDefault(item => item.Name == name.ToUpper());
+
+                if (sourceFuncSpec == null)
                 {
                     continue;
                 }
 
                 bool useBrackets = false;
 
-                MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(name, out useBrackets);
+                MappingFunctionInfo targetFunctionInfo = this.GetMappingFunctionInfo(name, formula.Body, out useBrackets);
 
                 if (!string.IsNullOrEmpty(targetFunctionInfo.Name))
                 {
                     if (targetFunctionInfo.Name.ToUpper().Trim() != name.ToUpper().Trim())
                     {
-                        string oldExp = fomular.Expression;
-                        string newExp = ReplaceValue(fomular.Expression, name, targetFunctionInfo.Name);
+                        string oldExp = formula.Expression;
+                        //string newExp = ReplaceValue(formula.Expression, name, targetFunctionInfo.Name);
+                        string newExp = $"{targetFunctionInfo.Name}{(formula.HasParentheses ? "(" : "")}{formula.Body}{(formula.HasParentheses ? ")" : "")}";
 
-                        if (!targetFunctionInfo.Name.Contains("()"))
+                        bool noParenthesess = false;
+                        bool hasArgs = false;
+                        var targetFuncSpec = this.targetFuncSpecs.FirstOrDefault(item => item.Name == targetFunctionInfo.Name);
+
+                        if (targetFuncSpec != null)
+                        {
+                            noParenthesess = targetFuncSpec.NoParenthesess;
+
+                            hasArgs = !string.IsNullOrEmpty(targetFuncSpec.Args);
+                        }
+
+                        if (!hasArgs && !string.IsNullOrEmpty(formula.Body))
+                        {
+                            newExp = $"{targetFunctionInfo.Name}()";
+                        }
+
+                        if (noParenthesess)
                         {
                             newExp = newExp.Replace("()", "");
                         }
                         else
                         {
-                            newExp = newExp.Replace("()()", "()");
+                            if (sourceFuncSpec.NoParenthesess && targetFuncSpec != null && string.IsNullOrEmpty(targetFuncSpec.Args))
+                            {
+                                newExp += "()";
+                            }
                         }
 
-                        fomular.Expression = newExp;
+                        newExp = newExp.Replace("()()", "()");
+
+                        formula.Expression = newExp;
 
                         value = ReplaceValue(value, oldExp, newExp);
                     }
                 }
 
                 Dictionary<string, string> dictDataType = null;
-                string newExpression = ParseFomular(this.sourceFuncSpecs, this.targetFuncSpecs, fomular, targetFunctionInfo, out dictDataType);
 
-                if (newExpression != fomular.Expression)
+                string newExpression = this.ParseFormula(this.sourceFuncSpecs, this.targetFuncSpecs, formula, targetFunctionInfo, out dictDataType);
+
+                if (newExpression != formula.Expression)
                 {
-                    value = ReplaceValue(value, fomular.Expression, newExpression);
+                    value = ReplaceValue(value, formula.Expression, newExpression);
                 }
             }
 
             return value;
         }
 
-        public static List<FunctionFomular> GetFunctionFomulars(string value)
+        public static List<FunctionFormula> GetFunctionFormulas(string value)
         {
             value = StringHelper.TrimBracket(value);
 
-            List<FunctionFomular> functions = new List<FunctionFomular>();
+            List<FunctionFormula> functions = new List<FunctionFormula>();
 
-            if(value.IndexOf("(")<0)
+            if (value.IndexOf("(") < 0)
             {
-                functions.Add(new FunctionFomular(value, value) { StartIndex=0, StopIndex= value.Length-1 });
+                functions.Add(new FunctionFormula(value, value) { StartIndex = 0, StopIndex = value.Length - 1 });
             }
             else
             {
@@ -128,8 +155,12 @@ namespace DatabaseConverter.Core
 
                 Regex parenthesesRegex = new Regex(ParenthesesExpression);
 
+                int count = 0;
+
                 while (parenthesesRegex.IsMatch(innerContent))
                 {
+                    count++;
+
                     int firstLeftParenthesesIndex = innerContent.IndexOf('(');
                     int lastRightParenthesesIndex = -1;
 
@@ -161,8 +192,10 @@ namespace DatabaseConverter.Core
 
                     string leftContent = innerContent.Substring(0, firstLeftParenthesesIndex);
 
+                    string cleanName = ExtractName(leftContent.Trim());
+
                     Regex nameRegex = new Regex(NameExpression, RegexOptions.IgnoreCase);
-                    var matches = nameRegex.Matches(leftContent);
+                    var matches = nameRegex.Matches(cleanName);
 
                     Match nameMatch = matches.Cast<Match>().LastOrDefault();
 
@@ -170,13 +203,13 @@ namespace DatabaseConverter.Core
                     {
                         string name = nameMatch.Value;
 
-                        int startIndex = nameMatch.Index;
+                        int startIndex = leftContent.IndexOf(cleanName, 0, System.StringComparison.OrdinalIgnoreCase);
 
                         int length = lastRightParenthesesIndex - startIndex + 1;
 
                         string expression = innerContent.Substring(startIndex, length);
 
-                        FunctionFomular func = new FunctionFomular(name, expression)
+                        FunctionFormula func = new FunctionFormula(name, expression)
                         {
                             StartIndex = startIndex,
                             StopIndex = lastRightParenthesesIndex
@@ -184,29 +217,90 @@ namespace DatabaseConverter.Core
 
                         functions.Add(func);
 
-                        innerContent = innerContent.Substring(firstLeftParenthesesIndex + 1, (func.StopIndex - 1) - (firstLeftParenthesesIndex + 1) + 1);
+                        string oldInnerContent = innerContent;
+
+                        innerContent = oldInnerContent.Substring(firstLeftParenthesesIndex + 1, (func.StopIndex - 1) - (firstLeftParenthesesIndex + 1) + 1);
+
+                        if (!parenthesesRegex.IsMatch(innerContent) || IsNotFunction(innerContent))
+                        {
+                            if (lastRightParenthesesIndex < value.Length - 1)
+                            {
+                                string rightContent = oldInnerContent.Substring(lastRightParenthesesIndex + 1).Trim(' ', ',');
+
+                                innerContent = rightContent;
+                            }
+                        }
                     }
                     else
                     {
-                        if (functions.Count == 0 && !leftContent.Contains("("))
+                        if (lastRightParenthesesIndex < innerContent.Length - 1)
                         {
-                            string name = value.Substring(0, firstLeftParenthesesIndex);
-
-                            FunctionFomular func = new FunctionFomular(name, value)
-                            {
-                                StartIndex = 0,
-                                StopIndex = value.Length - 1
-                            };
-
-                            functions.Add(func);
+                            innerContent = innerContent.Substring(lastRightParenthesesIndex + 1).Trim(' ', ',');
                         }
+                    }
 
+                    if (count > 1000) //avoid infinite loop
+                    {
                         break;
                     }
                 }
-            }            
+            }
 
             return functions;
+        }
+
+        private static bool IsNotFunction(string value)
+        {
+            MatchCollection matches = Regex.Matches(value, ParenthesesExpression);
+
+            int notFunctionCount = 0;
+
+            foreach(Match match in matches)
+            {
+                var mv = ValueHelper.GetTrimedParenthesisValue(match.Value);
+
+                if(mv.Contains(","))
+                {
+                    string[] items = mv.Split(',');
+
+                    if(items.Length == 2 && items.All(item=> int.TryParse(item.Trim(), out _)))
+                    {
+                        notFunctionCount++;
+                    }
+                }
+                else
+                {
+                    if (int.TryParse(mv, out _) || mv.ToLower() == "max")
+                    {
+                        notFunctionCount++;
+                    }
+                }                               
+            }
+
+            return notFunctionCount == matches.Count;
+        }
+
+        private static string ExtractName(string value)
+        {
+            var chars = value.ToArray();
+
+            List<char> name = new List<char>();
+
+            for (int i = chars.Length - 1; i >= 0; i--)
+            {
+                if (Regex.IsMatch(chars[i].ToString(), NameExpression))
+                {
+                    name.Add(chars[i]);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            name.Reverse();
+
+            return string.Join("", name);
         }
     }
 }

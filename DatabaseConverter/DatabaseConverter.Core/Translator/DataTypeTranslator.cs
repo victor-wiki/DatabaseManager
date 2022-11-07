@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace DatabaseConverter.Core
 {
@@ -22,7 +23,7 @@ namespace DatabaseConverter.Core
 
             this.LoadMappings();
         }
-       
+
         public void Translate(DataTypeInfo dataTypeInfo)
         {
             string originalDataType = dataTypeInfo.DataType;
@@ -64,7 +65,7 @@ namespace DatabaseConverter.Core
                 if (targetDataTypeSpec == null)
                 {
                     throw new Exception($"No type '{targetDataType}' defined for '{targetDbType}'.");
-                }               
+                }
 
                 dataTypeInfo.DataType = targetDataType;
 
@@ -73,15 +74,30 @@ namespace DatabaseConverter.Core
 
                 if (isChar || isBinary)
                 {
+                    bool noLength = false;
+
                     if (isChar)
                     {
                         if (!string.IsNullOrEmpty(targetMapping.Length))
                         {
                             dataTypeInfo.MaxLength = int.Parse(targetMapping.Length);
 
-                            if (DataTypeHelper.StartsWithN(targetDataType) && !DataTypeHelper.StartsWithN(sourceDataType))
+                            if (!DataTypeHelper.StartsWithN(sourceDataType) && DataTypeHelper.StartsWithN(targetDataType))
                             {
                                 dataTypeInfo.MaxLength *= 2;
+                            }
+                        }
+                        else
+                        {
+                            if (DataTypeHelper.StartsWithN(sourceDataType) && !DataTypeHelper.StartsWithN(targetDataType))
+                            {
+                                if (!this.Option?.NcharToDoubleChar == true)
+                                {
+                                    if (dataTypeInfo.MaxLength > 0 && dataTypeInfo.MaxLength % 2 == 0)
+                                    {
+                                        dataTypeInfo.MaxLength /= 2;
+                                    }
+                                }
                             }
                         }
                     }
@@ -92,30 +108,46 @@ namespace DatabaseConverter.Core
 
                         if (special != null)
                         {
-                            dataTypeInfo.DataType = special.Type;
+                            if(!string.IsNullOrEmpty(special.Type))
+                            {
+                                dataTypeInfo.DataType = special.Type;
+                            }                           
 
                             if (!string.IsNullOrEmpty(special.TargetMaxLength))
                             {
                                 dataTypeInfo.MaxLength = int.Parse(special.TargetMaxLength);
                             }
+                            else
+                            {
+                                noLength = special.NoLength;
+                                dataTypeInfo.MaxLength = -1;
+                            }
                         }
                     }
 
-                    if (dataTypeInfo.MaxLength == -1)
+                    if(!noLength)
                     {
-                        ArgumentRange? sourceLengthRange = DataTypeManager.GetArgumentRange(sourceDataTypeSpec, "length");
-
-                        if (sourceLengthRange.HasValue)
+                        if (dataTypeInfo.MaxLength == -1)
                         {
-                            dataTypeInfo.MaxLength = sourceLengthRange.Value.Max;
+                            ArgumentRange? sourceLengthRange = DataTypeManager.GetArgumentRange(sourceDataTypeSpec, "length");
+
+                            if (sourceLengthRange.HasValue)
+                            {
+                                dataTypeInfo.MaxLength = sourceLengthRange.Value.Max;
+                            }
                         }
-                    }
+                    }                    
 
                     ArgumentRange? targetLengthRange = DataTypeManager.GetArgumentRange(targetDataTypeSpec, "length");
 
                     if (targetLengthRange.HasValue)
                     {
                         int targetMaxLength = targetLengthRange.Value.Max;
+
+                        if (DataTypeHelper.StartsWithN(targetDataTypeSpec.Name))
+                        {
+                            targetMaxLength *= 2;
+                        }                        
 
                         if (dataTypeInfo.MaxLength > targetMaxLength)
                         {
@@ -399,6 +431,6 @@ namespace DatabaseConverter.Core
             }
 
             return false;
-        }  
+        }
     }
 }

@@ -32,37 +32,37 @@
             this.btnConfirm = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.tabMySql = new System.Windows.Forms.TabPage();
-            this.lblMySqlCharset = new System.Windows.Forms.Label();
+            this.txtMySqlCharsetCollation = new System.Windows.Forms.TextBox();
             this.txtMySqlCharset = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.txtMySqlCharsetCollation = new System.Windows.Forms.TextBox();
+            this.lblMySqlCharset = new System.Windows.Forms.Label();
             this.tabGeneral = new System.Windows.Forms.TabPage();
-            this.label1 = new System.Windows.Forms.Label();
-            this.numCommandTimeout = new System.Windows.Forms.NumericUpDown();
-            this.lblCommandTimeout = new System.Windows.Forms.Label();
-            this.numDataBatchSize = new System.Windows.Forms.NumericUpDown();
-            this.label2 = new System.Windows.Forms.Label();
-            this.chkEnableLog = new System.Windows.Forms.CheckBox();
-            this.chkShowBuiltinDatabase = new System.Windows.Forms.CheckBox();
-            this.chkNotCreateIfExists = new System.Windows.Forms.CheckBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
-            this.lblLogType = new System.Windows.Forms.Label();
-            this.chkLogInfo = new System.Windows.Forms.CheckBox();
-            this.chkLogError = new System.Windows.Forms.CheckBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr = new System.Windows.Forms.CheckBox();
-            this.chkRememberPasswordDuringSession = new System.Windows.Forms.CheckBox();
-            this.lblPassword = new System.Windows.Forms.Label();
-            this.txtLockPassword = new System.Windows.Forms.TextBox();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.chkEditorEnableIntellisence = new System.Windows.Forms.CheckBox();
             this.chkEnableEditorHighlighting = new System.Windows.Forms.CheckBox();
+            this.txtLockPassword = new System.Windows.Forms.TextBox();
+            this.lblPassword = new System.Windows.Forms.Label();
+            this.chkRememberPasswordDuringSession = new System.Windows.Forms.CheckBox();
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr = new System.Windows.Forms.CheckBox();
+            this.cboPreferredDatabase = new System.Windows.Forms.ComboBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.chkLogError = new System.Windows.Forms.CheckBox();
+            this.chkLogInfo = new System.Windows.Forms.CheckBox();
+            this.lblLogType = new System.Windows.Forms.Label();
+            this.cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.chkNotCreateIfExists = new System.Windows.Forms.CheckBox();
+            this.chkShowBuiltinDatabase = new System.Windows.Forms.CheckBox();
+            this.chkEnableLog = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.numDataBatchSize = new System.Windows.Forms.NumericUpDown();
+            this.lblCommandTimeout = new System.Windows.Forms.Label();
+            this.numCommandTimeout = new System.Windows.Forms.NumericUpDown();
+            this.label1 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabMySql.SuspendLayout();
             this.tabGeneral.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             this.tabControl1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -70,7 +70,7 @@
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(176, 438);
+            this.btnConfirm.Location = new System.Drawing.Point(176, 472);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(88, 33);
@@ -83,7 +83,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(297, 438);
+            this.btnCancel.Location = new System.Drawing.Point(297, 472);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -102,19 +102,17 @@
             this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
-            this.tabMySql.Size = new System.Drawing.Size(509, 394);
+            this.tabMySql.Size = new System.Drawing.Size(509, 462);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
-            // lblMySqlCharset
+            // txtMySqlCharsetCollation
             // 
-            this.lblMySqlCharset.AutoSize = true;
-            this.lblMySqlCharset.Location = new System.Drawing.Point(18, 31);
-            this.lblMySqlCharset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblMySqlCharset.Name = "lblMySqlCharset";
-            this.lblMySqlCharset.Size = new System.Drawing.Size(55, 17);
-            this.lblMySqlCharset.TabIndex = 0;
-            this.lblMySqlCharset.Text = "Charset:";
+            this.txtMySqlCharsetCollation.Location = new System.Drawing.Point(156, 71);
+            this.txtMySqlCharsetCollation.Margin = new System.Windows.Forms.Padding(4);
+            this.txtMySqlCharsetCollation.Name = "txtMySqlCharsetCollation";
+            this.txtMySqlCharsetCollation.Size = new System.Drawing.Size(116, 23);
+            this.txtMySqlCharsetCollation.TabIndex = 3;
             // 
             // txtMySqlCharset
             // 
@@ -134,19 +132,21 @@
             this.label3.TabIndex = 2;
             this.label3.Text = "Charset Collation:";
             // 
-            // txtMySqlCharsetCollation
+            // lblMySqlCharset
             // 
-            this.txtMySqlCharsetCollation.Location = new System.Drawing.Point(156, 71);
-            this.txtMySqlCharsetCollation.Margin = new System.Windows.Forms.Padding(4);
-            this.txtMySqlCharsetCollation.Name = "txtMySqlCharsetCollation";
-            this.txtMySqlCharsetCollation.Size = new System.Drawing.Size(116, 23);
-            this.txtMySqlCharsetCollation.TabIndex = 3;
+            this.lblMySqlCharset.AutoSize = true;
+            this.lblMySqlCharset.Location = new System.Drawing.Point(18, 31);
+            this.lblMySqlCharset.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblMySqlCharset.Name = "lblMySqlCharset";
+            this.lblMySqlCharset.Size = new System.Drawing.Size(55, 17);
+            this.lblMySqlCharset.TabIndex = 0;
+            this.lblMySqlCharset.Text = "Charset:";
             // 
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.chkEditorEnableIntellisence);
             this.tabGeneral.Controls.Add(this.chkEnableEditorHighlighting);
-            this.tabGeneral.Controls.Add(this.checkBox1);
             this.tabGeneral.Controls.Add(this.txtLockPassword);
             this.tabGeneral.Controls.Add(this.lblPassword);
             this.tabGeneral.Controls.Add(this.chkRememberPasswordDuringSession);
@@ -170,52 +170,198 @@
             this.tabGeneral.Margin = new System.Windows.Forms.Padding(4);
             this.tabGeneral.Name = "tabGeneral";
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(4);
-            this.tabGeneral.Size = new System.Drawing.Size(509, 394);
+            this.tabGeneral.Size = new System.Drawing.Size(509, 428);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
             // 
-            // label1
+            // chkEditorEnableIntellisence
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(248, 17);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(58, 17);
-            this.label1.TabIndex = 12;
-            this.label1.Text = "(second)";
+            this.chkEditorEnableIntellisence.AutoSize = true;
+            this.chkEditorEnableIntellisence.Checked = true;
+            this.chkEditorEnableIntellisence.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkEditorEnableIntellisence.Location = new System.Drawing.Point(13, 295);
+            this.chkEditorEnableIntellisence.Margin = new System.Windows.Forms.Padding(4);
+            this.chkEditorEnableIntellisence.Name = "chkEditorEnableIntellisence";
+            this.chkEditorEnableIntellisence.Size = new System.Drawing.Size(214, 21);
+            this.chkEditorEnableIntellisence.TabIndex = 31;
+            this.chkEditorEnableIntellisence.Text = "Enable intellisence for sql editor";
+            this.chkEditorEnableIntellisence.UseVisualStyleBackColor = true;
             // 
-            // numCommandTimeout
+            // chkEnableEditorHighlighting
             // 
-            this.numCommandTimeout.Location = new System.Drawing.Point(135, 14);
-            this.numCommandTimeout.Margin = new System.Windows.Forms.Padding(4);
-            this.numCommandTimeout.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.numCommandTimeout.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numCommandTimeout.Name = "numCommandTimeout";
-            this.numCommandTimeout.Size = new System.Drawing.Size(106, 23);
-            this.numCommandTimeout.TabIndex = 1;
-            this.numCommandTimeout.Value = new decimal(new int[] {
-            600,
-            0,
-            0,
-            0});
+            this.chkEnableEditorHighlighting.AutoSize = true;
+            this.chkEnableEditorHighlighting.Checked = true;
+            this.chkEnableEditorHighlighting.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkEnableEditorHighlighting.Location = new System.Drawing.Point(13, 262);
+            this.chkEnableEditorHighlighting.Margin = new System.Windows.Forms.Padding(4);
+            this.chkEnableEditorHighlighting.Name = "chkEnableEditorHighlighting";
+            this.chkEnableEditorHighlighting.Size = new System.Drawing.Size(219, 21);
+            this.chkEnableEditorHighlighting.TabIndex = 30;
+            this.chkEnableEditorHighlighting.Text = "Enable highlighting for sql editor";
+            this.chkEnableEditorHighlighting.UseVisualStyleBackColor = true;
             // 
-            // lblCommandTimeout
+            // txtLockPassword
             // 
-            this.lblCommandTimeout.AutoSize = true;
-            this.lblCommandTimeout.Location = new System.Drawing.Point(10, 17);
-            this.lblCommandTimeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblCommandTimeout.Name = "lblCommandTimeout";
-            this.lblCommandTimeout.Size = new System.Drawing.Size(119, 17);
-            this.lblCommandTimeout.TabIndex = 0;
-            this.lblCommandTimeout.Text = "Command timeout:";
+            this.txtLockPassword.Location = new System.Drawing.Point(115, 395);
+            this.txtLockPassword.Margin = new System.Windows.Forms.Padding(4);
+            this.txtLockPassword.Name = "txtLockPassword";
+            this.txtLockPassword.PasswordChar = '*';
+            this.txtLockPassword.Size = new System.Drawing.Size(164, 23);
+            this.txtLockPassword.TabIndex = 28;
+            // 
+            // lblPassword
+            // 
+            this.lblPassword.AutoSize = true;
+            this.lblPassword.Location = new System.Drawing.Point(10, 398);
+            this.lblPassword.Name = "lblPassword";
+            this.lblPassword.Size = new System.Drawing.Size(99, 17);
+            this.lblPassword.TabIndex = 27;
+            this.lblPassword.Text = "Lock password:";
+            // 
+            // chkRememberPasswordDuringSession
+            // 
+            this.chkRememberPasswordDuringSession.AutoSize = true;
+            this.chkRememberPasswordDuringSession.Checked = true;
+            this.chkRememberPasswordDuringSession.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkRememberPasswordDuringSession.Location = new System.Drawing.Point(13, 364);
+            this.chkRememberPasswordDuringSession.Margin = new System.Windows.Forms.Padding(4);
+            this.chkRememberPasswordDuringSession.Name = "chkRememberPasswordDuringSession";
+            this.chkRememberPasswordDuringSession.Size = new System.Drawing.Size(495, 21);
+            this.chkRememberPasswordDuringSession.TabIndex = 26;
+            this.chkRememberPasswordDuringSession.Text = "Remember password during application session(store it in memory temporarily)";
+            this.chkRememberPasswordDuringSession.UseVisualStyleBackColor = true;
+            // 
+            // chkUseOriginalDataTypeIfUdtHasOnlyOneAttr
+            // 
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.AutoSize = true;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Checked = true;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Location = new System.Drawing.Point(13, 166);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Margin = new System.Windows.Forms.Padding(4);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Name = "chkUseOriginalDataTypeIfUdtHasOnlyOneAttr";
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Size = new System.Drawing.Size(404, 21);
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.TabIndex = 25;
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Text = "Use original data type if user defined type has only one attribute";
+            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.UseVisualStyleBackColor = true;
+            // 
+            // cboPreferredDatabase
+            // 
+            this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPreferredDatabase.FormattingEnabled = true;
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(142, 327);
+            this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
+            this.cboPreferredDatabase.Name = "cboPreferredDatabase";
+            this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
+            this.cboPreferredDatabase.TabIndex = 24;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(11, 331);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(124, 17);
+            this.label5.TabIndex = 23;
+            this.label5.Text = "Preferred database:";
+            // 
+            // chkLogError
+            // 
+            this.chkLogError.AutoSize = true;
+            this.chkLogError.Checked = true;
+            this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogError.Location = new System.Drawing.Point(294, 227);
+            this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
+            this.chkLogError.Name = "chkLogError";
+            this.chkLogError.Size = new System.Drawing.Size(57, 21);
+            this.chkLogError.TabIndex = 22;
+            this.chkLogError.Text = "Error";
+            this.chkLogError.UseVisualStyleBackColor = true;
+            // 
+            // chkLogInfo
+            // 
+            this.chkLogInfo.AutoSize = true;
+            this.chkLogInfo.Checked = true;
+            this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkLogInfo.Location = new System.Drawing.Point(194, 227);
+            this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
+            this.chkLogInfo.Name = "chkLogInfo";
+            this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
+            this.chkLogInfo.TabIndex = 21;
+            this.chkLogInfo.Text = "Infomation";
+            this.chkLogInfo.UseVisualStyleBackColor = true;
+            // 
+            // lblLogType
+            // 
+            this.lblLogType.AutoSize = true;
+            this.lblLogType.Location = new System.Drawing.Point(117, 228);
+            this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblLogType.Name = "lblLogType";
+            this.lblLogType.Size = new System.Drawing.Size(62, 17);
+            this.lblLogType.TabIndex = 20;
+            this.lblLogType.Text = "Log type:";
+            // 
+            // cboDbObjectNameMode
+            // 
+            this.cboDbObjectNameMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboDbObjectNameMode.FormattingEnabled = true;
+            this.cboDbObjectNameMode.Location = new System.Drawing.Point(204, 94);
+            this.cboDbObjectNameMode.Margin = new System.Windows.Forms.Padding(4);
+            this.cboDbObjectNameMode.Name = "cboDbObjectNameMode";
+            this.cboDbObjectNameMode.Size = new System.Drawing.Size(138, 25);
+            this.cboDbObjectNameMode.TabIndex = 19;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(10, 99);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(180, 17);
+            this.label4.TabIndex = 18;
+            this.label4.Text = "Database object name mode:";
+            // 
+            // chkNotCreateIfExists
+            // 
+            this.chkNotCreateIfExists.AutoSize = true;
+            this.chkNotCreateIfExists.Location = new System.Drawing.Point(13, 197);
+            this.chkNotCreateIfExists.Margin = new System.Windows.Forms.Padding(4);
+            this.chkNotCreateIfExists.Name = "chkNotCreateIfExists";
+            this.chkNotCreateIfExists.Size = new System.Drawing.Size(176, 21);
+            this.chkNotCreateIfExists.TabIndex = 17;
+            this.chkNotCreateIfExists.Text = "Not create if object exists";
+            this.chkNotCreateIfExists.UseVisualStyleBackColor = true;
+            // 
+            // chkShowBuiltinDatabase
+            // 
+            this.chkShowBuiltinDatabase.AutoSize = true;
+            this.chkShowBuiltinDatabase.Location = new System.Drawing.Point(13, 135);
+            this.chkShowBuiltinDatabase.Margin = new System.Windows.Forms.Padding(4);
+            this.chkShowBuiltinDatabase.Name = "chkShowBuiltinDatabase";
+            this.chkShowBuiltinDatabase.Size = new System.Drawing.Size(155, 21);
+            this.chkShowBuiltinDatabase.TabIndex = 16;
+            this.chkShowBuiltinDatabase.Text = "Show builtin database";
+            this.chkShowBuiltinDatabase.UseVisualStyleBackColor = true;
+            // 
+            // chkEnableLog
+            // 
+            this.chkEnableLog.AutoSize = true;
+            this.chkEnableLog.Location = new System.Drawing.Point(13, 226);
+            this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
+            this.chkEnableLog.Name = "chkEnableLog";
+            this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
+            this.chkEnableLog.TabIndex = 15;
+            this.chkEnableLog.Text = "Enable log";
+            this.chkEnableLog.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(10, 58);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(100, 17);
+            this.label2.TabIndex = 13;
+            this.label2.Text = "Data batch size:";
             // 
             // numDataBatchSize
             // 
@@ -240,192 +386,48 @@
             0,
             0});
             // 
-            // label2
+            // lblCommandTimeout
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 58);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(100, 17);
-            this.label2.TabIndex = 13;
-            this.label2.Text = "Data batch size:";
+            this.lblCommandTimeout.AutoSize = true;
+            this.lblCommandTimeout.Location = new System.Drawing.Point(10, 17);
+            this.lblCommandTimeout.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblCommandTimeout.Name = "lblCommandTimeout";
+            this.lblCommandTimeout.Size = new System.Drawing.Size(119, 17);
+            this.lblCommandTimeout.TabIndex = 0;
+            this.lblCommandTimeout.Text = "Command timeout:";
             // 
-            // chkEnableLog
+            // numCommandTimeout
             // 
-            this.chkEnableLog.AutoSize = true;
-            this.chkEnableLog.Location = new System.Drawing.Point(13, 224);
-            this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
-            this.chkEnableLog.Name = "chkEnableLog";
-            this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
-            this.chkEnableLog.TabIndex = 15;
-            this.chkEnableLog.Text = "Enable log";
-            this.chkEnableLog.UseVisualStyleBackColor = true;
+            this.numCommandTimeout.Location = new System.Drawing.Point(135, 14);
+            this.numCommandTimeout.Margin = new System.Windows.Forms.Padding(4);
+            this.numCommandTimeout.Maximum = new decimal(new int[] {
+            10000,
+            0,
+            0,
+            0});
+            this.numCommandTimeout.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numCommandTimeout.Name = "numCommandTimeout";
+            this.numCommandTimeout.Size = new System.Drawing.Size(106, 23);
+            this.numCommandTimeout.TabIndex = 1;
+            this.numCommandTimeout.Value = new decimal(new int[] {
+            600,
+            0,
+            0,
+            0});
             // 
-            // chkShowBuiltinDatabase
+            // label1
             // 
-            this.chkShowBuiltinDatabase.AutoSize = true;
-            this.chkShowBuiltinDatabase.Location = new System.Drawing.Point(13, 135);
-            this.chkShowBuiltinDatabase.Margin = new System.Windows.Forms.Padding(4);
-            this.chkShowBuiltinDatabase.Name = "chkShowBuiltinDatabase";
-            this.chkShowBuiltinDatabase.Size = new System.Drawing.Size(155, 21);
-            this.chkShowBuiltinDatabase.TabIndex = 16;
-            this.chkShowBuiltinDatabase.Text = "Show builtin database";
-            this.chkShowBuiltinDatabase.UseVisualStyleBackColor = true;
-            // 
-            // chkNotCreateIfExists
-            // 
-            this.chkNotCreateIfExists.AutoSize = true;
-            this.chkNotCreateIfExists.Location = new System.Drawing.Point(13, 192);
-            this.chkNotCreateIfExists.Margin = new System.Windows.Forms.Padding(4);
-            this.chkNotCreateIfExists.Name = "chkNotCreateIfExists";
-            this.chkNotCreateIfExists.Size = new System.Drawing.Size(176, 21);
-            this.chkNotCreateIfExists.TabIndex = 17;
-            this.chkNotCreateIfExists.Text = "Not create if object exists";
-            this.chkNotCreateIfExists.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(10, 99);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(180, 17);
-            this.label4.TabIndex = 18;
-            this.label4.Text = "Database object name mode:";
-            // 
-            // cboDbObjectNameMode
-            // 
-            this.cboDbObjectNameMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboDbObjectNameMode.FormattingEnabled = true;
-            this.cboDbObjectNameMode.Location = new System.Drawing.Point(204, 94);
-            this.cboDbObjectNameMode.Margin = new System.Windows.Forms.Padding(4);
-            this.cboDbObjectNameMode.Name = "cboDbObjectNameMode";
-            this.cboDbObjectNameMode.Size = new System.Drawing.Size(138, 25);
-            this.cboDbObjectNameMode.TabIndex = 19;
-            // 
-            // lblLogType
-            // 
-            this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(129, 225);
-            this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblLogType.Name = "lblLogType";
-            this.lblLogType.Size = new System.Drawing.Size(62, 17);
-            this.lblLogType.TabIndex = 20;
-            this.lblLogType.Text = "Log type:";
-            // 
-            // chkLogInfo
-            // 
-            this.chkLogInfo.AutoSize = true;
-            this.chkLogInfo.Checked = true;
-            this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(210, 225);
-            this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
-            this.chkLogInfo.Name = "chkLogInfo";
-            this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
-            this.chkLogInfo.TabIndex = 21;
-            this.chkLogInfo.Text = "Infomation";
-            this.chkLogInfo.UseVisualStyleBackColor = true;
-            // 
-            // chkLogError
-            // 
-            this.chkLogError.AutoSize = true;
-            this.chkLogError.Checked = true;
-            this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(324, 225);
-            this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
-            this.chkLogError.Name = "chkLogError";
-            this.chkLogError.Size = new System.Drawing.Size(57, 21);
-            this.chkLogError.TabIndex = 22;
-            this.chkLogError.Text = "Error";
-            this.chkLogError.UseVisualStyleBackColor = true;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(10, 299);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(124, 17);
-            this.label5.TabIndex = 23;
-            this.label5.Text = "Preferred database:";
-            // 
-            // cboPreferredDatabase
-            // 
-            this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(142, 295);
-            this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
-            this.cboPreferredDatabase.Name = "cboPreferredDatabase";
-            this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
-            this.cboPreferredDatabase.TabIndex = 24;
-            // 
-            // chkUseOriginalDataTypeIfUdtHasOnlyOneAttr
-            // 
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.AutoSize = true;
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Checked = true;
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Location = new System.Drawing.Point(13, 164);
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Margin = new System.Windows.Forms.Padding(4);
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Name = "chkUseOriginalDataTypeIfUdtHasOnlyOneAttr";
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Size = new System.Drawing.Size(404, 21);
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.TabIndex = 25;
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.Text = "Use original data type if user defined type has only one attribute";
-            this.chkUseOriginalDataTypeIfUdtHasOnlyOneAttr.UseVisualStyleBackColor = true;
-            // 
-            // chkRememberPasswordDuringSession
-            // 
-            this.chkRememberPasswordDuringSession.AutoSize = true;
-            this.chkRememberPasswordDuringSession.Checked = true;
-            this.chkRememberPasswordDuringSession.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkRememberPasswordDuringSession.Location = new System.Drawing.Point(13, 332);
-            this.chkRememberPasswordDuringSession.Margin = new System.Windows.Forms.Padding(4);
-            this.chkRememberPasswordDuringSession.Name = "chkRememberPasswordDuringSession";
-            this.chkRememberPasswordDuringSession.Size = new System.Drawing.Size(495, 21);
-            this.chkRememberPasswordDuringSession.TabIndex = 26;
-            this.chkRememberPasswordDuringSession.Text = "Remember password during application session(store it in memory temporarily)";
-            this.chkRememberPasswordDuringSession.UseVisualStyleBackColor = true;
-            // 
-            // lblPassword
-            // 
-            this.lblPassword.AutoSize = true;
-            this.lblPassword.Location = new System.Drawing.Point(12, 366);
-            this.lblPassword.Name = "lblPassword";
-            this.lblPassword.Size = new System.Drawing.Size(99, 17);
-            this.lblPassword.TabIndex = 27;
-            this.lblPassword.Text = "Lock password:";
-            // 
-            // txtLockPassword
-            // 
-            this.txtLockPassword.Location = new System.Drawing.Point(115, 363);
-            this.txtLockPassword.Margin = new System.Windows.Forms.Padding(4);
-            this.txtLockPassword.Name = "txtLockPassword";
-            this.txtLockPassword.PasswordChar = '*';
-            this.txtLockPassword.Size = new System.Drawing.Size(164, 23);
-            this.txtLockPassword.TabIndex = 28;
-            // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(210, 187);
-            this.checkBox1.Margin = new System.Windows.Forms.Padding(4);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(89, 21);
-            this.checkBox1.TabIndex = 29;
-            this.checkBox1.Text = "Enable log";
-            this.checkBox1.UseVisualStyleBackColor = true;
-            // 
-            // chkEnableEditorHighlighting
-            // 
-            this.chkEnableEditorHighlighting.AutoSize = true;
-            this.chkEnableEditorHighlighting.Checked = true;
-            this.chkEnableEditorHighlighting.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkEnableEditorHighlighting.Location = new System.Drawing.Point(13, 259);
-            this.chkEnableEditorHighlighting.Margin = new System.Windows.Forms.Padding(4);
-            this.chkEnableEditorHighlighting.Name = "chkEnableEditorHighlighting";
-            this.chkEnableEditorHighlighting.Size = new System.Drawing.Size(219, 21);
-            this.chkEnableEditorHighlighting.TabIndex = 30;
-            this.chkEnableEditorHighlighting.Text = "Enable highlighting for sql editor";
-            this.chkEnableEditorHighlighting.UseVisualStyleBackColor = true;
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(248, 17);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(58, 17);
+            this.label1.TabIndex = 12;
+            this.label1.Text = "(second)";
             // 
             // tabControl1
             // 
@@ -438,7 +440,7 @@
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(517, 424);
+            this.tabControl1.Size = new System.Drawing.Size(517, 458);
             this.tabControl1.TabIndex = 15;
             // 
             // frmSetting
@@ -446,7 +448,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(523, 485);
+            this.ClientSize = new System.Drawing.Size(523, 519);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
@@ -460,8 +462,8 @@
             this.tabMySql.PerformLayout();
             this.tabGeneral.ResumeLayout(false);
             this.tabGeneral.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -477,7 +479,6 @@
         private System.Windows.Forms.Label lblMySqlCharset;
         private System.Windows.Forms.TabPage tabGeneral;
         private System.Windows.Forms.CheckBox chkEnableEditorHighlighting;
-        private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.TextBox txtLockPassword;
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.CheckBox chkRememberPasswordDuringSession;
@@ -498,5 +499,6 @@
         private System.Windows.Forms.NumericUpDown numCommandTimeout;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.CheckBox chkEditorEnableIntellisence;
     }
 }

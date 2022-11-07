@@ -11,6 +11,7 @@ namespace SqlAnalyser.Core
 {
     public abstract class SqlRuleAnalyser
     {
+        public SqlRuleAnalyserOption Option { get; set; } = new SqlRuleAnalyserOption();
         public abstract IEnumerable<Type> ParseTableTypes { get; }
         public abstract IEnumerable<Type> ParseColumnTypes { get; }
 
@@ -91,6 +92,11 @@ namespace SqlAnalyser.Core
 
         public virtual void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
+            if (!this.Option.ExtractFunctions)
+            {
+                return;
+            }
+
             if (node == null || node.children == null)
             {
                 return;
@@ -98,16 +104,33 @@ namespace SqlAnalyser.Core
 
             foreach (var child in node.children)
             {
+                bool isFunction = false;
+
                 if (this.IsFunction(child))
                 {
-                    script.Functions.Add(this.ParseFunction(child as ParserRuleContext));
+                    isFunction = true;
+
+                    var childNode = child as ParserRuleContext;
+
+                    if (!script.Functions.Any(item=>item.StartIndex.Value == childNode.Start.StartIndex && item.StopIndex.Value == childNode.Stop.StopIndex))
+                    {
+                        script.Functions.Add(this.ParseFunction(childNode));
+                    }                    
                 }
-                else if (child is ParserRuleContext)
+
+                if (isFunction && !this.Option.ExtractFunctionChildren)
                 {
-                    this.ExtractFunctions(script, child as ParserRuleContext);
+                    continue;
+                }
+                else
+                {
+                    if (child is ParserRuleContext)
+                    {
+                        this.ExtractFunctions(script, child as ParserRuleContext);
+                    }
                 }
             }
-        }
+        }        
 
         protected TokenInfo CreateToken(ParserRuleContext node, TokenType tokenType = TokenType.General)
         {
@@ -123,7 +146,7 @@ namespace SqlAnalyser.Core
 
         protected List<ParserRuleContext> FindSpecificContexts(ParserRuleContext node, IEnumerable<Type> searchTypes)
         {
-            List<ParserRuleContext> fullNames = new List<ParserRuleContext>();            
+            List<ParserRuleContext> fullNames = new List<ParserRuleContext>();
 
             if (node != null && node.children != null)
             {
@@ -167,22 +190,34 @@ namespace SqlAnalyser.Core
 
         protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token, IEnumerable<Type> tableTypes, IEnumerable<Type> columnTypes)
         {
-            this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
+            if (this.Option.ParseTokenChildren)
+            {
+                this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
+            }
         }
 
         protected void AddChildColumnNameToken(ParserRuleContext node, TokenInfo token, IEnumerable<Type> searchTypes)
         {
-            this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
+            if (this.Option.ParseTokenChildren)
+            {
+                this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
+            }
         }
 
         protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token)
         {
-            this.AddChildTableAndColumnNameToken(node, token, this.ParseTableTypes, this.ParseColumnTypes);
+            if (this.Option.ParseTokenChildren)
+            {
+                this.AddChildTableAndColumnNameToken(node, token, this.ParseTableTypes, this.ParseColumnTypes);
+            }
         }
 
         protected void AddChildColumnNameToken(ParserRuleContext node, TokenInfo token)
         {
-            this.AddChildColumnNameToken(node, token, this.ParseColumnTypes);
+            if (this.Option.ParseTokenChildren)
+            {
+                this.AddChildColumnNameToken(node, token, this.ParseColumnTypes);
+            }
         }
     }
 }

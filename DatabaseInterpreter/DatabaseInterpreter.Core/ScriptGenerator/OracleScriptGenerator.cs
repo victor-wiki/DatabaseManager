@@ -279,6 +279,13 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
             return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
         }
 
+        private Script AddUniqueConstraint(TableIndex index)
+        {
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
+
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {this.GetQuotedString(index.Name)} UNIQUE ({columnNames});");
+        }
+
         public override Script DropCheckConstraint(TableConstraint constraint)
         {
             return new DropDbObjectScript<TableConstraint>(this.GetDropConstraintSql(constraint));
@@ -402,12 +409,20 @@ CREATE TABLE {quotedTableName}(
                         continue;
                     }
 
-                    sb.AppendLine(this.AddIndex(index));
+                    if(index.Type != nameof(IndexType.Unique))
+                    {
+                        sb.AppendLine(this.AddIndex(index));
+                    }
+                    else
+                    {
+                        //create a constraint, if the column has foreign key, it's required.
+                        sb.AppendLine(this.AddUniqueConstraint(index));
+                    }
 
                     if (!indexColumns.Contains(strIndexColumnNames))
                     {
                         indexColumns.Add(strIndexColumnNames);
-                    }
+                    }                   
                 }
             }
             #endregion

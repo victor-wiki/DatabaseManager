@@ -285,8 +285,12 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR FOR");
-                this.Build(declareCursor.SelectStatement);
+                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+
+                if (declareCursor.SelectStatement != null)
+                {
+                    this.Build(declareCursor.SelectStatement);
+                }
             }
             else if (statement is DeclareCursorHandlerStatement declareCursorHandler)
             {
@@ -330,22 +334,35 @@ namespace SqlAnalyser.Core
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
-            bool isAssignColumn = select.Columns.Count == 1 && select.Columns[0].Symbol.Contains("=");
-            bool handled = false;
+            bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
 
-            if (select.TableName == null && isAssignColumn)
+            if (select.TableName == null && select.Columns.Count == 1 && hasAssignVariableColumn)
             {
                 ColumnName columnName = select.Columns.First();
 
                 this.AppendLine($"SET {columnName}");
             }
-            else if (select.TableName != null && select.FromItems.Count == 1 && isAssignColumn && this.RoutineType == RoutineType.FUNCTION)
+            else if (select.TableName != null && hasAssignVariableColumn && (this.RoutineType == RoutineType.FUNCTION || this.RoutineType == RoutineType.TRIGGER))
             {
-                string[] items = select.Columns.First().Symbol.Split('=');
-                string variableName = items[0];
+                //use "select column1, column2 into var1, var2" instead of "select var1=column1, var2=column2"
 
-                this.AppendLine($"SET {variableName}=(SELECT {items[1]} FROM {select.TableName})");
-                handled = true;
+                List<string> variables = new List<string>();
+                List<string> columnNames = new List<string>();
+
+                foreach (var column in select.Columns)
+                {
+                    if (column.Symbol.Contains("="))
+                    {
+                        string[] items = column.Symbol.Split('=');
+                        string variable = items[0].Trim();
+                        string columName = items[1].Trim();
+
+                        variables.Add(variable);
+                        columnNames.Add(columName);
+                    }
+                }
+
+                this.AppendLine($"SELECT {string.Join(",", columnNames)} INTO {string.Join(",", variables)}");
             }
             else if (!isWith)
             {
@@ -401,10 +418,7 @@ namespace SqlAnalyser.Core
                 this.AppendLine(selectColumns);
             }
 
-            if (!handled)
-            {
-                appendFrom();
-            }
+            appendFrom();
 
             if (select.Where != null)
             {
@@ -449,6 +463,8 @@ namespace SqlAnalyser.Core
                 this.AppendLine(";", false);
             }
         }
+
+
 
         private string GetUnionTypeName(UnionType unionType)
         {
