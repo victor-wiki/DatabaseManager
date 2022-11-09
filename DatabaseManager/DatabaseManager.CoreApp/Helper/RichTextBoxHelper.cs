@@ -1,5 +1,4 @@
-﻿using DatabaseConverter.Core;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
 using SqlAnalyser.Model;
