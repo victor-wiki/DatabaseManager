@@ -211,6 +211,16 @@ namespace DatabaseManager {
         }
         
         /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Icon _translate {
+            get {
+                object obj = ResourceManager.GetObject("_translate", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   查找 System.Drawing.Bitmap 类型的本地化资源。
         /// </summary>
         internal static System.Drawing.Bitmap Add {
@@ -336,6 +346,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap Edit {
             get {
                 object obj = ResourceManager.GetObject("Edit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap Exchange {
+            get {
+                object obj = ResourceManager.GetObject("Exchange", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -546,6 +566,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap Tool16 {
             get {
                 object obj = ResourceManager.GetObject("Tool16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap Translate {
+            get {
+                object obj = ResourceManager.GetObject("Translate", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

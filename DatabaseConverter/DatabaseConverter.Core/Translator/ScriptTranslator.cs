@@ -2,17 +2,14 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using PoorMansTSqlFormatterRedux;
 using SqlAnalyser.Core;
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -20,8 +17,9 @@ namespace DatabaseConverter.Core
         where T : ScriptDbObject
     {
         private IEnumerable<T> scripts;
+        public bool AutoMakeupSchemaName { get; set; } = true;
 
-      
+
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
             this.scripts = scripts;
@@ -119,10 +117,10 @@ namespace DatabaseConverter.Core
                     this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\"({count}/{total}).");
 
                     bool tokenProcessed = false;
-                    
+
                     dbObj.Definition = dbObj.Definition.Trim();
 
-                    if(this.Option.RemoveCarriagRreturnChar)
+                    if (this.Option.RemoveCarriagRreturnChar)
                     {
                         dbObj.Definition = dbObj.Definition.Replace("\r\n", "\n");
                     }
@@ -152,6 +150,11 @@ namespace DatabaseConverter.Core
                     AnalyseResult result = sourceAnalyser.Analyse<T>(originalDefinition.ToUpper());
 
                     CommonScript script = result.Script;
+
+                    if (script == null)
+                    {
+                        continue;
+                    }
 
                     bool replaced = false;
 
@@ -207,8 +210,14 @@ namespace DatabaseConverter.Core
                     {
                         if (string.IsNullOrEmpty(dbObj.Name) && !string.IsNullOrEmpty(result.Script?.Name?.Symbol))
                         {
+                            if (this.AutoMakeupSchemaName)
+                            {
+                                dbObj.Schema = result.Script.Schema;
+                            }
+
+                            TranslateHelper.RestoreTokenValue(originalDefinition, result.Script.Name);
+
                             dbObj.Name = result.Script.Name.Symbol;
-                            dbObj.Schema = result.Script.Schema;
                         }
 
                         processTokens(dbObj, script);

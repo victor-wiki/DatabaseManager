@@ -132,7 +132,7 @@ namespace DatabaseInterpreter.Core
                 {
                     return true;
                 }
-                
+
                 if (type == typeof(string))
                 {
                     string str = value.ToString();
@@ -146,7 +146,7 @@ namespace DatabaseInterpreter.Core
                 {
                     return true;
                 }
-                
+
             }
             return false;
         }
@@ -177,7 +177,7 @@ namespace DatabaseInterpreter.Core
         {
             string clause = this.dbInterpreter.ParseColumn(table, newColumn);
 
-            if(DataTypeHelper.IsGeometryType(newColumn.DataType))
+            if (DataTypeHelper.IsGeometryType(newColumn.DataType))
             {
                 clause = clause.Replace(this.dbInterpreter.ParseDataType(newColumn), "");
             }
@@ -409,20 +409,20 @@ CREATE TABLE {quotedTableName}(
                         continue;
                     }
 
-                    if(index.Type != nameof(IndexType.Unique))
-                    {
-                        sb.AppendLine(this.AddIndex(index));
-                    }
-                    else
+                    if (index.Type == nameof(IndexType.Unique) || index.IsUnique)
                     {
                         //create a constraint, if the column has foreign key, it's required.
                         sb.AppendLine(this.AddUniqueConstraint(index));
+                    }
+                    else
+                    {
+                        sb.AppendLine(this.AddIndex(index));
                     }
 
                     if (!indexColumns.Contains(strIndexColumnNames))
                     {
                         indexColumns.Add(strIndexColumnNames);
-                    }                   
+                    }
                 }
             }
             #endregion

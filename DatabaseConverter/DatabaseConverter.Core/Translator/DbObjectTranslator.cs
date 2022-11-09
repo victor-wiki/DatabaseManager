@@ -1,17 +1,15 @@
-﻿using Antlr4.Runtime.Misc;
-using DatabaseConverter.Core.Model;
+﻿using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using PoorMansTSqlFormatterRedux;
-using RTools_NTS.Util;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -61,7 +59,7 @@ namespace DatabaseConverter.Core
             return mappings.FirstOrDefault(item => item.Source.Type?.ToLower() == dataType?.ToLower());
         }
 
-        internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
+        internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true, RoutineType routineType = RoutineType.UNKNOWN)
         {
             dataType = this.GetTrimedValue(dataType.Trim());
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this.sourceDbInterpreter, dataType);
@@ -89,23 +87,37 @@ namespace DatabaseConverter.Core
 
             if (this.targetDbType == DatabaseType.Oracle)
             {
-                if (usedForFunction && this.GetType() == typeof(FunctionTranslator) && dataTypeInfo.Args?.ToLower() == "max")
+                if (usedForFunction && this.GetType() == typeof(FunctionTranslator))
                 {
                     var mappedDataType = this.GetDataTypeMapping(mappings, dataTypeInfo.DataType)?.Target?.Type;
 
-                    if (DataTypeHelper.IsCharType(mappedDataType) || DataTypeHelper.IsBinaryType(mappedDataType))
+                    bool isChar = DataTypeHelper.IsCharType(mappedDataType);                   
+                    bool isBinary = DataTypeHelper.IsBinaryType(mappedDataType);                   
+
+                    if (isChar || isBinary)
                     {
-                        var dataTypeSpec = this.targetDbInterpreter.GetDataTypeSpecification(mappedDataType);
-
-                        if (dataTypeSpec != null)
+                        if (isChar)
                         {
-                            ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpec, "length");
-
-                            if (range.HasValue)
+                            if (routineType == RoutineType.PROCEDURE || routineType== RoutineType.FUNCTION || routineType== RoutineType.TRIGGER)
                             {
-                                return $"{mappedDataType}({range.Value.Max})";
+                                return mappedDataType;
                             }
                         }
+
+                        if (dataTypeInfo.Args?.ToLower() == "max")
+                        {
+                            var dataTypeSpec = this.targetDbInterpreter.GetDataTypeSpecification(mappedDataType);
+
+                            if (dataTypeSpec != null)
+                            {
+                                ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpec, "length");
+
+                                if (range.HasValue)
+                                {
+                                    return $"{mappedDataType}({range.Value.Max})";
+                                }
+                            }
+                        }                        
                     }
                 }
             }
@@ -220,7 +232,7 @@ namespace DatabaseConverter.Core
         }
 
         public string ParseFormula(List<FunctionSpecification> sourceFuncSpecs, List<FunctionSpecification> targetFuncSpecs,
-            FunctionFormula formula, MappingFunctionInfo targetFunctionInfo, out Dictionary<string, string> dictDataType)
+            FunctionFormula formula, MappingFunctionInfo targetFunctionInfo, out Dictionary<string, string> dictDataType, RoutineType routineType = RoutineType.UNKNOWN)
         {
             dictDataType = new Dictionary<string, string>();
 
@@ -269,7 +281,7 @@ namespace DatabaseConverter.Core
 
                                 if (!dataTypeDict.ContainsKey(oldArg))
                                 {
-                                    newArg = this.GetNewDataType(this.dataTypeMappings, oldArg);
+                                    newArg = this.GetNewDataType(this.dataTypeMappings, oldArg, true, routineType);
 
                                     dataTypeDict.Add(oldArg, newArg.Trim());
                                 }

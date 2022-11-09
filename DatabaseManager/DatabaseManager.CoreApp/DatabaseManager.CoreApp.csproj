@@ -8,14 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.15</Version>
+    <Version>2.0.16</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add convert option: whether nchar to two char or not
-2. ui minor changes
-3. query editor highlighting: not work when disable intellisence</PackageReleaseNotes>
+    <PackageReleaseNotes>add script translate form</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.15</AssemblyVersion>
-    <FileVersion>2.0.15</FileVersion>
+    <AssemblyVersion>2.0.16</AssemblyVersion>
+    <FileVersion>2.0.16</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

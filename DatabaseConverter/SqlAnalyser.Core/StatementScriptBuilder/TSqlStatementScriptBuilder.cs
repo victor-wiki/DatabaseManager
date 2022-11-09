@@ -141,7 +141,18 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeleteStatement delete)
             {
-                this.AppendLine($"DELETE FROM {delete.TableName}");
+                bool hasJoin = AnalyserHelper.IsFromItemsHaveJoin(delete.FromItems);
+
+                if (!hasJoin)
+                {
+                    this.AppendLine($"DELETE FROM {delete.TableName}");
+                }
+                else
+                {
+                    this.AppendLine($"DELETE {delete.TableName}");
+
+                    this.BuildFromItems(delete.FromItems);
+                }
 
                 if (delete.Condition != null)
                 {

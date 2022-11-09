@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace SqlAnalyser.Core
 {
@@ -44,6 +45,8 @@ namespace SqlAnalyser.Core
 
                 List<TableName> tableNames = new List<TableName>();
 
+                bool usedCondition = false;
+
                 if (update.FromItems != null)
                 {
                     int i = 0;
@@ -63,25 +66,35 @@ namespace SqlAnalyser.Core
 
                         string colNames = string.Join(",", update.SetItems.Select(item => item.Value));
 
-                        string join = "";
+                        StringBuilder sb = new StringBuilder();
 
                         int j = 0;
                         foreach (var joinItem in fromItem.JoinItems)
                         {
                             if (j == 0)
                             {
-                                join += "FROM";
+                                sb.Append("FROM");
                             }
                             else
                             {
-                                join += joinItem.Type.ToString() + " JOIN";
+                                sb.Append(joinItem.Type.ToString() + " JOIN");
                             }
 
-                            join += $" {this.GetNameWithAlias(joinItem.TableName)} ON {joinItem.Condition}{Environment.NewLine}";
+                            string joinTableName = j == 0 ? $" JOIN {fromItem.TableName}" : "";
+
+                            sb.Append($" {this.GetNameWithAlias(joinItem.TableName)}{joinTableName} ON {joinItem.Condition}{Environment.NewLine}");
+
                             j++;
                         }
 
-                        nameValueItem.Value = new TokenInfo($"(SELECT {colNames} {join})");
+                        if (update.Condition != null && update.Condition.Symbol != null)
+                        {
+                            sb.AppendLine($"WHERE {update.Condition}");
+
+                            usedCondition = true;
+                        }
+
+                        nameValueItem.Value = new TokenInfo($"(SELECT {colNames} {sb.ToString()})");
 
                         nameValues.Add(nameValueItem);
 
@@ -102,20 +115,67 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
 
-                if (update.Condition != null && update.Condition.Symbol != null)
+                if (!usedCondition)
                 {
-                    this.AppendLine($"WHERE {update.Condition}");
+                    if (update.Condition != null && update.Condition.Symbol != null)
+                    {
+                        this.AppendLine($"WHERE {update.Condition}");
+                    }
                 }
 
                 this.AppendLine(";");
             }
             else if (statement is DeleteStatement delete)
             {
-                this.AppendLine($"DELETE {delete.TableName}");
+                bool hasJoin = AnalyserHelper.IsFromItemsHaveJoin(delete.FromItems);
 
-                if (delete.Condition != null)
+                if (!hasJoin)
                 {
-                    this.AppendLine($"WHERE {delete.Condition}");
+                    this.AppendLine($"DELETE FROM {this.GetNameWithAlias(delete.TableName)}");                    
+
+                    if (delete.Condition != null)
+                    {
+                        this.AppendLine($"WHERE {delete.Condition}");
+                    }
+                }
+                else
+                {
+                    string tableName = delete.TableName.Symbol;
+
+                    this.AppendLine($"DELETE FROM {delete.TableName}");
+
+                    string alias = null;
+
+                    int i = 0;
+
+                    foreach (FromItem fromItem in delete.FromItems)
+                    {
+                        if (i == 0)
+                        {
+                            if (fromItem.TableName != null && fromItem.TableName.Alias != null)
+                            {
+                                alias = fromItem.TableName.Alias.Symbol;
+                            }
+                            else if (fromItem.Alias != null)
+                            {
+                                alias = fromItem.Alias.Symbol;
+                            }
+                        }
+
+                        i++;
+                    }
+
+                    //use placeholder, the actual column name should according to the business needs.
+                    this.AppendLine($"WHERE $columnName$ IN (SELECT $columnName$");
+
+                    this.BuildFromItems(delete.FromItems, null, true);
+
+                    if (delete.Condition != null)
+                    {
+                        this.AppendLine($"WHERE {delete.Condition}");
+                    }
+
+                    this.AppendLine(")");
                 }
 
                 this.AppendLine(";");

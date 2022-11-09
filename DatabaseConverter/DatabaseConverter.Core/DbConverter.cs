@@ -378,9 +378,10 @@ namespace DatabaseConverter.Core
                             foreach (Script s in scripts)
                             {
                                 currentScript = s;
-
-                                bool isRoutineScript = this.IsRoutineScript(s);
+                                
                                 bool isView = s.ObjectType == nameof(View);
+                                bool isRoutineScript = this.IsRoutineScript(s);
+                                bool isRoutineScriptOrView = isRoutineScript || isView;
 
                                 if (!isValidScript(s))
                                 {
@@ -393,17 +394,17 @@ namespace DatabaseConverter.Core
                                 {
                                     i++;
 
-                                    if ((!isRoutineScript || isView) && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
+                                    if (!isRoutineScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
                                     {
                                         sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
                                     }
 
-                                    if (!targetInterpreter.HasError || (isRoutineScript && this.Option.ContinueWhenErrorOccurs))
+                                    if (!targetInterpreter.HasError || (isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs))
                                     {
                                         targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
 
                                         CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
-                                        commandInfo.ContinueWhenErrorOccurs = isRoutineScript && this.Option.ContinueWhenErrorOccurs;
+                                        commandInfo.ContinueWhenErrorOccurs = isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs;
 
                                         await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
@@ -417,7 +418,7 @@ namespace DatabaseConverter.Core
                                             }
                                             else
                                             {
-                                                if (isRoutineScript)
+                                                if (isRoutineScriptOrView)
                                                 {
                                                     continuedWhenErrorOccured = true;
                                                 }
@@ -683,7 +684,7 @@ namespace DatabaseConverter.Core
 
         private bool IsRoutineScript(Script script)
         {
-            return script.ObjectType == nameof(View) || script.ObjectType == nameof(Function) || script.ObjectType == nameof(Procedure) || script.ObjectType == nameof(TableTrigger);
+            return script.ObjectType == nameof(Function) || script.ObjectType == nameof(Procedure) || script.ObjectType == nameof(TableTrigger);
         }
 
         private (Dictionary<string, object> Paramters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)

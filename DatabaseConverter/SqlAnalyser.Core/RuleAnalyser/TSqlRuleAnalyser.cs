@@ -447,6 +447,10 @@ namespace SqlAnalyser.Core
                 {
                     statement.Columns = columns.id_().Select(item => this.ParseColumnName(item)).ToList();
                 }
+                else if (child is Insert_column_name_listContext insertColumns)
+                {
+                    statement.Columns = insertColumns.insert_column_id().Select(item => this.ParseColumnName(item)).ToList();
+                }
                 else if (child is Insert_statement_valueContext values)
                 {
                     var tableValues = values.table_value_constructor();
@@ -563,7 +567,9 @@ namespace SqlAnalyser.Core
 
                     foreach (Join_partContext join in joinParts)
                     {
-                        if (!asWhole && join.join_on()?.table_source()?.table_source_item_joined()?.table_source_item_joined() != null)
+                        var tsij = join.join_on()?.table_source()?.table_source_item_joined();
+
+                        if (!asWhole && (tsij.table_source_item_joined() != null || tsij.table_source_item()?.derived_table() != null))
                         {
                             asWhole = true;
                         }
@@ -679,6 +685,18 @@ namespace SqlAnalyser.Core
                 }
                 else
                 {
+                    #region handle alias
+                    var ts = tableSoure.table_source_item_joined()?.table_source_item();
+                    var derivedTable = ts?.derived_table();
+                    var derivedTableAlias = ts?.as_table_alias();
+
+                    if (derivedTable != null && derivedTableAlias != null)
+                    {
+                        joinItem.TableName = new TableName(derivedTable) { StartIndex = derivedTable.Start.StartIndex - 1, StopIndex = derivedTable.Stop.StopIndex + 1 };
+                        joinItem.TableName.Alias = new TokenInfo(derivedTableAlias);
+                    }
+                    #endregion
+
                     this.AddChildTableAndColumnNameToken(tableSoure, joinItem.TableName);
                 }
             }
@@ -738,6 +756,19 @@ namespace SqlAnalyser.Core
             DeleteStatement statement = new DeleteStatement();
 
             statement.TableName = this.ParseTableName(node.delete_statement_from().ddl_object());
+
+            Table_sourcesContext fromTable = node.table_sources();
+
+            if (fromTable != null)
+            {
+                statement.FromItems = this.ParseTableScources(fromTable);
+
+                if (!AnalyserHelper.IsFromItemsHaveJoin(statement.FromItems) && statement.FromItems.Count > 0)
+                {
+                    statement.TableName = statement.FromItems[0].TableName;
+                }
+            }
+
             statement.Condition = this.ParseCondition(node.search_condition());
 
             return statement;
@@ -1577,6 +1608,18 @@ namespace SqlAnalyser.Core
                     tableName.Server = fullName.server?.GetText();
                     tableName.Database = fullName.database?.GetText();
                     tableName.Schema = fullName.schema?.GetText();
+
+                    var parent = fullName.Parent;
+
+                    if (parent != null && parent is Table_source_itemContext ts)
+                    {
+                        As_table_aliasContext alias = ts.as_table_alias();
+
+                        if (alias != null)
+                        {
+                            tableName.Alias = new TokenInfo(alias.table_alias());
+                        }
+                    }
                 }
                 else if (node is Table_sourceContext ts)
                 {
@@ -1649,6 +1692,18 @@ namespace SqlAnalyser.Core
                     if (fullName.tablename != null)
                     {
                         columnName.TableName = new TokenInfo(fullName.tablename);
+                    }
+
+                    var parent = fullName.Parent;
+
+                    if (parent != null && parent is Column_elemContext celem)
+                    {
+                        var alias = celem.as_column_alias()?.column_alias();
+
+                        if (alias != null)
+                        {
+                            columnName.Alias = new TokenInfo(alias);
+                        }
                     }
                 }
                 else if (node is Column_def_table_constraintContext col)

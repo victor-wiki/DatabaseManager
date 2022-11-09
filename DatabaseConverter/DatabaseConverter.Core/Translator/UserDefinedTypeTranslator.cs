@@ -1,12 +1,6 @@
-﻿using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text.RegularExpressions;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {

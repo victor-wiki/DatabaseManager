@@ -12,6 +12,12 @@
 		<Postgres direction="IN" args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"></Postgres>
 	</mapping>
 	<mapping>
+		<SqlServer>NEWID</SqlServer>
+		<MySql>UUID</MySql>
+		<Oracle>SYS_GUID</Oracle>
+		<Postgres>GEN_RANDOM_UUID</Postgres>
+	</mapping>
+	<mapping>
 		<SqlServer>LEN</SqlServer>
 		<MySql>CHAR_LENGTH</MySql>
 		<Oracle>LENGTH</Oracle>
@@ -72,7 +78,7 @@
 		<Postgres>CAST</Postgres>
 	</mapping>
 	<mapping>
-		<SqlServer>SYSTEM_USER</SqlServer>
+		<SqlServer>SYSTEM_USER,SUSER_SNAME</SqlServer>
 		<MySql>CURRENT_USER</MySql>
 		<Oracle args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_USER</Postgres>

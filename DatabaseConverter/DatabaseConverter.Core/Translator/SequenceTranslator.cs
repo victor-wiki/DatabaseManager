@@ -1,13 +1,7 @@
-﻿using DatabaseConverter.Core.Model;
-using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using NCalc;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace DatabaseConverter.Core
 {

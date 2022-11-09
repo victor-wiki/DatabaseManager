@@ -48,6 +48,7 @@
             this.tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
             this.tsBtnCompare = new System.Windows.Forms.ToolStripButton();
             this.tsBtnConvert = new System.Windows.Forms.ToolStripButton();
+            this.tsBtnTranslateScript = new System.Windows.Forms.ToolStripButton();
             this.tsBtnRun = new System.Windows.Forms.ToolStripButton();
             this.txtMessage = new System.Windows.Forms.TextBox();
             this.dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
@@ -188,6 +189,7 @@
             this.tsBtnGenerateScripts,
             this.tsBtnCompare,
             this.tsBtnConvert,
+            this.tsBtnTranslateScript,
             this.tsBtnRun});
             this.toolStrip1.Location = new System.Drawing.Point(0, 27);
             this.toolStrip1.Name = "toolStrip1";
@@ -272,6 +274,19 @@
             this.tsBtnConvert.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tsBtnConvert.ToolTipText = "Convert Database";
             this.tsBtnConvert.Click += new System.EventHandler(this.tsBtnConvert_Click);
+            // 
+            // tsBtnTranslateScript
+            // 
+            this.tsBtnTranslateScript.AutoSize = false;
+            this.tsBtnTranslateScript.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.tsBtnTranslateScript.Image = global::DatabaseManager.Resources.Translate;
+            this.tsBtnTranslateScript.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            this.tsBtnTranslateScript.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsBtnTranslateScript.Name = "tsBtnTranslateScript";
+            this.tsBtnTranslateScript.Size = new System.Drawing.Size(40, 40);
+            this.tsBtnTranslateScript.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tsBtnTranslateScript.ToolTipText = "Translate Script";
+            this.tsBtnTranslateScript.Click += new System.EventHandler(this.tsBtnTranslateScript_Click);
             // 
             // tsBtnRun
             // 
@@ -363,6 +378,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiLock;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiGeometryView;
+        private System.Windows.Forms.ToolStripButton tsBtnTranslateScript;
     }
 }
 

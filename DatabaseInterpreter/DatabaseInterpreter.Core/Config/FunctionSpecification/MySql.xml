@@ -138,6 +138,7 @@
   <item name="USER" args=""></item>
   <item name="UTC_DATE" args=""></item>
   <item name="UTC_TIMESTAMP" args=""></item>
+  <item name="UUID" args=""></item>
   <item name="VERSION" args=""></item>
   <item name="WEEK" args="DATE[,MODE]"></item>
   <item name="WEEKDAY" args="DATE"></item>

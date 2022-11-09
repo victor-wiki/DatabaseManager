@@ -39,10 +39,11 @@ namespace DatabaseManager.Helper
                 richTextBox.ScrollToCaret();
             }
         }
+        
 
-        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null)
+        public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null, bool forceHighlightling = false)
         {
-            if (!SettingManager.Setting.EnableEditorHighlighting)
+            if (!SettingManager.Setting.EnableEditorHighlighting && !forceHighlightling)
             {
                 richTextBox.SelectionStart = 0;
                 richTextBox.SelectionLength = 0;
@@ -106,8 +107,7 @@ namespace DatabaseManager.Helper
                     }
 
                     richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
-                    richTextBox.SelectionLength = m.Length;
-                    richTextBox.SelectionFont = richTextBox.Font;
+                    richTextBox.SelectionLength = m.Length;                    
                     richTextBox.SelectionColor = color;
                 }
             }

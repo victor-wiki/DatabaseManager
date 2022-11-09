@@ -194,9 +194,9 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseCallStatement(call));
                 }
-                else if(child is DropStatementContext drop)
+                else if (child is DropStatementContext drop)
                 {
-                    foreach(var c in drop.children)
+                    foreach (var c in drop.children)
                     {
                         if (c is DropTableContext drop_table)
                         {
@@ -218,8 +218,8 @@ namespace SqlAnalyser.Core
                         {
                             addDropStatement(DatabaseObjectType.Trigger, TokenType.TriggerName, new ParserRuleContext[] { drop_trigger.triggerRef() });
                         }
-                    }                    
-                }               
+                    }
+                }
             }
 
             return statements;
@@ -523,29 +523,9 @@ namespace SqlAnalyser.Core
 
             var tableRefs = node.tableReferenceList().tableReference();
 
-            statement.FromItems = new List<FromItem>();
+            statement.FromItems = this.ParseFromItems(tableRefs);
 
-            foreach (var tableRef in tableRefs)
-            {
-                statement.TableNames.Add(this.ParseTableName(tableRef.tableFactor()));
-
-                var joinTables = tableRef.joinedTable();
-
-                FromItem fromItem = new FromItem();
-
-                foreach (var joinTable in joinTables)
-                {
-                    fromItem.TableName = this.ParseTableName(joinTable.tableReference().tableFactor());
-
-                    JoinItem joinItem = new JoinItem();
-                    joinItem.TableName = fromItem.TableName;
-                    joinItem.Condition = new TokenInfo(joinTable.expr()) { Type = TokenType.SearchCondition };
-
-                    fromItem.JoinItems.Add(joinItem);
-                }
-
-                statement.FromItems.Add(fromItem);
-            }
+            statement.TableNames.AddRange(statement.FromItems.Select(item => item.TableName));
 
             var setItems = node.updateList().updateElement();
 
@@ -578,7 +558,33 @@ namespace SqlAnalyser.Core
             List<DeleteStatement> statements = new List<DeleteStatement>();
 
             DeleteStatement statement = new DeleteStatement();
-            statement.TableName = this.ParseTableName(node.tableRef());
+
+            var tableRef = node.tableRef();
+
+            if (tableRef != null)
+            {
+                statement.TableName = this.ParseTableName(tableRef);
+            }
+            else
+            {
+                var alias = node.tableAliasRefList();
+                var tableRefs = node.tableReferenceList();
+
+                if (alias != null)
+                {
+                    statement.TableName = new TableName(alias);
+                }
+
+                if (tableRefs != null)
+                {
+                    statement.FromItems = this.ParseFromItems(tableRefs.tableReference());
+
+                    if (statement.TableName == null && statement.FromItems.Count > 0 && statement.FromItems[0].TableName != null)
+                    {
+                        statement.TableName = statement.FromItems[0].TableName;
+                    }
+                }
+            }
 
             var condition = node.whereClause().expr();
 
@@ -698,33 +704,11 @@ namespace SqlAnalyser.Core
 
             if (fromTables != null)
             {
-                statement.FromItems = new List<FromItem>();
+                statement.FromItems = this.ParseFromItems(fromTables);
 
-                foreach (var fromTable in fromTables)
+                if (statement.TableName == null && statement.FromItems.Count > 0 && statement.FromItems[0].TableName != null)
                 {
-                    FromItem fromItem = new FromItem();
-
-                    var tableFactor = fromTable.tableFactor();
-
-                    if (tableFactor.tableReferenceListParens() == null)
-                    {
-                        fromItem.TableName = this.ParseTableName(tableFactor.singleTable());
-                    }
-                    else
-                    {
-                        var tableRefListParents = tableFactor.tableReferenceListParens();
-
-                        fromItem.TableName = new TableName(tableRefListParents);
-
-                        this.AddChildTableAndColumnNameToken(tableRefListParents, fromItem.TableName);
-                    }
-
-                    if (statement.TableName == null)
-                    {
-                        statement.TableName = fromItem.TableName;
-                    }
-
-                    statement.FromItems.Add(fromItem);
+                    statement.TableName = statement.FromItems[0].TableName;
                 }
 
                 var condition = node.whereClause();
@@ -753,6 +737,96 @@ namespace SqlAnalyser.Core
             }
 
             return statement;
+        }
+
+        private List<FromItem> ParseFromItems(TableReferenceContext[] tableRefs)
+        {
+            List<FromItem> fromItems = new List<FromItem>();
+
+            foreach (var tableRef in tableRefs)
+            {
+                FromItem fromItem = new FromItem();
+
+                var tableFactor = tableRef.tableFactor();
+                var joinTables = tableRef.joinedTable();
+
+                fromItem.TableName = this.ParseTableName(tableFactor);
+
+                if (joinTables != null && joinTables.Length > 0)
+                {
+                    foreach (var joinTable in joinTables)
+                    {
+                        JoinItem joinItem = new JoinItem();
+
+                        var joinType = joinTable.innerJoinType().GetText();
+
+                        if (joinType.StartsWith(nameof(JoinType.INNER)))
+                        {
+                            joinItem.Type = JoinType.INNER;
+                        }
+                        else if (joinType.StartsWith(nameof(JoinType.LEFT)))
+                        {
+                            joinItem.Type = JoinType.LEFT;
+                        }
+                        else if (joinType.StartsWith(nameof(JoinType.RIGHT)))
+                        {
+                            joinItem.Type = JoinType.RIGHT;
+                        }
+                        else if (joinType.StartsWith(nameof(JoinType.CROSS)))
+                        {
+                            joinItem.Type = JoinType.CROSS;
+                        }
+                        else if (joinType.StartsWith(nameof(JoinType.FULL)))
+                        {
+                            joinItem.Type = JoinType.FULL;
+                        }
+
+                        var trf = joinTable.tableReference();
+                        var derivedTable = trf?.tableFactor()?.derivedTable();
+
+                        if (derivedTable == null)
+                        {
+                            joinItem.TableName = this.ParseTableName(joinTable.tableReference());
+                        }
+                        else
+                        {
+                            joinItem.TableName = this.ParseTableName(derivedTable.subquery());
+
+                            var alias = derivedTable.tableAlias();
+
+                            if (alias != null)
+                            {
+                                joinItem.TableName.Alias =new TokenInfo(alias);
+                            }
+
+                            this.AddChildTableAndColumnNameToken(derivedTable, joinItem.TableName);
+                        }
+
+                        joinItem.Condition = this.ParseCondition(joinTable.expr());
+
+                        fromItem.JoinItems.Add(joinItem);
+                    }
+                }
+                else
+                {
+                    if (tableFactor.tableReferenceListParens() == null)
+                    {
+                        fromItem.TableName = this.ParseTableName(tableFactor.singleTable());
+                    }
+                    else
+                    {
+                        var tableRefListParents = tableFactor.tableReferenceListParens();
+
+                        fromItem.TableName = new TableName(tableRefListParents);
+
+                        this.AddChildTableAndColumnNameToken(tableRefListParents, fromItem.TableName);
+                    }
+                }
+
+                fromItems.Add(fromItem);
+            }
+
+            return fromItems;
         }
 
         public List<SetStatement> ParseSetStatement(SetStatementContext node)
@@ -1122,6 +1196,32 @@ namespace SqlAnalyser.Core
                 {
                     tableName = new TableName(tableRef.qualifiedIdentifier());
                 }
+                else if (node is TableFactorContext tableFactor)
+                {
+                    var singleTable = tableFactor.singleTable();
+
+                    if (singleTable != null)
+                    {
+                        tableName = this.ParseTableName(singleTable);
+                    }
+                    else
+                    {
+                        tableName = new TableName(tableFactor);
+                    }
+                }
+                else if (node is TableReferenceContext tableReference)
+                {
+                    var tfc = tableReference.tableFactor();
+
+                    if (tfc != null)
+                    {
+                        tableName = this.ParseTableName(tfc);
+                    }
+                    else
+                    {
+                        tableName = new TableName(tableReference);
+                    }
+                }
                 else if (node is SingleTableContext singleTable)
                 {
                     tableName = new TableName(singleTable.tableRef().qualifiedIdentifier());
@@ -1153,7 +1253,7 @@ namespace SqlAnalyser.Core
                 {
                     var expr = si.expr();
 
-                    columnName = new ColumnName(expr);               
+                    columnName = new ColumnName(expr);
 
                     var alias = si.selectAlias();
 
@@ -1236,11 +1336,11 @@ namespace SqlAnalyser.Core
             }
 
             return null;
-        }     
+        }
 
         public override bool IsFunction(IParseTree node)
         {
-            if (node is FunctionCallContext || node is RuntimeFunctionCallContext 
+            if (node is FunctionCallContext || node is RuntimeFunctionCallContext
                 || node is SimpleExprConvertContext || node is SimpleExprCastContext)
             {
                 return true;

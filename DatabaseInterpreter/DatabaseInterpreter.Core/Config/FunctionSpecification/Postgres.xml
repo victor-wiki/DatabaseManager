@@ -34,6 +34,7 @@
   <item name="FLOOR" args="EXP"></item>
   <item name="FORMAT" args="FORAMT,EXP"></item>
   <item name="GCD" args="EXP1,EXP2"></item>
+  <item name="GEN_RANDOM_UUID" args=""></item>
   <item name="INITCAP" args="EXP"></item>
   <item name="LASTVAL" args=""></item>
   <item name="LCM" args="EXP1,EXP2"></item>

@@ -32,6 +32,14 @@
 		<target type="float" />
 	</mapping>
 	<mapping>
+		<source type="int" />
+		<target type="int" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="int" />
+	</mapping>
+	<mapping>
 		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
 		<target type="datetime"  />
 		<special name="expression" value="interval day[(]0[)] to second([(]\d[)])?" type="time" ></special>
@@ -73,6 +81,10 @@
 	<mapping>
 		<source type="sdo_geometry" />
 		<target type="geometry" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="smallint" />
 	</mapping>
 	<mapping>
 		<source type="st_geometry" />

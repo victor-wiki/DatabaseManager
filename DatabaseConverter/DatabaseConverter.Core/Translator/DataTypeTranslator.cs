@@ -4,10 +4,8 @@ using DatabaseInterpreter.Model;
 using NCalc;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace DatabaseConverter.Core
 {

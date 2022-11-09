@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using Microsoft.IdentityModel.Tokens;
 using SqlAnalyser.Model;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +12,10 @@ namespace DatabaseConverter.Core
     public class FunctionTranslator : DbObjectTranslator
     {
         private IEnumerable<TokenInfo> functions;
-        private const string ParenthesesExpression = @"\(.*\)";
-        private const string NameExpression = @"^([a-zA-Z_$][a-zA-Z\\d_$]*)$";
-
         private List<FunctionSpecification> sourceFuncSpecs;
         private List<FunctionSpecification> targetFuncSpecs;
+
+        public RoutineType RoutineType { get; set; }
 
         public FunctionTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter) : base(sourceInterpreter, targetInterpreter)
         {
@@ -128,7 +126,7 @@ namespace DatabaseConverter.Core
 
                 Dictionary<string, string> dictDataType = null;
 
-                string newExpression = this.ParseFormula(this.sourceFuncSpecs, this.targetFuncSpecs, formula, targetFunctionInfo, out dictDataType);
+                string newExpression = this.ParseFormula(this.sourceFuncSpecs, this.targetFuncSpecs, formula, targetFunctionInfo, out dictDataType, this.RoutineType);
 
                 if (newExpression != formula.Expression)
                 {
@@ -153,7 +151,7 @@ namespace DatabaseConverter.Core
             {
                 string innerContent = value;
 
-                Regex parenthesesRegex = new Regex(ParenthesesExpression);
+                Regex parenthesesRegex = new Regex(TranslateHelper.ParenthesesRegexPattern);
 
                 int count = 0;
 
@@ -194,7 +192,7 @@ namespace DatabaseConverter.Core
 
                     string cleanName = ExtractName(leftContent.Trim());
 
-                    Regex nameRegex = new Regex(NameExpression, RegexOptions.IgnoreCase);
+                    Regex nameRegex = new Regex(TranslateHelper.NameRegexPattern, RegexOptions.IgnoreCase);
                     var matches = nameRegex.Matches(cleanName);
 
                     Match nameMatch = matches.Cast<Match>().LastOrDefault();
@@ -251,7 +249,7 @@ namespace DatabaseConverter.Core
 
         private static bool IsNotFunction(string value)
         {
-            MatchCollection matches = Regex.Matches(value, ParenthesesExpression);
+            MatchCollection matches = Regex.Matches(value, TranslateHelper.ParenthesesRegexPattern);
 
             int notFunctionCount = 0;
 
@@ -288,7 +286,7 @@ namespace DatabaseConverter.Core
 
             for (int i = chars.Length - 1; i >= 0; i--)
             {
-                if (Regex.IsMatch(chars[i].ToString(), NameExpression))
+                if (Regex.IsMatch(chars[i].ToString(), TranslateHelper.NameRegexPattern))
                 {
                     name.Add(chars[i]);
                 }

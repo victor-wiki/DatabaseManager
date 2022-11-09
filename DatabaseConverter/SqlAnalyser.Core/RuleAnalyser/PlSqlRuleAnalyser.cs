@@ -11,7 +11,7 @@ namespace SqlAnalyser.Core
 {
     public class PlSqlRuleAnalyser : SqlRuleAnalyser
     {
-        public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Table_ref_aux_internal_oneContext) };
+        public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Tableview_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(Variable_nameContext) };
 
@@ -699,16 +699,47 @@ namespace SqlAnalyser.Core
             {
                 foreach (Column_based_update_set_clauseContext colSet in columnSets)
                 {
+                    ColumnName columnName = null;
+
+                    var col = colSet.column_name();
+
+                    if (col != null)
+                    {
+                        columnName = this.ParseColumnName(col);
+                    }
+                    else
+                    {
+                        var col2 = colSet.paren_column_list()?.column_list();
+
+                        if (col2 != null)
+                        {
+                            columnName = this.ParseColumnName(col2);
+                        }
+                    }
+
                     var valueExp = colSet.expression();
-                    var value = this.CreateToken(valueExp, TokenType.UpdateSetValue);
+                    var subQuery = colSet.subquery();
+
+                    TokenInfo value = null;
+
+                    if (valueExp != null)
+                    {
+                        value = this.CreateToken(valueExp, TokenType.UpdateSetValue);
+
+                        this.AddChildTableAndColumnNameToken(valueExp, value);
+                    }
+                    else if (subQuery != null)
+                    {
+                        value = this.CreateToken(subQuery, TokenType.UpdateSetValue);
+
+                        this.AddChildTableAndColumnNameToken(subQuery, value);
+                    }
 
                     statement.SetItems.Add(new NameValueItem()
                     {
-                        Name = new TokenInfo(colSet.column_name()) { Type = TokenType.ColumnName },
+                        Name = columnName,
                         Value = value
                     });
-
-                    this.AddChildTableAndColumnNameToken(valueExp, value);
                 }
             }
 
@@ -724,7 +755,12 @@ namespace SqlAnalyser.Core
             DeleteStatement statement = new DeleteStatement();
             statement.TableName = this.ParseTableName(node.general_table_ref());
 
-            statement.Condition = this.ParseCondition(node.where_clause());
+            var condition = node.where_clause()?.expression();
+
+            if (condition != null)
+            {
+                statement.Condition = this.ParseCondition(condition);
+            }
 
             statements.Add(statement);
 
@@ -1342,10 +1378,34 @@ namespace SqlAnalyser.Core
                 if (node is Tableview_nameContext tv)
                 {
                     tableName = new TableName(tv);
+
+                    var parent = tv.Parent?.Parent?.Parent;
+
+                    if (parent != null && parent is Table_ref_auxContext tra)
+                    {
+                        var alias = tra.table_alias();
+
+                        if (alias != null)
+                        {
+                            tableName.Alias = new TokenInfo(alias);
+                        }
+                    }
                 }
                 else if (node is Table_ref_aux_internal_oneContext traio)
                 {
                     tableName = new TableName(traio);
+
+                    var parent = traio.Parent;
+
+                    if (parent != null && parent is Table_ref_auxContext trau)
+                    {
+                        var alias = trau.table_alias();
+
+                        if (alias != null)
+                        {
+                            tableName.Alias = new TokenInfo(alias);
+                        }
+                    }
                 }
                 else if (node is General_table_refContext gtr)
                 {
@@ -1405,6 +1465,18 @@ namespace SqlAnalyser.Core
                     if (ids.Length > 1)
                     {
                         columnName.TableName = new TableName(ids[0]);
+                    }
+
+                    var sle = this.FindSelectListEelementsContext(vname);
+
+                    if (sle != null)
+                    {
+                        var alias = sle.column_alias()?.identifier();
+
+                        if (alias != null)
+                        {
+                            columnName.Alias = new TokenInfo(alias);
+                        }
                     }
                 }
                 else if (node is Select_list_elementsContext ele)
@@ -1469,6 +1541,23 @@ namespace SqlAnalyser.Core
             return columnName;
         }
 
+        private Select_list_elementsContext FindSelectListEelementsContext(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node.Parent != null && node.Parent is Select_list_elementsContext sle)
+                {
+                    return sle;
+                }
+                else if (node.Parent != null && node.Parent is ParserRuleContext)
+                {
+                    return this.FindSelectListEelementsContext(node.Parent as ParserRuleContext);
+                }
+            }
+
+            return null;
+        }
+
         private TokenInfo ParseCondition(ParserRuleContext node)
         {
             if (node != null)
@@ -1524,11 +1613,11 @@ namespace SqlAnalyser.Core
             else if (node is Non_reserved_keywords_pre12cContext)
             {
                 var parent = node.Parent?.Parent?.Parent;
-               
-                if (parent!= null && parent is Variable_nameContext)
+
+                if (parent != null && parent is Variable_nameContext)
                 {
                     return true;
-                }                
+                }
             }
 
             return false;

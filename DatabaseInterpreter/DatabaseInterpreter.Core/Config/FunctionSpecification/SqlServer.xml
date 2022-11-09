@@ -68,6 +68,7 @@
   <item name="MIN" args="EXP"></item>
   <item name="MONTH" args="DATE"></item>
   <item name="NCHAR" args="EXP"></item>
+  <item name="NEWID" args=""></item>
   <item name="NULLIF" args="EXP1,EXP2"></item>
   <item name="PARSE" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="PATINDEX" args="SEARCH,EXP"></item>
@@ -108,6 +109,7 @@
   <item name="SYSDATETIMEOFFSET" args=""></item>
   <item name="SYSTEM_USER" args="" noParenthesess="true"></item>
   <item name="SYSUTCDATETIME" args=""></item>
+  <item name="SUSER_SNAME" args=""></item>
   <item name="TAN" args="EXP"></item>
   <item name="TIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
   <item name="TODATETIMEOFFSET" args="EXP,TIME_ZONE"></item>

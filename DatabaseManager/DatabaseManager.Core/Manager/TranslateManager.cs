@@ -107,7 +107,17 @@ namespace DatabaseManager.Core
                 }
 
                 scriptDbObjects = this.ConvertScriptDbObject<Procedure>(script);
+
                 translator = this.GetScriptTranslator<Procedure>(scriptDbObjects, sourceDbInterpreter, targetDbInterpreter);
+            }
+
+            //use default schema
+            if (scriptDbObjects != null)
+            {
+                foreach (var sdo in scriptDbObjects)
+                {
+                    sdo.Schema = targetDbInterpreter.DefaultSchema;
+                }
             }
 
             if (translator != null)
@@ -247,10 +257,10 @@ namespace DatabaseManager.Core
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceDbInterpreter, targetDbInterpreter, dbObjects) { };
             translator.Option = new DbConverterOption();
+            translator.AutoMakeupSchemaName = false;
 
             return translator;
         }
-
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
         {

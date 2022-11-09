@@ -92,7 +92,63 @@ namespace SqlAnalyser.Core
             }
             else if (statement is DeleteStatement delete)
             {
-                this.AppendLine($"DELETE FROM {delete.TableName}");
+                bool hasJoin = AnalyserHelper.IsFromItemsHaveJoin(delete.FromItems);
+
+                if (!hasJoin)
+                {
+                    this.AppendLine($"DELETE FROM {this.GetNameWithAlias(delete.TableName)}");
+                }
+                else
+                {
+                    //"delete from join: from table can't use alias.
+
+                    string tableName = delete.TableName.Symbol;
+
+                    this.AppendLine($"DELETE {delete.TableName}");
+
+                    string alias = null;
+
+                    int i = 0;
+
+                    foreach (FromItem fromItem in delete.FromItems)
+                    {
+                        if (i == 0)
+                        {
+                            if (fromItem.TableName != null && fromItem.TableName.Alias != null)
+                            {
+                                alias = fromItem.TableName.Alias.Symbol;
+                                fromItem.TableName.Alias = null;
+                            }
+                            else if (fromItem.Alias != null)
+                            {
+                                alias = fromItem.Alias.Symbol;
+                                fromItem.Alias = null;
+                            }
+                        }
+
+                        foreach (JoinItem joinItem in fromItem.JoinItems)
+                        {
+                            string condition = joinItem.Condition.Symbol;
+
+                            if (!string.IsNullOrEmpty(alias) && condition.Contains(alias))
+                            {
+                                joinItem.Condition.Symbol = AnalyserHelper.ReplaceSymbol(condition, alias, tableName);
+                            }
+                        }
+
+                        i++;
+                    }
+
+                    this.BuildFromItems(delete.FromItems);
+
+                    if (!string.IsNullOrEmpty(alias))
+                    {
+                        if (delete.Condition.Symbol.Contains(alias))
+                        {
+                            delete.Condition.Symbol = AnalyserHelper.ReplaceSymbol(delete.Condition.Symbol, alias, tableName);
+                        }
+                    }
+                }
 
                 if (delete.Condition != null)
                 {

@@ -752,7 +752,6 @@ namespace SqlAnalyser.Core
                 }
             }
 
-
             return null;
         }
     }

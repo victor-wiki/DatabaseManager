@@ -11,8 +11,7 @@ using System.Text.RegularExpressions;
 namespace DatabaseConverter.Core
 {
     public class ScriptTokenProcessor : IDisposable
-    {
-        private const string NameExpression = @"^([a-zA-Z_\s]+)$";
+    {       
         private DataTypeTranslator dataTypeTranslator;
         private Dictionary<string, string> dictChangedValues = new Dictionary<string, string>();
         private List<IEnumerable<VariableMapping>> triggerVariableMappings;
@@ -175,8 +174,8 @@ namespace DatabaseConverter.Core
                 }
             }            
 
-            this.Script.Schema = this.GetQuotedString(this.DbObject.Schema);
-            this.Script.Name.Symbol = this.GetQuotedString(this.DbObject.Name);
+            this.Script.Schema = this.GetNewQuotedString(this.DbObject.Schema);
+            this.Script.Name.Symbol = this.GetNewQuotedString(this.DbObject.Name);
 
             #region Handle Trigger
             if (this.Script is TriggerScript ts)
@@ -234,8 +233,18 @@ namespace DatabaseConverter.Core
 
             if (token.Children == null || token.Children.Count == 0)
             {
+                if (token.Type == TokenType.SearchCondition)
+                {
+                    return;
+                }
+
                 if (!symbol.Contains("."))
                 {
+                    if(token.Type == TokenType.UpdateSetValue)
+                    {
+                        return;
+                    }                 
+
                     bool isAlias = this.IsAlias(token.Symbol, tokens);
 
                     if (!isAlias && !isFunction)
@@ -413,9 +422,14 @@ namespace DatabaseConverter.Core
 
         private string ReplaceSymbol(string value, string oldSymbol, string newSymbol)
         {
+            if(string.IsNullOrEmpty(oldSymbol))
+            {
+                return value;
+            }
+
             string pattern = null;
 
-            if (Regex.IsMatch(oldSymbol, NameExpression))
+            if (Regex.IsMatch(oldSymbol, TranslateHelper.NameRegexPattern))
             {
                 pattern = $"\\b{oldSymbol}\\b";
             }
@@ -486,6 +500,11 @@ namespace DatabaseConverter.Core
             if (this.HasBeenQuoted(token.Symbol))
             {
                 return false;
+            }
+
+            if(token.Symbol.Trim().ToUpper() =="NULL")
+            {
+                return false; 
             }
 
             return true;
@@ -614,6 +633,11 @@ namespace DatabaseConverter.Core
 
         private void ReplaceTokenSymbol(Dictionary<string, string> dict, TokenInfo token)
         {
+            if(token.Symbol == null)
+            {
+                return;
+            }
+
             foreach (var pv in dict)
             {
                 if (dict.Keys.Contains(token.Symbol))
@@ -644,10 +668,7 @@ namespace DatabaseConverter.Core
 
         private void RestoreValue(TokenInfo token)
         {
-            if (token != null && token.StartIndex.HasValue && token.Length > 0)
-            {
-                token.Symbol = this.DbObject.Definition.Substring(token.StartIndex.Value, token.Length);
-            }
+            TranslateHelper.RestoreTokenValue(this.DbObject.Definition, token);            
         }       
 
         private void ReplaceTokens(IEnumerable<TokenInfo> tokens)
@@ -735,6 +756,12 @@ namespace DatabaseConverter.Core
         {
             FunctionTranslator functionTranslator = new FunctionTranslator(this.SourceDbInterpreter, this.TargetDbInterpreter, tokens);
             functionTranslator.UserDefinedTypes = this.UserDefinedTypes;
+
+            if(this.Script is RoutineScript rs)
+            {
+                functionTranslator.RoutineType = rs.Type;
+            }
+           
 
             functionTranslator.Translate();
         }

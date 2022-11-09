@@ -1,6 +1,7 @@
 ﻿using DatabaseConverter.Core.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using Microsoft.Identity.Client;
 using NetTopologySuite.Algorithm;
 using SqlAnalyser.Model;
 using System.Collections.Generic;
@@ -13,11 +14,13 @@ namespace DatabaseConverter.Core
 {
     public class TranslateHelper
     {
-        private const string NumberRegexExpression = "(([0-9]\\d*\\.?\\d*)|(0\\.\\d*[0-9]))";
+        public const string NameRegexPattern = "^[a-zA-Z_][a-zA-Z0-9_]*$";
+        public const string NumberRegexPattern = "(([0-9]\\d*\\.?\\d*)|(0\\.\\d*[0-9]))";
+        public const string ParenthesesRegexPattern = @"\(.*\)";
 
         public static string ConvertNumberToPostgresMoney(string str)
         {
-            var matches = Regex.Matches(str, NumberRegexExpression);
+            var matches = Regex.Matches(str, NumberRegexPattern);
 
             if (matches != null)
             {
@@ -79,7 +82,7 @@ namespace DatabaseConverter.Core
                     }
                     else //exclude math operator "+"
                     {
-                        string[] items = symbol.Split(sourceConcatChars);
+                        string[] items = symbol.Split(sourceConcatChars, System.StringSplitOptions.RemoveEmptyEntries);
 
                         StringBuilder sb = new StringBuilder();
 
@@ -89,16 +92,21 @@ namespace DatabaseConverter.Core
 
                             if (i > 0)
                             {
-                                string previousLastChar = items[i - 1].Trim().Last().ToString();
-                                string currentFirstChar = items[i].Trim().First().ToString();
+                                char? previousLastChar = items[i - 1].Trim().FirstOrDefault();
+                                char? currentFirstChar = items[i].Trim().FirstOrDefault();
 
-                                if (int.TryParse(previousLastChar, out _) && int.TryParse(currentFirstChar, out _))
+                                if (previousLastChar.HasValue && currentFirstChar.HasValue
+                                    && int.TryParse(previousLastChar.ToString(), out _) && int.TryParse(currentFirstChar.ToString(), out _))
                                 {
                                     concatChar = sourceConcatChars;
                                 }
                             }
 
-                            sb.Append($"{(i > 0 ? concatChar : "")}{items[i]}");
+                            if (items[i].Trim().Length > 0)
+                            {
+                                sb.Append($"{(i > 0 ? concatChar : "")}{items[i]}");
+                            }                           
+                            
                         }
 
                         return sb.ToString();
@@ -165,7 +173,7 @@ namespace DatabaseConverter.Core
         {
             TableColumn column = new TableColumn();
 
-            if (userDefinedTypes != null)
+            if (userDefinedTypes != null && userDefinedTypes.Count>0)
             {
                 UserDefinedType userDefinedType = userDefinedTypes.FirstOrDefault(item => item.Name.Trim(trimChars).ToUpper() == dataType.Trim(trimChars).ToUpper());
 
@@ -182,7 +190,7 @@ namespace DatabaseConverter.Core
 
             DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(dbInterpreter, dataType);
 
-            string dataTypeName = dataTypeInfo.DataType;
+            string dataTypeName = dataTypeInfo.DataType.Trim().ToLower();
 
             column.DataType = dataTypeName;
 
@@ -215,7 +223,7 @@ namespace DatabaseConverter.Core
                     {
                         if (value > 0)
                         {
-                            DataTypeSpecification dataTypeSpecification = dbInterpreter.GetDataTypeSpecification(dataType);
+                            DataTypeSpecification dataTypeSpecification = dbInterpreter.GetDataTypeSpecification(dataTypeName);
 
                             if (dataTypeSpecification != null)
                             {
@@ -223,15 +231,15 @@ namespace DatabaseConverter.Core
 
                                 if (specArgs == "scale")
                                 {
-                                    column.Scale = GetDataTypeArgumentValue(argItems[0]);
+                                    scale = GetDataTypeArgumentValue(argItems[0]);
                                 }
                                 else if (specArgs == "precision,scale")
                                 {
-                                    column.Precision = GetDataTypeArgumentValue(argItems[0]);
+                                    precision = GetDataTypeArgumentValue(argItems[0]);
 
                                     if (argItems.Length > 1)
                                     {
-                                        column.Scale = GetDataTypeArgumentValue(argItems[1]);
+                                        scale = GetDataTypeArgumentValue(argItems[1]);
                                     }
                                 }
                             }
@@ -266,6 +274,14 @@ namespace DatabaseConverter.Core
             dataTypeTranslator.Translate(dataTypeInfo);
 
             DataTypeHelper.SetDataTypeInfoToTableColumn(dataTypeInfo, column);
+        }
+
+        public static void RestoreTokenValue(string definition, TokenInfo token)
+        {
+            if (token != null && token.StartIndex.HasValue && token.Length > 0)
+            {
+                token.Symbol = definition.Substring(token.StartIndex.Value, token.Length);
+            }
         }
     }
 }

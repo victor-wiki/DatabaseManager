@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using TSQL;
 using TSQL.Tokens;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {

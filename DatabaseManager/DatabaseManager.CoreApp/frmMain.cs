@@ -265,5 +265,11 @@ namespace DatabaseManager
             frmWktViewer geomViewer = new frmWktViewer();
             geomViewer.Show();
         }
+
+        private void tsBtnTranslateScript_Click(object sender, EventArgs e)
+        {
+            frmTranslateScript translateScript = new frmTranslateScript();
+            translateScript.Show();
+        }
     }
 }

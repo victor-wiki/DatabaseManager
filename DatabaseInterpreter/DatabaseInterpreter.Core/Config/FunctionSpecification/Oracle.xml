@@ -108,6 +108,7 @@
   <item name="SUM" args="EXP"></item>
   <item name="SYS_CONTEXT" args="NAMESPACE,PARAMETER[,LENGTH]"></item>
   <item name="SYS_EXTRACT_UTC" args="DATE"></item>
+  <item name="SYS_GUID" args=""></item>
   <item name="SYSDATE" args="" noParenthesess="true"></item>
   <item name="SYSTIMESTAMP" args=""  noParenthesess="true"></item>
   <item name="TAN" args="EXP"></item>

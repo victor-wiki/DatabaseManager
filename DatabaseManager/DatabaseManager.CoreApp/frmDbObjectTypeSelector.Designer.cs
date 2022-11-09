@@ -98,7 +98,7 @@
             this.MaximizeBox = false;
             this.Name = "frmDbObjectTypeSelector";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Select Database Objects";
+            this.Text = "Select Database Object Types";
             this.Load += new System.EventHandler(this.frmDbObjectTypeSelector_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
