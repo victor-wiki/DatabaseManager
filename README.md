@@ -25,9 +25,12 @@
 ### Empty Database
   Delete all objects of a database.
   
+### Translate Script
+  The windows translate form can translate script to one database kind to another .
+<br/>(Note:Most function and procedure of Postgres currently can't be translated to others.)
+
 ### Translate Script Online
-  The web application under this project provides a page that allows to translate script from one kind to another.
-<br/>(Note:The function and procedure of Postgres currently can't be translated to others.)
+  The web application under this project provides a page which translates script as same as windows form do except highlighting.
 
 ## UI - Main
 ![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=2)
@@ -47,6 +50,5 @@
 ## UI - SQL Query Editor
 ![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=2)
 
-## UI - Translate Script Online
-![Translate Script Online](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateOnline.png?raw=true&rid=2)
-
+## UI - Translate Script
+![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
