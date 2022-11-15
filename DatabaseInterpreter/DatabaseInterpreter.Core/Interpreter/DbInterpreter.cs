@@ -1045,6 +1045,16 @@ namespace DatabaseInterpreter.Core
 
             return string.Empty;
         }
+
+        public DataTypeInfo GetDataTypeInfo(string dataType)
+        {
+            if (!(this.DatabaseType == DatabaseType.Postgres && dataType == "\"char\""))
+            {
+                dataType = dataType.Trim(this.QuotationLeftChar, this.QuotationRightChar);
+            }
+
+            return DataTypeHelper.GetDataTypeInfo(dataType);
+        }
         #endregion
 
         #region Parse Column & DataType 
@@ -1161,7 +1171,7 @@ namespace DatabaseInterpreter.Core
         {
             string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for {StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower()} \"{dbObject.Name}\".";
             this.Feedback(FeedbackInfoType.Info, message);
-        }
+        }        
         #endregion
     }
 }

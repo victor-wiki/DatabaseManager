@@ -19,6 +19,11 @@ namespace SqlAnalyser.Core
             this.ruleAnalyser = new MySqlRuleAnalyser();
         }
 
+        public override AnalyseResult AnalyseCommon(string content)
+        {
+            return this.ruleAnalyser.AnalyseCommon(content);
+        }
+
         public override AnalyseResult AnalyseView(string content)
         {
             return this.ruleAnalyser.AnalyseView(content);
@@ -37,31 +42,11 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseTrigger(string content)
         {
             return this.ruleAnalyser.AnalyseTrigger(content);
-        }
+        }       
 
-        public override ScriptBuildResult GenerateScripts(CommonScript script)
+        public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
-            if (script is RoutineScript routineScript)
-            {
-                return this.GenerateRoutineScripts(routineScript);
-            }
-            else if (script is ViewScript viewScript)
-            {
-                return this.GenearteViewScripts(viewScript);
-            }
-            else if (script is TriggerScript triggerScript)
-            {
-                return this.GenearteTriggerScripts(triggerScript);
-            }
-            else
-            {
-                throw new NotSupportedException($"Not support generate scripts for type: {script.GetType()}.");
-            }
-        }
-
-        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
-        {
-            ScriptBuildResult result = new ScriptBuildResult();
+            ScriptBuildResult result = new ScriptBuildResult();          
 
             StringBuilder sb = new StringBuilder();          
 
@@ -100,17 +85,11 @@ namespace SqlAnalyser.Core
                 sb.AppendLine($"RETURNS {script.ReturnDataType}");
             }
 
-            int beginIndex = sb.Length - 1;
-            bool hasLeaveStatement = false;
+            int beginIndex = sb.Length - 1;            
 
             sb.AppendLine("BEGIN");
 
-            result.BodyStartIndex = sb.Length;
-
-            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
-            {
-                sb.AppendLine(this.BuildStatement(statement));
-            }
+            result.BodyStartIndex = sb.Length;          
 
             #region Cursor
 
@@ -124,12 +103,12 @@ namespace SqlAnalyser.Core
 
             if (script.Statements.Any(item => item is OpenCursorStatement) && !script.Statements.Any(item => item is DeclareCursorHandlerStatement))
             {
-                if (!script.Statements.Any(item => item is DeclareStatement && (item as DeclareStatement).Name.Symbol == "FINISHED"))
+                if (!script.Statements.Any(item => item is DeclareVariableStatement && (item as DeclareVariableStatement).Name.Symbol == "FINISHED"))
                 {
-                    DeclareStatement declareStatement = new DeclareStatement()
+                    DeclareVariableStatement declareStatement = new DeclareVariableStatement()
                     {
                         Name = new TokenInfo("FINISHED") { Type = TokenType.VariableName },
-                        DataType = new TokenInfo("INT") { Type = TokenType.DataType },
+                        DataType = new TokenInfo("INT"),
                         DefaultValue = new TokenInfo("0")
                     };
 
@@ -152,12 +131,16 @@ namespace SqlAnalyser.Core
 
             if (script.ReturnTable != null)
             {
-                sb.AppendLine(MySqlStatementScriptBuilder.BuildTemporaryTable(script.ReturnTable));
+                sb.AppendLine((this.StatementBuilder as MySqlStatementScriptBuilder).BuildTable(script.ReturnTable));
             }
+
+            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
+            this.StatementBuilder.Option.CollectDeclareStatement = true;
+            this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(LeaveStatement));
 
             FetchCursorStatement fetchCursorStatement = null;
 
-            foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement || item is DeclareCursorStatement)))
+            foreach (Statement statement in script.Statements)
             {
                 if (statement is FetchCursorStatement fetch)
                 {
@@ -177,31 +160,56 @@ namespace SqlAnalyser.Core
                             @while.Statements.Insert(0, fetchCursorStatement);
                         }
                     }
-                }
-
-                if (statement is LeaveStatement)
-                {
-                    hasLeaveStatement = true;
-                }
+                }                
           
                 sb.AppendLine(this.BuildStatement(statement, script.Type));
             }
 
             result.BodyStopIndex = sb.Length - 1;
 
-            sb.AppendLine("END");
+            sb.AppendLine("END");            
 
-            if (hasLeaveStatement)
+            if (this.StatementBuilder.DeclareStatements.Count > 0)
             {
-                sb.Insert(beginIndex, "sp:");
+                this.StatementBuilder.Clear();
+
+                StringBuilder sbDeclare = new StringBuilder();
+
+                foreach (var declareStatement in this.StatementBuilder.DeclareStatements)
+                {
+                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
+                    this.StatementBuilder.Option.CollectDeclareStatement = false;
+
+                    string content = this.BuildStatement(declareStatement, script.Type).Trim();
+
+                    sbDeclare.AppendLine(content);
+                }
+
+                sb.Insert(result.BodyStartIndex, sbDeclare.ToString());
+
+                result.BodyStartIndex += sbDeclare.Length;
+                result.BodyStopIndex += sbDeclare.Length;
+
+                this.StatementBuilder.DeclareStatements.Clear();
             }
-           
+
+            if (this.StatementBuilder.SpecialStatements.Any(item=>item.GetType() == typeof(LeaveStatement)))
+            {
+                this.StatementBuilder.Option.CollectSpecialStatementTypes.Clear();
+                this.StatementBuilder.SpecialStatements.Clear();
+
+                sb.Insert(beginIndex, "sp:");
+
+                result.BodyStartIndex += 3;
+                result.BodyStopIndex += 3;
+            }           
+
             result.Script = sb.ToString();
 
             return result;
         }
 
-        public ScriptBuildResult GenearteViewScripts(ViewScript script)
+        public override ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
@@ -223,7 +231,7 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
+        public override ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
@@ -244,12 +252,12 @@ namespace SqlAnalyser.Core
 
             result.BodyStartIndex = sb.Length;
 
-            foreach (Statement statement in script.Statements.Where(item => item is DeclareStatement))
+            foreach (Statement statement in script.Statements.Where(item => item is DeclareVariableStatement))
             {
                 sb.AppendLine(this.BuildStatement(statement));
             }
 
-            foreach (Statement statement in script.Statements.Where(item => !(item is DeclareStatement)))
+            foreach (Statement statement in script.Statements.Where(item => !(item is DeclareVariableStatement)))
             {
                 if (statement is LeaveStatement)
                 {

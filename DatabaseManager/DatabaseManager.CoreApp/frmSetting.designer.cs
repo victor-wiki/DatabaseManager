@@ -37,6 +37,9 @@
             this.label3 = new System.Windows.Forms.Label();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.lblOutputFolder = new System.Windows.Forms.Label();
+            this.btnOutputFolder = new System.Windows.Forms.Button();
+            this.txtOutputFolder = new System.Windows.Forms.TextBox();
             this.chkEditorEnableIntellisence = new System.Windows.Forms.CheckBox();
             this.chkEnableEditorHighlighting = new System.Windows.Forms.CheckBox();
             this.txtLockPassword = new System.Windows.Forms.TextBox();
@@ -59,18 +62,22 @@
             this.numCommandTimeout = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPostgres = new System.Windows.Forms.TabPage();
+            this.chkExcludePostgresExtensionObjects = new System.Windows.Forms.CheckBox();
+            this.dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
             this.tabMySql.SuspendLayout();
             this.tabGeneral.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).BeginInit();
             this.tabControl1.SuspendLayout();
+            this.tabPostgres.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnConfirm
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(176, 472);
+            this.btnConfirm.Location = new System.Drawing.Point(176, 503);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(88, 33);
@@ -83,7 +90,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(297, 472);
+            this.btnCancel.Location = new System.Drawing.Point(297, 503);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -102,7 +109,7 @@
             this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
-            this.tabMySql.Size = new System.Drawing.Size(509, 462);
+            this.tabMySql.Size = new System.Drawing.Size(509, 459);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
@@ -145,6 +152,9 @@
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.lblOutputFolder);
+            this.tabGeneral.Controls.Add(this.btnOutputFolder);
+            this.tabGeneral.Controls.Add(this.txtOutputFolder);
             this.tabGeneral.Controls.Add(this.chkEditorEnableIntellisence);
             this.tabGeneral.Controls.Add(this.chkEnableEditorHighlighting);
             this.tabGeneral.Controls.Add(this.txtLockPassword);
@@ -170,9 +180,38 @@
             this.tabGeneral.Margin = new System.Windows.Forms.Padding(4);
             this.tabGeneral.Name = "tabGeneral";
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(4);
-            this.tabGeneral.Size = new System.Drawing.Size(509, 428);
+            this.tabGeneral.Size = new System.Drawing.Size(509, 459);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
+            // 
+            // lblOutputFolder
+            // 
+            this.lblOutputFolder.AutoSize = true;
+            this.lblOutputFolder.Location = new System.Drawing.Point(10, 428);
+            this.lblOutputFolder.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblOutputFolder.Name = "lblOutputFolder";
+            this.lblOutputFolder.Size = new System.Drawing.Size(131, 17);
+            this.lblOutputFolder.TabIndex = 34;
+            this.lblOutputFolder.Text = "Scripts output folder:";
+            // 
+            // btnOutputFolder
+            // 
+            this.btnOutputFolder.Location = new System.Drawing.Point(433, 425);
+            this.btnOutputFolder.Margin = new System.Windows.Forms.Padding(4);
+            this.btnOutputFolder.Name = "btnOutputFolder";
+            this.btnOutputFolder.Size = new System.Drawing.Size(42, 24);
+            this.btnOutputFolder.TabIndex = 33;
+            this.btnOutputFolder.Text = "...";
+            this.btnOutputFolder.UseVisualStyleBackColor = true;
+            this.btnOutputFolder.Click += new System.EventHandler(this.btnOutputFolder_Click);
+            // 
+            // txtOutputFolder
+            // 
+            this.txtOutputFolder.Location = new System.Drawing.Point(149, 426);
+            this.txtOutputFolder.Margin = new System.Windows.Forms.Padding(4);
+            this.txtOutputFolder.Name = "txtOutputFolder";
+            this.txtOutputFolder.Size = new System.Drawing.Size(277, 23);
+            this.txtOutputFolder.TabIndex = 32;
             // 
             // chkEditorEnableIntellisence
             // 
@@ -436,19 +475,43 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabGeneral);
             this.tabControl1.Controls.Add(this.tabMySql);
+            this.tabControl1.Controls.Add(this.tabPostgres);
             this.tabControl1.Location = new System.Drawing.Point(1, 3);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(517, 458);
+            this.tabControl1.Size = new System.Drawing.Size(517, 489);
             this.tabControl1.TabIndex = 15;
+            // 
+            // tabPostgres
+            // 
+            this.tabPostgres.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPostgres.Controls.Add(this.chkExcludePostgresExtensionObjects);
+            this.tabPostgres.Location = new System.Drawing.Point(4, 26);
+            this.tabPostgres.Name = "tabPostgres";
+            this.tabPostgres.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPostgres.Size = new System.Drawing.Size(509, 459);
+            this.tabPostgres.TabIndex = 2;
+            this.tabPostgres.Text = "Postgres";
+            // 
+            // chkExcludePostgresExtensionObjects
+            // 
+            this.chkExcludePostgresExtensionObjects.AutoSize = true;
+            this.chkExcludePostgresExtensionObjects.Checked = true;
+            this.chkExcludePostgresExtensionObjects.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkExcludePostgresExtensionObjects.Location = new System.Drawing.Point(18, 12);
+            this.chkExcludePostgresExtensionObjects.Name = "chkExcludePostgresExtensionObjects";
+            this.chkExcludePostgresExtensionObjects.Size = new System.Drawing.Size(176, 21);
+            this.chkExcludePostgresExtensionObjects.TabIndex = 0;
+            this.chkExcludePostgresExtensionObjects.Text = "Exclude extension objects";
+            this.chkExcludePostgresExtensionObjects.UseVisualStyleBackColor = true;
             // 
             // frmSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(523, 519);
+            this.ClientSize = new System.Drawing.Size(523, 550);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
@@ -465,6 +528,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.numDataBatchSize)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numCommandTimeout)).EndInit();
             this.tabControl1.ResumeLayout(false);
+            this.tabPostgres.ResumeLayout(false);
+            this.tabPostgres.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -500,5 +565,11 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.CheckBox chkEditorEnableIntellisence;
+        private System.Windows.Forms.TabPage tabPostgres;
+        private System.Windows.Forms.CheckBox chkExcludePostgresExtensionObjects;
+        private System.Windows.Forms.Label lblOutputFolder;
+        private System.Windows.Forms.Button btnOutputFolder;
+        private System.Windows.Forms.TextBox txtOutputFolder;
+        private System.Windows.Forms.FolderBrowserDialog dlgOutputFolder;
     }
 }

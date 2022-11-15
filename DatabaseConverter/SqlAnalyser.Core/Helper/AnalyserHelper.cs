@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Antlr4.Runtime;
+using DatabaseInterpreter.Utility;
+using Newtonsoft.Json.Linq;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -10,13 +12,33 @@ namespace SqlAnalyser.Core
 {
     public class AnalyserHelper
     {
-        public const string NameRegexPattern = "^[a-zA-Z_][a-zA-Z0-9_]*$";
+        public static bool HasWord(string value, string word)
+        {
+            return Regex.IsMatch(value, $"({word})", RegexOptions.IgnoreCase);
+        }
+
+        public static bool IsSubquery(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                return IsSubquery(node.GetText());
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public static bool IsSubquery(string query)
+        {
+            return HasWord(query, "SELECT");
+        }
 
         public static string ReplaceSymbol(string symbol, string oldValue, string newValue)
         {
             string pattern;
 
-            if (Regex.IsMatch(oldValue, NameRegexPattern))
+            if (Regex.IsMatch(oldValue, RegexHelper.NameRegexPattern))
             {
                 pattern = $"\\b{oldValue}\\b";
             }
@@ -31,6 +53,6 @@ namespace SqlAnalyser.Core
         public static bool IsFromItemsHaveJoin(List<FromItem> fromItems)
         {
             return fromItems != null && fromItems.Count > 0 && fromItems.Any(item => item.JoinItems != null && item.JoinItems.Count > 0);
-        }
+        }        
     }
 }

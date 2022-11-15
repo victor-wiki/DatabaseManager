@@ -23,7 +23,7 @@ namespace DatabaseManager.Core
 
         public CancellationTokenSource CancellationTokenSource { get; private set; }
         public bool CancelRequested => this.cancelRequested;
-        public bool IsBusy => this.isBusy;      
+        public bool IsBusy => this.isBusy;
         public int LimitCount { get; set; } = 1000;
 
         public event FeedbackHandler OnFeedback;
@@ -94,14 +94,19 @@ namespace DatabaseManager.Core
                         {
                             if (dbInterpreter.DatabaseType == DatabaseType.Oracle)
                             {
-                                script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                                ScriptType scriptType = ScriptParser.DetectScriptType(script, dbInterpreter);
+
+                                if (scriptType != ScriptType.Procedure && scriptType != ScriptType.Function && scriptType != ScriptType.Trigger)
+                                {
+                                    script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                                }
                             }
 
                             commands = new string[] { script };
                         }
                         else
                         {
-                            string delimiter = dbInterpreter.ScriptsDelimiter;                         
+                            string delimiter = dbInterpreter.ScriptsDelimiter;
 
                             commands = script.Split(new string[] { delimiter, delimiter.Replace("\r", "\n") }, StringSplitOptions.RemoveEmptyEntries);
                         }

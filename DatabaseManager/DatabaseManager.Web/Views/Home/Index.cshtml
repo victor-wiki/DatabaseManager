@@ -28,7 +28,7 @@
 </style>
 
 <script type="text/javascript">
-    var validate=function(){
+    var validate = function () {
         var sourceDatabaseType = $("#sourceDatabaseType").val();
         var targetDatabaseType = $("#targetDatabaseType").val();
 
@@ -39,7 +39,7 @@
 
         var source = $("#source").val();
 
-        if(source==""){
+        if (source == "") {
             alert('the source content can not be empty!');
             return false;
         }
@@ -50,11 +50,11 @@
     var post = function () {
         var isValid = validate();
 
-        if(!isValid){
+        if (!isValid) {
             return;
         }
 
-        var data = $("#translateForm").serialize();       
+        var data = $("#translateForm").serialize();
 
         $.ajax({
             type: "POST",
@@ -62,11 +62,15 @@
             data: data,
             contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
             success: function (response) {
-                if(response){
-                    $("#target").val(response);
-                }else{
+                if (response.hasError == false) {
+                    $("#target").val(response.data);
+                }
+                else if (response.message) {
+                    alert(response.message);
+                }
+                else {
                     $("#target").val("N/A");
-                }                
+                }
             },
             error: function (result) {
                 alert(result);

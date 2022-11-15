@@ -34,6 +34,6 @@ namespace DatabaseInterpreter.Core
         public static IEnumerable<DatabaseType> GetDisplayDatabaseTypes()
         {
             return Enum.GetValues(typeof(DatabaseType)).Cast<DatabaseType>().Where(item=>item != DatabaseType.Unknown );
-        }
+        }        
     }
 }

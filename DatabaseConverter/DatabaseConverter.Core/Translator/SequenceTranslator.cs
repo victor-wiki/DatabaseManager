@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
 
@@ -91,7 +92,7 @@ namespace DatabaseConverter.Core
                 nextValueFlag = SequenceTranslator.OracleSequenceNextValueFlag;
             }
 
-            sequencePart = ValueHelper.GetTrimedParenthesisValue(value.Replace(nextValueFlag, "", StringComparison.OrdinalIgnoreCase).Trim()).Trim('\'');
+            sequencePart = StringHelper.GetBalanceParenthesisTrimedValue(value.Replace(nextValueFlag, "", StringComparison.OrdinalIgnoreCase).Trim()).Trim('\'');
 
             string schema = null, seqenceName = null;
 

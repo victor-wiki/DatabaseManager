@@ -4,6 +4,7 @@ using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,6 @@ namespace DatabaseManager.Core
     public class TranslateManager
     {
         private IObserver<FeedbackInfo> observer;
-        private string asPattern = @"\b(AS|IS)\b";
 
         public async Task Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, TranslateHandler translateHandler = null, bool removeCarriagRreturnChar = false)
         {
@@ -45,8 +45,10 @@ namespace DatabaseManager.Core
             }
         }
 
-        public string Translate(DatabaseType sourceDbType, DatabaseType targetDbType, string script)
+        public TranslateResult Translate(DatabaseType sourceDbType, DatabaseType targetDbType, string script)
         {
+            TranslateResult result = new TranslateResult();
+
             DbInterpreter sourceDbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, new ConnectionInfo(), new DbInterpreterOption());
             DbInterpreter targetDbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, new ConnectionInfo(), new DbInterpreterOption());
 
@@ -54,7 +56,7 @@ namespace DatabaseManager.Core
 
             dynamic translator = null;
 
-            ScriptType scriptType = this.DetectScriptType(script, sourceDbInterpreter);
+            ScriptType scriptType = ScriptParser.DetectScriptType(script, sourceDbInterpreter);
 
             if (scriptType == ScriptType.View)
             {
@@ -75,39 +77,14 @@ namespace DatabaseManager.Core
             {
                 scriptDbObjects = this.ConvertScriptDbObject<TableTrigger>(script);
                 translator = this.GetScriptTranslator<TableTrigger>(scriptDbObjects, sourceDbInterpreter, targetDbInterpreter);
-            }
-            else if (scriptType == ScriptType.SimpleSelect)
+            }           
+            else 
             {
-                string viewTemp = $"CREATE VIEW TEMP AS{Environment.NewLine}";
-                script = $"{viewTemp}{script}";
+                scriptDbObjects = new List<ScriptDbObject>() { new ScriptDbObject() { Definition = script } };
 
-                scriptDbObjects = this.ConvertScriptDbObject<View>(script);
-                translator = this.GetScriptTranslator<View>(scriptDbObjects, sourceDbInterpreter, targetDbInterpreter);
-            }
-            else if (scriptType == ScriptType.Other)
-            {
-                string viewTemp = $"CREATE PROCEDURE TEMP";
+                translator = this.GetScriptTranslator<ScriptDbObject>(scriptDbObjects, sourceDbInterpreter, targetDbInterpreter);
 
-                if (sourceDbType == DatabaseType.MySql)
-                {
-                    script = $"{viewTemp}(){Environment.NewLine}BEGIN{Environment.NewLine}{script}{Environment.NewLine}END";
-                }
-                else if (sourceDbType == DatabaseType.SqlServer)
-                {
-                    script = $"{viewTemp} AS {script}";
-                }
-                else if (sourceDbType == DatabaseType.Oracle)
-                {
-                    script = $"{viewTemp} AS{Environment.NewLine}BEGIN{Environment.NewLine}{script.TrimEnd(';')};{Environment.NewLine}END TEMP;";
-                }
-                else if (sourceDbType == DatabaseType.Postgres)
-                {
-                    script = $"{viewTemp} AS{Environment.NewLine}$${Environment.NewLine}BEGIN{Environment.NewLine}{script}{Environment.NewLine}END{Environment.NewLine}$$;";
-                }
-
-                scriptDbObjects = this.ConvertScriptDbObject<Procedure>(script);
-
-                translator = this.GetScriptTranslator<Procedure>(scriptDbObjects, sourceDbInterpreter, targetDbInterpreter);
+                translator.IsCommonScript = true;
             }
 
             //use default schema
@@ -123,70 +100,12 @@ namespace DatabaseManager.Core
             {
                 translator.Translate();
 
-                if (scriptType == ScriptType.SimpleSelect)
-                {
-                    var scriptDbObject = (scriptDbObjects as List<View>)[0];
-                    scriptDbObject.Definition = this.ExtractRoutineScriptBody<View>(scriptDbObject.Definition);
-                }
-                else if (scriptType == ScriptType.Other)
-                {
-                    var scriptDbObject = (scriptDbObjects as List<Procedure>)[0];
-                    scriptDbObject.Definition = this.ExtractRoutineScriptBody<Procedure>(scriptDbObject.Definition);
-                }
-            }
+                List<TranslateResult> results = translator.TranslateResults;
 
-            if (scriptDbObjects != null && scriptDbObjects.Count > 0)
-            {
-                return scriptDbObjects[0].Definition;
-            }
+                result = results.FirstOrDefault();
+            }              
 
-            return null;
-        }
-
-        private ScriptType DetectScriptType(string script, DbInterpreter dbInterpreter)
-        {
-            string upperScript = script.ToUpper().Trim();
-
-            ScriptParser scriptParser = new ScriptParser(dbInterpreter, upperScript);
-
-            if (scriptParser.IsCreateOrAlterScript())
-            {
-                string firstLine = upperScript.Split(Environment.NewLine).FirstOrDefault();
-
-                var asMatch = Regex.Match(firstLine, asPattern);
-
-                int asIndex = asMatch.Index;
-
-                if (asIndex <= 0)
-                {
-                    asIndex = firstLine.Length;
-                }
-
-                string prefix = upperScript.Substring(0, asIndex);
-
-                if (prefix.IndexOf(" VIEW ") > 0)
-                {
-                    return ScriptType.View;
-                }
-                else if (prefix.IndexOf(" FUNCTION ") > 0)
-                {
-                    return ScriptType.Function;
-                }
-                else if (prefix.IndexOf(" PROCEDURE ") > 0 || prefix.IndexOf(" PROC ") > 0)
-                {
-                    return ScriptType.Procedure;
-                }
-                else if (prefix.IndexOf(" TRIGGER ") > 0)
-                {
-                    return ScriptType.Trigger;
-                }
-            }
-            else if (scriptParser.IsSelect())
-            {
-                return ScriptType.SimpleSelect;
-            }
-
-            return ScriptType.Other;
+            return result;
         }
 
         private IEnumerable<T> ConvertScriptDbObject<T>(string script) where T : ScriptDbObject
@@ -199,63 +118,12 @@ namespace DatabaseManager.Core
             list.Add(t);
 
             return list;
-        }
-
-        private string ExtractRoutineScriptBody<T>(string script) where T : ScriptDbObject
-        {
-            if (typeof(T) == typeof(View))
-            {
-                var asMatch = Regex.Match(script.ToUpper(), asPattern);
-
-                if (asMatch != null)
-                {
-                    return script.Substring(asMatch.Index + 2).Trim();
-                }
-            }
-            else if (typeof(T) == typeof(Procedure))
-            {
-                string[] lines = script.Split(Environment.NewLine);
-                int firstBeginIndex = -1, lastEndIndex = -1;
-
-                int index = 0;
-
-                foreach (string line in lines)
-                {
-                    if (line.StartsWith("BEGIN") && firstBeginIndex == -1)
-                    {
-                        firstBeginIndex = index;
-                    }
-                    else if (line.StartsWith("END"))
-                    {
-                        lastEndIndex = index;
-                    }
-
-                    index++;
-                }
-
-                List<string> items = new List<string>();
-
-                index = 0;
-                foreach (string line in lines)
-                {
-                    if (index > firstBeginIndex && index < lastEndIndex)
-                    {
-                        items.Add(line);
-                    }
-
-                    index++;
-                }
-
-                script = String.Join(Environment.NewLine, items);
-            }
-
-            return script;
-        }
+        }        
 
         private ScriptTranslator<T> GetScriptTranslator<T>(IEnumerable<T> dbObjects, DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter) where T : ScriptDbObject
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceDbInterpreter, targetDbInterpreter, dbObjects) { };
-            translator.Option = new DbConverterOption();
+            translator.Option = new DbConverterOption() { OutputRemindInformation = false };
             translator.AutoMakeupSchemaName = false;
 
             return translator;
@@ -265,15 +133,5 @@ namespace DatabaseManager.Core
         {
             this.observer = observer;
         }
-    }
-
-    public enum ScriptType
-    {
-        SimpleSelect = 1,
-        View = 2,
-        Function = 3,
-        Procedure = 4,
-        Trigger = 5,
-        Other = 6
     }
 }

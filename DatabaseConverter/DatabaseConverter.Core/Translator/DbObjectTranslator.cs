@@ -59,10 +59,10 @@ namespace DatabaseConverter.Core
             return mappings.FirstOrDefault(item => item.Source.Type?.ToLower() == dataType?.ToLower());
         }
 
-        internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true, RoutineType routineType = RoutineType.UNKNOWN)
+        internal string GetNewDataType(List<DataTypeMapping> mappings, string dataType, bool usedForFunction = true)
         {
             dataType = this.GetTrimedValue(dataType.Trim());
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this.sourceDbInterpreter, dataType);
+            DataTypeInfo dataTypeInfo = this.sourceDbInterpreter.GetDataTypeInfo(dataType);
 
             string upperDataTypeName = dataTypeInfo.DataType.ToUpper();
 
@@ -87,7 +87,7 @@ namespace DatabaseConverter.Core
 
             if (this.targetDbType == DatabaseType.Oracle)
             {
-                if (usedForFunction && this.GetType() == typeof(FunctionTranslator))
+                if (usedForFunction && this.GetType() == typeof(FunctionTranslator) && dataTypeInfo.Args?.ToLower() == "max")
                 {
                     var mappedDataType = this.GetDataTypeMapping(mappings, dataTypeInfo.DataType)?.Target?.Type;
 
@@ -96,28 +96,17 @@ namespace DatabaseConverter.Core
 
                     if (isChar || isBinary)
                     {
-                        if (isChar)
+                        var dataTypeSpec = this.targetDbInterpreter.GetDataTypeSpecification(mappedDataType);
+
+                        if (dataTypeSpec != null)
                         {
-                            if (routineType == RoutineType.PROCEDURE || routineType== RoutineType.FUNCTION || routineType== RoutineType.TRIGGER)
+                            ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpec, "length");
+
+                            if (range.HasValue)
                             {
-                                return mappedDataType;
+                                return $"{mappedDataType}({range.Value.Max})";
                             }
                         }
-
-                        if (dataTypeInfo.Args?.ToLower() == "max")
-                        {
-                            var dataTypeSpec = this.targetDbInterpreter.GetDataTypeSpecification(mappedDataType);
-
-                            if (dataTypeSpec != null)
-                            {
-                                ArgumentRange? range = DataTypeManager.GetArgumentRange(dataTypeSpec, "length");
-
-                                if (range.HasValue)
-                                {
-                                    return $"{mappedDataType}({range.Value.Max})";
-                                }
-                            }
-                        }                        
                     }
                 }
             }
@@ -281,7 +270,7 @@ namespace DatabaseConverter.Core
 
                                 if (!dataTypeDict.ContainsKey(oldArg))
                                 {
-                                    newArg = this.GetNewDataType(this.dataTypeMappings, oldArg, true, routineType);
+                                    newArg = this.GetNewDataType(this.dataTypeMappings, oldArg, true);
 
                                     dataTypeDict.Add(oldArg, newArg.Trim());
                                 }
@@ -444,6 +433,27 @@ namespace DatabaseConverter.Core
                             sbArgs.Append(content);
                         }
                     }
+
+                    #region Oracle: use TO_CHAR instead of CAST(xxx as varchar2(n)) 
+                    if (this.targetDbType == DatabaseType.Oracle)
+                    {
+                        if (targetFunctionName == "CAST")
+                        {
+                            string[] items = sbArgs.ToString().Split("AS");
+                            string dataType = items.LastOrDefault().Trim();
+
+                            if (DataTypeHelper.IsCharType(dataType))
+                            {
+                                if (routineType == RoutineType.PROCEDURE || routineType == RoutineType.FUNCTION || routineType == RoutineType.TRIGGER)
+                                {
+                                    targetFunctionName = "TO_CHAR";
+                                    sbArgs.Clear();
+                                    sbArgs.Append(items[0].Trim());
+                                }
+                            }
+                        }
+                    } 
+                    #endregion
 
                     newExpression = $"{targetFunctionName}{(targetFuncSpec.NoParenthesess ? "" : $"({sbArgs.ToString()})")}";
                 }

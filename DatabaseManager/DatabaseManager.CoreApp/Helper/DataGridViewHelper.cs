@@ -3,6 +3,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -54,6 +55,15 @@ namespace DatabaseManager.Helper
                             {
                                 newColumnType = typeof(String);
                                 newValue = ValueHelper.BytesToHexString(value as byte[]);
+                            }
+                            else if(type == typeof(BitArray))
+                            {
+                                newColumnType = typeof(String);
+                                BitArray bitArray = value as BitArray;
+                            byte[] bytes =new byte[bitArray.Length];
+                                bitArray.CopyTo(bytes, 0);
+
+                                newValue = ValueHelper.BytesToHexString(bytes);
                             }
                             else if (type == typeof(SqlGeography))
                             {

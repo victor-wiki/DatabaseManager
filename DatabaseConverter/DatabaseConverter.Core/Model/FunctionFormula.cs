@@ -104,25 +104,35 @@ namespace DatabaseConverter.Model
 
                 int i = 0;
 
-                int singleQuoterCount = 0;
+                int leftParenthesesCount = 0;
+                int rightParenthesesCount = 0;
+                int singleQuotationCharCount = 0;
 
                 foreach (var c in body)
                 {
                     if (c == '\'')
                     {
-                        singleQuoterCount++;
+                        singleQuotationCharCount++;
+                    }
+
+                    if (c == '(')
+                    {
+                        if (singleQuotationCharCount % 2 == 0)
+                        {
+                            leftParenthesesCount++;
+                        }
+                    }
+                    else if (c == ')')
+                    {
+                        if (singleQuotationCharCount % 2 == 0)
+                        {
+                            rightParenthesesCount++;
+                        }
                     }
 
                     if (c == delimiterChar)
-                    {
-                        string leftContent = body.Substring(0, i);
-                        string rightContent = body.Substring(i + 1);
-
-                        bool leftClosed = leftContent.Count(item => item == '(') == leftContent.Count(item => item == ')');
-
-                        bool rightClosed = rightContent.Count(item => item == ')') == rightContent.Count(item => item == '(');
-
-                        if (leftClosed && rightClosed && (singleQuoterCount % 2 == 0))
+                    {                        
+                        if ((leftParenthesesCount == rightParenthesesCount) && (singleQuotationCharCount % 2 == 0))
                         {
                             delimiterIndexes.Add(i);
                         }

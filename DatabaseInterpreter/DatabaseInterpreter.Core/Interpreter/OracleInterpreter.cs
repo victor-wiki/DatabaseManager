@@ -948,7 +948,7 @@ namespace DatabaseInterpreter.Core
             string dataType = column.DataType;
             string dataLength = string.Empty;
 
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
             bool isChar = DataTypeHelper.IsCharType(column.DataType.ToLower());
 
             DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataTypeInfo.DataType);

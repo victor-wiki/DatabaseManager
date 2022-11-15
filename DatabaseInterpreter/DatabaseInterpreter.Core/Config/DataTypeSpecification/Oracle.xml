@@ -17,7 +17,7 @@
 	<item name="long raw" args="" size="2GB" indexForbidden="true"></item>
 	<item name="nchar" args="length" range="1~1000"></item>
 	<item name="nclob" args="" size="4GB" indexForbidden="true"></item>
-	<item name="number" args="precision,scale" range="1~38,0~38" optional="true" allowIdentity="true"></item>
+	<item name="number" args="precision,scale" range="1~38,0~38" optional="true" allowIdentity="true" default="38,4"></item>
 	<item name="nvarchar2" args="length" range="1~2000"></item>
 	<item name="raw" args="length" range="1~2000"></item>
 	<item name="real" args="" mapTo="float"></item>

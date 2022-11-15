@@ -129,6 +129,7 @@
             this.txtSource.Text = "";
             this.txtSource.SelectionChanged += new System.EventHandler(this.txtSource_SelectionChanged);
             this.txtSource.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtSource_KeyDown);
+            this.txtSource.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtSource_KeyUp);
             this.txtSource.MouseUp += new System.Windows.Forms.MouseEventHandler(this.txtSource_MouseUp);
             // 
             // txtTarget

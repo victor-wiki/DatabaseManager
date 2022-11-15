@@ -17,6 +17,10 @@ namespace SqlAnalyser.Model
         public TokenInfo Option { get; set; }
         public SelectTopInfo TopInfo { get; set; }
         public SelectLimitInfo LimitInfo { get; set; }
+
+        public bool HasFromItems => this.FromItems != null && this.FromItems.Count > 0;
+
+        public bool NoTableName => this.TableName == null && !this.HasFromItems;
     }
 
     public class SelectTopInfo
@@ -37,6 +41,8 @@ namespace SqlAnalyser.Model
         public TokenInfo Alias { get; set; }
         public SelectStatement SubSelectStatement { get; set; }
         public List<JoinItem> JoinItems { get; set; } = new List<JoinItem>();
+
+        public bool HasJoinItems => this.JoinItems != null && this.JoinItems.Count > 0;
     }
 
     public class JoinItem

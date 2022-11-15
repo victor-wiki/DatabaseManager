@@ -42,13 +42,14 @@ namespace DatabaseManager
             this.chkLogInfo.Checked = setting.LogType.HasFlag(LogType.Info);
             this.chkLogError.Checked = setting.LogType.HasFlag(LogType.Error);
             this.chkEnableEditorHighlighting.Checked = setting.EnableEditorHighlighting;
-            this.chkEditorEnableIntellisence.Checked = setting.EnableEditorIntellisence;           
+            this.chkEditorEnableIntellisence.Checked = setting.EnableEditorIntellisence;
+            this.chkExcludePostgresExtensionObjects.Checked = setting.ExcludePostgresExtensionObjects;           
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
             this.chkRememberPasswordDuringSession.Checked = setting.RememberPasswordDuringSession;
-
-            this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();            
+            this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
+            this.txtOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
 
             if(!string.IsNullOrEmpty(setting.LockPassword))
             {
@@ -70,7 +71,9 @@ namespace DatabaseManager
             setting.DbObjectNameMode = (DbObjectNameMode)Enum.Parse(typeof(DbObjectNameMode), this.cboDbObjectNameMode.Text);
             setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
             setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
-            setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;       
+            setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;
+            setting.ExcludePostgresExtensionObjects = this.chkExcludePostgresExtensionObjects.Checked;           
+            setting.ScriptsDefaultOutputFolder = this.txtOutputFolder.Text;
 
             string password = this.txtLockPassword.Text.Trim();
 
@@ -105,6 +108,21 @@ namespace DatabaseManager
             SettingManager.SaveConfig(setting);
 
             DbInterpreter.Setting = SettingManager.GetInterpreterSetting();
+        }
+
+        private void btnOutputFolder_Click(object sender, EventArgs e)
+        {
+            if (this.dlgOutputFolder == null)
+            {
+                this.dlgOutputFolder = new FolderBrowserDialog();
+            }
+
+            DialogResult result = this.dlgOutputFolder.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                this.txtOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
+            }
         }
     }
 }

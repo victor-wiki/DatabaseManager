@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using NetTopologySuite.Geometries;

@@ -9,7 +9,7 @@
 		<SqlServer>GETUTCDATE</SqlServer>
 		<MySql>UTC_TIMESTAMP</MySql>
 		<Oracle args="SYSTIMESTAMP">SYS_EXTRACT_UTC</Oracle>
-		<Postgres direction="IN" args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"></Postgres>
+		<Postgres args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>NEWID</SqlServer>
@@ -82,6 +82,12 @@
 		<MySql>CURRENT_USER</MySql>
 		<Oracle args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_USER</Postgres>
+	</mapping>
+	<mapping>
+		<SqlServer>USER_NAME</SqlServer>
+		<MySql direction="IN">DATABASE</MySql>
+		<Oracle direction="IN" args="'USERENV', 'CURRENT_SCHEMA'">SYS_CONTEXT</Oracle>
+		<Postgres>CURRENT_SCHEMA</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>DB_NAME</SqlServer>

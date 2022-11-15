@@ -83,6 +83,8 @@ namespace SqlAnalyser.Core
             return result;
         }
 
+        public abstract AnalyseResult AnalyseCommon(string content);
+
         public abstract AnalyseResult AnalyseProcedure(string content);
 
         public abstract AnalyseResult AnalyseFunction(string content);

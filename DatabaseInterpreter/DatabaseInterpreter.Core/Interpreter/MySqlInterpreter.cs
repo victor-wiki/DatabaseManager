@@ -757,7 +757,7 @@ namespace DatabaseInterpreter.Core
             string dataType = column.DataType;
             string dataLength = string.Empty;
 
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
             bool isChar = DataTypeHelper.IsCharType(dataType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataType);
 

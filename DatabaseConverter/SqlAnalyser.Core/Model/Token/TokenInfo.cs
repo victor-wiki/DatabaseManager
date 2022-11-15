@@ -10,12 +10,12 @@ namespace SqlAnalyser.Model
         public string Symbol { get; set; }
         public int? StartIndex { get; set; }
         public int? StopIndex { get; set; }
-        public bool IsConst { get; set; }        
+        public bool IsConst { get; set; }
 
         public int Length => this.StartIndex.HasValue && this.StopIndex.HasValue ? (this.StopIndex - this.StartIndex + 1).Value : 0;
 
         public TokenInfo Parent { get; private set; }
-        public List<TokenInfo> Children { get; } =new List<TokenInfo>();
+        public List<TokenInfo> Children { get; } = new List<TokenInfo>();
 
         public TokenInfo(string symbol)
         {
@@ -65,18 +65,26 @@ namespace SqlAnalyser.Model
         public override string ToString()
         {
             return this.Symbol;
-        }  
-        
+        }
+
         public void AddChild(TokenInfo child)
         {
-            child.Parent = this;
-            this.Children.Add(child);
+            if (child == null)
+            {
+                return;
+            }
+
+            if (!(child.StartIndex == this.StartIndex && child.StopIndex == this.StopIndex))
+            {
+                child.Parent = this;
+                this.Children.Add(child);
+            }
         }
     }
 
     public enum TokenType
     {
-        General = 0,       
+        General = 0,
         TableName,
         ViewName,
         TypeName,
@@ -88,20 +96,21 @@ namespace SqlAnalyser.Model
         ColumnName,
         ParameterName,
         VariableName,
-        CursorName,       
+        CursorName,
         DataType,
-        Alias,      
-        IfCondition,
+        Alias,
+        IfCondition, //not include query
         SearchCondition,
         TriggerCondition,
         ExitCondition,
         OrderBy,
         GroupBy,
         Option,
-        JoinOn,   
+        JoinOn,
         Pivot,
-        UnPivot,     
+        UnPivot,
         InsertValue,
-        UpdateSetValue
+        UpdateSetValue,
+        Subquery
     }
 }

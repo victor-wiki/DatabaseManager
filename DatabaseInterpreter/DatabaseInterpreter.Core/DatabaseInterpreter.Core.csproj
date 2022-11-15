@@ -3,10 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.18</AssemblyVersion>
-    <FileVersion>2.0.18</FileVersion>
-    <Version>2.0.18</Version>
-    <PackageReleaseNotes>add function specification: newid, uuid</PackageReleaseNotes>
+    <AssemblyVersion>2.0.19</AssemblyVersion>
+    <FileVersion>2.0.19</FileVersion>
+    <Version>2.0.19</Version>
+    <PackageReleaseNotes>1. Move "ValueHelper" and "DataTypeHelper"  to DatabaseInterpreter.Utility
+2. Fix bug: Postgres triggers show duplicate records
+3. Add option: exclude postgres extension objects</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle and Postgres.</Description>
   </PropertyGroup>

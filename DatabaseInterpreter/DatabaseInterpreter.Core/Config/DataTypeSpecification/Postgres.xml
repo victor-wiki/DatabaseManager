@@ -68,8 +68,8 @@
 	<item name="money[]" args="" indexForbidden="true"></item>
 	<item name="name" args=""></item>
 	<item name="name[]" args="" indexForbidden="true"></item>
-	<item name="numeric" args="precision,scale" range="1~1000,0~1000" optional="true"></item>
-	<item name="numeric[]" args="precision,scale" range="1~1000,0~1000" optional="true" indexForbidden="true"></item>
+	<item name="numeric" args="precision,scale" range="1~1000,0~1000" optional="true" default="38,4"></item>
+	<item name="numeric[]" args="precision,scale" range="1~1000,0~1000" optional="true" indexForbidden="true" default="38,4"></item>
 	<item name="nummultirange[]" args="" indexForbidden="true"></item>
 	<item name="numrange" args="" indexForbidden="true"></item>
 	<item name="numrange[]" args="" indexForbidden="true"></item>

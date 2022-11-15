@@ -139,7 +139,7 @@ namespace DatabaseConverter.Core
 
         public static List<FunctionFormula> GetFunctionFormulas(string value)
         {
-            value = StringHelper.TrimBracket(value);
+            value = StringHelper.TrimParenthesis(value);
 
             List<FunctionFormula> functions = new List<FunctionFormula>();
 
@@ -151,7 +151,7 @@ namespace DatabaseConverter.Core
             {
                 string innerContent = value;
 
-                Regex parenthesesRegex = new Regex(TranslateHelper.ParenthesesRegexPattern);
+                Regex parenthesesRegex = new Regex(RegexHelper.ParenthesesRegexPattern, RegexOptions.Multiline);
 
                 int count = 0;
 
@@ -164,22 +164,35 @@ namespace DatabaseConverter.Core
 
                     int leftParenthesesCount = 0;
                     int rightParenthesesCount = 0;
+                    int singleQuotationCharCount = 0;
 
                     for (int i = 0; i < innerContent.Length; i++)
                     {
-                        if (innerContent[i] == '(')
-                        {
-                            leftParenthesesCount++;
-                        }
-                        else if (innerContent[i] == ')')
-                        {
-                            rightParenthesesCount++;
+                        var c = innerContent[i];
 
-                            if (rightParenthesesCount == leftParenthesesCount)
+                        if (c == '(')
+                        {
+                            if (singleQuotationCharCount % 2 == 0)
                             {
-                                lastRightParenthesesIndex = i;
-                                break;
+                                leftParenthesesCount++;
                             }
+                        }
+                        else if (c == ')')
+                        {
+                            if (singleQuotationCharCount % 2 == 0)
+                            {
+                                rightParenthesesCount++;
+
+                                if (rightParenthesesCount == leftParenthesesCount)
+                                {
+                                    lastRightParenthesesIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        else if (c == '\'')
+                        {
+                            singleQuotationCharCount++;
                         }
                     }
 
@@ -192,7 +205,7 @@ namespace DatabaseConverter.Core
 
                     string cleanName = ExtractName(leftContent.Trim());
 
-                    Regex nameRegex = new Regex(TranslateHelper.NameRegexPattern, RegexOptions.IgnoreCase);
+                    Regex nameRegex = new Regex(RegexHelper.NameRegexPattern, RegexOptions.IgnoreCase);
                     var matches = nameRegex.Matches(cleanName);
 
                     Match nameMatch = matches.Cast<Match>().LastOrDefault();
@@ -201,7 +214,7 @@ namespace DatabaseConverter.Core
                     {
                         string name = nameMatch.Value;
 
-                        int startIndex = leftContent.IndexOf(cleanName, 0, System.StringComparison.OrdinalIgnoreCase);
+                        int startIndex = leftContent.LastIndexOf(cleanName, leftContent.Length - 1, System.StringComparison.OrdinalIgnoreCase);
 
                         int length = lastRightParenthesesIndex - startIndex + 1;
 
@@ -249,19 +262,19 @@ namespace DatabaseConverter.Core
 
         private static bool IsNotFunction(string value)
         {
-            MatchCollection matches = Regex.Matches(value, TranslateHelper.ParenthesesRegexPattern);
+            MatchCollection matches = Regex.Matches(value, RegexHelper.ParenthesesRegexPattern);
 
             int notFunctionCount = 0;
 
-            foreach(Match match in matches)
+            foreach (Match match in matches)
             {
-                var mv = ValueHelper.GetTrimedParenthesisValue(match.Value);
+                var mv = StringHelper.GetBalanceParenthesisTrimedValue(match.Value);
 
-                if(mv.Contains(","))
+                if (mv.Contains(","))
                 {
                     string[] items = mv.Split(',');
 
-                    if(items.Length == 2 && items.All(item=> int.TryParse(item.Trim(), out _)))
+                    if (items.Length == 2 && items.All(item => int.TryParse(item.Trim(), out _)))
                     {
                         notFunctionCount++;
                     }
@@ -272,7 +285,7 @@ namespace DatabaseConverter.Core
                     {
                         notFunctionCount++;
                     }
-                }                               
+                }
             }
 
             return notFunctionCount == matches.Count;
@@ -286,7 +299,7 @@ namespace DatabaseConverter.Core
 
             for (int i = chars.Length - 1; i >= 0; i--)
             {
-                if (Regex.IsMatch(chars[i].ToString(), TranslateHelper.NameRegexPattern))
+                if (Regex.IsMatch(chars[i].ToString(), RegexHelper.NameRegexPattern))
                 {
                     name.Add(chars[i]);
                 }

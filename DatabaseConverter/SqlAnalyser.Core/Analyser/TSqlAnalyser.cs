@@ -20,10 +20,14 @@ namespace SqlAnalyser.Core
             this.ruleAnalyser = new TSqlRuleAnalyser();
         }
 
+        public override AnalyseResult AnalyseCommon(string content)
+        {
+            return this.ruleAnalyser.AnalyseCommon(content);
+        }
+
         public override AnalyseResult AnalyseView(string content)
         {
             return this.ruleAnalyser.AnalyseView(content);
-
         }
 
         public override AnalyseResult AnalyseProcedure(string content)
@@ -39,29 +43,9 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseTrigger(string content)
         {
             return this.ruleAnalyser.AnalyseTrigger(content);
-        }
+        }           
 
-        public override ScriptBuildResult GenerateScripts(CommonScript script)
-        {
-            if (script is RoutineScript routineScript)
-            {
-                return this.GenerateRoutineScripts(routineScript);
-            }
-            else if (script is ViewScript viewScript)
-            {
-                return this.GenearteViewScripts(viewScript);
-            }
-            else if (script is TriggerScript triggerScript)
-            {
-                return this.GenearteTriggerScripts(triggerScript);
-            }
-            else
-            {
-                throw new NotSupportedException($"Not support generate scripts for type: {script.GetType()}.");
-            }
-        }
-
-        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
+        public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
@@ -116,7 +100,7 @@ namespace SqlAnalyser.Core
                 }
                 else
                 {
-                    sb.AppendLine($"RETURNS {script.ReturnTable.Name}({string.Join(",", script.ReturnTable.Columns.Select(t => $"{t.Name.Symbol} {t.DataType}")) })");
+                    sb.AppendLine($"RETURNS {script.ReturnTable.Name}({string.Join(",", script.ReturnTable.Columns.Select(t => $"{t.Name.Symbol} {t.DataType}"))})");
                 }
             }
 
@@ -194,11 +178,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public ScriptBuildResult GenearteViewScripts(ViewScript script)
+        public override ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();            
+            StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
@@ -209,18 +193,18 @@ namespace SqlAnalyser.Core
                 sb.AppendLine(this.BuildStatement(statement));
             }
 
-            result.BodyStopIndex = sb.Length-1;
+            result.BodyStopIndex = sb.Length - 1;
 
             result.Script = sb.ToString();
 
             return result;
         }
 
-        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
+        public override ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();            
+            StringBuilder sb = new StringBuilder();
 
             string time = (script.Time == TriggerTime.BEFORE || script.Time == TriggerTime.INSTEAD_OF) ? "INSTEAD OF" : script.Time.ToString();
             string events = string.Join(",", script.Events);
@@ -241,7 +225,7 @@ namespace SqlAnalyser.Core
             result.BodyStopIndex = sb.Length - 1;
 
             sb.AppendLine("END");
-            
+
             result.Script = sb.ToString();
 
             return result;

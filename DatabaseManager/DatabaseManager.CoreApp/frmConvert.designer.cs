@@ -39,7 +39,7 @@ namespace DatabaseManager
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
-            this.gbOption = new System.Windows.Forms.GroupBox();
+            this.gbConfiguration = new System.Windows.Forms.GroupBox();
             this.chkNcharToDoubleChar = new System.Windows.Forms.CheckBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.chkCreateSchemaIfNotExists = new System.Windows.Forms.CheckBox();
@@ -81,7 +81,7 @@ namespace DatabaseManager
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
-            this.gbOption.SuspendLayout();
+            this.gbConfiguration.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
@@ -171,7 +171,7 @@ namespace DatabaseManager
             // 
             // splitContainer2.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.gbOption);
+            this.splitContainer2.Panel2.Controls.Add(this.gbConfiguration);
             this.splitContainer2.Size = new System.Drawing.Size(882, 411);
             this.splitContainer2.SplitterDistance = 294;
             this.splitContainer2.TabIndex = 39;
@@ -185,41 +185,41 @@ namespace DatabaseManager
             this.tvDbObjects.Size = new System.Drawing.Size(294, 411);
             this.tvDbObjects.TabIndex = 38;
             // 
-            // gbOption
+            // gbConfiguration
             // 
-            this.gbOption.Controls.Add(this.chkNcharToDoubleChar);
-            this.gbOption.Controls.Add(this.pictureBox1);
-            this.gbOption.Controls.Add(this.chkCreateSchemaIfNotExists);
-            this.gbOption.Controls.Add(this.chkExcludeGeometryForData);
-            this.gbOption.Controls.Add(this.pictureBox2);
-            this.gbOption.Controls.Add(this.btnSetSchemaMappings);
-            this.gbOption.Controls.Add(this.chkGenerateComment);
-            this.gbOption.Controls.Add(this.chkTreatBytesAsNull);
-            this.gbOption.Controls.Add(this.chkOnlyCommentComputeExpression);
-            this.gbOption.Controls.Add(this.chkComputeColumn);
-            this.gbOption.Controls.Add(this.chkContinueWhenErrorOccurs);
-            this.gbOption.Controls.Add(this.chkUseTransaction);
-            this.gbOption.Controls.Add(this.chkBulkCopy);
-            this.gbOption.Controls.Add(this.chkGenerateIdentity);
-            this.gbOption.Controls.Add(this.chkScriptData);
-            this.gbOption.Controls.Add(this.chkScriptSchema);
-            this.gbOption.Controls.Add(this.lblDbSchemaMappings);
-            this.gbOption.Controls.Add(this.chkGenerateSourceScripts);
-            this.gbOption.Controls.Add(this.chkExecuteOnTarget);
-            this.gbOption.Controls.Add(this.lblOutputFolder);
-            this.gbOption.Controls.Add(this.btnOutputFolder);
-            this.gbOption.Controls.Add(this.txtOutputFolder);
-            this.gbOption.Controls.Add(this.lblScriptsMode);
-            this.gbOption.Controls.Add(this.chkOutputScripts);
-            this.gbOption.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gbOption.Location = new System.Drawing.Point(0, 0);
-            this.gbOption.Margin = new System.Windows.Forms.Padding(4);
-            this.gbOption.Name = "gbOption";
-            this.gbOption.Padding = new System.Windows.Forms.Padding(4);
-            this.gbOption.Size = new System.Drawing.Size(584, 411);
-            this.gbOption.TabIndex = 21;
-            this.gbOption.TabStop = false;
-            this.gbOption.Text = "Options";
+            this.gbConfiguration.Controls.Add(this.chkNcharToDoubleChar);
+            this.gbConfiguration.Controls.Add(this.pictureBox1);
+            this.gbConfiguration.Controls.Add(this.chkCreateSchemaIfNotExists);
+            this.gbConfiguration.Controls.Add(this.chkExcludeGeometryForData);
+            this.gbConfiguration.Controls.Add(this.pictureBox2);
+            this.gbConfiguration.Controls.Add(this.btnSetSchemaMappings);
+            this.gbConfiguration.Controls.Add(this.chkGenerateComment);
+            this.gbConfiguration.Controls.Add(this.chkTreatBytesAsNull);
+            this.gbConfiguration.Controls.Add(this.chkOnlyCommentComputeExpression);
+            this.gbConfiguration.Controls.Add(this.chkComputeColumn);
+            this.gbConfiguration.Controls.Add(this.chkContinueWhenErrorOccurs);
+            this.gbConfiguration.Controls.Add(this.chkUseTransaction);
+            this.gbConfiguration.Controls.Add(this.chkBulkCopy);
+            this.gbConfiguration.Controls.Add(this.chkGenerateIdentity);
+            this.gbConfiguration.Controls.Add(this.chkScriptData);
+            this.gbConfiguration.Controls.Add(this.chkScriptSchema);
+            this.gbConfiguration.Controls.Add(this.lblDbSchemaMappings);
+            this.gbConfiguration.Controls.Add(this.chkGenerateSourceScripts);
+            this.gbConfiguration.Controls.Add(this.chkExecuteOnTarget);
+            this.gbConfiguration.Controls.Add(this.lblOutputFolder);
+            this.gbConfiguration.Controls.Add(this.btnOutputFolder);
+            this.gbConfiguration.Controls.Add(this.txtOutputFolder);
+            this.gbConfiguration.Controls.Add(this.lblScriptsMode);
+            this.gbConfiguration.Controls.Add(this.chkOutputScripts);
+            this.gbConfiguration.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gbConfiguration.Location = new System.Drawing.Point(0, 0);
+            this.gbConfiguration.Margin = new System.Windows.Forms.Padding(4);
+            this.gbConfiguration.Name = "gbConfiguration";
+            this.gbConfiguration.Padding = new System.Windows.Forms.Padding(4);
+            this.gbConfiguration.Size = new System.Drawing.Size(584, 411);
+            this.gbConfiguration.TabIndex = 21;
+            this.gbConfiguration.TabStop = false;
+            this.gbConfiguration.Text = "Configuration";
             // 
             // chkNcharToDoubleChar
             // 
@@ -454,7 +454,7 @@ namespace DatabaseManager
             // lblOutputFolder
             // 
             this.lblOutputFolder.AutoSize = true;
-            this.lblOutputFolder.Location = new System.Drawing.Point(10, 360);
+            this.lblOutputFolder.Location = new System.Drawing.Point(9, 360);
             this.lblOutputFolder.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(131, 17);
@@ -500,6 +500,7 @@ namespace DatabaseManager
             this.chkOutputScripts.TabIndex = 0;
             this.chkOutputScripts.Text = "Output scripts to file";
             this.chkOutputScripts.UseVisualStyleBackColor = true;
+            this.chkOutputScripts.CheckedChanged += new System.EventHandler(this.chkOutputScripts_CheckedChanged);
             // 
             // targetDbProfile
             // 
@@ -603,8 +604,8 @@ namespace DatabaseManager
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
-            this.gbOption.ResumeLayout(false);
-            this.gbOption.PerformLayout();
+            this.gbConfiguration.ResumeLayout(false);
+            this.gbConfiguration.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
@@ -629,7 +630,7 @@ namespace DatabaseManager
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopySelection;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private System.Windows.Forms.GroupBox gbOption;
+        private System.Windows.Forms.GroupBox gbConfiguration;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.Button btnSetSchemaMappings;
         private System.Windows.Forms.CheckBox chkGenerateComment;

@@ -908,7 +908,7 @@ namespace DatabaseInterpreter.Core
             bool isChar = DataTypeHelper.IsCharType(dataType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataType);
 
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
 
             DataTypeSpecification dataTypeSpec = this.GetDataTypeSpecification(dataTypeInfo.DataType);
 

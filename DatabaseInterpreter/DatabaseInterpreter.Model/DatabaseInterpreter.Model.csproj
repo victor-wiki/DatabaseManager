@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.8</Version>
-    <AssemblyVersion>1.0.8</AssemblyVersion>
-    <FileVersion>1.0.8</FileVersion>
+    <Version>1.0.9</Version>
+    <AssemblyVersion>1.0.9</AssemblyVersion>
+    <FileVersion>1.0.9</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>rename "UserDefinedTypeItem" to "UserDefinedTypeAttribute", and change "Name" of "UserDefinedTypeAttribute" to "TypeName"</PackageReleaseNotes>
+    <PackageReleaseNotes>add option: ExcludePostgresExtensionObjects</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

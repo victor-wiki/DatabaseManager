@@ -1,5 +1,5 @@
-﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
@@ -20,6 +20,11 @@ namespace SqlAnalyser.Core
             this.ruleAnalyser = new PostgreSqlRuleAnalyser();
         }
 
+        public override AnalyseResult AnalyseCommon(string content)
+        {
+            return this.ruleAnalyser.AnalyseCommon(content);
+        }
+
         public override AnalyseResult AnalyseView(string content)
         {
             return this.ruleAnalyser.AnalyseView(content);
@@ -38,33 +43,14 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseTrigger(string content)
         {
             return this.ruleAnalyser.AnalyseTrigger(content);
-        }
+        }       
 
-        public override ScriptBuildResult GenerateScripts(CommonScript script)
-        {
-            if (script is RoutineScript routineScript)
-            {
-                return this.GenerateRoutineScripts(routineScript);
-            }
-            else if (script is ViewScript viewScript)
-            {
-                return this.GenearteViewScripts(viewScript);
-            }
-            else if (script is TriggerScript triggerScript)
-            {
-                return this.GenearteTriggerScripts(triggerScript);
-            }
-            else
-            {
-                throw new NotSupportedException($"Not support generate scripts for type: {script.GetType()}.");
-            }
-        }
-
-        public ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
+        public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StatementScriptBuilderOption option = new StatementScriptBuilderOption() { NotBuildDeclareStatement = true, CollectDeclareStatement = true };
+            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
+            this.StatementBuilder.Option.CollectDeclareStatement = true ;
 
             StringBuilder sb = new StringBuilder();
 
@@ -184,7 +170,7 @@ namespace SqlAnalyser.Core
                     }
                 }
 
-                sb.AppendLine(this.BuildStatement(statement, script.Type, option));
+                sb.AppendLine(this.BuildStatement(statement, script.Type));
             }
 
             result.BodyStopIndex = sb.Length - 1;
@@ -200,10 +186,10 @@ namespace SqlAnalyser.Core
 
                 foreach(var declareStatement in this.StatementBuilder.DeclareStatements)
                 {
-                    option.NotBuildDeclareStatement = false;
-                    option.CollectDeclareStatement = false;
+                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
+                    this.StatementBuilder.Option.CollectDeclareStatement = false;
 
-                    sbDeclare.AppendLine(this.BuildStatement(declareStatement, script.Type, option).Trim());
+                    sbDeclare.AppendLine(this.BuildStatement(declareStatement, script.Type).Trim());
                 }
 
                 sb.Insert(declareStartIndex, sbDeclare.ToString());
@@ -222,12 +208,12 @@ namespace SqlAnalyser.Core
         private string GetColumnInfo(ColumnInfo columnInfo)
         {
             string name = columnInfo.Name.FieldName;
-            string dataType = string.IsNullOrEmpty(columnInfo.DataType) ? "character varying" : columnInfo.DataType;
+            string dataType = string.IsNullOrEmpty(columnInfo.DataType?.Symbol) ? "character varying" : columnInfo.DataType.Symbol;
 
             return $"{name} {dataType}";
         }
 
-        public ScriptBuildResult GenearteViewScripts(ViewScript script)
+        public override ScriptBuildResult GenearteViewScripts(ViewScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
@@ -248,7 +234,7 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
+        public override ScriptBuildResult GenearteTriggerScripts(TriggerScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 

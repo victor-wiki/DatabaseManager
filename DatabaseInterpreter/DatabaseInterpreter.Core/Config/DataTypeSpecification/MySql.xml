@@ -8,10 +8,10 @@
 	<item name="char" args="length" range="1~255"></item>
 	<item name="date" args=""></item>
 	<item name="datetime" args=""></item>
-	<item name="decimal" args="precision,scale" range="1~65,0~30"></item>
-	<item name="double" args="precision,scale" range="1~255,0~30" allowIdentity="true"></item>
+	<item name="decimal" args="precision,scale" range="1~65,0~30" default="38,4"></item>
+	<item name="double" args="precision,scale" range="1~255,0~30" allowIdentity="true" default="38,4"></item>
 	<item name="enum" args=""></item>
-	<item name="float" args="precision,scale" range="1~255,0~30" optional="true" allowIdentity="true"></item>
+	<item name="float" args="precision,scale" range="1~255,0~30" optional="true" allowIdentity="true" default="38,4"></item>
 	<item name="geometry" args=""></item>
 	<item name="geomcollection" args=""></item>
 	<item name="int" args="" value="-2147483648~2147483647" allowIdentity="true"></item>
@@ -25,10 +25,10 @@
 	<item name="multilinestring" args=""></item>
 	<item name="multipoint" args=""></item>
 	<item name="multipolygon" args=""></item>
-	<item name="numeric" args="precision,scale" range="1~65,0~30" mapTo="decimal"></item>
+	<item name="numeric" args="precision,scale" range="1~65,0~30" mapTo="decimal" default="38,4"></item>
 	<item name="point" args=""></item>
 	<item name="polygon" args=""></item>
-	<item name="real" args="precision,scale" range="1~255,0~30" mapTo="double"></item>
+	<item name="real" args="precision,scale" range="1~255,0~30" mapTo="double" default="38,4"></item>
 	<item name="set" args=""></item>
 	<item name="smallint" args="" value="-32768~32767"></item>
 	<item name="text" args="" size="65535B" indexForbidden="true"></item>

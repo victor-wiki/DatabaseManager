@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
@@ -399,7 +400,7 @@ namespace DatabaseInterpreter.Core
             if (IsTableColumnDataTypeAndLengthEquals(databaseType, column1, column2)
                && column1.IsNullable == column2.IsNullable
                && column1.IsIdentity == column2.IsIdentity
-               && ValueHelper.IsStringEquals(ValueHelper.GetTrimedParenthesisValue(column1.DefaultValue), ValueHelper.GetTrimedParenthesisValue(column2.DefaultValue))
+               && ValueHelper.IsStringEquals(StringHelper.GetBalanceParenthesisTrimedValue(column1.DefaultValue), StringHelper.GetBalanceParenthesisTrimedValue(column2.DefaultValue))
                && (excludeComment || (!excludeComment && ValueHelper.IsStringEquals(column1.Comment, column2.Comment)))
                && ValueHelper.IsStringEquals(column1.ComputeExp, column2.ComputeExp))
             {
@@ -431,13 +432,13 @@ namespace DatabaseInterpreter.Core
 
             if (!dataTypeSpecs1.Any(item => item.Name == dataType1))
             {
-                dataTypeInfo1 = DataTypeHelper.GetSpecialDataTypeInfo(column1.DataType.ToLower());
+                dataTypeInfo1 = DataTypeHelper.GetDataTypeInfoByRegex(column1.DataType.ToLower());
                 dataType1 = dataTypeInfo1.DataType;
             }
 
             if (!dataTypeSpecs2.Any(item => item.Name == dataType2))
             {
-                dataTypeInfo2 = DataTypeHelper.GetSpecialDataTypeInfo(column2.DataType.ToLower());
+                dataTypeInfo2 = DataTypeHelper.GetDataTypeInfoByRegex(column2.DataType.ToLower());
                 dataType2 = dataTypeInfo2.DataType;
             }
 
@@ -511,7 +512,7 @@ namespace DatabaseInterpreter.Core
             foreach (var mapping in mappings)
             {
                 bool isAllSourceSchema = string.IsNullOrEmpty(mapping.SourceSchema);
-                string targetSchema = mapping.TargetSchema;                
+                string targetSchema = mapping.TargetSchema;
 
                 var tables = schemaInfo.Tables.Where(item => item.Schema == mapping.SourceSchema || isAllSourceSchema).ToList();
                 tables.ForEach(item => item.Schema = targetSchema);
@@ -569,6 +570,11 @@ namespace DatabaseInterpreter.Core
 
         public static string GetMappedSchema(string schema, List<SchemaMappingInfo> schemaMappings)
         {
+            if (schema == null)
+            {
+                return null;
+            }
+
             string mappedSchema = schemaMappings.FirstOrDefault(item => item.SourceSchema.ToUpper() == schema.ToUpper())?.TargetSchema;
 
             if (mappedSchema == null)

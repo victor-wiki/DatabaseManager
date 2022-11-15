@@ -27,6 +27,8 @@ namespace DatabaseConverter.Core.Model
         public bool CreateSchemaIfNotExists { get; set; }
         public bool NcharToDoubleChar { get; set; } = true;
 
+        public bool OutputRemindInformation { get; set; } = true;
+
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
     }
 }

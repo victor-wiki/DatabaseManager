@@ -1,4 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
@@ -154,7 +156,7 @@ namespace DatabaseManager
 
         private string GetValue(string value)
         {
-            bool needQuoted = ValueHelper.NeedQuotedForSql(this.Column.ValueType);
+            bool needQuoted = FrontQueryHelper.NeedQuotedForSql(this.Column.ValueType);
 
             return needQuoted ? $"'{value}'" : value;
         }

@@ -1,7 +1,9 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace SqlAnalyser.Core
 {
@@ -40,20 +42,30 @@ namespace SqlAnalyser.Core
             }
             else if (statement is UpdateStatement update)
             {
+                int fromItemsCount = update.FromItems == null ? 0 : update.FromItems.Count;
+                TableName tableName = StatementScriptBuilderHelper.GetUpdateSetTableName(update);
+                string tableNameOrAlias = tableName?.Symbol;
+                bool isCompositeColumnName = StatementScriptBuilderHelper.IsCompositeUpdateSetColumnName(update);
+
                 this.AppendLine($"UPDATE");
 
                 List<TableName> tableNames = new List<TableName>();
 
                 List<string> joins = new List<string>();
                 string otherCondition = null;
-                string tableName = null;
+                string strTableName = null;
                 string alias = null;
+
+                if (tableName?.Alias != null)
+                {
+                    alias = tableName.Alias.Symbol;
+                }
 
                 Func<string, bool, string> getNoAliasString = (str, useOldName) =>
                 {
                     if (str != null)
                     {
-                        return alias == null ? str : str.Replace($"{alias}.", (useOldName ? $"{tableName}." : ""));
+                        return alias == null ? str : str.Replace($"{alias}.", (useOldName ? $"{strTableName}." : ""));
                     }
 
                     return str;
@@ -65,32 +77,45 @@ namespace SqlAnalyser.Core
 
                     foreach (FromItem fromItem in update.FromItems)
                     {
-                        if (i == 0 && fromItem.TableName != null)
+                        bool hasJoin = fromItem.HasJoinItems;
+
+                        string tn = fromItem.TableName.Symbol;
+                        string talias = fromItem.TableName.Alias?.ToString();
+
+                        if (fromItem.TableName != null)
                         {
-                            tableNames.Add(fromItem.TableName);
-                            tableName = fromItem.TableName.Symbol;
-                            alias = fromItem.TableName.Alias?.ToString();
+                            if (tn == tableNameOrAlias || talias == tableNameOrAlias)
+                            {
+                                tableNames.Add(fromItem.TableName);
+                                strTableName = tn;
+                                alias = talias;
+                            }
                         }
 
-                        var joinItems = fromItem.JoinItems;
-
-                        if (joinItems != null && joinItems.Count() > 0)
+                        if (hasJoin)
                         {
                             int j = 0;
 
-                            foreach (var joinItem in joinItems)
+                            foreach (var joinItem in fromItem.JoinItems)
                             {
                                 if (j == 0)
                                 {
-                                    joins.Add($"FROM {joinItem.TableName}");
+                                    joins.Add($"FROM {joinItem.TableName.NameWithAlias}");
                                     otherCondition = getNoAliasString(joinItem.Condition.ToString(), true);
                                 }
                                 else
                                 {
-                                    joins.Add($"{joinItem.Type} JOIN {joinItem.TableName} ON {getNoAliasString(joinItem.Condition.ToString(), false)}");
+                                    joins.Add($"{joinItem.Type} JOIN {joinItem.TableName.NameWithAlias} ON {getNoAliasString(joinItem.Condition.ToString(), false)}");
                                 }
 
                                 j++;
+                            }
+                        }
+                        else if (fromItemsCount > 1)
+                        {
+                            if (tn != strTableName)
+                            {
+                                joins.Add($"{(i == 0 ? "FROM" : "")} {fromItem.TableName.NameWithAlias}{((i < fromItemsCount - 2) ? "," : "")}");
                             }
                         }
 
@@ -101,17 +126,32 @@ namespace SqlAnalyser.Core
                 if (tableNames.Count == 0 && update.TableNames.Count > 0)
                 {
                     tableNames.AddRange(update.TableNames);
+
+                    if (strTableName == null)
+                    {
+                        strTableName = update.TableNames.FirstOrDefault()?.Symbol;
+                    }
                 }
 
-                this.Append($" {string.Join(",", tableNames)}", false);
+                this.Append($" {string.Join(",", tableNames.Select(item => item.NameWithAlias))}", false);
 
                 this.AppendLine("SET");
 
-                this.AppendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{getNoAliasString(item.Name.ToString(), false)}={item.Value}")));
+                if (!isCompositeColumnName)
+                {
+                    this.AppendLine(string.Join("," + Environment.NewLine + Indent, update.SetItems.Select(item => $"{getNoAliasString(item.Name.ToString(), false)}={item.Value}")));
 
-                joins.ForEach(item => this.AppendLine(item));
+                    joins.ForEach(item => this.AppendLine(item));
+                }
+                else
+                {
+                    this.AppendLine(StatementScriptBuilderHelper.ParseCompositeUpdateSet(this, update));
+
+                    return this;
+                }
 
                 bool hasCondition = false;
+
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
                     this.AppendLine($"WHERE {getNoAliasString(update.Condition.ToString(), true)}");
@@ -138,35 +178,47 @@ namespace SqlAnalyser.Core
                     this.Append($"DELETE");
 
                     this.BuildFromItems(delete.FromItems, null, true);
-                }                
+                }
 
                 if (delete.Condition != null)
                 {
-                    this.AppendLine($"{(hasJoin ? "AND": "WHERE")} {delete.Condition}");
+                    this.AppendLine($"{(hasJoin ? "AND" : "WHERE")} {delete.Condition}");
                 }
 
                 this.AppendLine(";");
             }
-            else if (statement is DeclareStatement declare)
+            else if (statement is DeclareVariableStatement declareVar)
             {
+                StringBuilder sb = new StringBuilder();
+
+                string defaultValue = (declareVar.DefaultValue == null ? "" : $" DEFAULT {declareVar.DefaultValue}");
+
+                sb.Append($"DECLARE {declareVar.Name} {declareVar.DataType}{defaultValue};");
+
                 if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    if (declare.Type == DeclareType.Variable)
+                    this.AppendLine(sb.ToString());
+                }
+                else
+                {
+                    if (this.Option.OutputRemindInformation)
                     {
-                        string defaultValue = (declare.DefaultValue == null ? "" : $" DEFAULT {declare.DefaultValue}");
-
-                        this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
-                    }
-                    else if (declare.Type == DeclareType.Table)
-                    {
-
+                        this.PrintMessage($"'{StringHelper.HandleSingleQuotationChar(sb.ToString())}'");
                     }
                 }
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declare);
+                    this.DeclareStatements.Add(declareVar);
                 }
+            }
+            else if (statement is DeclareTableStatement declareTable)
+            {
+                this.AppendLine(this.BuildTable(declareTable.TableInfo));
+            }
+            else if (statement is CreateTableStatement createTable)
+            {
+                this.AppendLine(this.BuildTable(createTable.TableInfo));
             }
             else if (statement is IfStatement @if)
             {
@@ -254,15 +306,28 @@ namespace SqlAnalyser.Core
             }
             else if (statement is ReturnStatement @return)
             {
-                this.AppendLine($"RETURN {@return.Value};");
+                string value = @return.Value?.Symbol;
+
+                if (this.RoutineType != RoutineType.PROCEDURE)
+                {
+                    this.AppendLine($"RETURN {value};");
+                }
+                else
+                {
+                    bool isStringValue = ValueHelper.IsStringValue(value);
+
+                    this.PrintMessage(isStringValue ? StringHelper.HandleSingleQuotationChar(value) : value);
+
+                    this.AppendLine("RETURN;");
+                }
             }
             else if (statement is PrintStatement print)
             {
-                this.AppendLine($"RAISE INFO '%',{print.Content.Symbol};");
+                this.PrintMessage(print.Content.Symbol);
             }
             else if (statement is CallStatement execute)
             {
-                this.AppendLine($"{(execute.IsExecuteSql ? "EXECUTE" : "CALL")} {execute.Name}({string.Join(",", execute.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()))});");
+                this.AppendLine($"{(execute.IsExecuteSql ? "EXECUTE" : "CALL")} {execute.Name}({string.Join(",", execute.Parameters.Select(item => item.Name?.Symbol?.Split('=')?.LastOrDefault()))});");
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -271,7 +336,7 @@ namespace SqlAnalyser.Core
                 switch (commandType)
                 {
                     case TransactionCommandType.BEGIN:
-                        this.Append("BEGIN;");
+                        this.AppendLine("START TRANSACTION;");
                         break;
                     case TransactionCommandType.COMMIT:
                         this.AppendLine("COMMIT;");
@@ -291,7 +356,9 @@ namespace SqlAnalyser.Core
 
                 foreach (ExceptionItem exceptionItem in exception.Items)
                 {
-                    this.AppendLine($"WHEN {exceptionItem.Name} THEN");
+                    string name = exceptionItem.Name?.Symbol;
+
+                    this.AppendLine($"WHEN {name} THEN");
 
                     this.AppendChildStatements(exceptionItem.Statements, true);
                 }
@@ -300,19 +367,30 @@ namespace SqlAnalyser.Core
             {
                 this.AppendChildStatements(tryCatch.TryStatements, true);
 
-                this.AppendLine("EXCEPTION WHEN 1=1 THEN");
+                this.AppendLine("EXCEPTION WHEN OTHERS THEN");
 
                 this.AppendChildStatements(tryCatch.CatchStatements, true);
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+
                 if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+                    this.AppendLine(sb.ToString());
 
                     if (declareCursor.SelectStatement != null)
                     {
                         this.Build(declareCursor.SelectStatement);
+                    }
+                }
+                else
+                {
+                    if (this.Option.OutputRemindInformation)
+                    {
+                        this.PrintMessage($"'{StringHelper.HandleSingleQuotationChar(sb.ToString())}'");
                     }
                 }
 
@@ -346,6 +424,13 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
             }
+            else if (statement is RaiseErrorStatement error)
+            {
+                if (error.Content != null)
+                {
+                    this.AppendLine($"RAISE EXCEPTION '%',{error.Content};");
+                }
+            }
 
             return this;
         }
@@ -356,7 +441,7 @@ namespace SqlAnalyser.Core
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
-            if (select.TableName == null && select.Columns.Any(item => item.Symbol.Contains("=")))
+            if (select.NoTableName && select.Columns.Any(item => item.Symbol.Contains("=")))
             {
                 foreach (var column in select.Columns)
                 {
@@ -410,7 +495,7 @@ namespace SqlAnalyser.Core
 
             Action appendFrom = () =>
             {
-                if (select.FromItems != null && select.FromItems.Count > 0)
+                if (select.HasFromItems)
                 {
                     this.BuildSelectStatementFromItems(select);
                 }
@@ -484,6 +569,30 @@ namespace SqlAnalyser.Core
                 default:
                     return unionType.ToString();
             }
+        }
+
+        private void PrintMessage(string content)
+        {
+            this.AppendLine($"RAISE INFO '%',{content};");
+        }
+
+        public string BuildTable(TableInfo table)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}(");
+
+            int i = 0;
+
+            foreach (var column in table.Columns)
+            {
+                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                i++;
+            }
+
+            sb.AppendLine(");");
+
+            return sb.ToString();
         }
     }
 }

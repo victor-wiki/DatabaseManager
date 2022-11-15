@@ -7,6 +7,6 @@ namespace SqlAnalyser.Model
     {
         public DatabaseObjectType ObjectType { get; set; }
         public NameToken ObjectName { get; set; }
-       
+        public bool IsTemporaryTable { get; set; }
     }
 }

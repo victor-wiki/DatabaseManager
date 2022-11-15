@@ -926,6 +926,11 @@ namespace DatabaseManager.Controls
                 this.lvWords.Items.Clear();
                 this.lvWords.Tag = null;
             }
-        }       
+        }
+
+        private void tsmiSelectAll_Click(object sender, EventArgs e)
+        {
+            this.txtEditor.SelectAll();
+        }
     }
 }

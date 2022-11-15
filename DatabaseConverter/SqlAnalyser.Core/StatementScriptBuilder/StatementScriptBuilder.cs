@@ -1,4 +1,5 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,27 +10,38 @@ namespace SqlAnalyser.Core
 {
     public class StatementScriptBuilder
     {
-        private StringBuilder sb = new StringBuilder();
-        protected int level = 0;
-        protected string indent => " ".PadLeft((this.level + 1) * 2);
+        private StringBuilder builder = new StringBuilder();
+        internal int Level = 0;
+        internal string Indent => " ".PadLeft((this.Level + 1) * 2);       
 
-        public StringBuilder Script => this.sb;
+        public StringBuilder Script => this.builder;
 
         public RoutineType RoutineType { get; set; }
 
-        public List<Statement> DeclareStatements { get; set; } = new List<Statement>();
+        public List<Statement> DeclareStatements { get; internal set; } = new List<Statement>();
+        public List<Statement> SpecialStatements { get; internal set; } = new List<Statement>();
+        public Dictionary<string, string> Replacements { get; internal set; } = new Dictionary<string, string>();
+        public List<string> TemporaryTableNames { get; set; } = new List<string>();
 
-        public StatementScriptBuilderOption Option { get; set; }
+        public StatementScriptBuilderOption Option { get; set; } = new StatementScriptBuilderOption();
+
+        internal int Length
+        {
+            get
+            {
+                return this.builder.Length;
+            }
+        }        
 
         protected void Append(string value, bool appendIndent = true)
         {
-            sb.Append($"{(appendIndent ? this.indent : "")}{value}");
+            builder.Append($"{(appendIndent ? this.Indent : "")}{value}");
         }
 
-        protected void AppendLine(string value, bool appendIndent = true)
+        protected void AppendLine(string value = "", bool appendIndent = true)
         {
             this.Append(value, appendIndent);
-            this.sb.Append(Environment.NewLine);
+            this.builder.Append(Environment.NewLine);
         }
 
         protected void AppendChildStatements(IEnumerable<Statement> statements, bool needSeparator = true)
@@ -59,21 +71,21 @@ namespace SqlAnalyser.Core
 
         private void IncreaseLevel()
         {
-            this.level++;
+            this.Level++;
         }
 
         private void DecreaseLevel()
         {
-            this.level--;
+            this.Level--;
         }
 
         public void TrimEnd(params char[] characters)
         {
             if (characters != null && characters.Length > 0)
             {
-                while (this.sb.Length > 0 && characters.Contains(this.sb[this.sb.Length - 1]))
+                while (this.builder.Length > 0 && characters.Contains(this.builder[this.builder.Length - 1]))
                 {
-                    this.sb.Remove(this.sb.Length - 1, 1);
+                    this.builder.Remove(this.builder.Length - 1, 1);
                 }
             }
         }
@@ -85,12 +97,12 @@ namespace SqlAnalyser.Core
 
         public override string ToString()
         {
-            return this.sb.ToString();
+            return this.builder.ToString();
         }
 
         public void Clear()
         {
-            this.sb.Clear();
+            this.builder.Clear();
         }
 
         protected virtual void BuildSelectStatement(SelectStatement select, bool appendSeparator = true) { }
@@ -114,7 +126,7 @@ namespace SqlAnalyser.Core
                     this.Append("FROM ");
                 }
 
-                hasJoins = fromItem.JoinItems.Count > 0;
+                hasJoins = fromItem.HasJoinItems;
 
                 if (i > 0 && !hasJoins)
                 {
@@ -141,8 +153,7 @@ namespace SqlAnalyser.Core
                 if (fromItem.SubSelectStatement != null)
                 {
                     hasSubSelect = true;
-
-                    this.AppendLine("");
+                    
                     this.AppendLine("(");
                     this.BuildSelectStatement(fromItem.SubSelectStatement, false);
                     this.Append(")");
@@ -192,7 +203,22 @@ namespace SqlAnalyser.Core
 
                             string joinKeyword = (isPostgresDeleteFromJoin && j == 0) ? "USING " : $"{joinItem.Type} JOIN ";
 
-                            this.AppendLine($"{joinKeyword}{this.GetNameWithAlias(joinItem.TableName)}{condition}");
+                            TableName tableName = joinItem.TableName;
+
+                            string joinTableName = null;
+
+                            bool isSubquery = AnalyserHelper.IsSubquery(tableName.Symbol);
+
+                            if (!isSubquery)
+                            {
+                                joinTableName = this.GetNameWithAlias(tableName);
+                            }
+                            else
+                            {
+                                joinTableName = $"({tableName}){(tableName.Alias == null ? "" : $" {tableName.Alias}")}";
+                            }
+
+                            this.AppendLine($"{joinKeyword}{joinTableName}{condition}");
                         }
 
                         j++;
@@ -247,7 +273,7 @@ namespace SqlAnalyser.Core
             {
                 string name = value.Split('=')[0].Trim();
 
-                string pattern = AnalyserHelper.NameRegexPattern;
+                string pattern = RegexHelper.NameRegexPattern;
 
                 return Regex.IsMatch(name, pattern);
             }
@@ -265,6 +291,6 @@ namespace SqlAnalyser.Core
             }
 
             return false;
-        }        
+        }
     }
 }

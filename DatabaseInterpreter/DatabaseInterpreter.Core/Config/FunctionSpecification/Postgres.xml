@@ -24,6 +24,7 @@
   <item name="COT" args="EXP"></item>
   <item name="COTD" args="EXP"></item>
   <item name="CURRENT_DATABASE" args=""></item>
+  <item name="CURRENT_SCHEMA" args=""></item>
   <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
   <item name="CURRENT_USER" args="" noParenthesess="true"></item>
   <item name="DATE_PART" args="'UNIT',DATE"></item>

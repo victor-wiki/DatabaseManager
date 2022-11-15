@@ -1,6 +1,7 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,9 +17,7 @@ namespace DatabaseConverter.Core
         private DataTypeTranslator dataTypeTranslator;
         private FunctionTranslator functionTranslator;
         private SequenceTranslator sequenceTranslator;
-        private List<FunctionSpecification> targetFuncSpecs;
-
-        public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
+        private List<FunctionSpecification> targetFuncSpecs;  
 
         public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
@@ -80,7 +79,7 @@ namespace DatabaseConverter.Core
 
         public void ConvertDefaultValue(TableColumn column)
         {
-            string defaultValue = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
+            string defaultValue = StringHelper.GetBalanceParenthesisTrimedValue(column.DefaultValue);
             bool hasParenthesis = defaultValue != column.DefaultValue;
 
             if (defaultValue.ToUpper() == "NULL")
@@ -200,6 +199,22 @@ namespace DatabaseConverter.Core
                     if (defaultValue.Trim() == "true" || defaultValue.Trim() == "false")
                     {
                         defaultValue = defaultValue.Replace("true", "1").Replace("false", "0");
+                    }
+
+                    if(defaultValue.ToUpper().Contains("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"))
+                    {
+                        if(this.targetDbType == DatabaseType.SqlServer)
+                        {
+                            defaultValue = "GETUTCDATE()";
+                        }
+                        else if(this.targetDbType == DatabaseType.MySql)
+                        {
+                            defaultValue = "UTC_TIMESTAMP()";
+                        }
+                        else if(this.targetDbType == DatabaseType.Oracle)
+                        {
+                            defaultValue = "SYS_EXTRACT_UTC(SYSTIMESTAMP)";
+                        }
                     }
                 }
                 else if (this.sourceDbType == DatabaseType.SqlServer)
@@ -563,7 +578,7 @@ namespace DatabaseConverter.Core
                     hasCharColumn = true;
                 }
 
-                column.ComputeExp = TranslateHelper.ConvertConcatChars(column.ComputeExp, this.sourceDbInterpreter.STR_CONCAT_CHARS, this.targetDbInterpreter.STR_CONCAT_CHARS, hasCharColumn);
+                column.ComputeExp = ConcatCharsHelper.ConvertConcatChars(this.sourceDbInterpreter, this.targetDbInterpreter, column.ComputeExp, hasCharColumn);
 
                 column.ComputeExp = this.CheckColumnDataTypeForComputeExpression(column.ComputeExp, this.targetDbInterpreter.STR_CONCAT_CHARS, targetDbType);
             }
@@ -639,7 +654,7 @@ namespace DatabaseConverter.Core
                     var tableColumns = this.columns.Where(item => item.TableName == column.TableName);
 
                     bool isReferToSpecialDataType = tableColumns.Any(item => item.Name != column.Name
-                                            && DataTypeHelper.SpecialDataTypes.Any(t => t.ToLower().Contains(item.DataType.ToLower()))
+                                            && DataTypeHelper.IsSpecialDataType(item.DataType)
                                             && Regex.IsMatch(column.ComputeExp, $@"\b({item.Name})\b", RegexOptions.IgnoreCase));
 
                     if (isReferToSpecialDataType)

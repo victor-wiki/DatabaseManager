@@ -81,7 +81,7 @@ namespace DatabaseManager.Controls
                 row.Cells[this.colNullable.Name].Value = column.IsNullable;
                 row.Cells[this.colIdentity.Name].Value = column.IsIdentity;
                 row.Cells[this.colPrimary.Name].Value = column.IsPrimary;
-                row.Cells[this.colDefaultValue.Name].Value = ValueHelper.GetTrimedParenthesisValue(column.DefaultValue);
+                row.Cells[this.colDefaultValue.Name].Value = StringHelper.GetBalanceParenthesisTrimedValue(column.DefaultValue);
                 row.Cells[this.colComment.Name].Value = column.Comment;
 
                 row.Tag = column;

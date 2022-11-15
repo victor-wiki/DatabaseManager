@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -42,11 +43,23 @@ namespace SqlAnalyser.Core
             }
             else if (statement is UpdateStatement update)
             {
+                bool hasJoin = AnalyserHelper.IsFromItemsHaveJoin(update.FromItems);
+                int fromItemsCount = update.FromItems == null ? 0 : update.FromItems.Count;
+
+                bool isCompositeColumnName = StatementScriptBuilderHelper.IsCompositeUpdateSetColumnName(update);
+
                 this.Append($"UPDATE");
+
+                if (isCompositeColumnName)
+                {
+                    this.Append(StatementScriptBuilderHelper.ParseCompositeUpdateSet(this, update));
+
+                    return this;
+                }
 
                 List<TableName> tableNames = new List<TableName>();
 
-                if (update.FromItems != null)
+                if (fromItemsCount > 0)
                 {
                     tableNames.Add(update.FromItems.First().TableName);
                 }
@@ -57,7 +70,17 @@ namespace SqlAnalyser.Core
 
                 this.Append($" {string.Join(",", tableNames.Where(item => item != null).Select(item => item.NameWithAlias))}");
 
-                if (update.FromItems != null && update.FromItems.Count > 0)
+                if (!hasJoin)
+                {
+                    if (fromItemsCount > 1)
+                    {
+                        for (int i = 1; i < fromItemsCount; i++)
+                        {
+                            this.Append($",{update.FromItems[i].TableName.NameWithAlias}");
+                        }
+                    }
+                }
+                else
                 {
                     int i = 0;
 
@@ -81,7 +104,7 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine("SET");
 
-                this.AppendLine(string.Join("," + Environment.NewLine + indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
+                this.AppendLine(string.Join("," + Environment.NewLine + Indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
 
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
@@ -157,17 +180,26 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine(";");
             }
-            else if (statement is DeclareStatement declare)
+            else if (statement is DeclareVariableStatement declareVar)
             {
-                if (declare.Type == DeclareType.Variable)
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    string defaultValue = (declare.DefaultValue == null ? "" : $" DEFAULT {declare.DefaultValue}");
-                    this.AppendLine($"DECLARE {declare.Name} {declare.DataType}{defaultValue};");
+                    string defaultValue = (declareVar.DefaultValue == null ? "" : $" DEFAULT {declareVar.DefaultValue}");
+                    this.AppendLine($"DECLARE {declareVar.Name} {declareVar.DataType}{defaultValue};");
                 }
-                else if (declare.Type == DeclareType.Table)
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.AppendLine(BuildTemporaryTable(declare.Table));
+                    this.DeclareStatements.Add(declareVar);
                 }
+            }
+            else if (statement is DeclareTableStatement declareTable)
+            {
+                this.AppendLine(this.BuildTable(declareTable.TableInfo));
+            }
+            else if (statement is CreateTableStatement createTable)
+            {
+                this.AppendLine(this.BuildTable(createTable.TableInfo));
             }
             else if (statement is IfStatement @if)
             {
@@ -188,7 +220,9 @@ namespace SqlAnalyser.Core
 
                     this.AppendLine("END;");
                 }
+
                 this.AppendLine("END IF;");
+                this.AppendLine();
             }
             else if (statement is CaseStatement @case)
             {
@@ -275,20 +309,37 @@ namespace SqlAnalyser.Core
             }
             else if (statement is ReturnStatement @return)
             {
-                this.AppendLine($"RETURN {@return.Value};");
+                string value = @return.Value?.Symbol;
+
+                if (this.RoutineType != RoutineType.PROCEDURE)
+                {
+                    this.AppendLine($"RETURN {value};");
+                }
+                else
+                {
+                    bool isStringValue = ValueHelper.IsStringValue(value);
+
+                    this.PrintMessage(isStringValue ? StringHelper.HandleSingleQuotationChar(value) : value);                   
+
+                    //Use it will cause syntax error.
+                    //this.AppendLine("RETURN;");
+                }               
             }
             else if (statement is PrintStatement print)
             {
-                this.AppendLine($"SELECT {print.Content.Symbol?.Replace("||", "+")};");
+                this.PrintMessage(print.Content?.Symbol);
             }
             else if (statement is CallStatement call)
             {
-                string content = string.Join(",", call.Arguments.Select(item => item.Symbol?.Split('=')?.LastOrDefault()));
+                string content = string.Join(",", call.Parameters.Select(item => item.Name?.Symbol?.Split('=')?.LastOrDefault()));
 
                 if (call.IsExecuteSql)
                 {
-                    this.AppendLine($"PREPARE dynamicSQL FROM {content};");
+                    this.AppendLine($"SET @SQL:={content};");
+                    this.AppendLine($"PREPARE dynamicSQL FROM @SQL;");
                     this.AppendLine("EXECUTE dynamicSQL;");
+                    this.AppendLine("DEALLOCATE PREPARE dynamicSQL;");
+                    this.AppendLine();
                 }
                 else
                 {
@@ -315,46 +366,83 @@ namespace SqlAnalyser.Core
             else if (statement is LeaveStatement leave)
             {
                 this.AppendLine("LEAVE sp;");
+
+                if(this.Option.CollectSpecialStatementTypes.Contains(leave.GetType()))
+                {
+                    this.SpecialStatements.Add(leave);
+                }
             }
             else if (statement is TryCatchStatement tryCatch)
             {
-                this.AppendLine("DECLARE EXIT HANDLER FOR 1 #[REPLACE ERROR CODE HERE]");
-                this.AppendLine("BEGIN");
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
+                {
+                    this.AppendLine("DECLARE EXIT HANDLER FOR 1 #[REPLACE ERROR CODE HERE]");
+                    this.AppendLine("BEGIN");
 
-                this.AppendChildStatements(tryCatch.CatchStatements, true);
+                    this.AppendChildStatements(tryCatch.CatchStatements, true);
 
-                this.AppendLine("END;");
+                    this.AppendLine("END;");                    
+                }
 
                 this.AppendChildStatements(tryCatch.TryStatements, true);
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(tryCatch);
+                }
             }
             else if (statement is ExceptionStatement exception)
             {
-                foreach (ExceptionItem exceptionItem in exception.Items)
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    this.AppendLine($"DECLARE EXIT HANDLER FOR {exceptionItem.Name}");
-                    this.AppendLine("BEGIN");
+                    foreach (ExceptionItem exceptionItem in exception.Items)
+                    {
+                        this.AppendLine($"DECLARE EXIT HANDLER FOR {exceptionItem.Name}");
+                        this.AppendLine("BEGIN");
 
-                    this.AppendChildStatements(exceptionItem.Statements, true);
+                        this.AppendChildStatements(exceptionItem.Statements, true);
 
-                    this.AppendLine("END;");
+                        this.AppendLine("END;");
+                    }
+                }
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(exception);
                 }
             }
             else if (statement is DeclareCursorStatement declareCursor)
             {
-                this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
-
-                if (declareCursor.SelectStatement != null)
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    this.Build(declareCursor.SelectStatement);
+                    this.AppendLine($"DECLARE {declareCursor.CursorName} CURSOR{(declareCursor.SelectStatement != null ? " FOR" : "")}");
+
+                    if (declareCursor.SelectStatement != null)
+                    {
+                        this.Build(declareCursor.SelectStatement);
+                    }
+                }
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declareCursor);
                 }
             }
             else if (statement is DeclareCursorHandlerStatement declareCursorHandler)
             {
-                this.AppendLine($"DECLARE CONTINUE HANDLER");
-                this.AppendLine($"FOR NOT FOUND");
-                this.AppendLine($"BEGIN");
-                this.AppendChildStatements(declareCursorHandler.Statements, true);
-                this.AppendLine($"END;");
+                if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
+                {
+                    this.AppendLine($"DECLARE CONTINUE HANDLER");
+                    this.AppendLine($"FOR NOT FOUND");
+                    this.AppendLine($"BEGIN");
+                    this.AppendChildStatements(declareCursorHandler.Statements, true);
+                    this.AppendLine($"END;");
+                }
+
+                if (this.Option != null && this.Option.CollectDeclareStatement)
+                {
+                    this.DeclareStatements.Add(declareCursorHandler);
+                }
             }
             else if (statement is OpenCursorStatement openCursor)
             {
@@ -379,7 +467,14 @@ namespace SqlAnalyser.Core
             {
                 string objectType = drop.ObjectType.ToString().ToUpper();
 
-                this.AppendLine($"DROP {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
+                this.AppendLine($"DROP {(drop.IsTemporaryTable ? "TEMPORARY" : "")} {objectType} IF EXISTS {drop.ObjectName.NameWithSchema};");
+            }
+            else if (statement is RaiseErrorStatement error)
+            {
+                //https://dev.mysql.com/doc/refman/8.0/en/signal.html
+                string code = error.ErrorCode == null ? "45000" : error.ErrorCode.Symbol;
+
+                this.AppendLine($"SIGNAL SQLSTATE '{code}' SET MESSAGE_TEXT={error.Content};");
             }
 
             return this;
@@ -392,13 +487,13 @@ namespace SqlAnalyser.Core
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
             bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
 
-            if (select.TableName == null && select.Columns.Count == 1 && hasAssignVariableColumn)
+            if (select.NoTableName && select.Columns.Count == 1 && hasAssignVariableColumn)
             {
                 ColumnName columnName = select.Columns.First();
 
                 this.AppendLine($"SET {columnName}");
             }
-            else if (select.TableName != null && hasAssignVariableColumn && (this.RoutineType == RoutineType.FUNCTION || this.RoutineType == RoutineType.TRIGGER))
+            else if (!select.NoTableName && hasAssignVariableColumn && (this.RoutineType == RoutineType.FUNCTION || this.RoutineType == RoutineType.TRIGGER))
             {
                 //use "select column1, column2 into var1, var2" instead of "select var1=column1, var2=column2"
 
@@ -458,7 +553,7 @@ namespace SqlAnalyser.Core
 
             Action appendFrom = () =>
             {
-                if (select.FromItems != null && select.FromItems.Count > 0)
+                if (select.HasFromItems)
                 {
                     this.BuildSelectStatementFromItems(select);
                 }
@@ -471,6 +566,7 @@ namespace SqlAnalyser.Core
             if (isWith)
             {
                 appendWith();
+
                 this.AppendLine(selectColumns);
             }
 
@@ -520,30 +616,30 @@ namespace SqlAnalyser.Core
             }
         }
 
-
-
         private string GetUnionTypeName(UnionType unionType)
         {
             switch (unionType)
             {
                 case UnionType.UNION_ALL:
                     return "UNION ALL";
-                //case UnionType.INTERSECT:
-                //case UnionType.MINUS:
-                //case UnionType.EXCEPT:
-                //    return nameof(UnionType.UNION);
                 default:
                     return unionType.ToString();
             }
         }
 
-        public static string BuildTemporaryTable(TemporaryTable table)
+        private void PrintMessage(string content)
+        {
+            this.AppendLine($"SELECT {content};");
+        }
+
+        public string BuildTable(TableInfo table)
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE TEMPORARY TABLE {table.Name}(");
+            sb.AppendLine($"CREATE {(table.IsTemporary? "TEMPORARY":"")} TABLE {table.Name}(");
 
             int i = 0;
+
             foreach (var column in table.Columns)
             {
                 sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");

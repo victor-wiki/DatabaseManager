@@ -15,6 +15,7 @@ using SqlAnalyser.Model;
 using NetTopologySuite.Triangulate;
 using System.Text.RegularExpressions;
 using System.Dynamic;
+using DatabaseConverter.Model;
 
 namespace DatabaseManager.Web.Controllers
 {
@@ -33,7 +34,7 @@ namespace DatabaseManager.Web.Controllers
             return View();
         }      
 
-        public IActionResult Translate()
+        public async Task<IActionResult> Translate()
         {
             string source = this.Request.Form["source"];
             var sourceDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), this.Request.Form["sourceDatabaseType"]);
@@ -43,9 +44,13 @@ namespace DatabaseManager.Web.Controllers
             {
                 TranslateManager translateManager = new TranslateManager();
 
-                string result = translateManager.Translate(sourceDbType, targetDbType, source);
+                TranslateResult result = await Task.Run(()=> translateManager.Translate(sourceDbType, targetDbType, source));                
 
-                return new JsonResult(result);
+                string resultData = result.Data?.ToString();
+
+                dynamic jsonResult = new { HasError = result.HasError, Data = resultData, Message = (result.Error as SqlSyntaxError)?.ToString() };
+
+                return new JsonResult(jsonResult);
             }
             catch (Exception ex)
             {

@@ -1,8 +1,10 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Model;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -87,9 +89,22 @@ namespace DatabaseManager
             {
                 TranslateManager translateManager = new TranslateManager();
 
-                string result = translateManager.Translate(sourceDbType, targetDbType, sourceScript);
+                TranslateResult result = translateManager.Translate(sourceDbType, targetDbType, sourceScript);
 
-                this.txtTarget.Text = result;
+                string resultData = result.Data?.ToString();
+
+                this.txtTarget.Text = resultData;
+
+                if(result.HasError)
+                {
+                    MessageBox.Show((result.Error as SqlSyntaxError).ToString());
+                    return;
+                }
+                else if (string.IsNullOrEmpty(resultData) && sourceScript.Length > 0)
+                {
+                    MessageBox.Show("The tanslate result is empty, please check whether the source database type is right.");
+                    return;
+                }                
 
                 this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
             }
@@ -125,9 +140,15 @@ namespace DatabaseManager
         {
             if (e.Control && e.KeyCode == Keys.V)
             {
-                this.HandlePaste();
-
                 this.isPasting = true;
+            }
+        }
+
+        private void txtSource_KeyUp(object sender, KeyEventArgs e)
+        {
+            if(this.isPasting)
+            {
+                this.HandlePaste();
             }
         }
 
@@ -214,7 +235,7 @@ namespace DatabaseManager
             {
                 this.HighlightingRichTextBox(this.txtSource, this.cboSourceDbType);
                 this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
-            }                
-        }       
+            }
+        }        
     }
 }

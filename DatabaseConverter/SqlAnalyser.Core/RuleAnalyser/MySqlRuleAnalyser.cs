@@ -5,6 +5,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using static MySqlParser;
 
 namespace SqlAnalyser.Core
@@ -49,6 +50,69 @@ namespace SqlAnalyser.Core
             return rootContext.createStatement();
         }
 
+        public override AnalyseResult AnalyseCommon(string content)
+        {
+            SqlSyntaxError error = null;
+
+            SimpleStatementContext rootContext = this.GetRootContext(content, out error);
+
+            AnalyseResult result = new AnalyseResult() { Error = error };
+
+            if (!result.HasError && rootContext != null)
+            {
+                CommonScript script = null;
+
+                foreach (var child in rootContext.children)
+                {
+                    if (child is CreateStatementContext create)
+                    {
+                        var proc = create.createProcedure();
+                        var func = create.createFunction();
+                        var trigger = create.createTrigger();
+                        var view = create.createView();
+
+                        if (proc != null)
+                        {
+                            script = new RoutineScript() { Type = RoutineType.PROCEDURE };
+
+                            this.SetProcedureScript(script as RoutineScript, proc);
+                        }
+                        else if (func != null)
+                        {
+                            script = new RoutineScript() { Type = RoutineType.FUNCTION };
+
+                            this.SetFunctionScript(script as RoutineScript, func);
+                        }
+                        else if (trigger != null)
+                        {
+                            script = new TriggerScript();
+
+                            this.SetTriggerScript(script as TriggerScript, trigger);
+                        }
+                        else if (view != null)
+                        {
+                            script = new ViewScript();
+
+                            this.SetViewScript(script as ViewScript, view);
+                        }
+                    }
+                }
+
+                if (script == null)
+                {
+                    script = new CommonScript();
+
+                    script.Statements.AddRange(this.ParseSimpleStatement(rootContext));
+                }
+
+                result.Script = script;
+
+                this.ExtractFunctions(script, rootContext);
+            }
+
+            return result;
+        }
+
         public override AnalyseResult AnalyseProcedure(string content)
         {
             SqlSyntaxError error = null;
@@ -65,37 +129,7 @@ namespace SqlAnalyser.Core
 
                 if (proc != null)
                 {
-                    #region Name                    
-                    script.Name = new TokenInfo(proc.procedureName().qualifiedIdentifier());
-                    #endregion
-
-                    #region Parameters
-                    ProcedureParameterContext[] parameters = proc.procedureParameter();
-
-                    if (parameters != null)
-                    {
-                        foreach (ProcedureParameterContext parameter in parameters)
-                        {
-                            Parameter parameterInfo = new Parameter();
-
-                            var funPara = parameter.functionParameter();
-
-                            parameterInfo.Name = new TokenInfo(funPara.parameterName()) { Type = TokenType.ParameterName };
-
-                            parameterInfo.DataType = new TokenInfo(funPara.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
-
-                            this.SetParameterType(parameterInfo, parameter.children);
-
-                            script.Parameters.Add(parameterInfo);
-                        }
-                    }
-                    #endregion
-
-                    #region Body
-
-                    this.SetScriptBody(script, proc.compoundStatement());
-
-                    #endregion
+                    this.SetProcedureScript(script, proc);
                 }
 
                 this.ExtractFunctions(script, createStatement);
@@ -104,6 +138,41 @@ namespace SqlAnalyser.Core
             }
 
             return result;
+        }
+
+        private void SetProcedureScript(RoutineScript script, CreateProcedureContext proc)
+        {
+            #region Name                    
+            script.Name = new TokenInfo(proc.procedureName().qualifiedIdentifier());
+            #endregion
+
+            #region Parameters
+            ProcedureParameterContext[] parameters = proc.procedureParameter();
+
+            if (parameters != null)
+            {
+                foreach (ProcedureParameterContext parameter in parameters)
+                {
+                    Parameter parameterInfo = new Parameter();
+
+                    var funPara = parameter.functionParameter();
+
+                    parameterInfo.Name = new TokenInfo(funPara.parameterName()) { Type = TokenType.ParameterName };
+
+                    parameterInfo.DataType = new TokenInfo(funPara.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
+
+                    this.SetParameterType(parameterInfo, parameter.children);
+
+                    script.Parameters.Add(parameterInfo);
+                }
+            }
+            #endregion
+
+            #region Body
+
+            this.SetScriptBody(script, proc.compoundStatement());
+
+            #endregion
         }
 
         public void SetScriptBody(CommonScript script, CompoundStatementContext body)
@@ -194,6 +263,19 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseCallStatement(call));
                 }
+                else if (child is CreateStatementContext create)
+                {
+                    var statement = this.ParseCreateStatement(create);
+
+                    if (statement != null)
+                    {
+                        statements.Add(statement);
+                    }
+                }
+                else if (child is TruncateTableStatementContext truncate)
+                {
+                    statements.Add(this.ParseTruncateTableStatement(truncate));
+                }
                 else if (child is DropStatementContext drop)
                 {
                     foreach (var c in drop.children)
@@ -263,37 +345,7 @@ namespace SqlAnalyser.Core
 
                 if (func != null)
                 {
-                    #region Name                    
-                    script.Name = new TokenInfo(func.functionName().qualifiedIdentifier());
-                    #endregion
-
-                    #region Parameters
-                    FunctionParameterContext[] parameters = func.functionParameter();
-
-                    if (parameters != null)
-                    {
-                        foreach (FunctionParameterContext parameter in parameters)
-                        {
-                            Parameter parameterInfo = new Parameter();
-
-                            parameterInfo.Name = new TokenInfo(parameter.parameterName()) { Type = TokenType.ParameterName };
-
-                            parameterInfo.DataType = new TokenInfo(parameter.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
-
-                            this.SetParameterType(parameterInfo, parameter.children);
-
-                            script.Parameters.Add(parameterInfo);
-                        }
-                    }
-                    #endregion
-
-                    script.ReturnDataType = new TokenInfo(func.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
-
-                    #region Body
-
-                    this.SetScriptBody(script, func.compoundStatement());
-
-                    #endregion
+                    this.SetFunctionScript(script, func);
                 }
 
                 this.ExtractFunctions(script, createStatement);
@@ -302,6 +354,41 @@ namespace SqlAnalyser.Core
             }
 
             return result;
+        }
+
+        private void SetFunctionScript(RoutineScript script, CreateFunctionContext func)
+        {
+            #region Name                    
+            script.Name = new TokenInfo(func.functionName().qualifiedIdentifier());
+            #endregion
+
+            #region Parameters
+            FunctionParameterContext[] parameters = func.functionParameter();
+
+            if (parameters != null)
+            {
+                foreach (FunctionParameterContext parameter in parameters)
+                {
+                    Parameter parameterInfo = new Parameter();
+
+                    parameterInfo.Name = new TokenInfo(parameter.parameterName()) { Type = TokenType.ParameterName };
+
+                    parameterInfo.DataType = new TokenInfo(parameter.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
+
+                    this.SetParameterType(parameterInfo, parameter.children);
+
+                    script.Parameters.Add(parameterInfo);
+                }
+            }
+            #endregion
+
+            script.ReturnDataType = new TokenInfo(func.typeWithOptCollate().GetText()) { Type = TokenType.DataType };
+
+            #region Body
+
+            this.SetScriptBody(script, func.compoundStatement());
+
+            #endregion
         }
 
         public override AnalyseResult AnalyseView(string content)
@@ -320,21 +407,7 @@ namespace SqlAnalyser.Core
 
                 if (view != null)
                 {
-                    #region Name
-                    script.Name = new TokenInfo(view.viewName());
-                    #endregion                  
-
-                    #region Statement
-
-                    foreach (var child in view.children)
-                    {
-                        if (child is ViewTailContext tail)
-                        {
-                            script.Statements.Add(this.ParseViewSelectStatement(tail.viewSelect()));
-                        }
-                    }
-
-                    #endregion
+                    this.SetViewScript(script, view);
                 }
 
                 this.ExtractFunctions(script, createStatement);
@@ -343,6 +416,25 @@ namespace SqlAnalyser.Core
             }
 
             return result;
+        }
+
+        private void SetViewScript(ViewScript script, CreateViewContext view)
+        {
+            #region Name
+            script.Name = new TokenInfo(view.viewName());
+            #endregion
+
+            #region Statement
+
+            foreach (var child in view.children)
+            {
+                if (child is ViewTailContext tail)
+                {
+                    script.Statements.Add(this.ParseViewSelectStatement(tail.viewSelect()));
+                }
+            }
+
+            #endregion
         }
 
         public override AnalyseResult AnalyseTrigger(string content)
@@ -361,57 +453,7 @@ namespace SqlAnalyser.Core
 
                 if (trigger != null)
                 {
-                    #region Name                    
-                    script.Name = new TokenInfo(trigger.triggerName());
-
-                    var follows = trigger.triggerFollowsPrecedesClause();
-                    if (follows != null)
-                    {
-                        script.OtherTriggerName = new TokenInfo(follows.textOrIdentifier());
-
-                        script.Behavior = follows.GetText().Replace(script.OtherTriggerName.Symbol, "");
-                    }
-
-                    #endregion
-
-                    script.TableName = new TableName(trigger.tableRef().qualifiedIdentifier());
-
-                    foreach (var child in trigger.children)
-                    {
-                        if (child is TerminalNodeImpl terminalNode)
-                        {
-                            switch (terminalNode.Symbol.Type)
-                            {
-                                case MySqlParser.BEFORE_SYMBOL:
-                                    script.Time = TriggerTime.BEFORE;
-                                    break;
-                                case MySqlParser.AFTER_SYMBOL:
-                                    script.Time = TriggerTime.AFTER;
-                                    break;
-                                case MySqlParser.INSERT_SYMBOL:
-                                    script.Events.Add(TriggerEvent.INSERT);
-                                    break;
-                                case MySqlParser.UPDATE_SYMBOL:
-                                    script.Events.Add(TriggerEvent.UPDATE);
-                                    break;
-                                case MySqlParser.DELETE_SYMBOL:
-                                    script.Events.Add(TriggerEvent.DELETE);
-                                    break;
-                                case MySqlParser.PRECEDES_SYMBOL:
-                                    script.Behavior = "PRECEDES";
-                                    break;
-                                case MySqlParser.FOLLOWS_SYMBOL:
-                                    script.Behavior = "FOLLOWS";
-                                    break;
-                            }
-                        }
-                    }
-
-                    #region Body
-
-                    this.SetScriptBody(script, trigger.compoundStatement());
-
-                    #endregion
+                    this.SetTriggerScript(script, trigger);
                 }
 
                 this.ExtractFunctions(script, createStatement);
@@ -420,6 +462,61 @@ namespace SqlAnalyser.Core
             }
 
             return result;
+        }
+
+        private void SetTriggerScript(TriggerScript script, CreateTriggerContext trigger)
+        {
+            #region Name                    
+            script.Name = new TokenInfo(trigger.triggerName());
+
+            var follows = trigger.triggerFollowsPrecedesClause();
+            if (follows != null)
+            {
+                script.OtherTriggerName = new TokenInfo(follows.textOrIdentifier());
+
+                script.Behavior = follows.GetText().Replace(script.OtherTriggerName.Symbol, "");
+            }
+
+            #endregion
+
+            script.TableName = new TableName(trigger.tableRef().qualifiedIdentifier());
+
+            foreach (var child in trigger.children)
+            {
+                if (child is TerminalNodeImpl terminalNode)
+                {
+                    switch (terminalNode.Symbol.Type)
+                    {
+                        case MySqlParser.BEFORE_SYMBOL:
+                            script.Time = TriggerTime.BEFORE;
+                            break;
+                        case MySqlParser.AFTER_SYMBOL:
+                            script.Time = TriggerTime.AFTER;
+                            break;
+                        case MySqlParser.INSERT_SYMBOL:
+                            script.Events.Add(TriggerEvent.INSERT);
+                            break;
+                        case MySqlParser.UPDATE_SYMBOL:
+                            script.Events.Add(TriggerEvent.UPDATE);
+                            break;
+                        case MySqlParser.DELETE_SYMBOL:
+                            script.Events.Add(TriggerEvent.DELETE);
+                            break;
+                        case MySqlParser.PRECEDES_SYMBOL:
+                            script.Behavior = "PRECEDES";
+                            break;
+                        case MySqlParser.FOLLOWS_SYMBOL:
+                            script.Behavior = "FOLLOWS";
+                            break;
+                    }
+                }
+            }
+
+            #region Body
+
+            this.SetScriptBody(script, trigger.compoundStatement());
+
+            #endregion
         }
 
         public DeclareCursorStatement ParseDeclareCursor(CursorDeclarationContext node)
@@ -480,7 +577,7 @@ namespace SqlAnalyser.Core
 
             if (expressions != null && expressions.Length > 0)
             {
-                statement.Arguments.AddRange(expressions.Select(item => new TokenInfo(item)));
+                statement.Parameters.AddRange(expressions.Select(item => new Parameter() { Name = new TokenInfo(item) }));
             }
 
             return statement;
@@ -493,14 +590,18 @@ namespace SqlAnalyser.Core
             statement.TableName = this.ParseTableName(node.tableRef());
 
             var insertFrom = node.insertFromConstructor();
+            var fields = insertFrom.fields();
 
-            foreach (var child in insertFrom.fields().children)
+            if (fields != null)
             {
-                if (child is InsertIdentifierContext col)
+                foreach (var child in fields.children)
                 {
-                    TokenInfo tokenInfo = new TokenInfo(col.columnRef()) { Type = TokenType.ColumnName };
+                    if (child is InsertIdentifierContext col)
+                    {
+                        TokenInfo tokenInfo = new TokenInfo(col.columnRef()) { Type = TokenType.ColumnName };
 
-                    statement.Columns.Add(this.ParseColumnName(col.columnRef()));
+                        statement.Columns.Add(this.ParseColumnName(col.columnRef()));
+                    }
                 }
             }
 
@@ -536,7 +637,7 @@ namespace SqlAnalyser.Core
                 NameValueItem item = new NameValueItem();
 
                 item.Name = this.ParseColumnName(setItem.columnRef());
-                item.Value = new TokenInfo(valueExp);
+                item.Value = new TokenInfo(valueExp) { Type = TokenType.UpdateSetValue };
 
                 this.AddChildTableAndColumnNameToken(valueExp, item.Value);
 
@@ -796,7 +897,7 @@ namespace SqlAnalyser.Core
 
                             if (alias != null)
                             {
-                                joinItem.TableName.Alias =new TokenInfo(alias);
+                                joinItem.TableName.Alias = new TokenInfo(alias);
                             }
 
                             this.AddChildTableAndColumnNameToken(derivedTable, joinItem.TableName);
@@ -861,7 +962,16 @@ namespace SqlAnalyser.Core
                     }
                     else if (child is SetExprOrDefaultContext setExpr)
                     {
+                        bool isSubquery = AnalyserHelper.IsSubquery(setExpr);
+
                         statements.Last().Value = this.CreateToken(setExpr);
+
+                        if (isSubquery)
+                        {
+                            statements.Last().Value.Type = TokenType.Subquery;
+
+                            this.AddChildTableAndColumnNameToken(setExpr, statements.Last().Value);
+                        }
                     }
                 }
             }
@@ -939,12 +1049,12 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public DeclareStatement ParseDeclareStatement(VariableDeclarationContext node)
+        public DeclareVariableStatement ParseDeclareStatement(VariableDeclarationContext node)
         {
-            DeclareStatement statement = new DeclareStatement();
+            DeclareVariableStatement statement = new DeclareVariableStatement();
 
             statement.Name = new TokenInfo(node.identifierList().identifier().First()) { Type = TokenType.VariableName };
-            statement.DataType = new TokenInfo(node.dataType().GetText()) { Type = TokenType.DataType };
+            statement.DataType = new TokenInfo(node.dataType());
 
             var defaultValue = node.expr();
 
@@ -968,7 +1078,7 @@ namespace SqlAnalyser.Core
             while (ifBody != null)
             {
                 IfStatementItem item = new IfStatementItem() { Type = isFirst ? IfStatementType.IF : IfStatementType.ELSEIF };
-                item.Condition = new TokenInfo(ifBody.expr()) { Type = TokenType.IfCondition };
+                item.Condition = this.ParseCondition(ifBody.expr());
                 item.Statements.AddRange(this.ParseCompoundStatementList(ifBody.thenStatement().compoundStatementList()));
 
                 statement.Items.Add(item);
@@ -1182,6 +1292,63 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
+        public Statement ParseCreateStatement(CreateStatementContext node)
+        {
+            Statement statement = null;
+
+            foreach (var child in node.children)
+            {
+                if (child is CreateTableContext createTable)
+                {
+                    statement = this.ParseCreateTableStatement(createTable);
+                }
+            }
+
+            return statement;
+        }
+
+        public CreateTableStatement ParseCreateTableStatement(CreateTableContext node)
+        {
+            CreateTableStatement statement = new CreateTableStatement();
+
+            TableInfo tableInfo = new TableInfo();
+
+            foreach (var child in node.children)
+            {
+                if (child is TerminalNodeImpl tni)
+                {
+                    if (tni.GetText() == "TEMPORARY")
+                    {
+                        tableInfo.IsTemporary = true;
+                        break;
+                    }
+                }
+            }
+
+            tableInfo.Name = this.ParseTableName(node.tableName());
+
+            var columns = node.tableElementList().tableElement();
+
+            tableInfo.Columns.AddRange(columns.Select(item => new ColumnInfo()
+            {
+                Name = this.ParseColumnName(item.columnDefinition().columnName()),
+                DataType = new TokenInfo(item.columnDefinition().fieldDefinition())
+            }));
+
+            statement.TableInfo = tableInfo;
+
+            return statement;
+        }
+
+        public TruncateStatement ParseTruncateTableStatement(TruncateTableStatementContext node)
+        {
+            TruncateStatement statement = new TruncateStatement();
+
+            statement.TableName = this.ParseTableName(node.tableRef());
+
+            return statement;
+        }
+
         public override TableName ParseTableName(ParserRuleContext node, bool strict = false)
         {
             TableName tableName = null;
@@ -1190,7 +1357,21 @@ namespace SqlAnalyser.Core
             {
                 if (node is TableNameContext tn)
                 {
-                    tableName = new TableName(tn.dotIdentifier());
+                    var dotId = tn.dotIdentifier();
+                    var qualifiedId = tn.qualifiedIdentifier();
+
+                    if (dotId != null)
+                    {
+                        tableName = new TableName(dotId);
+                    }
+                    else if (qualifiedId != null)
+                    {
+                        tableName = new TableName(qualifiedId);
+                    }
+                    else
+                    {
+                        tableName = new TableName(tn);
+                    }
                 }
                 else if (node is TableRefContext tableRef)
                 {
@@ -1263,7 +1444,7 @@ namespace SqlAnalyser.Core
                         columnName.Alias = new TokenInfo(alias.identifier());
                     }
 
-                    this.AddChildColumnNameToken(si, columnName);
+                    this.AddChildTableAndColumnNameToken(si, columnName);
                 }
                 else if (node is QualifiedIdentifierContext qualifiedIdentifier)
                 {
@@ -1324,9 +1505,18 @@ namespace SqlAnalyser.Core
 
                     bool isIfCondition = node.Parent != null && (node.Parent is IfBodyContext || node.Parent is LeaveStatementContext);
 
-                    token.Type = isIfCondition ? TokenType.IfCondition : TokenType.SearchCondition;
+                    bool isSearchConditionHasSubquery = this.IsSearchConditionHasSubquery(node);
 
-                    if (!isIfCondition)
+                    if (isIfCondition && !isSearchConditionHasSubquery)
+                    {
+                        token.Type = TokenType.IfCondition;
+                    }
+                    else
+                    {
+                        token.Type = TokenType.SearchCondition;
+                    }
+
+                    if (token.Type == TokenType.SearchCondition)
                     {
                         this.AddChildTableAndColumnNameToken(node, token);
                     }
@@ -1344,6 +1534,23 @@ namespace SqlAnalyser.Core
                 || node is SimpleExprConvertContext || node is SimpleExprCastContext)
             {
                 return true;
+            }
+
+            return false;
+        }
+
+        private bool IsSearchConditionHasSubquery(ParserRuleContext node)
+        {
+            foreach (var child in node.children)
+            {
+                if (child is SubqueryContext)
+                {
+                    return true;
+                }
+                else if (child is ParserRuleContext prc)
+                {
+                    return this.IsSearchConditionHasSubquery(prc);
+                }
             }
 
             return false;

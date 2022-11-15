@@ -35,7 +35,7 @@ namespace DatabaseManager.Core
 
                 if (!dataTypes.Contains(dataType))
                 {
-                    dataTypeInfo = DataTypeHelper.GetSpecialDataTypeInfo(dataType);
+                    dataTypeInfo = DataTypeHelper.GetDataTypeInfoByRegex(dataType);
                     dataType = dataTypeInfo.DataType;
                     columnDesingerInfo.Length = dataTypeInfo.Args;
                 }

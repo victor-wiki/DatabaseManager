@@ -1,12 +1,10 @@
 ﻿using DatabaseInterpreter.Model;
-using Microsoft.SqlServer.Types;
-using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace DatabaseInterpreter.Core
+namespace DatabaseInterpreter.Utility
 {
     public class DataTypeHelper
     {
@@ -15,24 +13,22 @@ namespace DatabaseInterpreter.Core
         public static readonly string[] BinaryTypeFlags = { "binary", "bytea", "raw", "blob" };
         public static readonly string[] DateOrTimeTypeFlags = { "date", "time" };
         public static readonly string[] DatetimeOrTimestampTypeFlags = { "datetime", "timestamp"};
-        public static readonly string[] GeometryTypeFlags = { "geometry", "geography"};
-        public static List<string> SpecialDataTypes = new List<string>() { 
-            nameof(SqlHierarchyId), nameof(SqlGeography), nameof(SqlGeometry),nameof(Geometry), "Byte[]"
-        };
+        public static readonly string[] GeometryTypeFlags = { "geometry", "geography", "point", "line", "circle", "polygon" };
+        public static readonly string[] SpecialDataTypeFlags = { "sqlhierarchyid","geography","geometry","byte[]"};
 
         public static bool IsCharType(string dataType)
         {
-            return CharTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, CharTypeFlags);
         }
 
         public static bool IsBinaryType(string dataType)
         {
-            return BinaryTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, BinaryTypeFlags);
         }
 
         public static bool IsGeometryType(string dataType)
         {
-            return GeometryTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, GeometryTypeFlags);
         }
 
         public static bool StartsWithN(string dataType)
@@ -42,17 +38,27 @@ namespace DatabaseInterpreter.Core
 
         public static bool IsTextType(string dataType)
         {
-            return TextTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, TextTypeFlags);
         }
 
         public static bool IsDateOrTimeType(string dataType)
         {
-            return DateOrTimeTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, DateOrTimeTypeFlags); 
         }
 
         public static bool IsDatetimeOrTimestampType(string dataType)
         {
-            return DatetimeOrTimestampTypeFlags.Any(item => dataType.ToLower().Contains(item));
+            return IsContainsFlag(dataType, DatetimeOrTimestampTypeFlags);
+        }
+
+        public static bool IsSpecialDataType(string dataType)
+        {
+            return IsContainsFlag(dataType, SpecialDataTypeFlags);
+        }
+
+        private static bool IsContainsFlag(string value, string[] flags)
+        {
+            return flags.Any(item => value.ToLower().Contains(item.ToLower()));
         }
 
         public static bool IsUserDefinedType(TableColumn column)
@@ -66,19 +72,11 @@ namespace DatabaseInterpreter.Core
             }
 
             return column.IsUserDefined;
-        }
+        }       
 
-        public static DataTypeInfo GetDataTypeInfo(DbInterpreter dbInterpreter, string dataType)
+        public static DataTypeInfo GetDataTypeInfo(string dataType)
         {
-            DataTypeInfo dataTypeInfo = new DataTypeInfo();
-
-            if (dbInterpreter != null)
-            {
-                if(!(dbInterpreter.DatabaseType== DatabaseType.Postgres && dataType== "\"char\""))
-                {
-                    dataType = dataType.Trim(dbInterpreter.QuotationLeftChar, dbInterpreter.QuotationRightChar);
-                }               
-            }
+            DataTypeInfo dataTypeInfo = new DataTypeInfo();           
 
             int index = dataType.IndexOf("(");
 
@@ -102,12 +100,7 @@ namespace DatabaseInterpreter.Core
             return dataTypeInfo;
         }
 
-        public static DataTypeInfo GetDataTypeInfo(string dataType)
-        {
-            return GetDataTypeInfo(null, dataType);
-        }
-
-        public static DataTypeInfo GetSpecialDataTypeInfo(string dataType)
+        public static DataTypeInfo GetDataTypeInfoByRegex(string dataType)
         {
             DataTypeInfo dataTypeInfo = new DataTypeInfo();
 

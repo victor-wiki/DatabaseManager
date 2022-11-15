@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
         private string dbSchema;
         public const int DEFAULT_PORT = 5432;
         public override string STR_CONCAT_CHARS => "||";
-        public override string UnicodeLeadingFlag => "";       
+        public override string UnicodeLeadingFlag => "";
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
         public const char QuotedRightChar = '"';
@@ -130,9 +130,27 @@ namespace DatabaseInterpreter.Core
             sb.Append(this.GetFilterSchemaCondition(filter, "n.nspname"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "t.typname"));
 
+            if(Setting.ExcludePostgresExtensionObjects)
+            {
+                sb.Append(this.GetSqlForExcludeExtensionUserDefinedTypes("t.typname"));
+            }
+
             sb.Append($"ORDER BY t.typname{(isSimpleMode ? "" : ",a.attname")}");
 
             return sb.Content;
+        }
+
+        private string GetSqlForExcludeExtensionUserDefinedTypes(string columnName)
+        {
+            string sql = $@"AND {columnName} NOT IN(
+                            SELECT t.typname  
+                            FROM pg_catalog.pg_extension e
+                            JOIN pg_catalog.pg_depend d ON (d.refobjid = e.oid)
+                            JOIN pg_catalog.pg_type t ON t.oid = d.objid                            
+                            WHERE d.deptype = 'e' AND t.typtype='c'
+                       )";
+
+            return sql;
         }
         #endregion
 
@@ -190,6 +208,11 @@ namespace DatabaseInterpreter.Core
             sb.Append($"WHERE UPPER(sequence_catalog)=UPPER('{this.ConnectionInfo.Database}')");
             sb.Append(this.GetFilterSchemaCondition(filter, "sequence_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.SequenceNames, "s.sequence_name"));
+
+            if (Setting.ExcludePostgresExtensionObjects)
+            {
+                sb.Append(this.GetSqlForExcludeExtensionObjects(DatabaseObjectType.Sequence, "s.sequence_name"));
+            }
 
             sb.Append("ORDER BY s.sequence_name");
 
@@ -259,6 +282,11 @@ namespace DatabaseInterpreter.Core
             sb.Append(this.GetExcludeSystemSchemasCondition("t.table_schema"));
             sb.Append(this.GetFilterSchemaCondition(filter, "t.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.table_name"));
+
+            if (Setting.ExcludePostgresExtensionObjects)
+            {
+                sb.Append(this.GetSqlForExcludeExtensionObjects(DatabaseObjectType.Table, "t.table_name"));
+            }
 
             sb.Append("ORDER BY t.table_name");
 
@@ -439,7 +467,7 @@ namespace DatabaseInterpreter.Core
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT trigger_name AS ""Name"",event_object_schema AS ""TableSchema"",event_object_table AS ""TableName"",                         
-                         ({(isSimpleMode ? "''" : $@"CONCAT('CREATE TRIGGER ""',trigger_name,'"" ',action_timing,' ',event_manipulation,
+                         ({(isSimpleMode ? "''" : $@"CONCAT('CREATE TRIGGER ""',trigger_name,'"" ',action_timing,' ', array_to_string(array_agg(event_manipulation),' OR '),
                         ' ON ',event_object_schema,'.""',event_object_table,'""{Environment.NewLine}FOR EACH ',action_orientation, '{Environment.NewLine}',action_statement)")}:: CHARACTER VARYING) AS ""Definition""
                         FROM information_schema.triggers
                         WHERE UPPER(trigger_catalog) = UPPER('{this.ConnectionInfo.Database}')");
@@ -447,7 +475,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null)
             {
                 sb.Append(this.GetFilterSchemaCondition(filter, "event_object_schema"));
-                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "event_object_table"));
+                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "event_object_table"));                
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
@@ -455,6 +483,8 @@ namespace DatabaseInterpreter.Core
                     sb.Append($"AND trigger_name IN ({strNames})");
                 }
             }
+
+            sb.Append("GROUP BY event_object_schema,trigger_name,event_object_table,action_timing,action_orientation,action_statement");
 
             sb.Append("ORDER BY trigger_name");
 
@@ -524,9 +554,48 @@ namespace DatabaseInterpreter.Core
             sb.Append(this.GetFilterSchemaCondition(filter, "v.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.table_name"));
 
+            if(Setting.ExcludePostgresExtensionObjects)
+            {
+                sb.Append(this.GetSqlForExcludeExtensionObjects(DatabaseObjectType.View, "v.table_name"));
+            }
+
             sb.Append("ORDER BY v.table_name");
 
             return sb.Content;
+        }
+
+        private string GetSqlForExcludeExtensionObjects(DatabaseObjectType databaseObjectType,  string columnName)
+        {
+            string kind = "";
+
+            //https://www.postgresql.org/docs/9.3/catalog-pg-class.html
+            switch (databaseObjectType)
+            {
+                case DatabaseObjectType.Table:
+                    kind = "r";
+                    break;
+                case DatabaseObjectType.View:
+                    kind = "v";
+                    break;
+                case DatabaseObjectType.Sequence:
+                    kind = "s";
+                    break;                    
+            }
+
+            if(string.IsNullOrEmpty(kind))
+            {
+                return string.Empty;
+            }
+
+            string sql = $@"AND {columnName} NOT IN(
+                                 SELECT c.relname
+                                 FROM pg_catalog.pg_extension e
+                                 JOIN pg_catalog.pg_depend d ON d.refobjid = e.oid
+                                 JOIN pg_catalog.pg_class c ON c.oid = d.objid                                
+                                 WHERE d.deptype = 'e' AND c.relkind = '{kind}'
+                      )";
+
+            return sql;
         }
         #endregion
 
@@ -551,11 +620,11 @@ namespace DatabaseInterpreter.Core
 
             var sb = this.CreateSqlBuilder();
 
-            Action appendSchemaAndNamesCondition = () =>
+            Action appendCondition = () =>
             {
                 sb.Append(this.GetFilterSchemaCondition(filter, "r.routine_schema"));
                 sb.Append(this.GetFilterNamesCondition(filter, objectNames, " r.routine_name"));
-            };
+            };            
 
             if (isSimpleMode)
             {
@@ -564,27 +633,46 @@ namespace DatabaseInterpreter.Core
                          WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')");
 
                 sb.Append(this.GetExcludeSystemSchemasCondition("r.routine_schema"));
-                appendSchemaAndNamesCondition();
+
+                appendCondition();
+
+                if(Setting.ExcludePostgresExtensionObjects)
+                {
+                    sb.Append(this.GetSqlForExcludeExtensionsRoutines("r.routine_name", isFunction));
+                }
             }
             else
             {
                 sb.Append($@"SELECT r.routine_schema AS ""Schema"", r.routine_name AS ""Name"",CASE WHEN r.data_type='trigger' THEN 1 ELSE 0 END AS ""IsTriggerFunction"",
                         concat('CREATE OR REPLACE {type} ', routine_schema,'.""',r.routine_name, '""(', array_to_string(
                         array_agg(concat(CASE p.parameter_mode WHEN 'IN' THEN '' ELSE p.parameter_mode END,' ',p.parameter_name,' ',p.data_type)),','),')'
-                        {(isFunction ? "' RETURNS ',r.data_type" : "")},CHR(10),'LANGUAGE ''plpgsql''',CHR(10),'AS',CHR(10),'$$',r.routine_definition,'$$;') AS ""Definition""
+                        {(isFunction ? "' RETURNS ',r.data_type" : "")},CHR(10),'LANGUAGE ''plpgsql''',CHR(10),'AS ','$$',CHR(10),r.routine_definition,CHR(10),'$$;') AS ""Definition""
                         FROM information_schema.routines r
                         LEFT JOIN information_schema.parameters p ON p.specific_name=r.specific_name
                         WHERE r.routine_type='{type}' AND UPPER(r.routine_catalog)=UPPER('{this.ConnectionInfo.Database}')
                         {this.GetExcludeSystemSchemasCondition("r.routine_schema")} {strNamesCondition}");
 
-                appendSchemaAndNamesCondition();
+                appendCondition();
 
                 sb.Append("GROUP BY r.routine_schema,r.routine_name,r.routine_definition,r.data_type");
-            }
+            }           
 
             sb.Append("ORDER BY r.routine_name");
 
             return sb.Content;
+        }
+
+        private string GetSqlForExcludeExtensionsRoutines(string columnName, bool isFunction)
+        {
+            string sql = $@"AND {columnName} NOT IN(SELECT proname
+                            FROM pg_catalog.pg_extension e
+                            JOIN pg_catalog.pg_depend d ON d.refobjid = e.oid
+                            JOIN pg_catalog.pg_proc p ON p.oid = d.objid
+                            JOIN pg_catalog.pg_namespace ne ON ne.oid = e.extnamespace
+                            JOIN pg_catalog.pg_namespace np ON np.oid = p.pronamespace
+                            WHERE d.deptype = 'e' AND p.prokind = '{(isFunction ? "f" : "p")}')";
+
+            return sql;
         }
         #endregion
         #endregion
@@ -968,7 +1056,7 @@ namespace DatabaseInterpreter.Core
             string dataType = column.DataType;
             string dataLength = string.Empty;
 
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(this, dataType);
+            DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
             bool isChar = DataTypeHelper.IsCharType(dataType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataType);
 

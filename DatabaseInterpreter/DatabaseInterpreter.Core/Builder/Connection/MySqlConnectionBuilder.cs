@@ -7,7 +7,7 @@ namespace DatabaseInterpreter.Core
     {
         public string BuildConntionString(ConnectionInfo connectionInfo)
         {
-            StringBuilder sb = new StringBuilder($"server={connectionInfo.Server};port={connectionInfo.Port};database={connectionInfo.Database};Charset=utf8;AllowLoadLocalInfile=True;AllowZeroDateTime=True;AllowPublicKeyRetrieval=True;");
+            StringBuilder sb = new StringBuilder($"server={connectionInfo.Server};port={connectionInfo.Port};database={connectionInfo.Database};Charset=utf8;AllowLoadLocalInfile=True;AllowZeroDateTime=True;AllowPublicKeyRetrieval=True;Allow User Variables=true;");
 
             if(connectionInfo.IntegratedSecurity)
             {

@@ -329,7 +329,7 @@ namespace DatabaseManager.Core
 
             DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
-            bool isDefaultValueEquals = ValueHelper.IsStringEquals(ValueHelper.GetTrimedParenthesisValue(oldColumn.DefaultValue), newColumn.DefaultValue);
+            bool isDefaultValueEquals = ValueHelper.IsStringEquals(StringHelper.GetBalanceParenthesisTrimedValue(oldColumn.DefaultValue), newColumn.DefaultValue);
 
             if (!SchemaInfoHelper.IsTableColumnEquals(databaseType, oldColumn, newColumn)
                 || !isDefaultValueEquals)

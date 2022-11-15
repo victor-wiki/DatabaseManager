@@ -71,6 +71,7 @@ namespace DatabaseManager.Controls
 
             if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
             {
+                this.conditionBuilder.DatabaseType = dbInterpreter.DatabaseType;
                 this.conditionBuilder.QuotationLeftChar = dbInterpreter.QuotationLeftChar;
                 this.conditionBuilder.QuotationRightChar = dbInterpreter.QuotationRightChar;
 

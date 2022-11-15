@@ -434,11 +434,14 @@ namespace DatabaseManager.Controls
                 if (parentNode.Tag is Database)
                 {
                     string databaseName = parentNode.Name;
+
                     DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.GetDbObjectTypeByFolderName(name);
 
                     if (databaseObjectType != DatabaseObjectType.None)
                     {
                         await this.AddDbObjectNodes(node, databaseName, databaseObjectType, false);
+
+                        this.ShowChildrenCount(node);
                     }
                 }
                 else if (parentNode.Tag is Table)
@@ -466,6 +469,11 @@ namespace DatabaseManager.Controls
                     await this.AddTableObjectNodes(node, parentNode.Tag as Table, databaseObjectType);
                 }
             }
+        }
+
+        private void ShowChildrenCount(TreeNode node)
+        {
+            node.Text = $"{node.Name} ({node.Nodes.Count})";
         }
 
         private async void tsmiRefresh_Click(object sender, EventArgs e)
@@ -699,7 +707,15 @@ namespace DatabaseManager.Controls
 
             if (!dbInterpreter.HasError)
             {
+                bool parentIsChildFolderOfDatabase = node.Parent?.Parent?.Tag is Database;
+                TreeNode parentNode = node.Parent;
+
                 node.Parent.Nodes.Remove(node);
+
+                if (parentIsChildFolderOfDatabase)
+                {
+                    this.ShowChildrenCount(parentNode);
+                }
             }
         }
 

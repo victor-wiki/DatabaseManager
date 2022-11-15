@@ -154,6 +154,7 @@ namespace DatabaseConverter.Core
                             if (joinRegex.IsMatch(line))
                             {
                                 string leftStr = line.Substring(line.ToLower().LastIndexOf("join") + 4);
+                                
                                 if (!onRegex.IsMatch(line) && !wordRegex.IsMatch(leftStr))
                                 {
                                     hasChanged = true;

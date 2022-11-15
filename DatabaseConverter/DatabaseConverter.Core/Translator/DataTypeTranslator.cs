@@ -1,6 +1,9 @@
-﻿using DatabaseConverter.Model;
+﻿using Antlr.Runtime.Tree;
+using Antlr4.Runtime.Misc;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using NCalc;
 using System;
 using System.Collections.Generic;
@@ -26,7 +29,7 @@ namespace DatabaseConverter.Core
         {
             string originalDataType = dataTypeInfo.DataType;
 
-            DataTypeInfo dti = DataTypeHelper.GetDataTypeInfo(this.sourceDbInterpreter, originalDataType);
+            DataTypeInfo dti = this.sourceDbInterpreter.GetDataTypeInfo(originalDataType);
             string sourceDataType = dti.DataType;
 
             dataTypeInfo.DataType = sourceDataType;
@@ -106,10 +109,10 @@ namespace DatabaseConverter.Core
 
                         if (special != null)
                         {
-                            if(!string.IsNullOrEmpty(special.Type))
+                            if (!string.IsNullOrEmpty(special.Type))
                             {
                                 dataTypeInfo.DataType = special.Type;
-                            }                           
+                            }
 
                             if (!string.IsNullOrEmpty(special.TargetMaxLength))
                             {
@@ -123,7 +126,7 @@ namespace DatabaseConverter.Core
                         }
                     }
 
-                    if(!noLength)
+                    if (!noLength)
                     {
                         if (dataTypeInfo.MaxLength == -1)
                         {
@@ -134,7 +137,7 @@ namespace DatabaseConverter.Core
                                 dataTypeInfo.MaxLength = sourceLengthRange.Value.Max;
                             }
                         }
-                    }                    
+                    }
 
                     ArgumentRange? targetLengthRange = DataTypeManager.GetArgumentRange(targetDataTypeSpec, "length");
 
@@ -145,7 +148,7 @@ namespace DatabaseConverter.Core
                         if (DataTypeHelper.StartsWithN(targetDataTypeSpec.Name))
                         {
                             targetMaxLength *= 2;
-                        }                        
+                        }
 
                         if (dataTypeInfo.MaxLength > targetMaxLength)
                         {
@@ -266,7 +269,28 @@ namespace DatabaseConverter.Core
                             }
                             else
                             {
-                                dataTypeInfo.Precision = default(int?);
+                                string[] defaultValues = targetDataTypeSpec.Default?.Split(',');
+
+                                bool hasDefaultValues = defaultValues != null && defaultValues.Length > 0;
+
+                                string args = targetDataTypeSpec.Args;
+
+                                if (hasDefaultValues)
+                                {
+                                    if(args == "precision,scale" && defaultValues.Length == 2)
+                                    {
+                                        dataTypeInfo.Precision = int.Parse(defaultValues[0]);
+                                        dataTypeInfo.Scale = int.Parse(defaultValues[1]);
+                                    }
+                                    else if(args == "scale" && defaultValues.Length == 1)
+                                    {
+                                        dataTypeInfo.Scale = int.Parse(defaultValues[0]);
+                                    }
+                                }
+                                else
+                                {
+                                    dataTypeInfo.Precision = default(int?);
+                                }
                             }
                         }
                     }

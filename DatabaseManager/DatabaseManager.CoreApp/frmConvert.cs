@@ -56,9 +56,9 @@ namespace DatabaseManager
                 this.btnFetch.Height = this.targetDbProfile.ClientHeight;
                 this.targetDbProfile.Top -= increaseHeight;
                 this.tvDbObjects.Top -= increaseHeight;
-                this.gbOption.Top -= increaseHeight;
+                this.gbConfiguration.Top -= increaseHeight;
                 this.tvDbObjects.Height += increaseHeight;
-                this.gbOption.Height += increaseHeight;
+                this.gbConfiguration.Height += increaseHeight;
 
                 if (this.sourceDatabaseType == DatabaseType.MySql || this.sourceDatabaseType == DatabaseType.Oracle)
                 {
@@ -493,6 +493,7 @@ namespace DatabaseManager
             }
 
             DialogResult result = this.dlgOutputFolder.ShowDialog();
+
             if (result == DialogResult.OK)
             {
                 this.txtOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
@@ -531,7 +532,7 @@ namespace DatabaseManager
 
                 var targetDbInterpreter = DbInterpreterHelper.GetDbInterpreter(databaseType, this.targetDbConnectionInfo, new DbInterpreterOption());
 
-                this.chkNcharToDoubleChar.Enabled = !targetDbInterpreter.SupportNchar;                
+                this.chkNcharToDoubleChar.Enabled = !targetDbInterpreter.SupportNchar;
             }
             else
             {
@@ -541,16 +542,16 @@ namespace DatabaseManager
             this.btnSetSchemaMappings.Enabled = enable;
 
             if (!enable)
-            {            
+            {
                 this.chkCreateSchemaIfNotExists.Enabled = false;
                 this.chkCreateSchemaIfNotExists.Checked = false;
             }
             else
             {
                 this.chkCreateSchemaIfNotExists.Enabled = true;
-            }   
-            
-            if(!this.chkNcharToDoubleChar.Enabled)
+            }
+
+            if (!this.chkNcharToDoubleChar.Enabled)
             {
                 this.chkNcharToDoubleChar.Checked = true;
             }
@@ -626,6 +627,16 @@ namespace DatabaseManager
             if (form.ShowDialog() == DialogResult.OK)
             {
                 this.schemaMappings = form.Mappings;
+            }
+        }
+
+        private void chkOutputScripts_CheckedChanged(object sender, EventArgs e)
+        {
+            string defaultOutputFolder = SettingManager.Setting.ScriptsDefaultOutputFolder;
+
+            if (this.chkOutputScripts.Checked && string.IsNullOrEmpty(this.txtOutputFolder.Text) && !string.IsNullOrEmpty(defaultOutputFolder))
+            {
+                this.txtOutputFolder.Text = defaultOutputFolder;
             }
         }
     }

@@ -1,26 +1,26 @@
 ﻿using DatabaseConverter.Core.Model;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using Microsoft.Identity.Client;
-using NetTopologySuite.Algorithm;
+using DatabaseInterpreter.Utility;
+using Newtonsoft.Json.Linq;
 using SqlAnalyser.Model;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using TSQL.Tokens;
 
 namespace DatabaseConverter.Core
 {
     public class TranslateHelper
     {
-        public const string NameRegexPattern = "^[a-zA-Z_][a-zA-Z0-9_]*$";
-        public const string NumberRegexPattern = "(([0-9]\\d*\\.?\\d*)|(0\\.\\d*[0-9]))";
-        public const string ParenthesesRegexPattern = @"\(.*\)";
-
         public static string ConvertNumberToPostgresMoney(string str)
         {
-            var matches = Regex.Matches(str, NumberRegexPattern);
+            var matches = Regex.Matches(str, RegexHelper.NumberRegexPattern);
 
             if (matches != null)
             {
@@ -57,108 +57,6 @@ namespace DatabaseConverter.Core
             return value;
         }
 
-        public static bool HasConcatChars(string symbol, string concatChars, bool hasCharColumn = false)
-        {
-            if (!string.IsNullOrEmpty(symbol) && !string.IsNullOrEmpty(concatChars))
-            {
-                string[] items = symbol.Split(concatChars);
-
-                return symbol.Contains(concatChars)
-                    && (hasCharColumn || items.Any(item => item.Trim().StartsWith('\'') || item.Trim().EndsWith('\'') || DataTypeHelper.IsCharType(item)));
-            }
-
-            return false;
-        }
-
-        public static string ConvertConcatChars(string symbol, string sourceConcatChars, string targetConcatChars, bool hasCharColumn = false)
-        {
-            if (HasConcatChars(symbol, sourceConcatChars, hasCharColumn))
-            {
-                if (!string.IsNullOrEmpty(targetConcatChars))
-                {
-                    if (sourceConcatChars != "+")
-                    {
-                        return symbol.Replace(sourceConcatChars, targetConcatChars);
-                    }
-                    else //exclude math operator "+"
-                    {
-                        string[] items = symbol.Split(sourceConcatChars, System.StringSplitOptions.RemoveEmptyEntries);
-
-                        StringBuilder sb = new StringBuilder();
-
-                        for (int i = 0; i < items.Length; i++)
-                        {
-                            string concatChar = targetConcatChars;
-
-                            if (i > 0)
-                            {
-                                char? previousLastChar = items[i - 1].Trim().FirstOrDefault();
-                                char? currentFirstChar = items[i].Trim().FirstOrDefault();
-
-                                if (previousLastChar.HasValue && currentFirstChar.HasValue
-                                    && int.TryParse(previousLastChar.ToString(), out _) && int.TryParse(currentFirstChar.ToString(), out _))
-                                {
-                                    concatChar = sourceConcatChars;
-                                }
-                            }
-
-                            if (items[i].Trim().Length > 0)
-                            {
-                                sb.Append($"{(i > 0 ? concatChar : "")}{items[i]}");
-                            }                           
-                            
-                        }
-
-                        return sb.ToString();
-                    }
-                }
-                else
-                {
-                    string[] items = ValueHelper.GetTrimedParenthesisValue(symbol).Split(sourceConcatChars);
-
-                    List<string> list = new List<string>();
-
-                    foreach (var item in items)
-                    {
-                        var trimedItem = "";
-
-                        if (!ValueHelper.IsParenthesisBalanced(item))
-                        {
-                            trimedItem = item.Trim('(', ')', ' ');
-                        }
-                        else
-                        {
-                            trimedItem = ValueHelper.GetTrimedParenthesisValue(item.Trim());
-                        }
-
-                        string[] subItems = trimedItem.Split(' ');
-
-                        //this is to handle the "+" like this: CASE WHEN '1'='' THEN 'a' ELSE ISNULL('b1','') + 'b2' END
-                        if (subItems.Length > 1)
-                        {
-                            string firstSubItem = subItems[0].Trim();
-                            string lastSubItem = subItems[subItems.Length - 1].Trim();
-
-                            if (lastSubItem.Trim(')').EndsWith("'"))
-                            {
-                                subItems[subItems.Length - 1] = $"CONCAT({lastSubItem}";
-                            }
-
-                            if (firstSubItem.Trim('(').StartsWith("\'") || firstSubItem.Trim('(').StartsWith("N\'"))
-                            {
-                                subItems[0] = firstSubItem + ")";
-                            }
-                        }
-
-                        list.Add(string.Join(" ", subItems));
-                    }
-
-                    return $"CONCAT({string.Join(",", list)})";
-                }
-            }
-
-            return symbol;
-        }
 
         public static IEnumerable<char> GetTrimChars(params DbInterpreter[] dbInterpreters)
         {
@@ -173,7 +71,7 @@ namespace DatabaseConverter.Core
         {
             TableColumn column = new TableColumn();
 
-            if (userDefinedTypes != null && userDefinedTypes.Count>0)
+            if (userDefinedTypes != null && userDefinedTypes.Count > 0)
             {
                 UserDefinedType userDefinedType = userDefinedTypes.FirstOrDefault(item => item.Name.Trim(trimChars).ToUpper() == dataType.Trim(trimChars).ToUpper());
 
@@ -188,7 +86,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            DataTypeInfo dataTypeInfo = DataTypeHelper.GetDataTypeInfo(dbInterpreter, dataType);
+            DataTypeInfo dataTypeInfo = dbInterpreter.GetDataTypeInfo(dataType);
 
             string dataTypeName = dataTypeInfo.DataType.Trim().ToLower();
 
@@ -283,5 +181,7 @@ namespace DatabaseConverter.Core
                 token.Symbol = definition.Substring(token.StartIndex.Value, token.Length);
             }
         }
+
+
     }
 }
