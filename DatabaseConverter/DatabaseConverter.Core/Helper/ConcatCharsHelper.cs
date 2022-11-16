@@ -17,11 +17,11 @@ namespace DatabaseConverter.Core
         {
             if (!string.IsNullOrEmpty(symbol) && !string.IsNullOrEmpty(concatChars))
             {
-                string[] items = symbol.Split(concatChars);
+                string[] items = symbol.Split(concatChars,StringSplitOptions.RemoveEmptyEntries);
 
                 return symbol.Contains(concatChars)
                     && (hasCharColumn || items.Any(item => item.Trim().StartsWith('\'') || item.Trim().EndsWith('\'') || DataTypeHelper.IsCharType(item))
-                    && !items.Any(item => decimal.TryParse(item.Trim().Trim(','), out _)));
+                    && !items.Any(item => decimal.TryParse(item.Trim().Trim(','), out _) || DataTypeHelper.IsDateOrTimeType(item)));
             }
 
             return false;

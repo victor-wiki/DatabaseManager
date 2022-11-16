@@ -121,9 +121,23 @@ namespace SqlAnalyser.Core
 
             foreach (FromItem fromItem in fromItems)
             {
+                NameToken fromTableName = fromItem.TableName;
+
+                if (fromTableName == null && selectStatement?.TableName != null)
+                {
+                    fromTableName = selectStatement.TableName;
+                }
+
+                TokenInfo alias = fromItem.Alias;
+
+                bool isValidTableName = this.IsValidTableName(fromTableName.Symbol);
+
                 if (i == 0)
                 {
-                    this.Append("FROM ");
+                    if(isValidTableName)
+                    {
+                        this.Append("FROM ");
+                    }                    
                 }
 
                 hasJoins = fromItem.HasJoinItems;
@@ -131,22 +145,17 @@ namespace SqlAnalyser.Core
                 if (i > 0 && !hasJoins)
                 {
                     this.Append(",", false);
-                }
-
-                NameToken fromTableName = fromItem.TableName;
-                TokenInfo alias = fromItem.Alias;
-
-                if (fromTableName == null && selectStatement?.TableName != null)
-                {
-                    fromTableName = selectStatement.TableName;
-                }
-
+                }  
+                
                 string nameWithAlias = this.GetNameWithAlias(fromTableName);
 
-                if (nameWithAlias?.Trim() != alias?.Symbol?.Trim())
+                if(isValidTableName)
                 {
-                    this.Append($"{nameWithAlias}{(hasJoins ? Environment.NewLine : "")}", false);
-                }
+                    if (nameWithAlias?.Trim() != alias?.Symbol?.Trim())
+                    {
+                        this.Append($"{nameWithAlias}{(hasJoins ? Environment.NewLine : "")}", false);
+                    }
+                }                
 
                 bool hasSubSelect = false;
 
@@ -242,6 +251,23 @@ namespace SqlAnalyser.Core
         public string GetTrimedQuotationValue(string value)
         {
             return value?.Trim('[', ']', '"', '`');
+        }
+
+        protected bool IsValidTableName(string tableName)
+        {
+            if(tableName == null)
+            {
+                return false;
+            }
+
+            tableName = this.GetTrimedQuotationValue(tableName);
+
+            if(tableName.ToUpper() == "DUAL" && !(this is PlSqlStatementScriptBuilder))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         protected virtual string GetPivotInItem(TokenInfo token)

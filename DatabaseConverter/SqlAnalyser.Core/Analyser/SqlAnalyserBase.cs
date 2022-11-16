@@ -156,6 +156,11 @@ namespace SqlAnalyser.Core
 
             StringBuilder sb = new StringBuilder();
 
+            if(this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
+            {
+                this.StatementBuilder.Option.CollectDeclareStatement = true;
+            }
+
             foreach (Statement statement in script.Statements)
             {
                 sb.AppendLine(this.BuildStatement(statement));

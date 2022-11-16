@@ -67,7 +67,7 @@
   <item name="LOCALTIMESTAMP" args="" noParenthesess="true"></item>
   <item name="LOG" args="EXP"></item>
   <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH[,VALUE]"></item>
+  <item name="LPAD" args="EXP,LENGTH[,PAD]"></item>
   <item name="LTRIM" args="EXP"></item>
   <item name="MAX" args="EXP"></item>
   <!--<item name="MEDIAN" args=""></item>-->
@@ -95,7 +95,7 @@
   <item name="REPLACE" args="EXP,OLD[,NEW]"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
   <!--<item name="ROWNUM" args="" noParenthesess="true"></item>-->
-  <item name="RPAD" args="EXP,LENGTH,PAD"></item>
+  <item name="RPAD" args="EXP,LENGTH[,PAD]"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SESSIONTIMEZONE" args="" noParenthesess="true"></item>
   <item name="SIGN" args="EXP"></item>

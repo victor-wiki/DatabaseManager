@@ -73,7 +73,7 @@
   <item name="LOG10" args="EXP"></item>
   <item name="LOG2" args="EXP"></item>
   <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH,VALUE"></item>
+  <item name="LPAD" args="EXP,LENGTH,PAD"></item>
   <item name="LTRIM" args="EXP"></item>
   <item name="MAKEDATE" args="YEAR,DAY_OF_YEAR"></item>
   <item name="MAKETIME" args="HOUR,MINUTE,SECONDS"></item>
@@ -99,12 +99,12 @@
   <item name="QUARTER" args="DATE"></item>
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
-  <item name="REPEAT" args="PAD,LENGTH"></item> 
+  <item name="REPEAT" args="EXP,TIMES"></item> 
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
-  <item name="RPAD" args="STR,LENGTH,PAD"></item>
+  <item name="RPAD" args="EXP,LENGTH,PAD"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SEC_TO_TIME" args="SECONDS"></item>
   <item name="SECOND" args="DATE"></item>
@@ -130,6 +130,7 @@
   <item name="TIME_TO_SEC" args="TIME"></item>
   <item name="TIMEDIFF" args="TIME1,TIME2"></item>
   <item name="TIMESTAMP" args="EXP[,NUMBER]"></item>
+  <item name="TIMESTAMPDIFF" args="UNIT,DATE1,DATE2"></item>
   <item name="TO_DAYS" args="DATE"></item>
   <item name="TRIM" args="EXP"></item>
   <item name="TRUNCATE" args="EXP,DECIMAL"></item>

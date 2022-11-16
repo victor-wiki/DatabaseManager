@@ -8,8 +8,8 @@
 	<mapping>
 		<SqlServer>GETUTCDATE</SqlServer>
 		<MySql>UTC_TIMESTAMP</MySql>
-		<Oracle args="SYSTIMESTAMP">SYS_EXTRACT_UTC</Oracle>
-		<Postgres args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"></Postgres>
+		<Oracle args="SYSTIMESTAMP" isFixedArgs="true">SYS_EXTRACT_UTC</Oracle>
+		<Postgres args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'" isFixedArgs="true"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>NEWID</SqlServer>
@@ -44,7 +44,7 @@
 	<mapping>
 		<SqlServer>STUFF</SqlServer>
 		<MySql>INSERT</MySql>
-		<Oracle></Oracle>
+		<Oracle direction="IN" expression="SUBSTR(EXP,1,START-1) || SUBSTR(VALUE,1,LENGTH) || SUBSTR(EXP,LENGTH+START)"></Oracle>
 		<Postgres>OVERLAY</Postgres>
 	</mapping>
 	<mapping>
@@ -54,22 +54,22 @@
 		<Postgres>COALESCE</Postgres>
 	</mapping>
 	<mapping>
-		<SqlServer defaults="UNIT:day">DATEDIFF</SqlServer>
-		<MySql>DATEDIFF</MySql>
-		<Oracle></Oracle>
-		<Postgres></Postgres>
+		<SqlServer defaults="UNIT:DAY" translator="DateDiffTranslator">DATEDIFF</SqlServer>
+		<MySql translator="DateDiffTranslator">TIMESTAMPDIFF,DATEDIFF</MySql>
+		<Oracle direction="IN" translator="DateDiffTranslator"></Oracle>
+		<Postgres direction="IN" translator="DateDiffTranslator"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>DATEADD</SqlServer>
 		<MySql>DATE_ADD</MySql>
-		<Oracle></Oracle>
-		<Postgres></Postgres>
+		<Oracle direction="IN" translator="DateAddTranslator"></Oracle>
+		<Postgres direction="IN" translator="DateAddTranslator"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>REPLICATE</SqlServer>
 		<MySql>REPEAT</MySql>
-		<Oracle>RPAD</Oracle>
-		<Postgres>RPAD</Postgres>
+		<Oracle direction="IN" expression="RPAD(EXP,LENGTH(EXP)*TIMES,EXP)"></Oracle>
+		<Postgres>REPEAT</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>CONVERT</SqlServer>
@@ -80,13 +80,13 @@
 	<mapping>
 		<SqlServer>SYSTEM_USER,SUSER_SNAME</SqlServer>
 		<MySql>CURRENT_USER</MySql>
-		<Oracle args="'USERENV', 'CURRENT_USER'">SYS_CONTEXT</Oracle>
+		<Oracle args="'USERENV', 'CURRENT_USER'" isFixedArgs="true">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_USER</Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>USER_NAME</SqlServer>
 		<MySql direction="IN">DATABASE</MySql>
-		<Oracle direction="IN" args="'USERENV', 'CURRENT_SCHEMA'">SYS_CONTEXT</Oracle>
+		<Oracle direction="IN" args="'USERENV', 'CURRENT_SCHEMA'" isFixedArgs="true">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_SCHEMA</Postgres>
 	</mapping>
 	<mapping>
@@ -95,12 +95,12 @@
 		<Oracle>ORA_DATABASE_NAME</Oracle>
 		<Postgres>CURRENT_DATABASE</Postgres>
 	</mapping>
-	<!--<mapping>
+	<mapping>
 		<SqlServer>DAY</SqlServer>
 		<MySql>DAYOFMONTH</MySql>
-		<Oracle direction="IN" args="DAY FROM DATE EXP">EXTRACT</Oracle>
-		<Postgres direction="IN" args="'DAY',TIMESTAMP EXP">DATE_PART</Postgres>
-	</mapping>-->
+		<Oracle direction="IN" args="DAY FROM DATE">EXTRACT</Oracle>
+		<Postgres direction="IN" args="'DAY',DATE">DATE_PART</Postgres>
+	</mapping>
 	<mapping>
 		<SqlServer>DATEPART</SqlServer>
 		<MySql>EXTRACT</MySql>
@@ -110,8 +110,8 @@
 	<mapping>
 		<SqlServer>IIF</SqlServer>
 		<MySql>IF</MySql>
-		<Oracle></Oracle>
-		<Postgres></Postgres>
+		<Oracle direction="IN" expression="(CASE WHEN EXP THEN TRUE_VALUE ELSE FALSE_VALUE END)"></Oracle>
+		<Postgres direction="IN" expression="(CASE WHEN EXP THEN TRUE_VALUE ELSE FALSE_VALUE END)"></Postgres>
 	</mapping>
 	<mapping>
 		<SqlServer>LOWER</SqlServer>
@@ -132,11 +132,17 @@
 		<Postgres>LN</Postgres>
 	</mapping>	
 	<mapping>
-		<SqlServer direction="IN">REPLICATE</SqlServer>
-		<MySql>RPAD</MySql>
-		<Oracle>RPAD</Oracle>
-		<Postgres>RPAD</Postgres>
+		<SqlServer direction="IN" defaults="PAD:' '" expression="REPLICATE(PAD,LENGTH-LEN(EXP))+EXP"></SqlServer>
+		<MySql defaults="PAD:' '">LPAD</MySql>
+		<Oracle>LPAD</Oracle>
+		<Postgres defaults="PAD:' '">LPAD</Postgres>
 	</mapping>
+	<mapping>
+		<SqlServer direction="IN" defaults="PAD:' '" expression="EXP+REPLICATE(PAD,LENGTH-LEN(EXP))"></SqlServer>
+		<MySql  defaults="PAD:' '">RPAD</MySql>
+		<Oracle>RPAD</Oracle>
+		<Postgres  defaults="PAD:' '">RPAD</Postgres>
+	</mapping>	
 	<mapping>
 		<SqlServer>CEILING</SqlServer>
 		<MySql>CEILING,CEIL</MySql>
@@ -150,7 +156,7 @@
 		<Postgres>CHR</Postgres>
 	</mapping>
 	<mapping>
-		<SqlServer direction="IN" args="EXP,-1">ROUND</SqlServer>
+		<SqlServer direction="IN">ROUND</SqlServer>
 		<MySql>TRUNCATE</MySql>
 		<Oracle>TRUNC</Oracle>
 		<Postgres>TRUNC</Postgres>

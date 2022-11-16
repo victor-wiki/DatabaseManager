@@ -1,4 +1,5 @@
-﻿using DatabaseConverter.Core.Model;
+﻿using DatabaseConverter.Core.Functions;
+using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
@@ -91,8 +92,8 @@ namespace DatabaseConverter.Core
                 {
                     var mappedDataType = this.GetDataTypeMapping(mappings, dataTypeInfo.DataType)?.Target?.Type;
 
-                    bool isChar = DataTypeHelper.IsCharType(mappedDataType);                   
-                    bool isBinary = DataTypeHelper.IsBinaryType(mappedDataType);                   
+                    bool isChar = DataTypeHelper.IsCharType(mappedDataType);
+                    bool isBinary = DataTypeHelper.IsBinaryType(mappedDataType);
 
                     if (isChar || isBinary)
                     {
@@ -225,11 +226,9 @@ namespace DatabaseConverter.Core
         {
             dictDataType = new Dictionary<string, string>();
 
-            Dictionary<string, string> dataTypeDict = new Dictionary<string, string>();
-
             string name = formula.Name;
 
-            if (!string.IsNullOrEmpty(targetFunctionInfo.Args) && !targetFunctionInfo.Args.Contains("EXP"))
+            if (!string.IsNullOrEmpty(targetFunctionInfo.Args) && targetFunctionInfo.IsFixedArgs)
             {
                 return $"{targetFunctionInfo.Name}({targetFunctionInfo.Args})";
             }
@@ -238,6 +237,22 @@ namespace DatabaseConverter.Core
             FunctionSpecification targetFuncSpec = targetFuncSpecs.FirstOrDefault(item => item.Name.ToUpper() == targetFunctionInfo.Name.ToUpper());
 
             string newExpression = formula.Expression;
+
+            if (sourceFuncSpec != null && !string.IsNullOrEmpty(targetFunctionInfo.Translator))
+            {
+                Type type = Type.GetType($"{typeof(SpecificFunctionTranslatorBase).Namespace}.{targetFunctionInfo.Translator}");
+
+                SpecificFunctionTranslatorBase translator = (SpecificFunctionTranslatorBase)Activator.CreateInstance(type, new object[] { sourceFuncSpec, targetFuncSpec });
+
+                translator.SourceDbType = this.sourceDbType;
+                translator.TargetDbType = this.targetDbType;
+
+                newExpression = translator.Translate(formula);
+
+                return newExpression;
+            }
+
+            Dictionary<string, string> dataTypeDict = new Dictionary<string, string>();
 
             if (sourceFuncSpec != null)
             {
@@ -278,6 +293,15 @@ namespace DatabaseConverter.Core
                                 {
                                     newArg = dataTypeDict[oldArg];
                                 }
+
+                                break;
+
+                            case "DATE":
+                            case "DATE1":
+                            case "DATE2":
+
+                                newArg = DatetimeHelper.DecorateDatetimeString(this.targetDbType, newArg);
+
                                 break;
                         }
 
@@ -297,27 +321,27 @@ namespace DatabaseConverter.Core
                     return content.StartsWith('\'');
                 };
 
-                if (!ignore)
-                {
-                    Dictionary<string, string> defaults = this.GetFunctionDefaults(targetFunctionInfo);
-                    string targetFunctionName = targetFunctionInfo.Name;
+                Dictionary<string, string> defaults = this.GetFunctionDefaults(targetFunctionInfo);
+                string targetFunctionName = targetFunctionInfo.Name;
 
-                    if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                if (this.sourceDbInterpreter.DatabaseType == DatabaseType.Postgres)
+                {
+                    if (name == "TRIM" && formulaArgs.Count > 1)
                     {
-                        if (name == "TRIM" && formulaArgs.Count > 1)
+                        switch (formulaArgs[0])
                         {
-                            switch (formulaArgs[0])
-                            {
-                                case "LEADING":
-                                    targetFunctionName = "LTRIM";
-                                    break;
-                                case "TRAILING":
-                                    targetFunctionName = "RTRIM";
-                                    break;
-                            }
+                            case "LEADING":
+                                targetFunctionName = "LTRIM";
+                                break;
+                            case "TRAILING":
+                                targetFunctionName = "RTRIM";
+                                break;
                         }
                     }
+                }
 
+                if (!ignore)
+                {
                     StringBuilder sbArgs = new StringBuilder();
 
                     foreach (FunctionArgumentItemInfo tai in targetArgItems)
@@ -348,7 +372,7 @@ namespace DatabaseConverter.Core
                             }
                             else
                             {
-                                string defaultValue = this.GetFunctionDefaultValue(defaults, content);
+                                string defaultValue = this.GetFunctionDictionaryValue(defaults, content);
 
                                 if (!string.IsNullOrEmpty(defaultValue))
                                 {
@@ -384,10 +408,6 @@ namespace DatabaseConverter.Core
                                     }
                                 }
                             }
-                        }
-                        else if (content == "STR")
-                        {
-                            sbArgs.Append("''");
                         }
                         else if (content == "START")
                         {
@@ -452,7 +472,7 @@ namespace DatabaseConverter.Core
                                 }
                             }
                         }
-                    } 
+                    }
                     #endregion
 
                     newExpression = $"{targetFunctionName}{(targetFuncSpec.NoParenthesess ? "" : $"({sbArgs.ToString()})")}";
@@ -467,11 +487,28 @@ namespace DatabaseConverter.Core
                         {
                             string value = getSourceArg(sourceItem, sourceItem.Content);
 
-                            expression = expression.Replace(sourceItem.Content, value);
-                        }
+                            if (string.IsNullOrEmpty(value))
+                            {
+                                string defaultValue = this.GetFunctionDictionaryValue(defaults, sourceItem.Content);
+
+                                if (!string.IsNullOrEmpty(defaultValue))
+                                {
+                                    value = defaultValue;
+                                }
+                            }
+
+                            expression = expression.Replace(sourceItem.Content, value);                            
+                        }                       
 
                         newExpression = expression;
                     }
+                }
+
+                var replacements = this.GetFunctionStringDictionary(targetFunctionInfo.Replacements);
+
+                foreach (var replacement in replacements)
+                {
+                    newExpression = newExpression.Replace(replacement.Key, replacement.Value);
                 }
             }
 
@@ -480,11 +517,11 @@ namespace DatabaseConverter.Core
             return newExpression;
         }
 
-        private string GetFunctionDefaultValue(Dictionary<string, string> defaults, string arg)
+        private string GetFunctionDictionaryValue(Dictionary<string, string> values, string arg)
         {
-            if (defaults.ContainsKey(arg))
+            if (values.ContainsKey(arg))
             {
-                return defaults[arg];
+                return values[arg];
             }
 
             return null;
@@ -492,13 +529,21 @@ namespace DatabaseConverter.Core
 
         private Dictionary<string, string> GetFunctionDefaults(MappingFunctionInfo targetFunctionInfo)
         {
-            Dictionary<string, string> dictDefaults = new Dictionary<string, string>();
+            return this.GetFunctionStringDictionary(targetFunctionInfo.Defaults);
+        }
 
-            string defaults = targetFunctionInfo.Defaults;
+        private Dictionary<string, string> GetFunctionReplacements(MappingFunctionInfo targetFunctionInfo)
+        {
+            return this.GetFunctionStringDictionary(targetFunctionInfo.Replacements);
+        }
 
-            if (!string.IsNullOrEmpty(defaults))
+        private Dictionary<string, string> GetFunctionStringDictionary(string content)
+        {
+            Dictionary<string, string> dict = new Dictionary<string, string>();            
+
+            if (!string.IsNullOrEmpty(content))
             {
-                string[] items = defaults.Split(';');
+                string[] items = content.Split(';');
 
                 foreach (string item in items)
                 {
@@ -509,15 +554,15 @@ namespace DatabaseConverter.Core
                         string key = subItems[0];
                         string value = subItems[1];
 
-                        if (!dictDefaults.ContainsKey(key))
+                        if (!dict.ContainsKey(key))
                         {
-                            dictDefaults.Add(key, value);
+                            dict.Add(key, value);
                         }
                     }
                 }
             }
 
-            return dictDefaults;
+            return dict;
         }
 
         private string GetFunctionValue(List<FunctionSpecification> targetFuncSpecs, string value)
@@ -614,7 +659,7 @@ namespace DatabaseConverter.Core
 
                     if (!string.IsNullOrEmpty(args) && !string.IsNullOrEmpty(mapping.Args))
                     {
-                        if (args.Trim().ToLower() != mapping.Args.Trim().ToLower())
+                        if (mapping.IsFixedArgs && args.Trim().ToLower() != mapping.Args.Trim().ToLower())
                         {
                             matched = false;
                         }
@@ -624,8 +669,11 @@ namespace DatabaseConverter.Core
                     {
                         functionInfo.Name = mapping.Function.Split(',')?.FirstOrDefault();
                         functionInfo.Args = mapping.Args;
+                        functionInfo.IsFixedArgs = mapping.IsFixedArgs;
                         functionInfo.Expression = mapping.Expression;
                         functionInfo.Defaults = mapping.Defaults;
+                        functionInfo.Translator = mapping.Translator;
+                        functionInfo.Replacements = mapping.Replacements;
                     }
                 }
             }

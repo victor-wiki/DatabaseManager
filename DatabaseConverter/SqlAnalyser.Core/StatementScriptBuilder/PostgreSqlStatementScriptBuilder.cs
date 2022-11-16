@@ -3,6 +3,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace SqlAnalyser.Core
@@ -268,7 +269,9 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null && set.Value != null)
                 {
-                    this.AppendLine($"{set.Key} := {set.Value};");
+                    string value = this.GetSetVariableValue(set.Key.Symbol, set.Value.Symbol);
+
+                    this.AppendLine($"{set.Key} := {value};");
                 }
             }
             else if (statement is LoopStatement loop)
@@ -451,7 +454,20 @@ namespace SqlAnalyser.Core
                     {
                         string[] items = symbol.Split('=');
 
-                        symbol = $"{items[0]}:={string.Join("=", items.Skip(1))}";
+                        var values = items.Skip(1);
+
+                        string strValue = "";
+
+                        if (values.Count() == 1)
+                        {
+                            strValue = this.GetSetVariableValue(items[0], items[1]);
+                        }
+                        else
+                        {
+                            strValue = string.Join("=", items.Skip(1));
+                        }
+
+                        symbol = $"{items[0]}:={strValue}";
                     }
 
                     this.AppendLine($"{symbol};");
@@ -574,6 +590,33 @@ namespace SqlAnalyser.Core
         private void PrintMessage(string content)
         {
             this.AppendLine($"RAISE INFO '%',{content};");
+        }
+
+        private string GetSetVariableValue(string name, string value)
+        {
+            if (name != null && value != null && ValueHelper.IsStringValue(value))
+            {
+                var declareVariable = this.DeclareStatements.FirstOrDefault(item => (item is DeclareVariableStatement) && (item as DeclareVariableStatement).Name.Symbol?.Trim() == name.Trim()) as DeclareVariableStatement;
+
+                if (declareVariable != null)
+                {
+                    string dataType = declareVariable.DataType?.Symbol?.ToUpper();
+
+                    if (dataType != null)
+                    {
+                        if (dataType == "DATE")
+                        {
+                            value = $"{value}::DATE";
+                        }
+                        else if (dataType.Contains("TIMESTAMP"))
+                        {
+                            value = $"{value}::TIMESTAMP";
+                        }
+                    }
+                }
+            }
+
+            return value;
         }
 
         public string BuildTable(TableInfo table)

@@ -3,8 +3,6 @@ using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using PoorMansTSqlFormatterRedux;
-using RTools_NTS.Util;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -126,7 +124,7 @@ namespace DatabaseConverter.Core
             }
 
             this.ProcessFunctions();
-            this.ProcessSequences();
+            this.ProcessSequences();            
 
             foreach (Statement statement in this.Script.Statements)
             {
@@ -167,7 +165,7 @@ namespace DatabaseConverter.Core
                                 changeParaVarName(token);
 
                                 continue;
-                            }
+                            }                            
                         }
 
                         this.HandleQuotationChar(statement, token, tokens);
@@ -200,7 +198,7 @@ namespace DatabaseConverter.Core
 
                     this.HandleConcatChars(token);
                 }
-            }
+            }            
 
             this.Script.Schema = this.GetNewQuotedString(this.DbObject.Schema);
 

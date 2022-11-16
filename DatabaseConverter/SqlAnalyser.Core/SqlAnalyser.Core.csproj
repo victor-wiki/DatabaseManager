@@ -6,15 +6,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql and PostgreSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.8</Version>
+    <Version>2.0.9</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.8</AssemblyVersion>
-    <FileVersion>2.0.8</FileVersion>
-    <PackageReleaseNotes>1. remove dependency of DatabaseInterpreter.Core 
-2. add
-(1) add raise error and goto statements for SqlAnalyser
-(2) add AnalyseCommon method for SqlAnalyser, no need specify routine script type
-3. fix bugs: select inner join; update inner join: mysql declares</PackageReleaseNotes>
+    <AssemblyVersion>2.0.9</AssemblyVersion>
+    <FileVersion>2.0.9</FileVersion>
+    <PackageReleaseNotes>1. handle date or timestamp variable but value is string for oracle and postgres
+2. oracle: select from DUAL to other database, should remove DUAL</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

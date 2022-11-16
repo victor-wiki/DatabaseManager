@@ -131,7 +131,7 @@ namespace DatabaseConverter.Model
                     }
 
                     if (c == delimiterChar)
-                    {                        
+                    {
                         if ((leftParenthesesCount == rightParenthesesCount) && (singleQuotationCharCount % 2 == 0))
                         {
                             delimiterIndexes.Add(i);
@@ -152,7 +152,7 @@ namespace DatabaseConverter.Model
                     {
                         string value = body.Substring(startIndex, length);
 
-                        args.Add(value);
+                        args.Add(value.Trim());
                     }
 
                     lastDelimiterIndex = delimiterIndex;
@@ -160,7 +160,7 @@ namespace DatabaseConverter.Model
 
                 if (lastDelimiterIndex < body.Length - 1)
                 {
-                    args.Add(body.Substring(lastDelimiterIndex + 1));
+                    args.Add(body.Substring(lastDelimiterIndex + 1).Trim());
                 }
             }
             else
@@ -169,8 +169,8 @@ namespace DatabaseConverter.Model
 
                 if (lastIndex >= 0)
                 {
-                    string firstPart = body.Substring(0, lastIndex);
-                    string lastPart = body.Substring(lastIndex + delimiter.Length);
+                    string firstPart = body.Substring(0, lastIndex).Trim();
+                    string lastPart = body.Substring(lastIndex + delimiter.Length).Trim();
 
                     args.Add(firstPart);
                     args.Add(lastPart);

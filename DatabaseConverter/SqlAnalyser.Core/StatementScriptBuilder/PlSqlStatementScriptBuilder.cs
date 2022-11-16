@@ -331,13 +331,15 @@ namespace SqlAnalyser.Core
                 {
                     string value = set.Value.Symbol;
 
+                    value = this.GetSetVariableValue(set.Key.Symbol, set.Value?.Symbol);
+
                     if (!AnalyserHelper.IsSubquery(value))
                     {
-                        this.AppendLine($"{set.Key} := {set.Value};");
+                        this.AppendLine($"{set.Key} := {value};");
                     }
                     else
                     {
-                        this.AppendLine(StatementScriptBuilderHelper.ConvertToSelectIntoVariable(set.Key.Symbol, set.Value.Symbol));
+                        this.AppendLine(StatementScriptBuilderHelper.ConvertToSelectIntoVariable(set.Key.Symbol, value));
                     }
                 }
             }
@@ -521,6 +523,8 @@ namespace SqlAnalyser.Core
 
                         string variable = items[0];
                         string value = string.Join("=", items.Skip(1));
+
+                        value = this.GetSetVariableValue(variable, value);
 
                         if (!AnalyserHelper.IsSubquery(value))
                         {
@@ -741,6 +745,35 @@ namespace SqlAnalyser.Core
             }
 
             return tableName;
+        }
+
+        private string GetSetVariableValue(string name, string value)
+        {
+            if (name != null && value != null && ValueHelper.IsStringValue(value))
+            {
+                bool isTimestampValue = value.Contains(" ");
+                string dateFormat = "'yyyy-MM-dd'";
+                string datetimeFormat = "'yyyy-MM-dd HH24:mi:ss'";
+
+                string format = isTimestampValue ? datetimeFormat : dateFormat;
+
+                var declareVariable = this.DeclareStatements.FirstOrDefault(item => (item is DeclareVariableStatement) && (item as DeclareVariableStatement).Name.Symbol?.Trim() == name.Trim()) as DeclareVariableStatement;
+
+                if (declareVariable != null)
+                {
+                    string dataType = declareVariable.DataType?.Symbol?.ToUpper();
+
+                    if (dataType != null)
+                    {
+                        if (dataType == "DATE" || dataType.Contains("TIMESTAMP"))
+                        {
+                            value = $"TO_DATE({value}, {format})";
+                        }
+                    }
+                }
+            }
+
+            return value;
         }
 
         private string GetExecuteImmediateSql(string sql)

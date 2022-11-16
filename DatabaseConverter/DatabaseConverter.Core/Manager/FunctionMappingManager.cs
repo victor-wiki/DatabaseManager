@@ -1,5 +1,6 @@
 ﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,8 +40,11 @@ namespace DatabaseConverter.Core
                 Function = t.Value,
                 Direction = ParseDirection(t),
                 Args = t.Attribute("args")?.Value,
+                IsFixedArgs = ValueHelper.IsTrueValue(t.Attribute("isFixedArgs")?.Value),
                 Expression = t.Attribute("expression")?.Value,
-                Defaults = t.Attribute("defaults")?.Value
+                Replacements = t.Attribute("replacements")?.Value,
+                Defaults = t.Attribute("defaults")?.Value,
+                Translator = t.Attribute("translator")?.Value
             }))
             .ToList();
         }

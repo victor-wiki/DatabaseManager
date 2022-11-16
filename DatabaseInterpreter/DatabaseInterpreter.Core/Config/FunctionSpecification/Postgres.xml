@@ -45,7 +45,7 @@
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
   <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH,VALUE"></item>
+  <item name="LPAD" args="EXP,LENGTH,PAD"></item>
   <item name="LTRIM" args="EXP"></item>
   <item name="MD5" args="EXP"></item>
   <item name="MIN_SCALE" args="EXP"></item>
@@ -57,12 +57,12 @@
   <item name="POSITION" args="SEARCH IN EXP" delimiter="IN"></item>
   <item name="POWER" args="EXP,Y"></item>
   <item name="RADIANS" args="EXP"></item>
-  <item name="REPEAT" args="EXP,LENGTH"></item>
+  <item name="REPEAT" args="EXP,TIMES"></item>
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
-  <item name="RPAD" args="STR,LENGTH,PAD"></item>
+  <item name="RPAD" args="EXP,LENGTH,PAD"></item>
   <item name="RTRIM" args="EXP"></item>
   <item name="SCALE" args="EXP"></item>
   <item name="SIN" args="EXP"></item>
@@ -81,6 +81,6 @@
   <item name="TO_TIMESTAMP" args="EXP,FORMAT"></item>
   <item name="TRIM" args="[BOTH|LEADING|TRAILING] FROM EXP" delimiter="FROM"></item>
   <item name="TRIM_SCALE" args="EXP"></item>
-  <item name="TRUNC" args="EXP"></item>
+  <item name="TRUNC" args="EXP,DECIMAL"></item>
   <item name="UPPER" args="EXP"></item>  
 </items>

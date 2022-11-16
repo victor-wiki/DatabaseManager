@@ -81,7 +81,7 @@
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
   <item name="REPLACE" args="EXP,OLD,NEW"></item>
-  <item name="REPLICATE" args="PAD,LENGTH"></item>
+  <item name="REPLICATE" args="EXP,TIMES"></item>
   <item name="REVERSE" args="EXP"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
