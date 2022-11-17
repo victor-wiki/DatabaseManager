@@ -228,11 +228,6 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 
-# Visual Studio 6 build log
-*.plg
-
-# Visual Studio 6 workspace options file
-*.opt
 
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
