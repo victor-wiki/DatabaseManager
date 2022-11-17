@@ -219,7 +219,7 @@
             // 
             // btnExchange
             // 
-            this.btnExchange.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.btnExchange.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnExchange.Image = global::DatabaseManager.Resources.Exchange;
             this.btnExchange.Location = new System.Drawing.Point(240, 8);
             this.btnExchange.Name = "btnExchange";

@@ -8,13 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.17</Version>
+    <Version>2.0.18</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. show error message for script translate
-2. add: default output folder setting for scripts</PackageReleaseNotes>
+    <PackageReleaseNotes>change form control font and document annotation language</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.17</AssemblyVersion>
-    <FileVersion>2.0.17</FileVersion>
+    <AssemblyVersion>2.0.18</AssemblyVersion>
+    <FileVersion>2.0.18</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

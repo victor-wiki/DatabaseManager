@@ -303,9 +303,37 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"PRINT {print.Content.Symbol?.Replace("||", "+")};");
             }
-            else if (statement is CallStatement execute)
+            else if (statement is CallStatement call)
             {
-                this.AppendLine($"EXECUTE {execute.Name} {string.Join(",", execute.Parameters)};");
+                if(!call.IsExecuteSql)
+                {
+                    this.AppendLine($"EXECUTE {call.Name} {string.Join(",", call.Parameters.Select(item=>item.Value))};");
+                } 
+                else
+                {
+                    string content = call.Parameters.FirstOrDefault()?.Value?.Symbol;
+
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var parameters = call.Parameters.Skip(1);
+
+                        List<CallParameter> usings = new List<CallParameter>();
+
+                        foreach (var parameter in parameters)
+                        {
+                            var value = parameter.Value?.Symbol;
+
+                            if (!parameter.IsDescription)
+                            {
+                                usings.Add(parameter);
+                            }
+                        }
+
+                        string strParameters = usings.Count == 0 ? "" : $",N'', {(string.Join(",", usings.Select(item => $"{item.Value}")))}";
+
+                        this.AppendLine($"EXECUTE SP_EXECUTESQL {content}{strParameters};");
+                    }
+                }
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -390,6 +418,26 @@ namespace SqlAnalyser.Core
                     this.AppendLine($"{gts.Label}:");
 
                     this.AppendChildStatements(gts.Statements);
+                }
+            }
+            else if (statement is PreparedStatement prepared)
+            {
+                PreparedStatementType type = prepared.Type;
+
+                if(type == PreparedStatementType.Prepare)
+                {
+                    if(this.Option.CollectSpecialStatementTypes.Contains(prepared.GetType()))
+                    {
+                        this.SpecialStatements.Add(prepared);
+                    }
+                }
+                else if(type == PreparedStatementType.Execute)
+                {
+                    var pre = this.SpecialStatements.FirstOrDefault(item => (item is PreparedStatement) && (item as PreparedStatement).Id.Symbol == prepared.Id.Symbol) as PreparedStatement;
+
+                    string variables = prepared.ExecuteVariables.Count > 0 ? $",N'',{(string.Join(",", prepared.ExecuteVariables))}" : "";
+
+                    this.AppendLine($"EXECUTE SP_EXECUTESQL {pre?.FromSqlOrVariable}{variables};");
                 }
             }
 

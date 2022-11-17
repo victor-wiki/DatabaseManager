@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -747,7 +748,7 @@ namespace SqlAnalyser.Core
                 statement = new CallStatement()
                 {
                     Name = functionName,
-                    Parameters = args?.Select(item => new Parameter() { Name = new TokenInfo(item) }).ToList()
+                    Parameters = args?.Select(item => new CallParameter() { Value = new TokenInfo(item) }).ToList()
                 };
             }
 
@@ -796,9 +797,36 @@ namespace SqlAnalyser.Core
                 {
                     statements.AddRange(this.ParseCursorManipulationtatement(cursor));
                 }
+                else if(child is Execute_immediateContext execute)
+                {
+                    statements.Add(this.ParseExecuteImmediate(execute));
+                }
             }
 
             return statements;
+        }
+
+        public CallStatement ParseExecuteImmediate(Execute_immediateContext node)
+        {
+            CallStatement statement = new CallStatement();
+
+            statement.IsExecuteSql = true;
+
+            statement.Parameters.Add(new CallParameter() { Value = new TokenInfo(node.expression()) });
+
+            var usings = node.using_clause()?.using_element();
+
+            if(usings!=null)
+            {
+                foreach(var item in usings)
+                {
+                    var parameter = new CallParameter() { Value = new TokenInfo(item.select_list_elements()) { Type = TokenType.VariableName } };
+
+                    statement.Parameters.Add(parameter);                     
+                }               
+            }            
+
+            return statement;
         }
 
         public List<Statement> ParseDataManipulationLanguageStatement(Data_manipulation_language_statementsContext node)
@@ -1450,7 +1478,7 @@ namespace SqlAnalyser.Core
                 {
                     SetStatement statement = new SetStatement();
 
-                    statement.Key = new TokenInfo(element);
+                    statement.Key = new TokenInfo(element) { Type = TokenType.VariableName };
 
                     statements.Add(statement);
                 }

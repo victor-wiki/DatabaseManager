@@ -377,9 +377,38 @@ namespace SqlAnalyser.Core
             {
                 this.PrintMessage(print.Content.Symbol?.ToString()?.Replace("+", "||"));
             }
-            else if (statement is CallStatement execute)
+            else if (statement is CallStatement call)
             {
-                this.AppendLine($"{(execute.IsExecuteSql ? "EXECUTE IMMEDIATE" : "")} {execute.Name}({string.Join(",", execute.Parameters.Select(item => item.Name?.Symbol?.Split('=')?.LastOrDefault()))});");
+                if (!call.IsExecuteSql)
+                {
+                    this.AppendLine($"{call.Name}({string.Join(",", call.Parameters.Select(item => item.Value?.Symbol?.Split('=')?.LastOrDefault()))});");
+                }
+                else
+                {
+                    string content = call.Parameters.FirstOrDefault()?.Value?.Symbol;
+
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var parameters = call.Parameters.Skip(1);
+
+                        List<CallParameter> usings = new List<CallParameter>();
+
+                        foreach (var parameter in parameters)
+                        {
+                            var value = parameter.Value?.Symbol;
+
+                            if (!parameter.IsDescription)
+                            {
+                                usings.Add(parameter);
+                            }
+                        }
+
+                        string strUsings = usings.Count == 0 ? "" : $" USING {(string.Join(",", usings.Select(item => $"{item.Value}")))}";
+
+                        this.AppendLine($"EXECUTE IMMEDIATE {content}{strUsings};");
+                    }
+                }
+
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -495,6 +524,26 @@ namespace SqlAnalyser.Core
                     this.AppendLine($"<<{gts.Label}>>");
 
                     this.AppendChildStatements(gts.Statements);
+                }
+            }
+            else if (statement is PreparedStatement prepared)
+            {
+                PreparedStatementType type = prepared.Type;
+
+                if (type == PreparedStatementType.Prepare)
+                {
+                    if (this.Option.CollectSpecialStatementTypes.Contains(prepared.GetType()))
+                    {
+                        this.SpecialStatements.Add(prepared);
+                    }
+                }
+                else if (type == PreparedStatementType.Execute)
+                {
+                    var pre = this.SpecialStatements.FirstOrDefault(item => (item is PreparedStatement) && (item as PreparedStatement).Id.Symbol == prepared.Id.Symbol) as PreparedStatement;
+
+                    string variables = prepared.ExecuteVariables.Count > 0 ? $" USING {(string.Join(",", prepared.ExecuteVariables))}" : "";
+
+                    this.AppendLine($"EXECUTE IMMEDIATE {pre?.FromSqlOrVariable}{variables};");
                 }
             }
 

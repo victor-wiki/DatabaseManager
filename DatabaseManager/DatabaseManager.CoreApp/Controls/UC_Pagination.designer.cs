@@ -3,14 +3,14 @@
     partial class UC_Pagination
     {
         /// <summary> 
-        /// 必需的设计器变量。
+        /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
         /// <summary> 
-        /// 清理所有正在使用的资源。
+        /// Clean up any resources being used.
         /// </summary>
-        /// <param name="disposing">如果应释放托管资源，为 true；否则为 false。</param>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -20,11 +20,11 @@
             base.Dispose(disposing);
         }
 
-        #region 组件设计器生成的代码
+        #region Component Designer generated code
 
         /// <summary> 
-        /// 设计器支持所需的方法 - 不要
-        /// 使用代码编辑器修改此方法的内容。
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
@@ -46,7 +46,7 @@
             // 
             // cboPageNum
             // 
-            this.cboPageNum.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.cboPageNum.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.cboPageNum.FormattingEnabled = true;
             this.cboPageNum.Location = new System.Drawing.Point(79, 5);
             this.cboPageNum.Margin = new System.Windows.Forms.Padding(4);
@@ -59,14 +59,14 @@
             // 
             // lblPageCount
             // 
-            this.lblPageCount.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.lblPageCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblPageCount.Location = new System.Drawing.Point(172, 9);
             this.lblPageCount.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblPageCount.Name = "lblPageCount";
             this.lblPageCount.Size = new System.Drawing.Size(38, 20);
             this.lblPageCount.TabIndex = 4;
             this.lblPageCount.Text = "0";
-            this.toolTip1.SetToolTip(this.lblPageCount, "总页数");
+            this.toolTip1.SetToolTip(this.lblPageCount, "Total Pages");
             // 
             // btnRefresh
             // 
@@ -78,7 +78,7 @@
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(25, 25);
             this.btnRefresh.TabIndex = 10;
-            this.toolTip1.SetToolTip(this.btnRefresh, "刷新");
+            this.toolTip1.SetToolTip(this.btnRefresh, "Refresh");
             this.btnRefresh.UseVisualStyleBackColor = true;
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
@@ -152,7 +152,7 @@
             // 
             this.cboPageSize.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPageSize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cboPageSize.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.cboPageSize.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.cboPageSize.FormattingEnabled = true;
             this.cboPageSize.Items.AddRange(new object[] {
             "10",
@@ -174,7 +174,7 @@
             // lblSepartor
             // 
             this.lblSepartor.AutoSize = true;
-            this.lblSepartor.Font = new System.Drawing.Font("宋体", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.lblSepartor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblSepartor.Location = new System.Drawing.Point(148, 9);
             this.lblSepartor.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblSepartor.Name = "lblSepartor";

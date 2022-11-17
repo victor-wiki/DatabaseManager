@@ -1,11 +1,8 @@
 ﻿using DatabaseConverter.Core.Model.Functions;
 using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DatabaseConverter.Core.Functions
 {
@@ -53,7 +50,8 @@ namespace DatabaseConverter.Core.Functions
             {
                 string unit = dateDiff.Value.Unit.ToUpper();
 
-                bool isStringValue = ValueHelper.IsStringValue(dateDiff.Value.Date1);
+                bool isStringValue1 = ValueHelper.IsStringValue(dateDiff.Value.Date1);
+                bool isStringValue2 = ValueHelper.IsStringValue(dateDiff.Value.Date2);
                 string date1 = dateDiff.Value.Date1;
                 string date2 = dateDiff.Value.Date2;
 
@@ -94,7 +92,7 @@ namespace DatabaseConverter.Core.Functions
                 {
                     string dataType = "::TIMESTAMP";
 
-                    string strDate1 = $"{date1}{dataType}"; ;
+                    string strDate1 = $"{date1}{dataType}";
                     string strDate2 = $"{date2}{dataType}";
                     string strDate1MinusData2 = $"{strDate1}-{strDate2}";
 
@@ -125,46 +123,56 @@ namespace DatabaseConverter.Core.Functions
                 }
                 else if (this.TargetDbType == DatabaseType.Oracle)
                 {
-                    bool isTimestampStr = isStringValue && date1.Contains(" ");
-                    bool isDateStr = isStringValue && !date1.Contains(" ");
+                    bool isTimestampStr1 = isStringValue1 && DatetimeHelper.IsTimestampString(date1);
+                    bool isTimestampStr2 = isStringValue2 && DatetimeHelper.IsTimestampString(date2);
+                    bool isDateStr1 = isStringValue1 && !isTimestampStr1;
+                    bool isDateStr2 = isStringValue2 && !isTimestampStr2;
 
-                    if (isStringValue)
+                    Func<string, bool, bool, string> getStrDate = (date, isStringValue, isTimestampStr) =>
                     {
-                        date1 = DatetimeHelper.GetOracleUniformDatetimeString(date1, isTimestampStr);
-                        date2 = DatetimeHelper.GetOracleUniformDatetimeString(date2, isTimestampStr);
-                    }
+                        if (isStringValue)
+                        {
+                            date = DatetimeHelper.GetOracleUniformDatetimeString(date, isTimestampStr);
+                        }
 
-                    string dataType = isStringValue ? (isTimestampStr ? "TIMESTAMP" : "DATE") : "";
+                        string dataType = isStringValue ? (isTimestampStr ? "TIMESTAMP" : "DATE") : "";
 
-                    string strDate1 = $"{dataType}{date1}";
-                    string strDate2 = $"{dataType}{date2}";
+                        string strDate = $"{dataType}{date}";
 
-                    if (!isTimestampStr)
-                    {
-                        strDate1 = $"CAST({strDate1} AS TIMESTAMP)";
-                        strDate2 = $"CAST({strDate2} AS TIMESTAMP)";
-                    }
+                        if (!isTimestampStr)
+                        {
+                            strDate = $"CAST({strDate} AS TIMESTAMP)";
+                        }
+
+                        return strDate;
+                    };
+
+                    string strDate1 = getStrDate(date1, isStringValue1, isTimestampStr1);
+                    string strDate2 = getStrDate(date2, isStringValue2, isTimestampStr2);
 
                     string strDate1MinusData2 = $"{strDate1}-{strDate2}";
-                    string dateFormat = "'yyyy-MM-dd'";
-                    string datetimeFormat = "'yyyy-MM-dd HH24:mi:ss'";
+                    string dateFormat = $"'{DatetimeHelper.DateFormat}'";
+                    string datetimeFormat = $"'{DatetimeHelper.OracleDatetimeFormat}'";
 
-                    Func<string, string> getDiffValue = (multiplier) =>
+                    Func<string, bool, bool, string> getDateFormatStr = (date, isDateStr, isTimestampStr) =>
                     {
-                        string value = "";
-
                         if(isDateStr)
                         {
-                            value =  $"(TO_DATE({date1}, {dateFormat})-TO_DATE({date2}, {dateFormat}))";
+                            return $"TO_DATE({date}, {dateFormat})";
                         }
                         else if(isTimestampStr)
                         {
-                            value = $"(TO_DATE({date1}, {datetimeFormat})-TO_DATE({date2}, {datetimeFormat}))";
+                            return $"TO_DATE({date}, {datetimeFormat})";
                         }
                         else
                         {
-                            value = $"(TO_DATE(TO_CHAR({date1}, {datetimeFormat}))-TO_DATE(TO_CHAR({date2}, {datetimeFormat})))";
+                            return $"TO_DATE(TO_CHAR({date}, {datetimeFormat}), {datetimeFormat})";
                         }
+                    };
+
+                    Func<string, string> getDiffValue = (multiplier) =>
+                    {
+                        string value = $"({getDateFormatStr(date1, isDateStr1, isTimestampStr1)}-{getDateFormatStr(date2, isDateStr2, isTimestampStr2)})"; ;
 
                         return $"ROUND({value}*{multiplier})";
                     };

@@ -1,9 +1,5 @@
 ﻿using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DatabaseConverter.Core.Functions
 {

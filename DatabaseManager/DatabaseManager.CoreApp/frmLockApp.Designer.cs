@@ -38,9 +38,9 @@
             // 
             // btnLock
             // 
-            this.btnLock.Location = new System.Drawing.Point(107, 66);
+            this.btnLock.Location = new System.Drawing.Point(115, 68);
             this.btnLock.Name = "btnLock";
-            this.btnLock.Size = new System.Drawing.Size(75, 23);
+            this.btnLock.Size = new System.Drawing.Size(75, 30);
             this.btnLock.TabIndex = 0;
             this.btnLock.Text = "Lock";
             this.btnLock.UseVisualStyleBackColor = true;
@@ -63,13 +63,13 @@
             this.txtPassword.PasswordChar = '*';
             this.txtPassword.Size = new System.Drawing.Size(193, 23);
             this.txtPassword.TabIndex = 6;
-            this.txtPassword.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtPassword_KeyUp);           
+            this.txtPassword.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtPassword_KeyUp);
             // 
             // btnExit
             // 
-            this.btnExit.Location = new System.Drawing.Point(207, 66);
+            this.btnExit.Location = new System.Drawing.Point(215, 68);
             this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(75, 23);
+            this.btnExit.Size = new System.Drawing.Size(75, 30);
             this.btnExit.TabIndex = 7;
             this.btnExit.Text = "Cancel";
             this.btnExit.UseVisualStyleBackColor = true;
@@ -79,7 +79,7 @@
             // 
             this.lblMessage.AutoSize = true;
             this.lblMessage.ForeColor = System.Drawing.Color.Red;
-            this.lblMessage.Location = new System.Drawing.Point(8, 103);
+            this.lblMessage.Location = new System.Drawing.Point(8, 113);
             this.lblMessage.Name = "lblMessage";
             this.lblMessage.Size = new System.Drawing.Size(398, 17);
             this.lblMessage.TabIndex = 8;
@@ -90,7 +90,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(405, 121);
+            this.ClientSize = new System.Drawing.Size(405, 135);
             this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.txtPassword);

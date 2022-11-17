@@ -302,9 +302,65 @@ namespace SqlAnalyser.Core
                         }
                     }
                 }
+                else if (child is PreparedStatementContext prepared)
+                {
+                    statements.Add(this.ParsePreparedStatement(prepared));
+                }
             }
 
             return statements;
+        }
+
+        public PreparedStatement ParsePreparedStatement(PreparedStatementContext node)
+        {
+            PreparedStatement statement = new PreparedStatement();
+
+            var id = node.identifier();
+
+            if (id != null)
+            {
+                statement.Id = new TokenInfo(id);
+            }
+
+            foreach (var child in node.children)
+            {
+                if (child is TerminalNodeImpl tni)
+                {
+                    string text = child.GetText();
+
+                    if (text == "PREPARE")
+                    {
+                        statement.Type = PreparedStatementType.Prepare;
+                    }
+                    else if (text == "DEALLOCAT")
+                    {
+                        statement.Type = PreparedStatementType.Deallocate;
+                    }
+                }
+                else if (child is TextLiteralContext text)
+                {
+                    statement.FromSqlOrVariable = new TokenInfo(text);
+                }
+                else if (child is UserVariableContext uVar)
+                {
+                    statement.FromSqlOrVariable = new TokenInfo(uVar) { Type = TokenType.VariableName };
+                }
+                else if (child is ExecuteStatementContext es)
+                {
+                    statement.Type = PreparedStatementType.Execute;
+
+                    statement.Id = new TokenInfo(es.identifier());
+
+                    var variables = es.executeVarList().userVariable();
+
+                    if (variables != null)
+                    {
+                        statement.ExecuteVariables.AddRange(variables.Select(item => new TokenInfo(item) { Type = TokenType.VariableName }));
+                    }
+                }
+            }
+
+            return statement;
         }
 
         public void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
@@ -577,7 +633,7 @@ namespace SqlAnalyser.Core
 
             if (expressions != null && expressions.Length > 0)
             {
-                statement.Parameters.AddRange(expressions.Select(item => new Parameter() { Name = new TokenInfo(item) }));
+                statement.Parameters.AddRange(expressions.Select(item => new CallParameter() { Value = new TokenInfo(item) }));
             }
 
             return statement;
@@ -942,9 +998,9 @@ namespace SqlAnalyser.Core
                 {
                     if (child is UserVariableContext variable)
                     {
-                        SetStatement statement = new SetStatement();
+                        SetStatement statement = new SetStatement() { IsSetUserVariable = true };
 
-                        statement.Key = new TokenInfo(variable);
+                        statement.Key = new TokenInfo(variable) { Type = TokenType.VariableName };
 
                         statements.Add(statement);
                     }

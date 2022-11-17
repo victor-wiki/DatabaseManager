@@ -4,6 +4,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace SqlAnalyser.Core
@@ -319,11 +320,11 @@ namespace SqlAnalyser.Core
                 {
                     bool isStringValue = ValueHelper.IsStringValue(value);
 
-                    this.PrintMessage(isStringValue ? StringHelper.HandleSingleQuotationChar(value) : value);                   
+                    this.PrintMessage(isStringValue ? StringHelper.HandleSingleQuotationChar(value) : value);
 
                     //Use it will cause syntax error.
                     //this.AppendLine("RETURN;");
-                }               
+                }
             }
             else if (statement is PrintStatement print)
             {
@@ -331,20 +332,41 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement call)
             {
-                string content = string.Join(",", call.Parameters.Select(item => item.Name?.Symbol?.Split('=')?.LastOrDefault()));
-
-                if (call.IsExecuteSql)
+                if(!call.IsExecuteSql)
                 {
-                    this.AppendLine($"SET @SQL:={content};");
-                    this.AppendLine($"PREPARE dynamicSQL FROM @SQL;");
-                    this.AppendLine("EXECUTE dynamicSQL;");
-                    this.AppendLine("DEALLOCATE PREPARE dynamicSQL;");
-                    this.AppendLine();
+                    string content = string.Join(",", call.Parameters.Select(item => item.Value?.Symbol?.Split('=')?.LastOrDefault()));
+
+                    this.AppendLine($"CALL {call.Name}({content});");
                 }
                 else
                 {
-                    this.AppendLine($"CALL {call.Name}({content});");
-                }
+                    string content = call.Parameters.FirstOrDefault()?.Value?.Symbol;
+
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var parameters = call.Parameters.Skip(1);
+
+                        List<CallParameter> usings = new List<CallParameter>();
+
+                        foreach (var parameter in parameters)
+                        {
+                            var value = parameter.Value?.Symbol;
+
+                            if (!parameter.IsDescription)
+                            {
+                                usings.Add(parameter);
+                            }                           
+                        }
+
+                        string strUsings = usings.Count == 0 ? "" : $" USING {(string.Join(",", usings.Select(item => $"@{item.Value}")))}";
+
+                        this.AppendLine($"SET @SQL:={content};");
+                        this.AppendLine("PREPARE dynamicSQL FROM @SQL;");
+                        this.AppendLine($"EXECUTE dynamicSQL{strUsings};");
+                        this.AppendLine("DEALLOCATE PREPARE dynamicSQL;");
+                        this.AppendLine();
+                    }
+                }                
             }
             else if (statement is TransactionStatement transaction)
             {
@@ -367,7 +389,7 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine("LEAVE sp;");
 
-                if(this.Option.CollectSpecialStatementTypes.Contains(leave.GetType()))
+                if (this.Option.CollectSpecialStatementTypes.Contains(leave.GetType()))
                 {
                     this.SpecialStatements.Add(leave);
                 }
@@ -381,7 +403,7 @@ namespace SqlAnalyser.Core
 
                     this.AppendChildStatements(tryCatch.CatchStatements, true);
 
-                    this.AppendLine("END;");                    
+                    this.AppendLine("END;");
                 }
 
                 this.AppendChildStatements(tryCatch.TryStatements, true);
@@ -475,6 +497,25 @@ namespace SqlAnalyser.Core
                 string code = error.ErrorCode == null ? "45000" : error.ErrorCode.Symbol;
 
                 this.AppendLine($"SIGNAL SQLSTATE '{code}' SET MESSAGE_TEXT={error.Content};");
+            }
+            else if (statement is PreparedStatement prepared)
+            {
+                PreparedStatementType type = prepared.Type;
+
+                if (type == PreparedStatementType.Prepare)
+                {
+                    this.AppendLine($"PREPARE {prepared.Id} FROM {prepared.FromSqlOrVariable};");
+                }
+                else if (type == PreparedStatementType.Execute)
+                {
+                    string usingVariables = prepared.ExecuteVariables.Count > 0 ? $" USING {(string.Join(",", prepared.ExecuteVariables))}" : "";
+
+                    this.AppendLine($"EXECUTE {prepared.Id}{usingVariables};");
+                }
+                else if (type == PreparedStatementType.Deallocate)
+                {
+                    this.AppendLine($"DEALLOCATE PREPARE {prepared.Id};");
+                }
             }
 
             return this;
@@ -636,7 +677,7 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE {(table.IsTemporary? "TEMPORARY":"")} TABLE {table.Name}(");
+            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}(");
 
             int i = 0;
 

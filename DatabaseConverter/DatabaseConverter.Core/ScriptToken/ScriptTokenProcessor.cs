@@ -81,13 +81,16 @@ namespace DatabaseConverter.Core
                 }
                 else
                 {
-                    pv.Symbol = "@" + pv.Symbol;
+                    if (!pv.Symbol.StartsWith("@"))
+                    {
+                        pv.Symbol = "@" + pv.Symbol;
+                    }
                 }
 
                 this.AddChangedValue(this.dictChangedValues, name, pv.Symbol);
             };
 
-            Action<TokenInfo> changeDataType = (token) =>
+            Action<Statement, TokenInfo> changeDataType = (statement, token) =>
             {
                 if (token.Symbol != null)
                 {
@@ -103,6 +106,14 @@ namespace DatabaseConverter.Core
 
                     TranslateHelper.TranslateTableColumnDataType(this.dataTypeTranslator, column);
 
+                    if(this.targetDbType == DatabaseType.SqlServer)
+                    {
+                        if(DataTypeHelper.IsTextType(column.DataType) && statement is DeclareVariableStatement)
+                        {
+                            column.DataType = "NVARCHAR";
+                        }
+                    }
+
                     token.Symbol = this.TargetDbInterpreter.ParseDataType(column);
                 }
             };
@@ -114,17 +125,17 @@ namespace DatabaseConverter.Core
                 foreach (var parameter in parameters)
                 {
                     changeParaVarName(parameter.Name);
-                    changeDataType(parameter.DataType);
+                    changeDataType(null, parameter.DataType);
                 }
 
                 if (routineScript.ReturnDataType != null)
                 {
-                    changeDataType(routineScript.ReturnDataType);
+                    changeDataType(null, routineScript.ReturnDataType);
                 }
             }
 
             this.ProcessFunctions();
-            this.ProcessSequences();            
+            this.ProcessSequences();
 
             foreach (Statement statement in this.Script.Statements)
             {
@@ -165,7 +176,7 @@ namespace DatabaseConverter.Core
                                 changeParaVarName(token);
 
                                 continue;
-                            }                            
+                            }
                         }
 
                         this.HandleQuotationChar(statement, token, tokens);
@@ -187,7 +198,7 @@ namespace DatabaseConverter.Core
                             continue;
                         }
 
-                        changeDataType(token);
+                        changeDataType(statement, token);
                     }
                     else
                     {
@@ -198,7 +209,7 @@ namespace DatabaseConverter.Core
 
                     this.HandleConcatChars(token);
                 }
-            }            
+            }
 
             this.Script.Schema = this.GetNewQuotedString(this.DbObject.Schema);
 

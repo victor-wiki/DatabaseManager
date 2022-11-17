@@ -49,6 +49,8 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
+            this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(PreparedStatement));
+
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"CREATE {script.Type.ToString()} {script.NameWithSchema}");

@@ -1,7 +1,5 @@
-﻿using Antlr.Runtime.Tree;
-using DatabaseConverter.Model;
+﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
@@ -20,8 +18,8 @@ namespace DatabaseConverter.Core
                 string[] items = symbol.Split(concatChars,StringSplitOptions.RemoveEmptyEntries);
 
                 return symbol.Contains(concatChars)
-                    && (hasCharColumn || items.Any(item => item.Trim().StartsWith('\'') || item.Trim().EndsWith('\'') || DataTypeHelper.IsCharType(item))
-                    && !items.Any(item => decimal.TryParse(item.Trim().Trim(','), out _) || DataTypeHelper.IsDateOrTimeType(item)));
+                    && (hasCharColumn || items.Any(item => ValueHelper.IsStringValue(item.Trim()) || DataTypeHelper.IsCharType(item))
+                    && !items.Any(item => decimal.TryParse(item.Trim(',',' '), out _)));
             }
 
             return false;

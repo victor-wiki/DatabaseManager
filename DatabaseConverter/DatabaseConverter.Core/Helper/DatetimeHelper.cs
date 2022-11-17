@@ -1,16 +1,24 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DatabaseConverter.Core
 {
     public class DatetimeHelper
     {
+        public const string DateFormat = "yyyy-MM-dd";
+        public const string DatetimeFormat = "yyyy-MM-dd HH:mm:ss";
+        public const string OracleDatetimeFormat = "yyyy-MM-dd HH24:mi:ss";
+
+
         public static string GetOracleUniformDatetimeString(string value, bool isTimestamp)
         {
-            value = DateTime.Parse(value.Trim('\'', ' ')).ToString(isTimestamp ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd");
+            string trimedValue = value.Trim('\'', ' ');
+
+            if(DateTime.TryParse(trimedValue, out var date))
+            {
+                value = date.ToString(isTimestamp ? DatetimeFormat : DateFormat);
+            }            
 
             return $"'{value}'";
         }
@@ -34,6 +42,11 @@ namespace DatabaseConverter.Core
             }           
 
             return value;
+        }
+
+        public static bool IsTimestampString(string value)
+        {
+            return value != null && value.Contains(" ");
         }
     }
 }

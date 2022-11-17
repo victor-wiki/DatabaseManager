@@ -77,6 +77,7 @@
             // 
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.btnConfirm.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnConfirm.Location = new System.Drawing.Point(176, 503);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";

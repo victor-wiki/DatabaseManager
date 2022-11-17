@@ -51,6 +51,7 @@ namespace SqlAnalyser.Core
 
             this.StatementBuilder.Option.NotBuildDeclareStatement = true;
             this.StatementBuilder.Option.CollectDeclareStatement = true ;
+            this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(PreparedStatement));
 
             StringBuilder sb = new StringBuilder();
 

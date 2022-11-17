@@ -7,6 +7,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
 using static TSqlParser;
 
 namespace SqlAnalyser.Core
@@ -1538,78 +1539,100 @@ namespace SqlAnalyser.Core
 
             statement.Name = new TokenInfo(body.func_proc_name_server_database_schema()) { Type = TokenType.RoutineName };
 
-            if (statement.Name.Symbol == "SP_EXECUTESQL")
-            {
-                statement.IsExecuteSql = true;
-            }
-
             Execute_statement_argContext args = body.execute_statement_arg();
-            Execute_statement_argContext []argDetails = args?.execute_statement_arg();
             var varStrs = body.execute_var_string();
 
-            Action<List<Parameter>, Execute_statement_argContext> parseArg = (parameters, arg) =>
-            {
-                if (arg != null)
-                {
-                    var namedArgs = arg.execute_statement_arg_named();
-                    var unnamedArg = arg.execute_statement_arg_unnamed();
-
-                    if (namedArgs != null && namedArgs.Length > 0)
-                    {
-                        foreach (Execute_statement_arg_namedContext g in namedArgs)
-                        {
-                            parameters.Add(this.ParseParameter(g.execute_parameter()));
-                        }
-                    }
-
-                    if (unnamedArg != null)
-                    {
-                        parameters.Add(this.ParseParameter(unnamedArg.execute_parameter()));
-                    }
-                }
-            };
-
-            parseArg(statement.Parameters, args);
-
-            if (argDetails != null)
-            {
-                foreach (var arg in argDetails)
-                {
-                    parseArg(statement.ParameterDetails, arg);
-                }
-            }
+            this.ParseExecuteStatementArgument(statement.Parameters, args);
 
             if (varStrs != null && varStrs.Length > 0)
             {
                 statement.IsExecuteSql = true;
 
-                statement.Parameters.AddRange(varStrs.Select(item => new Parameter() { Name = new TokenInfo(item) }));
-            }          
+                statement.Parameters.AddRange(varStrs.Select(item => new CallParameter() { Value = new TokenInfo(item) }));
+            }
 
+            if (statement.Name.Symbol == "SP_EXECUTESQL")
+            {
+                statement.IsExecuteSql = true;
+
+                if (statement.Parameters.Count > 1)
+                {
+                    statement.Parameters[1].IsDescription = true;
+                }
+            }
 
             return statement;
         }
 
-        private Parameter ParseParameter(Execute_parameterContext node)
+        private void ParseExecuteStatementArgument(List<CallParameter> parameters, Execute_statement_argContext node)
         {
-            Parameter parameter = new Parameter();
+            if (node != null)
+            {
+                var namedArgs = node.execute_statement_arg_named();
+                var unnamedArg = node.execute_statement_arg_unnamed();
+                Execute_statement_argContext[] execArgs = node.execute_statement_arg();
+
+                if (namedArgs != null && namedArgs.Length > 0)
+                {
+                    foreach (Execute_statement_arg_namedContext g in namedArgs)
+                    {
+                        CallParameter parameter = this.ParseCallParameter(g.execute_parameter());
+
+                        if (parameter != null)
+                        {
+                            foreach (var child in g.children)
+                            {
+                                if (child is TerminalNodeImpl && child.GetText().StartsWith("@"))
+                                {
+                                    parameter.Name = new TokenInfo(child as TerminalNodeImpl) { Type = TokenType.VariableName };
+                                    break;
+                                }
+                            }
+
+                            parameters.Add(parameter);
+                        }
+                    }
+                }
+
+                if (unnamedArg != null)
+                {
+                    parameters.Add(this.ParseCallParameter(unnamedArg.execute_parameter()));
+                }
+
+                if (execArgs != null)
+                {
+                    foreach (var item in execArgs)
+                    {
+                        this.ParseExecuteStatementArgument(parameters, item);
+                    }
+                }
+            }
+        }
+
+        private CallParameter ParseCallParameter(Execute_parameterContext node)
+        {
+            CallParameter parameter = new CallParameter();
 
             if (node != null)
             {
                 foreach (var child in node.children)
                 {
+                    string text = child.GetText();
+
                     if (child is TerminalNodeImpl tni)
                     {
-                        string text = child.GetText();
-
                         if (text.StartsWith("@"))
                         {
-                            parameter.Name = new TokenInfo(tni) { Type = TokenType.VariableName };
+                            parameter.Value = new TokenInfo(tni) { Type = TokenType.VariableName };
                         }
                         else if (text == "OUTPUT")
                         {
                             parameter.ParameterType = ParameterType.OUT;
                         }
+                    }
+                    else if (child is ConstantContext cc)
+                    {
+                        parameter.Value = new TokenInfo(cc);
                     }
                 }
             }

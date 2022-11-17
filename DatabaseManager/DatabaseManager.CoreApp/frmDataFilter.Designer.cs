@@ -78,6 +78,7 @@
             // btnRemove
             // 
             this.btnRemove.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnRemove.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnRemove.Location = new System.Drawing.Point(239, 8);
             this.btnRemove.Margin = new System.Windows.Forms.Padding(2, 3, 2, 3);
             this.btnRemove.Name = "btnRemove";
