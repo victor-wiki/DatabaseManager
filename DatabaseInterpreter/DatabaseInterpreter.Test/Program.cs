@@ -35,17 +35,17 @@ namespace DatabaseInterpreter.Test
             SchemaInfoFilter filter = new SchemaInfoFilter();
 
             filter.DatabaseObjectType =
-                 DatabaseObjectType.UserDefinedType
+                 DatabaseObjectType.Type
                  | DatabaseObjectType.Function
                  | DatabaseObjectType.Table
                  | DatabaseObjectType.View
                  | DatabaseObjectType.Procedure
-                 | DatabaseObjectType.TableColumn
-                 | DatabaseObjectType.TablePrimaryKey
-                 | DatabaseObjectType.TableForeignKey
-                 | DatabaseObjectType.TableIndex
-                 | DatabaseObjectType.TableConstraint
-                 | DatabaseObjectType.TableTrigger
+                 | DatabaseObjectType.Column
+                 | DatabaseObjectType.PrimaryKey
+                 | DatabaseObjectType.ForeignKey
+                 | DatabaseObjectType.Index
+                 | DatabaseObjectType.Constraint
+                 | DatabaseObjectType.Trigger
                  | DatabaseObjectType.Sequence;
 
             await InterpreterDemoRuner.Run(new InterpreterDemo(sqlServerInterpreter), filter);
