@@ -25,9 +25,7 @@ namespace DatabaseConverter.Demo
         public async Task Convert()
         {
             DatabaseType sourceDbType = this.sourceInterpreter.DatabaseType;
-            DatabaseType targetDbType = this.targetInterpreter.DatabaseType;
-
-            int dataBatchSize = 500;
+            DatabaseType targetDbType = this.targetInterpreter.DatabaseType;     
 
             DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = (GenerateScriptOutputMode.WriteToFile | GenerateScriptOutputMode.WriteToString)};
