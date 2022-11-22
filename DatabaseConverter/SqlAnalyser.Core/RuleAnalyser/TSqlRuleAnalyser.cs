@@ -405,7 +405,7 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Dml_trigger_operationContext operation)
                 {
-                    script.Events.Add((TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText()));
+                    script.Events.Add((TriggerEvent)Enum.Parse(typeof(TriggerEvent), operation.GetText().ToUpper()));
                 }
             }
 
@@ -1729,7 +1729,7 @@ namespace SqlAnalyser.Core
             {
                 foreach (var child in node.children)
                 {
-                    string text = child.GetText();
+                    string text = child.GetText().ToUpper();
 
                     if (child is TerminalNodeImpl tni)
                     {

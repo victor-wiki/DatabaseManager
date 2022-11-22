@@ -6,15 +6,11 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql and PostgreSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.11</Version>
+    <Version>2.0.12</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.11</AssemblyVersion>
-    <FileVersion>2.0.11</FileVersion>
-    <PackageReleaseNotes>1. add ValidateScripts method
-2. bugs fix:
-(1) tsql: miss elseif; top n subquery
-(2) plsql : elsif
-(3) select into clause to create temporary table</PackageReleaseNotes>
+    <AssemblyVersion>2.0.12</AssemblyVersion>
+    <FileVersion>2.0.12</FileVersion>
+    <PackageReleaseNotes>upper case handle for sql parser; handle declare cursor collect</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

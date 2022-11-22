@@ -193,7 +193,7 @@ namespace SqlAnalyser.Core
 
                     TriggeractiontimeContext actionTime = trigger.triggeractiontime();
 
-                    switch (actionTime.GetText())
+                    switch (actionTime.GetText().ToUpper())
                     {
                         case nameof(PostgreSqlParser.BEFORE):
                             script.Time = TriggerTime.BEFORE;
@@ -210,7 +210,7 @@ namespace SqlAnalyser.Core
 
                     foreach (var evt in events.triggeroneevent())
                     {
-                        TriggerEvent triggerEvent = (TriggerEvent)Enum.Parse(typeof(TriggerEvent), evt.GetText());
+                        TriggerEvent triggerEvent = (TriggerEvent)Enum.Parse(typeof(TriggerEvent), evt.GetText().ToUpper());
 
                         script.Events.Add(triggerEvent);
                     }
@@ -720,7 +720,7 @@ namespace SqlAnalyser.Core
         {
             if (joinType != null)
             {
-                string type = joinType.GetText();
+                string type = joinType.GetText().ToUpper();
 
                 switch (type)
                 {
@@ -742,7 +742,7 @@ namespace SqlAnalyser.Core
         {
             DropStatement statement = new DropStatement();
 
-            var type = node.object_type_any_name().GetText();
+            var type = node.object_type_any_name().GetText().ToUpper();
 
             string typeName = Enum.GetNames(typeof(DatabaseObjectType)).FirstOrDefault(item => item.ToUpper() == type);
 

@@ -972,7 +972,7 @@ namespace SqlAnalyser.Core
                     {
                         JoinItem joinItem = new JoinItem();
 
-                        var joinType = joinTable.innerJoinType().GetText();
+                        var joinType = joinTable.innerJoinType().GetText().ToUpper();
 
                         if (joinType.StartsWith(nameof(JoinType.INNER)))
                         {

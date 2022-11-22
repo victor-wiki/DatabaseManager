@@ -558,7 +558,10 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declareCursor);
+                    if (!this.DeclareStatements.Any(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == declareCursor.CursorName.Symbol))
+                    {
+                        this.DeclareStatements.Add(declareCursor);
+                    }                        
                 }
             }
             else if (statement is OpenCursorStatement openCursor)

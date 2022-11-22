@@ -395,7 +395,7 @@ namespace SqlAnalyser.Core
 
                 foreach (Dml_event_elementContext evt in events)
                 {
-                    TriggerEvent triggerEvent = (TriggerEvent)Enum.Parse(typeof(TriggerEvent), evt.GetText());
+                    TriggerEvent triggerEvent = (TriggerEvent)Enum.Parse(typeof(TriggerEvent), evt.GetText().ToUpper());
 
                     script.Events.Add(triggerEvent);
                 }
@@ -774,6 +774,14 @@ namespace SqlAnalyser.Core
             if (name.GetText().ToUpper() == "RAISE_APPLICATION_ERROR")
             {
                 statement = this.ParseRaiseErrorStatement(args);
+            }
+            else
+            {
+                statement = new CallStatement()
+                {
+                    Name = new TokenInfo(name) { Type = TokenType.ProcedureName },
+                    Parameters = args?.Select(item => new CallParameter() { Value = new TokenInfo(item) }).ToList()
+                };
             }
 
             return statement;
@@ -1385,7 +1393,7 @@ namespace SqlAnalyser.Core
 
                         if (joinType != null)
                         {
-                            type = joinType.GetText();
+                            type = joinType.GetText().ToUpper();
 
                             jt = this.GetJoinType(type, out matched);
                         }
@@ -1395,7 +1403,7 @@ namespace SqlAnalyser.Core
                             {
                                 if (child is TerminalNodeImpl tni)
                                 {
-                                    jt = this.GetJoinType(tni.GetText(), out matched);
+                                    jt = this.GetJoinType(tni.GetText().ToUpper(), out matched);
 
                                     if (matched)
                                     {

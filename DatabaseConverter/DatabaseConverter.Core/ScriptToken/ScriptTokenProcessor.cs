@@ -235,7 +235,8 @@ namespace DatabaseConverter.Core
                         this.HandleQuotationChar(statement, token, tokens);
                     }
 
-                    if (token.Symbol != null && token.Symbol.Contains(this.SourceDbInterpreter.STR_CONCAT_CHARS))
+                    if (token.Symbol != null && !string.IsNullOrWhiteSpace(this.SourceDbInterpreter.STR_CONCAT_CHARS) 
+                        && token.Symbol.Contains(this.SourceDbInterpreter.STR_CONCAT_CHARS))
                     {
                         this.tokensWithConcatChars.Add(token);
                     }
