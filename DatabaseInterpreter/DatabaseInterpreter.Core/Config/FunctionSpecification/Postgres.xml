@@ -8,32 +8,32 @@
   <item name="ATAN" args="EXP"></item>
   <item name="ATAN2" args="EXP"></item>
   <item name="ATAN2D" args="EXP"></item>
-  <item name="BTRIM" args="EXP[,EXP]"></item>
+  <item name="BTRIM" args="EXP[,EXP]" isString="true"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CBRT" args="EXP"></item>
   <item name="CEIL" args="EXP"></item>
   <item name="CEILING" args="EXP"></item>
   <item name="CHAR_LENGTH" args="EXP"></item>
-  <item name="CHR" args="NUMBER"></item>
+  <item name="CHR" args="NUMBER" isString="true"></item>
   <item name="CHARACTER_LENGTH" args="EXP"></item>
   <item name="COALESCE" args="EXP,DEFAULT"></item>
-  <item name="CONCAT" args="EXP1,EXP2,..."></item>
-  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..."></item>
+  <item name="CONCAT" args="EXP1,EXP2,..." isString="true"></item>
+  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..." isString="true"></item>
   <item name="COS" args="EXP"></item>
   <item name="COSD" args="EXP"></item>
   <item name="COT" args="EXP"></item>
   <item name="COTD" args="EXP"></item>
-  <item name="CURRENT_DATABASE" args=""></item>
-  <item name="CURRENT_SCHEMA" args=""></item>
+  <item name="CURRENT_DATABASE" args="" isString="true"></item>
+  <item name="CURRENT_SCHEMA" args="" isString="true"></item>
   <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
-  <item name="CURRENT_USER" args="" noParenthesess="true"></item>
+  <item name="CURRENT_USER" args="" noParenthesess="true" isString="true"></item>
   <item name="DATE_PART" args="'UNIT',DATE"></item>
   <item name="DEGREES" args="EXP"></item>
   <item name="EXP" args="EXP"></item>
   <item name="EXTRACT" args="UNIT FROM INTERVAL DATE"></item>
   <item name="FACTORIAL" args="EXP"></item>
   <item name="FLOOR" args="EXP"></item>
-  <item name="FORMAT" args="FORAMT,EXP"></item>
+  <item name="FORMAT" args="FORAMT,EXP" isString="true"></item>
   <item name="GCD" args="EXP1,EXP2"></item>
   <item name="GEN_RANDOM_UUID" args=""></item>
   <item name="INITCAP" args="EXP"></item>
@@ -44,8 +44,8 @@
   <item name="LN" args="EXP"></item>
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
-  <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH,PAD"></item>
+  <item name="LOWER" args="EXP" isString="true"></item>
+  <item name="LPAD" args="EXP,LENGTH,PAD" isString="true"></item>
   <item name="LTRIM" args="EXP"></item>
   <item name="MD5" args="EXP"></item>
   <item name="MIN_SCALE" args="EXP"></item>
@@ -57,30 +57,30 @@
   <item name="POSITION" args="SEARCH IN EXP" delimiter="IN"></item>
   <item name="POWER" args="EXP,Y"></item>
   <item name="RADIANS" args="EXP"></item>
-  <item name="REPEAT" args="EXP,TIMES"></item>
-  <item name="REPLACE" args="EXP,OLD,NEW"></item>
-  <item name="REVERSE" args="EXP"></item>
-  <item name="RIGHT" args="EXP,LENGTH"></item>
+  <item name="REPEAT" args="EXP,TIMES" isString="true"></item>
+  <item name="REPLACE" args="EXP,OLD,NEW" isString="true"></item>
+  <item name="REVERSE" args="EXP" isString="true"></item>
+  <item name="RIGHT" args="EXP,LENGTH" isString="true"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
-  <item name="RPAD" args="EXP,LENGTH,PAD"></item>
-  <item name="RTRIM" args="EXP"></item>
+  <item name="RPAD" args="EXP,LENGTH,PAD" isString="true"></item>
+  <item name="RTRIM" args="EXP" isString="true"></item>
   <item name="SCALE" args="EXP"></item>
   <item name="SIN" args="EXP"></item>
   <item name="SIND" args="EXP"></item>
   <item name="SIGN" args="EXP"></item>
   <item name="SQRT" args="EXP"></item>
-  <item name="SUBSTR" args="EXP,START[,LENGTH]"></item>
-  <item name="SUBSTRING" args="EXP,START[,LENGTH]"></item>
+  <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
+  <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="STARTS_WITH" args="EXP,SEARCH"></item>
   <item name="STRPOS" args="EXP,SEARCH"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TAND" args="EXP"></item>
-  <item name="TO_CHAR" args="EXP,FORMAT"></item>
+  <item name="TO_CHAR" args="EXP,FORMAT" isString="true"></item>
   <item name="TO_DATE" args="EXP,FORMAT"></item>
   <item name="TO_NUMBER" args="EXP[,FORMAT][,LANGUAGE]"></item>
   <item name="TO_TIMESTAMP" args="EXP,FORMAT"></item>
-  <item name="TRIM" args="[BOTH|LEADING|TRAILING] FROM EXP" delimiter="FROM"></item>
+  <item name="TRIM" args="[BOTH|LEADING|TRAILING] FROM EXP" delimiter="FROM" isString="true"></item>
   <item name="TRIM_SCALE" args="EXP"></item>
   <item name="TRUNC" args="EXP,DECIMAL"></item>
-  <item name="UPPER" args="EXP"></item>  
+  <item name="UPPER" args="EXP" isString="true"></item>  
 </items>

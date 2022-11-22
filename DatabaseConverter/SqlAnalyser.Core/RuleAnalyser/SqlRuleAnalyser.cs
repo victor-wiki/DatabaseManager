@@ -45,6 +45,7 @@ namespace SqlAnalyser.Core
             return errorListener;
         }
 
+        public abstract SqlSyntaxError Validate(string content);
         public abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
         public abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
         public abstract bool IsFunction(IParseTree node);
@@ -195,7 +196,10 @@ namespace SqlAnalyser.Core
         {
             if (this.Option.ParseTokenChildren)
             {
-                this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
+                if(token != null)
+                {
+                    this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
+                }                
             }
         }
 
@@ -203,7 +207,10 @@ namespace SqlAnalyser.Core
         {
             if (this.Option.ParseTokenChildren)
             {
-                this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
+                if(token != null)
+                {
+                    this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
+                }                
             }
         }
 

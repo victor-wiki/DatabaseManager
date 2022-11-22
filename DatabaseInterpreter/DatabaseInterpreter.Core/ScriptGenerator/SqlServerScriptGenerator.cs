@@ -354,6 +354,10 @@ CREATE TABLE {quotedTableName}(
                     {
                         continue;
                     }
+                    else if(column.DefaultValue.ToUpper().TrimStart().StartsWith("CREATE DEFAULT"))
+                    {
+                        continue;
+                    }
 
                     sb.AppendLine(this.AddDefaultValueConstraint(column));
                 }

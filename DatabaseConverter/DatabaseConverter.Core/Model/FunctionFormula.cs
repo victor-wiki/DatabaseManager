@@ -8,12 +8,7 @@ namespace DatabaseConverter.Model
     {
         private string _name;
         private string _body;
-        private string _expression;
-
-        public int StartIndex { get; set; }
-        public int StopIndex { get; set; }
-
-        public int Length => this.StopIndex - this.StartIndex + 1;
+        private string _expression; 
 
         public bool HasParentheses => this._expression?.Contains("(") == true;
 

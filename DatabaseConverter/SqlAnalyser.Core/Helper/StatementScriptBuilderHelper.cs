@@ -32,8 +32,8 @@ namespace SqlAnalyser.Core
 
             if (fromItems != null)
             {
-                tableName = fromItems.FirstOrDefault(item => tableNameOrAliases.Contains(item.TableName.Symbol.ToLower())
-                                                     || (item.TableName.Alias != null && tableNameOrAliases.Contains(item.TableName.Alias.Symbol.ToLower())))?.TableName;
+                tableName = fromItems.FirstOrDefault(item => item.TableName != null && (tableNameOrAliases.Contains(item.TableName.Symbol.ToLower())
+                                                     || (item.TableName.Alias != null && tableNameOrAliases.Contains(item.TableName.Alias.Symbol.ToLower()))))?.TableName;
             }
 
             if (tableName == null && tableNames != null)
@@ -51,7 +51,7 @@ namespace SqlAnalyser.Core
         /// <param name="statement"></param>
         public static bool IsCompositeUpdateSetColumnName(UpdateStatement statement)
         {
-            return statement.SetItems.Any(item => item.Name.Symbol.Contains(","));
+            return statement.SetItems.Any(item => item.Name?.Symbol?.Contains(",") == true);
         }
 
         public static string ParseCompositeUpdateSet(StatementScriptBuilder builder, UpdateStatement statement)
@@ -63,7 +63,7 @@ namespace SqlAnalyser.Core
 
             if (valueSymbol.StartsWith('(') && valueSymbol.EndsWith(')'))
             {
-                valueSymbol = StringHelper.TrimParenthesis(valueSymbol);
+                valueSymbol = StringHelper.GetBalanceParenthesisTrimedValue(valueSymbol);
             }
 
             int fromIndex = valueSymbol.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
@@ -106,7 +106,7 @@ namespace SqlAnalyser.Core
 
                 if (whereIndex > 0)
                 {
-                    fromTables = valueSymbol.Substring(fromIndex + 4, whereIndex - fromIndex -4).Trim();
+                    fromTables = valueSymbol.Substring(fromIndex + 4, whereIndex - fromIndex - 4).Trim();
                 }
                 else
                 {
@@ -185,12 +185,17 @@ namespace SqlAnalyser.Core
 
             if (value.StartsWith("(") && value.EndsWith(")"))
             {
-                value = StringHelper.TrimParenthesis(value);
+                value = StringHelper.GetBalanceParenthesisTrimedValue(value);
             }
 
             int fromIndex = value.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
 
-            return  $"{value.Substring(0, fromIndex)} INTO {name} {value.Substring(fromIndex)};";
+            if (fromIndex < 0)
+            {
+                return $"{name}:={value};";
+            }
+
+            return $"{value.Substring(0, fromIndex)} INTO {name} {value.Substring(fromIndex)};";
         }
     }
 }

@@ -5,12 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.16</Version>
-    <PackageReleaseNotes>1. fix bug: data viewer: string value condition for postgres
-2. script translate: add AnalyseCommon; use TranslateResult as return type</PackageReleaseNotes>
+    <Version>2.0.17</Version>
+    <PackageReleaseNotes>Add: ScriptValidator</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.16</AssemblyVersion>
-    <FileVersion>2.0.16</FileVersion>
+    <AssemblyVersion>2.0.17</AssemblyVersion>
+    <FileVersion>2.0.17</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

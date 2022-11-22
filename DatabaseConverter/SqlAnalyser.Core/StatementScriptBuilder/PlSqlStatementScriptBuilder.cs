@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Utility;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -81,9 +82,46 @@ namespace SqlAnalyser.Core
 
                     if (!hasJoin)
                     {
-                        string fromTableNames = string.Join(",", update.FromItems.Select(item => item.TableName.NameWithAlias));
+                        sb.Append("FROM ");
 
-                        sb.AppendLine($"FROM {fromTableNames}");
+                        bool lastHasNewLine = false;
+
+                        for (int i = 0; i < fromItemsCount; i++)
+                        {
+                            var item = update.FromItems[i];
+
+                            if (item.TableName != null)
+                            {
+                                sb.Append(item.TableName.NameWithAlias);
+
+                                lastHasNewLine = false;
+                            }
+                            else if (item.SubSelectStatement != null)
+                            {
+                                string alias = item.Alias == null ? "" : item.Alias.Symbol;
+
+                                PlSqlStatementScriptBuilder builder = new PlSqlStatementScriptBuilder();
+
+                                builder.AppendLine("(");
+
+                                builder.BuildSelectStatement(item.SubSelectStatement, false);
+                                builder.Append($") {alias}");
+
+                                sb.AppendLine(builder.ToString());
+
+                                lastHasNewLine = true;
+                            }
+
+                            if (i < fromItemsCount - 1)
+                            {
+                                sb.Append(",");
+                            }
+                        }
+
+                        if (!lastHasNewLine)
+                        {
+                            sb.AppendLine();
+                        }
                     }
                     else
                     {
@@ -120,7 +158,7 @@ namespace SqlAnalyser.Core
 
                     if (update.Condition != null && update.Condition.Symbol != null)
                     {
-                        sb.AppendLine($"WHERE {update.Condition}");
+                        sb.AppendLine($" WHERE {update.Condition}");
                     }
 
                     sb.Append(")");
@@ -141,7 +179,23 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine("SET");
 
-                this.AppendLine(string.Join("," + Environment.NewLine + Indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
+                int k = 0;
+
+                foreach (var item in update.SetItems)
+                {
+                    this.Append($"{item.Name}=");
+
+                    this.BuildUpdateSetValue(item);
+
+                    if (k < update.SetItems.Count - 1)
+                    {
+                        this.Append(",");
+                    }
+
+                    this.AppendLine(this.Indent);
+
+                    k++;
+                }
 
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
@@ -287,7 +341,11 @@ namespace SqlAnalyser.Core
                 {
                     if (item.Type == IfStatementType.IF || item.Type == IfStatementType.ELSEIF)
                     {
-                        this.AppendLine($"{item.Type} {item.Condition} THEN");
+                        this.Append($"{(item.Type == IfStatementType.ELSEIF ? "ELSIF": "IF")} ");
+
+                        this.BuildIfCondition(item);
+
+                        this.AppendLine(" THEN");
                     }
                     else
                     {
@@ -327,19 +385,37 @@ namespace SqlAnalyser.Core
             }
             else if (statement is SetStatement set)
             {
-                if (set.Key != null && set.Value != null)
+                if (set.Key != null)
                 {
-                    string value = set.Value.Symbol;
-
-                    value = this.GetSetVariableValue(set.Key.Symbol, set.Value?.Symbol);
-
-                    if (!AnalyserHelper.IsSubquery(value))
+                    if(set.Value!=null)
                     {
-                        this.AppendLine($"{set.Key} := {value};");
+                        string value = set.Value.Symbol;
+
+                        value = this.GetSetVariableValue(set.Key.Symbol, set.Value?.Symbol);
+
+                        if (!AnalyserHelper.IsSubquery(value))
+                        {
+                            this.AppendLine($"{set.Key} := {value};");
+                        }
+                        else
+                        {
+                            this.AppendLine(StatementScriptBuilderHelper.ConvertToSelectIntoVariable(set.Key.Symbol, value));
+                        }
                     }
-                    else
+                    else if (set.IsSetCursorVariable && set.ValueStatement != null)
                     {
-                        this.AppendLine(StatementScriptBuilderHelper.ConvertToSelectIntoVariable(set.Key.Symbol, value));
+                        var declareCursorStatement = this.DeclareStatements.FirstOrDefault(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == set.Key.Symbol) as DeclareCursorStatement;
+
+                        if (declareCursorStatement == null)
+                        {
+                            this.AppendLine($"SET {set.Key} =");
+
+                            this.BuildSelectStatement(set.ValueStatement);
+                        }
+                        else
+                        {
+                            declareCursorStatement.SelectStatement = set.ValueStatement;
+                        }
                     }
                 }
             }
@@ -360,6 +436,10 @@ namespace SqlAnalyser.Core
             else if (statement is LoopExitStatement loopExit)
             {
                 this.AppendLine($"EXIT WHEN {loopExit.Condition};");
+            }
+            else if (statement is BreakStatement @break)
+            {
+                this.AppendLine("EXIT;");
             }
             else if (statement is WhileStatement @while)
             {
@@ -462,10 +542,9 @@ namespace SqlAnalyser.Core
 
                 if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    this.AppendLine(sb.ToString());
-
                     if (declareCursor.SelectStatement != null)
                     {
+                        this.AppendLine(sb.ToString());
                         this.Build(declareCursor.SelectStatement);
                     }
                 }
@@ -500,12 +579,19 @@ namespace SqlAnalyser.Core
             else if (statement is TruncateStatement truncate)
             {
                 this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
+
+                this.ReplaceTemporaryTableContent(truncate.TableName, startIndex);
             }
             else if (statement is DropStatement drop)
             {
                 string objectType = drop.ObjectType.ToString().ToUpper();
 
                 this.AppendLine($"DROP {objectType} {drop.ObjectName.NameWithSchema};");
+
+                if(drop.ObjectType == DatabaseObjectType.Table)
+                {
+                    this.ReplaceTemporaryTableContent(drop.ObjectName, startIndex);
+                }                
             }
             else if (statement is RaiseErrorStatement error)
             {
@@ -552,7 +638,16 @@ namespace SqlAnalyser.Core
 
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
+            bool isCreateTemporaryTable = false;
+
             int startIndex = this.Length;
+
+            if (select.IntoTableName != null)
+            {
+                isCreateTemporaryTable = true;
+
+                this.AppendLine($"CREATE GLOBAL TEMPORARY TABLE {select.IntoTableName} AS (");
+            }         
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
             bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
@@ -623,11 +718,6 @@ namespace SqlAnalyser.Core
                 {
                     select.TableName = new TableName("DUAL");
                 }
-            }
-
-            if (select.IntoTableName != null)
-            {
-                this.AppendLine($"INTO {select.IntoTableName}");
             }
 
             Action appendWith = () =>
@@ -712,15 +802,30 @@ namespace SqlAnalyser.Core
                 foreach (var union in select.UnionStatements)
                 {
                     this.Build(union, false).TrimSeparator();
+                    this.AppendLine();
                 }
+            }
+
+            if (isCreateTemporaryTable)
+            {
+                this.AppendLine(")");
             }
 
             if (appendSeparator)
             {
                 this.AppendLine(";");
-            }
+            }            
 
-            this.ReplaceTemporaryTableContent(select.TableName, startIndex);
+            if(isCreateTemporaryTable)
+            {
+                this.TemporaryTableNames.Add(select.IntoTableName.Symbol);
+
+                this.ReplaceTemporaryTableContent(select.IntoTableName, startIndex);
+            }
+            else
+            {
+                this.ReplaceTemporaryTableContent(select.TableName, startIndex);
+            }
         }
 
         private string GetUnionTypeName(UnionType unionType)
@@ -758,7 +863,10 @@ namespace SqlAnalyser.Core
 
             foreach (var column in table.Columns)
             {
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+
+                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{identity}{(i == table.Columns.Count - 1 ? "" : ",")}");
+
                 i++;
             }
 
@@ -830,7 +938,7 @@ namespace SqlAnalyser.Core
             return $"EXECUTE IMMEDIATE  '{StringHelper.HandleSingleQuotationChar(sql)}';";
         }
 
-        private bool IsTemporaryTable(TableName tableName)
+        private bool IsTemporaryTable(TokenInfo tableName)
         {
             if (tableName == null || tableName.Symbol == null)
             {
@@ -842,7 +950,7 @@ namespace SqlAnalyser.Core
             return this.TemporaryTableNames.Contains(strTableName);
         }
 
-        private void ReplaceTemporaryTableContent(TableName tableName, int startIndex)
+        private void ReplaceTemporaryTableContent(TokenInfo tableName, int startIndex)
         {
             if (this.RoutineType == RoutineType.PROCEDURE && this.IsTemporaryTable(tableName))
             {

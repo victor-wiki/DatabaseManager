@@ -21,7 +21,20 @@ namespace DatabaseManager
         {
             InitializeComponent();
 
-            this.txtContent.Text = content;           
+            this.txtContent.Text = content;
+        }
+
+        public frmTextContent(string title, string content, bool isError = false)
+        {
+            InitializeComponent();
+
+            this.Text = title;
+            this.txtContent.Text = content;
+
+            if(isError)
+            {
+                this.txtContent.ForeColor = Color.Red;
+            }
         }
 
         private void frmTextContent_Load(object sender, EventArgs e)
@@ -33,7 +46,7 @@ namespace DatabaseManager
         {
             string content = this.txtContent.Text.Trim();
 
-            if(string.IsNullOrEmpty(content))
+            if (string.IsNullOrEmpty(content))
             {
                 MessageBox.Show("The content is empty.");
                 return;

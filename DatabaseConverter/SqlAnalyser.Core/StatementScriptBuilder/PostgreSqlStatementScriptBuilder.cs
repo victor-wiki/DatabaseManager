@@ -19,9 +19,9 @@ namespace SqlAnalyser.Core
                 this.BuildSelectStatement(select, appendSeparator);
             }
             else if (statement is UnionStatement union)
-            {
+            {               
                 this.AppendLine(this.GetUnionTypeName(union.Type));
-                this.Build(union.SelectStatement);
+                this.Build(union.SelectStatement);            
             }
             else if (statement is InsertStatement insert)
             {
@@ -72,7 +72,20 @@ namespace SqlAnalyser.Core
                     return str;
                 };
 
-                if (update.FromItems != null)
+                Func<string, string> getCleanColumnName = (name) =>
+                {
+                    if (name != null)
+                    {
+                        if(name.Contains("."))
+                        {
+                            name = name.Split('.').Last();
+                        }
+                    }
+
+                    return name;
+                };
+
+                if (update.HasFromItems)
                 {
                     int i = 0;
 
@@ -80,8 +93,8 @@ namespace SqlAnalyser.Core
                     {
                         bool hasJoin = fromItem.HasJoinItems;
 
-                        string tn = fromItem.TableName.Symbol;
-                        string talias = fromItem.TableName.Alias?.ToString();
+                        string tn = fromItem.TableName?.Symbol;
+                        string talias = fromItem.TableName?.Alias?.ToString();
 
                         if (fromItem.TableName != null)
                         {
@@ -112,11 +125,35 @@ namespace SqlAnalyser.Core
                                 j++;
                             }
                         }
-                        else if (fromItemsCount > 1)
+                        else if (fromItemsCount > 0)
                         {
-                            if (tn != strTableName)
+                            string seperator = (joins.Count < fromItemsCount - 2 && fromItemsCount > 2) ? "," : "";
+
+                            if (tn != null)
                             {
-                                joins.Add($"{(i == 0 ? "FROM" : "")} {fromItem.TableName.NameWithAlias}{((i < fromItemsCount - 2) ? "," : "")}");
+                                if (tn != strTableName)
+                                {
+                                    joins.Add($"{(joins.Count == 0 ? "FROM" : "")} {fromItem.TableName.NameWithAlias}{seperator}");
+                                }
+                            }
+                            else if (fromItem.SubSelectStatement != null)
+                            {
+                                PostgreSqlStatementScriptBuilder builder = new PostgreSqlStatementScriptBuilder();
+
+                                if (joins.Count == 0)
+                                {
+                                    builder.Append("FROM ");
+                                }
+
+                                string strAlias = fromItem.Alias == null ? "" : fromItem.Alias.Symbol;
+
+                                builder.AppendLine("(");
+                                builder.BuildSelectStatement(fromItem.SubSelectStatement, false);
+                                builder.Append($") {strAlias}");
+
+                                builder.Append(seperator);
+
+                                joins.Add(builder.ToString());
                             }
                         }
 
@@ -140,7 +177,23 @@ namespace SqlAnalyser.Core
 
                 if (!isCompositeColumnName)
                 {
-                    this.AppendLine(string.Join("," + Environment.NewLine + Indent, update.SetItems.Select(item => $"{getNoAliasString(item.Name.ToString(), false)}={item.Value}")));
+                    int k = 0;
+
+                    foreach (var item in update.SetItems)
+                    {
+                        this.Append($"{item.Name}=");
+
+                        this.BuildUpdateSetValue(item);
+
+                        if (k < update.SetItems.Count - 1)
+                        {
+                            this.Append(",");
+                        }
+
+                        this.AppendLine(this.Indent);
+
+                        k++;
+                    }
 
                     joins.ForEach(item => this.AppendLine(item));
                 }
@@ -155,7 +208,7 @@ namespace SqlAnalyser.Core
 
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
-                    this.AppendLine($"WHERE {getNoAliasString(update.Condition.ToString(), true)}");
+                    this.AppendLine($"WHERE {update.Condition}");
                     hasCondition = true;
                 }
 
@@ -227,7 +280,11 @@ namespace SqlAnalyser.Core
                 {
                     if (item.Type == IfStatementType.IF || item.Type == IfStatementType.ELSEIF)
                     {
-                        this.AppendLine($"{item.Type} {item.Condition} THEN");
+                        this.Append($"{item.Type} ");
+
+                        this.BuildIfCondition(item);
+
+                        this.AppendLine(" THEN");
                     }
                     else
                     {
@@ -267,11 +324,29 @@ namespace SqlAnalyser.Core
             }
             else if (statement is SetStatement set)
             {
-                if (set.Key != null && set.Value != null)
+                if (set.Key != null)
                 {
-                    string value = this.GetSetVariableValue(set.Key.Symbol, set.Value.Symbol);
+                    if(set.Value!=null)
+                    {
+                        string value = this.GetSetVariableValue(set.Key.Symbol, set.Value.Symbol);
 
-                    this.AppendLine($"{set.Key} := {value};");
+                        this.AppendLine($"{set.Key} := {value};");
+                    }
+                    else if (set.IsSetCursorVariable && set.ValueStatement != null)
+                    {
+                        var declareCursorStatement = this.DeclareStatements.FirstOrDefault(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == set.Key.Symbol) as DeclareCursorStatement;
+
+                        if (declareCursorStatement == null)
+                        {
+                            this.AppendLine($"SET {set.Key} =");
+
+                            this.BuildSelectStatement(set.ValueStatement);
+                        }
+                        else
+                        {
+                            declareCursorStatement.SelectStatement = set.ValueStatement; 
+                        }
+                    }
                 }
             }
             else if (statement is LoopStatement loop)
@@ -330,7 +405,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement call)
             {
-                if(!call.IsExecuteSql)
+                if (!call.IsExecuteSql)
                 {
                     this.AppendLine($"CALL {call.Name}({string.Join(",", call.Parameters.Select(item => item.Value?.Symbol?.Split('=')?.LastOrDefault()))});");
                 }
@@ -377,6 +452,10 @@ namespace SqlAnalyser.Core
                         break;
                 }
             }
+            else if (statement is BreakStatement @break)
+            {
+                this.AppendLine("EXIT;");
+            }
             else if (statement is LeaveStatement leave)
             {
                 this.AppendLine("RETURN;");
@@ -410,10 +489,10 @@ namespace SqlAnalyser.Core
 
                 if (!(this.Option != null && this.Option.NotBuildDeclareStatement))
                 {
-                    this.AppendLine(sb.ToString());
-
                     if (declareCursor.SelectStatement != null)
                     {
+                        this.AppendLine(sb.ToString());
+
                         this.Build(declareCursor.SelectStatement);
                     }
                 }
@@ -482,12 +561,34 @@ namespace SqlAnalyser.Core
                     this.AppendLine($"EXECUTE {pre?.FromSqlOrVariable}{variables};");
                 }
             }
+            else if (statement is GotoStatement gts)
+            {
+                if (gts.IsLabel)
+                {
+                    this.AppendLine($"--GOTO-- {gts.Label};");
+                }
+                else
+                {
+                    this.AppendLine($"--GOTO--{gts.Label}");
+
+                    this.AppendChildStatements(gts.Statements);
+                }
+            }
 
             return this;
         }
 
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
+            bool isCreateTemporaryTable = false;
+
+            if (select.IntoTableName != null)
+            {
+                isCreateTemporaryTable = true;
+
+                this.AppendLine($"CREATE TEMPORARY TABLE IF NOT EXISTS {select.IntoTableName} AS (");
+            }
+
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
@@ -524,11 +625,6 @@ namespace SqlAnalyser.Core
             else if (!isWith)
             {
                 this.AppendLine(selectColumns);
-            }
-
-            if (select.IntoTableName != null)
-            {
-                this.AppendLine($"INTO {select.IntoTableName}");
             }
 
             Action appendWith = () =>
@@ -613,7 +709,13 @@ namespace SqlAnalyser.Core
                 foreach (var union in select.UnionStatements)
                 {
                     this.Build(union, false).TrimSeparator();
+                    this.AppendLine();
                 }
+            }
+
+            if (isCreateTemporaryTable)
+            {
+                this.AppendLine(")");
             }
 
             if (appendSeparator)
@@ -677,7 +779,10 @@ namespace SqlAnalyser.Core
 
             foreach (var column in table.Columns)
             {
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+
+                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{identity}{(i == table.Columns.Count - 1 ? "" : ",")}");
+
                 i++;
             }
 

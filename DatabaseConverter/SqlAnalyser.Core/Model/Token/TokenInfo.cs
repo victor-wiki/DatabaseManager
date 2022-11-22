@@ -111,6 +111,7 @@ namespace SqlAnalyser.Model
         UnPivot,
         InsertValue,
         UpdateSetValue,
-        Subquery
+        Subquery,
+        FunctionCall
     }
 }

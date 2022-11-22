@@ -6,5 +6,7 @@
         public TokenInfo Value { get; set; }
 
         public bool IsSetUserVariable { get; set; }
+        public bool IsSetCursorVariable { get; set; }
+        public SelectStatement ValueStatement { get; set; }
     }
 }

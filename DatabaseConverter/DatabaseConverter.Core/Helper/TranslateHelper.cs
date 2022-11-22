@@ -4,6 +4,7 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Newtonsoft.Json.Linq;
+using SqlAnalyser.Core;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,6 @@ namespace DatabaseConverter.Core
             return value;
         }
 
-
         public static IEnumerable<char> GetTrimChars(params DbInterpreter[] dbInterpreters)
         {
             foreach (var interpreter in dbInterpreters)
@@ -65,6 +65,21 @@ namespace DatabaseConverter.Core
                 yield return interpreter.QuotationLeftChar;
                 yield return interpreter.QuotationRightChar;
             }
+        }
+
+        public static string ExtractNameFromParenthesis(string value)
+        {
+            if (value != null)
+            {
+                int index = value.IndexOf("(");
+
+                if (index > 0)
+                {
+                    return value.Substring(0, index).Trim();
+                }
+            }
+
+            return value;
         }
 
         public static TableColumn SimulateTableColumn(DbInterpreter dbInterpreter, string dataType, DbConverterOption option, List<UserDefinedType> userDefinedTypes, char[] trimChars)
@@ -182,6 +197,67 @@ namespace DatabaseConverter.Core
             }
         }
 
+        public static SqlAnalyserBase GetSqlAnalyser(DatabaseType databaseType)
+        {
+            SqlAnalyserBase sqlAnalyser = null;
 
+            if (databaseType == DatabaseType.SqlServer)
+            {
+                sqlAnalyser = new TSqlAnalyser();
+            }
+            else if (databaseType == DatabaseType.MySql)
+            {
+                sqlAnalyser = new MySqlAnalyser();
+            }
+            else if (databaseType == DatabaseType.Oracle)
+            {
+                sqlAnalyser = new PlSqlAnalyser();
+            }
+            else if (databaseType == DatabaseType.Postgres)
+            {
+                sqlAnalyser = new PostgreSqlAnalyser();
+            }
+
+            return sqlAnalyser;
+        }
+
+        public static string TranslateComments(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string value)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            string[] lines = value.Split('\n');
+
+            foreach (string line in lines)
+            {
+                int index = line.IndexOf(sourceDbInterpreter.CommentString);
+                bool handled = false;
+
+                if (index >= 0)
+                {
+                    int singleQuotationCharCount = line.Substring(0, index).Count(item => item == '\'');
+
+                    if (singleQuotationCharCount % 2 == 0)
+                    {
+                        sb.Append($"{line.Substring(0, index)}{targetDbInterpreter.CommentString}{line.Substring(index + 2)}");
+
+                        handled = true;
+                    }
+                }
+
+                if (!handled)
+                {
+                    sb.Append(line);
+                }
+
+                sb.Append('\n');
+            }
+
+            return sb.ToString();
+        }
+
+        public static bool NeedConvertConcatChar(List<string> databaseTypes, DatabaseType databaseType)
+        {
+            return databaseTypes.Count == 0 ||  databaseTypes.Any(item => item == databaseType.ToString());
+        }
     }
 }

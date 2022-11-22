@@ -1,16 +1,23 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Controls;
+//using DatabaseManager.Controls.Model;
 using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace DatabaseManager
 {
     public partial class frmSetting : Form
     {
+        private List<string> convertConcatCharTargetDatabases;
+
         public frmSetting()
         {
             InitializeComponent();
@@ -43,7 +50,8 @@ namespace DatabaseManager
             this.chkLogError.Checked = setting.LogType.HasFlag(LogType.Error);
             this.chkEnableEditorHighlighting.Checked = setting.EnableEditorHighlighting;
             this.chkEditorEnableIntellisence.Checked = setting.EnableEditorIntellisence;
-            this.chkExcludePostgresExtensionObjects.Checked = setting.ExcludePostgresExtensionObjects;           
+            this.chkExcludePostgresExtensionObjects.Checked = setting.ExcludePostgresExtensionObjects;
+            this.chkValidateScriptsAfterTranslated.Checked = setting.ValidateScriptsAfterTranslated;
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
@@ -55,6 +63,8 @@ namespace DatabaseManager
             {
                 this.txtLockPassword.Text = AesHelper.Decrypt(setting.LockPassword);
             }
+
+            this.convertConcatCharTargetDatabases = setting.ConvertConcatCharTargetDatabases;
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
@@ -74,6 +84,7 @@ namespace DatabaseManager
             setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;
             setting.ExcludePostgresExtensionObjects = this.chkExcludePostgresExtensionObjects.Checked;           
             setting.ScriptsDefaultOutputFolder = this.txtOutputFolder.Text;
+            setting.ValidateScriptsAfterTranslated = this.chkValidateScriptsAfterTranslated.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 
@@ -103,7 +114,9 @@ namespace DatabaseManager
                 logType |= LogType.Error;
             }
 
-            setting.LogType = logType;
+            setting.LogType = logType;          
+
+            setting.ConvertConcatCharTargetDatabases = this.convertConcatCharTargetDatabases;
 
             SettingManager.SaveConfig(setting);
 
@@ -122,6 +135,16 @@ namespace DatabaseManager
             if (result == DialogResult.OK)
             {
                 this.txtOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
+            }
+        }
+
+        private void btnSelectTargetDatabaseTypesForConcatChar_Click(object sender, EventArgs e)
+        {
+            frmItemsSelector selector = new frmItemsSelector("Select Database Types", ItemsSelectorHelper.GetDatabaseTypeItems(this.convertConcatCharTargetDatabases));
+
+            if (selector.ShowDialog() == DialogResult.OK)
+            {
+                this.convertConcatCharTargetDatabases = selector.CheckedItem.Select(item=> item.Name).ToList();
             }
         }
     }

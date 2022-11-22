@@ -21,9 +21,8 @@ namespace DatabaseConverter.Core
         public const DatabaseObjectType SupportDatabaseObjectType = DatabaseObjectType.Column | DatabaseObjectType.Constraint |
                                                                     DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure |
                                                                     DatabaseObjectType.Trigger | DatabaseObjectType.Sequence | DatabaseObjectType.Type;
-
-
-        public TranslateHandler OnTranslated;
+        
+        public List<TranslateResult> TranslateResults { get; private set; } = new List<TranslateResult>();
 
         public bool ContinueWhenErrorOccurs { get; set; }
 
@@ -71,24 +70,32 @@ namespace DatabaseConverter.Core
             {
                 ScriptTranslator<View> viewTranslator = this.GetScriptTranslator<View>(this.targetSchemaInfo.Views);
                 viewTranslator.Translate();
+
+                this.TranslateResults.AddRange(viewTranslator.TranslateResults);
             }
 
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Function))
             {
                 ScriptTranslator<Function> functionTranslator = this.GetScriptTranslator<Function>(this.targetSchemaInfo.Functions);
                 functionTranslator.Translate();
+
+                this.TranslateResults.AddRange(functionTranslator.TranslateResults);
             }
 
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Procedure))
             {
                 ScriptTranslator<Procedure> procedureTranslator = this.GetScriptTranslator<Procedure>(this.targetSchemaInfo.Procedures);
                 procedureTranslator.Translate();
+
+                this.TranslateResults.AddRange(procedureTranslator.TranslateResults);
             }
 
             if (this.NeedTranslate(databaseObjectType, DatabaseObjectType.Trigger))
             {
                 ScriptTranslator<TableTrigger> triggerTranslator = this.GetScriptTranslator<TableTrigger>(this.targetSchemaInfo.TableTriggers);
                 triggerTranslator.Translate();
+
+                this.TranslateResults.AddRange(triggerTranslator.TranslateResults);
             }
         }
 
@@ -114,20 +121,11 @@ namespace DatabaseConverter.Core
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceInterpreter, this.targetInerpreter, dbObjects) { ContinueWhenErrorOccurs = this.ContinueWhenErrorOccurs };
             translator.Option = this.option;
-            translator.UserDefinedTypes = this.UserDefinedTypes;
-            translator.OnTranslated += this.ScriptTranslated;
+            translator.UserDefinedTypes = this.UserDefinedTypes;      
             translator.Subscribe(this.observer);
 
             return translator;
-        }
-
-        private void ScriptTranslated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
-        {
-            if (this.OnTranslated != null)
-            {
-                this.OnTranslated(dbType, dbObject, result);
-            }
-        }
+        }     
 
         private void TranslateSchema()
         {

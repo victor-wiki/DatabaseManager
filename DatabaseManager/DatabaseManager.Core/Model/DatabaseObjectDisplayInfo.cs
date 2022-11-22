@@ -15,6 +15,7 @@ namespace DatabaseManager.Model
         public bool IsNew { get; set; }
         public string FilePath { get; set; }
         public ScriptAction ScriptAction;
+        public bool IsTranlatedScript { get; set; }
     }
 
     public enum DatabaseObjectDisplayType

@@ -28,7 +28,8 @@ namespace DatabaseInterpreter.Core
                 Name = item.Attribute("name").Value,
                 Args = item.Attribute("args").Value,
                 Delimiter = item.Attribute("delimiter")?.Value,
-                NoParenthesess = ValueHelper.IsTrueValue(item.Attribute("noParenthesess")?.Value)
+                NoParenthesess = ValueHelper.IsTrueValue(item.Attribute("noParenthesess")?.Value),
+                IsString = ValueHelper.IsTrueValue(item.Attribute("isString")?.Value)
             }).ToList();
 
             if (_functionSpecifications == null)
@@ -39,6 +40,6 @@ namespace DatabaseInterpreter.Core
             _functionSpecifications.Add(dbType, functionSpecs);
 
             return functionSpecs;
-        }        
+        }
     }
 }

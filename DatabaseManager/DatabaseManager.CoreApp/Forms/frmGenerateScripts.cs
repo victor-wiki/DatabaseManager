@@ -53,6 +53,13 @@ namespace DatabaseManager
 
                 this.Connect();
             }
+
+            string defaultOutputFolder = SettingManager.Setting.ScriptsDefaultOutputFolder;
+
+            if(!string.IsNullOrEmpty(defaultOutputFolder))
+            {
+                this.txtOutputFolder.Text = defaultOutputFolder;
+            }
         }
 
         private void btnOutputFolder_Click(object sender, EventArgs e)

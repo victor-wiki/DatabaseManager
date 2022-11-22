@@ -1,568 +1,417 @@
-﻿using DatabaseConverter.Model;
+﻿using Antlr4.Runtime.Dfa;
+using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Newtonsoft.Json.Linq;
+using Npgsql.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
     public class ConcatCharsHelper
     {
-        public static bool HasConcatChars(string symbol, string concatChars, bool hasCharColumn = false)
-        {
-            if (!string.IsNullOrEmpty(symbol) && !string.IsNullOrEmpty(concatChars))
-            {
-                string[] items = symbol.Split(concatChars,StringSplitOptions.RemoveEmptyEntries);
+        public const string KEYWORDS = "AND|NOT|NULL|IS|CASE|WHEN|THEN|ELSE|END|LIKE|FOR|IN|OR";
 
-                return symbol.Contains(concatChars)
-                    && (hasCharColumn || items.Any(item => ValueHelper.IsStringValue(item.Trim()) || DataTypeHelper.IsCharType(item))
-                    && !items.Any(item => decimal.TryParse(item.Trim(',',' '), out _)));
-            }
-
-            return false;
-        }
-
-        public static string ConvertConcatChars(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string symbol, bool hasCharColumn = false)
+        public static string ConvertConcatChars(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string symbol, IEnumerable<string> charItems = null)
         {
             string sourceConcatChars = sourceDbInterpreter.STR_CONCAT_CHARS;
-            string targetConcatChars = targetDbInterpreter.STR_CONCAT_CHARS;
 
-            if (HasConcatChars(symbol, sourceConcatChars, hasCharColumn))
+            if (!symbol.Contains(sourceConcatChars))
             {
-                if (!string.IsNullOrEmpty(targetConcatChars))
+                return symbol;
+            }
+
+            bool hasParenthesis = symbol.Trim().StartsWith("(");
+
+            DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
+
+            var items = SplitByKeywords(StringHelper.GetBalanceParenthesisTrimedValue(symbol));
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var item in items)
+            {
+                if (item.Index > 0)
                 {
-                    return ConvertConcatChars(symbol, sourceConcatChars, targetConcatChars);
+                    sb.Append(" ");
+                }
+
+                if (item.Type == TokenSymbolItemType.Keyword || item.Content.Trim().Length == 0)
+                {
+                    sb.Append(item.Content);
                 }
                 else
                 {
-                    IEnumerable<string> keywords = KeywordManager.GetKeywords(sourceDbInterpreter.DatabaseType);
-                    var quotationChars = TranslateHelper.GetTrimChars(sourceDbInterpreter, targetDbInterpreter);
+                    string res = InternalConvertConcatChars(sourceDbInterpreter, targetDbInterpreter, item.Content, charItems);
 
-                    string wrappedSymbol = FormatSymbolWithSpace(symbol, sourceConcatChars);
-
-                    string[] items = SplitToArray(wrappedSymbol, ' ');
-
-                    int singleQuotationCharCount = 0;
-
-                    Func<string, bool> isMatched = (value) =>
-                    {
-                        if (!keywords.Contains(value.ToUpper()) &&
-                        (ValueHelper.IsStringValue(value.Trim()) 
-                        || value == sourceConcatChars                         
-                        || value.StartsWith("@"))
-                        || Regex.IsMatch(value.Trim('(', ')'), RegexHelper.NameRegexPattern)
-                        || (value.Contains(".") && value.Split(".").All(item=> Regex.IsMatch(ReplaceQuotationChars(item ,quotationChars), RegexHelper.NameRegexPattern)))
-                        )
-                        {
-                            return true;
-                        }
-
-                        return false;
-                    };
-
-                    List<TokenSymbolItemGroupInfo> groups = new List<TokenSymbolItemGroupInfo>();
-
-                    Action<TokenSymbolItemGroupInfo, int, string, bool> addGroupItem = (group, index, value, isLeftSide) =>
-                    {
-                        TokenSymbolItemInfo tsi = new TokenSymbolItemInfo() { Index = index, Type = TokenSymbolItemType.Combination };
-
-                        tsi.Children.Add(new TokenSymbolItemInfo() { Index = index, Content = value });
-
-                        if (isLeftSide)
-                        {
-                            group.LeftSideItems.Add(tsi);
-                        }
-                        else
-                        {
-                            group.RightSideItems.Add(tsi);
-                        }
-                    };
-
-                    for (int i = 0; i < items.Length; i++)
-                    {
-                        singleQuotationCharCount = string.Join("", items.Take(i)).Count(t => t == '\'');
-
-                        string item = items[i];
-
-                        if (singleQuotationCharCount % 2 == 0)
-                        {
-                            if (item.Trim() == sourceConcatChars)
-                            {
-                                TokenSymbolItemGroupInfo group = new TokenSymbolItemGroupInfo() { GroupId = i };
-
-                                groups.Add(group);
-
-                                #region backward
-                                StringBuilder sbBackward = new StringBuilder();
-                                bool needBackwardParenthesis = false;
-                                bool needBackwardSingleQuotationChar = false;
-
-                                for (int j = i - 1; j >= 0; j--)
-                                {
-                                    string value = items[j];
-
-                                    if (value.Trim() == "," && !needBackwardParenthesis && !needBackwardSingleQuotationChar)
-                                    {
-                                        break;
-                                    }
-
-                                    if (needBackwardParenthesis)
-                                    {
-                                        sbBackward.Insert(0, value);
-
-                                        group.LeftSideItems.Last().Children.Insert(0, new TokenSymbolItemInfo() { Index = j, Content = value });
-
-                                        if (StringHelper.IsParenthesisBalanced(sbBackward.ToString()))
-                                        {
-                                            needBackwardParenthesis = false;
-                                        }
-
-                                        continue;
-                                    }
-                                    else if (needBackwardSingleQuotationChar)
-                                    {
-                                        sbBackward.Insert(0, value);
-
-                                        group.LeftSideItems.Last().Children.Add(new TokenSymbolItemInfo() { Index = j, Content = value });
-
-                                        if (ValueHelper.IsStringValue(sbBackward.ToString().Trim()))
-                                        {
-                                            needBackwardSingleQuotationChar = false;
-                                        }
-
-                                        continue;
-                                    }
-
-                                    if ((value.Contains(")") && !value.Trim().EndsWith(",")))
-                                    {
-                                        sbBackward.Insert(0, value);
-
-                                        addGroupItem(group, j, value, true);
-
-                                        if (!StringHelper.IsParenthesisBalanced(sbBackward.ToString()))
-                                        {
-                                            needBackwardParenthesis = true;
-                                        }
-                                    }
-                                    else if (StringHelper.IsEndWithSingleQuotationChar(value.Trim()) && !StringHelper.IsStartWithSingleQuotationChar(value.Trim()))
-                                    {
-                                        sbBackward.Insert(0, value);
-
-                                        addGroupItem(group, j, value, true);
-
-                                        needBackwardSingleQuotationChar = true;
-                                    }
-                                    else if (StringHelper.IsEndWithSingleQuotationChar(value) || isMatched(value))
-                                    {
-                                        group.LeftSideItems.Add(new TokenSymbolItemInfo() { Index = j, Content = value });
-                                    }
-                                    else if (value == "\n" || value.Length == 0)
-                                    {
-                                        continue;
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-                                }
-                                #endregion
-
-                                #region forward
-                                StringBuilder sbForward = new StringBuilder();
-                                bool needForwardParenthesis = false;
-                                bool needFowardSingleQuotationChar = false;
-
-                                for (int k = i + 1; k < items.Length; k++)
-                                {
-                                    string value = items[k];
-
-                                    if (value.Trim() == "," && !needForwardParenthesis && !needFowardSingleQuotationChar)
-                                    {
-                                        break;
-                                    }
-
-                                    if (needForwardParenthesis)
-                                    {
-                                        sbForward.Append(value);
-
-                                        group.RightSideItems.Last().Children.Add(new TokenSymbolItemInfo() { Index = k, Content = value });
-
-                                        if (StringHelper.IsParenthesisBalanced(sbForward.ToString()))
-                                        {
-                                            needForwardParenthesis = false;
-                                        }
-
-                                        if (StringHelper.IsParenthesisBalanced(sbForward.ToString()))
-                                        {
-                                            needForwardParenthesis = false;
-                                            i = k;
-                                        }
-
-                                        continue;
-                                    }
-                                    else if (needFowardSingleQuotationChar)
-                                    {
-                                        sbForward.Append(value);
-
-                                        group.RightSideItems.Last().Children.Add(new TokenSymbolItemInfo() { Index = k, Content = value });
-
-                                        if (ValueHelper.IsStringValue(sbForward.ToString().Trim()))
-                                        {
-                                            needFowardSingleQuotationChar = false;
-                                            i = k;
-                                        }
-
-                                        continue;
-                                    }
-
-                                    if ((value.Contains("(") && !value.Trim().StartsWith(",")))
-                                    {
-                                        sbForward.Append(value);
-
-                                        addGroupItem(group, k, value, false);
-
-                                        if (!StringHelper.IsParenthesisBalanced(sbForward.ToString()))
-                                        {
-                                            needForwardParenthesis = true;
-                                        }
-                                    }
-                                    else if (StringHelper.IsStartWithSingleQuotationChar(value.Trim()) && !StringHelper.IsEndWithSingleQuotationChar(value.Trim()))
-                                    {
-                                        sbForward.Append(value);
-
-                                        addGroupItem(group, k, value, false);
-
-                                        needFowardSingleQuotationChar = true;
-                                    }                                    
-                                    else if (value == "\n" || value.Length == 0)
-                                    {
-                                        continue;
-                                    }
-                                    else if (value == sourceConcatChars && (group.RightSideItems.Count == 0 || group.RightSideItems.LastOrDefault()?.Content == sourceConcatChars))
-                                    {
-                                        continue;
-                                    }
-                                    else if (StringHelper.IsStartWithSingleQuotationChar(value) || isMatched(value))
-                                    {
-                                        group.RightSideItems.Add(new TokenSymbolItemInfo() { Index = k, Content = value });
-
-                                        i = k;
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-                                }
-                                #endregion
-                            }
-                        }
-                    }
-
-                    StringBuilder sb = new StringBuilder();
-
-                    Action<TokenSymbolItemInfo> appendGroupItem = (gi) =>
-                    {
-                        if (gi.Children.Count == 0)
-                        {
-                            sb.Append(gi.Content);
-                        }
-                        else
-                        {
-                            sb.Append(String.Join(" ", gi.Children.OrderBy(item => item.Index).Select(item => item.Content)));
-                        }
-                    };
-
-                    for (int i = 0; i < items.Length; i++)
-                    {
-                        string item = items[i];
-
-                        if (IsTokenSymbolGroupItem(groups, i))
-                        {
-                            var group = FindSymbolItemGroupByIndex(groups, i);
-
-                            TokenSymbolItemInfo firstItem = GetFirstTokenSymbolItem(group.LeftSideItems);
-                            int backwardParenthesisCount = GetParenthesisCount(group.LeftSideItems, '(');
-                            int forwardParenthesisCount = GetParenthesisCount(group.RightSideItems, ')');
-
-                            bool isFirstItemEndWithParenthesis = firstItem != null && firstItem.Content.EndsWith("(");
-
-                            string concat = "CONCAT(";
-
-                            if (isFirstItemEndWithParenthesis && backwardParenthesisCount == forwardParenthesisCount)
-                            {
-                                //exchange 
-
-                                sb.Append(firstItem.Content);
-
-                                firstItem.Content = concat;
-                            }
-                            else
-                            {
-                                sb.Append(concat);
-                            }
-
-                            int j = 0;
-
-                            foreach (var gi in group.LeftSideItems.OrderBy(item => item.Index))
-                            {
-                                appendGroupItem(gi);
-
-                                if (j < group.LeftSideItems.Count - 1)
-                                {
-                                    sb.Append(" ");
-                                }
-
-                                j++;
-                            }
-
-                            sb.Append(",");
-
-                            int k = 0;
-
-                            foreach (var gi in group.RightSideItems)
-                            {
-                                if (gi.Content == sourceConcatChars)
-                                {
-                                    sb.Append(",");
-                                }
-                                else
-                                {
-                                    appendGroupItem(gi);
-                                }
-
-                                if (k < group.RightSideItems.Count - 1)
-                                {
-                                    sb.Append(" ");
-                                }
-
-                                k++;
-                            }
-
-                            sb.Append(") ");
-
-                            if (group.RightSideItems.Any())
-                            {
-                                i = GetMaxIndexOfSymbolGroup(group);
-                            }
-                        }
-                        else
-                        {
-                            sb.Append(item + " ");
-                        }
-                    }
-
-                    return sb.ToString().Trim();
+                    sb.Append(res);
                 }
+            }
+
+            string result = sb.ToString();
+
+            if (StringHelper.IsParenthesisBalanced(result))
+            {
+                return GetOriginalValue(result, hasParenthesis);
             }
 
             return symbol;
         }
 
-        private static string ReplaceQuotationChars(string value, IEnumerable<char> quotationChars)
+        private static string GetOriginalValue(string value, bool hasParenthesis)
         {
-            foreach(var c in quotationChars)
+            if (!hasParenthesis)
             {
-                value = value.Replace(c.ToString(), "");
+                return value;
             }
+            else
+            {
+                if (!value.Trim().StartsWith("("))
+                {
+                    return $"({value})";
+                }
+            }          
 
             return value;
         }
 
-        private static TokenSymbolItemInfo GetFirstTokenSymbolItem(List<TokenSymbolItemInfo> items)
+        private static string InternalConvertConcatChars(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string symbol, IEnumerable<string> charItems = null)
         {
-            if (items.Count > 0)
-            {
-                var item = items.OrderBy(item => item.Index).First();
+            string sourceConcatChars = sourceDbInterpreter.STR_CONCAT_CHARS;
+            string targetConcatChars = targetDbInterpreter.STR_CONCAT_CHARS;
 
-                if (item.Children.Count == 0)
+            if (!symbol.Contains(sourceConcatChars))
+            {
+                return symbol;
+            }
+
+            DatabaseType sourceDbType = sourceDbInterpreter.DatabaseType;
+            DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
+
+            bool hasParenthesis = symbol.Trim().StartsWith("(");
+
+            var quotationChars = TranslateHelper.GetTrimChars(sourceDbInterpreter, targetDbInterpreter).ToArray();
+
+            var symbolItems = SplitByConcatChars(StringHelper.GetBalanceParenthesisTrimedValue(symbol), sourceConcatChars);
+
+            if (symbolItems.Count == 1)
+            {
+                string content = symbolItems[0].Content;
+
+                if (!content.Contains("("))
                 {
-                    return item;
+                    return symbol;
                 }
                 else
                 {
-                    return item.Children.OrderBy(item => item.Index).First();
-                }
-            }
+                    int equalMarkIndex = content.IndexOf("=");
+                    int parenthesisIndex = content.IndexOf("(");
 
-            return null;
-        }
+                    string assignName = "";
+                    string functionName = "";
 
-        private static int GetParenthesisCount(List<TokenSymbolItemInfo> items, char parenthesis)
-        {
-            int count = 0;
-
-            foreach (var item in items)
-            {
-                if (item.Children.Count == 0)
-                {
-                    count += item.Content.Count(t => t == parenthesis);
-                }
-                else
-                {
-                    count += item.Children.Sum(t => t.Content.Count(c => c == parenthesis));
-                }
-            }
-
-            return count;
-        }
-
-        private static int GetMaxIndexOfSymbolGroup(TokenSymbolItemGroupInfo group)
-        {
-            int index = 0;
-
-            foreach (var gi in group.RightSideItems)
-            {
-                if (gi.Children.Count == 0)
-                {
-                    if (gi.Index > index)
+                    if (equalMarkIndex >= 0 && equalMarkIndex < parenthesisIndex)
                     {
-                        index = gi.Index;
+                        assignName = content.Substring(0, equalMarkIndex);
+                        functionName = content.Substring(equalMarkIndex + 1, parenthesisIndex - equalMarkIndex - 1);
                     }
-                }
-                else
-                {
-                    int maxIndex = gi.Children.Max(item => item.Index);
-
-                    if (maxIndex > index)
+                    else
                     {
-                        index = maxIndex;
+                        functionName = content.Substring(0, parenthesisIndex);
                     }
+
+                    var spec = FunctionManager.GetFunctionSpecifications(targetDbType).FirstOrDefault(item => item.Name.ToUpper() == functionName.Trim().ToUpper());
+
+                    if (spec != null)
+                    {
+                        var formular = new FunctionFormula(content);
+
+                        if (formular != null)
+                        {
+                            var args = formular.GetArgs(spec.Delimiter ?? ",");
+
+                            List<string> results = new List<string>();
+
+                            foreach (var arg in args)
+                            {
+                                results.Add(ConvertConcatChars(sourceDbInterpreter, targetDbInterpreter, arg, charItems));
+                            }
+
+                            string delimiter = spec.Delimiter == "," ? "," : $" {spec.Delimiter} ";
+                            string strAssign = !string.IsNullOrEmpty(assignName) ? assignName + "=" : "";
+
+                            return $"{strAssign}{functionName}({string.Join(delimiter, results)})";
+                        }
+                    }
+
+                    return GetOriginalValue(content, hasParenthesis);
                 }
             }
 
-            return index;
-        }
-
-        private static bool IsTokenSymbolGroupItem(List<TokenSymbolItemGroupInfo> groups, int index)
-        {
-            foreach (var group in groups)
+            foreach (var item in symbolItems)
             {
-                if (IsTokenSymbolGroupItem(group.LeftSideItems, index))
+                if (item.Content != symbol && item.Content.Contains("("))
                 {
-                    return true;
-                }
-
-                if (IsTokenSymbolGroupItem(group.RightSideItems, index))
-                {
-                    return true;
+                    item.Content = ConvertConcatChars(sourceDbInterpreter, targetDbInterpreter, item.Content, charItems);
                 }
             }
 
-            return false;
-        }
-
-        private static bool IsTokenSymbolGroupItem(List<TokenSymbolItemInfo> items, int index)
-        {
-            if (items.Any(item => item.Index == index || (item.Children.Count > 0 && item.Children.Any(t => t.Index == index))))
+            if (sourceConcatChars == "+")
             {
-                return true;
+                if (symbolItems.Any(item => decimal.TryParse(item.Content.Trim(',', ' '), out _)))
+                {
+                    return symbol;
+                }
             }
 
-            return false;
-        }
-
-        private static TokenSymbolItemGroupInfo FindSymbolItemGroupByIndex(List<TokenSymbolItemGroupInfo> groups, int index)
-        {
-            foreach (var group in groups)
+            Func<string, bool> isMatched = (value) =>
             {
-                if (IsTokenSymbolGroupItem(group.LeftSideItems, index))
-                {
-                    return group; ;
-                }
+                return ValueHelper.IsStringValue(value.Trim('(',')'))
+                    || IsStringFunction(targetDbType, value)
+                    || (charItems != null && charItems.Any(c => c.Trim(quotationChars) == value.Trim(quotationChars)));
+            };
 
-                if (IsTokenSymbolGroupItem(group.RightSideItems, index))
-                {
-                    return group;
-                }
-            }
-
-            return null;
-        }
-
-        private static string FormatSymbolWithSpace(string value, string sourceConcatChars)
-        {
-            char concatFirstChar = sourceConcatChars.First();
-            int concatCharsLength = sourceConcatChars.Length;
-            int singleQuotationCharCount = 0;
+            bool hasStringValue = symbolItems.Any(item => isMatched(item.Content.Trim()));
 
             StringBuilder sb = new StringBuilder();
 
-            for (int i = 0; i < value.Length; i++)
+            if (hasStringValue)
             {
-                char c = value[i];
+                var items = symbolItems.Select(item => item.Content).ToArray();
 
-                if (c == '\'')
+                if (!string.IsNullOrEmpty(targetConcatChars))
                 {
-                    singleQuotationCharCount++;
+                    sb.Append(string.Join(targetConcatChars, items));
                 }
-
-                if (c == concatFirstChar)
+                else
                 {
-                    string fowardChars = concatCharsLength == 1 ? sourceConcatChars : (i + concatCharsLength <= value.Length - 1) ? value.Substring(i, concatCharsLength)
-                           : value.Substring(i);
+                    bool hasInvalid = false;
 
-                    if (fowardChars == sourceConcatChars)
+                    for (int i = 0; i < items.Length; i++)
                     {
-                        if (singleQuotationCharCount % 2 == 0)
+                        string value = items[i];
+
+                        if (isMatched(value.Trim()))
                         {
-                            if (i > 0 && value[i - 1] != ' ')
+                            sb.Append(value);
+                        }
+                        else
+                        {
+                            if (value.StartsWith("@")
+                              || Regex.IsMatch(value.Trim('(', ')', ' '), RegexHelper.NameRegexPattern)
+                              || (value.Contains(".") && value.Split(".").All(item => Regex.IsMatch(item.Trim().Trim(quotationChars), RegexHelper.NameRegexPattern)))
+                              || Regex.IsMatch(TranslateHelper.ExtractNameFromParenthesis(value.Trim()), RegexHelper.NameRegexPattern)
+                              )
                             {
-                                sb.Append(" ");
+                                sb.Append(value);
                             }
-
-                            sb.Append(sourceConcatChars);
-
-                            i = i + concatCharsLength - 1;
-
-                            if (i < value.Length - 1 && value[i + 1] != ' ')
+                            else
                             {
-                                sb.Append(" ");
+                                hasInvalid = true;
+                                break;
                             }
+                        }
 
-                            continue;
+                        if (i < items.Length - 1)
+                        {
+                            sb.Append(",");
                         }
                     }
-                }
-                else if (c == ',' && singleQuotationCharCount % 2 == 0)
-                {
-                    if (i > 0 && value[i - 1] != ' ')
+
+                    if (!hasInvalid)
                     {
-                        sb.Append(" ");
+                        sb.Insert(0, "CONCAT(");
+                        sb.Append(")");
                     }
-
-                    sb.Append(c);
-
-                    if (i < value.Length - 1 && value[i + 1] != ' ')
+                    else
                     {
-                        sb.Append(" ");
+                        return symbol;
                     }
-
-                    continue;
                 }
-                else if (c == '(')
+            }
+
+            string result = sb.ToString().Trim();
+
+            if (result.Length > 0 && StringHelper.IsParenthesisBalanced(result))
+            {
+                return GetOriginalValue(result, hasParenthesis);
+            }
+
+            return symbol;
+        }
+
+        private static List<TokenSymbolItemInfo> SplitByKeywords(string value)
+        {
+            string keywordsRegex = $@"\b({KEYWORDS})\b";
+
+            var matches = Regex.Matches(value, keywordsRegex, RegexOptions.IgnoreCase);
+
+            List<TokenSymbolItemInfo> tokenSymbolItems = new List<TokenSymbolItemInfo>();
+
+            Action<string, TokenSymbolItemType> addItem = (content, type) =>
+            {
+                TokenSymbolItemInfo contentItem = new TokenSymbolItemInfo();
+                contentItem.Index = tokenSymbolItems.Count();
+                contentItem.Content = content;
+                contentItem.Type = type;
+
+                tokenSymbolItems.Add(contentItem);
+            };
+
+            List<Match> matchList = new List<Match>();
+
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var match = matches[i];
+
+                if (match.Index > 0)
                 {
-                    if (i < value.Length - 1 && (value[i + 1] != '(' && value[i + 1] != ' '))
+                    if ("@" + match.Value == value.Substring(match.Index - 1, match.Length + 1))
                     {
-                        sb.Append(c);
-                        sb.Append(" ");
                         continue;
                     }
                 }
 
-                sb.Append(c);
+                matchList.Add(match);
             }
 
-            return sb.ToString();
+            for (int i = 0; i < matchList.Count; i++)
+            {
+                var match = matchList[i];
+
+                int index = match.Index;
+
+                if (index > 0)
+                {
+                    if ("@" + match.Value == value.Substring(match.Index - 1, match.Length + 1))
+                    {
+                        continue;
+                    }
+                }
+
+                int singleQuotaionCharCount = value.Substring(0, index).Count(item => item == '\'');
+
+                if (singleQuotaionCharCount % 2 == 0)
+                {
+                    if (i == 0 && match.Index > 0)
+                    {
+                        addItem(value.Substring(0, match.Index), TokenSymbolItemType.Content);
+                    }
+
+                    addItem(match.Value, TokenSymbolItemType.Keyword);
+
+                    if (i < matchList.Count - 1)
+                    {
+                        int nextMatchIndex = matchList[i + 1].Index;
+
+                        string content = value.Substring(index + match.Length, nextMatchIndex - index - match.Length);
+
+                        addItem(content, TokenSymbolItemType.Content);
+                    }
+                    else if (i == matchList.Count - 1)
+                    {
+                        int startIndex = match.Index + match.Length;
+
+                        if (startIndex < value.Length)
+                        {
+                            string content = value.Substring(startIndex);
+
+                            addItem(content, TokenSymbolItemType.Content);
+                        }
+                    }
+                }
+            }
+
+            if (tokenSymbolItems.Count == 0)
+            {
+                addItem(value, TokenSymbolItemType.Content);
+            }
+
+            return tokenSymbolItems;
         }
 
-        private static string ConvertConcatChars(string value, string sourceConcatChars, string targetConcatChars)
+        private static bool IsStringFunction(DatabaseType databaseType, string value)
         {
-            char concatFirstChar = sourceConcatChars.First();
-            int concatCharsLength = sourceConcatChars.Length;
+            string functionName = TranslateHelper.ExtractNameFromParenthesis(value.Trim()).ToUpper();
+            FunctionSpecification specification = FunctionManager.GetFunctionSpecifications(databaseType).FirstOrDefault(item => item.Name.ToUpper() == functionName);
+
+            if (specification != null)
+            {
+                if (specification.IsString)
+                {
+                    return true;
+                }
+                else
+                {
+                    return IsStringConvertFunction(databaseType, specification, value);
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsStringConvertFunction(DatabaseType databaseType, FunctionSpecification specification, string value)
+        {
+            string name = specification.Name.Trim().ToUpper();
+
+            if (name != "CONVERT" && name != "CAST")
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(specification.Args))
+            {
+                int index = value.IndexOf("(");
+
+                string content = StringHelper.GetBalanceParenthesisTrimedValue(value.Substring(index));
+
+                string[] items = content.Split(specification.Delimiter ?? ",");
+
+                string dataType = null;
+
+                if (name == "CONVERT")
+                {
+                    if (databaseType == DatabaseType.MySql)
+                    {
+                        dataType = items.LastOrDefault()?.Trim();
+                    }
+                    else
+                    {
+                        dataType = items.FirstOrDefault()?.Trim();
+                    }
+                }
+                else if (name == "CAST")
+                {
+                    dataType = items.LastOrDefault()?.Trim();
+                }
+
+                if (dataType != null && DataTypeHelper.IsCharType(dataType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        private static List<TokenSymbolItemInfo> SplitByConcatChars(string value, string concatChars)
+        {
+            List<TokenSymbolItemInfo> items = new List<TokenSymbolItemInfo>();
+
+            char concatFirstChar = concatChars.First();
+            int concatCharsLength = concatChars.Length;
             int singleQuotationCharCount = 0;
+            int leftParenthesisCount = 0;
+            int rightParenthesisCount = 0;
 
             StringBuilder sb = new StringBuilder();
 
@@ -574,24 +423,39 @@ namespace DatabaseConverter.Core
                 {
                     singleQuotationCharCount++;
                 }
+                else if (c == '(')
+                {
+                    if (singleQuotationCharCount % 2 == 0)
+                    {
+                        leftParenthesisCount++;
+                    }
+                }
+                else if (c == ')')
+                {
+                    if (singleQuotationCharCount % 2 == 0)
+                    {
+                        rightParenthesisCount++;
+                    }
+                }
 
                 if (c == concatFirstChar)
                 {
-                    string fowardChars = concatCharsLength == 1 ? sourceConcatChars : (i + concatCharsLength <= value.Length - 1) ? value.Substring(i, concatCharsLength)
-                           : value.Substring(i);
+                    string fowardChars = concatCharsLength == 1 ? concatChars : (i + concatCharsLength <= value.Length - 1) ? value.Substring(i, concatCharsLength)
+                    : value.Substring(i);
 
-                    if (fowardChars == sourceConcatChars)
+                    if (fowardChars == concatChars)
                     {
-                        if (singleQuotationCharCount % 2 == 0)
+                        if (singleQuotationCharCount % 2 == 0 && (leftParenthesisCount == rightParenthesisCount))
                         {
-                            if (sb.ToString().Trim().EndsWith(targetConcatChars))
-                            {
-                                continue;
-                            }
+                            TokenSymbolItemInfo item = new TokenSymbolItemInfo();
+                            item.Content = sb.ToString();
+                            item.Index = items.Count;
 
-                            sb.Append(targetConcatChars);
+                            items.Add(item);
 
                             i = i + concatCharsLength - 1;
+
+                            sb.Clear();
 
                             continue;
                         }
@@ -601,62 +465,16 @@ namespace DatabaseConverter.Core
                 sb.Append(c);
             }
 
-            return sb.ToString();
-        }
-
-        private static bool ContainsConcatChars(string value, string concatChars)
-        {
-            int index = -1;
-
-            while ((index = value.IndexOf(concatChars)) > 0)
+            if (sb.Length > 0) //last one
             {
-                int singleQuotationCharCount = value.Substring(0, index).Count(item => item == '\'');
+                TokenSymbolItemInfo item = new TokenSymbolItemInfo();
+                item.Content = sb.ToString();
+                item.Index = items.Count;
 
-                if (singleQuotationCharCount % 2 == 0)
-                {
-                    return true;
-                }
-                else
-                {
-                    int nextIndex = index + concatChars.Length + 1;
-
-                    value = nextIndex < value.Length ? value.Substring(nextIndex) : "";
-                }
+                items.Add(item);
             }
 
-            return false;
-        }
-
-        public static string[] SplitToArray(string value, char separator)
-        {
-            int singleQuotationCharCount = 0;
-
-            List<string> list = new List<string>();
-
-            int lastIndex = -1;
-
-            for (int i = 0; i < value.Length; i++)
-            {
-                char c = value[i];
-
-                if (c == '\'')
-                {
-                    singleQuotationCharCount++;
-                }
-
-                if (c == separator && singleQuotationCharCount % 2 == 0)
-                {
-                    list.Add(value.Substring(lastIndex + 1, i - lastIndex - 1));
-
-                    lastIndex = i;
-                }
-                else if (i == value.Length - 1 && lastIndex < value.Length - 1)
-                {
-                    list.Add(value.Substring(lastIndex + 1));
-                }
-            }
-
-            return list.ToArray();
+            return items;
         }
     }
 }

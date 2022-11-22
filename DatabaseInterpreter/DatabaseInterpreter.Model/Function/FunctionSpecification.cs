@@ -6,6 +6,7 @@
         public string Name { get; set; }
         public string Args { get; set; }
         public bool NoParenthesess { get; set; }
+        public bool IsString { get; set; }
 
         public string Delimiter
         {

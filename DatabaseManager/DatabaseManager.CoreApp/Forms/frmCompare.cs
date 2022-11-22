@@ -113,7 +113,7 @@ namespace DatabaseManager
 
         private async void btnCompare_Click(object sender, EventArgs e)
         {
-            frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector() { DatabaseType = this.sourceDbProfile.DatabaseType };
+            frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType));
 
             if (selector.ShowDialog() == DialogResult.OK)
             {
@@ -121,7 +121,9 @@ namespace DatabaseManager
                 this.txtSource.Clear();
                 this.txtTarget.Clear();
 
-                await Task.Run(() => this.Compare(selector.DatabaseObjectType));
+                var databaseObjectType = ItemsSelectorHelper.GetDatabaseObjectTypeByCheckItems(selector.CheckedItem);
+
+                await Task.Run(() => this.Compare(databaseObjectType));
             }
         }
 

@@ -9,13 +9,13 @@
   <item name="AVG" args="EXP"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEILING" args="EXP"></item>
-  <item name="CHAR" args="NUMBER"></item>
+  <item name="CHAR" args="NUMBER" isString="true"></item>
   <item name="CHARINDEX" args="SEARCH,EXP,START"></item>
   <item name="CHECKSUM_AGG" args="EXP"></item>
   <item name="CHOOSE" args="INDEX,VALUE1,VALUE2,..."></item>
   <item name="COALESCE" args="EXP1,EXP2,..."></item>
-  <item name="CONCAT" args="EXP1,EXP2,..."></item>
-  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..."></item>
+  <item name="CONCAT" args="EXP1,EXP2,..." isString="true"></item>
+  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..." isString="true"></item>
   <item name="CONVERT" args="TYPE,EXP"></item>
   <item name="COS" args="EXP"></item>
   <item name="COT" args="EXP"></item>
@@ -23,26 +23,26 @@
   <item name="COUNT_BIG" args="EXP"></item>
   <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
   <item name="CURRENT_TIMEZONE" args="" ></item>
-  <item name="CURRENT_USER" args="" noParenthesess="true"></item>
+  <item name="CURRENT_USER" args="" noParenthesess="true" isString="true"></item>
   <item name="DATALENGTH" args="EXP"></item>
   <item name="DATEADD" args="UNIT,NUMBER,DATE"></item>
   <item name="DATEDIFF" args="UNIT,DATE1,DATE2"></item>
   <item name="DATEDIFF_BIG" args="UNIT,DATE1,DATE2"></item>
   <item name="DATEFROMPARTS" args="YEAR,MONTH,DAY"></item>
-  <item name="DATENAME" args="UNIT,DATE"></item>
+  <item name="DATENAME" args="UNIT,DATE" isString="true"></item>
   <item name="DATEPART" args="UNIT,DATE"></item>
   <item name="DATETIME2FROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,FRACTIONS,PRECISION"></item>
   <item name="DATETIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
   <item name="DATETIMEOFFSETFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,FRACTIONS,HOUR_OFFSET,MINUTE_OFFSET,PRECISION"></item>
   <item name="DAY" args="DATE"></item>
-  <item name="DB_NAME" args=""></item>
+  <item name="DB_NAME" args="" isString="true"></item>
   <item name="DEGREES" args="EXP"></item>
   <item name="DIFFERENCE" args="EXP1,EXP2"></item>
   <item name="EOMONTH" args="DATE[,OFFSET]"></item>
   <item name="EXP" args="EXP"></item>
   <!--<item name="FIRST_VALUE" args=""></item>-->
   <item name="FLOOR" args="EXP"></item>
-  <item name="FORMAT" args="EXP,FORMAT[,CULTURE]"></item>
+  <item name="FORMAT" args="EXP,FORMAT[,CULTURE]" isString="true"></item>
   <item name="GETDATE" args=""></item>
   <item name="GETUTCDATE" args=""></item>
   <item name="GROUPING" args="COLUMN"></item>
@@ -58,16 +58,16 @@
   <!--<item name="LAG" args=""></item>-->
   <!--<item name="LAST_VALUE" args=""></item>-->
   <!--<item name="LEAD" args=""></item>-->
-  <item name="LEFT" args="EXP,LENGTH"></item>
+  <item name="LEFT" args="EXP,LENGTH" isString="true"></item>
   <item name="LEN" args="EXP"></item>
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
   <item name="LOWER" args="EXP"></item>
-  <item name="LTRIM" args="EXP"></item>
+  <item name="LTRIM" args="EXP" isString="true"></item>
   <item name="MAX" args="EXP"></item>
   <item name="MIN" args="EXP"></item>
   <item name="MONTH" args="DATE"></item>
-  <item name="NCHAR" args="EXP"></item>
+  <item name="NCHAR" args="EXP" isString="true"></item>
   <item name="NEWID" args=""></item>
   <item name="NULLIF" args="EXP1,EXP2"></item>
   <item name="PARSE" args="EXP AS TYPE" delimiter="AS"></item>
@@ -80,14 +80,14 @@
   <item name="QUOTENAME" args="EXP[,CHAR]"></item>
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
-  <item name="REPLACE" args="EXP,OLD,NEW"></item>
+  <item name="REPLACE" args="EXP,OLD,NEW" isString="true"></item>
   <item name="REPLICATE" args="EXP,TIMES"></item>
-  <item name="REVERSE" args="EXP"></item>
-  <item name="RIGHT" args="EXP,LENGTH"></item>
+  <item name="REVERSE" args="EXP" isString="true"></item>
+  <item name="RIGHT" args="EXP,LENGTH" isString="true"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
-  <item name="RTRIM" args="EXP"></item>
+  <item name="RTRIM" args="EXP" isString="true"></item>
   <item name="SCOPE_IDENTITY" args=""></item>	
-  <item name="SESSION_USER" args="" noParenthesess="true"></item>
+  <item name="SESSION_USER" args="" noParenthesess="true" isString="true"></item>
   <item name="SESSIONPROPERTY" args="OPTION" ></item>
   <item name="SIGN" args="EXP"></item>
   <item name="SIN" args="EXP"></item>
@@ -98,27 +98,27 @@
   <item name="SQUARE" args="EXP"></item>
   <item name="STDEV" args="[ALL|DISTINCT] EXP"></item>
   <item name="STDEVP" args="[ALL|DISTINCT] EXP"></item>
-  <item name="STR" args="EXP[,LENGTH,DECIMAL]"></item>
-  <item name="STRING_AGG" args="EXP,SEPARATOR"></item>
-  <item name="STRING_ESCAPE" args="EXP,TYPE"></item>
+  <item name="STR" args="EXP[,LENGTH,DECIMAL]" isString="true"></item>
+  <item name="STRING_AGG" args="EXP,SEPARATOR" isString="true"></item>
+  <item name="STRING_ESCAPE" args="EXP,TYPE" isString="true"></item>
   <item name="STRING_SPLIT" args="EXP,SEPARATOR"></item>
-  <item name="STUFF" args="EXP,START,LENGTH,VALUE"></item>
-  <item name="SUBSTRING" args="EXP,START,LENGTH"></item>
+  <item name="STUFF" args="EXP,START,LENGTH,VALUE" isString="true"></item>
+  <item name="SUBSTRING" args="EXP,START,LENGTH" isString="true"></item>
   <item name="SUM" args="EXP"></item>
   <item name="SYSDATETIME" args=""></item>
   <item name="SYSDATETIMEOFFSET" args=""></item>
-  <item name="SYSTEM_USER" args="" noParenthesess="true"></item>
+  <item name="SYSTEM_USER" args="" noParenthesess="true" isString="true"></item>
   <item name="SYSUTCDATETIME" args=""></item>
-  <item name="SUSER_SNAME" args=""></item>
+  <item name="SUSER_SNAME" args="" isString="true"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TIMEFROMPARTS" args="YEAR,MONTH,DAY,HOUR,MINUTE,SECONDS,MILLISECONDS"></item>
   <item name="TODATETIMEOFFSET" args="EXP,TIME_ZONE"></item>
   <item name="TRANSLATE" args="EXP,OLD,NEW"></item>
-  <item name="TRIM" args="EXP"></item>
+  <item name="TRIM" args="EXP" isString="true"></item>
   <item name="TRY_CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="TRY_CONVERT" args="TYPE,EXP"></item>
-  <item name="UPPER" args="EXP"></item>
-  <item name="USER_NAME" args=""></item>
+  <item name="UPPER" args="EXP" isString="true"></item>
+  <item name="USER_NAME" args="" isString="true"></item>
   <item name="VAR" args="[ALL|DISTINCT] EXP"></item>
   <item name="VARP" args="[ALL|DISTINCT] EXP"></item>
   <item name="YEAR" args="DATE"></item>

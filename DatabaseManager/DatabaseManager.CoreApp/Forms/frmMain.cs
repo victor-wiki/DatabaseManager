@@ -60,7 +60,6 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            
             this.txtMessage.ForeColor = Color.Black;
 
             if (info.InfoType == FeedbackInfoType.Error)

@@ -278,6 +278,8 @@ namespace DatabaseManager
                     option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
                     option.CreateSchemaIfNotExists = this.chkCreateSchemaIfNotExists.Checked;
                     option.NcharToDoubleChar = this.chkNcharToDoubleChar.Checked;
+                    option.ConvertConcatChar = TranslateHelper.NeedConvertConcatChar(SettingManager.Setting.ConvertConcatCharTargetDatabases, targetDbType);
+                    option.CollectTranslateResultAfterTranslated = false;
 
                     option.SchemaMappings = this.schemaMappings;
 
@@ -295,11 +297,11 @@ namespace DatabaseManager
 
                     this.SetExecuteButtonEnabled(false);
 
-                    DbConverterResult result = await this.dbConverter.Convert(schemaInfo);
+                    DbConvertResult result = await this.dbConverter.Convert(schemaInfo);
 
                     this.SetExecuteButtonEnabled(true);
 
-                    if (result.InfoType == DbConverterResultInfoType.Information)
+                    if (result.InfoType == DbConvertResultInfoType.Information)
                     {
                         if (!this.dbConverter.CancelRequested)
                         {
@@ -311,11 +313,11 @@ namespace DatabaseManager
                             MessageBox.Show("Task has been canceled.");
                         }
                     }
-                    else if (result.InfoType == DbConverterResultInfoType.Warnning)
+                    else if (result.InfoType == DbConvertResultInfoType.Warnning)
                     {
                         MessageBox.Show(result.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    else if (result.InfoType == DbConverterResultInfoType.Error)
+                    else if (result.InfoType == DbConvertResultInfoType.Error)
                     {
                         MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }

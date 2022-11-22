@@ -64,33 +64,33 @@
             this.tsmiCloseAll,
             this.tsmiSaveScript});
             this.scriptContentMenu.Name = "scriptContentMenu";
-            this.scriptContentMenu.Size = new System.Drawing.Size(181, 114);
+            this.scriptContentMenu.Size = new System.Drawing.Size(152, 92);
             // 
             // tsmiClose
             // 
             this.tsmiClose.Name = "tsmiClose";
-            this.tsmiClose.Size = new System.Drawing.Size(180, 22);
+            this.tsmiClose.Size = new System.Drawing.Size(151, 22);
             this.tsmiClose.Text = "Close";
             this.tsmiClose.Click += new System.EventHandler(this.tsmiClose_Click);
             // 
             // tsmiCloseOthers
             // 
             this.tsmiCloseOthers.Name = "tsmiCloseOthers";
-            this.tsmiCloseOthers.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCloseOthers.Size = new System.Drawing.Size(151, 22);
             this.tsmiCloseOthers.Text = "Close Others";
             this.tsmiCloseOthers.Click += new System.EventHandler(this.tsmiCloseOthers_Click);
             // 
             // tsmiCloseAll
             // 
             this.tsmiCloseAll.Name = "tsmiCloseAll";
-            this.tsmiCloseAll.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCloseAll.Size = new System.Drawing.Size(151, 22);
             this.tsmiCloseAll.Text = "Close All";
             this.tsmiCloseAll.Click += new System.EventHandler(this.tsmiCloseAll_Click);
             // 
             // tsmiSaveScript
             // 
             this.tsmiSaveScript.Name = "tsmiSaveScript";
-            this.tsmiSaveScript.Size = new System.Drawing.Size(180, 22);
+            this.tsmiSaveScript.Size = new System.Drawing.Size(151, 22);
             this.tsmiSaveScript.Text = "Save";
             this.tsmiSaveScript.Click += new System.EventHandler(this.tsmiSave_Click);
             // 

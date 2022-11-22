@@ -20,6 +20,11 @@ namespace SqlAnalyser.Core
             this.ruleAnalyser = new TSqlRuleAnalyser();
         }
 
+        public override SqlSyntaxError Validate(string content)
+        {
+            return this.ruleAnalyser.Validate(content);
+        }
+
         public override AnalyseResult AnalyseCommon(string content)
         {
             return this.ruleAnalyser.AnalyseCommon(content);

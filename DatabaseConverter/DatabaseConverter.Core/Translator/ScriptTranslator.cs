@@ -13,14 +13,13 @@ using System.Text.RegularExpressions;
 
 namespace DatabaseConverter.Core
 {
-    public class ScriptTranslator<T> : DbObjectTokenTranslator, IDisposable
+    public class ScriptTranslator<T> : DbObjectTokenTranslator
         where T : ScriptDbObject
     {
         private IEnumerable<T> scripts;
-        private List<TranslateResult> translateResults = new List<TranslateResult>();
+       
         public bool AutoMakeupSchemaName { get; set; } = true;
-        public bool IsCommonScript { get; set; }
-        public List<TranslateResult> TranslateResults => this.translateResults;
+        public bool IsCommonScript { get; set; }     
 
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
@@ -47,7 +46,7 @@ namespace DatabaseConverter.Core
 
             int total = this.scripts.Count();
             int count = 0;
-            int successCount = 0;
+            int successCount = 0;           
 
             foreach (T dbObj in this.scripts)
             {
@@ -60,11 +59,14 @@ namespace DatabaseConverter.Core
 
                 Type type = typeof(T);
 
-                this.FeedbackInfo($"Begin to translate {type.Name} \"{dbObj.Name}\"({count}/{total}).");
+                this.FeedbackInfo($"Begin to translate {type.Name}: \"{dbObj.Name}\"({count}/{total}).");
 
                 TranslateResult result = this.TranslateScript(dbObj, sourceAnalyser, targetAnalyser);
 
-                this.translateResults.Add(result);
+                if(this.Option.CollectTranslateResultAfterTranslated)
+                {
+                    this.TranslateResults.Add(result);
+                }                
 
                 if (!result.HasError)
                 {
@@ -80,7 +82,7 @@ namespace DatabaseConverter.Core
 
         private TranslateResult TranslateScript(ScriptDbObject dbObj, SqlAnalyserBase sourceAnalyser, SqlAnalyserBase targetAnalyser, bool isPartial = false)
         {
-            TranslateResult translateResult = new TranslateResult();
+            TranslateResult translateResult = new TranslateResult() { DbObjectType = DbObjectHelper.GetDatabaseObjectType(dbObj), DbObjectName = dbObj.Name };
 
             try
             {
@@ -94,8 +96,6 @@ namespace DatabaseConverter.Core
                 {
                     dbObj.Definition = dbObj.Definition.Replace("\r\n", "\n");
                 }
-
-                this.Validate(dbObj);
 
                 if (sourceDbType == DatabaseType.MySql)
                 {
@@ -121,11 +121,11 @@ namespace DatabaseConverter.Core
 
                 if (!isPartial)
                 {
-                    anlyseResult = sourceAnalyser.Analyse<T>(originalDefinition.ToUpper());
+                    anlyseResult = sourceAnalyser.Analyse<T>(originalDefinition);
                 }
                 else
                 {
-                    anlyseResult = sourceAnalyser.AnalyseCommon(originalDefinition.ToLower());
+                    anlyseResult = sourceAnalyser.AnalyseCommon(originalDefinition);
                 }
 
                 CommonScript script = anlyseResult.Script;
@@ -238,20 +238,17 @@ namespace DatabaseConverter.Core
                     }
                 }
 
+                dbObj.Definition = TranslateHelper.TranslateComments(this.sourceDbInterpreter, this.targetDbInterpreter, dbObj.Definition);
+
                 if (isPartial)
                 {
                     return translateResult;
                 }
 
                 translateResult.Error = replaced ? null : anlyseResult.Error;
-                translateResult.Data = dbObj.Definition;
+                translateResult.Data = dbObj.Definition;                
 
-                if (this.OnTranslated != null)
-                {
-                    this.OnTranslated(this.targetDbInterpreter.DatabaseType, dbObj, translateResult);
-                }                
-
-                this.FeedbackInfo($"End translate {type.Name} \"{dbObj.Name}\", translate result: {(anlyseResult.HasError ? "Error" : "OK")}.");
+                this.FeedbackInfo($"End translate {type.Name}: \"{dbObj.Name}\", translate result: {(anlyseResult.HasError ? "Error" : "OK")}.");
 
                 if (!replaced && anlyseResult.HasError)
                 {
@@ -349,20 +346,6 @@ namespace DatabaseConverter.Core
             };
         }
 
-        private void Validate(ScriptDbObject script)
-        {
-            if (sourceDbType == DatabaseType.SqlServer && targetDbType != DatabaseType.SqlServer)
-            {
-                //ANTRL can't handle "top 100 percent" correctly.
-                Regex regex = new Regex(@"(TOP[\s]+100[\s]+PERCENT)", RegexOptions.IgnoreCase);
-
-                if (regex.IsMatch(script.Definition))
-                {
-                    script.Definition = regex.Replace(script.Definition, "");
-                }
-            }
-        }
-
         private SqlSyntaxError ParseSqlSyntaxError(SqlSyntaxError error, string definition)
         {
             foreach (SqlSyntaxErrorItem item in error.Items)
@@ -375,24 +358,7 @@ namespace DatabaseConverter.Core
 
         public SqlAnalyserBase GetSqlAnalyser(DatabaseType dbType)
         {
-            SqlAnalyserBase sqlAnalyser = null;
-
-            if (dbType == DatabaseType.SqlServer)
-            {
-                sqlAnalyser = new TSqlAnalyser();
-            }
-            else if (dbType == DatabaseType.MySql)
-            {
-                sqlAnalyser = new MySqlAnalyser();
-            }
-            else if (dbType == DatabaseType.Oracle)
-            {
-                sqlAnalyser = new PlSqlAnalyser();
-            }
-            else if (dbType == DatabaseType.Postgres)
-            {
-                sqlAnalyser = new PostgreSqlAnalyser();
-            }
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(dbType);
 
             sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = true;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
@@ -402,11 +368,6 @@ namespace DatabaseConverter.Core
             sqlAnalyser.ScriptBuilderOption.OutputRemindInformation = this.Option.OutputRemindInformation;
 
             return sqlAnalyser;
-        }
-
-        public void Dispose()
-        {
-            this.translateResults.Clear();
-        }
+        }        
     }
 }

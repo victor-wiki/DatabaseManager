@@ -299,9 +299,9 @@ namespace DatabaseManager
             this.chkGenerateComment.Location = new System.Drawing.Point(165, 235);
             this.chkGenerateComment.Margin = new System.Windows.Forms.Padding(4);
             this.chkGenerateComment.Name = "chkGenerateComment";
-            this.chkGenerateComment.Size = new System.Drawing.Size(140, 21);
+            this.chkGenerateComment.Size = new System.Drawing.Size(138, 21);
             this.chkGenerateComment.TabIndex = 57;
-            this.chkGenerateComment.Text = "Generate Comment";
+            this.chkGenerateComment.Text = "Generate comment";
             this.chkGenerateComment.UseVisualStyleBackColor = true;
             // 
             // chkTreatBytesAsNull
@@ -533,7 +533,7 @@ namespace DatabaseManager
             // btnFetch
             // 
             this.btnFetch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnFetch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.btnFetch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnFetch.Location = new System.Drawing.Point(806, 3);
             this.btnFetch.Margin = new System.Windows.Forms.Padding(4);
             this.btnFetch.Name = "btnFetch";

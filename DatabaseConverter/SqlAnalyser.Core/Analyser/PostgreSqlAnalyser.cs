@@ -3,6 +3,7 @@ using DatabaseInterpreter.Utility;
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -18,6 +19,11 @@ namespace SqlAnalyser.Core
         public PostgreSqlAnalyser()
         {
             this.ruleAnalyser = new PostgreSqlRuleAnalyser();
+        }
+
+        public override SqlSyntaxError Validate(string content)
+        {
+            return this.ruleAnalyser.Validate(content);
         }
 
         public override AnalyseResult AnalyseCommon(string content)
@@ -43,15 +49,63 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseTrigger(string content)
         {
             return this.ruleAnalyser.AnalyseTrigger(content);
-        }       
+        }
+
+        protected override void PreHandleStatements(List<Statement> statements)
+        {
+            base.PreHandleStatements(statements);
+
+            this.PreHandle();
+        }
+
+        protected override void PostHandleStatements(StringBuilder sb)
+        {
+            base.PostHandleStatements(sb);
+
+            this.PostHandle(sb);
+        }
+
+        private void PreHandle()
+        {
+            this.StatementBuilder.Option.CollectDeclareStatement = true;
+            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
+            this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(PreparedStatement));
+        }
+
+        private void PostHandle(StringBuilder sb, RoutineType routineType = RoutineType.UNKNOWN, ScriptBuildResult result = null, int? declareStartIndex = default(int?))
+        {
+            if (this.StatementBuilder.DeclareStatements.Count > 0)
+            {
+                this.StatementBuilder.Clear();
+
+                StringBuilder sbDeclare = new StringBuilder();
+
+                foreach (var declareStatement in this.StatementBuilder.DeclareStatements)
+                {
+                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
+                    this.StatementBuilder.Option.CollectDeclareStatement = false;
+
+                    sbDeclare.AppendLine(this.BuildStatement(declareStatement, routineType).Trim());
+                }
+
+                sb.Insert(declareStartIndex.HasValue? declareStartIndex.Value: 0, sbDeclare.ToString());
+
+                if(result!=null)
+                {
+                    result.BodyStartIndex += sbDeclare.Length;
+                    result.BodyStopIndex += sbDeclare.Length;
+                }                          
+            }
+
+            this.StatementBuilder.DeclareStatements.Clear();
+            this.StatementBuilder.SpecialStatements.Clear();
+        }
 
         public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
-            this.StatementBuilder.Option.CollectDeclareStatement = true ;
-            this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(PreparedStatement));
+            this.PreHandle();
 
             StringBuilder sb = new StringBuilder();
 
@@ -179,27 +233,7 @@ namespace SqlAnalyser.Core
             sb.AppendLine($"END");
             sb.AppendLine("$$;");
 
-            if (this.StatementBuilder.DeclareStatements.Count > 0)
-            {
-                this.StatementBuilder.Clear();
-
-                StringBuilder sbDeclare = new StringBuilder();
-
-                foreach(var declareStatement in this.StatementBuilder.DeclareStatements)
-                {
-                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
-                    this.StatementBuilder.Option.CollectDeclareStatement = false;
-
-                    sbDeclare.AppendLine(this.BuildStatement(declareStatement, script.Type).Trim());
-                }
-
-                sb.Insert(declareStartIndex, sbDeclare.ToString());
-
-                result.BodyStartIndex += sbDeclare.Length;
-                result.BodyStopIndex += sbDeclare.Length;
-
-                this.StatementBuilder.DeclareStatements.Clear();
-            }
+            this.PostHandle(sb, script.Type, result, declareStartIndex);
 
             result.Script = sb.ToString();
 

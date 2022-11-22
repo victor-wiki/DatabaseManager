@@ -35,4 +35,10 @@
 		<Oracle></Oracle>
 		<Postgres></Postgres>
 	</mapping>
+	<mapping>
+		<SqlServer>@@SERVERNAME</SqlServer>
+		<MySql>@@HOSTNAME</MySql>
+		<Oracle>(SELECT SYS_CONTEXT('USERENV','SERVER_HOST') FROM DUAL)</Oracle>
+		<Postgres></Postgres>
+	</mapping>
 </mappings>

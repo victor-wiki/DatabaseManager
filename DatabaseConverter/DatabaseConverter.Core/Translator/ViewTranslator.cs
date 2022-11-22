@@ -95,9 +95,9 @@ namespace DatabaseConverter.Core
 
                     view.Definition = definition;
 
-                    if (this.OnTranslated != null)
+                    if (this.Option.CollectTranslateResultAfterTranslated)
                     {
-                        this.OnTranslated(this.targetDbInterpreter.DatabaseType, view, new TranslateResult() { Data = view.Definition });
+                        this.TranslateResults.Add(new TranslateResult() { DbObjectType = DatabaseObjectType.View, DbObjectName = view.Name, Data = view.Definition });
                     }
                 }
                 catch (Exception ex)

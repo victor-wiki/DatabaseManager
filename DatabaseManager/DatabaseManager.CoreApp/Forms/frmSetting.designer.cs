@@ -37,6 +37,9 @@
             this.label3 = new System.Windows.Forms.Label();
             this.lblMySqlCharset = new System.Windows.Forms.Label();
             this.tabGeneral = new System.Windows.Forms.TabPage();
+            this.chkValidateScriptsAfterTranslated = new System.Windows.Forms.CheckBox();
+            this.btnSelectTargetDatabaseTypesForConcatChar = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
             this.lblOutputFolder = new System.Windows.Forms.Label();
             this.btnOutputFolder = new System.Windows.Forms.Button();
             this.txtOutputFolder = new System.Windows.Forms.TextBox();
@@ -78,7 +81,7 @@
             this.btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btnConfirm.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btnConfirm.Location = new System.Drawing.Point(176, 503);
+            this.btnConfirm.Location = new System.Drawing.Point(176, 527);
             this.btnConfirm.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(88, 33);
@@ -91,7 +94,7 @@
             // 
             this.btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(297, 503);
+            this.btnCancel.Location = new System.Drawing.Point(297, 527);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -110,7 +113,7 @@
             this.tabMySql.Margin = new System.Windows.Forms.Padding(4);
             this.tabMySql.Name = "tabMySql";
             this.tabMySql.Padding = new System.Windows.Forms.Padding(4);
-            this.tabMySql.Size = new System.Drawing.Size(509, 459);
+            this.tabMySql.Size = new System.Drawing.Size(509, 483);
             this.tabMySql.TabIndex = 1;
             this.tabMySql.Text = "MySql";
             // 
@@ -153,6 +156,9 @@
             // tabGeneral
             // 
             this.tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            this.tabGeneral.Controls.Add(this.chkValidateScriptsAfterTranslated);
+            this.tabGeneral.Controls.Add(this.btnSelectTargetDatabaseTypesForConcatChar);
+            this.tabGeneral.Controls.Add(this.label6);
             this.tabGeneral.Controls.Add(this.lblOutputFolder);
             this.tabGeneral.Controls.Add(this.btnOutputFolder);
             this.tabGeneral.Controls.Add(this.txtOutputFolder);
@@ -181,14 +187,43 @@
             this.tabGeneral.Margin = new System.Windows.Forms.Padding(4);
             this.tabGeneral.Name = "tabGeneral";
             this.tabGeneral.Padding = new System.Windows.Forms.Padding(4);
-            this.tabGeneral.Size = new System.Drawing.Size(509, 459);
+            this.tabGeneral.Size = new System.Drawing.Size(509, 483);
             this.tabGeneral.TabIndex = 0;
             this.tabGeneral.Text = "General";
+            // 
+            // chkValidateScriptsAfterTranslated
+            // 
+            this.chkValidateScriptsAfterTranslated.AutoSize = true;
+            this.chkValidateScriptsAfterTranslated.Location = new System.Drawing.Point(13, 293);
+            this.chkValidateScriptsAfterTranslated.Name = "chkValidateScriptsAfterTranslated";
+            this.chkValidateScriptsAfterTranslated.Size = new System.Drawing.Size(209, 21);
+            this.chkValidateScriptsAfterTranslated.TabIndex = 38;
+            this.chkValidateScriptsAfterTranslated.Text = "Validate scripts after translated";
+            this.chkValidateScriptsAfterTranslated.UseVisualStyleBackColor = true;
+            // 
+            // btnSelectTargetDatabaseTypesForConcatChar
+            // 
+            this.btnSelectTargetDatabaseTypesForConcatChar.Location = new System.Drawing.Point(265, 321);
+            this.btnSelectTargetDatabaseTypesForConcatChar.Name = "btnSelectTargetDatabaseTypesForConcatChar";
+            this.btnSelectTargetDatabaseTypesForConcatChar.Size = new System.Drawing.Size(75, 26);
+            this.btnSelectTargetDatabaseTypesForConcatChar.TabIndex = 37;
+            this.btnSelectTargetDatabaseTypesForConcatChar.Text = "Set";
+            this.btnSelectTargetDatabaseTypesForConcatChar.UseVisualStyleBackColor = true;
+            this.btnSelectTargetDatabaseTypesForConcatChar.Click += new System.EventHandler(this.btnSelectTargetDatabaseTypesForConcatChar_Click);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(11, 324);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(248, 17);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Convert concat char if target database is:";
             // 
             // lblOutputFolder
             // 
             this.lblOutputFolder.AutoSize = true;
-            this.lblOutputFolder.Location = new System.Drawing.Point(10, 428);
+            this.lblOutputFolder.Location = new System.Drawing.Point(10, 455);
             this.lblOutputFolder.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblOutputFolder.Name = "lblOutputFolder";
             this.lblOutputFolder.Size = new System.Drawing.Size(131, 17);
@@ -197,7 +232,7 @@
             // 
             // btnOutputFolder
             // 
-            this.btnOutputFolder.Location = new System.Drawing.Point(433, 425);
+            this.btnOutputFolder.Location = new System.Drawing.Point(433, 449);
             this.btnOutputFolder.Margin = new System.Windows.Forms.Padding(4);
             this.btnOutputFolder.Name = "btnOutputFolder";
             this.btnOutputFolder.Size = new System.Drawing.Size(42, 24);
@@ -208,7 +243,7 @@
             // 
             // txtOutputFolder
             // 
-            this.txtOutputFolder.Location = new System.Drawing.Point(149, 426);
+            this.txtOutputFolder.Location = new System.Drawing.Point(149, 450);
             this.txtOutputFolder.Margin = new System.Windows.Forms.Padding(4);
             this.txtOutputFolder.Name = "txtOutputFolder";
             this.txtOutputFolder.Size = new System.Drawing.Size(277, 23);
@@ -219,7 +254,7 @@
             this.chkEditorEnableIntellisence.AutoSize = true;
             this.chkEditorEnableIntellisence.Checked = true;
             this.chkEditorEnableIntellisence.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkEditorEnableIntellisence.Location = new System.Drawing.Point(13, 295);
+            this.chkEditorEnableIntellisence.Location = new System.Drawing.Point(248, 262);
             this.chkEditorEnableIntellisence.Margin = new System.Windows.Forms.Padding(4);
             this.chkEditorEnableIntellisence.Name = "chkEditorEnableIntellisence";
             this.chkEditorEnableIntellisence.Size = new System.Drawing.Size(214, 21);
@@ -242,7 +277,7 @@
             // 
             // txtLockPassword
             // 
-            this.txtLockPassword.Location = new System.Drawing.Point(115, 395);
+            this.txtLockPassword.Location = new System.Drawing.Point(115, 419);
             this.txtLockPassword.Margin = new System.Windows.Forms.Padding(4);
             this.txtLockPassword.Name = "txtLockPassword";
             this.txtLockPassword.PasswordChar = '*';
@@ -252,7 +287,7 @@
             // lblPassword
             // 
             this.lblPassword.AutoSize = true;
-            this.lblPassword.Location = new System.Drawing.Point(10, 398);
+            this.lblPassword.Location = new System.Drawing.Point(10, 422);
             this.lblPassword.Name = "lblPassword";
             this.lblPassword.Size = new System.Drawing.Size(99, 17);
             this.lblPassword.TabIndex = 27;
@@ -263,7 +298,7 @@
             this.chkRememberPasswordDuringSession.AutoSize = true;
             this.chkRememberPasswordDuringSession.Checked = true;
             this.chkRememberPasswordDuringSession.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkRememberPasswordDuringSession.Location = new System.Drawing.Point(13, 364);
+            this.chkRememberPasswordDuringSession.Location = new System.Drawing.Point(13, 388);
             this.chkRememberPasswordDuringSession.Margin = new System.Windows.Forms.Padding(4);
             this.chkRememberPasswordDuringSession.Name = "chkRememberPasswordDuringSession";
             this.chkRememberPasswordDuringSession.Size = new System.Drawing.Size(495, 21);
@@ -288,7 +323,7 @@
             // 
             this.cboPreferredDatabase.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboPreferredDatabase.FormattingEnabled = true;
-            this.cboPreferredDatabase.Location = new System.Drawing.Point(142, 327);
+            this.cboPreferredDatabase.Location = new System.Drawing.Point(149, 355);
             this.cboPreferredDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboPreferredDatabase.Name = "cboPreferredDatabase";
             this.cboPreferredDatabase.Size = new System.Drawing.Size(126, 25);
@@ -297,7 +332,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(11, 331);
+            this.label5.Location = new System.Drawing.Point(11, 359);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(124, 17);
@@ -309,7 +344,7 @@
             this.chkLogError.AutoSize = true;
             this.chkLogError.Checked = true;
             this.chkLogError.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogError.Location = new System.Drawing.Point(294, 227);
+            this.chkLogError.Location = new System.Drawing.Point(294, 228);
             this.chkLogError.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogError.Name = "chkLogError";
             this.chkLogError.Size = new System.Drawing.Size(57, 21);
@@ -322,7 +357,7 @@
             this.chkLogInfo.AutoSize = true;
             this.chkLogInfo.Checked = true;
             this.chkLogInfo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkLogInfo.Location = new System.Drawing.Point(194, 227);
+            this.chkLogInfo.Location = new System.Drawing.Point(194, 228);
             this.chkLogInfo.Margin = new System.Windows.Forms.Padding(4);
             this.chkLogInfo.Name = "chkLogInfo";
             this.chkLogInfo.Size = new System.Drawing.Size(90, 21);
@@ -333,7 +368,7 @@
             // lblLogType
             // 
             this.lblLogType.AutoSize = true;
-            this.lblLogType.Location = new System.Drawing.Point(117, 228);
+            this.lblLogType.Location = new System.Drawing.Point(117, 229);
             this.lblLogType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblLogType.Name = "lblLogType";
             this.lblLogType.Size = new System.Drawing.Size(62, 17);
@@ -385,7 +420,7 @@
             // chkEnableLog
             // 
             this.chkEnableLog.AutoSize = true;
-            this.chkEnableLog.Location = new System.Drawing.Point(13, 226);
+            this.chkEnableLog.Location = new System.Drawing.Point(13, 228);
             this.chkEnableLog.Margin = new System.Windows.Forms.Padding(4);
             this.chkEnableLog.Name = "chkEnableLog";
             this.chkEnableLog.Size = new System.Drawing.Size(89, 21);
@@ -481,7 +516,7 @@
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(517, 489);
+            this.tabControl1.Size = new System.Drawing.Size(517, 513);
             this.tabControl1.TabIndex = 15;
             // 
             // tabPostgres
@@ -491,7 +526,7 @@
             this.tabPostgres.Location = new System.Drawing.Point(4, 26);
             this.tabPostgres.Name = "tabPostgres";
             this.tabPostgres.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPostgres.Size = new System.Drawing.Size(509, 459);
+            this.tabPostgres.Size = new System.Drawing.Size(509, 483);
             this.tabPostgres.TabIndex = 2;
             this.tabPostgres.Text = "Postgres";
             // 
@@ -512,7 +547,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(523, 550);
+            this.ClientSize = new System.Drawing.Size(523, 574);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnConfirm);
@@ -572,5 +607,8 @@
         private System.Windows.Forms.Button btnOutputFolder;
         private System.Windows.Forms.TextBox txtOutputFolder;
         private System.Windows.Forms.FolderBrowserDialog dlgOutputFolder;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Button btnSelectTargetDatabaseTypesForConcatChar;
+        private System.Windows.Forms.CheckBox chkValidateScriptsAfterTranslated;
     }
 }

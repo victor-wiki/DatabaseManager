@@ -133,7 +133,7 @@ namespace DatabaseConverter.Core
 
             string functionName = defaultValue;
 
-            List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(defaultValue);
+            List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbType, defaultValue);
 
             if (formulas.Count > 0)
             {
@@ -491,7 +491,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            column.DefaultValue = hasParenthesis ? $"({defaultValue})" : defaultValue;
+            column.DefaultValue = (!string.IsNullOrEmpty(defaultValue) && hasParenthesis) ? $"({defaultValue})" : defaultValue;
         }
 
         public void ConvertComputeExpression(TableColumn column)
@@ -523,7 +523,7 @@ namespace DatabaseConverter.Core
                             exp = exp.Substring(1, computeExp.Length - 1);
                         }
 
-                        List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(exp);
+                        List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbType, exp);
 
                         if (formulas.Count > 0)
                         {
@@ -569,16 +569,15 @@ namespace DatabaseConverter.Core
 
             if (!string.IsNullOrEmpty(this.sourceDbInterpreter.STR_CONCAT_CHARS))
             {
-                bool hasCharColumn = false;
-
                 string[] items = column.ComputeExp.Split(this.sourceDbInterpreter.STR_CONCAT_CHARS);
 
-                if (items.Any(item => this.columns.Any(c => this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType))))
-                {
-                    hasCharColumn = true;
-                }
+                var charColumns = this.columns.Where(c => items.Any(item=>  this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType)))
+                                  .Select(c=>c.Name);
 
-                column.ComputeExp = ConcatCharsHelper.ConvertConcatChars(this.sourceDbInterpreter, this.targetDbInterpreter, column.ComputeExp, hasCharColumn);
+                //if(this.Option.ConvertConcatChar)
+                {
+                    column.ComputeExp = ConcatCharsHelper.ConvertConcatChars(this.sourceDbInterpreter, this.targetDbInterpreter, column.ComputeExp, charColumns);
+                }                
 
                 column.ComputeExp = this.CheckColumnDataTypeForComputeExpression(column.ComputeExp, this.targetDbInterpreter.STR_CONCAT_CHARS, targetDbType);
             }

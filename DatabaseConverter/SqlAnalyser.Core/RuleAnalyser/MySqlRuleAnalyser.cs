@@ -5,7 +5,6 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using static MySqlParser;
 
 namespace SqlAnalyser.Core
@@ -48,6 +47,15 @@ namespace SqlAnalyser.Core
             SimpleStatementContext rootContext = this.GetRootContext(content, out error);
 
             return rootContext.createStatement();
+        }
+
+        public override SqlSyntaxError Validate(string content)
+        {
+            SqlSyntaxError error = null;
+
+            var rootContext = this.GetRootContext(content, out error);
+
+            return error;
         }
 
         public override AnalyseResult AnalyseCommon(string content)
@@ -326,7 +334,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is TerminalNodeImpl tni)
                 {
-                    string text = child.GetText();
+                    string text = child.GetText().ToUpper();
 
                     if (text == "PREPARE")
                     {
@@ -693,9 +701,35 @@ namespace SqlAnalyser.Core
                 NameValueItem item = new NameValueItem();
 
                 item.Name = this.ParseColumnName(setItem.columnRef());
-                item.Value = new TokenInfo(valueExp) { Type = TokenType.UpdateSetValue };
 
-                this.AddChildTableAndColumnNameToken(valueExp, item.Value);
+                bool isSubquery = AnalyserHelper.IsSubquery(valueExp);
+
+                if (!isSubquery)
+                {
+                    item.Value = new TokenInfo(valueExp) { Type = TokenType.UpdateSetValue };
+                }
+                else
+                {
+                    foreach (var child in valueExp.children)
+                    {
+                        if (child is PrimaryExprPredicateContext pep)
+                        {
+                            var subquery = (pep.predicate()?.bitExpr()?.SingleOrDefault().simpleExpr() as SimpleExprSubQueryContext)?.subquery();
+
+                            if (subquery != null)
+                            {
+                                item.ValueStatement = this.ParseQueryExpression(subquery.queryExpressionParens()?.queryExpression());
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                if (item.Value != null)
+                {
+                    this.AddChildTableAndColumnNameToken(valueExp, item.Value);
+                }
 
                 statement.SetItems.Add(item);
             }
@@ -788,6 +822,7 @@ namespace SqlAnalyser.Core
             SelectStatement statement = null;
 
             QueryExpressionBodyContext body = node.queryExpressionBody();
+            var limit = node.limitClause();
 
             bool isUnion = false;
             UnionType unionType = UnionType.UNION;
@@ -803,7 +838,9 @@ namespace SqlAnalyser.Core
                     else
                     {
                         UnionStatement unionStatement = new UnionStatement();
+
                         unionStatement.Type = unionType;
+
                         unionStatement.SelectStatement = this.ParseQuerySpecification(queryPrimary.querySpecification());
 
                         statement.UnionStatements.Add(unionStatement);
@@ -816,6 +853,7 @@ namespace SqlAnalyser.Core
                     if (terminalNode.Symbol.Type == MySqlParser.UNION_SYMBOL)
                     {
                         isUnion = true;
+
                         statement.UnionStatements = new List<UnionStatement>();
                     }
                 }
@@ -834,6 +872,25 @@ namespace SqlAnalyser.Core
                             break;
                     }
                 }
+            }
+
+            if (limit != null)
+            {
+                var options = limit.limitOptions().limitOption();
+
+                SelectLimitInfo limitInfo = new SelectLimitInfo();
+
+                if (options.Length > 0)
+                {
+                    limitInfo.StartRowIndex = new TokenInfo(options[0]);
+                }
+
+                if (options.Length > 1)
+                {
+                    limitInfo.RowCount = new TokenInfo(options[1]);
+                }
+
+                statement.LimitInfo = limitInfo;
             }
 
             return statement;
@@ -1070,11 +1127,15 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is LabeledControlContext labeledControl)
                 {
-                    statements.Add(this.ParseLabelControlStatement(labeledControl));
+                    statements.Add(this.ParseLabelControl(labeledControl));
                 }
                 else if (child is UnlabeledControlContext unlabeledControl)
                 {
-                    statements.Add(this.ParseUnlabeledControlStatement(unlabeledControl));
+                    statements.Add(this.ParseUnlabeledControl(unlabeledControl));
+                }
+                else if (child is UnlabeledBlockContext unlabeledBlock)
+                {
+                    statements.AddRange(this.ParseUnlabeledBlock(unlabeledBlock));
                 }
                 else if (child is ReturnStatementContext returnStatement)
                 {
@@ -1126,15 +1187,53 @@ namespace SqlAnalyser.Core
         {
             IfStatement statement = new IfStatement();
 
-            IfStatementItem ifItem = new IfStatementItem() { Type = IfStatementType.IF };
-
             bool isFirst = true;
             var ifBody = node.ifBody();
 
             while (ifBody != null)
             {
                 IfStatementItem item = new IfStatementItem() { Type = isFirst ? IfStatementType.IF : IfStatementType.ELSEIF };
-                item.Condition = this.ParseCondition(ifBody.expr());
+
+                var condition = ifBody.expr();
+
+                SimpleExprSubQueryContext subquery = null;
+
+                var children = (condition is ExprNotContext) ? (condition as ExprNotContext).expr().children : condition.children;
+
+                foreach (var child in children)
+                {
+                    if (child is PrimaryExprPredicateContext pep)
+                    {
+                        subquery = pep.predicate()?.bitExpr()?.FirstOrDefault()?.simpleExpr() as SimpleExprSubQueryContext;
+
+                        if (subquery != null)
+                        {
+                            foreach (var c in subquery.children)
+                            {
+                                if (c is TerminalNodeImpl && c.GetText().ToUpper() == "EXISTS")
+                                {
+                                    item.ConditionType = IfConditionType.Exists;
+                                    break;
+                                }
+                            }
+
+                            item.CondtionStatement = this.ParseQueryExpression(subquery.subquery().queryExpressionParens()?.queryExpression());
+                        }
+
+                        break;
+                    }
+                }
+
+                if (item.ConditionType == IfConditionType.Exists && (ifBody.expr() is ExprNotContext))
+                {
+                    item.ConditionType = IfConditionType.NotExists;
+                }
+
+                if (subquery == null)
+                {
+                    item.Condition = this.ParseCondition(condition);
+                }
+
                 item.Statements.AddRange(this.ParseCompoundStatementList(ifBody.thenStatement().compoundStatementList()));
 
                 statement.Items.Add(item);
@@ -1148,6 +1247,7 @@ namespace SqlAnalyser.Core
                 if (elseStatements != null)
                 {
                     IfStatementItem elseItem = new IfStatementItem() { Type = IfStatementType.ELSE };
+
                     elseItem.Statements.AddRange(this.ParseCompoundStatementList(elseStatements));
                 }
             }
@@ -1251,7 +1351,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseLabelControlStatement(LabeledControlContext node)
+        public Statement ParseLabelControl(LabeledControlContext node)
         {
             Statement statement = null;
 
@@ -1269,7 +1369,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseUnlabeledControlStatement(UnlabeledControlContext node)
+        public Statement ParseUnlabeledControl(UnlabeledControlContext node)
         {
             Statement statement = null;
 
@@ -1287,6 +1387,22 @@ namespace SqlAnalyser.Core
 
             return statement;
         }
+
+        public List<Statement> ParseUnlabeledBlock(UnlabeledBlockContext node)
+        {
+            List<Statement> statements = new List<Statement>();
+
+            foreach (var child in node.children)
+            {
+                if (child is BeginEndBlockContext beginEnd)
+                {
+                    statements.AddRange(this.ParseCompoundStatementList(beginEnd.compoundStatementList()));
+                }
+            }
+
+            return statements;
+        }
+
 
         public ReturnStatement ParseReturnStatement(ReturnStatementContext node)
         {
@@ -1373,7 +1489,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is TerminalNodeImpl tni)
                 {
-                    if (tni.GetText() == "TEMPORARY")
+                    if (tni.GetText().ToUpper() == "TEMPORARY")
                     {
                         tableInfo.IsTemporary = true;
                         break;

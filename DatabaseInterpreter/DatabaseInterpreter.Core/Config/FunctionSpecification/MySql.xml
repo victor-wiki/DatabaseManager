@@ -13,12 +13,12 @@
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEIL" args="EXP"></item>
   <item name="CEILING" args="EXP"></item>
-  <item name="CHAR" args="NUMBER"></item>
+  <item name="CHAR" args="NUMBER" isString="true"></item>
   <item name="CHAR_LENGTH" args="EXP"></item>
   <item name="CHARACTER_LENGTH" args=""></item>
   <item name="COALESCE" args="EXP1,EXP2,..."></item>
-  <item name="CONCAT" args="EXP1,EXP2,..."></item>
-  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..."></item>
+  <item name="CONCAT" args="EXP1,EXP2,..." isString="true"></item>
+  <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..." isString="true"></item>
   <item name="CONNECTION_ID" args=""></item>
   <item name="CONV" args="EXP,FROM,TO"></item>
   <item name="CONVERT" args="EXP,TYPE"></item>
@@ -29,16 +29,16 @@
   <item name="CURRENT_DATE" args=""></item>
   <item name="CURRENT_TIME" args=""></item>
   <item name="CURRENT_TIMESTAMP" args=""></item>
-  <item name="CURRENT_USER" args=""></item>
+  <item name="CURRENT_USER" args="" isString="true"></item>
   <item name="CURTIME" args=""></item>
-  <item name="DATABASE" args=""></item>
+  <item name="DATABASE" args="" isString="true"></item>
   <item name="DATE" args="EXP"></item>
   <item name="DATE_ADD" args="DATE,INTERVAL NUMBER UNIT"></item>
   <item name="DATE_FORMAT" args="DATE,FORMAT"></item>
   <item name="DATE_SUB" args="DATE,INTERVAL NUMBER UNIT"></item>
   <item name="DATEDIFF" args="DATE1,DATE2"></item>
   <item name="DAY" args="DATE"></item>
-  <item name="DAYNAME" args="DATE"></item>
+  <item name="DAYNAME" args="DATE" isString="true"></item>
   <item name="DAYOFMONTH" args="DATE"></item>
   <item name="DAYOFWEEK" args="DATE"></item>
   <item name="DAYOFYEAR" args="DATE"></item>
@@ -50,20 +50,20 @@
   <item name="FIELD" args="SEARCH,EXP1,EXP2,..."></item>
   <item name="FIND_IN_SET" args="SEARCH,EXP"></item>
   <item name="FLOOR" args="EXP"></item>
-  <item name="FORMAT" args="EXP,DECIMAL"></item>
+  <item name="FORMAT" args="EXP,DECIMAL" isString="true"></item>
   <item name="FROM_DAYS" args="EXP"></item>
   <item name="GREATEST" args="EXP1,EXP2,..."></item>
   <item name="HOUR" args="DATE"></item>
   <item name="IF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
   <item name="IFNULL" args="EXP,DEFAULT"></item>
-  <item name="INSERT" args="EXP,START,LENGTH,VALUE"></item>
-  <item name="INSTR" args="EXP,SEARCH"></item>
+  <item name="INSERT" args="EXP,START,LENGTH,VALUE" isString="true"></item>
+  <item name="INSTR" args="EXP,SEARCH" isString="true"></item>
   <item name="ISNULL" args="EXP"></item>
   <item name="LAST_DAY" args="DATE"></item>
   <item name="LAST_INSERT_ID" args=""></item>
-  <item name="LCASE" args="EXP"></item>
+  <item name="LCASE" args="EXP" isString="true"></item>
   <item name="LEAST" args="EXP1,EXP2,..."></item>
-  <item name="LEFT" args="EXP,LENGTH"></item>
+  <item name="LEFT" args="EXP,LENGTH" isString="true"></item>
   <item name="LENGTH" args="EXP"></item>
   <item name="LN" args="EXP"></item>
   <item name="LOCALTIME" args="" ></item>
@@ -72,9 +72,9 @@
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
   <item name="LOG2" args="EXP"></item>
-  <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH,PAD"></item>
-  <item name="LTRIM" args="EXP"></item>
+  <item name="LOWER" args="EXP" isString="true"></item>
+  <item name="LPAD" args="EXP,LENGTH,PAD" isString="true"></item>
+  <item name="LTRIM" args="EXP" isString="true"></item>
   <item name="MAKEDATE" args="YEAR,DAY_OF_YEAR"></item>
   <item name="MAKETIME" args="HOUR,MINUTE,SECONDS"></item>
   <item name="MAX" args="EXP"></item>
@@ -85,7 +85,7 @@
   <item name="MINUTE" args="DATE"></item>
   <item name="MOD" args="EXP1,EXP2"></item>
   <item name="MONTH" args="DATE"></item>
-  <item name="MONTHNAME" args="DATE"></item>
+  <item name="MONTHNAME" args="DATE" isString="true"></item>
   <item name="NOW" args=""></item>
   <item name="NULLIF" args="EXP,DEFAULT"></item>
   <item name="OLD_PASSWORD" args="EXP"></item>
@@ -99,16 +99,16 @@
   <item name="QUARTER" args="DATE"></item>
   <item name="RADIANS" args="EXP"></item>
   <item name="RAND" args="EXP"></item>
-  <item name="REPEAT" args="EXP,TIMES"></item> 
-  <item name="REPLACE" args="EXP,OLD,NEW"></item>
-  <item name="REVERSE" args="EXP"></item>
+  <item name="REPEAT" args="EXP,TIMES" isString="true"></item> 
+  <item name="REPLACE" args="EXP,OLD,NEW" isString="true"></item>
+  <item name="REVERSE" args="EXP" isString="true"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
-  <item name="RPAD" args="EXP,LENGTH,PAD"></item>
-  <item name="RTRIM" args="EXP"></item>
+  <item name="RPAD" args="EXP,LENGTH,PAD" isString="true"></item>
+  <item name="RTRIM" args="EXP" isString="true"></item>
   <item name="SEC_TO_TIME" args="SECONDS"></item>
   <item name="SECOND" args="DATE"></item>
-  <item name="SESSION_USER" args=""></item>
+  <item name="SESSION_USER" args="" isString="true"></item>
   <item name="SIGN" args="EXP"></item>
   <item name="SIN" args="EXP"></item>
   <item name="SPACE" args="LENGTH"></item>
@@ -117,13 +117,13 @@
   <item name="STR_TO_DATE" args="EXP,FORMAT"></item>
   <item name="STRCMP" args="EXP1,EXP2"></item>
   <item name="SUBDATE" args="DATE,INTERVAL NUMBER UNIT"></item>
-  <item name="SUBSTR" args="EXP,START[,LENGTH]"></item>
-  <item name="SUBSTRING" args="EXP,START[,LENGTH]"></item>
+  <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
+  <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="SUBSTRING_INDEX" args="EXP,DELIMITER,NUMBER"></item>
   <item name="SUBTIME" args="DATE,TIME"></item>
   <item name="SUM" args="EXP"></item>
   <item name="SYSDATE" args=""></item>
-  <item name="SYSTEM_USER" args=""></item>
+  <item name="SYSTEM_USER" args="" isString="true"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TIME" args="EXP"></item>
   <item name="TIME_FORMAT" args="TIME,FORMAT"></item>
@@ -132,10 +132,10 @@
   <item name="TIMESTAMP" args="EXP[,NUMBER]"></item>
   <item name="TIMESTAMPDIFF" args="UNIT,DATE1,DATE2"></item>
   <item name="TO_DAYS" args="DATE"></item>
-  <item name="TRIM" args="EXP"></item>
+  <item name="TRIM" args="EXP" isString="true"></item>
   <item name="TRUNCATE" args="EXP,DECIMAL"></item>
-  <item name="UCASE" args="EXP"></item>
-  <item name="UPPER" args="EXP"></item>
+  <item name="UCASE" args="EXP" isString="true"></item>
+  <item name="UPPER" args="EXP" isString="true"></item>
   <item name="USER" args=""></item>
   <item name="UTC_DATE" args=""></item>
   <item name="UTC_TIMESTAMP" args=""></item>

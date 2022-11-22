@@ -125,7 +125,7 @@ namespace DatabaseManager.Helper
                     richTextBox.SelectionStart = item.StartIndex;
                     richTextBox.SelectionLength = item.StopIndex - item.StartIndex + 1;
 
-                    richTextBox.SelectionColor = Color.Red;
+                    //richTextBox.SelectionColor = Color.Red;
                     richTextBox.SelectionBackColor = Color.Yellow;
                 }
             }

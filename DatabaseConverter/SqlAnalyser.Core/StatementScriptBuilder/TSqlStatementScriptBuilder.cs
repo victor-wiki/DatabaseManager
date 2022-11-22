@@ -59,7 +59,23 @@ namespace SqlAnalyser.Core
 
                 if (!StatementScriptBuilderHelper.IsCompositeUpdateSetColumnName(update))
                 {
-                    this.AppendLine(string.Join("," + Environment.NewLine + Indent, update.SetItems.Select(item => $"{item.Name}={item.Value}")));
+                    int k = 0;
+
+                    foreach (var item in update.SetItems)
+                    {
+                        this.Append($"{item.Name}=");
+
+                        this.BuildUpdateSetValue(item);
+
+                        if (k < update.SetItems.Count - 1)
+                        {
+                            this.Append(",");
+                        }
+
+                        this.AppendLine(this.Indent);
+
+                        k++;
+                    }
                 }
                 else if (update.SetItems.Count > 0)
                 {
@@ -208,9 +224,13 @@ namespace SqlAnalyser.Core
             {
                 foreach (IfStatementItem item in @if.Items)
                 {
-                    if (item.Type == IfStatementType.IF)
+                    if (item.Type == IfStatementType.IF || item.Type == IfStatementType.ELSEIF)
                     {
-                        this.AppendLine($"{item.Type} {item.Condition}");
+                        this.Append($"{item.Type} ");
+
+                        this.BuildIfCondition(item);
+
+                        this.AppendLine();
                     }
                     else
                     {
@@ -298,6 +318,14 @@ namespace SqlAnalyser.Core
             else if (statement is ReturnStatement @return)
             {
                 this.AppendLine($"RETURN {@return.Value};");
+            }
+            else if(statement is BreakStatement @break)
+            {
+                this.AppendLine("BREAK;");
+            }
+            else if (statement is ContinueStatement @continue)
+            {
+                this.AppendLine("CONTINUE;");
             }
             else if (statement is PrintStatement print)
             {
@@ -456,7 +484,15 @@ namespace SqlAnalyser.Core
             bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
-            string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : "")}";
+            if(select.LimitInfo != null && select.TopInfo == null)
+            {
+                if(select.LimitInfo.StartRowIndex == null || select.LimitInfo.StartRowIndex.Symbol == "0")
+                {
+                    select.TopInfo = new SelectTopInfo() { TopCount = select.LimitInfo.RowCount };
+                }
+            }
+
+            string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : " ")}";
             string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
 
             string selectColumns = $"SELECT {top}{intoVariable}{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
@@ -544,8 +580,16 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                //NOTE: "OFFSET X ROWS FETCH NEXT Y ROWS ONLY" only available for SQLServer 2012 and above.
-                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+                if(select.TopInfo == null)
+                {
+                    if(select.OrderBy == null)
+                    {
+                        this.AppendLine("ORDER BY (SELECT 0)");
+                    }
+
+                    //NOTE: "OFFSET X ROWS FETCH NEXT Y ROWS ONLY" only available for SQLServer 2012 and above.
+                    this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+                }
             }
 
             if (select.UnionStatements != null)
@@ -553,6 +597,7 @@ namespace SqlAnalyser.Core
                 foreach (UnionStatement union in select.UnionStatements)
                 {
                     this.Build(union, false).TrimSeparator();
+                    this.AppendLine();
                 }
             }
 

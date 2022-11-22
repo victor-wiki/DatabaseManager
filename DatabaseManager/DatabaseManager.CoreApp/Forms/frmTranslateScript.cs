@@ -20,6 +20,7 @@ namespace DatabaseManager
     {
         private bool isPasting = false;
         private bool isHighlightingRequesting = false;
+        private delegate void AddNodeDelegate();
 
         public frmTranslateScript()
         {
@@ -36,6 +37,11 @@ namespace DatabaseManager
             this.splitContainer1.SplitterDistance = (int)((this.splitContainer1.Width - this.splitContainer1.SplitterWidth) / 2);
 
             this.LoadDbTypes();
+
+            if(SettingManager.Setting.ValidateScriptsAfterTranslated)
+            {
+                this.chkValidateScriptsAfterTranslated.Checked = true;
+            }
         }
 
         public void LoadDbTypes()
@@ -51,10 +57,18 @@ namespace DatabaseManager
 
         private void btnTranlate_Click(object sender, EventArgs e)
         {
-            Task.Run(() => this.Translate());
+            this.StartTranslate();
         }
 
-        private void Translate()
+        private void StartTranslate()
+        {
+            if (this.ValidateInputs())
+            {
+                Task.Run(() => this.Translate());
+            }
+        }
+
+        private bool ValidateInputs()
         {
             string sourceDbTypeName = this.cboSourceDbType.Text;
             string targetDbTypeName = this.cboTargetDbType.Text;
@@ -62,13 +76,13 @@ namespace DatabaseManager
             if (string.IsNullOrEmpty(sourceDbTypeName) || string.IsNullOrEmpty(targetDbTypeName))
             {
                 MessageBox.Show("Please specify the source and target database type.");
-                return;
+                return false;
             }
 
             if (sourceDbTypeName == targetDbTypeName)
             {
                 MessageBox.Show("The source database type can't be same as target.");
-                return;
+                return false;
             }
 
             string sourceScript = this.txtSource.Text.Trim();
@@ -76,10 +90,20 @@ namespace DatabaseManager
             if (string.IsNullOrEmpty(sourceScript))
             {
                 MessageBox.Show("The source script can't be empty.");
-                return;
+                return false;
             }
 
+            return true;
+        }
+
+        private void Translate()
+        {
+            string sourceDbTypeName = this.cboSourceDbType.Text;
+            string targetDbTypeName = this.cboTargetDbType.Text;
+            string sourceScript = this.txtSource.Text.Trim();
+
             this.btnTranlate.Enabled = false;
+            this.ClearSelection(this.txtSource);
             this.txtTarget.Clear();
 
             var sourceDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), sourceDbTypeName);
@@ -95,15 +119,24 @@ namespace DatabaseManager
 
                 this.txtTarget.Text = resultData;
 
-                if(result.HasError)
+                if (result.HasError)
                 {
-                    MessageBox.Show((result.Error as SqlSyntaxError).ToString());
+                    frmTextContent msgBox = new frmTextContent("Error Message", result.Error.ToString(), true);
+                    msgBox.ShowDialog();
+
+                    RichTextBoxHelper.HighlightingError(this.txtSource, result.Error);
+
                     return;
                 }
                 else if (string.IsNullOrEmpty(resultData) && sourceScript.Length > 0)
                 {
                     MessageBox.Show("The tanslate result is empty, please check whether the source database type is right.");
                     return;
+                }
+
+                if(this.chkValidateScriptsAfterTranslated.Checked)
+                {
+                    this.ValidateScripts(targetDbType);
                 }                
 
                 this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
@@ -115,6 +148,29 @@ namespace DatabaseManager
             finally
             {
                 this.btnTranlate.Enabled = true;
+            }
+        }
+
+        private async void ValidateScripts(DatabaseType databaseType, bool showMessageBox = false)
+        {
+            SqlSyntaxError error = await Task.Run(() => ScriptValidator.ValidateSyntax(databaseType, this.txtTarget.Text));
+
+            if (error != null && error.HasError)
+            {
+                if(showMessageBox)
+                {
+                    frmTextContent msgBox = new frmTextContent("Error Message", error.ToString(), true);
+                    msgBox.ShowDialog();
+                }                
+
+                RichTextBoxHelper.HighlightingError(this.txtTarget, error);
+            }
+            else
+            {
+                if(showMessageBox)
+                {
+                    MessageBox.Show("The scripts is valid.");
+                }                
             }
         }
 
@@ -146,7 +202,7 @@ namespace DatabaseManager
 
         private void txtSource_KeyUp(object sender, KeyEventArgs e)
         {
-            if(this.isPasting)
+            if (this.isPasting)
             {
                 this.HandlePaste();
             }
@@ -236,6 +292,43 @@ namespace DatabaseManager
                 this.HighlightingRichTextBox(this.txtSource, this.cboSourceDbType);
                 this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
             }
-        }        
+        }
+
+        private void frmTranslateScript_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F5)
+            {
+                this.StartTranslate();
+            }
+        }
+
+        private void ClearSelection(RichTextBox txtEditor)
+        {
+            int start = txtEditor.SelectionStart;
+
+            txtEditor.SelectAll();
+            txtEditor.SelectionBackColor = Color.White;
+            txtEditor.SelectionStart = start;
+            txtEditor.SelectionLength = 0;
+        }
+
+        private void tsmiValidateScripts_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(this.cboTargetDbType.Text))
+            {
+                return;
+            }
+
+            this.ClearSelection(this.txtTarget);
+
+            var targetDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), this.cboTargetDbType.Text);
+
+            this.ValidateScripts(targetDbType, true);           
+        }
+
+        private void targetContextMenuStrip_Opening(object sender, CancelEventArgs e)
+        {
+            this.tsmiValidateScripts.Visible = this.txtTarget.Text.Trim().Length > 0;
+        }
     }
 }

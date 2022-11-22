@@ -44,10 +44,13 @@
             this.tsmiPaste = new System.Windows.Forms.ToolStripMenuItem();
             this.targetContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiValidateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.btnExchange = new System.Windows.Forms.Button();
             this.chkHighlighting = new System.Windows.Forms.CheckBox();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.chkValidateScriptsAfterTranslated = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -62,7 +65,7 @@
             this.cboTargetDbType.BackColor = System.Drawing.Color.White;
             this.cboTargetDbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboTargetDbType.FormattingEnabled = true;
-            this.cboTargetDbType.Location = new System.Drawing.Point(381, 8);
+            this.cboTargetDbType.Location = new System.Drawing.Point(342, 8);
             this.cboTargetDbType.Margin = new System.Windows.Forms.Padding(4);
             this.cboTargetDbType.MaxDropDownItems = 100;
             this.cboTargetDbType.Name = "cboTargetDbType";
@@ -92,7 +95,7 @@
             // lblTarget
             // 
             this.lblTarget.AutoSize = true;
-            this.lblTarget.Location = new System.Drawing.Point(326, 11);
+            this.lblTarget.Location = new System.Drawing.Point(287, 11);
             this.lblTarget.Name = "lblTarget";
             this.lblTarget.Size = new System.Drawing.Size(49, 17);
             this.lblTarget.TabIndex = 44;
@@ -151,6 +154,7 @@
             this.btnTranlate.Size = new System.Drawing.Size(75, 30);
             this.btnTranlate.TabIndex = 46;
             this.btnTranlate.Text = "Translate";
+            this.toolTip1.SetToolTip(this.btnTranlate, "F5");
             this.btnTranlate.UseVisualStyleBackColor = true;
             this.btnTranlate.Click += new System.EventHandler(this.btnTranlate_Click);
             // 
@@ -193,16 +197,25 @@
             // targetContextMenuStrip
             // 
             this.targetContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCopy});
+            this.tsmiCopy,
+            this.tsmiValidateScripts});
             this.targetContextMenuStrip.Name = "sourceContextMenuStrip";
-            this.targetContextMenuStrip.Size = new System.Drawing.Size(107, 26);
+            this.targetContextMenuStrip.Size = new System.Drawing.Size(167, 48);
+            this.targetContextMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.targetContextMenuStrip_Opening);
             // 
             // tsmiCopy
             // 
             this.tsmiCopy.Name = "tsmiCopy";
-            this.tsmiCopy.Size = new System.Drawing.Size(106, 22);
+            this.tsmiCopy.Size = new System.Drawing.Size(166, 22);
             this.tsmiCopy.Text = "Copy";
             this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
+            // 
+            // tsmiValidateScripts
+            // 
+            this.tsmiValidateScripts.Name = "tsmiValidateScripts";
+            this.tsmiValidateScripts.Size = new System.Drawing.Size(166, 22);
+            this.tsmiValidateScripts.Text = "Validate Scripts";
+            this.tsmiValidateScripts.Click += new System.EventHandler(this.tsmiValidateScripts_Click);
             // 
             // contextMenuStrip2
             // 
@@ -221,7 +234,7 @@
             // 
             this.btnExchange.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnExchange.Image = global::DatabaseManager.Resources.Exchange;
-            this.btnExchange.Location = new System.Drawing.Point(240, 8);
+            this.btnExchange.Location = new System.Drawing.Point(219, 8);
             this.btnExchange.Name = "btnExchange";
             this.btnExchange.Size = new System.Drawing.Size(49, 25);
             this.btnExchange.TabIndex = 49;
@@ -233,19 +246,31 @@
             this.chkHighlighting.AutoSize = true;
             this.chkHighlighting.Checked = true;
             this.chkHighlighting.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkHighlighting.Location = new System.Drawing.Point(531, 12);
+            this.chkHighlighting.Location = new System.Drawing.Point(491, 12);
             this.chkHighlighting.Name = "chkHighlighting";
-            this.chkHighlighting.Size = new System.Drawing.Size(125, 21);
+            this.chkHighlighting.Size = new System.Drawing.Size(122, 21);
             this.chkHighlighting.TabIndex = 50;
-            this.chkHighlighting.Text = "Highlighting Text";
+            this.chkHighlighting.Text = "Highlighting text";
             this.chkHighlighting.UseVisualStyleBackColor = true;
             this.chkHighlighting.CheckedChanged += new System.EventHandler(this.chkHighlighting_CheckedChanged);
+            // 
+            // chkValidateScriptsAfterTranslated
+            // 
+            this.chkValidateScriptsAfterTranslated.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkValidateScriptsAfterTranslated.AutoSize = true;
+            this.chkValidateScriptsAfterTranslated.Location = new System.Drawing.Point(632, 13);
+            this.chkValidateScriptsAfterTranslated.Name = "chkValidateScriptsAfterTranslated";
+            this.chkValidateScriptsAfterTranslated.Size = new System.Drawing.Size(209, 21);
+            this.chkValidateScriptsAfterTranslated.TabIndex = 51;
+            this.chkValidateScriptsAfterTranslated.Text = "Validate scripts after translated";
+            this.chkValidateScriptsAfterTranslated.UseVisualStyleBackColor = true;
             // 
             // frmTranslateScript
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(853, 489);
+            this.Controls.Add(this.chkValidateScriptsAfterTranslated);
             this.Controls.Add(this.chkHighlighting);
             this.Controls.Add(this.btnExchange);
             this.Controls.Add(this.btnClear);
@@ -257,10 +282,12 @@
             this.Controls.Add(this.cboTargetDbType);
             this.Controls.Add(this.cboSourceDbType);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.Name = "frmTranslateScript";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Translate Script";
             this.Load += new System.EventHandler(this.frmTranslateScript_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmTranslateScript_KeyDown);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -293,5 +320,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
         private System.Windows.Forms.Button btnExchange;
         private System.Windows.Forms.CheckBox chkHighlighting;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiValidateScripts;
+        private System.Windows.Forms.CheckBox chkValidateScriptsAfterTranslated;
     }
 }

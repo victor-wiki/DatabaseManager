@@ -15,7 +15,7 @@
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEIL" args="EXP"></item>
   <item name="CHARTOROWID" args="EXP"></item>
-  <item name="CHR" args="NUMBER"></item>
+  <item name="CHR" args="NUMBER" isString="true"></item>
   <item name="COALESCE" args="EXP1,EXP2,..."></item>
   <item name="COMPOSE" args="EXP"></item>
   <item name="CONCAT" args="EXP1,EXP2,..."></item>
@@ -46,11 +46,11 @@
   <item name="GROUP_ID" args=""></item>
   <item name="HEXTORAW" args="EXP"></item>
   <item name="INITCAP" args="EXP"></item>
-  <item name="INSTR" args="EXP,SEARCH[,START]"></item>
-  <item name="INSTR2" args="EXP,SEARCH[,START]"></item>
-  <item name="INSTR4" args="EXP,SEARCH[,START]"></item>
-  <item name="INSTRB" args="EXP,SEARCH[,START]"></item>
-  <item name="INSTRC" args="EXP,SEARCH[,START]"></item>
+  <item name="INSTR" args="EXP,SEARCH[,START]" isString="true"></item>
+  <item name="INSTR2" args="EXP,SEARCH[,START]" isString="true"></item>
+  <item name="INSTR4" args="EXP,SEARCH[,START]" isString="true"></item>
+  <item name="INSTRB" args="EXP,SEARCH[,START]" isString="true"></item>
+  <item name="INSTRC" args="EXP,SEARCH[,START]" isString="true"></item>
   <!--<item name="LAG" args=""></item>-->
   <item name="LAST_DAY" args="DATE"></item>
   <!--<item name="LAST_VALUE" args=""></item>-->
@@ -66,9 +66,9 @@
   <item name="LNNVL" args="EXP"></item>
   <item name="LOCALTIMESTAMP" args="" noParenthesess="true"></item>
   <item name="LOG" args="EXP"></item>
-  <item name="LOWER" args="EXP"></item>
-  <item name="LPAD" args="EXP,LENGTH[,PAD]"></item>
-  <item name="LTRIM" args="EXP"></item>
+  <item name="LOWER" args="EXP" isString="true"></item>
+  <item name="LPAD" args="EXP,LENGTH[,PAD]" isString="true"></item>
+  <item name="LTRIM" args="EXP" isString="true"></item>
   <item name="MAX" args="EXP"></item>
   <!--<item name="MEDIAN" args=""></item>-->
   <item name="MIN" args="EXP"></item>
@@ -92,7 +92,7 @@
   <item name="REGEXP_REPLACE" args="EXP,PATTERN[,NEW[,START[,NTH[,MATCH]]]]"></item>
   <item name="REGEXP_SUBSTR" args="EXP,PATTERN[,START[,NTH[,OPTION[,MATCH[,SUB_EXP]]]]]"></item>
   <item name="REMAINDER" args="EXP1,EXP2"></item>
-  <item name="REPLACE" args="EXP,OLD[,NEW]"></item>
+  <item name="REPLACE" args="EXP,OLD[,NEW]" isString="true"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
   <!--<item name="ROWNUM" args="" noParenthesess="true"></item>-->
   <item name="RPAD" args="EXP,LENGTH[,PAD]"></item>
@@ -104,7 +104,7 @@
   <item name="SOUNDEX" args="EXP"></item>
   <item name="SQRT" args="EXP"></item>
   <!--<item name="STDDEV" args="[ALL|DISTINCT] EXP"></item>-->
-  <item name="SUBSTR" args="EXP,START[,LENGTH]"></item>
+  <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="SUM" args="EXP"></item>
   <item name="SYS_CONTEXT" args="NAMESPACE,PARAMETER[,LENGTH]"></item>
   <item name="SYS_EXTRACT_UTC" args="DATE"></item>
@@ -113,7 +113,7 @@
   <item name="SYSTIMESTAMP" args=""  noParenthesess="true"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TANH" args="TANH"></item>
-  <item name="TO_CHAR" args="EXP[,FORMAT][,LANGUAGE]"></item>
+  <item name="TO_CHAR" args="EXP[,FORMAT][,LANGUAGE]" isString="true"></item>
   <item name="TO_CLOB" args="EXP"></item>
   <item name="TO_DATE" args="EXP[,FORMAT][,LANGUAGE]"></item>
   <item name="TO_DSINTERVAL" args="EXP"></item>
@@ -126,11 +126,11 @@
   <item name="TO_TIMESTAMP_TZ" args="EXP[,FORMAT]"></item>
   <item name="TO_YMINTERVAL" args="EXP"></item>
   <item name="TRANSLATE" args="EXP,OLD,NEW"></item>
-  <item name="TRIM" args="EXP"></item>
+  <item name="TRIM" args="EXP" isString="true"></item>
   <item name="TRUNC" args="EXP[,DECIMAL]"></item>
   <item name="TZ_OFFSET" args="TIME_ZONE"></item>
   <item name="UID" args="" noParenthesess="true"></item>
-  <item name="UPPER" args="EXP"></item>
+  <item name="UPPER" args="EXP" isString="true"></item>
   <item name="USER" args="" noParenthesess="true"></item>
   <item name="USERENV" args="EXP"></item>
   <item name="VAR_POP" args="EXP"></item>

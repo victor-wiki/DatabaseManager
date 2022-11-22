@@ -12,8 +12,8 @@ namespace SqlAnalyser.Core
     {
         private StringBuilder builder = new StringBuilder();
         internal int Level = 0;
-        internal string Indent => " ".PadLeft((this.Level + 1) * 2);       
-
+        internal string Indent => " ".PadLeft((this.Level + 1) * 2);
+        internal int LoopCount = 0;
         public StringBuilder Script => this.builder;
 
         public RoutineType RoutineType { get; set; }
@@ -31,7 +31,7 @@ namespace SqlAnalyser.Core
             {
                 return this.builder.Length;
             }
-        }        
+        }
 
         protected void Append(string value, bool appendIndent = true)
         {
@@ -44,16 +44,24 @@ namespace SqlAnalyser.Core
             this.builder.Append(Environment.NewLine);
         }
 
+        protected virtual void PreHandleStatements(List<Statement> statements) { }
+
         protected void AppendChildStatements(IEnumerable<Statement> statements, bool needSeparator = true)
         {
-            int childCount = statements.Count();
+            List<Statement> statementList = new List<Statement>();
+
+            statementList.AddRange(statements);
+
+            this.PreHandleStatements(statementList);
+
+            int childCount = statementList.Count();
 
             if (childCount > 0)
             {
                 this.IncreaseLevel();
             }
 
-            foreach (Statement statement in statements)
+            foreach (Statement statement in statementList)
             {
                 this.Build(statement, needSeparator);
             }
@@ -69,12 +77,12 @@ namespace SqlAnalyser.Core
             return this;
         }
 
-        private void IncreaseLevel()
+        internal void IncreaseLevel()
         {
             this.Level++;
         }
 
-        private void DecreaseLevel()
+        internal void DecreaseLevel()
         {
             this.Level--;
         }
@@ -130,14 +138,14 @@ namespace SqlAnalyser.Core
 
                 TokenInfo alias = fromItem.Alias;
 
-                bool isValidTableName = this.IsValidTableName(fromTableName.Symbol);
+                bool isInvalidTableName = this.IsInvalidTableName(fromTableName?.Symbol);
 
                 if (i == 0)
                 {
-                    if(isValidTableName)
+                    if (!isInvalidTableName)
                     {
                         this.Append("FROM ");
-                    }                    
+                    }
                 }
 
                 hasJoins = fromItem.HasJoinItems;
@@ -145,24 +153,24 @@ namespace SqlAnalyser.Core
                 if (i > 0 && !hasJoins)
                 {
                     this.Append(",", false);
-                }  
-                
+                }
+
                 string nameWithAlias = this.GetNameWithAlias(fromTableName);
 
-                if(isValidTableName)
+                if (!isInvalidTableName)
                 {
                     if (nameWithAlias?.Trim() != alias?.Symbol?.Trim())
                     {
                         this.Append($"{nameWithAlias}{(hasJoins ? Environment.NewLine : "")}", false);
                     }
-                }                
+                }
 
                 bool hasSubSelect = false;
 
                 if (fromItem.SubSelectStatement != null)
                 {
                     hasSubSelect = true;
-                    
+
                     this.AppendLine("(");
                     this.BuildSelectStatement(fromItem.SubSelectStatement, false);
                     this.Append(")");
@@ -243,6 +251,46 @@ namespace SqlAnalyser.Core
             }
         }
 
+        protected void BuildIfCondition(IfStatementItem item)
+        {
+            if (item.Condition != null)
+            {
+                this.Append(item.Condition.Symbol);
+            }
+            else if (item.CondtionStatement != null)
+            {
+                if (item.ConditionType == IfConditionType.NotExists)
+                {
+                    this.Append("NOT EXISTS");
+                }
+                else if (item.ConditionType == IfConditionType.Exists)
+                {
+                    this.Append("EXISTS");
+                }
+
+                this.AppendSubquery(item.CondtionStatement);
+            }
+        }
+
+        protected void BuildUpdateSetValue(NameValueItem item)
+        {
+            if (item.Value != null)
+            {
+                this.Append(item.Value.Symbol);
+            }
+            else if (item.ValueStatement != null)
+            {
+                this.AppendSubquery(item.ValueStatement);
+            }
+        }
+
+        public void AppendSubquery(SelectStatement statement)
+        {
+            this.Append("(");
+            this.BuildSelectStatement(statement, false);
+            this.Append(")");
+        }
+
         protected virtual string GetNameWithAlias(NameToken name)
         {
             return name?.NameWithAlias;
@@ -253,21 +301,21 @@ namespace SqlAnalyser.Core
             return value?.Trim('[', ']', '"', '`');
         }
 
-        protected bool IsValidTableName(string tableName)
+        protected bool IsInvalidTableName(string tableName)
         {
-            if(tableName == null)
+            if (tableName == null)
             {
                 return false;
             }
 
             tableName = this.GetTrimedQuotationValue(tableName);
 
-            if(tableName.ToUpper() == "DUAL" && !(this is PlSqlStatementScriptBuilder))
+            if (tableName.ToUpper() == "DUAL" && !(this is PlSqlStatementScriptBuilder))
             {
-                return false;
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         protected virtual string GetPivotInItem(TokenInfo token)
@@ -317,6 +365,16 @@ namespace SqlAnalyser.Core
             }
 
             return false;
+        }
+
+        protected string GetNextLoopLabel(string prefix, bool withColon = true)
+        {
+            return $"{prefix}{++this.LoopCount}{(withColon ? ":" : "")}";
+        }
+
+        protected string GetCurrentLoopLabel(string prefix)
+        {
+            return $"{prefix}{this.LoopCount}";
         }
     }
 }

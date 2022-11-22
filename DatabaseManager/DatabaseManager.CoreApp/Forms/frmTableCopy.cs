@@ -129,9 +129,9 @@ namespace DatabaseManager
 
                     this.dbConverter.Option.SplitScriptsToExecute = true;
 
-                    DbConverterResult result = await this.dbConverter.Convert(schemaInfo);
+                    DbConvertResult result = await this.dbConverter.Convert(schemaInfo, this.Table.Schema);
 
-                    if (result.InfoType == DbConverterResultInfoType.Information)
+                    if (result.InfoType == DbConvertResultInfoType.Information)
                     {
                         if (!this.dbConverter.CancelRequested)
                         {
@@ -144,11 +144,11 @@ namespace DatabaseManager
                             MessageBox.Show("Task has been canceled.");
                         }
                     }
-                    else if (result.InfoType == DbConverterResultInfoType.Warnning)
+                    else if (result.InfoType == DbConvertResultInfoType.Warnning)
                     {
                         MessageBox.Show(result.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    else if (result.InfoType == DbConverterResultInfoType.Error) //message shows in main form because it uses Subscribe above
+                    else if (result.InfoType == DbConvertResultInfoType.Error) //message shows in main form because it uses Subscribe above
                     {
                         // MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }

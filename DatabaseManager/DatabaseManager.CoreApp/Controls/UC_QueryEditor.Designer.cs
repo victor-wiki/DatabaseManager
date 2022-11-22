@@ -32,17 +32,18 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_QueryEditor));
             this.txtEditor = new System.Windows.Forms.RichTextBox();
             this.editorContexMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmiSelectAll = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiPaste = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDisableIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiUpdateIntellisense = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiValidateScripts = new System.Windows.Forms.ToolStripMenuItem();
             this.lvWords = new System.Windows.Forms.ListView();
             this.Icon = new System.Windows.Forms.ColumnHeader();
             this.Word = new System.Windows.Forms.ColumnHeader();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.txtToolTip = new System.Windows.Forms.TextBox();
             this.panelWords = new System.Windows.Forms.Panel();
-            this.tsmiSelectAll = new System.Windows.Forms.ToolStripMenuItem();
             this.editorContexMenu.SuspendLayout();
             this.panelWords.SuspendLayout();
             this.SuspendLayout();
@@ -73,9 +74,18 @@
             this.tsmiCopy,
             this.tsmiPaste,
             this.tsmiDisableIntellisense,
-            this.tsmiUpdateIntellisense});
+            this.tsmiUpdateIntellisense,
+            this.tsmiValidateScripts});
             this.editorContexMenu.Name = "contextMenuStrip1";
             this.editorContexMenu.Size = new System.Drawing.Size(188, 136);
+            this.editorContexMenu.Opening += new System.ComponentModel.CancelEventHandler(this.editorContexMenu_Opening);
+            // 
+            // tsmiSelectAll
+            // 
+            this.tsmiSelectAll.Name = "tsmiSelectAll";
+            this.tsmiSelectAll.Size = new System.Drawing.Size(187, 22);
+            this.tsmiSelectAll.Text = "Select All";
+            this.tsmiSelectAll.Click += new System.EventHandler(this.tsmiSelectAll_Click);
             // 
             // tsmiCopy
             // 
@@ -104,6 +114,14 @@
             this.tsmiUpdateIntellisense.Size = new System.Drawing.Size(187, 22);
             this.tsmiUpdateIntellisense.Text = "Update Intellisense";
             this.tsmiUpdateIntellisense.Click += new System.EventHandler(this.tsmiUpdateIntellisense_Click);
+            // 
+            // tsmiValidateScripts
+            // 
+            this.tsmiValidateScripts.Name = "tsmiValidateScripts";
+            this.tsmiValidateScripts.Size = new System.Drawing.Size(187, 22);
+            this.tsmiValidateScripts.Text = "Validate Scripts";
+            this.tsmiValidateScripts.ToolTipText = "Validate Syntax";
+            this.tsmiValidateScripts.Click += new System.EventHandler(this.tsmiValidateScripts_Click);
             // 
             // lvWords
             // 
@@ -175,13 +193,6 @@
             this.panelWords.TabIndex = 7;
             this.panelWords.Visible = false;
             // 
-            // tsmiSelectAll
-            // 
-            this.tsmiSelectAll.Name = "tsmiSelectAll";
-            this.tsmiSelectAll.Size = new System.Drawing.Size(187, 22);
-            this.tsmiSelectAll.Text = "Select All";
-            this.tsmiSelectAll.Click += new System.EventHandler(this.tsmiSelectAll_Click);
-            // 
             // UC_QueryEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -214,5 +225,6 @@
         private System.Windows.Forms.Panel panelWords;
         private System.Windows.Forms.ToolStripMenuItem tsmiUpdateIntellisense;
         private System.Windows.Forms.ToolStripMenuItem tsmiSelectAll;
+        private System.Windows.Forms.ToolStripMenuItem tsmiValidateScripts;
     }
 }

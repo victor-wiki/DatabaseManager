@@ -19,7 +19,7 @@ namespace DatabaseInterpreter.Core
     public class SqlServerInterpreter : DbInterpreter
     {
         #region Field & Property
-        public const string AzureSQLFlag = "SQL Azure";       
+        public const string AzureSQLFlag = "SQL Azure";
         public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '[';
         public const char QuotedRightChar = ']';
@@ -189,12 +189,14 @@ namespace DatabaseInterpreter.Core
         {
             var sb = this.CreateSqlBuilder();
 
+            string condition = "WHERE t.is_ms_shipped=0";
+
             if (this.IsObjectFectchSimpleMode())
             {
                 sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name],
                          IDENT_SEED(schema_name(t.schema_id)+'.'+t.name) AS [IdentitySeed],IDENT_INCR(schema_name(t.schema_id)+'.'+t.name) AS [IdentityIncrement]
                          FROM sys.tables t
-                         WHERE 1=1");
+                         {condition}");
             }
             else
             {
@@ -203,7 +205,7 @@ namespace DatabaseInterpreter.Core
                         FROM sys.tables t
                         LEFT JOIN sys.extended_properties ext ON t.object_id=ext.major_id AND ext.minor_id=0 AND ext.class=1 AND ext.name='microsoft_database_tools_support'
                         LEFT JOIN sys.extended_properties ext2 ON t.object_id=ext2.major_id and ext2.minor_id=0 AND ext2.class_desc='OBJECT_OR_COLUMN' AND ext2.name='MS_Description'
-                        WHERE t.is_ms_shipped=0 AND ext.class is null");
+                        {condition} AND ext.class is null");
             }
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
@@ -495,8 +497,8 @@ namespace DatabaseInterpreter.Core
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT v.name AS [Name], schema_name(v.schema_id) AS [Schema], {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
-                            FROM sys.views v
-                            WHERE 1=1");
+                         FROM sys.views v
+                         WHERE 1=1");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(v.schema_id)"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.name"));
@@ -712,9 +714,9 @@ namespace DatabaseInterpreter.Core
                                     else if (dataType == "geography")
                                     {
                                         newColumnType = typeof(SqlGeography);
-                                        newValue = MySqlGeometryHelper.ToSqlGeography(value as byte[]);                                        
+                                        newValue = MySqlGeometryHelper.ToSqlGeography(value as byte[]);
                                     }
-                                }                               
+                                }
                             }
                             else if (type == typeof(BitArray))
                             {
@@ -881,7 +883,7 @@ namespace DatabaseInterpreter.Core
                 string dataType = this.ParseDataType(column);
 
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
-                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");               
+                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}{scriptComment}";

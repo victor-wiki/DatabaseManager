@@ -133,6 +133,8 @@ namespace DatabaseManager.Controls
             this.tsmiUpdateScript.Visible = isTable;
             this.tsmiDeleteScript.Visible = isTable;
             this.tsmiViewDependency.Visible = isDatabase || isTable;
+
+            this.tsmiCopyChildrenNames.Visible = node.Level == 1 && node.Nodes.Count > 0 && (node.Nodes[0].Tag != null);
         }
 
         private ConnectionInfo GetConnectionInfo(string database)
@@ -628,13 +630,13 @@ namespace DatabaseManager.Controls
 
             if (MessageBox.Show($"Are you sure to delete all objects of the database?{Environment.NewLine}Please handle this operation carefully!", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                frmDbObjectTypeSelector selector = new frmDbObjectTypeSelector() { DatabaseType = this.databaseType };
+                frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.databaseType));
 
                 if (selector.ShowDialog() == DialogResult.OK)
                 {
                     TreeNode node = this.GetSelectedNode();
 
-                    await this.EmptyDatabase(node.Name, selector.DatabaseObjectType);
+                    await this.EmptyDatabase(node.Name, ItemsSelectorHelper.GetDatabaseObjectTypeByCheckItems(selector.CheckedItem));
 
                     await this.LoadChildNodes(node);
 
@@ -806,15 +808,21 @@ namespace DatabaseManager.Controls
                 TranslateManager translateManager = new TranslateManager();
                 translateManager.Subscribe(this);
 
-                await translateManager.Translate(this.databaseType, targetDbType, tag as DatabaseObject, connectionInfo, this.DbConverter_OnTranslated, true);
+                var dbObject = tag as DatabaseObject;
+
+                TranslateResult result = await translateManager.Translate(this.databaseType, targetDbType, dbObject, connectionInfo, true);
+
+                if (result != null)
+                {
+                    DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { 
+                        Name = dbObject.Name, DatabaseType = targetDbType, DatabaseObject = dbObject,
+                        Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error,
+                        IsTranlatedScript = true
+                    };
+
+                    this.ShowContent(info);
+                }            
             }
-        }
-
-        private void DbConverter_OnTranslated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
-        {
-            DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = dbType, DatabaseObject = dbObject, Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error };
-
-            this.ShowContent(info);
         }
 
         private void tvDbObjects_ItemDrag(object sender, ItemDragEventArgs e)
@@ -1120,6 +1128,30 @@ namespace DatabaseManager.Controls
 
             frmDependency frm = new frmDependency(this.databaseType, this.GetConnectionInfo(database.Name), dbObject);
             frm.Show();
+        }
+
+        private void tsmiCopyChildrenNames_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            if (node != null)
+            {
+                var dbObjects = node.Nodes.Cast<TreeNode>().Select(item => item.Tag as DatabaseObject);
+
+                bool isUniqueSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
+
+                var names = dbObjects.Select(item => (isUniqueSchema ? item.Name : $"{item.Schema}.{item.Name}"));
+
+                string content = string.Join(Environment.NewLine, names);
+
+                frmTextContent frm = new frmTextContent(content);
+                frm.Show();
+            }
         }
     }
 }

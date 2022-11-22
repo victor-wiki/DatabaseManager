@@ -2,6 +2,7 @@
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -17,6 +18,11 @@ namespace SqlAnalyser.Core
         public MySqlAnalyser()
         {
             this.ruleAnalyser = new MySqlRuleAnalyser();
+        }
+
+        public override SqlSyntaxError Validate(string content)
+        {
+            return this.ruleAnalyser.Validate(content);
         }
 
         public override AnalyseResult AnalyseCommon(string content)
@@ -42,13 +48,116 @@ namespace SqlAnalyser.Core
         public override AnalyseResult AnalyseTrigger(string content)
         {
             return this.ruleAnalyser.AnalyseTrigger(content);
-        }       
+        }
+
+        protected override void PreHandleStatements(List<Statement> statements)
+        {
+            this.PreHandle(statements);
+        }
+
+        protected override void PostHandleStatements(StringBuilder sb)
+        {
+            base.PostHandleStatements(sb);
+
+            this.PostHandle(sb);
+        }
+
+        private void PreHandle(List<Statement> statements)
+        {
+            this.StatementBuilder.Option.CollectDeclareStatement = true;
+            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
+            this.StatementBuilder.Option.CollectDeclareStatement = true;
+
+            base.PreHandleStatements(statements);
+
+            MySqlAnalyserHelper.RearrangeStatements(statements);
+        }
+
+        private void PostHandle(StringBuilder sb, RoutineType routineType = RoutineType.UNKNOWN, ScriptBuildResult result = null, int? beginIndex = default(int?))
+        {
+            if (this.StatementBuilder.DeclareStatements.Count > 0)
+            {
+                this.StatementBuilder.Clear();
+
+                StringBuilder sbDeclare = new StringBuilder();
+
+                bool hasDeclareCursor = false;
+                bool hasDeclareCursorHanlder = false;
+
+                foreach (var declareStatement in this.StatementBuilder.DeclareStatements)
+                {
+                    if (declareStatement is DeclareCursorStatement)
+                    {
+                        hasDeclareCursor = true;
+                    }
+
+                    if (declareStatement is DeclareCursorHandlerStatement)
+                    {
+                        hasDeclareCursorHanlder = true;
+                    }
+                }
+
+                if (hasDeclareCursor && !hasDeclareCursorHanlder)
+                {
+                    DeclareVariableStatement declareVaribleStatement = new DeclareVariableStatement()
+                    {
+                        Name = new TokenInfo("FINISHED") { Type = TokenType.VariableName },
+                        DataType = new TokenInfo("INT"),
+                        DefaultValue = new TokenInfo("0")
+                    };
+
+                    this.StatementBuilder.DeclareStatements.Insert(0, declareVaribleStatement);
+
+                    DeclareCursorHandlerStatement declareHandlerStatement = new DeclareCursorHandlerStatement();
+                    declareHandlerStatement.Statements.Add(new SetStatement() { Key = new TokenInfo("FINISHED") { Type = TokenType.VariableName }, Value = new TokenInfo("1") });
+
+                    this.StatementBuilder.DeclareStatements.Add(declareHandlerStatement);
+                }
+
+                foreach (var declareStatement in this.StatementBuilder.DeclareStatements.Where(item => item is DeclareVariableStatement).Union(this.StatementBuilder.DeclareStatements.Where(item => !(item is DeclareVariableStatement))))
+                {
+                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
+                    this.StatementBuilder.Option.CollectDeclareStatement = false;
+
+                    string content = this.BuildStatement(declareStatement, routineType).TrimEnd();
+
+                    sbDeclare.AppendLine(content);
+                }
+
+                sb.Insert(result == null ? 0 : result.BodyStartIndex, sbDeclare.ToString());
+
+                if (result != null)
+                {
+                    result.BodyStartIndex += sbDeclare.Length;
+                    result.BodyStopIndex += sbDeclare.Length;
+                }
+
+                this.StatementBuilder.DeclareStatements.Clear();
+            }
+
+            if (this.StatementBuilder.SpecialStatements.Any(item => item.GetType() == typeof(LeaveStatement)))
+            {
+                this.StatementBuilder.Option.CollectSpecialStatementTypes.Clear();
+                this.StatementBuilder.SpecialStatements.Clear();
+
+                if (beginIndex.HasValue)
+                {
+                    sb.Insert(beginIndex.Value, "sp:");
+                }
+
+                if (result != null)
+                {
+                    result.BodyStartIndex += 3;
+                    result.BodyStopIndex += 3;
+                }
+            }
+        }
 
         public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
         {
-            ScriptBuildResult result = new ScriptBuildResult();          
+            ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();          
+            StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"CREATE {script.Type.ToString()} {script.NameWithSchema}");
 
@@ -57,6 +166,7 @@ namespace SqlAnalyser.Core
             if (script.Parameters.Count > 0)
             {
                 int i = 0;
+
                 foreach (Parameter parameter in script.Parameters)
                 {
                     ParameterType parameterType = parameter.ParameterType;
@@ -82,127 +192,37 @@ namespace SqlAnalyser.Core
 
             if (script.Type == RoutineType.FUNCTION)
             {
-                sb.AppendLine($"RETURNS {script.ReturnDataType}");
+                string returnType = script.ReturnDataType != null ? script.ReturnDataType.Symbol
+                                   : (script.ReturnTable != null ? $"#Table#{script.ReturnTable.Name}" : "");
+
+                sb.AppendLine($"RETURNS {returnType}");
             }
 
-            int beginIndex = sb.Length - 1;            
+            int beginIndex = sb.Length - 1;
 
             sb.AppendLine("BEGIN");
 
-            result.BodyStartIndex = sb.Length;          
-
-            #region Cursor
-
-            Action appendDeclareCursor = () =>
-            {
-                foreach (Statement statement in script.Statements.Where(item => item is DeclareCursorStatement))
-                {
-                    sb.AppendLine(this.BuildStatement(statement));
-                }
-            };
-
-            if (script.Statements.Any(item => item is OpenCursorStatement) && !script.Statements.Any(item => item is DeclareCursorHandlerStatement))
-            {
-                if (!script.Statements.Any(item => item is DeclareVariableStatement && (item as DeclareVariableStatement).Name.Symbol == "FINISHED"))
-                {
-                    DeclareVariableStatement declareStatement = new DeclareVariableStatement()
-                    {
-                        Name = new TokenInfo("FINISHED") { Type = TokenType.VariableName },
-                        DataType = new TokenInfo("INT"),
-                        DefaultValue = new TokenInfo("0")
-                    };
-
-                    sb.AppendLine(this.BuildStatement(declareStatement));
-                }
-
-                appendDeclareCursor();
-
-                DeclareCursorHandlerStatement handler = new DeclareCursorHandlerStatement();
-                handler.Statements.Add(new SetStatement() { Key = new TokenInfo("FINISHED") { Type = TokenType.VariableName }, Value = new TokenInfo("1") });
-
-                sb.AppendLine(this.BuildStatement(handler));
-            }
-            else
-            {
-                appendDeclareCursor();
-            }
-
-            #endregion
+            result.BodyStartIndex = sb.Length;
 
             if (script.ReturnTable != null)
             {
                 sb.AppendLine((this.StatementBuilder as MySqlStatementScriptBuilder).BuildTable(script.ReturnTable));
             }
 
-            this.StatementBuilder.Option.NotBuildDeclareStatement = true;
-            this.StatementBuilder.Option.CollectDeclareStatement = true;
             this.StatementBuilder.Option.CollectSpecialStatementTypes.Add(typeof(LeaveStatement));
 
-            FetchCursorStatement fetchCursorStatement = null;
+            this.PreHandle(script.Statements);
 
             foreach (Statement statement in script.Statements)
             {
-                if (statement is FetchCursorStatement fetch)
-                {
-                    fetchCursorStatement = fetch;
-                    continue;
-                }
-                else if (statement is WhileStatement @while)
-                {
-                    FetchCursorStatement fs = @while.Statements.FirstOrDefault(item => item is FetchCursorStatement) as FetchCursorStatement;
-
-                    if (fetchCursorStatement != null && fs != null)
-                    {
-                        @while.Condition.Symbol = "FINISHED = 0";
-
-                        if (fs.Variables.Count == 0)
-                        {
-                            @while.Statements.Insert(0, fetchCursorStatement);
-                        }
-                    }
-                }                
-          
                 sb.AppendLine(this.BuildStatement(statement, script.Type));
             }
 
             result.BodyStopIndex = sb.Length - 1;
 
-            sb.AppendLine("END");            
+            sb.AppendLine("END");
 
-            if (this.StatementBuilder.DeclareStatements.Count > 0)
-            {
-                this.StatementBuilder.Clear();
-
-                StringBuilder sbDeclare = new StringBuilder();
-
-                foreach (var declareStatement in this.StatementBuilder.DeclareStatements)
-                {
-                    this.StatementBuilder.Option.NotBuildDeclareStatement = false;
-                    this.StatementBuilder.Option.CollectDeclareStatement = false;
-
-                    string content = this.BuildStatement(declareStatement, script.Type).Trim();
-
-                    sbDeclare.AppendLine(content);
-                }
-
-                sb.Insert(result.BodyStartIndex, sbDeclare.ToString());
-
-                result.BodyStartIndex += sbDeclare.Length;
-                result.BodyStopIndex += sbDeclare.Length;
-
-                this.StatementBuilder.DeclareStatements.Clear();
-            }
-
-            if (this.StatementBuilder.SpecialStatements.Any(item=>item.GetType() == typeof(LeaveStatement)))
-            {
-                this.StatementBuilder.Option.CollectSpecialStatementTypes.Clear();
-                this.StatementBuilder.SpecialStatements.Clear();
-
-                sb.Insert(beginIndex, "sp:");
-
-                result.BodyStartIndex += 3;
-                result.BodyStopIndex += 3;
-            }           
+            this.PostHandle(sb, script.Type, result, beginIndex);
 
             result.Script = sb.ToString();
 
@@ -213,7 +233,7 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();          
+            StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"CREATE VIEW {script.NameWithSchema} AS");
 
@@ -235,7 +255,7 @@ namespace SqlAnalyser.Core
         {
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();           
+            StringBuilder sb = new StringBuilder();
 
             //only allow one event type: INSERT, UPDATE OR DELETE
             var events = script.Events.FirstOrDefault(); // string.Join(",", script.Events);
@@ -276,7 +296,7 @@ namespace SqlAnalyser.Core
                 sb.Insert(beginIndex, "sp:");
             }
 
-            result.Script = sb.ToString();            
+            result.Script = sb.ToString();
 
             return result;
         }

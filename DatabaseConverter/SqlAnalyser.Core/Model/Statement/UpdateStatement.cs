@@ -9,11 +9,13 @@ namespace SqlAnalyser.Model
         public List<FromItem> FromItems { get; set; }
         public TokenInfo Condition { get; set; }
         public TokenInfo Option { get; set; }
+        public bool HasFromItems => this.FromItems != null && this.FromItems.Count > 0;
     }
 
     public class NameValueItem
     {
         public TokenInfo Name { get; set; }
         public TokenInfo Value { get; set; }
+        public SelectStatement ValueStatement { get; set; }
     }
 }

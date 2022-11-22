@@ -31,7 +31,21 @@ namespace SqlAnalyser.Core
 
         public static bool IsSubquery(string query)
         {
-            return HasWord(query, "SELECT");
+            bool hasWord = HasWord(query, "SELECT");
+
+            if(hasWord)
+            {
+                int index = query.IndexOf("SELECT", StringComparison.OrdinalIgnoreCase);
+
+                int singleQuotationCharCount = query.Substring(0, index).Count(item => item == '\'');
+
+                if(singleQuotationCharCount %2 == 0)
+                {
+                    return true;
+                }                
+            }
+
+            return false;
         }
 
         public static string ReplaceSymbol(string symbol, string oldValue, string newValue)
@@ -53,6 +67,42 @@ namespace SqlAnalyser.Core
         public static bool IsFromItemsHaveJoin(List<FromItem> fromItems)
         {
             return fromItems != null && fromItems.Count > 0 && fromItems.Any(item => item.JoinItems != null && item.JoinItems.Count > 0);
-        }        
+        }
+
+        public static bool HasExitStatement(WhileStatement statement)
+        {
+            var types = new Type[] { typeof(BreakStatement), typeof(LoopExitStatement) };
+
+            foreach (var st in statement.Statements)
+            {
+                if (types.Contains(st.GetType()))
+                {
+                    return true;
+                }
+                else if (st is IfStatement @if)
+                {
+                    foreach (var item in @if.Items)
+                    {
+                        foreach (var ist in item.Statements)
+                        {
+                            if (types.Contains(ist.GetType()))
+                            {
+                                return true;
+                            }
+                            else if(ist is WhileStatement @while)
+                            {
+                                return HasExitStatement(@while);
+                            }
+                        }
+                    }
+                }
+                else if (st is WhileStatement @while)
+                {
+                    return HasExitStatement(@while);
+                }
+            }
+
+            return false;
+        }
     }
 }

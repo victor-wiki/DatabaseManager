@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmDbObjectTypeSelector
+    partial class frmItemsSelector
     {
         /// <summary>
         /// Required designer variable.
@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDbObjectTypeSelector));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmItemsSelector));
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.chkDbObjectTypes = new System.Windows.Forms.CheckedListBox();
+            this.chkItems = new System.Windows.Forms.CheckedListBox();
             this.chkSelectAll = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
@@ -61,15 +61,15 @@
             // 
             // chkDbObjectTypes
             // 
-            this.chkDbObjectTypes.CheckOnClick = true;
-            this.chkDbObjectTypes.FormattingEnabled = true;
-            this.chkDbObjectTypes.Location = new System.Drawing.Point(14, 45);
-            this.chkDbObjectTypes.Margin = new System.Windows.Forms.Padding(4);
-            this.chkDbObjectTypes.Name = "chkDbObjectTypes";
-            this.chkDbObjectTypes.Size = new System.Drawing.Size(358, 220);
-            this.chkDbObjectTypes.TabIndex = 3;
-            this.chkDbObjectTypes.KeyUp += new System.Windows.Forms.KeyEventHandler(this.chkDbObjectTypes_KeyUp);
-            this.chkDbObjectTypes.MouseUp += new System.Windows.Forms.MouseEventHandler(this.chkDbObjectTypes_MouseUp);
+            this.chkItems.CheckOnClick = true;
+            this.chkItems.FormattingEnabled = true;
+            this.chkItems.Location = new System.Drawing.Point(14, 45);
+            this.chkItems.Margin = new System.Windows.Forms.Padding(4);
+            this.chkItems.Name = "chkDbObjectTypes";
+            this.chkItems.Size = new System.Drawing.Size(358, 220);
+            this.chkItems.TabIndex = 3;
+            this.chkItems.KeyUp += new System.Windows.Forms.KeyEventHandler(this.chkItems_KeyUp);
+            this.chkItems.MouseUp += new System.Windows.Forms.MouseEventHandler(this.chkItems_MouseUp);
             // 
             // chkSelectAll
             // 
@@ -89,7 +89,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(386, 327);
             this.Controls.Add(this.chkSelectAll);
-            this.Controls.Add(this.chkDbObjectTypes);
+            this.Controls.Add(this.chkItems);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -99,7 +99,7 @@
             this.Name = "frmDbObjectTypeSelector";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Select Database Object Types";
-            this.Load += new System.EventHandler(this.frmDbObjectTypeSelector_Load);
+            this.Load += new System.EventHandler(this.frmItemsSelector_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -109,7 +109,7 @@
 
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.CheckedListBox chkDbObjectTypes;
+        private System.Windows.Forms.CheckedListBox chkItems;
         private System.Windows.Forms.CheckBox chkSelectAll;
     }
 }

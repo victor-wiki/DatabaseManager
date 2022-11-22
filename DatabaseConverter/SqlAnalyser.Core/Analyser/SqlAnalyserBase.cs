@@ -2,6 +2,7 @@
 using SqlAnalyser.Core.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -15,6 +16,7 @@ namespace SqlAnalyser.Core
         public abstract SqlRuleAnalyser RuleAnalyser { get; }
         public StatementScriptBuilderOption ScriptBuilderOption { get; set; } = new StatementScriptBuilderOption();
 
+        public abstract SqlSyntaxError Validate(string content);
         public abstract AnalyseResult AnalyseCommon(string content);
         public abstract AnalyseResult AnalyseView(string content);
         public abstract AnalyseResult AnalyseProcedure(string content);
@@ -150,21 +152,23 @@ namespace SqlAnalyser.Core
             return result;
         }
 
+        protected virtual void PreHandleStatements(List<Statement> statements) { }  
+        protected virtual void PostHandleStatements(StringBuilder sb) { }
+
         protected virtual ScriptBuildResult GenerateCommonScripts(CommonScript script)
         {
+            this.PreHandleStatements(script.Statements);
+
             ScriptBuildResult result = new ScriptBuildResult();
 
-            StringBuilder sb = new StringBuilder();
-
-            if(this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
-            {
-                this.StatementBuilder.Option.CollectDeclareStatement = true;
-            }
+            StringBuilder sb = new StringBuilder();            
 
             foreach (Statement statement in script.Statements)
             {
                 sb.AppendLine(this.BuildStatement(statement));
             }
+
+            this.PostHandleStatements(sb);
 
             result.Script = sb.ToString();
 

@@ -2,8 +2,11 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using SqlAnalyser.Core;
 using SqlAnalyser.Model;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -58,7 +61,7 @@ namespace DatabaseConverter.Core
                 value = value.Replace(@"""substring""", "substring", System.StringComparison.OrdinalIgnoreCase);
             }
 
-            List<FunctionFormula> formulas = GetFunctionFormulas(value);
+            List<FunctionFormula> formulas = GetFunctionFormulas(this.sourceDbType, value);
 
             foreach (FunctionFormula formula in formulas)
             {
@@ -137,181 +140,69 @@ namespace DatabaseConverter.Core
             return value;
         }
 
-        public static List<FunctionFormula> GetFunctionFormulas(string value)
+        public static List<FunctionFormula> GetFunctionFormulas(DatabaseType databaseType, string value, bool extractChildren = true)
         {
-            value = StringHelper.TrimParenthesis(value);
+            value = StringHelper.GetBalanceParenthesisTrimedValue(value);
+
+            var functionSpecifications = FunctionManager.GetFunctionSpecifications(databaseType);
 
             List<FunctionFormula> functions = new List<FunctionFormula>();
 
+            Func<string, bool> isValidFunction = (name) =>
+            {
+                return functionSpecifications.Any(item => item.Name.ToUpper() == name.Trim().ToUpper());
+            };
+
             if (value.IndexOf("(") < 0)
             {
-                functions.Add(new FunctionFormula(value, value) { StartIndex = 0, StopIndex = value.Length - 1 });
+                if (isValidFunction(value))
+                {
+                    functions.Add(new FunctionFormula(value, value));
+                }
             }
             else
             {
-                string innerContent = value;
+                SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType);
 
-                Regex parenthesesRegex = new Regex(RegexHelper.ParenthesesRegexPattern, RegexOptions.Multiline);
+                sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = extractChildren;
+                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
 
-                int count = 0;
+                string select = "SELECT ";
 
-                while (parenthesesRegex.IsMatch(innerContent))
+                string sql = $"{select}{value}";
+
+                if (databaseType == DatabaseType.Oracle)
                 {
-                    count++;
+                    sql += " FROM DUAL";
+                }
 
-                    int firstLeftParenthesesIndex = innerContent.IndexOf('(');
-                    int lastRightParenthesesIndex = -1;
+                var result = sqlAnalyser.AnalyseCommon(sql);
 
-                    int leftParenthesesCount = 0;
-                    int rightParenthesesCount = 0;
-                    int singleQuotationCharCount = 0;
+                if (!result.HasError)
+                {
+                    List<TokenInfo> tokens = result.Script.Functions;
 
-                    for (int i = 0; i < innerContent.Length; i++)
+                    foreach (TokenInfo token in tokens)
                     {
-                        var c = innerContent[i];
+                        string symbol = token.Symbol;
 
-                        if (c == '(')
+                        string name = TranslateHelper.ExtractNameFromParenthesis(symbol);
+
+                        if (isValidFunction(name))
                         {
-                            if (singleQuotationCharCount % 2 == 0)
-                            {
-                                leftParenthesesCount++;
-                            }
+                            TranslateHelper.RestoreTokenValue(sql, token);
+
+                            FunctionFormula formula = new FunctionFormula(name, token.Symbol);
+
+                            functions.Add(formula);
                         }
-                        else if (c == ')')
-                        {
-                            if (singleQuotationCharCount % 2 == 0)
-                            {
-                                rightParenthesesCount++;
-
-                                if (rightParenthesesCount == leftParenthesesCount)
-                                {
-                                    lastRightParenthesesIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                        else if (c == '\'')
-                        {
-                            singleQuotationCharCount++;
-                        }
-                    }
-
-                    if (lastRightParenthesesIndex == -1)
-                    {
-                        break;
-                    }
-
-                    string leftContent = innerContent.Substring(0, firstLeftParenthesesIndex);
-
-                    string cleanName = ExtractName(leftContent.Trim());
-
-                    Regex nameRegex = new Regex(RegexHelper.NameRegexPattern, RegexOptions.IgnoreCase);
-                    var matches = nameRegex.Matches(cleanName);
-
-                    Match nameMatch = matches.Cast<Match>().LastOrDefault();
-
-                    if (nameMatch != null)
-                    {
-                        string name = nameMatch.Value;
-
-                        int startIndex = leftContent.LastIndexOf(cleanName, leftContent.Length - 1, System.StringComparison.OrdinalIgnoreCase);
-
-                        int length = lastRightParenthesesIndex - startIndex + 1;
-
-                        string expression = innerContent.Substring(startIndex, length);
-
-                        FunctionFormula func = new FunctionFormula(name, expression)
-                        {
-                            StartIndex = startIndex,
-                            StopIndex = lastRightParenthesesIndex
-                        };
-
-                        functions.Add(func);
-
-                        string oldInnerContent = innerContent;
-
-                        innerContent = oldInnerContent.Substring(firstLeftParenthesesIndex + 1, (func.StopIndex - 1) - (firstLeftParenthesesIndex + 1) + 1);
-
-                        if (!parenthesesRegex.IsMatch(innerContent) || IsNotFunction(innerContent))
-                        {
-                            if (lastRightParenthesesIndex < value.Length - 1)
-                            {
-                                string rightContent = oldInnerContent.Substring(lastRightParenthesesIndex + 1).Trim(' ', ',');
-
-                                innerContent = rightContent;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (lastRightParenthesesIndex < innerContent.Length - 1)
-                        {
-                            innerContent = innerContent.Substring(lastRightParenthesesIndex + 1).Trim(' ', ',');
-                        }
-                    }
-
-                    if (count > 1000) //avoid infinite loop
-                    {
-                        break;
                     }
                 }
             }
 
             return functions;
-        }
-
-        private static bool IsNotFunction(string value)
-        {
-            MatchCollection matches = Regex.Matches(value, RegexHelper.ParenthesesRegexPattern);
-
-            int notFunctionCount = 0;
-
-            foreach (Match match in matches)
-            {
-                var mv = StringHelper.GetBalanceParenthesisTrimedValue(match.Value);
-
-                if (mv.Contains(","))
-                {
-                    string[] items = mv.Split(',');
-
-                    if (items.Length == 2 && items.All(item => int.TryParse(item.Trim(), out _)))
-                    {
-                        notFunctionCount++;
-                    }
-                }
-                else
-                {
-                    if (int.TryParse(mv, out _) || mv.ToLower() == "max")
-                    {
-                        notFunctionCount++;
-                    }
-                }
-            }
-
-            return notFunctionCount == matches.Count;
-        }
-
-        private static string ExtractName(string value)
-        {
-            var chars = value.ToArray();
-
-            List<char> name = new List<char>();
-
-            for (int i = chars.Length - 1; i >= 0; i--)
-            {
-                if (Regex.IsMatch(chars[i].ToString(), RegexHelper.NameRegexPattern))
-                {
-                    name.Add(chars[i]);
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            name.Reverse();
-
-            return string.Join("", name);
         }
     }
 }

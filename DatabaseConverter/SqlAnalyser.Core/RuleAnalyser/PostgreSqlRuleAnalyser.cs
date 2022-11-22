@@ -27,6 +27,15 @@ namespace SqlAnalyser.Core
             return new PostgreSqlParser(tokenStream);
         }
 
+        public override SqlSyntaxError Validate(string content)
+        {
+            SqlSyntaxError error = null;
+
+            var rootContext = this.GetRootContext(content, out error);
+
+            return error;
+        }
+
         public override AnalyseResult AnalyseCommon(string content)
         {
             SqlSyntaxError error = null;
@@ -319,7 +328,7 @@ namespace SqlAnalyser.Core
                     {
                         if (child is TerminalNodeImpl impl)
                         {
-                            if (impl.GetText().ToLower() == "default")
+                            if (impl.GetText().ToUpper() == "DEFAULT")
                             {
                                 hasDefault = true;
                             }
@@ -524,7 +533,7 @@ namespace SqlAnalyser.Core
             {
                 if (child is TerminalNodeImpl tni)
                 {
-                    if (tni.GetText() == "TABLE")
+                    if (tni.GetText().ToUpper() == "TABLE")
                     {
                         statement = new CreateTableStatement() { TableInfo = new TableInfo() };
                     }
@@ -764,7 +773,7 @@ namespace SqlAnalyser.Core
             {
                 var funName = exp?.func_application()?.func_name();
 
-                if (funName != null && funName.GetText() == "NEXTVAL")
+                if (funName != null && funName.GetText().ToUpper() == "NEXTVAL")
                 {
                     var arg = exp.func_application().func_arg_list().GetText();
                     var ids = arg.Trim('\'').Split('.');
@@ -879,7 +888,7 @@ namespace SqlAnalyser.Core
 
                     if (columnName != null && alias != null)
                     {
-                        columnName.HasAs = label.children.Any(t => t is TerminalNodeImpl && t.GetText() == "AS");
+                        columnName.HasAs = label.children.Any(t => t is TerminalNodeImpl && t.GetText().ToUpper() == "AS");
                         columnName.Alias = new TokenInfo(alias.identifier());
                     }
 

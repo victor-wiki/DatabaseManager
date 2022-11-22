@@ -4,12 +4,14 @@ using DatabaseManager.Core;
 using DatabaseManager.Data;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -43,8 +45,8 @@ namespace DatabaseManager.Controls
 
             this.lvWords.MouseWheel += LvWords_MouseWheel;
             this.panelWords.VerticalScroll.Enabled = true;
-            this.panelWords.VerticalScroll.Visible = true;            
-        }       
+            this.panelWords.VerticalScroll.Visible = true;
+        }
 
         public void Init()
         {
@@ -65,7 +67,7 @@ namespace DatabaseManager.Controls
         public void SetupIntellisence()
         {
             this.intellisenseSetuped = true;
-            this.enableIntellisense = true;            
+            this.enableIntellisense = true;
             this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
             this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
             this.dbSchemas = this.allWords.Where(item => item.Type == SqlWordTokenType.Schema).Select(item => item.Text).ToList();
@@ -246,10 +248,10 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                if(this.enableIntellisense)
+                if (this.enableIntellisense)
                 {
                     this.ShowWordListByToken(token);
-                }                
+                }
             }
         }
 
@@ -621,7 +623,7 @@ namespace DatabaseManager.Controls
                     {
                         this.ClearStyle(token);
                     }
-                }                             
+                }
             }
 
             return token;
@@ -704,6 +706,11 @@ namespace DatabaseManager.Controls
 
         private void SetWordColor(SqlWordToken token, bool keepCurrentPos = false)
         {
+            if (!SettingManager.Setting.EnableEditorHighlighting)
+            {
+                return;
+            }
+
             Color color = Color.Black;
 
             if (token.Type == SqlWordTokenType.Keyword)
@@ -812,7 +819,7 @@ namespace DatabaseManager.Controls
                     this.txtEditor.Focus();
                 }
             }
-        }       
+        }
 
         private void tsmiDisableIntellisense_Click(object sender, EventArgs e)
         {
@@ -931,6 +938,51 @@ namespace DatabaseManager.Controls
         private void tsmiSelectAll_Click(object sender, EventArgs e)
         {
             this.txtEditor.SelectAll();
+        }
+
+        private void tsmiValidateScripts_Click(object sender, EventArgs e)
+        {
+            this.ClearSelection();
+
+            this.ValidateScripts(true);
+        }
+
+        internal async void ValidateScripts(bool showMessageBox = false)
+        {
+            SqlSyntaxError error = await Task.Run(() => ScriptValidator.ValidateSyntax(this.DatabaseType, this.txtEditor.Text));
+
+            if (error != null && error.HasError)
+            {
+                if(showMessageBox)
+                {
+                    frmTextContent msgBox = new frmTextContent("Error Message", error.ToString(), true);
+                    msgBox.ShowDialog();
+                }                
+
+                RichTextBoxHelper.HighlightingError(this.txtEditor, error);
+            }
+            else
+            {
+                if(showMessageBox)
+                {
+                    MessageBox.Show("The scripts is valid.");
+                }                
+            }
+        }
+
+        private void ClearSelection()
+        {
+            int start = this.txtEditor.SelectionStart;
+
+            this.txtEditor.SelectAll();
+            this.txtEditor.SelectionBackColor = Color.White;
+            this.txtEditor.SelectionStart = start;
+            this.txtEditor.SelectionLength = 0;
+        }
+
+        private void editorContexMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            this.tsmiValidateScripts.Visible = this.txtEditor.Text.Trim().Length > 0;
         }
     }
 }

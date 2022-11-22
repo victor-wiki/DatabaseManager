@@ -3,6 +3,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -23,6 +24,9 @@ namespace DatabaseManager.Controls
         public UC_DbObjectContent()
         {
             InitializeComponent();
+
+            TabControl.CheckForIllegalCrossThreadCalls = false;
+            TabPage.CheckForIllegalCrossThreadCalls = false;            
 
             FormEventCenter.OnSave += this.Save;
             FormEventCenter.OnRunScripts += this.RunScripts;
@@ -99,6 +103,11 @@ namespace DatabaseManager.Controls
                     if (info.Error != null)
                     {
                         RichTextBoxHelper.HighlightingError(sqlQuery.Editor, info.Error);
+                    }
+
+                    if ((info.DatabaseObject is ScriptDbObject) && SettingManager.Setting.ValidateScriptsAfterTranslated && info.IsTranlatedScript)
+                    {
+                        sqlQuery.ValidateScripts();
                     }
                 }
                 else

@@ -8,12 +8,15 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.18</Version>
+    <Version>2.0.19</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>change form control font and document annotation language</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add
+(1) validate scripts after translated
+(2) copy children names of  tree node
+2. rearrange form files</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.18</AssemblyVersion>
-    <FileVersion>2.0.18</FileVersion>
+    <AssemblyVersion>2.0.19</AssemblyVersion>
+    <FileVersion>2.0.19</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
@@ -134,118 +137,118 @@
     <Compile Update="Controls\UC_TableIndexes.Designer.cs">
       <DependentUpon>UC_TableIndexes.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmAccountInfo.cs">
+    <Compile Update="Forms\frmAccountInfo.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmAccountInfo.Designer.cs">
+    <Compile Update="Forms\frmAccountInfo.Designer.cs">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmBackupSetting.cs">
+    <Compile Update="Forms\frmBackupSetting.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmBackupSetting.Designer.cs">
+    <Compile Update="Forms\frmBackupSetting.Designer.cs">
       <DependentUpon>frmBackupSetting.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmBackupSettingRedefine.cs">
+    <Compile Update="Forms\frmBackupSettingRedefine.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmBackupSettingRedefine.Designer.cs">
+    <Compile Update="Forms\frmBackupSettingRedefine.Designer.cs">
       <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmColumnMapping.cs">
+    <Compile Update="Forms\frmColumnMapping.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmColumnMapping.Designer.cs">
+    <Compile Update="Forms\frmColumnMapping.Designer.cs">
       <DependentUpon>frmColumnMapping.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmColumSelect.cs">
+    <Compile Update="Forms\frmColumSelect.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmColumSelect.Designer.cs">
+    <Compile Update="Forms\frmColumSelect.Designer.cs">
       <DependentUpon>frmColumSelect.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmConvert.cs">
+    <Compile Update="Forms\frmConvert.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmConvert.designer.cs">
+    <Compile Update="Forms\frmConvert.designer.cs">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDataFilter.cs">
+    <Compile Update="Forms\frmDataFilter.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDataFilter.Designer.cs">
+    <Compile Update="Forms\frmDataFilter.Designer.cs">
       <DependentUpon>frmDataFilter.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDataFilterCondition.cs">
+    <Compile Update="Forms\frmDataFilterCondition.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDataFilterCondition.Designer.cs">
+    <Compile Update="Forms\frmDataFilterCondition.Designer.cs">
       <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDbConnect.cs">
+    <Compile Update="Forms\frmDbConnect.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDbConnect.designer.cs">
+    <Compile Update="Forms\frmDbConnect.designer.cs">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDbConnectionManage.cs">
+    <Compile Update="Forms\frmDbConnectionManage.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDbConnectionManage.Designer.cs">
+    <Compile Update="Forms\frmDbConnectionManage.Designer.cs">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDbObjectTypeSelector.cs">
+    <Compile Update="Forms\frmItemsSelector.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDbObjectTypeSelector.Designer.cs">
-      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
+    <Compile Update="Forms\frmItemsSelector.Designer.cs">
+      <DependentUpon>frmItemsSelector.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDiagnose.cs">
+    <Compile Update="Forms\frmDiagnose.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDiagnose.Designer.cs">
+    <Compile Update="Forms\frmDiagnose.Designer.cs">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmDiagnoseResult.cs">
+    <Compile Update="Forms\frmDiagnoseResult.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmDiagnoseResult.Designer.cs">
+    <Compile Update="Forms\frmDiagnoseResult.Designer.cs">
       <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmGenerateScripts.cs">
+    <Compile Update="Forms\frmGenerateScripts.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmGenerateScripts.Designer.cs">
+    <Compile Update="Forms\frmGenerateScripts.Designer.cs">
       <DependentUpon>frmGenerateScripts.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmMain.cs">
+    <Compile Update="Forms\frmMain.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmMain.Designer.cs">
+    <Compile Update="Forms\frmMain.Designer.cs">
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmScriptsViewer.cs">
+    <Compile Update="Forms\frmScriptsViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmScriptsViewer.Designer.cs">
+    <Compile Update="Forms\frmScriptsViewer.Designer.cs">
       <DependentUpon>frmScriptsViewer.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmSetting.cs">
+    <Compile Update="Forms\frmSetting.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmSetting.designer.cs">
+    <Compile Update="Forms\frmSetting.designer.cs">
       <DependentUpon>frmSetting.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmSqlQuery.cs">
+    <Compile Update="Forms\frmSqlQuery.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmSqlQuery.Designer.cs">
+    <Compile Update="Forms\frmSqlQuery.Designer.cs">
       <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </Compile>
-    <Compile Update="frmTableCopy.cs">
+    <Compile Update="Forms\frmTableCopy.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="frmTableCopy.Designer.cs">
+    <Compile Update="Forms\frmTableCopy.Designer.cs">
       <DependentUpon>frmTableCopy.cs</DependentUpon>
     </Compile>
     <Compile Update="Resources.Designer.cs">
@@ -304,61 +307,61 @@
     <EmbeddedResource Update="Controls\UC_TableIndexes.resx">
       <DependentUpon>UC_TableIndexes.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmAccountInfo.resx">
+    <EmbeddedResource Update="Forms\frmAccountInfo.resx">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmBackupSetting.resx">
+    <EmbeddedResource Update="Forms\frmBackupSetting.resx">
       <DependentUpon>frmBackupSetting.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmBackupSettingRedefine.resx">
+    <EmbeddedResource Update="Forms\frmBackupSettingRedefine.resx">
       <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmColumnMapping.resx">
+    <EmbeddedResource Update="Forms\frmColumnMapping.resx">
       <DependentUpon>frmColumnMapping.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmColumSelect.resx">
+    <EmbeddedResource Update="Forms\frmColumSelect.resx">
       <DependentUpon>frmColumSelect.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmConvert.resx">
+    <EmbeddedResource Update="Forms\frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDataFilter.resx">
+    <EmbeddedResource Update="Forms\frmDataFilter.resx">
       <DependentUpon>frmDataFilter.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDataFilterCondition.resx">
+    <EmbeddedResource Update="Forms\frmDataFilterCondition.resx">
       <DependentUpon>frmDataFilterCondition.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDbConnect.resx">
+    <EmbeddedResource Update="Forms\frmDbConnect.resx">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDbConnectionManage.resx">
+    <EmbeddedResource Update="Forms\frmDbConnectionManage.resx">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDbObjectTypeSelector.resx">
-      <DependentUpon>frmDbObjectTypeSelector.cs</DependentUpon>
+    <EmbeddedResource Update="Forms\frmItemsSelector.resx">
+      <DependentUpon>frmItemsSelector.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDiagnose.resx">
+    <EmbeddedResource Update="Forms\frmDiagnose.resx">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmDiagnoseResult.resx">
+    <EmbeddedResource Update="Forms\frmDiagnoseResult.resx">
       <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmGenerateScripts.resx">
+    <EmbeddedResource Update="Forms\frmGenerateScripts.resx">
       <DependentUpon>frmGenerateScripts.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmMain.resx">
+    <EmbeddedResource Update="Forms\frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmScriptsViewer.resx">
+    <EmbeddedResource Update="Forms\frmScriptsViewer.resx">
       <DependentUpon>frmScriptsViewer.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmSetting.resx">
+    <EmbeddedResource Update="Forms\frmSetting.resx">
       <DependentUpon>frmSetting.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmSqlQuery.resx">
+    <EmbeddedResource Update="Forms\frmSqlQuery.resx">
       <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="frmTableCopy.resx">
+    <EmbeddedResource Update="Forms\frmTableCopy.resx">
       <DependentUpon>frmTableCopy.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources.resx">

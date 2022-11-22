@@ -11,6 +11,8 @@ namespace SqlAnalyser.Model
     {
         public IfStatementType Type { get; set; }
         public TokenInfo Condition { get; set; }
+        public IfConditionType ConditionType { get; set; } = IfConditionType.Common;
+        public SelectStatement CondtionStatement { get; set; }
         public List<Statement> Statements { get; set; } = new List<Statement>();
     }
 
@@ -19,5 +21,12 @@ namespace SqlAnalyser.Model
         IF = 0,
         ELSEIF = 1,
         ELSE = 2
+    }
+
+    public enum IfConditionType
+    {
+        Common,
+        Exists,
+        NotExists
     }
 }

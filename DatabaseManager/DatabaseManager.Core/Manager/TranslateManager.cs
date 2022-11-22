@@ -4,11 +4,9 @@ using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DatabaseManager.Core
@@ -17,7 +15,7 @@ namespace DatabaseManager.Core
     {
         private IObserver<FeedbackInfo> observer;
 
-        public async Task Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, TranslateHandler translateHandler = null, bool removeCarriagRreturnChar = false)
+        public async Task<TranslateResult> Translate(DatabaseType sourceDbType, DatabaseType targetDbType, DatabaseObject dbObject, ConnectionInfo connectionInfo, bool removeCarriagRreturnChar = false)
         {
             DbInterpreterOption sourceScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.None };
             DbInterpreterOption targetScriptOption = new DbInterpreterOption() { ScriptOutputMode = GenerateScriptOutputMode.WriteToString };
@@ -27,21 +25,21 @@ namespace DatabaseManager.Core
 
             using (DbConverter dbConverter = new DbConverter(script, target))
             {
-                dbConverter.Option.OnlyForTranslate = true;
-                dbConverter.Option.GenerateScriptMode = GenerateScriptMode.Schema;
-                dbConverter.Option.ExecuteScriptOnTargetServer = false;
-                dbConverter.Option.ConvertComputeColumnExpression = true;
-                dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
-                dbConverter.Option.RemoveCarriagRreturnChar = removeCarriagRreturnChar;
+                var option = dbConverter.Option;
 
-                dbConverter.Subscribe(this.observer);
+                option.OnlyForTranslate = true;
+                option.GenerateScriptMode = GenerateScriptMode.Schema;
+                option.ExecuteScriptOnTargetServer = false;
+                option.ConvertComputeColumnExpression = true;
+                option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
+                option.RemoveCarriagRreturnChar = removeCarriagRreturnChar;
+                option.ConvertConcatChar = TranslateHelper.NeedConvertConcatChar(SettingManager.Setting.ConvertConcatCharTargetDatabases, targetDbType);
 
-                if (translateHandler != null)
-                {
-                    dbConverter.OnTranslated += translateHandler;
-                }
+                dbConverter.Subscribe(this.observer);               
 
-                await dbConverter.Translate(dbObject);
+                DbConvertResult result = await dbConverter.Translate(dbObject);
+
+                return result.TranslateResults.FirstOrDefault();
             }
         }
 
@@ -124,10 +122,11 @@ namespace DatabaseManager.Core
         {
             ScriptTranslator<T> translator = new ScriptTranslator<T>(sourceDbInterpreter, targetDbInterpreter, dbObjects) { };
             translator.Option = new DbConverterOption() { OutputRemindInformation = false };
+            translator.Option.ConvertConcatChar = TranslateHelper.NeedConvertConcatChar(SettingManager.Setting.ConvertConcatCharTargetDatabases, targetDbInterpreter.DatabaseType);
             translator.AutoMakeupSchemaName = false;
 
             return translator;
-        }
+        }      
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
         {

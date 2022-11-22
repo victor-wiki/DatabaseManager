@@ -14,6 +14,7 @@ namespace SqlAnalyser.Model
     {
         private TokenInfo _dataType;
         public ColumnName Name { get; set; }
+        public bool IsIdentity { get; set; }
         public TokenInfo DataType
         {
             get { return this._dataType; }

@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using System.Collections.Generic;
 
 namespace DatabaseManager.Model
 {
@@ -10,5 +11,7 @@ namespace DatabaseManager.Model
         public bool EnableEditorHighlighting { get; set; } = true;
         public bool EnableEditorIntellisence { get; set; } = true;    
         public string ScriptsDefaultOutputFolder { get; set; }
+        public bool ValidateScriptsAfterTranslated { get; set; } = true;
+        public List<string> ConvertConcatCharTargetDatabases { get; set; } = new List<string>();
     }   
 }

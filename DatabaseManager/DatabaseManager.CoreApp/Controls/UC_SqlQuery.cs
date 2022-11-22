@@ -97,7 +97,7 @@ namespace DatabaseManager.Controls
 
             if (!string.IsNullOrEmpty(displayInfo.Content))
             {
-                this.Editor.AppendText(displayInfo.Content);
+                this.Editor.AppendText(displayInfo.Content);                
             }
             else if (File.Exists(displayInfo.FilePath))
             {
@@ -338,6 +338,11 @@ namespace DatabaseManager.Controls
         internal bool IsTextChanged()
         {
             return this.originalText != this.Editor.Text;
+        }
+
+        internal void ValidateScripts()
+        {
+            this.queryEditor.ValidateScripts();
         }
     }
 }

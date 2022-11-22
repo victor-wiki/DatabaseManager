@@ -4,8 +4,7 @@ using DatabaseConverter.Profile;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using Microsoft.IdentityModel.Tokens;
-using SqlAnalyser.Model;
+using Npgsql.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,8 +16,6 @@ using System.Threading.Tasks;
 
 namespace DatabaseConverter.Core
 {
-    public delegate void TranslateHandler(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result);
-
     public class DbConverter : IDisposable
     {
         private bool hasError = false;
@@ -38,7 +35,6 @@ namespace DatabaseConverter.Core
         public DbConverterOption Option { get; set; } = new DbConverterOption();
 
         public event FeedbackHandler OnFeedback;
-        public event TranslateHandler OnTranslated;
 
         public CancellationTokenSource CancellationTokenSource { get; private set; }
 
@@ -73,7 +69,7 @@ namespace DatabaseConverter.Core
             this.observer = observer;
         }
 
-        public Task<DbConverterResult> Translate(DatabaseObject dbObject)
+        public Task<DbConvertResult> Translate(DatabaseObject dbObject)
         {
             this.translateDbObject = dbObject;
 
@@ -82,14 +78,14 @@ namespace DatabaseConverter.Core
             return this.InternalConvert(schemaInfo, dbObject.Schema);
         }
 
-        public Task<DbConverterResult> Convert(SchemaInfo schemaInfo = null, string schema = null)
+        public Task<DbConvertResult> Convert(SchemaInfo schemaInfo = null, string schema = null)
         {
             return this.InternalConvert(schemaInfo, schema);
         }
 
-        private async Task<DbConverterResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null)
+        private async Task<DbConvertResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null)
         {
-            DbConverterResult result = new DbConverterResult();
+            DbConvertResult result = new DbConvertResult();
             bool continuedWhenErrorOccured = false;
 
             DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
@@ -124,7 +120,7 @@ namespace DatabaseConverter.Core
 
             if (sourceInterpreter.HasError)
             {
-                result.InfoType = DbConverterResultInfoType.Error;
+                result.InfoType = DbConvertResultInfoType.Error;
                 result.Message = "Source database interpreter has error occured.";
                 return result;
             }
@@ -238,6 +234,7 @@ namespace DatabaseConverter.Core
             #endregion
 
             #region Translate
+            
             TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, this.Target.DbInterpreter, this.Option);
 
             translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!this.Option.ExecuteScriptOnTargetServer && !this.Option.OnlyForTranslate);
@@ -250,9 +247,11 @@ namespace DatabaseConverter.Core
             }
 
             translateEngine.UserDefinedTypes = utypes;
-            translateEngine.OnTranslated += this.Translated;
             translateEngine.Subscribe(this.observer);
-            translateEngine.Translate(translateDbObjectType);
+
+            await Task.Run(()=> translateEngine.Translate(translateDbObjectType));
+
+            result.TranslateResults = translateEngine.TranslateResults;
 
             #endregion
 
@@ -310,14 +309,14 @@ namespace DatabaseConverter.Core
                     {
                         if (!(this.translateDbObject is ScriptDbObject)) //script db object uses script translator which uses event to feed back to ui.
                         {
-                            this.Translated(targetInterpreter.DatabaseType, this.translateDbObject, new TranslateResult() { Data = scriptBuilder.ToString() });
+                            result.TranslateResults.Add(new TranslateResult() { DbObjectType = DbObjectHelper.GetDatabaseObjectType(this.translateDbObject), DbObjectName= this.translateDbObject.Name, Data = scriptBuilder.ToString() });
                         }
                     }
                 }
 
                 if (this.Option.OnlyForTranslate)
                 {
-                    result.InfoType = DbConverterResultInfoType.Information;
+                    result.InfoType = DbConvertResultInfoType.Information;
                     result.Message = "Translate has finished";
                     return result;
                 }
@@ -349,7 +348,7 @@ namespace DatabaseConverter.Core
                     {
                         this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
                         this.isBusy = false;
-                        result.InfoType = DbConverterResultInfoType.Information;
+                        result.InfoType = DbConvertResultInfoType.Information;
                         result.Message = "No any script to execute.";
 
                         return result;
@@ -628,7 +627,7 @@ namespace DatabaseConverter.Core
 
                                     var res = this.HandleError(dataTransferException);
 
-                                    result.InfoType = DbConverterResultInfoType.Error;
+                                    result.InfoType = DbConvertResultInfoType.Error;
                                     result.Message = res.Message;
                                 }
                             }
@@ -660,12 +659,12 @@ namespace DatabaseConverter.Core
             {
                 if (continuedWhenErrorOccured)
                 {
-                    result.InfoType = DbConverterResultInfoType.Warnning;
+                    result.InfoType = DbConvertResultInfoType.Warnning;
                     result.Message = $"Convert has finished,{Environment.NewLine}but some errors occured.";
                 }
                 else
                 {
-                    result.InfoType = DbConverterResultInfoType.Error;
+                    result.InfoType = DbConvertResultInfoType.Error;
 
                     if (string.IsNullOrEmpty(result.Message))
                     {
@@ -675,7 +674,7 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                result.InfoType = DbConverterResultInfoType.Information;
+                result.InfoType = DbConvertResultInfoType.Information;
                 result.Message = "Convert has finished.";
             }
 
@@ -789,7 +788,7 @@ namespace DatabaseConverter.Core
             return SchemaInfoHelper.GetMappedTableName(tableName, this.Source.TableNameMappings);
         }
 
-        private DbConverterResult HandleError(ConvertException ex)
+        private DbConvertResult HandleError(ConvertException ex)
         {
             this.hasError = true;
             this.isBusy = false;
@@ -797,8 +796,8 @@ namespace DatabaseConverter.Core
             string errMsg = ExceptionHelper.GetExceptionDetails(ex);
             this.Feedback(this, errMsg, FeedbackInfoType.Error);
 
-            DbConverterResult result = new DbConverterResult();
-            result.InfoType = DbConverterResultInfoType.Error;
+            DbConvertResult result = new DbConvertResult();
+            result.InfoType = DbConvertResultInfoType.Error;
             result.Message = errMsg;
 
             return result;
@@ -871,15 +870,7 @@ namespace DatabaseConverter.Core
             {
                 this.OnFeedback(info);
             }
-        }
-
-        private void Translated(DatabaseType dbType, DatabaseObject dbObject, TranslateResult result)
-        {
-            if (this.OnTranslated != null)
-            {
-                this.OnTranslated(dbType, dbObject, result);
-            }
-        }
+        }      
 
         public void Dispose()
         {

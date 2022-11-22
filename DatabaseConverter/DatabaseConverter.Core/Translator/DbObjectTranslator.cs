@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace DatabaseConverter.Core
 {
-    public abstract class DbObjectTranslator
+    public abstract class DbObjectTranslator:IDisposable
     {
         private IObserver<FeedbackInfo> observer;
         protected string sourceSchemaName;
@@ -33,7 +33,7 @@ namespace DatabaseConverter.Core
         public DbConverterOption Option { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
 
-        public TranslateHandler OnTranslated;
+        public List<TranslateResult> TranslateResults { get; internal set; } = new List<TranslateResult>();
 
         public DbObjectTranslator(DbInterpreter source, DbInterpreter target)
         {
@@ -301,6 +301,38 @@ namespace DatabaseConverter.Core
                             case "DATE2":
 
                                 newArg = DatetimeHelper.DecorateDatetimeString(this.targetDbType, newArg);
+
+                                break;
+                            case "UNIT":
+
+                                #region SqlServer date part short name
+                                switch (oldArg?.ToUpper())
+                                {
+                                    case "Y":
+                                    case "YY":
+                                    case "YYYY":
+                                        newArg = "YEAR";
+                                        break;
+                                    case "M":
+                                    case "MM":
+                                        newArg = "MONTH";
+                                        break;
+                                    case "D":
+                                    case "DD":
+                                        newArg = "DAY";
+                                        break;
+                                    case "HH":
+                                        newArg = "HOUR";
+                                        break;
+                                    case "MI":
+                                        newArg = "MINUTE";
+                                        break;
+                                    case "S":
+                                    case "SS":
+                                        newArg = "SECOND";
+                                        break;
+                                } 
+                                #endregion
 
                                 break;
                         }
@@ -719,6 +751,11 @@ namespace DatabaseConverter.Core
         public void FeedbackError(string message, bool skipError = false)
         {
             this.Feedback(FeedbackInfoType.Error, message, skipError);
+        }
+
+        public void Dispose()
+        {
+            this.TranslateResults.Clear();
         }
     }
 }
