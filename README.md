@@ -20,7 +20,8 @@
   Delete data of all tables.
   
 ### Diagnose Database
-  Diagnose invalid records of table that values are empty but columns definded as not null, and that referenced values are as same as themselves.
+  * Diagnose invalid records of table that values are empty but columns definded as not null, and that referenced values are as same as themselves.
+  * Diagnose referenced name not match as they are defined in routine scripts.
   
 ### Empty Database
   Delete all objects of a database.
@@ -32,23 +33,14 @@
 ### Translate Script Online
   The web application under this project provides a page which translates script as same as windows form do except highlighting.
 
-## UI - Main
-![Main](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=2)
-
 ## UI - Convert Database
 ![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=2)
 
 ## UI - Compare Database
 ![Compare Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Compare.png?raw=true&rid=1)
 
-## UI - Generate Scripts
-![Generate Scripts](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/GenerateScripts.png?raw=true&rid=2)
-
 ## UI - Table Designer
 ![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=2)
-
-## UI - SQL Query Editor
-![SQL Query Editor](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/QueryEditor.png?raw=true&rid=2)
 
 ## UI - Translate Script
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
