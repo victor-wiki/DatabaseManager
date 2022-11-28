@@ -7,14 +7,15 @@ namespace DatabaseInterpreter.Test
 {
     class Program
     {
-        static ConnectionInfo sqlServerConn = new ConnectionInfo() { Server = @".\sql2019", Database = "Northwind", IntegratedSecurity = true };
-        static ConnectionInfo mySqlConn = new ConnectionInfo() { Server = "localhost", Database = "northwind", UserId = "sa", Password = "1234" };
-        static ConnectionInfo oracleConn = new ConnectionInfo() { Server = "127.0.0.1/orcl", Database = "Northwind", UserId = "C##northwind", Password = "TEST" };
+        static ConnectionInfo sqlServerConn = new ConnectionInfo() { Server = @"localhost", Database = "Northwind", IntegratedSecurity = true };
+        static ConnectionInfo mySqlConn = new ConnectionInfo() { Server = "localhost", Database = "northwind", UserId = "root", Password = "1234456" };
+        static ConnectionInfo oracleConn = new ConnectionInfo() { Server = "127.0.0.1/orcl", Database = "test", UserId = "test", Password = "123456" };
+        static ConnectionInfo postgresConn = new ConnectionInfo() { Server = "localhost", Database = "test", UserId = "postgres", Password = "123456", Port = "5432" };
 
         static DbInterpreterOption option = new DbInterpreterOption()
         {
             ScriptOutputMode = GenerateScriptOutputMode.WriteToString | GenerateScriptOutputMode.WriteToFile,
-            ScriptOutputFolder = "output",           
+            ScriptOutputFolder = "output",
             TreatBytesAsNullForReading = true,
             TreatBytesAsNullForExecuting = true
         };
@@ -22,11 +23,15 @@ namespace DatabaseInterpreter.Test
         static SqlServerInterpreter sqlServerInterpreter = new SqlServerInterpreter(sqlServerConn, option);
         static MySqlInterpreter mySqlInterpreter = new MySqlInterpreter(mySqlConn, option);
         static OracleInterpreter oracleInterpreter = new OracleInterpreter(oracleConn, option);
+        static PostgresInterpreter postgresInterpreter = new PostgresInterpreter(postgresConn, option);
 
         static void Main(string[] args)
         {
             RunDemo();
-;
+
+            //TestPostgresDependency();
+            //TestOracleDependency();
+            
             Console.ReadLine();
         }
 
@@ -53,6 +58,29 @@ namespace DatabaseInterpreter.Test
             await InterpreterDemoRuner.Run(new InterpreterDemo(oracleInterpreter), filter);
 
             Console.WriteLine("OK");
+        }
+
+        static async void TestPostgresDependency()
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter();
+            //filter.ViewNames = new string[] { "" };
+
+            var viewTableUsages = await postgresInterpreter.GetViewTableUsages(filter);
+
+            var viewColumnUsages = await postgresInterpreter.GetViewColumnUsages(filter);           
+        }
+
+        static async void TestOracleDependency()
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter();
+            //filter.ViewNames = new string[] { "" };  
+
+            var viewTableUsages = await oracleInterpreter.GetViewTableUsages(filter, true);
+
+            filter.DatabaseObjectType = DatabaseObjectType.Procedure;
+            //filter.ProcedureNames = new string[] { "" };
+
+            var routineScriptUsages = await oracleInterpreter.GetRoutineScriptUsages(filter);
         }
     }
 }

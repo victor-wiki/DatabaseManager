@@ -12,6 +12,7 @@ using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
+using View = DatabaseInterpreter.Model.View;
 
 namespace DatabaseManager.Controls
 {
@@ -51,7 +52,7 @@ namespace DatabaseManager.Controls
 
             this.pagination.PageNum = pageNum;
 
-            Table table = displayInfo.DatabaseObject as Table;
+            DatabaseObject dbObject = displayInfo.DatabaseObject;
 
             int pageSize = this.pagination.PageSize;
 
@@ -80,7 +81,12 @@ namespace DatabaseManager.Controls
 
             try
             {
-                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(table, orderColumns, pageSize, pageNum, conditionClause);
+                if(dbObject is View)
+                {
+                    dbObject = ObjectHelper.CloneObject<Table>(dbObject);
+                }
+
+                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, true);
 
                 this.pagination.TotalCount = result.Total;
 
@@ -88,7 +94,7 @@ namespace DatabaseManager.Controls
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             foreach (DataGridViewColumn column in this.dgvData.Columns)

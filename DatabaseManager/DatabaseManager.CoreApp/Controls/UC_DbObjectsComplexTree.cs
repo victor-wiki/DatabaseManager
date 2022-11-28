@@ -4,14 +4,17 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO.Packaging;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using View = DatabaseInterpreter.Model.View;
 
 namespace DatabaseManager.Controls
 {
@@ -101,11 +104,14 @@ namespace DatabaseManager.Controls
         private void SetMenuItemVisible(TreeNode node)
         {
             bool isDatabase = node.Level == 0;
-            bool isView = node.Tag is DatabaseInterpreter.Model.View;
+            bool isView = node.Tag is View;
             bool isTable = node.Tag is Table;
             bool isScriptObject = node.Tag is ScriptDbObject;
             bool isUserDefinedType = node.Tag is UserDefinedType;
             bool isSequence = node.Tag is Sequence;
+            bool isFunction = node.Tag is Function;
+            bool isTriggerFunction = isFunction && (node.Tag as Function).IsTriggerFunction;
+            bool isProcedure = node.Tag is Procedure;
 
             this.tsmiNewQuery.Visible = isDatabase;
             this.tsmiNewTable.Visible = node.Name == nameof(DbObjectTreeFolderType.Tables) || isTable;
@@ -121,18 +127,19 @@ namespace DatabaseManager.Controls
             this.tsmiConvert.Visible = isDatabase;
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
-            this.tsmiViewData.Visible = isTable;
+            this.tsmiViewData.Visible = isTable || isView;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
             this.tsmiCompare.Visible = isDatabase;
 
-            this.tsmiSelectScript.Visible = isTable || isView;
+            this.tsmiSelectScript.Visible = isTable || isView || (isFunction && !isTriggerFunction);
             this.tsmiInsertScript.Visible = isTable;
             this.tsmiUpdateScript.Visible = isTable;
             this.tsmiDeleteScript.Visible = isTable;
             this.tsmiViewDependency.Visible = isDatabase || isTable;
+            this.tsmiExecuteScript.Visible = isProcedure;
 
             this.tsmiCopyChildrenNames.Visible = node.Level == 1 && node.Nodes.Count > 0 && (node.Nodes[0].Tag != null);
         }
@@ -165,6 +172,7 @@ namespace DatabaseManager.Controls
             {
                 return true;
             }
+
             return false;
         }
 
@@ -186,6 +194,7 @@ namespace DatabaseManager.Controls
             option.ThrowExceptionWhenErrorOccurs = false;
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, option);
+
             return dbInterpreter;
         }
 
@@ -205,27 +214,48 @@ namespace DatabaseManager.Controls
 
             this.ClearNodes(parentNode);
 
-            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Table, schemaInfo.Tables, createFolderNode, true);
-            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode);
-            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Function, schemaInfo.Functions, createFolderNode);
-            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
-
-            foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
+            if (databaseObjectType == DatabaseObjectType.Table)
             {
-                string dataType = userDefinedType.Attributes.Count > 1 ? "" : userDefinedType.Attributes.First().DataType;
-                string strDataType = string.IsNullOrEmpty(dataType) ? "" : $"({dataType})";
-
-                string text = $"{userDefinedType.Name}{strDataType}";
-
-                string imageKeyName = nameof(userDefinedType);
-
-                TreeNode node = DbObjectsTreeHelper.CreateTreeNode(userDefinedType.Name, text, imageKeyName);
-                node.Tag = userDefinedType;
-
-                parentNode.Nodes.Add(node);
+                this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Table, schemaInfo.Tables, createFolderNode, true);
             }
 
-            this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Sequence, schemaInfo.Sequences, createFolderNode);
+            if (databaseObjectType == DatabaseObjectType.View)
+            {
+                this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.View, schemaInfo.Views, createFolderNode, true);
+            }
+
+            if (databaseObjectType == DatabaseObjectType.Function)
+            {
+                this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Function, schemaInfo.Functions, createFolderNode);
+            }
+
+            if (databaseObjectType == DatabaseObjectType.Procedure)
+            {
+                this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Procedure, schemaInfo.Procedures, createFolderNode);
+            }
+
+            if (databaseObjectType == DatabaseObjectType.Type)
+            {
+                foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
+                {
+                    string dataType = userDefinedType.Attributes.Count > 1 ? "" : userDefinedType.Attributes.First().DataType;
+                    string strDataType = string.IsNullOrEmpty(dataType) ? "" : $"({dataType})";
+
+                    string text = $"{userDefinedType.Name}{strDataType}";
+
+                    string imageKeyName = nameof(userDefinedType);
+
+                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(userDefinedType.Name, text, imageKeyName);
+                    node.Tag = userDefinedType;
+
+                    parentNode.Nodes.Add(node);
+                }
+            }
+
+            if (databaseObjectType == DatabaseObjectType.Sequence)
+            {
+                this.AddTreeNodes(parentNode, databaseObjectType, DatabaseObjectType.Sequence, schemaInfo.Sequences, createFolderNode);
+            }
         }
 
         private TreeNodeCollection AddTreeNodes<T>(TreeNode node, DatabaseObjectType types, DatabaseObjectType type, List<T> dbObjects, bool createFolderNode = true, bool createFakeNode = false)
@@ -267,6 +297,13 @@ namespace DatabaseManager.Controls
             tableNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Constraints), nameof(DbObjectTreeFolderType.Constraints), true));
         }
 
+        private void AddViewFakeNodes(TreeNode viewNode, View view)
+        {
+            this.ClearNodes(viewNode);
+
+            viewNode.Nodes.Add(DbObjectsTreeHelper.CreateFolderNode(nameof(DbObjectTreeFolderType.Columns), nameof(DbObjectTreeFolderType.Columns), true));
+        }
+
         private void AddDatabaseFakeNodes(TreeNode databaseNode, Database database)
         {
             this.ClearNodes(databaseNode);
@@ -283,15 +320,22 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType)
+        private async Task AddTableObjectNodes(TreeNode treeNode, Table table, DatabaseObjectType databaseObjectType, bool isForView = false)
         {
             string nodeName = treeNode.Name;
             string database = this.GetDatabaseNode(treeNode).Name;
-            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);           
 
             dbInterpreter.Subscribe(this);
 
-            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, Schema = table.Schema, TableNames = new string[] { table.Name } });
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType, Schema = table.Schema, TableNames = new string[] { table.Name } };
+
+            if (isForView)
+            {
+                filter.ColumnType = ColumnType.ViewColumn;
+            }
+
+            SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
             this.ClearNodes(treeNode);
 
@@ -313,55 +357,58 @@ namespace DatabaseManager.Controls
             }
             #endregion
 
-            if (nodeName == nameof(DbObjectTreeFolderType.Triggers))
+            if (!isForView)
             {
-                treeNode.AddDbObjectNodes(schemaInfo.TableTriggers);
-            }
-
-            #region Indexes
-            if (nodeName == nameof(DbObjectTreeFolderType.Indexes) && schemaInfo.TableIndexes.Any())
-            {
-                foreach (TableIndex index in schemaInfo.TableIndexes)
+                if (nodeName == nameof(DbObjectTreeFolderType.Triggers))
                 {
-                    bool isUnique = index.IsUnique;
-                    string strColumns = string.Join(",", index.Columns.OrderBy(item => item.Order).Select(item => item.ColumnName));
-                    string content = isUnique ? $"(Unique, {strColumns})" : $"({strColumns})";
-
-                    string text = $"{index.Name}{content}";
-                    string imageKeyName = nameof(TableIndex);
-
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(index.Name, text, imageKeyName);
-                    node.Tag = index;
-
-                    treeNode.Nodes.Add(node);
-                }
-            }
-            #endregion
-            if (nodeName == nameof(DbObjectTreeFolderType.Keys))
-            {
-                foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
-                {
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                    treeNode.Nodes.Add(node);
+                    treeNode.AddDbObjectNodes(schemaInfo.TableTriggers);
                 }
 
-                foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
+                #region Indexes
+                if (nodeName == nameof(DbObjectTreeFolderType.Indexes) && schemaInfo.TableIndexes.Any())
                 {
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
-                    treeNode.Nodes.Add(node);
-                }
-            }
+                    foreach (TableIndex index in schemaInfo.TableIndexes)
+                    {
+                        bool isUnique = index.IsUnique;
+                        string strColumns = string.Join(",", index.Columns.OrderBy(item => item.Order).Select(item => item.ColumnName));
+                        string content = isUnique ? $"(Unique, {strColumns})" : $"({strColumns})";
 
-            #region Constraints
-            if (nodeName == nameof(DbObjectTreeFolderType.Constraints) && schemaInfo.TableConstraints.Any())
-            {
-                foreach (TableConstraint constraint in schemaInfo.TableConstraints)
-                {
-                    TreeNode node = DbObjectsTreeHelper.CreateTreeNode(constraint);
-                    treeNode.Nodes.Add(node);
+                        string text = $"{index.Name}{content}";
+                        string imageKeyName = nameof(TableIndex);
+
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(index.Name, text, imageKeyName);
+                        node.Tag = index;
+
+                        treeNode.Nodes.Add(node);
+                    }
                 }
+                #endregion
+                if (nodeName == nameof(DbObjectTreeFolderType.Keys))
+                {
+                    foreach (TablePrimaryKey key in schemaInfo.TablePrimaryKeys)
+                    {
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                        treeNode.Nodes.Add(node);
+                    }
+
+                    foreach (TableForeignKey key in schemaInfo.TableForeignKeys)
+                    {
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(key);
+                        treeNode.Nodes.Add(node);
+                    }
+                }
+
+                #region Constraints
+                if (nodeName == nameof(DbObjectTreeFolderType.Constraints) && schemaInfo.TableConstraints.Any())
+                {
+                    foreach (TableConstraint constraint in schemaInfo.TableConstraints)
+                    {
+                        TreeNode node = DbObjectsTreeHelper.CreateTreeNode(constraint);
+                        treeNode.Nodes.Add(node);
+                    }
+                }
+                #endregion
             }
-            #endregion          
 
             this.Feedback("");
         }
@@ -427,6 +474,11 @@ namespace DatabaseManager.Controls
                 Table table = tag as Table;
                 this.AddTableFakeNodes(node, table);
             }
+            else if (tag is View)
+            {
+                View view = tag as View;
+                this.AddViewFakeNodes(node, view);
+            }
             else if (tag == null)
             {
                 string name = node.Name;
@@ -470,6 +522,12 @@ namespace DatabaseManager.Controls
 
                     await this.AddTableObjectNodes(node, parentNode.Tag as Table, databaseObjectType);
                 }
+                else if (parentNode.Tag is View)
+                {
+                    Table table = ObjectHelper.CloneObject<Table>(parentNode.Tag as View);
+
+                    await this.AddTableObjectNodes(node, table, DatabaseObjectType.Column, true);
+                }
             }
         }
 
@@ -508,12 +566,7 @@ namespace DatabaseManager.Controls
         private TreeNode GetSelectedNode()
         {
             return this.tvDbObjects.SelectedNode;
-        }
-
-        private void tsmiGenerateScripts_Click(object sender, EventArgs e)
-        {
-
-        }
+        }       
 
         private async void GenerateScripts(ScriptAction scriptAction)
         {
@@ -548,13 +601,25 @@ namespace DatabaseManager.Controls
 
         private async Task GenerateObjectScript(string database, DatabaseObject dbObj, ScriptAction scriptAction)
         {
-            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
+            try
+            {
+                DbInterpreter dbInterpreter = this.GetDbInterpreter(database, false);
 
-            ScriptGenerator scriptGenerator = new ScriptGenerator(dbInterpreter);
+                dbInterpreter.Option.ThrowExceptionWhenErrorOccurs = true;
 
-            string script = await scriptGenerator.Generate(dbObj, scriptAction);
+                ScriptGenerator scriptGenerator = new ScriptGenerator(dbInterpreter);
 
-            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObj.Name, DatabaseType = this.databaseType, DatabaseObject = dbObj, Content = script, ConnectionInfo = dbInterpreter.ConnectionInfo });
+                ScriptGenerateResult result = await scriptGenerator.Generate(dbObj, scriptAction);
+
+                this.ShowContent(new DatabaseObjectDisplayInfo() { 
+                    Name = dbObj.Name, DatabaseType = this.databaseType, DatabaseObject = dbObj, ConnectionInfo = dbInterpreter.ConnectionInfo,
+                    Content = result.Script, ScriptAction = scriptAction, ScriptParameters = result.Parameters
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex));
+            }
         }
 
         private void tsmiConvert_Click(object sender, EventArgs e)
@@ -672,6 +737,108 @@ namespace DatabaseManager.Controls
             {
                 this.DeleteNode();
             }
+
+            if (e.Control)
+            {
+                if (e.KeyCode == Keys.F)
+                {
+                    this.FindChild();
+                }
+                else if (e.KeyCode == Keys.C)
+                {
+                    this.CopyNodeText();
+                }
+            }
+        }
+
+        private void CopyNodeText()
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            Clipboard.SetDataObject(node.Text);
+        }
+
+        private bool IsEmptyTreeNode(TreeNode node)
+        {
+            return node.Nodes.Count == 0 || (node.Nodes.Count == 1 && node.Nodes[0].Tag == null);
+        }
+
+        private bool IsTreeNodeHasDbObjectChildren(TreeNode node)
+        {
+            return !(this.IsEmptyTreeNode(node) || node.Nodes.Cast<TreeNode>().All(item => item.Tag == null && this.IsEmptyTreeNode(item)));
+        }
+
+        private void FindChild()
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            if (node.Level >= 1)
+            {
+                var targetNodes = this.IsTreeNodeHasDbObjectChildren(node) ? node.Nodes : node.Parent.Nodes;
+
+                if (targetNodes.Count <= 1)
+                {
+                    return;
+                }
+
+                frmFindBox findBox = new frmFindBox();
+
+                findBox.StartPosition = FormStartPosition.Manual;
+                findBox.Location = new System.Drawing.Point(0, 90);
+
+                DialogResult result = findBox.ShowDialog();
+
+                if (result == DialogResult.OK)
+                {
+                    string word = findBox.FindWord;
+
+                    TreeNode foundNode = this.FindTreeNode(targetNodes, word);
+
+                    if (foundNode != null)
+                    {
+                        this.tvDbObjects.SelectedNode = foundNode;
+                        foundNode.EnsureVisible();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Not found.");
+                    }
+                }
+            }
+        }
+
+        private TreeNode FindTreeNode(TreeNodeCollection nodes, string word)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                object tag = node.Tag;
+
+                if (node.Tag != null)
+                {
+                    string text = node.Text.Split('.').LastOrDefault()?.Split('(')?.FirstOrDefault()?.Trim();
+
+                    if (text.ToUpper() == word.ToUpper())
+                    {
+                        return node;
+                    }
+                }
+                else if (node.Nodes.Count >= 1)
+                {
+                    return this.FindTreeNode(node.Nodes, word);
+                }
+            }
+
+            return null;
         }
 
         private void DeleteNode()
@@ -741,9 +908,9 @@ namespace DatabaseManager.Controls
         private void ViewData(TreeNode node)
         {
             string database = this.GetDatabaseNode(node).Name;
-            Table table = node.Tag as Table;
+            DatabaseObject dbObject = node.Tag as DatabaseObject;
 
-            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = table.Name, DatabaseType = this.databaseType, DatabaseObject = table, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = this.databaseType, DatabaseObject = dbObject, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
         }
 
         public void OnNext(FeedbackInfo value)
@@ -810,18 +977,31 @@ namespace DatabaseManager.Controls
 
                 var dbObject = tag as DatabaseObject;
 
-                TranslateResult result = await translateManager.Translate(this.databaseType, targetDbType, dbObject, connectionInfo, true);
-
-                if (result != null)
+                try
                 {
-                    DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { 
-                        Name = dbObject.Name, DatabaseType = targetDbType, DatabaseObject = dbObject,
-                        Content = result.Data?.ToString(), ConnectionInfo = null, Error = result.Error,
-                        IsTranlatedScript = true
-                    };
+                    TranslateResult result = await translateManager.Translate(this.databaseType, targetDbType, dbObject, connectionInfo, true);
 
-                    this.ShowContent(info);
-                }            
+                    if (result != null)
+                    {
+                        DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo()
+                        {
+                            Schema = result.DbObjectSchema ?? dbObject.Schema,
+                            Name = dbObject.Name,
+                            DatabaseType = targetDbType,
+                            DatabaseObject = dbObject,
+                            Content = result.Data?.ToString(),
+                            ConnectionInfo = null,
+                            Error = result.Error,
+                            IsTranlatedScript = true
+                        };
+
+                        this.ShowContent(info);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex));
+                }
             }
         }
 
@@ -1040,6 +1220,11 @@ namespace DatabaseManager.Controls
             form.DatabaseType = this.databaseType;
             form.ConnectionInfo = connectionInfo;
 
+            if (this.databaseType == DatabaseType.Oracle)
+            {
+                form.Schema = this.GetDatabaseNode(this.GetSelectedNode()).Name;
+            }
+
             form.Init(this);
             form.ShowDialog();
         }
@@ -1152,6 +1337,11 @@ namespace DatabaseManager.Controls
                 frmTextContent frm = new frmTextContent(content);
                 frm.Show();
             }
+        }
+
+        private void tsmiExecuteScript_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.EXECUTE);
         }
     }
 }

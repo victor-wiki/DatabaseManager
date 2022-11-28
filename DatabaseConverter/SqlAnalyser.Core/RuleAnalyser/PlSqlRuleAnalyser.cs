@@ -6,6 +6,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using static PlSqlParser;
 
 namespace SqlAnalyser.Core
@@ -15,6 +16,8 @@ namespace SqlAnalyser.Core
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Tableview_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(Variable_nameContext), typeof(Column_nameContext) };
+        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Table_aliasContext) };
+        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() { typeof(Column_aliasContext) };
 
         public override Lexer GetLexer(string content)
         {
@@ -1302,7 +1305,17 @@ namespace SqlAnalyser.Core
 
                 if (groupbyElements != null && groupbyElements.Length > 0)
                 {
-                    statement.GroupBy = groupbyElements.Select(item => this.CreateToken(item, TokenType.GroupBy)).ToList();
+                    foreach(var gpbElem in groupbyElements)
+                    {
+                        var gpb = this.CreateToken(gpbElem, TokenType.GroupBy);
+
+                        statement.GroupBy.Add(gpb);
+
+                        if (!AnalyserHelper.IsValidColumnName(gpb))
+                        {
+                            this.AddChildTableAndColumnNameToken(gpbElem, gpb);
+                        }
+                    }                    
                 }
 
                 if (having != null)
@@ -2038,6 +2051,32 @@ namespace SqlAnalyser.Core
                 else if (node.Parent != null && node.Parent is ParserRuleContext)
                 {
                     return this.FindSelectListEelementsContext(node.Parent as ParserRuleContext);
+                }
+            }
+
+            return null;
+        }
+
+        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is Table_aliasContext alias)
+                {
+                    return new TokenInfo(alias.identifier()) { Type = TokenType.TableAlias };
+                }
+            }
+
+            return null;
+        }
+
+        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is Column_aliasContext alias)
+                {
+                    return new TokenInfo(alias.identifier()) { Type = TokenType.ColumnAlias };
                 }
             }
 

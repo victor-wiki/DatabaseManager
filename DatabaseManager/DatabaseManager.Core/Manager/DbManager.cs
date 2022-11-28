@@ -278,15 +278,28 @@ namespace DatabaseManager.Core
             return false;
         }
 
-        public async Task<DiagnoseResult> Diagnose(DatabaseType databaseType, ConnectionInfo connectionInfo, DiagnoseType diagnoseType)
+        public async Task<TableDiagnoseResult> DiagnoseTable(DatabaseType databaseType, ConnectionInfo connectionInfo, string schema, TableDiagnoseType diagnoseType)
         {
             DbDiagnosis dbDiagnosis = DbDiagnosis.GetInstance(databaseType, connectionInfo);
+            dbDiagnosis.Schema = schema;
 
             dbDiagnosis.OnFeedback += this.Feedback;
 
-            DiagnoseResult result = await dbDiagnosis.Diagnose(diagnoseType);
+            TableDiagnoseResult result = await dbDiagnosis.DiagnoseTable(diagnoseType);
 
             return result;
+        }
+
+        public async Task<List<ScriptDiagnoseResult>> DiagnoseScript(DatabaseType databaseType, ConnectionInfo connectionInfo, string schema, ScriptDiagnoseType diagnoseType)
+        {
+            DbDiagnosis dbDiagnosis = DbDiagnosis.GetInstance(databaseType, connectionInfo);
+            dbDiagnosis.Schema = schema;
+
+            dbDiagnosis.OnFeedback += this.Feedback;
+
+            List<ScriptDiagnoseResult> results = await dbDiagnosis.DiagnoseScript(diagnoseType);
+
+            return results;
         }
 
         public void Feedback(FeedbackInfoType infoType, string message)

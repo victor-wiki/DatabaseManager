@@ -15,6 +15,8 @@ namespace SqlAnalyser.Core
         public SqlRuleAnalyserOption Option { get; set; } = new SqlRuleAnalyserOption();
         public abstract IEnumerable<Type> ParseTableTypes { get; }
         public abstract IEnumerable<Type> ParseColumnTypes { get; }
+        public abstract IEnumerable<Type> ParseTableAliasTypes { get; }
+        public abstract IEnumerable<Type> ParseColumnAliasTypes { get; }
 
         public abstract Lexer GetLexer(string content);
 
@@ -48,6 +50,8 @@ namespace SqlAnalyser.Core
         public abstract SqlSyntaxError Validate(string content);
         public abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
         public abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
+        public abstract TokenInfo ParseTableAlias(ParserRuleContext node);
+        public abstract TokenInfo ParseColumnAlias(ParserRuleContext node);
         public abstract bool IsFunction(IParseTree node);
         public virtual TokenInfo ParseFunction(ParserRuleContext node)
         {
@@ -116,10 +120,10 @@ namespace SqlAnalyser.Core
 
                     var childNode = child as ParserRuleContext;
 
-                    if (!script.Functions.Any(item=>item.StartIndex.Value == childNode.Start.StartIndex && item.StopIndex.Value == childNode.Stop.StopIndex))
+                    if (!script.Functions.Any(item => item.StartIndex.Value == childNode.Start.StartIndex && item.StopIndex.Value == childNode.Stop.StopIndex))
                     {
                         script.Functions.Add(this.ParseFunction(childNode));
-                    }                    
+                    }
                 }
 
                 if (isFunction && !this.Option.ExtractFunctionChildren)
@@ -134,7 +138,7 @@ namespace SqlAnalyser.Core
                     }
                 }
             }
-        }        
+        }
 
         protected TokenInfo CreateToken(ParserRuleContext node, TokenType tokenType = TokenType.General)
         {
@@ -172,34 +176,89 @@ namespace SqlAnalyser.Core
             return fullNames;
         }
 
-        protected List<TokenInfo> ParseTableAndColumnNames(ParserRuleContext node, IEnumerable<Type> tableTypes, IEnumerable<Type> columnTypes)
+        protected List<TokenInfo> ParseTableAndColumnNames(ParserRuleContext node, bool isOnlyForColumn = false)
         {
             List<TokenInfo> tokens = new List<TokenInfo>();
+            List<TableName> tableNameTokens = new List<TableName>();
+            List<ColumnName> columnNameTokens = new List<ColumnName>();
+            List<TokenInfo> aliasTokens = new List<TokenInfo>();
 
-            var fullTableNames = this.FindSpecificContexts(node, tableTypes);
-            var fullColumnNames = this.FindSpecificContexts(node, columnTypes);
+            var types = isOnlyForColumn ? this.ParseColumnTypes.Union(this.ParseColumnAliasTypes)
+                        : this.ParseTableTypes.Union(this.ParseColumnTypes).Union(this.ParseTableAliasTypes).Union(this.ParseColumnAliasTypes);
 
-            foreach (var columnName in fullColumnNames)
+            var results = this.FindSpecificContexts(node, types);
+
+            var tableNames = !isOnlyForColumn ? results.Where(item => this.ParseTableTypes.Any(t => item.GetType() == t)) : Enumerable.Empty<ParserRuleContext>();
+            var columnNames = results.Where(item => this.ParseColumnTypes.Any(t => item.GetType() == t));
+            var tableAliases = !isOnlyForColumn ? results.Where(item => this.ParseTableAliasTypes.Any(t => item.GetType() == t)) : Enumerable.Empty<ParserRuleContext>();
+            var columnAliases = results.Where(item => this.ParseColumnAliasTypes.Any(t => item.GetType() == t));
+
+            foreach (var columnName in columnNames)
             {
-                tokens.Add(this.ParseColumnName(columnName));
+                columnNameTokens.Add(this.ParseColumnName(columnName));
             }
 
-            foreach (var tableName in fullTableNames)
+            if (!isOnlyForColumn)
             {
-                tokens.Add(this.ParseTableName(tableName));
+                foreach (var tableName in tableNames)
+                {
+                    tableNameTokens.Add(this.ParseTableName(tableName));
+                }
             }
+
+            foreach (var columnAlias in columnAliases)
+            {
+                TokenInfo alias = this.ParseColumnAlias(columnAlias);
+
+                if (!this.IsAliasExisted(columnNameTokens, alias))
+                {
+                    aliasTokens.Add(alias);                    
+                }
+            }
+
+            if (!isOnlyForColumn)
+            {
+                foreach (var tableAlias in tableAliases)
+                {
+                    TokenInfo alias = this.ParseTableAlias(tableAlias);
+
+                    if (!this.IsAliasExisted(tableNameTokens, alias))
+                    {
+                        aliasTokens.Add(alias);
+                    }
+                }
+            }
+
+            tokens.AddRange(columnNameTokens);
+
+            if (!isOnlyForColumn)
+            {
+                tokens.AddRange(tableNameTokens);
+            }
+
+            tokens.AddRange(aliasTokens);
 
             return tokens;
         }
 
-        protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token, IEnumerable<Type> tableTypes, IEnumerable<Type> columnTypes)
+        private bool IsAliasExisted(IEnumerable<NameToken> tokens, TokenInfo alias)
+        {
+            if (tokens.Any(item => item.Alias?.Symbol == alias?.Symbol && item.Alias?.StartIndex == alias?.StartIndex))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token)
         {
             if (this.Option.ParseTokenChildren)
             {
-                if(token != null)
+                if (token != null)
                 {
-                    this.ParseTableAndColumnNames(node, tableTypes, columnTypes).ForEach(item => token.AddChild(item));
-                }                
+                    this.ParseTableAndColumnNames(node).ForEach(item => token.AddChild(item));
+                }
             }
         }
 
@@ -207,18 +266,10 @@ namespace SqlAnalyser.Core
         {
             if (this.Option.ParseTokenChildren)
             {
-                if(token != null)
+                if (token != null)
                 {
-                    this.FindSpecificContexts(node, searchTypes).ForEach(item => token.AddChild(this.ParseColumnName(item)));
-                }                
-            }
-        }
-
-        protected void AddChildTableAndColumnNameToken(ParserRuleContext node, TokenInfo token)
-        {
-            if (this.Option.ParseTokenChildren)
-            {
-                this.AddChildTableAndColumnNameToken(node, token, this.ParseTableTypes, this.ParseColumnTypes);
+                    this.ParseTableAndColumnNames(node, true).ForEach(item => token.AddChild(item));
+                }
             }
         }
 

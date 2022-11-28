@@ -52,6 +52,7 @@ namespace DatabaseManager
             this.tsmiExpandAll = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCollapseAll = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiGenerateChangedScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiFindText = new System.Windows.Forms.ToolStripMenuItem();
             this.targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
@@ -70,7 +71,7 @@ namespace DatabaseManager
             // btnCompare
             // 
             this.btnCompare.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCompare.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.btnCompare.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnCompare.Location = new System.Drawing.Point(739, 7);
             this.btnCompare.Margin = new System.Windows.Forms.Padding(4);
             this.btnCompare.Name = "btnCompare";
@@ -115,7 +116,6 @@ namespace DatabaseManager
             this.colSourceName,
             this.colTargetName,
             this.colChangeType});
-            this.tlvDifferences.Cursor = System.Windows.Forms.Cursors.Default;
             this.tlvDifferences.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlvDifferences.FullRowSelect = true;
             this.tlvDifferences.GridLines = true;
@@ -137,6 +137,7 @@ namespace DatabaseManager
             this.tlvDifferences.View = System.Windows.Forms.View.Details;
             this.tlvDifferences.VirtualMode = true;
             this.tlvDifferences.SelectedIndexChanged += new System.EventHandler(this.tlvDifferences_SelectedIndexChanged);
+            this.tlvDifferences.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tlvDifferences_KeyDown);
             this.tlvDifferences.MouseDown += new System.Windows.Forms.MouseEventHandler(this.tlvDifferences_MouseDown);
             // 
             // colType
@@ -281,7 +282,6 @@ namespace DatabaseManager
             this.txtMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtMessage.BackColor = System.Drawing.SystemColors.Control;
             this.txtMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtMessage.Cursor = System.Windows.Forms.Cursors.Default;
             this.txtMessage.Location = new System.Drawing.Point(5, 574);
             this.txtMessage.Margin = new System.Windows.Forms.Padding(4);
             this.txtMessage.Name = "txtMessage";
@@ -293,9 +293,10 @@ namespace DatabaseManager
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiExpandAll,
             this.tsmiCollapseAll,
-            this.tsmiGenerateChangedScripts});
+            this.tsmiGenerateChangedScripts,
+            this.tsmiFindText});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 70);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(229, 92);
             // 
             // tsmiExpandAll
             // 
@@ -321,11 +322,18 @@ namespace DatabaseManager
             this.tsmiGenerateChangedScripts.Visible = false;
             this.tsmiGenerateChangedScripts.Click += new System.EventHandler(this.tsmiGenerateChangedScripts_Click);
             // 
+            // tsmiFindText
+            // 
+            this.tsmiFindText.Name = "tsmiFindText";
+            this.tsmiFindText.Size = new System.Drawing.Size(228, 22);
+            this.tsmiFindText.Text = "Find Text";
+            this.tsmiFindText.Click += new System.EventHandler(this.tsmiFindText_Click);
+            // 
             // targetDbProfile
             // 
             this.targetDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.targetDbProfile.DatabaseType = DatabaseType.Unknown;
+            this.targetDbProfile.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.targetDbProfile.EnableDatabaseType = true;
             this.targetDbProfile.Location = new System.Drawing.Point(16, 36);
             this.targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
@@ -339,7 +347,7 @@ namespace DatabaseManager
             // 
             this.sourceDbProfile.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.sourceDbProfile.DatabaseType = DatabaseType.Unknown;
+            this.sourceDbProfile.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
             this.sourceDbProfile.EnableDatabaseType = true;
             this.sourceDbProfile.Location = new System.Drawing.Point(16, 5);
             this.sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
@@ -409,5 +417,6 @@ namespace DatabaseManager
         private System.Windows.Forms.ToolStripMenuItem tsmiCollapseAll;
         private System.Windows.Forms.ToolStripMenuItem tsmiGenerateChangedScripts;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiFindText;
     }
 }

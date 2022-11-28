@@ -32,7 +32,7 @@ namespace DatabaseInterpreter.Core
         public bool ShowBuiltinDatabase => Setting.ShowBuiltinDatabase;
         public DbObjectNameMode DbObjectNameMode => Setting.DbObjectNameMode;
         public int DataBatchSize => Setting.DataBatchSize;
-        public bool NotCreateIfExists => Setting.NotCreateIfExists;       
+        public bool NotCreateIfExists => Setting.NotCreateIfExists;
         public abstract string CommandParameterChar { get; }
         public abstract char QuotationLeftChar { get; }
         public abstract char QuotationRightChar { get; }
@@ -180,6 +180,14 @@ namespace DatabaseInterpreter.Core
         #region Procedure        
         public abstract Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null);
         public abstract Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        #endregion
+
+        #region Routine Parameter        
+        public abstract Task<List<RoutineParameter>> GetFunctionParametersAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<RoutineParameter>> GetFunctionParametersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+
+        public abstract Task<List<RoutineParameter>> GetProcedureParametersAsync(SchemaInfoFilter filter = null);
+        public abstract Task<List<RoutineParameter>> GetProcedureParametersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
         #endregion
 
         #region SchemaInfo
@@ -352,6 +360,56 @@ namespace DatabaseInterpreter.Core
         #endregion
         #endregion
 
+        #region Dependency
+        public abstract Task<List<ViewTableUsage>> GetViewTableUsages(SchemaInfoFilter filter, bool isFilterForReferenced = false);
+        public abstract Task<List<ViewTableUsage>> GetViewTableUsages(DbConnection dbConnection, SchemaInfoFilter filter, bool isFilterForReferenced = false);
+        public abstract Task<List<ViewColumnUsage>> GetViewColumnUsages(SchemaInfoFilter filter);
+        public abstract Task<List<ViewColumnUsage>> GetViewColumnUsages(DbConnection dbConnection, SchemaInfoFilter filter);
+        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter, bool isFilterForReferenced = false);
+        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter, bool isFilterForReferenced = false);
+
+        protected async Task<List<T>> GetDbObjectUsagesAsync<T>(string sql) where T : DbObjectUsage
+        {
+            if (!string.IsNullOrEmpty(sql))
+            {
+                using (DbConnection dbConnection = this.CreateConnection())
+                {
+                    return await this.GetDbObjectUsagesAsync<T>(dbConnection, sql);
+                }
+            }
+
+            return new List<T>();
+        }
+
+        protected async Task<List<T>> GetDbObjectUsagesAsync<T>(DbConnection dbConnection, string sql) where T : DbObjectUsage
+        {
+            List<T> objects = new List<T>();
+
+            if (!string.IsNullOrEmpty(sql))
+            {
+                try
+                {
+                    await this.OpenConnectionAsync(dbConnection);
+
+                    objects = (await dbConnection.QueryAsync<T>(sql)).ToList();
+                }
+                catch (Exception ex)
+                {
+                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+
+                    if (this.Option.ThrowExceptionWhenErrorOccurs)
+                    {
+                        throw ex;
+                    }
+                }
+            }
+
+            this.FeedbackInfo($"Got {objects.Count} {StringHelper.GetFriendlyTypeName(typeof(T).Name).ToLower()}(s).");
+
+            return objects;
+        }
+        #endregion
+
         #region Database Operation
 
         public abstract DbConnector GetDbConnector();
@@ -495,7 +553,22 @@ namespace DatabaseInterpreter.Core
 
         public abstract Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo);
 
-        public abstract Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "");
+        public virtual Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
+        {
+            return this.GetRecordCount(table as DatabaseObject, connection, whereClause);
+        }
+
+        private Task<long> GetRecordCount(DatabaseObject dbObject, DbConnection connection, string whereClause = "")
+        {
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(dbObject)}";
+
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                sql += whereClause;
+            }
+
+            return this.GetTableRecordCountAsync(connection, sql);
+        }
 
         protected async Task<long> GetTableRecordCountAsync(DbConnection connection, string sql)
         {
@@ -537,13 +610,8 @@ namespace DatabaseInterpreter.Core
             return dbConnection.ExecuteReader(sql);
         }
 
-        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, int? limitCount = null)
+        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql)
         {
-            if (limitCount > 0)
-            {
-                sql = this.AppendLimitClause(sql, limitCount.Value);
-            }
-
             if (this.DatabaseType == DatabaseType.Postgres)
             {
                 NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite(geographyAsDefault: false);
@@ -562,61 +630,13 @@ namespace DatabaseInterpreter.Core
             return table;
         }
 
-        protected string AppendLimitClause(string sql, int limitCount)
-        {
-            sql = sql.TrimEnd(';', '\r', '\n');
-
-            int index = sql.LastIndexOf(')');
-
-            string select = index > 0 ? sql.Substring(index + 1) : sql;
-
-            if (!Regex.IsMatch(select, @"(LIMIT|OFFSET)(.[\n]?)+", RegexOptions.IgnoreCase))
-            {
-                if (!Regex.IsMatch(select, @"ORDER[\s]+BY", RegexOptions.IgnoreCase))
-                {
-                    string orderBy = this.GetDefaultOrder();
-
-                    if (!string.IsNullOrEmpty(orderBy))
-                    {
-                        sql += Environment.NewLine + "ORDER BY " + orderBy;
-                    }
-                }
-
-                if (this.DatabaseType == DatabaseType.SqlServer)
-                {
-                    if (!Regex.IsMatch(select, @"SELECT[\s]+TOP[\s]+", RegexOptions.IgnoreCase))
-                    {
-                        sql = sql.Substring(0, index + 1) + Regex.Replace(select, "SELECT", $"SELECT TOP {limitCount} ", RegexOptions.IgnoreCase);
-                    }
-                }
-                else if (this.DatabaseType == DatabaseType.MySql || this.DatabaseType == DatabaseType.Postgres)
-                {
-                    sql = $@"SELECT * FROM
-                       (
-                         {sql}
-                       ) TEMP"
-                      + Environment.NewLine + this.GetLimitStatement(0, limitCount);
-                }
-                else if (this.DatabaseType == DatabaseType.Oracle)
-                {
-                    sql = $@"SELECT * FROM
-                       (
-                         {sql}
-                       ) TEMP
-                       WHERE ROWNUM BETWEEN 1 AND {limitCount}";
-                }
-            }
-
-            return sql;
-        }
-
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
         {
-            string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table);
+            string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table as DatabaseObject);
 
             List<string> columnNames = new List<string>();
 
-            foreach (TableColumn column in columns)
+            foreach (var column in columns)
             {
                 if (this.Option.ExcludeGeometryForData && DataTypeHelper.IsGeometryType(column.DataType))
                 {
@@ -772,13 +792,22 @@ namespace DatabaseInterpreter.Core
             return dt;
         }
 
-        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false)
         {
             using (DbConnection connection = this.CreateConnection())
             {
                 long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
 
-                List<TableColumn> columns = await this.GetTableColumnsAsync(connection, new SchemaInfoFilter() { Schema = table.Schema, TableNames = new string[] { table.Name } });
+                SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema };
+
+                if (isForView)
+                {
+                    filter.ColumnType = ColumnType.ViewColumn;
+                }
+
+                filter.TableNames = new string[] { table.Name };
+
+                var columns = await this.GetTableColumnsAsync(connection, filter);
 
                 DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, pageSize, pageNumber, whereClause);
 
@@ -1055,6 +1084,11 @@ namespace DatabaseInterpreter.Core
 
             return DataTypeHelper.GetDataTypeInfo(dataType);
         }
+
+        protected bool IsForViewColumnFilter(SchemaInfoFilter filter)
+        {
+            return filter != null && filter.ColumnType == ColumnType.ViewColumn;
+        }
         #endregion
 
         #region Parse Column & DataType 
@@ -1066,9 +1100,14 @@ namespace DatabaseInterpreter.Core
         {
             bool isChar = DataTypeHelper.IsCharType(column.DataType);
 
-            if (isChar && !column.DefaultValue.Trim('(', ')').StartsWith("'"))
+            if (isChar && column.DefaultValue != null)
             {
-                return $"'{column.DefaultValue}'";
+                string trimedValue = column.DefaultValue.Trim('(', ')').Trim().ToUpper();
+
+                if (!trimedValue.StartsWith('\'') && !trimedValue.StartsWith("N'"))
+                {
+                    return $"'{column.DefaultValue}'";
+                }
             }
 
             return column.DefaultValue?.Trim();
@@ -1171,7 +1210,7 @@ namespace DatabaseInterpreter.Core
         {
             string message = $"{state.ToString()}{(state == OperationState.Begin ? " to" : "")} generate script for {StringHelper.GetFriendlyTypeName(dbObject.GetType().Name).ToLower()} \"{dbObject.Name}\".";
             this.Feedback(FeedbackInfoType.Info, message);
-        }        
+        }
         #endregion
     }
 }

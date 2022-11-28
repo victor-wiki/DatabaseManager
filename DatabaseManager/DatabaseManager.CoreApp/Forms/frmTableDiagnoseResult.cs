@@ -7,12 +7,12 @@ using DatabaseInterpreter.Utility;
 
 namespace DatabaseManager
 {
-    public partial class frmDiagnoseResult : Form
+    public partial class frmTableDiagnoseResult : Form
     {
         public DatabaseType DatabaseType { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
 
-        public frmDiagnoseResult()
+        public frmTableDiagnoseResult()
         {
             InitializeComponent();
         }
@@ -22,9 +22,9 @@ namespace DatabaseManager
             this.dgvResult.ClearSelection();
         }
 
-        public void LoadResult(DiagnoseResult result)
+        public void LoadResult(TableDiagnoseResult result)
         {
-            foreach (DiagnoseResultItem item in result.Details)
+            foreach (TableDiagnoseResultDetail item in result.Details)
             {
                 int rowIndex = this.dgvResult.Rows.Add();
 
@@ -107,7 +107,7 @@ namespace DatabaseManager
 
             if (e.ColumnIndex == this.colInvalidRecordCount.Index)
             {
-                DiagnoseResultItem resultItem = this.dgvResult.Rows[e.RowIndex].Tag as DiagnoseResultItem;
+                TableDiagnoseResultDetail resultItem = this.dgvResult.Rows[e.RowIndex].Tag as TableDiagnoseResultDetail;
 
                 string sql = resultItem.Sql;
 

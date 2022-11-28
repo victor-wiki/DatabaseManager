@@ -10,7 +10,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-
+using SqlAnalyser.Core;
+using DatabaseConverter.Core;
+using SqlAnalyser.Model;
+using System.Runtime.InteropServices;
+using Oracle.ManagedDataAccess.Client;
 
 namespace DatabaseManager.Core
 {
@@ -38,7 +42,7 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script)
+        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script, ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null)
         {
             this.cancelRequested = false;
             this.isBusy = false;
@@ -70,12 +74,14 @@ namespace DatabaseManager.Core
                         this.isBusy = true;
                         result.ResultType = QueryResultType.Grid;
 
+                        script = this.DecorateSelectWithLimit(dbInterpreter, script);
+
                         if (!scriptParser.IsCreateOrAlterScript() && dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
                             cleanScript = script.TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
                         }
 
-                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, this.LimitCount);
+                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, cleanScript);
 
                         result.Result = dataTable;
                     }
@@ -113,6 +119,10 @@ namespace DatabaseManager.Core
 
                         int affectedRows = 0;
 
+                        bool isProcedureCall = action == ScriptAction.EXECUTE;
+
+                        var commandType = (isProcedureCall && dbInterpreter.DatabaseType == DatabaseType.Oracle) ? CommandType.StoredProcedure : CommandType.Text;
+
                         foreach (string command in commands)
                         {
                             if (string.IsNullOrEmpty(command.Trim()))
@@ -122,11 +132,19 @@ namespace DatabaseManager.Core
 
                             CommandInfo commandInfo = new CommandInfo()
                             {
-                                CommandType = CommandType.Text,
+                                CommandType = commandType,
                                 CommandText = command,
                                 Transaction = this.transaction,
                                 CancellationToken = this.CancellationTokenSource.Token
                             };
+
+                            if (commandType == CommandType.StoredProcedure)
+                            {
+                                if (action == ScriptAction.EXECUTE && dbInterpreter.DatabaseType == DatabaseType.Oracle)
+                                {
+                                    this.ParseOracleProcedureCall(commandInfo, parameters);
+                                }
+                            }
 
                             int res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
@@ -156,6 +174,44 @@ namespace DatabaseManager.Core
             }
 
             return result;
+        }
+
+        private void ParseOracleProcedureCall(CommandInfo cmd, List<RoutineParameter> parameters)
+        {
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(DatabaseType.Oracle);
+
+            sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+            sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
+            sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
+            sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
+
+            var result = sqlAnalyser.AnalyseCommon(cmd.CommandText);
+
+            if (result != null && !result.HasError)
+            {
+                CommonScript cs = result.Script;
+
+                CallStatement callStatement = cs.Statements.FirstOrDefault(item => item is CallStatement) as CallStatement;
+
+                if (callStatement != null)
+                {
+                    cmd.CommandText = callStatement.Name.Symbol;
+
+                    if (parameters != null && callStatement.Parameters != null && parameters.Count == callStatement.Parameters.Count)
+                    {
+                        cmd.Parameters = new Dictionary<string, object>();
+
+                        int i = 0;
+
+                        foreach (var para in parameters.OrderBy(item=>item.Order))
+                        {
+                            cmd.Parameters.Add(para.Name, callStatement.Parameters[i]?.Value?.Symbol);
+
+                            i++;
+                        }
+                    }
+                }
+            }
         }
 
         public async Task Run(DbInterpreter dbInterpreter, IEnumerable<Script> scripts)
@@ -256,6 +312,58 @@ namespace DatabaseManager.Core
                     //throw;
                 }
             }
+        }
+
+        public string DecorateSelectWithLimit(DbInterpreter dbInterpreter, string script)
+        {
+            DatabaseType databaseType = dbInterpreter.DatabaseType;
+
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType);
+
+            sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+            sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
+            sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
+            sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
+
+            var result = sqlAnalyser.AnalyseCommon(script);
+
+            if (result != null && !result.HasError)
+            {
+                CommonScript cs = result.Script;
+
+                SelectStatement selectStatement = cs.Statements.FirstOrDefault(item => item is SelectStatement) as SelectStatement;
+
+                if (selectStatement != null)
+                {
+                    TableName tableName = selectStatement.TableName;
+
+                    if (tableName == null)
+                    {
+                        if (selectStatement.HasFromItems)
+                        {
+                            tableName = selectStatement.FromItems[0].TableName;
+                        }
+                    }
+
+                    bool hasTableName = tableName != null && tableName.Symbol?.ToUpper() != "DUAL";
+
+                    if (hasTableName && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
+                    {
+                        if (databaseType == DatabaseType.SqlServer)
+                        {
+                            selectStatement.TopInfo = new SelectTopInfo() { TopCount = new TokenInfo(this.LimitCount.ToString()) };
+                        }
+                        else
+                        {
+                            selectStatement.LimitInfo = new SelectLimitInfo() { RowCount = new TokenInfo(this.LimitCount.ToString()) };
+                        }
+
+                        script = sqlAnalyser.GenerateScripts(cs).Script;
+                    }
+                }
+            }
+
+            return script;
         }
 
         public void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)

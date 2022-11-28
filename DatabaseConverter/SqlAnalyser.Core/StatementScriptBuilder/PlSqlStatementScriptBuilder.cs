@@ -664,7 +664,7 @@ namespace SqlAnalyser.Core
                 {
                     string symbol = column.Symbol;
 
-                    if (this.IsIdentifierNameBeforeEqualMark(symbol))
+                    if (AnalyserHelper.IsAssignNameColumn(column))
                     {
                         string[] items = symbol.Split('=');
 

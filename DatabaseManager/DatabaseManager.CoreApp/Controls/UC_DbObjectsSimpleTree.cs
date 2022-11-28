@@ -11,6 +11,8 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
+using DatabaseManager.Forms;
+using System.IO.Packaging;
 
 namespace DatabaseManager.Controls
 {
@@ -155,6 +157,69 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
+        }
+
+        private void tvDbObjects_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control)
+            {
+                if (e.KeyCode == Keys.F)
+                {
+                    if (this.tvDbObjects.SelectedNode != null)
+                    {
+                        this.FindChild();
+                    }
+                }
+            }
+        }
+
+        private void FindChild()
+        {
+            var node = this.tvDbObjects.SelectedNode;
+
+            frmFindBox findBox = new frmFindBox();
+
+            DialogResult result = findBox.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                string word = findBox.FindWord;
+
+                var nodes = node.Nodes.Count == 0 ? node.Parent.Nodes : node.Nodes;
+
+                TreeNode foundNode = this.FindTreeNode(nodes, word);
+
+                if (foundNode != null)
+                {
+                    this.tvDbObjects.SelectedNode = foundNode;
+
+                    foundNode.EnsureVisible();
+                }
+                else
+                {
+                    MessageBox.Show("Not found.");
+                }
+            }
+        }
+
+        private TreeNode FindTreeNode(TreeNodeCollection nodes, string word)
+        {
+            foreach (TreeNode node in nodes)
+            {
+                object tag = node.Tag;
+
+                if (node.Tag != null)
+                {
+                    string text = node.Text.Split('.').LastOrDefault()?.Trim();
+
+                    if (text.ToUpper() == word.ToUpper())
+                    {
+                        return node;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

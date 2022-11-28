@@ -339,27 +339,13 @@ namespace SqlAnalyser.Core
             this.AppendLine($"{unpivotItem.ValueColumnName}");
             this.AppendLine($"FOR {unpivotItem.ForColumnName} IN ({(string.Join(",", unpivotItem.InColumnNames.Select(item => $"{item}")))})");
             this.AppendLine(")");
-        }
-
-        protected bool IsIdentifierNameBeforeEqualMark(string value)
-        {
-            if (!string.IsNullOrEmpty(value))
-            {
-                string name = value.Split('=')[0].Trim();
-
-                string pattern = RegexHelper.NameRegexPattern;
-
-                return Regex.IsMatch(name, pattern);
-            }
-
-            return false;
-        }
+        }     
 
         protected bool HasAssignVariableColumn(SelectStatement statement)
         {
             var columns = statement.Columns;
 
-            if (columns.Any(item => item.Symbol.Contains("=") && this.IsIdentifierNameBeforeEqualMark(item.Symbol)))
+            if (columns.Any(item => AnalyserHelper.IsAssignNameColumn(item)))
             {
                 return true;
             }

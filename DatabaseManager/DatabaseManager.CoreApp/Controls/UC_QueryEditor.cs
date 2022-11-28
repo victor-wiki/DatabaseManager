@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
 using DatabaseManager.Data;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using SqlAnalyser.Model;
@@ -10,9 +11,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace DatabaseManager.Controls
 {
@@ -33,7 +36,7 @@ namespace DatabaseManager.Controls
         private List<string> dbSchemas;
         private const int WordListMinWidth = 160;
         private string commentString { get { return RichTextBoxHelper.GetCommentString(this.DatabaseType); } }
-
+        private frmFindBox findBox;
         public DatabaseType DatabaseType { get; set; }
         public DbInterpreter DbInterpreter { get; set; }
         public event EventHandler SetupIntellisenseRequired;
@@ -75,7 +78,12 @@ namespace DatabaseManager.Controls
 
         private void tsmiCopy_Click(object sender, EventArgs e)
         {
-            Clipboard.SetDataObject(this.txtEditor.SelectedText);
+            this.CopyText();
+        }
+
+        private void CopyText()
+        {
+            Clipboard.SetDataObject(this.txtEditor.SelectedText);            
         }
 
         private void tsmiPaste_Click(object sender, EventArgs e)
@@ -108,6 +116,14 @@ namespace DatabaseManager.Controls
                 this.isPasting = true;
                 return;
             }
+            else if (e.Control && e.KeyCode == Keys.F)
+            {
+                this.ShowFindBox();
+            }
+            else if(e.Control && e.KeyCode == Keys.C)
+            {
+                this.CopyText();
+            }
 
             if (!this.enableIntellisense)
             {
@@ -128,6 +144,59 @@ namespace DatabaseManager.Controls
                     e.SuppressKeyPress = true;
                 }
             }
+        }
+
+        private void ShowFindBox()
+        {
+            if (this.findBox == null || this.findBox.IsDisposed)
+            {
+                this.findBox = new frmFindBox(true);
+
+                this.findBox.OnFind += this.FindBox_OnFind;
+                this.findBox.OnEndFind += this.FindBox_OnEndFind;
+            }
+
+            this.findBox.StartPosition = FormStartPosition.Manual;
+
+            Control topControl = this.GetTopConrol();
+
+            if (topControl != null)
+            {
+                this.findBox.Location = new Point(topControl.Left + topControl.Width - this.findBox.Width - 40, topControl.Top + 130);
+            }
+            else
+            {
+                this.findBox.Location = new Point(1000, 150);
+            }
+
+            this.findBox.Show();
+        }
+
+        private void FindBox_OnEndFind()
+        {
+            this.ClearSelection();
+        }
+
+        private Control GetTopConrol()
+        {
+            Control parent = this.Parent;
+
+            while (parent != null)
+            {
+                if (parent.Parent == null)
+                {
+                    return parent;
+                }
+
+                parent = parent.Parent;
+            }
+
+            return null;
+        }
+
+        private void FindBox_OnFind()
+        {
+            RichTextBoxHelper.HighlightingFindWord(this.txtEditor, findBox.FindWord, findBox.MatchCase, findBox.MatchWholeWord);
         }
 
         private void txtEditor_KeyUp(object sender, KeyEventArgs e)
@@ -953,20 +1022,20 @@ namespace DatabaseManager.Controls
 
             if (error != null && error.HasError)
             {
-                if(showMessageBox)
+                if (showMessageBox)
                 {
                     frmTextContent msgBox = new frmTextContent("Error Message", error.ToString(), true);
                     msgBox.ShowDialog();
-                }                
+                }
 
                 RichTextBoxHelper.HighlightingError(this.txtEditor, error);
             }
             else
             {
-                if(showMessageBox)
+                if (showMessageBox)
                 {
                     MessageBox.Show("The scripts is valid.");
-                }                
+                }
             }
         }
 
@@ -982,7 +1051,23 @@ namespace DatabaseManager.Controls
 
         private void editorContexMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            this.tsmiValidateScripts.Visible = this.txtEditor.Text.Trim().Length > 0;
+            bool hasText = this.txtEditor.Text.Trim().Length > 0;
+            this.tsmiValidateScripts.Visible = hasText;
+            this.tsmiFindText.Visible = hasText;
+        }
+
+        internal void DisposeResources()
+        {
+            if (this.findBox != null && !this.findBox.IsDisposed)
+            {
+                this.findBox.Close();
+                this.findBox.Dispose();
+            }
+        }
+
+        private void tsmiFindText_Click(object sender, EventArgs e)
+        {
+            this.ShowFindBox();
         }
     }
 }

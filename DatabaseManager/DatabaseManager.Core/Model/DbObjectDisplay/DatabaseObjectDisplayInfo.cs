@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using System.Collections.Generic;
 
 namespace DatabaseManager.Model
 {
@@ -15,7 +16,8 @@ namespace DatabaseManager.Model
         public bool IsNew { get; set; }
         public string FilePath { get; set; }
         public ScriptAction ScriptAction;
-        public bool IsTranlatedScript { get; set; }
+        public List<RoutineParameter> ScriptParameters;
+        public bool IsTranlatedScript { get; set; }       
     }
 
     public enum DatabaseObjectDisplayType

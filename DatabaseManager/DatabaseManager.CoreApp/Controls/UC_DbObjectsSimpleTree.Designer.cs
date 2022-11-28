@@ -40,12 +40,13 @@
             this.tvDbObjects.CheckBoxes = true;
             this.tvDbObjects.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tvDbObjects.Location = new System.Drawing.Point(0, 0);
-            this.tvDbObjects.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.tvDbObjects.Margin = new System.Windows.Forms.Padding(4);
             this.tvDbObjects.Name = "tvDbObjects";
             this.tvDbObjects.Size = new System.Drawing.Size(290, 449);
             this.tvDbObjects.TabIndex = 20;
             this.tvDbObjects.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.tvDbObjects_AfterCheck);
             this.tvDbObjects.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvDbObjects_NodeMouseClick);
+            this.tvDbObjects.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tvDbObjects_KeyDown);
             // 
             // contextMenuStrip1
             // 
@@ -66,7 +67,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.tvDbObjects);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "UC_DbObjectsSimpleTree";
             this.Size = new System.Drawing.Size(290, 449);
             this.contextMenuStrip1.ResumeLayout(false);

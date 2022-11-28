@@ -26,7 +26,7 @@ namespace DatabaseManager.Controls
             InitializeComponent();
 
             TabControl.CheckForIllegalCrossThreadCalls = false;
-            TabPage.CheckForIllegalCrossThreadCalls = false;            
+            TabPage.CheckForIllegalCrossThreadCalls = false;
 
             FormEventCenter.OnSave += this.Save;
             FormEventCenter.OnRunScripts += this.RunScripts;
@@ -318,15 +318,15 @@ namespace DatabaseManager.Controls
                     }
                     else
                     {
-                        if(sqlQuery.IsTextChanged())
+                        if (sqlQuery.IsTextChanged())
                         {
                             saveRequired = true;
                         }
                     }
                 }
-                else if(control is UC_TableDesigner tableDesigner)
+                else if (control is UC_TableDesigner tableDesigner)
                 {
-                    if(await tableDesigner.IsChanged())
+                    if (await tableDesigner.IsChanged())
                     {
                         saveRequired = true;
                     }
@@ -349,6 +349,13 @@ namespace DatabaseManager.Controls
 
             if (canClose)
             {
+                if (info.DisplayType == DatabaseObjectDisplayType.Script)
+                {
+                    var sqlQueryControl = this.GetUcControlInterface(tabPage) as UC_SqlQuery;
+
+                    sqlQueryControl.DisposeResources();
+                }
+
                 this.tabControl1.TabPages.RemoveAt(tabPageIndex);
                 this.dictCloseButtonRectangle.Remove(tabPageIndex);
             }
@@ -358,7 +365,7 @@ namespace DatabaseManager.Controls
             return canClose;
         }
 
-        private void tsmiCloseOthers_Click(object sender, EventArgs e)
+        private async void tsmiCloseOthers_Click(object sender, EventArgs e)
         {
             this.dictCloseButtonRectangle.Clear();
 
@@ -366,12 +373,12 @@ namespace DatabaseManager.Controls
 
             for (int i = this.tabControl1.TabPages.Count - 1; i >= index + 1; i--)
             {
-                this.CloseTabPage(i);
+                await this.CloseTabPage(i);
             }
 
             while (this.tabControl1.TabPages.Count > 1)
             {
-                this.CloseTabPage(0);
+                await this.CloseTabPage(0);
             }
 
             this.SetControlVisible();
@@ -382,11 +389,11 @@ namespace DatabaseManager.Controls
             this.Visible = this.tabControl1.TabPages.Count > 0;
         }
 
-        private void tsmiCloseAll_Click(object sender, EventArgs e)
+        private async void tsmiCloseAll_Click(object sender, EventArgs e)
         {
             for (int i = this.tabControl1.TabCount - 1; i >= 0; i--)
             {
-                this.CloseTabPage(i);
+                await this.CloseTabPage(i);
             }
 
             this.SetControlVisible();
@@ -546,7 +553,9 @@ namespace DatabaseManager.Controls
 
                     if (dbObject != null)
                     {
-                        name = $"{dbObject.Schema}.{dbObject.Name}";
+                        string schema = info.Schema ?? dbObject.Schema;
+
+                        name = $"{schema}.{dbObject.Name}";
                     }
                 }
             }

@@ -1,8 +1,11 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Model;
 using SqlAnalyser.Model;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -38,7 +41,7 @@ namespace DatabaseManager.Helper
                 richTextBox.ScrollToCaret();
             }
         }
-        
+
 
         public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null, bool forceHighlightling = false)
         {
@@ -106,7 +109,7 @@ namespace DatabaseManager.Helper
                     }
 
                     richTextBox.SelectionStart = m.Index + (startIndex.HasValue ? startIndex.Value : 0);
-                    richTextBox.SelectionLength = m.Length;                    
+                    richTextBox.SelectionLength = m.Length;
                     richTextBox.SelectionColor = color;
                 }
             }
@@ -114,6 +117,83 @@ namespace DatabaseManager.Helper
             {
 
             }
+        }
+
+        public static void HighlightingFindWord(RichTextBox richTextBox, string word, bool matchCase, bool matchWholeWord)
+        {
+            if (string.IsNullOrEmpty(word))
+            {
+                return;
+            }
+
+            string pattern = "";
+
+            if (Regex.IsMatch(word, RegexHelper.NameRegexPattern))
+            {
+                pattern = $"\\b{word}\\b";
+            }
+            else
+            {
+                pattern = $"({word})";
+            }
+
+            string regex = matchWholeWord ? pattern : word;
+
+            RegexOptions option = RegexOptions.Multiline;
+
+            if (!matchCase)
+            {
+                option = option | RegexOptions.IgnoreCase;
+            }
+
+            regex = regex.Replace("[", "\\[").Replace("]", "\\]");
+
+            try
+            {
+                MatchCollection matches = Regex.Matches(richTextBox.Text, regex, option);
+
+                if (matches.Count > 0)
+                {
+                    HighlightingWord(richTextBox, matches.Select(item => new WordMatchInfo() { Index = item.Index, Length = item.Length }), Color.Orange);
+                }
+                else
+                {
+                    MessageBox.Show("No match.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex));
+            }
+        }
+
+        public static void HighlightingWord(RichTextBox richTextBox, IEnumerable<WordMatchInfo> matches, Color color)
+        {
+            richTextBox.SelectAll();
+            richTextBox.SelectionBackColor = Color.White;
+            richTextBox.SelectionStart = 0;
+            richTextBox.SelectionLength = 0;
+
+            int fisrtIndex = -1;
+
+            foreach (var m in matches)
+            {
+                richTextBox.SelectionStart = m.Index;
+                richTextBox.SelectionLength = m.Length;
+                richTextBox.SelectionBackColor = color;
+
+                if (fisrtIndex == -1)
+                {
+                    fisrtIndex = m.Index + m.Length;
+                }
+            }
+
+            if (fisrtIndex >= 0)
+            {
+                richTextBox.SelectionStart = fisrtIndex;
+            }
+
+            richTextBox.SelectionLength = 0;
         }
 
         public static void HighlightingError(RichTextBox richTextBox, object error)

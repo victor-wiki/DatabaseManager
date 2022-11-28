@@ -176,7 +176,8 @@ namespace DatabaseConverter.Core
                         || tokenType == TokenType.ProcedureName
                         || tokenType == TokenType.TriggerName
                         || tokenType == TokenType.ColumnName
-                        || tokenType == TokenType.Alias)
+                        || tokenType == TokenType.TableAlias
+                        || tokenType == TokenType.ColumnAlias)
                     {
                         if (tokenType == TokenType.ColumnName)
                         {
@@ -235,7 +236,7 @@ namespace DatabaseConverter.Core
                         this.HandleQuotationChar(statement, token, tokens);
                     }
 
-                    if (token.Symbol != null && !string.IsNullOrWhiteSpace(this.SourceDbInterpreter.STR_CONCAT_CHARS) 
+                    if (token.Symbol != null && !string.IsNullOrWhiteSpace(this.SourceDbInterpreter.STR_CONCAT_CHARS)
                         && token.Symbol.Contains(this.SourceDbInterpreter.STR_CONCAT_CHARS))
                     {
                         this.tokensWithConcatChars.Add(token);
@@ -293,7 +294,7 @@ namespace DatabaseConverter.Core
             if (symbol == null)
             {
                 return;
-            }
+            }          
 
             bool canQuote = this.CanQuote(statement, token);
 
@@ -317,7 +318,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            if (!this.HasChildren(token))
+            Action procToken = () =>
             {
                 if (token.Type == TokenType.SearchCondition)
                 {
@@ -331,9 +332,9 @@ namespace DatabaseConverter.Core
                         return;
                     }
 
-                    bool isAlias = this.IsAlias(token.Symbol, tokens);
+                    bool isTableAlias = this.IsAlias(token, tokens, TokenType.TableAlias);
 
-                    if (!isAlias && !isFunction)
+                    if (!isTableAlias && !isFunction)
                     {
                         if (!this.IsTriggerInteralTable(token))
                         {
@@ -360,83 +361,75 @@ namespace DatabaseConverter.Core
                 }
                 else
                 {
-                    Func<string[], string> getNewSymbol = (items) =>
+                    Func<TokenSymbolNameInfo, string> getNewSymbol = (nameInfo) =>
                     {
-                        string schema = null, tableName = null, columnName = null;
+                        string schema = null;
 
-                        if (token.Type == TokenType.ColumnName
-                          || token.Type == TokenType.OrderBy
-                          || token.Type == TokenType.GroupBy
-                          || token.Type == TokenType.SearchCondition
-                          || token.Type == TokenType.UpdateSetValue)
+                        if (nameInfo.Type == TokenSymbolNameType.SchemaTableColumn)
                         {
-                            if (items.Length == 2)
-                            {
-                                tableName = items[0];
-                                columnName = items[1];
-                            }
-                            else if (items.Length == 3)
-                            {
-                                schema = items[0];
-                                tableName = items[1];
-                                columnName = items[2];
-                            }
+                            bool isTableNameAlias = this.IsAlias(token, tokens, TokenType.TableAlias, nameInfo);
+                            bool isColumnNameAlias = this.IsAlias(token, tokens, TokenType.ColumnAlias, nameInfo);
 
-                            bool isAlias = this.IsAlias(tableName, tokens);
-
-                            if (schema != null)
+                            if (nameInfo.Schema != null)
                             {
                                 schema = this.GetMappedSchema(schema);
                             }
 
-                            return this.GetQuotedFullColumnName(schema, tableName, columnName, isAlias);
+                            return this.GetQuotedFullColumnName(schema, nameInfo.TableName, nameInfo.ColumnName, isTableNameAlias, isColumnNameAlias);
                         }
-                        else
+                        else if (nameInfo.Type == TokenSymbolNameType.SchemaTable)
                         {
-                            if (items.Length == 1)
-                            {
-                                tableName = items[0];
-                            }
-                            else if (items.Length == 2)
+                            if (nameInfo.TableName != null)
                             {
                                 if (this.IsTriggerVariable(token))
                                 {
-                                    return $"{items[0]}.{this.GetNewQuotedString(items[1])}";
-                                }
-                                else
-                                {
-                                    schema = items[0];
-                                    tableName = items[1];
+                                    return $"{nameInfo.Schema}.{this.GetNewQuotedString(nameInfo.TableName)}";
                                 }
                             }
 
-                            bool isAlias = this.IsAlias(tableName, tokens);
+                            bool isAlias = this.IsAlias(token, tokens, TokenType.TableAlias, nameInfo);
 
                             if (schema != null)
                             {
                                 schema = this.GetMappedSchema(schema);
                             }
 
-                            return this.GetQuotedFullTableName(schema, tableName, isAlias);
+                            return this.GetQuotedFullTableName(schema, nameInfo.TableName, isAlias);
                         }
+
+                        return null;
                     };
 
                     string[] items = token.Symbol.Split('.');
 
                     if (items.Length <= 3)
                     {
-                        string newSymbol = getNewSymbol(items);
+                        TokenSymbolNameInfo nameInfo = this.GetTokenSymbolNameInfo(token);
 
+                        string newSymbol = nameInfo == null ? null : getNewSymbol(nameInfo);     
+                        
                         if (!string.IsNullOrEmpty(newSymbol))
                         {
                             token.Symbol = this.RemoveRepeatedQuotationChars(newSymbol);
                         }
                     }
                 }
+            };
+
+            if (!this.HasChildren(token))
+            {
+                procToken();
             }
             else
             {
-                foreach (var child in token.Children)
+                string parentOldSymbol = token.Symbol;
+
+                int aliasCount = 0;
+
+                //replace with child whose symbol has '.' first
+                var children = token.Children.Where(item => item.Symbol?.Contains(".") == true).Union(token.Children.Where(item => item.Symbol?.Contains(".") == false));
+
+                foreach (var child in children)
                 {
                     string oldSymbol = child.Symbol;
 
@@ -460,6 +453,8 @@ namespace DatabaseConverter.Core
 
                     if (nt != null)
                     {
+                       // this.ChangeNameTokenAlias(child);
+
                         if (oldAliasSymbol != nt.Alias?.Symbol)
                         {
                             child.Parent.Symbol = this.ReplaceSymbol(child.Parent.Symbol, oldAliasSymbol, nt.Alias.Symbol);
@@ -467,9 +462,32 @@ namespace DatabaseConverter.Core
                     }
 
                     child.Parent.Symbol = this.RemoveRepeatedQuotationChars(child.Parent.Symbol);
+
+                    if (child.Type == TokenType.TableAlias || child.Type == TokenType.ColumnAlias)
+                    {
+                        aliasCount++;
+                    }
+                }
+
+                if (parentOldSymbol == token.Symbol)
+                {
+                    if (aliasCount == token.Children.Count)
+                    {
+                        string[] items = parentOldSymbol.Split('.');
+
+                        if (items.Length <= 3 && items.All(item => Regex.IsMatch(this.GetTrimedName(item), RegexHelper.NameRegexPattern)))
+                        {
+                            procToken();
+                        }
+                    }
                 }
             }
 
+            this.ChangeNameTokenAlias(token);
+        }
+
+        private void ChangeNameTokenAlias(TokenInfo token)
+        {
             if (token is NameToken)
             {
                 var t = token as NameToken;
@@ -480,7 +498,7 @@ namespace DatabaseConverter.Core
 
         private bool HasChildren(TokenInfo token)
         {
-            if (token == null || token.Children == null || token.Children.Count == null)
+            if (token == null || token.Children == null || token.Children.Count == 0)
             {
                 return false;
             }
@@ -496,6 +514,57 @@ namespace DatabaseConverter.Core
             }
 
             return token.Children.Count > 0;
+        }     
+
+        private TokenSymbolNameInfo GetTokenSymbolNameInfo(TokenInfo token)
+        {
+            string symbol = token.Symbol;
+            string[] items = symbol.Split('.');
+
+            if (items.Any(item=> !TranslateHelper.IsValidName(item, this.TrimChars)))
+            {
+                return null;
+            }
+
+            string schema = null, tableName = null, columnName = null;
+            TokenSymbolNameType type = TokenSymbolNameType.Unknown;
+
+            if (token.Type == TokenType.ColumnName
+                || token.Type == TokenType.OrderBy
+                || token.Type == TokenType.GroupBy
+                || token.Type == TokenType.SearchCondition
+                || token.Type == TokenType.UpdateSetValue)
+            {
+                type = TokenSymbolNameType.SchemaTableColumn;
+
+                if (items.Length == 2)
+                {
+                    tableName = items[0].Trim();
+                    columnName = items[1].Trim();
+                }
+                else if (items.Length == 3)
+                {
+                    schema = items[0].Trim();
+                    tableName = items[1].Trim();
+                    columnName = items[2].Trim();
+                }
+            }
+            else
+            {
+                type = TokenSymbolNameType.SchemaTable;
+
+                if (items.Length == 1)
+                {
+                    tableName = items[0].Trim();
+                }
+                else if (items.Length == 2)
+                {
+                    schema = items[0].Trim();
+                    tableName = items[1].Trim();
+                }
+            }
+
+            return new TokenSymbolNameInfo() { Schema = schema, TableName = tableName, ColumnName = columnName, Type = type };
         }
 
         private bool ChangeAliasQuotationChar(NameToken token)
@@ -509,6 +578,15 @@ namespace DatabaseConverter.Core
                     token.Alias.Symbol = this.GetAppropriateAlias(token.Alias.Symbol);
 
                     return true;
+                }
+                else if(token is ColumnName)
+                {
+                    if(!token.Alias.Symbol.StartsWith(this.TargetDbInterpreter.QuotationLeftChar))
+                    {
+                        token.Alias.Symbol = this.GetNewQuotedString(token.Alias.Symbol);
+
+                        return true;
+                    }
                 }
             }
 
@@ -538,29 +616,27 @@ namespace DatabaseConverter.Core
             }
 
             string pattern = null;
+            string oldSymbolPattern = oldSymbol;
+
+            oldSymbolPattern = Regex.Escape(oldSymbolPattern);
 
             if (Regex.IsMatch(oldSymbol, RegexHelper.NameRegexPattern))
             {
-                pattern = $"\\b{oldSymbol}\\b";
+                pattern = $"\\b{oldSymbolPattern}\\b";
             }
             else
             {
                 if (oldSymbol.EndsWith(this.SourceDbInterpreter.QuotationRightChar))
                 {
-                    pattern = $"({oldSymbol})";
+                    pattern = $"({oldSymbolPattern})";
                 }
                 else
                 {
-                    pattern = $"({oldSymbol})\\b";
+                    pattern = $"({oldSymbolPattern})\\b";
                 }
             }
 
-            if (this.SourceDbInterpreter.DatabaseType == DatabaseType.SqlServer)
-            {
-                pattern = pattern.Replace("[", "\\[").Replace("]", "\\]");
-            }
-
-            string result = Regex.Replace(value, pattern, newSymbol, RegexOptions.Multiline);
+            string result = Regex.Replace(value, pattern, RegexHelper.CheckReplacement(newSymbol), RegexOptions.Multiline);
 
             if (value.Contains("@" + oldSymbol)) //restore variable name
             {
@@ -588,8 +664,25 @@ namespace DatabaseConverter.Core
                 return false;
             }
 
+            if (ValueHelper.IsStringValue(token.Symbol) && token.Children.Count == 0)
+            {
+                if (token is ColumnName && (token as ColumnName).Alias != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
             if (token.Type == TokenType.ColumnName && (token.IsConst))
             {
+                if (token is ColumnName && (token as ColumnName).Alias != null)
+                {
+                    return true;
+                }
+
                 return false;
             }
 
@@ -624,11 +717,6 @@ namespace DatabaseConverter.Core
                 return false;
             }
 
-            if (ValueHelper.IsStringValue(token.Symbol))
-            {
-                return false;
-            }
-
             return true;
         }
 
@@ -642,9 +730,55 @@ namespace DatabaseConverter.Core
                          .Replace(repeatedQuotationRightChars, this.TargetDbInterpreter.QuotationRightChar.ToString());
         }
 
-        private bool IsAlias(string symbol, IEnumerable<TokenInfo> tokens)
+        private bool IsAlias(TokenInfo token, IEnumerable<TokenInfo> tokens, TokenType tokenType, TokenSymbolNameInfo nameInfo = null)
         {
-            return tokens.Any(item => item.Type == TokenType.Alias && item.Symbol == symbol);
+            string symbol = token.Symbol;
+            bool isAlias = false;
+
+            if (nameInfo == null)
+            {
+                nameInfo = this.GetTokenSymbolNameInfo(token);
+            }
+
+            if (nameInfo != null)
+            {
+                if (tokenType == TokenType.TableAlias)
+                {
+                    isAlias = tokens.Any(item => item.Type == tokenType && item.Symbol == nameInfo.TableName);
+                }
+                else if (tokenType == TokenType.ColumnAlias)
+                {
+                    isAlias = tokens.Any(item => item.Type == tokenType && item.Symbol == nameInfo.ColumnName);
+                }
+            }           
+
+            if (isAlias && tokenType == TokenType.ColumnAlias)
+            {
+                if (token.Parent is ColumnName cn)
+                {
+                    if (cn != null && cn.Alias?.Symbol == symbol)
+                    {
+                        return false; //column alias can't be as same as its parent's alias
+                    }
+                }
+            }
+
+            return isAlias;
+        }
+
+        private bool IsQuoted(TokenInfo token)
+        {
+            if (token != null && token.Symbol?.StartsWith(this.SourceDbInterpreter.QuotationLeftChar) == true)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsQuotationCharSame()
+        {
+            return this.SourceDbInterpreter.QuotationLeftChar == this.TargetDbInterpreter.QuotationLeftChar;
         }
 
         private bool IsCopyingType(string symbol)
@@ -732,17 +866,19 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private string GetQuotedFullColumnName(string schema, string tableName, string columnName, bool isAlias = false)
+        private string GetQuotedFullColumnName(string schema, string tableName, string columnName, bool isTableNameAlias = false, bool isColumnNameAlias = false)
         {
-            string quotedTableName = isAlias ? this.GetAppropriateAlias(tableName) : this.GetNewQuotedString(tableName);
+            string quotedTableName = isTableNameAlias ? this.GetAppropriateAlias(tableName) : this.GetNewQuotedString(tableName);
+            //string quotedColumnName = isColumnNameAlias ? this.GetAppropriateAlias(columnName) : this.GetNewQuotedString(columnName);
+            string quotedColumnName = this.GetNewQuotedString(columnName);
 
             if (!string.IsNullOrEmpty(schema))
             {
-                return $"{this.GetNewQuotedString(schema)}.{quotedTableName}.{this.GetNewQuotedString(columnName)}";
+                return $"{this.GetNewQuotedString(schema)}.{quotedTableName}.{quotedColumnName}";
             }
             else
             {
-                return $"{quotedTableName}.{this.GetNewQuotedString(columnName)}";
+                return $"{quotedTableName}.{quotedColumnName}";
             }
         }
 
@@ -853,7 +989,7 @@ namespace DatabaseConverter.Core
 
         private string ReplaceValue(string source, string oldValue, string newValue)
         {
-            return this.ValidateValue(Regex.Replace(source, Regex.Escape(oldValue), newValue, RegexOptions.IgnoreCase));
+            return this.ValidateValue(RegexHelper.Replace(source, oldValue, newValue, RegexOptions.IgnoreCase | RegexOptions.Multiline));
         }
 
         private string ValidateValue(string value)
@@ -909,7 +1045,6 @@ namespace DatabaseConverter.Core
             {
                 functionTranslator.RoutineType = RoutineType.TRIGGER;
             }
-
 
             functionTranslator.Translate();
         }

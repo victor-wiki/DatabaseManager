@@ -21,7 +21,7 @@ namespace DatabaseConverter.Core
 
         public override void Translate()
         {
-
+            
         }
 
         public virtual string ParseDefinition(string definition)

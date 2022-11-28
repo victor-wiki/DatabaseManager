@@ -6,11 +6,11 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql and PostgreSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.12</Version>
+    <Version>2.0.13</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.12</AssemblyVersion>
-    <FileVersion>2.0.12</FileVersion>
-    <PackageReleaseNotes>upper case handle for sql parser; handle declare cursor collect</PackageReleaseNotes>
+    <AssemblyVersion>2.0.13</AssemblyVersion>
+    <FileVersion>2.0.13</FileVersion>
+    <PackageReleaseNotes>Distinguish table alias and column alias.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

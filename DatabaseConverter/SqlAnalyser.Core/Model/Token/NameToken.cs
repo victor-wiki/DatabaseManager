@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using System;
 using System.IO;
 
 namespace SqlAnalyser.Model
@@ -24,7 +25,16 @@ namespace SqlAnalyser.Model
             {
                 if (value != null)
                 {
-                    value.Type = TokenType.Alias;
+                    Type type = this.GetType();
+                    
+                    if(type == typeof(TableName))
+                    {
+                        value.Type = TokenType.TableAlias;
+                    }
+                    else if(type == typeof(ColumnName))
+                    {
+                        value.Type = TokenType.ColumnAlias;
+                    }                   
                 }
 
                 this.alias = value;

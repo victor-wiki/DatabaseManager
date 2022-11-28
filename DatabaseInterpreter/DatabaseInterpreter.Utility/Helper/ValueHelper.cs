@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace DatabaseInterpreter.Utility
 {
@@ -105,7 +106,36 @@ namespace DatabaseInterpreter.Utility
         {
             if (!string.IsNullOrEmpty(value))
             {
-                return value.EndsWith("\'") && (value.StartsWith("\'") || value.ToUpper().StartsWith("N\'"));
+                bool isBeginAndEndWith = value.EndsWith("\'") && (value.StartsWith("\'") || value.ToUpper().StartsWith("N\'"));
+
+                if (!isBeginAndEndWith)
+                {
+                    return false;
+                }
+                else
+                {
+                    int firstIndex = value.IndexOf("'");
+                    int lastIndex = value.LastIndexOf("'");
+
+                    string innerContent = value.Substring(firstIndex + 1, lastIndex - firstIndex - 1);
+
+                    if (innerContent.IndexOf("'") >= 0)
+                    {
+                        int count1 = innerContent.Count(item => item == '\'');
+                        int count2 = Regex.Matches(innerContent, "''").Count;
+
+                        if (count1 != count2 * 2)
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
             }
 
             return false;

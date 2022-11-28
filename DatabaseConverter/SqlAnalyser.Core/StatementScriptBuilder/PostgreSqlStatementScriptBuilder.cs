@@ -19,9 +19,9 @@ namespace SqlAnalyser.Core
                 this.BuildSelectStatement(select, appendSeparator);
             }
             else if (statement is UnionStatement union)
-            {               
+            {
                 this.AppendLine(this.GetUnionTypeName(union.Type));
-                this.Build(union.SelectStatement);            
+                this.Build(union.SelectStatement);
             }
             else if (statement is InsertStatement insert)
             {
@@ -76,7 +76,7 @@ namespace SqlAnalyser.Core
                 {
                     if (name != null)
                     {
-                        if(name.Contains("."))
+                        if (name.Contains("."))
                         {
                             name = name.Split('.').Last();
                         }
@@ -98,7 +98,21 @@ namespace SqlAnalyser.Core
 
                         if (fromItem.TableName != null)
                         {
-                            if (tn == tableNameOrAlias || talias == tableNameOrAlias)
+                            bool matched = false;
+
+                            if (alias != null)
+                            {
+                                if (talias == alias)
+                                {
+                                    matched = true;
+                                }
+                            }
+                            else if (tn == tableNameOrAlias)
+                            {
+                                matched = true;
+                            }
+
+                            if (matched)
                             {
                                 tableNames.Add(fromItem.TableName);
                                 strTableName = tn;
@@ -131,7 +145,7 @@ namespace SqlAnalyser.Core
 
                             if (tn != null)
                             {
-                                if (tn != strTableName)
+                                if (tn != strTableName || (tn == strTableName && alias != talias))
                                 {
                                     joins.Add($"{(joins.Count == 0 ? "FROM" : "")} {fromItem.TableName.NameWithAlias}{seperator}");
                                 }
@@ -326,7 +340,7 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null)
                 {
-                    if(set.Value!=null)
+                    if (set.Value != null)
                     {
                         string value = this.GetSetVariableValue(set.Key.Symbol, set.Value.Symbol);
 
@@ -344,7 +358,7 @@ namespace SqlAnalyser.Core
                         }
                         else
                         {
-                            declareCursorStatement.SelectStatement = set.ValueStatement; 
+                            declareCursorStatement.SelectStatement = set.ValueStatement;
                         }
                     }
                 }
@@ -509,7 +523,7 @@ namespace SqlAnalyser.Core
                     if (!this.DeclareStatements.Any(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == declareCursor.CursorName.Symbol))
                     {
                         this.DeclareStatements.Add(declareCursor);
-                    }                        
+                    }
                 }
             }
             else if (statement is OpenCursorStatement openCursor)
@@ -596,13 +610,13 @@ namespace SqlAnalyser.Core
 
             string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
-            if (select.NoTableName && select.Columns.Any(item => item.Symbol.Contains("=")))
+            if (select.NoTableName && select.Columns.Any(item => AnalyserHelper.IsAssignNameColumn(item)))
             {
                 foreach (var column in select.Columns)
                 {
                     string symbol = column.Symbol;
 
-                    if (this.IsIdentifierNameBeforeEqualMark(symbol))
+                    if (AnalyserHelper.IsAssignNameColumn(column))
                     {
                         string[] items = symbol.Split('=');
 

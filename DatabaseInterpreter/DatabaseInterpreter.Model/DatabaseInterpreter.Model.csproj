@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.10</Version>
-    <AssemblyVersion>1.0.10</AssemblyVersion>
-    <FileVersion>1.0.10</FileVersion>
+    <Version>1.0.11</Version>
+    <AssemblyVersion>1.0.11</AssemblyVersion>
+    <FileVersion>1.0.11</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>Add "IsString“ to class "FunctionSpecification".</PackageReleaseNotes>
+    <PackageReleaseNotes>Add classes for dependencies.</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

@@ -89,7 +89,7 @@ namespace DatabaseInterpreter.Utility
                 value = value.Substring(1, value.Length - 2);
             }
 
-            return value;                 
+            return value;
         }
 
         public static string GetBalanceParenthesisTrimedValue(string value)
@@ -118,6 +118,11 @@ namespace DatabaseInterpreter.Utility
 
         public static bool IsParenthesisBalanced(string value)
         {
+            if (string.IsNullOrEmpty(value) || (!value.Contains("(") && !value.Contains(")")))
+            {
+                return true;
+            }
+
             Dictionary<char, char> pairs = new Dictionary<char, char>() { { '(', ')' } };
 
             Stack<char> parenthesises = new Stack<char>();
@@ -156,6 +161,6 @@ namespace DatabaseInterpreter.Utility
             }
 
             return parenthesises.Count() == 0 ? true : false;
-        }       
+        }
     }
 }

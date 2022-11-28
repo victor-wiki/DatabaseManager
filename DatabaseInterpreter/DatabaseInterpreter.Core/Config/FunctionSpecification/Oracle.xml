@@ -16,7 +16,7 @@
   <item name="CEIL" args="EXP"></item>
   <item name="CHARTOROWID" args="EXP"></item>
   <item name="CHR" args="NUMBER" isString="true"></item>
-  <item name="COALESCE" args="EXP1,EXP2,..."></item>
+  <item name="COALESCE" args="EXP,DEFAULT,..."></item>
   <item name="COMPOSE" args="EXP"></item>
   <item name="CONCAT" args="EXP1,EXP2,..."></item>
   <!--<item name="CONVERT" args="EXP,NEW[,OLD]"></item>-->

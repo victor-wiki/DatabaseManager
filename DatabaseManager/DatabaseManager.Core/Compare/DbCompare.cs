@@ -244,6 +244,7 @@ namespace DatabaseManager.Core
             config.CaseSensitive = false;
             config.IgnoreStringLeadingTrailingWhitespace = true;
             config.TreatStringEmptyAndNullTheSame = true;
+            config.CustomComparers.Add(new TableColumnComparer(RootComparerFactory.GetRootComparer()));
 
             CompareLogic compareLogic = new CompareLogic(config);
 

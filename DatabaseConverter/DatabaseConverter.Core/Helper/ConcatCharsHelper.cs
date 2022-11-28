@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime.Dfa;
+﻿using Antlr4.Runtime.Atn;
+using Antlr4.Runtime.Dfa;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
@@ -12,7 +13,6 @@ using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 namespace DatabaseConverter.Core
 {
@@ -23,12 +23,14 @@ namespace DatabaseConverter.Core
         public static string ConvertConcatChars(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string symbol, IEnumerable<string> charItems = null)
         {
             string sourceConcatChars = sourceDbInterpreter.STR_CONCAT_CHARS;
+            string targetConcatChars = targetDbInterpreter.STR_CONCAT_CHARS;
 
             if (!symbol.Contains(sourceConcatChars))
             {
                 return symbol;
             }
 
+            var quotationChars = TranslateHelper.GetTrimChars(sourceDbInterpreter, targetDbInterpreter).ToArray();
             bool hasParenthesis = symbol.Trim().StartsWith("(");
 
             DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
@@ -60,6 +62,98 @@ namespace DatabaseConverter.Core
 
             if (StringHelper.IsParenthesisBalanced(result))
             {
+                if (result.Contains(sourceConcatChars)) //check the final result
+                {
+                    sb.Clear();
+
+                    if (!string.IsNullOrEmpty(targetConcatChars))
+                    {
+                        var symbolItems = SplitByConcatChars(StringHelper.GetBalanceParenthesisTrimedValue(result), sourceConcatChars);
+
+                        for (int i = 0; i < symbolItems.Count; i++)
+                        {
+                            string content = symbolItems[i].Content;
+
+                            sb.Append(content);
+
+                            if (i < symbolItems.Count - 1)
+                            {
+                                string nextContent = (i + 1 <= symbolItems.Count - 1) ? symbolItems[i + 1].Content : null;
+
+                                bool currentContentIsMatched = IsStringValueMatched(content, targetDbType, quotationChars, charItems);
+
+                                bool nextContentIsMatched = nextContent != null && IsStringValueMatched(nextContent, targetDbType, quotationChars, charItems);
+
+                                if (currentContentIsMatched || nextContentIsMatched)
+                                {
+                                    sb.Append(targetConcatChars);
+                                }
+                                else
+                                {
+                                    sb.Append(sourceConcatChars);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool isAssignClause = TranslateHelper.IsAssignClause(result, quotationChars);
+                        string strAssign = "";
+                        string parseContent = result;
+
+                        if (isAssignClause)
+                        {
+                            int equalMarkIndex = result.IndexOf("=");
+
+                            strAssign = result.Substring(0, equalMarkIndex + 1);
+                            parseContent = result.Substring(equalMarkIndex + 1); 
+                        }
+
+                        var symbolItems = SplitByConcatChars(StringHelper.GetBalanceParenthesisTrimedValue(parseContent), sourceConcatChars);
+
+                        bool hasStringValue = false;
+
+                        for (int i = 0; i < symbolItems.Count; i++)
+                        {
+                            string content = symbolItems[i].Content;
+
+                            bool isMatched = IsStringValueMatched(content, targetDbType, quotationChars, charItems);
+
+                            if (isMatched)
+                            {
+                                hasStringValue = true;
+                            }
+                            else
+                            {
+                                string upperContent = content.Trim('(', ')').Trim().ToUpper();
+
+                                if (upperContent.StartsWith("CASE") && upperContent.EndsWith("END"))
+                                {
+                                    var subItems = SplitByConcatChars(upperContent, " ");
+
+                                    hasStringValue = subItems.Any(item => IsStringValueMatched(item.Content, targetDbType, quotationChars, charItems));
+                                }
+                            }
+
+                            if (hasStringValue)
+                            {
+                                break;
+                            }
+                        }
+
+                        if (hasStringValue)
+                        {
+                            sb.Append($"{strAssign}CONCAT({string.Join(",", symbolItems.Select(item => item.Content))})");
+                        }
+                        else
+                        {
+                            sb.Append(result);
+                        }
+                    }
+
+                    result = sb.ToString();
+                }
+
                 return GetOriginalValue(result, hasParenthesis);
             }
 
@@ -78,7 +172,7 @@ namespace DatabaseConverter.Core
                 {
                     return $"({value})";
                 }
-            }          
+            }
 
             return value;
         }
@@ -130,6 +224,11 @@ namespace DatabaseConverter.Core
 
                     var spec = FunctionManager.GetFunctionSpecifications(targetDbType).FirstOrDefault(item => item.Name.ToUpper() == functionName.Trim().ToUpper());
 
+                    if (spec == null) //if no target function specification, use the source instead.
+                    {
+                        spec = FunctionManager.GetFunctionSpecifications(sourceDbType).FirstOrDefault(item => item.Name.ToUpper() == functionName.Trim().ToUpper());
+                    }
+
                     if (spec != null)
                     {
                         var formular = new FunctionFormula(content);
@@ -174,9 +273,7 @@ namespace DatabaseConverter.Core
 
             Func<string, bool> isMatched = (value) =>
             {
-                return ValueHelper.IsStringValue(value.Trim('(',')'))
-                    || IsStringFunction(targetDbType, value)
-                    || (charItems != null && charItems.Any(c => c.Trim(quotationChars) == value.Trim(quotationChars)));
+                return IsStringValueMatched(value, targetDbType, quotationChars, charItems);
             };
 
             bool hasStringValue = symbolItems.Any(item => isMatched(item.Content.Trim()));
@@ -238,6 +335,18 @@ namespace DatabaseConverter.Core
                 }
             }
 
+            if (symbol.Trim().EndsWith(sourceConcatChars))
+            {
+                if (!string.IsNullOrEmpty(targetConcatChars))
+                {
+                    sb.Append(targetConcatChars);
+                }
+                else
+                {
+                    sb.Append(sourceConcatChars);
+                }
+            }
+
             string result = sb.ToString().Trim();
 
             if (result.Length > 0 && StringHelper.IsParenthesisBalanced(result))
@@ -246,6 +355,13 @@ namespace DatabaseConverter.Core
             }
 
             return symbol;
+        }
+
+        private static bool IsStringValueMatched(string value, DatabaseType targetDbType, char[] quotationChars, IEnumerable<string> charItems = null)
+        {
+            return ValueHelper.IsStringValue(value.Trim('(', ')'))
+                   || IsStringFunction(targetDbType, value)
+                   || (charItems != null && charItems.Any(c => c.Trim(quotationChars) == value.Trim(quotationChars)));
         }
 
         private static List<TokenSymbolItemInfo> SplitByKeywords(string value)
@@ -275,6 +391,13 @@ namespace DatabaseConverter.Core
                 if (match.Index > 0)
                 {
                     if ("@" + match.Value == value.Substring(match.Index - 1, match.Length + 1))
+                    {
+                        continue;
+                    }
+
+                    int singleQuotationCharCount = value.Substring(0, match.Index).Count(item => item == '\'');
+
+                    if (singleQuotationCharCount % 2 != 0)
                     {
                         continue;
                     }
@@ -401,7 +524,6 @@ namespace DatabaseConverter.Core
 
             return false;
         }
-
 
         private static List<TokenSymbolItemInfo> SplitByConcatChars(string value, string concatChars)
         {

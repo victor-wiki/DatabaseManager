@@ -5,11 +5,14 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.17</Version>
-    <PackageReleaseNotes>Add: ScriptValidator</PackageReleaseNotes>
+    <Version>2.0.18</Version>
+    <PackageReleaseNotes>1. add
+(1) script diagnose for sqlserver and mysql
+(2) generate script for: select view, select function, execute procedure
+2. optimize: use SqlAnalyser to limit query count instead of regex</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.17</AssemblyVersion>
-    <FileVersion>2.0.17</FileVersion>
+    <AssemblyVersion>2.0.18</AssemblyVersion>
+    <FileVersion>2.0.18</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -71,7 +74,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CompareNETObjects" Version="4.66.0" />
+    <PackageReference Include="CompareNETObjects" Version="4.78.0" />
     <PackageReference Include="Humanizer.Core" Version="2.7.9" />
     <PackageReference Include="SharpZipLib.NETStandard" Version="1.0.7" />
   </ItemGroup>
@@ -80,12 +83,6 @@
     <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Model\TableDesigner\TableDesignerGenerateScriptsData.cs">
-      <SubType>Form</SubType>
-    </Compile>
   </ItemGroup>
 
 </Project>

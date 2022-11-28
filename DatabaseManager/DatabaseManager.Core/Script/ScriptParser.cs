@@ -1,4 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +12,9 @@ namespace DatabaseManager.Core
     public class ScriptParser
     {
         private readonly string selectPattern = "SELECT(.[\n]?)+(FROM)?";
-        private readonly string dmlPattern = "(CREATE|ALTER|INSERT|UPDATE|DELETE|TRUNCATE|INTO)";
-        private readonly string createAlterScriptPattern = "(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)";
-        private readonly string routinePattern = "(BEGIN|END|DECLARE|SET|GOTO)";
+        private readonly string dmlPattern = @"\b(CREATE|ALTER|INSERT|UPDATE|DELETE|TRUNCATE|INTO)\b";
+        private readonly string createAlterScriptPattern = @"\b(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)\b";
+        private readonly string routinePattern = @"\b(BEGIN|END|DECLARE|SET|GOTO)\b";
         private DbInterpreter dbInterpreter;
         private string originalScript;
         private string cleanScript;
@@ -112,6 +114,42 @@ namespace DatabaseManager.Core
             }
 
             return ScriptType.Other;
+        }
+
+        public static ScriptContentInfo GetContentInfo(string script, string lineSeperator, string commentString)
+        {
+            int lineSeperatorLength = lineSeperator.Length;
+
+            ScriptContentInfo info = new ScriptContentInfo();
+
+            string[] lines = script.Split(lineSeperator);
+
+            int count = 0;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                TextLineInfo lineInfo = new TextLineInfo() { Index = i, FirstCharIndex = count };
+
+                if (lines[i].Trim().StartsWith(commentString) || lines[i].Trim().StartsWith("**"))
+                {
+                    lineInfo.Type = TextLineType.Comment;
+                }
+
+                if (i < lines.Length - 1)
+                {
+                    lineInfo.Length = lines[i].Length + lineSeperatorLength;
+                }
+                else
+                {
+                    lineInfo.Length = script.EndsWith(lineSeperator) ? lines[i].Length + lineSeperatorLength : lines[i].Length;
+                }
+
+                count += lines[i].Length + lineSeperatorLength;
+
+                info.Lines.Add(lineInfo);
+            }
+
+            return info;
         }
     }
 

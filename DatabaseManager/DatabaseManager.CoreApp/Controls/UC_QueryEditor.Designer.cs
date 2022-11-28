@@ -38,6 +38,7 @@
             this.tsmiDisableIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiUpdateIntellisense = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiValidateScripts = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiFindText = new System.Windows.Forms.ToolStripMenuItem();
             this.lvWords = new System.Windows.Forms.ListView();
             this.Icon = new System.Windows.Forms.ColumnHeader();
             this.Word = new System.Windows.Forms.ColumnHeader();
@@ -75,9 +76,10 @@
             this.tsmiPaste,
             this.tsmiDisableIntellisense,
             this.tsmiUpdateIntellisense,
-            this.tsmiValidateScripts});
+            this.tsmiValidateScripts,
+            this.tsmiFindText});
             this.editorContexMenu.Name = "contextMenuStrip1";
-            this.editorContexMenu.Size = new System.Drawing.Size(188, 136);
+            this.editorContexMenu.Size = new System.Drawing.Size(188, 180);
             this.editorContexMenu.Opening += new System.ComponentModel.CancelEventHandler(this.editorContexMenu_Opening);
             // 
             // tsmiSelectAll
@@ -122,6 +124,13 @@
             this.tsmiValidateScripts.Text = "Validate Scripts";
             this.tsmiValidateScripts.ToolTipText = "Validate Syntax";
             this.tsmiValidateScripts.Click += new System.EventHandler(this.tsmiValidateScripts_Click);
+            // 
+            // tsmiFindText
+            // 
+            this.tsmiFindText.Name = "tsmiFindText";
+            this.tsmiFindText.Size = new System.Drawing.Size(187, 22);
+            this.tsmiFindText.Text = "Find Text";
+            this.tsmiFindText.Click += new System.EventHandler(this.tsmiFindText_Click);
             // 
             // lvWords
             // 
@@ -226,5 +235,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiUpdateIntellisense;
         private System.Windows.Forms.ToolStripMenuItem tsmiSelectAll;
         private System.Windows.Forms.ToolStripMenuItem tsmiValidateScripts;
+        private System.Windows.Forms.ToolStripMenuItem tsmiFindText;
     }
 }

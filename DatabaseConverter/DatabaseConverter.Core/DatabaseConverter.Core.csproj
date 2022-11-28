@@ -7,11 +7,12 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.0.22</Version>
+    <Version>2.0.23</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.22</AssemblyVersion>
-    <FileVersion>2.0.22</FileVersion>
-    <PackageReleaseNotes>fix bug: null check for concat char</PackageReleaseNotes>
+    <AssemblyVersion>2.0.23</AssemblyVersion>
+    <FileVersion>2.0.23</FileVersion>
+    <PackageReleaseNotes>1. enhance: concat char convert
+2. handle column alias token for script</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,15 +8,17 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.19</Version>
+    <Version>2.0.20</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add
-(1) validate scripts after translated
-(2) copy children names of  tree node
-2. rearrange form files</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add 
+(1) find text box: tree view; database compare result list
+(2) view data for "View" and display columns of "View" in tree
+(3) generate script for: select view, select function, execute procedure
+2. optimize: database compare: only show records that are different
+</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.19</AssemblyVersion>
-    <FileVersion>2.0.19</FileVersion>
+    <AssemblyVersion>2.0.20</AssemblyVersion>
+    <FileVersion>2.0.20</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
@@ -209,11 +211,11 @@
     <Compile Update="Forms\frmDiagnose.Designer.cs">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmDiagnoseResult.cs">
+    <Compile Update="Forms\frmTableDiagnoseResult.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmDiagnoseResult.Designer.cs">
-      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    <Compile Update="Forms\frmTableDiagnoseResult.Designer.cs">
+      <DependentUpon>frmTableDiagnoseResult.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmGenerateScripts.cs">
       <SubType>Form</SubType>
@@ -343,8 +345,8 @@
     <EmbeddedResource Update="Forms\frmDiagnose.resx">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmDiagnoseResult.resx">
-      <DependentUpon>frmDiagnoseResult.cs</DependentUpon>
+    <EmbeddedResource Update="Forms\frmTableDiagnoseResult.resx">
+      <DependentUpon>frmTableDiagnoseResult.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmGenerateScripts.resx">
       <DependentUpon>frmGenerateScripts.cs</DependentUpon>

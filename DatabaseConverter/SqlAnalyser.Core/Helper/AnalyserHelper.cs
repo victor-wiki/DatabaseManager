@@ -1,17 +1,19 @@
 ﻿using Antlr4.Runtime;
 using DatabaseInterpreter.Utility;
-using Newtonsoft.Json.Linq;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
     public class AnalyserHelper
     {
+        public static char[] QuotationChars = { '[', ']', '"', '`' };
+        public static char[] TrimChars = { '@', '[', ']', '"', '`', ':' };
+
         public static bool HasWord(string value, string word)
         {
             return Regex.IsMatch(value, $"({word})", RegexOptions.IgnoreCase);
@@ -103,6 +105,58 @@ namespace SqlAnalyser.Core
             }
 
             return false;
+        }
+
+        public static bool IsAssignNameColumn(ColumnName column)
+        {
+            string symbol = column.Symbol;
+
+            if(symbol.Contains("="))
+            {
+                string[] items = symbol.Split("=");
+
+                string assignName = items[0].Trim(TrimChars).Trim();
+
+                if(Regex.IsMatch(assignName, RegexHelper.NameRegexPattern))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }       
+
+        public static bool IsValidColumnName(TokenInfo token)
+        {
+            string symbol = token.Symbol;
+
+            if(string.IsNullOrEmpty(symbol))
+            {
+                return false;
+            }
+
+            string[] items = symbol.Split('.');
+
+            return items.All(item=> IsValidName(item));
+        }
+
+        public static bool IsValidName(string name)
+        {
+            string trimedName = name.Trim(TrimChars).Trim();
+
+            if(trimedName.Contains(" ") && IsNameQuoted(name.Trim()))
+            {
+                return true;
+            }
+            else
+            {
+                return Regex.IsMatch(trimedName, RegexHelper.NameRegexPattern);
+            }
+        }
+
+        public static bool IsNameQuoted(string name)
+        {
+            return QuotationChars.Any(item=> name.StartsWith(item) && name.EndsWith(item));
         }
     }
 }

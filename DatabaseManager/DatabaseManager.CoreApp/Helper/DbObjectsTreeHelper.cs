@@ -84,7 +84,7 @@ namespace DatabaseManager.Helper
             return node;
         }
 
-        public static TreeNode AddDbObjectNodes<T>(this TreeNode treeNode, List<T> dbObjects)
+        public static TreeNode AddDbObjectNodes<T>(this TreeNode treeNode, IEnumerable<T> dbObjects)
          where T : DatabaseObject
         {
             treeNode.Nodes.AddRange(CreateDbObjectNodes(dbObjects).ToArray());
@@ -92,7 +92,7 @@ namespace DatabaseManager.Helper
             return treeNode;
         }
 
-        public static TreeNode AddDbObjectFolderNode<T>(this TreeNode treeNode, List<T> dbObjects)
+        public static TreeNode AddDbObjectFolderNode<T>(this TreeNode treeNode, IEnumerable<T> dbObjects)
            where T : DatabaseObject
         {
             string folderName = GetFolderNameByDbObjectType(typeof(T));
@@ -122,10 +122,10 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static TreeNode CreateFolderNode<T>(string name, string text, List<T> dbObjects)
+        public static TreeNode CreateFolderNode<T>(string name, string text, IEnumerable<T> dbObjects)
            where T : DatabaseObject
         {
-            if (dbObjects.Count > 0)
+            if (dbObjects.Count() > 0)
             {
                 var node = CreateFolderNode(name, text);
 
@@ -149,8 +149,19 @@ namespace DatabaseManager.Helper
             foreach (var dbObj in dbObjects)
             {
                 string text = (alwaysShowSchema || !isUniqueDbSchema) ? $"{dbObj.Schema}.{dbObj.Name}" : dbObj.Name;
-                TreeNode node = CreateTreeNode(dbObj.Name, text, dbObj.GetType().Name);
-                node.Tag = dbObj;
+
+                string imgKeyName = typeof(T).Name;              
+
+                if (dbObj is Function func)
+                {
+                    if (func.IsTriggerFunction)
+                    {
+                        imgKeyName = $"{imgKeyName}_Trigger";
+                    }
+                }
+
+                TreeNode node = CreateTreeNode(dbObj.Name, text, imgKeyName);               
+                node.Tag = dbObj;                
 
                 yield return node;
             }

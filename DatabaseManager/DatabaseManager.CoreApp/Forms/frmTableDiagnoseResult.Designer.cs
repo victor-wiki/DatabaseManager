@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmDiagnoseResult
+    partial class frmTableDiagnoseResult
     {
         /// <summary>
         /// Required designer variable.
@@ -32,7 +32,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDiagnoseResult));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTableDiagnoseResult));
             this.dgvResult = new System.Windows.Forms.DataGridView();
             this.colTableName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colObjectType = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -184,7 +184,7 @@
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
-            // frmDiagnoseResult
+            // frmTableDiagnoseResult
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -194,9 +194,9 @@
             this.Controls.Add(this.dgvResult);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "frmDiagnoseResult";
+            this.Name = "frmTableDiagnoseResult";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database Diagnose Result";
+            this.Text = "Table Diagnose Result";
             this.Load += new System.EventHandler(this.frmDiagnoseResult_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);

@@ -259,5 +259,41 @@ namespace DatabaseConverter.Core
         {
             return databaseTypes.Count == 0 ||  databaseTypes.Any(item => item == databaseType.ToString());
         }
+
+        public static bool IsValidName(string name, char[] trimChars)
+        {
+            string trimedName = name.Trim().Trim(trimChars).Trim();
+
+            if (trimedName.Contains(" ") && IsNameQuoted(name.Trim(), trimChars))
+            {
+                return true;
+            }
+            else
+            {
+                return Regex.IsMatch(trimedName, RegexHelper.NameRegexPattern);
+            }
+        }
+
+        public static bool IsNameQuoted(string name, char[] trimChars)
+        {
+            return trimChars.Any(item => name.StartsWith(item) && name.EndsWith(item));
+        }
+
+        public static bool IsAssignClause(string value, char[] trimChars)
+        {
+            if (value.Contains("="))
+            {
+                string[] items = value.Split("=");
+
+                string assignName = items[0].Trim(trimChars).Trim();
+
+                if (Regex.IsMatch(assignName, RegexHelper.NameRegexPattern))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

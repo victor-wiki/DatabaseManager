@@ -10,7 +10,8 @@
 
 namespace DatabaseManager {
     using System;
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -30,7 +31,7 @@ namespace DatabaseManager {
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -44,7 +45,7 @@ namespace DatabaseManager {
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -175,6 +176,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Icon _polygon {
             get {
                 object obj = ResourceManager.GetObject("_polygon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon _search {
+            get {
+                object obj = ResourceManager.GetObject("_search", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
             }
         }
@@ -615,6 +626,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap tree_Function {
             get {
                 object obj = ResourceManager.GetObject("tree_Function", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap tree_Function_Trigger {
+            get {
+                object obj = ResourceManager.GetObject("tree_Function_Trigger", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

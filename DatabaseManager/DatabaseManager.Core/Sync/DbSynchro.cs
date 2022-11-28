@@ -15,7 +15,7 @@ namespace DatabaseManager.Core
     {
         private IObserver<FeedbackInfo> observer;
         private DbInterpreter sourceInterpreter;
-        private DbInterpreter targetInterpreter;     
+        private DbInterpreter targetInterpreter;
         private DbScriptGenerator targetScriptGenerator;
         private TableManager tableManager;
 
@@ -68,7 +68,7 @@ namespace DatabaseManager.Core
         public async Task<List<Script>> GenerateChangedScripts(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<DbDifference> differences)
         {
             List<Script> scripts = new List<Script>();
-            List<Script> tableScripts = new List<Script>();           
+            List<Script> tableScripts = new List<Script>();
 
             foreach (DbDifference difference in differences)
             {
@@ -101,7 +101,7 @@ namespace DatabaseManager.Core
         {
             List<Script> scripts = new List<Script>();
 
-            DbDifferenceType diffType = difference.DifferenceType;           
+            DbDifferenceType diffType = difference.DifferenceType;
 
             ScriptDbObject sourceScriptDbObject = difference.Source as ScriptDbObject;
             ScriptDbObject targetScriptDbObject = difference.Target as ScriptDbObject;
@@ -241,14 +241,22 @@ namespace DatabaseManager.Core
             }
             else if (diffType == DbDifferenceType.Modified)
             {
-                if(difference.DatabaseObjectType == DatabaseObjectType.Column)
+                if (difference.DatabaseObjectType == DatabaseObjectType.Column)
                 {
                     SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = source.Schema, TableNames = new string[] { source.TableName } };
                     List<TableDefaultValueConstraint> defaultValueConstraints = await this.tableManager.GetTableDefaultConstraints(filter);
 
                     Table table = new Table() { Schema = targetTable.Schema, Name = target.TableName };
 
-                    scripts.AddRange(this.tableManager.GetColumnAlterScripts(table, table, target as TableColumn, source as TableColumn, defaultValueConstraints));
+                    TableColumn sourceColumn = source as TableColumn;
+                    TableColumn targetColumn = target as TableColumn;
+
+                    if (tableManager.IsNameChanged(sourceColumn.Name, targetColumn.Name))
+                    {
+                        scripts.Add(this.tableManager.GetColumnRenameScript(table, sourceColumn, targetColumn));
+                    }
+
+                    scripts.AddRange(this.tableManager.GetColumnAlterScripts(table, table, targetColumn, sourceColumn, defaultValueConstraints));
                 }
                 else
                 {
@@ -274,13 +282,13 @@ namespace DatabaseManager.Core
             }
 
             return scripts;
-        }    
+        }
 
         private DatabaseObject CloneTableChild(DatabaseObject tableChild, DatabaseObjectType databaseObjectType, string targetSchema)
         {
             if (databaseObjectType == DatabaseObjectType.PrimaryKey)
             {
-                return this.CloneDbObject(tableChild as TablePrimaryKey, targetSchema);                
+                return this.CloneDbObject(tableChild as TablePrimaryKey, targetSchema);
             }
             else if (databaseObjectType == DatabaseObjectType.ForeignKey)
             {
@@ -297,10 +305,10 @@ namespace DatabaseManager.Core
 
             return tableChild;
         }
-        
-        private T CloneDbObject<T>(T dbObject, string owner) where T:DatabaseObject
+
+        private T CloneDbObject<T>(T dbObject, string owner) where T : DatabaseObject
         {
-            if(dbObject == null)
+            if (dbObject == null)
             {
                 return null;
             }

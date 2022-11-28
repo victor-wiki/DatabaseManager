@@ -11,6 +11,7 @@ using DatabaseManager.Model;
 using DatabaseManager.Core;
 using DatabaseInterpreter.Utility;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Forms;
 
 namespace DatabaseManager
 {
@@ -18,6 +19,7 @@ namespace DatabaseManager
     {
         public DatabaseType DatabaseType { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
+        public string Schema { get; set; }
 
         DbManager dbManager = null;
 
@@ -38,6 +40,11 @@ namespace DatabaseManager
                 this.rbNotNullWithEmpty.Enabled = false;
                 this.rbSelfReferenceSame.Checked = true;
             }
+
+            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
+            {
+                this.tabControl.TabPages.Remove(this.tabForScript);
+            }
         }
 
         public void Init(IObserver<FeedbackInfo> observer)
@@ -49,41 +56,108 @@ namespace DatabaseManager
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            this.Diagnose();
+            string tabPageName = this.tabControl.SelectedTab.Name;
+
+            if (tabPageName == this.tabForTable.Name)
+            {
+                this.DiagnoseTable();
+            }
+            else if (tabPageName == this.tabForScript.Name)
+            {
+                this.DiagnoseScript();
+            }
         }
 
-        private async void Diagnose()
+        private async void DiagnoseTable()
         {
-            DiagnoseType diagnoseType = DiagnoseType.None;
-            
-            if(this.rbNotNullWithEmpty.Checked)
+            TableDiagnoseType diagnoseType = TableDiagnoseType.None;
+
+            if (this.rbNotNullWithEmpty.Checked)
             {
-                diagnoseType = DiagnoseType.NotNullWithEmpty;
+                diagnoseType = TableDiagnoseType.NotNullWithEmpty;
             }
-            else if(this.rbWithLeadingOrTrailingWhitespace.Checked)
+            else if (this.rbWithLeadingOrTrailingWhitespace.Checked)
             {
-                diagnoseType = DiagnoseType.WithLeadingOrTrailingWhitespace;
+                diagnoseType = TableDiagnoseType.WithLeadingOrTrailingWhitespace;
             }
-            else if(this.rbSelfReferenceSame.Checked)
+            else if (this.rbSelfReferenceSame.Checked)
             {
-                diagnoseType = DiagnoseType.SelfReferenceSame;
-            }         
+                diagnoseType = TableDiagnoseType.SelfReferenceSame;
+            }
+
+            if (diagnoseType == TableDiagnoseType.None)
+            {
+                MessageBox.Show("Please select a type for table diagnose.");
+                return;
+            }
 
             try
             {
                 this.btnStart.Enabled = false;
 
-                DiagnoseResult result = await dbManager.Diagnose(this.DatabaseType, this.ConnectionInfo, diagnoseType);
+                TableDiagnoseResult result = await dbManager.DiagnoseTable(this.DatabaseType, this.ConnectionInfo, this.Schema, diagnoseType);
 
                 if (result.Details.Count > 0)
                 {
-                    frmDiagnoseResult frmResult = new frmDiagnoseResult()
+                    frmTableDiagnoseResult frmResult = new frmTableDiagnoseResult()
                     {
                         DatabaseType = this.DatabaseType,
                         ConnectionInfo = this.ConnectionInfo
                     };
 
                     frmResult.LoadResult(result);
+                    frmResult.ShowDialog();
+                }
+                else
+                {
+                    MessageBox.Show("Diagnosis finished, no invalid data found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.btnStart.Enabled = true;
+            }
+        }
+
+        private async void DiagnoseScript()
+        {
+            ScriptDiagnoseType diagnoseType = ScriptDiagnoseType.None;
+
+            if(this.rbViewColumnAliasWithoutQuotationChar.Checked)
+            {
+                diagnoseType = ScriptDiagnoseType.ViewColumnAliasWithoutQuotationChar;
+            }
+            else if (this.rbNameNotMatchForScript.Checked)
+            {
+                diagnoseType = ScriptDiagnoseType.NameNotMatch;
+            }
+
+            if (diagnoseType == ScriptDiagnoseType.None)
+            {
+                MessageBox.Show("Please select a type for script diagnose.");
+                return;
+            }
+
+            try
+            {
+                this.btnStart.Enabled = false;
+
+                List<ScriptDiagnoseResult> results = await dbManager.DiagnoseScript(this.DatabaseType, this.ConnectionInfo, this.Schema, diagnoseType);
+
+                if (results.Count > 0)
+                {
+                    frmScriptDiagnoseResult frmResult = new frmScriptDiagnoseResult()
+                    {
+                        DatabaseType = this.DatabaseType,
+                        ConnectionInfo = this.ConnectionInfo,
+                        DiagnoseType = diagnoseType
+                    };
+
+                    frmResult.LoadResults(results);
                     frmResult.ShowDialog();
                 }
                 else

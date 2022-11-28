@@ -8,8 +8,10 @@ using NpgsqlTypes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using PgGeom = NetTopologySuite.Geometries;
@@ -139,39 +141,7 @@ namespace DatabaseInterpreter.Core
 
             return sb.Content;
         }
-        #endregion
-
-        #region Function       
-
-        public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
-        {
-            return base.GetDbObjectsAsync<Function>(this.GetSqlForFunctions(filter));
-        }
-
-        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
-        {
-            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForFunctions(filter));
-        }
-
-        private string GetSqlForFunctions(SchemaInfoFilter filter = null)
-        {
-            bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            var sb = this.CreateSqlBuilder();
-
-            sb.Append($@"SELECT o.name AS [Name], schema_name(o.schema_id) AS [Schema], 
-                           {(isSimpleMode ? "''" : "OBJECT_DEFINITION(o.object_id)")} AS [Definition]
-                           FROM sys.all_objects o 
-                           WHERE o.type IN ('FN', 'IF', 'AF', 'FS', 'FT','TF')
-                           AND SCHEMA_NAME(schema_id) NOT IN('sys') AND o.name NOT IN('fn_diagramobjects')");
-
-            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(o.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.FunctionNames, "o.name"));
-
-            sb.Append("ORDER BY o.name");
-
-            return sb.Content;
-        }
-        #endregion
+        #endregion      
 
         #region Table      
 
@@ -231,12 +201,15 @@ namespace DatabaseInterpreter.Core
         {
             //Note: MaxLength consider char/nvarchar, ie. it's nvarchar(50), the max length is 100.
 
+            bool isForView = this.IsForViewColumnFilter(filter);
+
+            string tableAlias = !isForView ? "t" : "v";
+            string joinTable = !isForView ? "JOIN sys.tables t ON c.object_id=t.object_id" : "JOIN sys.views v ON c.object_id=v.object_id";
+
             var sb = this.CreateSqlBuilder();
 
-            if (this.IsObjectFectchSimpleMode())
-            {
-                sb.Append(@"SELECT schema_name(t.schema_id) AS [Schema], 
-                            t.name AS [TableName],
+            string simpleColumns = $@"schema_name({tableAlias}.schema_id) AS [Schema], 
+                            {tableAlias}.name AS [TableName],
                             c.name AS [Name], 
                             st.name AS [DataType],
                             c.is_nullable AS [IsNullable],
@@ -244,44 +217,43 @@ namespace DatabaseInterpreter.Core
                             c.precision AS [Precision],
                             c.column_id as [Order], 
                             c.scale AS [Scale],                           
-                            c.is_identity AS [IsIdentity]                       
-                        FROM sys.columns c 
-                        JOIN sys.systypes st ON c.user_type_id = st.xusertype
-                        JOIN sys.tables t ON c.object_id=t.object_id");
+                            c.is_identity AS [IsIdentity]";
+
+            string detailsColumns = @"sco.text As [DefaultValue], 
+                            ext.value AS [Comment],                           
+                            sty.is_user_defined AS [IsUserDefined],
+                            schema_name(sty.schema_id) AS [DataTypeSchema],                           
+                            cc.definition as [ComputeExp]";
+
+            if (this.IsObjectFectchSimpleMode())
+            {
+                sb.Append($@"SELECT {simpleColumns}                  
+                            FROM sys.columns c 
+                            JOIN sys.systypes st ON c.user_type_id = st.xusertype
+                            {joinTable}");
             }
             else
             {
-                sb.Append(@"SELECT schema_name(t.schema_id) AS [Schema], 
-                            t.name AS [TableName],
-                            c.name AS [Name], 
-                            st.name AS [DataType],
-                            c.is_nullable AS [IsNullable],
-                            c.max_length AS [MaxLength], 
-                            c.precision AS [Precision],
-                            c.column_id as [Order], 
-                            c.scale AS [Scale],
-                            sco.text As [DefaultValue], 
-                            ext.value AS [Comment],
-                            c.is_identity AS [IsIdentity],
-                            sty.is_user_defined AS [IsUserDefined],
-                            schema_name(sty.schema_id) AS [DataTypeSchema],                           
-                            cc.definition as [ComputeExp]
-                        FROM sys.columns c 
-                        JOIN sys.systypes st ON c.user_type_id = st.xusertype
-                        JOIN sys.tables t ON c.object_id=t.object_id
-                        LEFT JOIN sys.syscomments sco ON c.default_object_id=sco.id
-                        LEFT JOIN sys.extended_properties ext on c.column_id=ext.minor_id AND c.object_id=ext.major_id AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'
-						LEFT JOIN sys.types sty on c.user_type_id = sty.user_type_id
-                        LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id");
+                sb.Append($@"SELECT {simpleColumns},
+                           {detailsColumns}
+                            FROM sys.columns c 
+                            JOIN sys.systypes st ON c.user_type_id = st.xusertype
+                            {joinTable}
+                            LEFT JOIN sys.syscomments sco ON c.default_object_id=sco.id
+                            LEFT JOIN sys.extended_properties ext on c.column_id=ext.minor_id AND c.object_id=ext.major_id AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'
+						    LEFT JOIN sys.types sty on c.user_type_id = sty.user_type_id
+                            LEFT JOIN sys.computed_columns cc on cc.object_id=c.object_id AND c.column_id= cc.column_id");
             }
 
             sb.Append("WHERE 1=1");
-            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
+            sb.Append(this.GetFilterSchemaCondition(filter, $"schema_name({tableAlias}.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, $"{tableAlias}.name"));
+
+            sb.Append($"ORDER BY {tableAlias}.name, c.column_id");
 
             return sb.Content;
         }
-        #endregion
+        #endregion        
 
         #region Table Primary Key      
 
@@ -507,35 +479,53 @@ namespace DatabaseInterpreter.Core
 
             return sb.Content;
         }
-        #endregion       
+        #endregion
+
+        #region Function
+        public override Task<List<Function>> GetFunctionsAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Function>(this.GetSqlForRoutines(DatabaseObjectType.Function, filter));
+        }
+
+        public override Task<List<Function>> GetFunctionsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<Function>(dbConnection, this.GetSqlForRoutines(DatabaseObjectType.Function, filter));
+        }
+        #endregion
 
         #region Procedure       
 
         public override Task<List<Procedure>> GetProceduresAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForProcedures(filter));
+            return base.GetDbObjectsAsync<Procedure>(this.GetSqlForRoutines(DatabaseObjectType.Procedure, filter));
         }
 
         public override Task<List<Procedure>> GetProceduresAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForProcedures(filter));
+            return base.GetDbObjectsAsync<Procedure>(dbConnection, this.GetSqlForRoutines(DatabaseObjectType.Procedure, filter));
         }
 
-        private string GetSqlForProcedures(SchemaInfoFilter filter = null)
+        private string GetSqlForRoutines(DatabaseObjectType databaseObjectType, SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
+            bool isFunction = databaseObjectType == DatabaseObjectType.Function;
+            string[] routineNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
+            string routineType = isFunction ? "FUNCTION" : "PROCEDURE";
+
+            string definition = isSimpleMode ? "" : ", OBJECT_DEFINITION(OBJECT_ID(r.ROUTINE_SCHEMA+'.'+r.ROUTINE_NAME)) AS [Definition]";
 
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT name AS [Name], SCHEMA_NAME(schema_id) AS [Schema], 
-                            {(isSimpleMode ? "''" : "OBJECT_DEFINITION(object_id)")} AS [Definition]
-                            FROM sys.procedures
-                            WHERE name not like 'sp[_]%'");
+            //can't use r.ROUTINE_DEFINITION directly, it may be incomplete.
 
-            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.ProcedureNames, "name"));
+            sb.Append($@"SELECT r.ROUTINE_SCHEMA AS [Schema],r.ROUTINE_NAME AS [Name],r.DATA_TYPE AS [DataType]{definition}
+                        FROM INFORMATION_SCHEMA.ROUTINES r
+                        WHERE ROUTINE_TYPE = '{routineType}'");
 
-            sb.Append("ORDER BY name");
+            sb.Append(this.GetFilterSchemaCondition(filter, "r.ROUTINE_SCHEMA"));
+            sb.Append(this.GetFilterNamesCondition(filter, routineNames, "r.ROUTINE_NAME"));
+
+            sb.Append("ORDER BY r.ROUTINE_NAME");
 
             return sb.Content;
         }
@@ -567,22 +557,172 @@ namespace DatabaseInterpreter.Core
             return sb.Content;
         }
         #endregion
+
+        #region Routine Parameter        
+        public override Task<List<RoutineParameter>> GetFunctionParametersAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<RoutineParameter>(this.GetSqlForRoutineParameters(DatabaseObjectType.Function, filter));
+        }
+        public override Task<List<RoutineParameter>> GetFunctionParametersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<RoutineParameter>(dbConnection, this.GetSqlForRoutineParameters(DatabaseObjectType.Function, filter));
+        }
+
+        public override Task<List<RoutineParameter>> GetProcedureParametersAsync(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<RoutineParameter>(this.GetSqlForRoutineParameters(DatabaseObjectType.Procedure, filter));
+        }
+        public override Task<List<RoutineParameter>> GetProcedureParametersAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectsAsync<RoutineParameter>(dbConnection, this.GetSqlForRoutineParameters(DatabaseObjectType.Procedure, filter));
+        }
+
+        private string GetSqlForRoutineParameters(DatabaseObjectType databaseObjectType, SchemaInfoFilter filter = null)
+        {
+            SqlBuilder sb = new SqlBuilder();
+
+            bool isFunction = databaseObjectType == DatabaseObjectType.Function;
+
+            var routineNames = isFunction ? filter?.FunctionNames : filter?.ProcedureNames;
+
+            sb.Append(@"SELECT schema_name(schema_id) AS [Schema],o.name AS [RoutineName],		   
+                        p.name AS [Name],type_name(p.user_type_id) AS [DataType],p.max_length AS [MaxLength],
+                        p.precision AS [Precision],p.scale AS [Scale],p.parameter_id AS [Order],p.is_output AS [IsOutput]
+                        FROM sys.objects o
+                        INNER JOIN sys.parameters p ON o.object_id=p.object_id
+                        WHERE isnull(p.name,'')<>'' AND o.type IN ('P','FN', 'IF', 'AF', 'FS', 'FT','TF') 
+                        AND schema_name(schema_id) NOT IN('sys') AND o.name NOT IN('fn_diagramobjects')");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(schema_id)"));
+
+            sb.Append(this.GetFilterNamesCondition(filter, routineNames, "o.name"));
+
+            sb.Append("ORDER BY o.name, p.parameter_id");
+
+            return sb.Content;
+        }
+        #endregion
+        #endregion
+
+        #region Dependency
+        #region View->Table Usage
+        public override Task<List<ViewTableUsage>> GetViewTableUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            return base.GetDbObjectUsagesAsync<ViewTableUsage>(this.GetSqlForViewTableUsages(filter, isFilterForReferenced));
+        }
+
+        public override Task<List<ViewTableUsage>> GetViewTableUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            return base.GetDbObjectUsagesAsync<ViewTableUsage>(dbConnection, this.GetSqlForViewTableUsages(filter, isFilterForReferenced));
+        }
+
+        private string GetSqlForViewTableUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            SqlBuilder sb = new SqlBuilder();
+
+            sb.Append(@"SELECT vt.VIEW_CATALOG AS [ObjectCatalog],vt.VIEW_SCHEMA AS [ObjectSchema],vt.[VIEW_NAME] AS [ObjectName],
+                        vt.TABLE_CATALOG AS [RefObjectCatalog], vt.TABLE_SCHEMA AS[RefObjectSchema], vt.TABLE_NAME AS [RefObjectName]
+                        FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE vt
+                        WHERE 1=1");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, !isFilterForReferenced ? "vt.VIEW_SCHEMA" : "vt.TABLE_SCHEMA"));
+            sb.Append(this.GetFilterNamesCondition(filter, !isFilterForReferenced ? filter?.ViewNames : filter?.TableNames, !isFilterForReferenced ? "vt.VIEW_NAME" : "vt.TABLE_NAME"));
+
+            return sb.Content;
+        }
+        #endregion
+
+        #region View->Column Usage
+        public override Task<List<ViewColumnUsage>> GetViewColumnUsages(SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectUsagesAsync<ViewColumnUsage>(this.GetSqlForViewColumnUsages(filter));
+        }
+
+        public override Task<List<ViewColumnUsage>> GetViewColumnUsages(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        {
+            return base.GetDbObjectUsagesAsync<ViewColumnUsage>(dbConnection, this.GetSqlForViewColumnUsages(filter));
+        }
+
+        private string GetSqlForViewColumnUsages(SchemaInfoFilter filter = null)
+        {
+            SqlBuilder sb = new SqlBuilder();
+
+            sb.Append(@"SELECT vc.VIEW_CATALOG AS [ObjectCatalog],vc.VIEW_SCHEMA AS [ObjectSchema],vc.VIEW_NAME AS [ObjectName],
+                        vc.TABLE_CATALOG AS [RefObjectCatalog], vc.TABLE_SCHEMA AS[RefObjectSchema], vc.TABLE_NAME AS [RefObjectName], vc.COLUMN_NAME AS [ColumnName]
+                        FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE vc
+                        WHERE 1=1");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "vc.VIEW_SCHEMA"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "vc.VIEW_NAME"));
+
+            return sb.Content;
+        }
+        #endregion
+
+        #region Routine Script Usage
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced));
+        }
+
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced));
+        }
+
+        private string GetSqlForRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        {
+            SqlBuilder sb = new SqlBuilder();
+
+            sb.Append(@"SELECT CASE o.type WHEN 'P' THEN 'Procedure' WHEN 'FN' THEN 'Function' WHEN 'TF' THEN 'Function' WHEN 'U' THEN 'Table' WHEN 'V' THEN 'View' END AS [ObjectType],
+                        CASE ro.type WHEN 'P' THEN 'Procedure' WHEN 'FN' THEN 'Function' WHEN 'TF' THEN 'Function' WHEN 'U' THEN 'Table' WHEN 'V' THEN 'View' END AS [RefObjectType],
+                        schema_name(o.schema_id) AS [ObjectSchema],o.name AS [ObjectName],
+                        schema_name(ro.schema_id) AS [RefObjectSchema],referenced_entity_name AS [RefObjectName]
+                        FROM sys.sql_expression_dependencies d
+                        JOIN sys.objects o ON d.referencing_id = o.object_id
+                        JOIN sys.objects ro ON d.referenced_id=ro.object_id
+                        WHERE o.type IN ('P','FN','TF','U','V') AND ro.type IN ('P','FN','TF','U','V')");
+
+            string referenceTable = !isFilterForReferenced ? "o" : "ro";
+            string type = null;
+            string[] filterNames = null;
+
+            if (filter?.DatabaseObjectType == DatabaseObjectType.Procedure)
+            {
+                type = "'P'";
+                filterNames = filter?.ProcedureNames;
+            }
+            else if (filter?.DatabaseObjectType == DatabaseObjectType.Function)
+            {
+                type = "'FN','TF'";
+                filterNames = filter?.FunctionNames;
+            }
+            else if (filter.DatabaseObjectType == DatabaseObjectType.View)
+            {
+                type = "'V'";
+                filterNames = filter?.ViewNames;
+            }
+            else if (filter.DatabaseObjectType == DatabaseObjectType.Table)
+            {
+                type = "'U'";
+                filterNames = filter?.TableNames;
+            }
+
+            if (type != null)
+            {
+                sb.Append($"AND {referenceTable}.type in({type})");
+            }
+
+            sb.Append(this.GetFilterNamesCondition(filter, filterNames, $"{referenceTable}.name"));
+
+            sb.Append(this.GetFilterSchemaCondition(filter, $"schema_name({referenceTable}.schema_id)"));
+
+            return sb.Content;
+        }
+        #endregion
         #endregion
 
         #region Database Operation
-
-        public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
-        {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(table)}";
-
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                sql += whereClause;
-            }
-
-            return base.GetTableRecordCountAsync(connection, sql);
-        }
-
 
         private async Task<bool> IsProcedureExisted(DbConnection dbConnection, string procedureName)
         {

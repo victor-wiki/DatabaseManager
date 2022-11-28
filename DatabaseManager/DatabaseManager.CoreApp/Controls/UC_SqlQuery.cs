@@ -246,7 +246,7 @@ namespace DatabaseManager.Controls
 
             if (this.CheckConnection())
             {
-                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script);
+                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, data.ScriptAction, data.ScriptParameters);
 
                 this.ShowResult(result);
             }
@@ -343,6 +343,14 @@ namespace DatabaseManager.Controls
         internal void ValidateScripts()
         {
             this.queryEditor.ValidateScripts();
+        }
+
+        internal void DisposeResources()
+        {
+            if(this.queryEditor!=null)
+            {
+                this.queryEditor.DisposeResources();
+            }
         }
     }
 }

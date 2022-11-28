@@ -18,6 +18,8 @@ namespace SqlAnalyser.Core
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Full_table_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(Full_column_nameContext) };
+        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Table_aliasContext) };
+        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() { typeof(Column_aliasContext) };
 
         public override Lexer GetLexer(string content)
         {
@@ -613,9 +615,9 @@ namespace SqlAnalyser.Core
                 else
                 {
                     setItem.ValueStatement = this.ParseSelectStatement(subquery.select_statement())?.FirstOrDefault();
-                }               
+                }
 
-                var columnName = ele.full_column_name();               
+                var columnName = ele.full_column_name();
 
                 if (columnName != null)
                 {
@@ -679,7 +681,7 @@ namespace SqlAnalyser.Core
 
                         if (alias != null)
                         {
-                            fromItem.Alias = new TokenInfo(alias.table_alias()) { Type = TokenType.Alias };
+                            fromItem.Alias = new TokenInfo(alias.table_alias()) { Type = TokenType.TableAlias };
                         }
 
                         Derived_tableContext derivedTable = fromTable.derived_table();
@@ -834,7 +836,7 @@ namespace SqlAnalyser.Core
                     #region handle alias
                     var ts = tableSoure.table_source_item_joined()?.table_source_item();
                     var derivedTable = ts?.derived_table();
-                    var derivedTableAlias = ts?.as_table_alias();
+                    var derivedTableAlias = ts?.as_table_alias()?.table_alias();
 
                     if (derivedTable != null && derivedTableAlias != null)
                     {
@@ -1015,13 +1017,13 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is PredicateContext predicate)
                 {
-                    foreach(var c in predicate.children)
+                    foreach (var c in predicate.children)
                     {
-                        if(c is TerminalNodeImpl && c.GetText().ToUpper()== "EXISTS")
+                        if (c is TerminalNodeImpl && c.GetText().ToUpper() == "EXISTS")
                         {
                             ifItem.ConditionType = IfConditionType.Exists;
                         }
-                        else if(c is SubqueryContext subquery)
+                        else if (c is SubqueryContext subquery)
                         {
                             ifItem.CondtionStatement = this.ParseSelectStatement(subquery.select_statement())?.FirstOrDefault();
                         }
@@ -1029,15 +1031,15 @@ namespace SqlAnalyser.Core
                 }
             }
 
-            if(ifItem.ConditionType == IfConditionType.Exists && hasNot)
+            if (ifItem.ConditionType == IfConditionType.Exists && hasNot)
             {
                 ifItem.ConditionType = IfConditionType.NotExists;
             }
 
-            if(ifItem.CondtionStatement == null)
+            if (ifItem.CondtionStatement == null)
             {
                 ifItem.Condition = this.ParseCondition(condition);
-            }           
+            }
 
             var sqlClauses = node.sql_clauses();
 
@@ -1462,7 +1464,14 @@ namespace SqlAnalyser.Core
                         statement.GroupBy = new List<TokenInfo>();
                     }
 
-                    statement.GroupBy.Add(this.CreateToken(groupBy, TokenType.GroupBy));
+                    TokenInfo gpb = this.CreateToken(groupBy, TokenType.GroupBy);
+
+                    statement.GroupBy.Add(gpb);
+
+                    if(!AnalyserHelper.IsValidColumnName(gpb))
+                    {
+                        this.AddChildTableAndColumnNameToken(groupBy, gpb);
+                    }                   
                 }
                 else if (child is Top_clauseContext top)
                 {
@@ -2234,7 +2243,23 @@ namespace SqlAnalyser.Core
                             }
                             else
                             {
-                                columnName = new ColumnName(columnEle);
+                                bool found = false;
+
+                                foreach(var child in columnEle.children)
+                                {
+                                    if(child is TerminalNodeImpl && child.GetText().ToUpper() == "NULL")
+                                    {
+                                        found = true;
+
+                                        columnName = new ColumnName("NULL");
+                                        break;
+                                    }
+                                }
+                                
+                                if(!found)
+                                {
+                                    columnName = new ColumnName(columnEle);
+                                }                               
                             }
 
                             var alias = columnEle.as_column_alias()?.column_alias();
@@ -2244,14 +2269,14 @@ namespace SqlAnalyser.Core
                                 columnName.HasAs = this.HasAsFlag(alias);
                                 columnName.Alias = new TokenInfo(alias);
 
-                                this.AddChildColumnNameToken(columnEle, columnName);
+                                this.AddChildTableAndColumnNameToken(columnEle, columnName);
                             }
                         }
                         else if (expEle != null)
                         {
                             columnName = this.ParseColumnName(expEle, strict);
 
-                            this.AddChildColumnNameToken(expEle, columnName);
+                            this.AddChildTableAndColumnNameToken(expEle, columnName);
 
                             if (expEle.GetText().Contains("@"))
                             {
@@ -2336,6 +2361,32 @@ namespace SqlAnalyser.Core
             }
 
             return columnName;
+        }
+
+        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if(node is Table_aliasContext alias)
+                {
+                    return new TokenInfo(alias) { Type = TokenType.TableAlias };
+                }
+            }
+
+            return null;
+        }
+
+        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is Column_aliasContext alias)
+                {
+                    return new TokenInfo(alias) { Type = TokenType.ColumnAlias };
+                }
+            }
+
+            return null;
         }
 
         private List<TokenInfo> GetNodeVariables(ParserRuleContext node)

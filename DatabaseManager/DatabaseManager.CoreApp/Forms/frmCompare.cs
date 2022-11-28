@@ -3,11 +3,13 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -19,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static BrightIdeasSoftware.TreeListView;
+using static Humanizer.In;
 
 namespace DatabaseManager
 {
@@ -268,7 +271,7 @@ namespace DatabaseManager
                 return Enumerable.Empty<DbDifference>();
             }
 
-            var children = this.differences.Where(item => item.ParentType == difference.Type
+            var children = this.differences.Where(item => item.DifferenceType != DbDifferenceType.None && item.ParentType == difference.Type
             && ((item.ParentName == null || (item.ParentName == difference.Source?.Name || item.ParentName == difference.Target?.Name)) ||
                 (item.ParentName == null || (item.ParentName == difference.Parent?.Source?.Name || item.ParentName == difference?.Parent.Target?.Name))
             ));
@@ -324,7 +327,12 @@ namespace DatabaseManager
             {
                 if (difference.SubDifferences.Any(item => item.DatabaseObjectType == databaseObjectType))
                 {
-                    differences.Add(new DbDifference() { Type = folderName, ParentType = nameof(Table), ParentName = tableName, Parent = difference, DifferenceType = this.GetTableSubFolderDiffType(difference, databaseObjectType) });
+                    var differenceType = this.GetTableSubFolderDiffType(difference, databaseObjectType);
+
+                    if (differenceType != DbDifferenceType.None)
+                    {
+                        differences.Add(new DbDifference() { Type = folderName, ParentType = nameof(Table), ParentName = tableName, Parent = difference, DifferenceType = differenceType });
+                    }
                 }
             };
 
@@ -867,6 +875,101 @@ namespace DatabaseManager
                         {
                         }
                     });
+                }
+            }
+        }
+
+        private void tsmiFindText_Click(object sender, EventArgs e)
+        {
+            this.FindText();
+        }
+
+        private void FindText()
+        {
+            frmFindBox findBox = new frmFindBox();
+
+            DialogResult result = findBox.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                string word = findBox.FindWord;
+
+                var objects = this.tlvDifferences.Objects;
+
+                bool found = false;
+
+                if (objects != null)
+                {
+                    found = this.FindText(objects, word);
+                }
+
+                if (!found)
+                {
+                    MessageBox.Show("Not found.");
+                }
+            }
+        }
+
+        private bool FindText(IEnumerable objects, string word)
+        {
+            foreach (var obj in objects)
+            {
+                if (obj is DbDifference diff)
+                {
+                    if (diff.DatabaseObjectType == DatabaseObjectType.None)
+                    {
+                        var children = this.tlvDifferences.GetChildren(diff);
+
+                        return this.FindText(children, word);
+                    }
+                    else
+                    {
+                        if (this.IsNameMatch(diff.Source, word) || this.IsNameMatch(diff.Target, word))
+                        {
+                            int index = this.tlvDifferences.TreeModel.GetObjectIndex(diff);
+
+                            if (index >= 0)
+                            {
+                                this.tlvDifferences.SelectedIndex = index;
+
+                                this.tlvDifferences.EnsureModelVisible(diff);
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsNameMatch(DatabaseObject dbObject, string word)
+        {
+            string name = dbObject?.Name;
+
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            string text = name.Split('.').LastOrDefault();
+
+            if (text.ToUpper() == word.ToUpper())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private void tlvDifferences_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control)
+            {
+                if (e.KeyCode == Keys.F)
+                {
+                    this.FindText();
                 }
             }
         }

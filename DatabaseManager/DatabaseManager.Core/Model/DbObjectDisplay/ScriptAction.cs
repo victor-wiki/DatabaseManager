@@ -8,6 +8,7 @@
         SELECT = 3,
         INSERT = 4,
         UPDATE = 5,
-        DELETE = 6
+        DELETE = 6,
+        EXECUTE = 7
     }
 }

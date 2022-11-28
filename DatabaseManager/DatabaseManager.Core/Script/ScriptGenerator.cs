@@ -20,11 +20,15 @@ namespace DatabaseManager.Core
             this.dbInterpreter = dbInterpreter;
         }
 
-        public async Task<string> Generate(DatabaseObject dbObject, ScriptAction scriptAction)
+        public async Task<ScriptGenerateResult> Generate(DatabaseObject dbObject, ScriptAction scriptAction)
         {
+            ScriptGenerateResult result = new ScriptGenerateResult();
+
             string typeName = dbObject.GetType().Name;
 
             var databaseObjectType = DbObjectHelper.GetDatabaseObjectType(dbObject);
+
+            ColumnType columnType = ColumnType.TableColumn;
 
             if (dbObject is Table)
             {
@@ -37,11 +41,43 @@ namespace DatabaseManager.Core
                     databaseObjectType |= DatabaseObjectType.Column;
                 }
             }
+            else if (dbObject is View)
+            {
+                if (scriptAction == ScriptAction.SELECT)
+                {
+                    databaseObjectType |= DatabaseObjectType.Column;
 
-            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
+                    columnType = ColumnType.ViewColumn;
+                }
+            }
+
+            SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType, ColumnType = columnType };
 
             filter.Schema = dbObject.Schema;
-            filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });           
+
+            if (columnType == ColumnType.ViewColumn)
+            {
+                filter.TableNames = new string[] { dbObject.Name };
+            }
+            else
+            {
+                filter.GetType().GetProperty($"{typeName}Names").SetValue(filter, new string[] { dbObject.Name });
+            }
+
+            if (dbObject is Function func)
+            {
+                if (scriptAction == ScriptAction.SELECT)
+                {
+                    return await this.GenerateRoutineCallScript(dbObject, filter);
+                }
+            }
+            else if (dbObject is Procedure proc)
+            {
+                if (scriptAction == ScriptAction.EXECUTE)
+                {
+                    return await this.GenerateRoutineCallScript(dbObject, filter);
+                }
+            }
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
@@ -99,18 +135,18 @@ namespace DatabaseManager.Core
                     sbContent.AppendLine(content);
                 }
 
-                return StringHelper.ToSingleEmptyLine(sbContent.ToString().Trim());
+                result.Script = StringHelper.ToSingleEmptyLine(sbContent.ToString().Trim());
             }
             else if (dbObject is Table table)
             {
-                return this.GenerateTableDMLScript(schemaInfo, table, scriptAction);
+                result.Script = this.GenerateTableDMLScript(schemaInfo, table, scriptAction);
             }
             else if (dbObject is View view)
             {
-                return this.GenerateViewDMLScript(schemaInfo, view, scriptAction);
+                result.Script = this.GenerateViewDMLScript(schemaInfo, view, scriptAction);
             }
 
-            return String.Empty;
+            return result;
         }
 
         private int GetCreateIndex(string script, string createFlag)
@@ -169,15 +205,105 @@ namespace DatabaseManager.Core
         {
             string script = "";
             string viewName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(view);
+            var columns = schemaInfo.TableColumns;
 
             switch (scriptAction)
             {
                 case ScriptAction.SELECT:
-                    script = $"SELECT * {Environment.NewLine}FROM {viewName}";
+                    string columnNames = this.dbInterpreter.GetQuotedColumnNames(columns);
+                    script = $"SELECT {columnNames}{Environment.NewLine}FROM {viewName};";
                     break;
             }
 
             return script;
+        }
+
+        public async Task<ScriptGenerateResult> GenerateRoutineCallScript(DatabaseObject dbObject, SchemaInfoFilter filter)
+        {
+            ScriptGenerateResult result = new ScriptGenerateResult();
+
+            string routineName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(dbObject);
+            List<RoutineParameter> parameters = null;
+            bool isFunction = dbObject is Function;
+            bool isProcedure = dbObject is Procedure;
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+
+            StringBuilder sb = new StringBuilder();
+
+            string action = "";
+            bool isTableFunction = false;
+            bool isSqlServerProcedure = false;
+
+            if (isFunction)
+            {
+                action = "SELECT";
+
+                isTableFunction = (dbObject as Function).DataType?.ToUpper() == "TABLE";
+            }
+            else
+            {
+                if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres)
+                {
+                    action = "CALL";
+                }
+                else if (databaseType == DatabaseType.SqlServer)
+                {
+                    action = "EXEC";
+
+                    isSqlServerProcedure = true;
+                }
+            }
+
+            if (isTableFunction)
+            {
+                sb.Append("* FROM ");
+            }
+
+            if (isFunction)
+            {
+                parameters = await this.dbInterpreter.GetFunctionParametersAsync(filter);
+            }
+            else if (isProcedure)
+            {
+                parameters = await this.dbInterpreter.GetProcedureParametersAsync(filter);
+            }
+
+            result.Parameters = parameters;
+
+            sb.Append($"{action}{(string.IsNullOrEmpty(action) ? "" : " ")}{routineName}");
+
+            if(!isSqlServerProcedure)
+            {
+                sb.Append("(");
+            }           
+
+            sb.AppendLine();
+
+            if (parameters != null && parameters.Count > 0)
+            {
+                sb.AppendLine(String.Join(" ," + Environment.NewLine, parameters.Select(item => this.GetRoutineParameterItem(item, isFunction))));
+            }
+
+            if(!isSqlServerProcedure)
+            {
+                sb.AppendLine(")");
+            }           
+
+            if (isFunction && !isTableFunction && databaseType == DatabaseType.Oracle)
+            {
+                sb.Append("FROM DUAL");
+            }
+
+            result.Script = sb.ToString();
+
+            return result;
+        }
+
+        public string GetRoutineParameterItem(RoutineParameter parameter, bool isFunction)
+        {
+            string strInOut = isFunction ? "" : (parameter.IsOutput ? "OUT " : "IN ");
+
+            return $"<{strInOut}{parameter.Name} {parameter.DataType}>";
         }
     }
 }

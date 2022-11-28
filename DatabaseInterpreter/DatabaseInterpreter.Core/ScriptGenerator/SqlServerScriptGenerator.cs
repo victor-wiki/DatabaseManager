@@ -17,7 +17,6 @@ namespace DatabaseInterpreter.Core
         public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
         {
             ScriptBuilder sb = new ScriptBuilder();
-           
 
             #region User Defined Type            
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)

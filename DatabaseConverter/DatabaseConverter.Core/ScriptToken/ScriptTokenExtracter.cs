@@ -26,7 +26,7 @@ namespace DatabaseConverter.Core
             return this.tokens;
         }
 
-        private void ExtractTokens(dynamic obj)
+        private void ExtractTokens(dynamic obj, bool isFirst = true)
         {
             Type type = obj.GetType();
 
@@ -39,7 +39,7 @@ namespace DatabaseConverter.Core
                     if (property.Name == nameof(TokenInfo.Parent))
                     {
                         continue;
-                    }
+                    }                  
 
                     dynamic value = property.GetValue(obj);
 
@@ -52,19 +52,19 @@ namespace DatabaseConverter.Core
                     {
                         if (!value.Equals(obj))
                         {
-                            this.ExtractTokens(value);
+                            this.ExtractTokens(value, false);
                         }
                     }
                     else if (value.GetType().IsClass && property.PropertyType.IsGenericType && !(property.DeclaringType == typeof(CommonScript) && property.Name == nameof(CommonScript.Functions)))
                     {
                         foreach (var v in value)
                         {
-                            this.ExtractTokens(v);
+                            this.ExtractTokens(v, false);
                         }
                     }
                     else if (value is Statement || value is TableInfo || value is StatementItem || value is SelectTopInfo)
                     {
-                        this.ExtractTokens(value);
+                        this.ExtractTokens(value, false);
                     }
                 }
             };
@@ -86,7 +86,7 @@ namespace DatabaseConverter.Core
             if (token == null)
             {
                 return;
-            }            
+            }
 
             this.tokens.Add(token);
         }

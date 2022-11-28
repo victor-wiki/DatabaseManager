@@ -13,7 +13,8 @@ namespace DatabaseInterpreter.Model
         public string[] TableNames { get; set; }
         public string[] ViewNames { get; set; }
         public string[] ProcedureNames { get; set; }
-        public string[] TableTriggerNames { get; set; }       
+        public string[] TableTriggerNames { get; set; }
+        public ColumnType ColumnType { get; set; } = ColumnType.TableColumn;
     }
 
     [Flags]
@@ -32,5 +33,12 @@ namespace DatabaseInterpreter.Model
         Index = 1024,
         Constraint = 2048,
         Sequence = 4096
+    }
+
+    public enum ColumnType : int
+    {
+        None = 0,
+        TableColumn = 2,
+        ViewColumn = 4
     }
 }

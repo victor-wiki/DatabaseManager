@@ -164,7 +164,7 @@ namespace DatabaseManager.Core
                         {
                             if (this.IsNameChanged(columnDesignerInfo.OldName, columnDesignerInfo.Name))
                             {
-                                scripts.Add(this.scriptGenerator.RenameTableColumn(table, oldColumn, newColumn.Name));
+                                scripts.Add(this.GetColumnRenameScript(table, oldColumn, newColumn));
 
                                 renamedColNames.Add(oldColumn.Name);
                             }
@@ -203,7 +203,7 @@ namespace DatabaseManager.Core
                             TableIndex oldIndex = oldIndexes.FirstOrDefault(item => item.Name == indexDesignerInfo.OldName);
 
                             if (this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldName, indexDesignerInfo.Name)
-                                && (this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldType, indexDesignerInfo.Type) || (indexDesignerInfo.Type== nameof(IndexType.Unique) && oldIndex.IsUnique))
+                                && (this.IsValueEqualsIgnoreCase(indexDesignerInfo.OldType, indexDesignerInfo.Type) || (indexDesignerInfo.Type == nameof(IndexType.Unique) && oldIndex.IsUnique))
                               )
                             {
                                 if (oldIndex != null && this.IsStringEquals(oldIndex.Comment, newIndex.Comment) && SchemaInfoHelper.IsIndexColumnsEquals(oldIndex.Columns, newIndex.Columns))
@@ -311,6 +311,11 @@ namespace DatabaseManager.Core
             }
         }
 
+        public Script GetColumnRenameScript(Table table, TableColumn oldColumn, TableColumn newColumn)
+        {
+            return this.scriptGenerator.RenameTableColumn(table, oldColumn, newColumn.Name);
+        }
+
         public async Task<List<TableDefaultValueConstraint>> GetTableDefaultConstraints(SchemaInfoFilter filter)
         {
             List<TableDefaultValueConstraint> defaultValueConstraints = null;
@@ -347,25 +352,34 @@ namespace DatabaseManager.Core
                             scripts.Add(sqlServerScriptGenerator.DropDefaultValueConstraint(defaultValueConstraint));
                         }
 
-                        scripts.Add(sqlServerScriptGenerator.AddDefaultValueConstraint(newColumn));
+                        if (newColumn.DefaultValue != null)
+                        {
+                            scripts.Add(sqlServerScriptGenerator.AddDefaultValueConstraint(newColumn));
+                        }
                     }
                 }
 
-                Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
+                string oldColumnDefinition = this.dbInterpreter.ParseColumn(newTable, oldColumn);
+                string newColumnDefinition = this.dbInterpreter.ParseColumn(newTable, newColumn);
 
-                if (databaseType == DatabaseType.Oracle)
+                if(oldColumnDefinition.ToUpper() != newColumnDefinition.ToUpper())
                 {
-                    if (!oldColumn.IsNullable && !newColumn.IsNullable)
-                    {
-                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
-                    }
-                    else if (oldColumn.IsNullable && newColumn.IsNullable)
-                    {
-                        alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
-                    }
-                }
+                    Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
 
-                scripts.Add(alterColumnScript);
+                    if (databaseType == DatabaseType.Oracle)
+                    {
+                        if (!oldColumn.IsNullable && !newColumn.IsNullable)
+                        {
+                            alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NOT NULL", "", RegexOptions.IgnoreCase);
+                        }
+                        else if (oldColumn.IsNullable && newColumn.IsNullable)
+                        {
+                            alterColumnScript.Content = Regex.Replace(alterColumnScript.Content, "NULL", "", RegexOptions.IgnoreCase);
+                        }
+                    }
+
+                    scripts.Add(alterColumnScript);
+                }                
             }
             else if (!ValueHelper.IsStringEquals(newColumn.Comment, oldColumn.Comment))
             {
@@ -475,16 +489,16 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        private bool IsValueEqualsIgnoreCase(string value1, string value2)
+        public bool IsValueEqualsIgnoreCase(string value1, string value2)
         {
             return !string.IsNullOrEmpty(value1) && !string.IsNullOrEmpty(value2) && value1.ToLower() == value2.ToLower();
         }
 
-        private bool IsNameChanged(string name1, string name2)
+        public bool IsNameChanged(string name1, string name2)
         {
             if (SettingManager.Setting.DbObjectNameMode == DbObjectNameMode.WithoutQuotation)
             {
-                if(this.IsValueEqualsIgnoreCase(name1, name2))
+                if (this.IsValueEqualsIgnoreCase(name1, name2))
                 {
                     return false;
                 }
@@ -492,27 +506,20 @@ namespace DatabaseManager.Core
                 {
                     return true;
                 }
-            }  
+            }
             else
             {
                 DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
-                if(databaseType == DatabaseType.Oracle || databaseType == DatabaseType.Postgres)
+                if (name1 == name2)
                 {
-                    if (name1 == name2)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                    return false;
                 }
                 else
                 {
-                    return !this.IsValueEqualsIgnoreCase(name1, name2);
-                }               
-            }              
+                    return true;
+                }
+            }
         }
 
         private void SetTableChildComment(List<Script> scripts, DbScriptGenerator scriptGenerator, TableChild tableChild, bool isNew)

@@ -72,8 +72,9 @@
             this.cboDatabase.Margin = new System.Windows.Forms.Padding(4);
             this.cboDatabase.Name = "cboDatabase";
             this.cboDatabase.Size = new System.Drawing.Size(193, 25);
-            this.cboDatabase.TabIndex = 7;
+            this.cboDatabase.TabIndex = 7;  
             this.cboDatabase.SelectedIndexChanged += new System.EventHandler(this.cboDatabase_SelectedIndexChanged);
+            this.cboDatabase.MouseClick += new System.Windows.Forms.MouseEventHandler(this.cboDatabase_MouseClick);
             // 
             // lblProfileName
             // 

@@ -14,6 +14,8 @@ namespace SqlAnalyser.Core
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(SingleTableContext), typeof(TableRefContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(SelectItemContext), typeof(ColumnRefContext) };
+        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(TableAliasContext) };
+        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() { typeof(SelectAliasContext) };
 
         public override Lexer GetLexer(string content)
         {
@@ -940,7 +942,14 @@ namespace SqlAnalyser.Core
 
                     foreach (var col in groupBy.orderList().orderExpression())
                     {
-                        statement.GroupBy.Add(this.CreateToken(col, TokenType.GroupBy));
+                        var gpb = this.CreateToken(col, TokenType.GroupBy);
+
+                        statement.GroupBy.Add(gpb);
+
+                        if (!AnalyserHelper.IsValidColumnName(gpb))
+                        {
+                            this.AddChildTableAndColumnNameToken(col, gpb);
+                        }
                     }
                 }
 
@@ -1665,6 +1674,32 @@ namespace SqlAnalyser.Core
             }
 
             return node;
+        }
+
+        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is TableAliasContext alias)
+                {
+                    return new TokenInfo(alias.identifier()) { Type = TokenType.TableAlias };
+                }
+            }
+
+            return null;
+        }
+
+        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is SelectAliasContext alias)
+                {
+                    return new TokenInfo(alias.identifier()) { Type = TokenType.ColumnAlias };
+                }
+            }
+
+            return null;
         }
 
         private TokenInfo ParseCondition(ParserRuleContext node)

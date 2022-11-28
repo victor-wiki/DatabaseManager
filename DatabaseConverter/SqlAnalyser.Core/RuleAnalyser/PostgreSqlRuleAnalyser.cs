@@ -16,6 +16,8 @@ namespace SqlAnalyser.Core
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Qualified_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(ColumnrefContext) };
+        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Alias_clauseContext)};
+        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() {  };
 
         public override Lexer GetLexer(string content)
         {
@@ -513,7 +515,14 @@ namespace SqlAnalyser.Core
 
                 foreach (var item in items)
                 {
-                    statement.GroupBy.Add(new TokenInfo(item) { Type = TokenType.GroupBy });
+                    var gpb = new TokenInfo(item) { Type = TokenType.GroupBy };
+
+                    statement.GroupBy.Add(gpb);
+
+                    if (!AnalyserHelper.IsValidColumnName(gpb))
+                    {
+                        this.AddChildTableAndColumnNameToken(item, gpb);
+                    }
                 }
 
                 if (having != null && having.a_expr() != null)
@@ -930,6 +939,24 @@ namespace SqlAnalyser.Core
                 }
             }
 
+            return null;
+        }
+
+        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        {
+            if (node != null)
+            {
+                if (node is Alias_clauseContext alias)
+                {
+                    return new TokenInfo(alias.colid()) { Type = TokenType.TableAlias };
+                }
+            }
+
+            return null;
+        }
+
+        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        {
             return null;
         }
     }

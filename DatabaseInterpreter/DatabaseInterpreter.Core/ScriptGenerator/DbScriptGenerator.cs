@@ -138,7 +138,7 @@ namespace DatabaseInterpreter.Core
 
                         string strWhere = $" WHERE ({columnName} IS NULL OR {columnName}={referencedColumnName})";
 
-                        dictPagedData = await this.GetSortedPageData(connection, table, primaryKeyColumns, fkc.ReferencedColumnName, fkc.ColumnName, columns, total, strWhere);
+                        dictPagedData = await this.GetSortedPageData(connection, table as Table, primaryKeyColumns, fkc.ReferencedColumnName, fkc.ColumnName, columns, total, strWhere);
                     }
                     else
                     {
@@ -170,7 +170,7 @@ namespace DatabaseInterpreter.Core
                     {
                         if (scriptOutputMode != GenerateScriptOutputMode.None)
                         {
-                            this.AppendDataScripts(sb, table, columns, dictPagedData);
+                            this.AppendDataScripts(sb, table, columns as IEnumerable<TableColumn>, dictPagedData);
                         }
                     }
                 }
@@ -269,7 +269,7 @@ namespace DatabaseInterpreter.Core
             return sb.ToString();
         }
 
-        public virtual Dictionary<string, object> AppendDataScripts(StringBuilder sb, Table table, List<TableColumn> columns, Dictionary<long, List<Dictionary<string, object>>> dictPagedData)
+        public virtual Dictionary<string, object> AppendDataScripts(StringBuilder sb, Table table, IEnumerable<TableColumn> columns, Dictionary<long, List<Dictionary<string, object>>> dictPagedData)
         {
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
@@ -424,7 +424,7 @@ namespace DatabaseInterpreter.Core
             return (isAllEnd ? ";" : ",");
         }
 
-        private List<object> GetRowValues(Dictionary<string, object> row, int rowIndex, List<TableColumn> columns, List<string> excludeColumnNames, long pageNumber, bool isAppendToFile, out Dictionary<string, object> parameters)
+        private List<object> GetRowValues(Dictionary<string, object> row, int rowIndex, IEnumerable<TableColumn> columns, List<string> excludeColumnNames, long pageNumber, bool isAppendToFile, out Dictionary<string, object> parameters)
         {
             parameters = new Dictionary<string, object>();
 

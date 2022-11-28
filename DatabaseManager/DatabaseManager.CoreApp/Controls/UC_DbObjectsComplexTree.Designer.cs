@@ -51,16 +51,17 @@
             this.tsmiInsertScript = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiUpdateScript = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDeleteScript = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiExecuteScript = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDelete = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiViewDependency = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiCopyChildrenNames = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiBackup = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDiagnose = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiCopyChildrenNames = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -105,6 +106,7 @@
             this.imageList1.Images.SetKeyName(13, "tree_TableColumn.png");
             this.imageList1.Images.SetKeyName(14, "tree_UserDefinedType.png");
             this.imageList1.Images.SetKeyName(15, "tree_Sequence.png");
+            this.imageList1.Images.SetKeyName(16, "tree_Function_Trigger.png");
             // 
             // contextMenuStrip1
             // 
@@ -129,7 +131,7 @@
             this.tsmiCopyChildrenNames,
             this.tsmiMore});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 444);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 422);
             // 
             // tsmiNewQuery
             // 
@@ -222,46 +224,53 @@
             this.tsmiSelectScript,
             this.tsmiInsertScript,
             this.tsmiUpdateScript,
-            this.tsmiDeleteScript});
+            this.tsmiDeleteScript,
+            this.tsmiExecuteScript});
             this.tsmiGenerateScripts.Name = "tsmiGenerateScripts";
             this.tsmiGenerateScripts.Size = new System.Drawing.Size(203, 22);
             this.tsmiGenerateScripts.Text = "Scripts";
-            this.tsmiGenerateScripts.Click += new System.EventHandler(this.tsmiGenerateScripts_Click);
             // 
             // tsmiCreateScript
             // 
             this.tsmiCreateScript.Name = "tsmiCreateScript";
-            this.tsmiCreateScript.Size = new System.Drawing.Size(156, 22);
+            this.tsmiCreateScript.Size = new System.Drawing.Size(157, 22);
             this.tsmiCreateScript.Text = "Create Script";
             this.tsmiCreateScript.Click += new System.EventHandler(this.tsmiCreateScript_Click);
             // 
             // tsmiSelectScript
             // 
             this.tsmiSelectScript.Name = "tsmiSelectScript";
-            this.tsmiSelectScript.Size = new System.Drawing.Size(156, 22);
+            this.tsmiSelectScript.Size = new System.Drawing.Size(157, 22);
             this.tsmiSelectScript.Text = "Select Script";
             this.tsmiSelectScript.Click += new System.EventHandler(this.tsmiSelectScript_Click);
             // 
             // tsmiInsertScript
             // 
             this.tsmiInsertScript.Name = "tsmiInsertScript";
-            this.tsmiInsertScript.Size = new System.Drawing.Size(156, 22);
+            this.tsmiInsertScript.Size = new System.Drawing.Size(157, 22);
             this.tsmiInsertScript.Text = "Insert Script";
             this.tsmiInsertScript.Click += new System.EventHandler(this.tsmiInsertScript_Click);
             // 
             // tsmiUpdateScript
             // 
             this.tsmiUpdateScript.Name = "tsmiUpdateScript";
-            this.tsmiUpdateScript.Size = new System.Drawing.Size(156, 22);
+            this.tsmiUpdateScript.Size = new System.Drawing.Size(157, 22);
             this.tsmiUpdateScript.Text = "Update Script";
             this.tsmiUpdateScript.Click += new System.EventHandler(this.tsmiUpdateScript_Click);
             // 
             // tsmiDeleteScript
             // 
             this.tsmiDeleteScript.Name = "tsmiDeleteScript";
-            this.tsmiDeleteScript.Size = new System.Drawing.Size(156, 22);
+            this.tsmiDeleteScript.Size = new System.Drawing.Size(157, 22);
             this.tsmiDeleteScript.Text = "Delete Script";
             this.tsmiDeleteScript.Click += new System.EventHandler(this.tsmiDeleteScript_Click);
+            // 
+            // tsmiExecuteScript
+            // 
+            this.tsmiExecuteScript.Name = "tsmiExecuteScript";
+            this.tsmiExecuteScript.Size = new System.Drawing.Size(157, 22);
+            this.tsmiExecuteScript.Text = "Execute Script";
+            this.tsmiExecuteScript.Click += new System.EventHandler(this.tsmiExecuteScript_Click);
             // 
             // tsmiTranslate
             // 
@@ -290,6 +299,13 @@
             this.tsmiViewDependency.Size = new System.Drawing.Size(203, 22);
             this.tsmiViewDependency.Text = "View Dependency";
             this.tsmiViewDependency.Click += new System.EventHandler(this.tsmiViewDependency_Click);
+            // 
+            // tsmiCopyChildrenNames
+            // 
+            this.tsmiCopyChildrenNames.Name = "tsmiCopyChildrenNames";
+            this.tsmiCopyChildrenNames.Size = new System.Drawing.Size(203, 22);
+            this.tsmiCopyChildrenNames.Text = "Copy Children Names";
+            this.tsmiCopyChildrenNames.Click += new System.EventHandler(this.tsmiCopyChildrenNames_Click);
             // 
             // tsmiMore
             // 
@@ -329,13 +345,6 @@
             this.tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
-            // 
-            // tsmiCopyChildrenNames
-            // 
-            this.tsmiCopyChildrenNames.Name = "tsmiCopyChildrenNames";
-            this.tsmiCopyChildrenNames.Size = new System.Drawing.Size(203, 22);
-            this.tsmiCopyChildrenNames.Text = "Copy Children Names";
-            this.tsmiCopyChildrenNames.Click += new System.EventHandler(this.tsmiCopyChildrenNames_Click);
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -383,5 +392,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiDeleteScript;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewDependency;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyChildrenNames;
+        private System.Windows.Forms.ToolStripMenuItem tsmiExecuteScript;
     }
 }

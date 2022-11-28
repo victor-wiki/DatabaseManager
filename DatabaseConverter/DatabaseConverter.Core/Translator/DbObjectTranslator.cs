@@ -187,7 +187,7 @@ namespace DatabaseConverter.Core
 
         public static string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
         {
-            return Regex.Replace(source, Regex.Escape(oldValue), newValue, option);
+            return RegexHelper.Replace(source, oldValue, newValue, option);
         }
 
         public string ExchangeFunctionArgs(string functionName, string args1, string args2)

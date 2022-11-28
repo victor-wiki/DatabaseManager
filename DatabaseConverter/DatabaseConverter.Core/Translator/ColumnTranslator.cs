@@ -491,7 +491,7 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            column.DefaultValue = (!string.IsNullOrEmpty(defaultValue) && hasParenthesis) ? $"({defaultValue})" : defaultValue;
+            column.DefaultValue = (!string.IsNullOrEmpty(defaultValue) && hasParenthesis && !defaultValue.StartsWith("-")) ? $"({defaultValue})" : defaultValue;
         }
 
         public void ConvertComputeExpression(TableColumn column)

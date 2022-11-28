@@ -17,9 +17,9 @@ namespace DatabaseConverter.Core
         where T : ScriptDbObject
     {
         private IEnumerable<T> scripts;
-       
+
         public bool AutoMakeupSchemaName { get; set; } = true;
-        public bool IsCommonScript { get; set; }     
+        public bool IsCommonScript { get; set; }
 
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
@@ -46,7 +46,7 @@ namespace DatabaseConverter.Core
 
             int total = this.scripts.Count();
             int count = 0;
-            int successCount = 0;           
+            int successCount = 0;
 
             foreach (T dbObj in this.scripts)
             {
@@ -59,14 +59,16 @@ namespace DatabaseConverter.Core
 
                 Type type = typeof(T);
 
-                this.FeedbackInfo($"Begin to translate {type.Name}: \"{dbObj.Name}\"({count}/{total}).");
+                string percent = total == 1 ? "" : $"({count}/{total})";
+
+                this.FeedbackInfo($"Begin to translate {type.Name}: \"{dbObj.Name}\"{percent}.");
 
                 TranslateResult result = this.TranslateScript(dbObj, sourceAnalyser, targetAnalyser);
 
-                if(this.Option.CollectTranslateResultAfterTranslated)
+                if (this.Option.CollectTranslateResultAfterTranslated)
                 {
                     this.TranslateResults.Add(result);
-                }                
+                }
 
                 if (!result.HasError)
                 {
@@ -74,15 +76,15 @@ namespace DatabaseConverter.Core
                 }
             }
 
-            if (total > 0)
+            if (total > 1)
             {
                 this.FeedbackInfo($"Translated {total} script(s): {successCount} succeeded, {(total - successCount)} failed.");
-            }
+            }            
         }
 
         private TranslateResult TranslateScript(ScriptDbObject dbObj, SqlAnalyserBase sourceAnalyser, SqlAnalyserBase targetAnalyser, bool isPartial = false)
         {
-            TranslateResult translateResult = new TranslateResult() { DbObjectType = DbObjectHelper.GetDatabaseObjectType(dbObj), DbObjectName = dbObj.Name };
+            TranslateResult translateResult = new TranslateResult() { DbObjectType = DbObjectHelper.GetDatabaseObjectType(dbObj), DbObjectSchema = dbObj.Schema, DbObjectName = dbObj.Name };
 
             try
             {
@@ -246,7 +248,7 @@ namespace DatabaseConverter.Core
                 }
 
                 translateResult.Error = replaced ? null : anlyseResult.Error;
-                translateResult.Data = dbObj.Definition;                
+                translateResult.Data = dbObj.Definition;
 
                 this.FeedbackInfo($"End translate {type.Name}: \"{dbObj.Name}\", translate result: {(anlyseResult.HasError ? "Error" : "OK")}.");
 
@@ -368,6 +370,6 @@ namespace DatabaseConverter.Core
             sqlAnalyser.ScriptBuilderOption.OutputRemindInformation = this.Option.OutputRemindInformation;
 
             return sqlAnalyser;
-        }        
+        }
     }
 }

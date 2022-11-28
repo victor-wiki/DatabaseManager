@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Windows.Forms;
 using DatabaseManager.Data;
+using System.Threading.Tasks;
 
 namespace DatabaseManager
 {
@@ -81,6 +82,11 @@ namespace DatabaseManager
 
         private async void TestConnect()
         {
+            this.PopulateDatabases();
+        }
+
+        private async void PopulateDatabases()
+        {
             ConnectionInfo connectionInfo = this.GetConnectionInfo();
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, connectionInfo, new DbInterpreterOption());
 
@@ -98,6 +104,8 @@ namespace DatabaseManager
                 });
 
                 this.cboDatabase.Text = oldDatabase;
+
+                this.cboDatabase.DroppedDown = true;
             }
             catch (Exception ex)
             {
@@ -233,6 +241,15 @@ namespace DatabaseManager
 
                     this.ucDbAccountInfo.LoadData(frm.SelectedAccountProfileInfo, password);
                 }
+            }
+        }
+     
+
+        private void cboDatabase_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (this.cboDatabase.Items.Count == 0)
+            {
+                this.PopulateDatabases();
             }
         }
     }

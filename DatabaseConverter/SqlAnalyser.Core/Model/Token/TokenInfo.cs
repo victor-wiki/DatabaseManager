@@ -97,8 +97,9 @@ namespace SqlAnalyser.Model
         ParameterName,
         VariableName,
         CursorName,
-        DataType,
-        Alias,
+        DataType,   
+        TableAlias,
+        ColumnAlias,
         IfCondition, //not include query
         SearchCondition,
         TriggerCondition,
