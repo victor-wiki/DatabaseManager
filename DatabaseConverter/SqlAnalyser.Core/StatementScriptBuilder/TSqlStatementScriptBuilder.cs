@@ -319,7 +319,7 @@ namespace SqlAnalyser.Core
             {
                 this.AppendLine($"RETURN {@return.Value};");
             }
-            else if(statement is BreakStatement @break)
+            else if (statement is BreakStatement @break)
             {
                 this.AppendLine("BREAK;");
             }
@@ -333,10 +333,10 @@ namespace SqlAnalyser.Core
             }
             else if (statement is CallStatement call)
             {
-                if(!call.IsExecuteSql)
+                if (!call.IsExecuteSql)
                 {
-                    this.AppendLine($"EXECUTE {call.Name} {string.Join(",", call.Parameters.Select(item=>item.Value))};");
-                } 
+                    this.AppendLine($"EXECUTE {call.Name} {string.Join(",", call.Parameters.Select(item => item.Value))};");
+                }
                 else
                 {
                     string content = call.Parameters.FirstOrDefault()?.Value?.Symbol;
@@ -452,14 +452,14 @@ namespace SqlAnalyser.Core
             {
                 PreparedStatementType type = prepared.Type;
 
-                if(type == PreparedStatementType.Prepare)
+                if (type == PreparedStatementType.Prepare)
                 {
-                    if(this.Option.CollectSpecialStatementTypes.Contains(prepared.GetType()))
+                    if (this.Option.CollectSpecialStatementTypes.Contains(prepared.GetType()))
                     {
                         this.SpecialStatements.Add(prepared);
                     }
                 }
-                else if(type == PreparedStatementType.Execute)
+                else if (type == PreparedStatementType.Execute)
                 {
                     var pre = this.SpecialStatements.FirstOrDefault(item => (item is PreparedStatement) && (item as PreparedStatement).Id.Symbol == prepared.Id.Symbol) as PreparedStatement;
 
@@ -484,9 +484,9 @@ namespace SqlAnalyser.Core
             bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
-            if(select.LimitInfo != null && select.TopInfo == null)
+            if (select.LimitInfo != null && select.TopInfo == null)
             {
-                if(select.LimitInfo.StartRowIndex == null || select.LimitInfo.StartRowIndex.Symbol == "0")
+                if (select.LimitInfo.StartRowIndex == null || select.LimitInfo.StartRowIndex.Symbol == "0")
                 {
                     select.TopInfo = new SelectTopInfo() { TopCount = select.LimitInfo.RowCount };
                 }
@@ -580,15 +580,15 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                if(select.TopInfo == null)
+                if (select.TopInfo == null)
                 {
-                    if(select.OrderBy == null)
+                    if (select.OrderBy == null)
                     {
                         this.AppendLine("ORDER BY (SELECT 0)");
                     }
 
                     //NOTE: "OFFSET X ROWS FETCH NEXT Y ROWS ONLY" only available for SQLServer 2012 and above.
-                    this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+                    this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex?.Symbol ?? "0"} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
                 }
             }
 
@@ -644,7 +644,7 @@ namespace SqlAnalyser.Core
 
             string tableName = table.Name.Symbol;
 
-            string trimedTableName = tableName.Trim('[',']');
+            string trimedTableName = tableName.Trim('[', ']');
 
             if (table.IsTemporary && !trimedTableName.StartsWith("#"))
             {
@@ -653,7 +653,7 @@ namespace SqlAnalyser.Core
                 if (!this.Replacements.ContainsKey(tableName))
                 {
                     this.Replacements.Add(trimedTableName, newTableName);
-                }               
+                }
             }
 
             sb.AppendLine($"CREATE TABLE {tableName}(");

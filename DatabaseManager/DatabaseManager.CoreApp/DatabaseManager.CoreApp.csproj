@@ -8,17 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.20</Version>
+    <Version>2.0.21</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add 
-(1) find text box: tree view; database compare result list
-(2) view data for "View" and display columns of "View" in tree
-(3) generate script for: select view, select function, execute procedure
-2. optimize: database compare: only show records that are different
-</PackageReleaseNotes>
+    <PackageReleaseNotes>fix bug: data viewer for view or table argument</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.20</AssemblyVersion>
-    <FileVersion>2.0.20</FileVersion>
+    <AssemblyVersion>2.0.21</AssemblyVersion>
+    <FileVersion>2.0.21</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

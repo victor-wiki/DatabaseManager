@@ -78,7 +78,7 @@ namespace DatabaseManager.Core
 
                         if (!scriptParser.IsCreateOrAlterScript() && dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
-                            cleanScript = script.TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                            cleanScript = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
                         }
 
                         DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, cleanScript);
@@ -203,7 +203,7 @@ namespace DatabaseManager.Core
 
                         int i = 0;
 
-                        foreach (var para in parameters.OrderBy(item=>item.Order))
+                        foreach (var para in parameters.OrderBy(item => item.Order))
                         {
                             cmd.Parameters.Add(para.Name, callStatement.Parameters[i]?.Value?.Symbol);
 
@@ -349,16 +349,32 @@ namespace DatabaseManager.Core
 
                     if (hasTableName && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
                     {
+                        string defaultOrder = dbInterpreter.GetDefaultOrder();
+
+                        if (selectStatement.OrderBy == null && !string.IsNullOrEmpty(defaultOrder))
+                        {
+                            selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
+                        }
+
                         if (databaseType == DatabaseType.SqlServer)
                         {
                             selectStatement.TopInfo = new SelectTopInfo() { TopCount = new TokenInfo(this.LimitCount.ToString()) };
                         }
-                        else
+                        else if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres)
                         {
-                            selectStatement.LimitInfo = new SelectLimitInfo() { RowCount = new TokenInfo(this.LimitCount.ToString()) };
+                            selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo("0"), RowCount = new TokenInfo(this.LimitCount.ToString()) };
                         }
 
                         script = sqlAnalyser.GenerateScripts(cs).Script;
+
+                        if (databaseType == DatabaseType.Oracle) //oracle low version doesn't support limit clause.
+                        {
+                            script = $@"SELECT * FROM
+                               (
+                                 {script.Trim().TrimEnd(';')}
+                               ) TEMP
+                               WHERE ROWNUM BETWEEN 1 AND {this.LimitCount}";
+                        }
                     }
                 }
             }

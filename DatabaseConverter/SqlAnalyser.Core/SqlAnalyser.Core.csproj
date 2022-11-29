@@ -6,11 +6,11 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql and PostgreSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.13</Version>
+    <Version>2.0.14</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.13</AssemblyVersion>
-    <FileVersion>2.0.13</FileVersion>
-    <PackageReleaseNotes>Distinguish table alias and column alias.</PackageReleaseNotes>
+    <AssemblyVersion>2.0.14</AssemblyVersion>
+    <FileVersion>2.0.14</FileVersion>
+    <PackageReleaseNotes>Handle limit clause: StartRowIndex is null</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

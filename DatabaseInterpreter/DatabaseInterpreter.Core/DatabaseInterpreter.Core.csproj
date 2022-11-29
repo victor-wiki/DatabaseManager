@@ -3,12 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.22</AssemblyVersion>
-    <FileVersion>2.0.22</FileVersion>
-    <Version>2.0.22</Version>
-    <PackageReleaseNotes>add: 
-(1) view table/column usages; routine script usages
-(2) query view columns</PackageReleaseNotes>
+    <AssemblyVersion>2.0.23</AssemblyVersion>
+    <FileVersion>2.0.23</FileVersion>
+    <Version>2.0.23</Version>
+    <PackageReleaseNotes>fix bug: oracle interpreter query table columns.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle and Postgres.</Description>
   </PropertyGroup>

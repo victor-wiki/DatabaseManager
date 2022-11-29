@@ -797,7 +797,7 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex?.Symbol??"0"} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
             }
 
             if (select.UnionStatements != null)

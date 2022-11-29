@@ -345,7 +345,7 @@ namespace DatabaseInterpreter.Core
             string commentColumn = isSimpleMode ? "" : @", CC.COMMENTS AS ""Comment""";
             string commentClause = isSimpleMode ? "" : "LEFT JOIN USER_COL_COMMENTS CC ON C.TABLE_NAME=CC.TABLE_NAME AND C.COLUMN_NAME=CC.COLUMN_NAME";
 
-            string joinTable = !isForView ? "JOIN ALL_TABLES T ON C.OWNER=T.OWNER AND C.TABLE_NAME=T.TABLE_NAME" : " JOIN ALL_VIEWS V ON C.OWNER=V.OWNERE AND C.TABLE_NAME=V.VIEW_NAME";
+            string joinTable = !isForView ? "JOIN ALL_TABLES T ON C.OWNER=T.OWNER AND C.TABLE_NAME=T.TABLE_NAME" : " JOIN ALL_VIEWS V ON C.OWNER=V.OWNER AND C.TABLE_NAME=V.VIEW_NAME";
 
             var sb = this.CreateSqlBuilder();
 

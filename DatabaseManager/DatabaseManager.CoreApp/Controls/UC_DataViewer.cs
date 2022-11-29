@@ -81,12 +81,16 @@ namespace DatabaseManager.Controls
 
             try
             {
+                bool isForView = false;
+
                 if(dbObject is View)
                 {
                     dbObject = ObjectHelper.CloneObject<Table>(dbObject);
+
+                    isForView = true;
                 }
 
-                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, true);
+                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, isForView);
 
                 this.pagination.TotalCount = result.Total;
 

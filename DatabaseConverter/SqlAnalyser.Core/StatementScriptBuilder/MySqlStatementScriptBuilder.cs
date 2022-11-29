@@ -727,7 +727,7 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                this.AppendLine($"LIMIT {select.LimitInfo.StartRowIndex},{select.LimitInfo.RowCount}");
+                this.AppendLine($"LIMIT {select.LimitInfo.StartRowIndex?.Symbol??"0"},{select.LimitInfo.RowCount}");
             }
 
             if (select.UnionStatements != null)

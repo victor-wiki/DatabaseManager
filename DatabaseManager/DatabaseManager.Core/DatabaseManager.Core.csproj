@@ -5,14 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.18</Version>
-    <PackageReleaseNotes>1. add
-(1) script diagnose for sqlserver and mysql
-(2) generate script for: select view, select function, execute procedure
-2. optimize: use SqlAnalyser to limit query count instead of regex</PackageReleaseNotes>
+    <Version>2.0.19</Version>
+    <PackageReleaseNotes>fix bug: query limit no start row index</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.18</AssemblyVersion>
-    <FileVersion>2.0.18</FileVersion>
+    <AssemblyVersion>2.0.19</AssemblyVersion>
+    <FileVersion>2.0.19</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
