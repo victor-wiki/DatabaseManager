@@ -62,6 +62,7 @@
   <item name="REVERSE" args="EXP" isString="true"></item>
   <item name="RIGHT" args="EXP,LENGTH" isString="true"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
+  <item name="ROW_NUMBER" args=""></item>
   <item name="RPAD" args="EXP,LENGTH,PAD" isString="true"></item>
   <item name="RTRIM" args="EXP" isString="true"></item>
   <item name="SCALE" args="EXP"></item>

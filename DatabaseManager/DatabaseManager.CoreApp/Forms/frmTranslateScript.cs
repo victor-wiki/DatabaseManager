@@ -38,7 +38,7 @@ namespace DatabaseManager
 
             this.LoadDbTypes();
 
-            if(SettingManager.Setting.ValidateScriptsAfterTranslated)
+            if (SettingManager.Setting.ValidateScriptsAfterTranslated)
             {
                 this.chkValidateScriptsAfterTranslated.Checked = true;
             }
@@ -134,10 +134,10 @@ namespace DatabaseManager
                     return;
                 }
 
-                if(this.chkValidateScriptsAfterTranslated.Checked)
+                if (this.chkValidateScriptsAfterTranslated.Checked)
                 {
                     this.ValidateScripts(targetDbType);
-                }                
+                }
 
                 this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
             }
@@ -153,24 +153,31 @@ namespace DatabaseManager
 
         private async void ValidateScripts(DatabaseType databaseType, bool showMessageBox = false)
         {
-            SqlSyntaxError error = await Task.Run(() => ScriptValidator.ValidateSyntax(databaseType, this.txtTarget.Text));
+            string script = this.txtTarget.Text.Trim();
+
+            if (string.IsNullOrEmpty(script))
+            {
+                return;
+            }
+
+            SqlSyntaxError error = await Task.Run(() => ScriptValidator.ValidateSyntax(databaseType, script));
 
             if (error != null && error.HasError)
             {
-                if(showMessageBox)
+                if (showMessageBox)
                 {
                     frmTextContent msgBox = new frmTextContent("Error Message", error.ToString(), true);
                     msgBox.ShowDialog();
-                }                
+                }
 
                 RichTextBoxHelper.HighlightingError(this.txtTarget, error);
             }
             else
             {
-                if(showMessageBox)
+                if (showMessageBox)
                 {
                     MessageBox.Show("The scripts is valid.");
-                }                
+                }
             }
         }
 
@@ -323,7 +330,7 @@ namespace DatabaseManager
 
             var targetDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), this.cboTargetDbType.Text);
 
-            this.ValidateScripts(targetDbType, true);           
+            this.ValidateScripts(targetDbType, true);
         }
 
         private void targetContextMenuStrip_Opening(object sender, CancelEventArgs e)

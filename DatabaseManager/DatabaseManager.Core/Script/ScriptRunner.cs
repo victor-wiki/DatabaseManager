@@ -178,14 +178,14 @@ namespace DatabaseManager.Core
 
         private void ParseOracleProcedureCall(CommandInfo cmd, List<RoutineParameter> parameters)
         {
-            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(DatabaseType.Oracle);
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(DatabaseType.Oracle, cmd.CommandText);
 
             sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
             sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
 
-            var result = sqlAnalyser.AnalyseCommon(cmd.CommandText);
+            var result = sqlAnalyser.AnalyseCommon();
 
             if (result != null && !result.HasError)
             {
@@ -318,14 +318,14 @@ namespace DatabaseManager.Core
         {
             DatabaseType databaseType = dbInterpreter.DatabaseType;
 
-            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType);
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType, script);
 
             sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
             sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
 
-            var result = sqlAnalyser.AnalyseCommon(script);
+            var result = sqlAnalyser.AnalyseCommon();
 
             if (result != null && !result.HasError)
             {
@@ -365,7 +365,9 @@ namespace DatabaseManager.Core
                             selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo("0"), RowCount = new TokenInfo(this.LimitCount.ToString()) };
                         }
 
-                        script = sqlAnalyser.GenerateScripts(cs).Script;
+                        ScriptBuildFactory scriptBuildFactory = TranslateHelper.GetScriptBuildFactory(databaseType);
+
+                        script = scriptBuildFactory.GenerateScripts(cs).Script;
 
                         if (databaseType == DatabaseType.Oracle) //oracle low version doesn't support limit clause.
                         {

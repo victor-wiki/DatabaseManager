@@ -128,18 +128,18 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key       
-        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null);
-        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null);
+        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false);
+        public abstract Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false);
 
-        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null)
+        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(filter);
+            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(filter, isFilterForReferenced);
             return SchemaInfoHelper.GetTableForeignKeys(foreignKeyItems);
         }
 
-        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public virtual async Task<List<TableForeignKey>> GetTableForeignKeysAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(dbConnection, filter);
+            List<TableForeignKeyItem> foreignKeyItems = await this.GetTableForeignKeyItemsAsync(dbConnection, filter, isFilterForReferenced);
             return SchemaInfoHelper.GetTableForeignKeys(foreignKeyItems);
         }
         #endregion
@@ -365,8 +365,8 @@ namespace DatabaseInterpreter.Core
         public abstract Task<List<ViewTableUsage>> GetViewTableUsages(DbConnection dbConnection, SchemaInfoFilter filter, bool isFilterForReferenced = false);
         public abstract Task<List<ViewColumnUsage>> GetViewColumnUsages(SchemaInfoFilter filter);
         public abstract Task<List<ViewColumnUsage>> GetViewColumnUsages(DbConnection dbConnection, SchemaInfoFilter filter);
-        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter, bool isFilterForReferenced = false);
-        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter, bool isFilterForReferenced = false);
+        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter, bool isFilterForReferenced = false, bool includeViewTableUsages = false);
+        public abstract Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter, bool isFilterForReferenced = false, bool includeViewTableUsages = false);
 
         protected async Task<List<T>> GetDbObjectUsagesAsync<T>(string sql) where T : DbObjectUsage
         {

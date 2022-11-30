@@ -13,36 +13,40 @@ namespace SqlAnalyser.Core
 {
     public class PostgreSqlRuleAnalyser : SqlRuleAnalyser
     {
+        public PostgreSqlRuleAnalyser(string content) : base(content)
+        {
+        }
+
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Qualified_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(ColumnrefContext) };
-        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Alias_clauseContext)};
-        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() {  };
+        public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Alias_clauseContext) };
+        public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() { };
 
-        public override Lexer GetLexer(string content)
+        protected override Lexer GetLexer()
         {
-            return new PostgreSqlLexer(this.GetCharStreamFromString(content));
+            return new PostgreSqlLexer(this.GetCharStreamFromString());
         }
 
-        public override Parser GetParser(CommonTokenStream tokenStream)
+        protected override Parser GetParser(CommonTokenStream tokenStream)
         {
             return new PostgreSqlParser(tokenStream);
         }
 
-        public override SqlSyntaxError Validate(string content)
+        public override SqlSyntaxError Validate()
         {
             SqlSyntaxError error = null;
 
-            var rootContext = this.GetRootContext(content, out error);
+            var rootContext = this.GetRootContext(out error);
 
             return error;
         }
 
-        public override AnalyseResult AnalyseCommon(string content)
+        public override AnalyseResult AnalyseCommon()
         {
             SqlSyntaxError error = null;
 
-            RootContext rootContext = this.GetRootContext(content, out error);
+            RootContext rootContext = this.GetRootContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -68,11 +72,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public override AnalyseResult AnalyseProcedure(string content)
+        public override AnalyseResult AnalyseProcedure()
         {
             SqlSyntaxError error = null;
 
-            StmtContext statement = this.GetStmtContext(content, out error);
+            StmtContext statement = this.GetStmtContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -120,11 +124,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public override AnalyseResult AnalyseFunction(string content)
+        public override AnalyseResult AnalyseFunction()
         {
             SqlSyntaxError error = null;
 
-            StmtContext statement = this.GetStmtContext(content, out error);
+            StmtContext statement = this.GetStmtContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -171,11 +175,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public override AnalyseResult AnalyseTrigger(string content)
+        public override AnalyseResult AnalyseTrigger()
         {
             SqlSyntaxError error = null;
 
-            StmtContext statement = this.GetStmtContext(content, out error);
+            StmtContext statement = this.GetStmtContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -240,11 +244,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public override AnalyseResult AnalyseView(string content)
+        public override AnalyseResult AnalyseView()
         {
             SqlSyntaxError error = null;
 
-            StmtContext statement = this.GetStmtContext(content, out error);
+            StmtContext statement = this.GetStmtContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -285,11 +289,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public RootContext GetRootContext(string content, out SqlSyntaxError error)
+        private RootContext GetRootContext(out SqlSyntaxError error)
         {
             error = null;
 
-            PostgreSqlParser parser = this.GetParser(content) as PostgreSqlParser;
+            PostgreSqlParser parser = this.GetParser() as PostgreSqlParser;
 
             SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
 
@@ -302,16 +306,16 @@ namespace SqlAnalyser.Core
             return context;
         }
 
-        public StmtContext GetStmtContext(string content, out SqlSyntaxError error)
+        private StmtContext GetStmtContext(out SqlSyntaxError error)
         {
             error = null;
 
-            RootContext rootContext = this.GetRootContext(content, out error);
+            RootContext rootContext = this.GetRootContext(out error);
 
             return rootContext?.stmtblock()?.stmtmulti()?.stmt()?.FirstOrDefault();
         }
 
-        public void SetRoutineParameters(RoutineScript script, Func_arg_with_defaultContext[] parameters)
+        private void SetRoutineParameters(RoutineScript script, Func_arg_with_defaultContext[] parameters)
         {
             if (parameters != null)
             {
@@ -357,7 +361,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
+        private void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
         {
             foreach (var child in nodes)
             {
@@ -379,7 +383,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public SelectStatement ParseSelectStatement(SelectstmtContext node)
+        private SelectStatement ParseSelectStatement(SelectstmtContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -418,7 +422,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public List<Statement> ParseStmt(StmtContext node)
+        private List<Statement> ParseStmt(StmtContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -455,7 +459,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public SelectStatement ParseSelectClause(Select_clauseContext node)
+        private SelectStatement ParseSelectClause(Select_clauseContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -470,7 +474,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public SelectStatement ParseSimpleSelect(Simple_selectContext node)
+        private SelectStatement ParseSimpleSelect(Simple_selectContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -479,7 +483,7 @@ namespace SqlAnalyser.Core
             var where = node.where_clause();
             var groupBy = node.group_clause();
             var having = node.having_clause();
-            var into = node.into_clause();
+            var intos = node.into_clause();
 
             foreach (var col in columns.children)
             {
@@ -497,6 +501,46 @@ namespace SqlAnalyser.Core
                 if (colName != null)
                 {
                     statement.Columns.Add(colName);
+                }
+            }
+
+            if (intos != null)
+            {
+                statement.Intos = new List<TokenInfo>();
+
+                foreach (var into in intos)
+                {
+                    var exprs = into.into_target()?.expr_list();
+
+                    if (exprs != null)
+                    {
+                        foreach (var child in exprs.children)
+                        {
+                            if ((child is ParserRuleContext pr) && !string.IsNullOrEmpty(child.GetText()))
+                            {
+                                string text = pr.GetText();
+
+                                bool hasWord = AnalyserHelper.HasWord(this.Content, text, 0, pr.Start.StartIndex);
+
+                                TokenInfo token = new TokenInfo(pr) { Type = hasWord ? TokenType.VariableName : TokenType.TableName };
+
+                                statement.Intos.Add(token);
+                            }
+                        }
+                    }
+                    else if (into.children != null)
+                    {
+                        foreach (var child in into.children)
+                        {
+                            if (child is OpttempTableNameContext tn)
+                            {
+                                TokenInfo token = new TokenInfo(tn) { Type = TokenType.TableName };
+
+                                statement.Intos.Add(token);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 
@@ -534,7 +578,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public CreateStatement ParseCreateStatement(CreatestmtContext node)
+        private CreateStatement ParseCreateStatement(CreatestmtContext node)
         {
             CreateStatement statement = null;
 
@@ -576,7 +620,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public TruncateStatement ParseTuncateStatement(TruncatestmtContext node)
+        private TruncateStatement ParseTuncateStatement(TruncatestmtContext node)
         {
             TruncateStatement statement = null;
 
@@ -616,7 +660,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public List<FromItem> ParseFromClause(From_clauseContext node)
+        private List<FromItem> ParseFromClause(From_clauseContext node)
         {
             List<FromItem> fromItems = new List<FromItem>();
 
@@ -747,7 +791,7 @@ namespace SqlAnalyser.Core
             return JoinType.INNER;
         }
 
-        public DropStatement ParseDropStatetment(DropstmtContext node)
+        private DropStatement ParseDropStatetment(DropstmtContext node)
         {
             DropStatement statement = new DropStatement();
 
@@ -764,7 +808,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public override bool IsFunction(IParseTree node)
+        protected override bool IsFunction(IParseTree node)
         {
             if (node is Func_exprContext || node is Func_applicationContext)
             {
@@ -774,7 +818,7 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        public override TokenInfo ParseFunction(ParserRuleContext node)
+        protected override TokenInfo ParseFunction(ParserRuleContext node)
         {
             TokenInfo token = base.ParseFunction(node);
 
@@ -810,13 +854,13 @@ namespace SqlAnalyser.Core
             return token;
         }
 
-        public override TableName ParseTableName(ParserRuleContext node, bool strict = false)
+        protected override TableName ParseTableName(ParserRuleContext node, bool strict = false)
         {
             TableName tableName = null;
 
             Action<Opt_alias_clauseContext> setAlias = (alias) =>
             {
-                if (tableName != null && alias != null)
+                if (tableName != null && alias != null && !string.IsNullOrEmpty(alias.GetText()))
                 {
                     tableName.Alias = new TokenInfo(alias);
                 }
@@ -833,7 +877,9 @@ namespace SqlAnalyser.Core
                     {
                         tableName = new TableName(expr);
 
-                        setAlias(tableRef.opt_alias_clause());
+                        var alias = tableRef.opt_alias_clause();
+
+                        setAlias(alias);
                     }
                     else if (tbRefs != null && tbRefs.Length > 0)
                     {
@@ -871,7 +917,7 @@ namespace SqlAnalyser.Core
             return tableName;
         }
 
-        public override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
+        protected override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
         {
             ColumnName columnName = null;
 
@@ -942,7 +988,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        protected override TokenInfo ParseTableAlias(ParserRuleContext node)
         {
             if (node != null)
             {
@@ -955,7 +1001,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        protected override TokenInfo ParseColumnAlias(ParserRuleContext node)
         {
             return null;
         }

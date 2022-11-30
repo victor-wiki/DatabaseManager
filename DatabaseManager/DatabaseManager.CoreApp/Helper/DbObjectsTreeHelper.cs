@@ -73,7 +73,7 @@ namespace DatabaseManager.Helper
         public static TreeNode CreateTreeNode<T>(T dbObject, bool createFakeNode = false)
             where T : DatabaseObject
         {
-            TreeNode node = CreateTreeNode(dbObject.Name, dbObject.Name, typeof(T).Name);
+            TreeNode node = CreateTreeNode(dbObject.Name, dbObject.Name, dbObject.GetType().Name);
             node.Tag = dbObject;
 
             if (createFakeNode)

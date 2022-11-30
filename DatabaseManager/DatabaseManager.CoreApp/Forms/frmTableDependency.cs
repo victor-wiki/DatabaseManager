@@ -14,7 +14,7 @@ using System.Windows.Forms;
 
 namespace DatabaseManager
 {
-    public partial class frmDependency : Form
+    public partial class frmTableDependency : Form
     {
         private DatabaseType databaseType;
         private ConnectionInfo connectionInfo;
@@ -22,12 +22,12 @@ namespace DatabaseManager
         private DatabaseObject dbObject;
         private bool hasStyled = false;
 
-        public frmDependency()
+        public frmTableDependency()
         {
             InitializeComponent();
         }
 
-        public frmDependency(DatabaseType databaseType, ConnectionInfo connectionInfo, DatabaseObject dbObject)
+        public frmTableDependency(DatabaseType databaseType, ConnectionInfo connectionInfo, DatabaseObject dbObject)
         {
             InitializeComponent();
             this.databaseType = databaseType;

@@ -405,18 +405,20 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
+            string tableAlias = !isFilterForReferenced ? "UC" : "RUCC";
+
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT UC.OWNER AS ""Schema"", UC.TABLE_NAME AS ""TableName"", UC.CONSTRAINT_NAME AS ""Name"", UCC.column_name AS ""ColumnName"",
@@ -427,7 +429,7 @@ namespace DatabaseInterpreter.Core
                         JOIN USER_CONS_COLUMNS RUCC ON UC.OWNER=RUCC.OWNER AND UC.R_CONSTRAINT_NAME=RUCC.CONSTRAINT_NAME AND UCC.POSITION=RUCC.POSITION
                         WHERE UC.CONSTRAINT_TYPE='R' AND UPPER(UC.OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "UC.TABLE_NAME"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, $"{tableAlias}.TABLE_NAME"));
 
             return sb.Content;
         }
@@ -696,17 +698,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Routine Script Usage
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
-            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced));
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced,includeViewTableUsages));
         }
 
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
-            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced));
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced, includeViewTableUsages));
         }
 
-        private string GetSqlForRountineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        private string GetSqlForRountineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             SqlBuilder sb = new SqlBuilder();
 
@@ -715,8 +717,13 @@ namespace DatabaseInterpreter.Core
             sb.Append($@"SELECT SUBSTR(d.TYPE,1,1) || LOWER(SUBSTR(d.TYPE,2)) AS ""ObjectType"",SUBSTR(d.REFERENCED_TYPE,1,1) || LOWER(SUBSTR(d.REFERENCED_TYPE,2)) AS ""RefObjectType"",
                         d.OWNER AS ""ObjectSchema"",d.NAME AS ""ObjectName"",d.REFERENCED_OWNER AS ""RefObjectSchema"", d.REFERENCED_NAME AS ""RefObjectName""
                         FROM sys.all_dependencies d
-                        WHERE d.TYPE IN('PROCEDURE','FUNCTION') AND d.REFERENCED_OWNER NOT IN('SYS','PUBLIC')
+                        WHERE d.REFERENCED_OWNER NOT IN('SYS','PUBLIC')
                         AND UPPER({owner})=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
+
+            if(!includeViewTableUsages)
+            {
+                sb.Append("AND NOT (d.TYPE= 'VIEW' AND d.REFERENCED_TYPE='TABLE') AND NOT (d.TYPE= 'VIEW' AND d.REFERENCED_TYPE='VIEW')");
+            }
 
             string typeColumn = !isFilterForReferenced ? "TYPE": "REFERENCED_TYPE";
             string nameColumn = !isFilterForReferenced ? "NAME" : "REFERENCED_NAME";

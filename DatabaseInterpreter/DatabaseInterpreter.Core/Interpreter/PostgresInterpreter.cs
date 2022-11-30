@@ -130,7 +130,7 @@ namespace DatabaseInterpreter.Core
             sb.Append(this.GetFilterSchemaCondition(filter, "n.nspname"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.UserDefinedTypeNames, "t.typname"));
 
-            if(Setting.ExcludePostgresExtensionObjects)
+            if (Setting.ExcludePostgresExtensionObjects)
             {
                 sb.Append(this.GetSqlForExcludeExtensionUserDefinedTypes("t.typname"));
             }
@@ -381,18 +381,20 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
+            string tableAlias = !isFilterForReferenced ? "kcu" : "fkcu";
+
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT kcu.constraint_schema AS ""Schema"", kcu.constraint_name AS ""Name"", kcu.table_name AS ""TableName"",kcu.column_name AS ""ColumnName"",
@@ -403,8 +405,8 @@ namespace DatabaseInterpreter.Core
                             INNER JOIN information_schema.key_column_usage fkcu ON fkcu.constraint_name=rc.unique_constraint_name
                             WHERE kcu.ordinal_position=fkcu.ordinal_position");
 
-            sb.Append(this.GetFilterSchemaCondition(filter, "kcu.constraint_schema"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "kcu.table_name"));
+            sb.Append(this.GetFilterSchemaCondition(filter, $"{tableAlias}.constraint_schema"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, $"{tableAlias}.table_name"));
 
             return sb.Content;
         }
@@ -484,7 +486,7 @@ namespace DatabaseInterpreter.Core
             if (filter != null)
             {
                 sb.Append(this.GetFilterSchemaCondition(filter, "event_object_schema"));
-                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "event_object_table"));                
+                sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "event_object_table"));
 
                 if (filter.TableTriggerNames != null && filter.TableTriggerNames.Any())
                 {
@@ -563,7 +565,7 @@ namespace DatabaseInterpreter.Core
             sb.Append(this.GetFilterSchemaCondition(filter, "v.table_schema"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.ViewNames, "v.table_name"));
 
-            if(Setting.ExcludePostgresExtensionObjects)
+            if (Setting.ExcludePostgresExtensionObjects)
             {
                 sb.Append(this.GetSqlForExcludeExtensionObjects(DatabaseObjectType.View, "v.table_name"));
             }
@@ -573,7 +575,7 @@ namespace DatabaseInterpreter.Core
             return sb.Content;
         }
 
-        private string GetSqlForExcludeExtensionObjects(DatabaseObjectType databaseObjectType,  string columnName)
+        private string GetSqlForExcludeExtensionObjects(DatabaseObjectType databaseObjectType, string columnName)
         {
             string kind = "";
 
@@ -588,10 +590,10 @@ namespace DatabaseInterpreter.Core
                     break;
                 case DatabaseObjectType.Sequence:
                     kind = "s";
-                    break;                    
+                    break;
             }
 
-            if(string.IsNullOrEmpty(kind))
+            if (string.IsNullOrEmpty(kind))
             {
                 return string.Empty;
             }
@@ -634,7 +636,7 @@ namespace DatabaseInterpreter.Core
             {
                 sb.Append(this.GetFilterSchemaCondition(filter, "r.routine_schema"));
                 sb.Append(this.GetFilterNamesCondition(filter, objectNames, " r.routine_name"));
-            };            
+            };
 
             if (isSimpleMode)
             {
@@ -647,7 +649,7 @@ namespace DatabaseInterpreter.Core
 
                 appendCondition();
 
-                if(Setting.ExcludePostgresExtensionObjects)
+                if (Setting.ExcludePostgresExtensionObjects)
                 {
                     sb.Append(this.GetSqlForExcludeExtensionsRoutines("r.routine_name", isFunction));
                 }
@@ -667,7 +669,7 @@ namespace DatabaseInterpreter.Core
                 appendCondition();
 
                 sb.Append("GROUP BY r.routine_schema,r.routine_name,r.routine_definition,r.data_type");
-            }           
+            }
 
             sb.Append("ORDER BY r.routine_name");
 
@@ -767,7 +769,7 @@ namespace DatabaseInterpreter.Core
 
             sb.Append(this.GetExcludeSystemSchemasCondition(schemaColumn));
             sb.Append(this.GetFilterSchemaCondition(filter, schemaColumn));
-            sb.Append(this.GetFilterNamesCondition(filter, !isFilterForReferenced? filter?.ViewNames: filter?.TableNames, !isFilterForReferenced? "vt.view_name": "vt.table_name"));
+            sb.Append(this.GetFilterNamesCondition(filter, !isFilterForReferenced ? filter?.ViewNames : filter?.TableNames, !isFilterForReferenced ? "vt.view_name" : "vt.table_name"));
 
             return sb.Content;
         }
@@ -803,12 +805,12 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Routine Script Usage
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             return base.GetDbObjectUsagesAsync<RoutineScriptUsage>("");
         }
 
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, "");
         }

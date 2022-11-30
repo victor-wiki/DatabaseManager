@@ -138,7 +138,7 @@ namespace DatabaseManager.Controls
             this.tsmiInsertScript.Visible = isTable;
             this.tsmiUpdateScript.Visible = isTable;
             this.tsmiDeleteScript.Visible = isTable;
-            this.tsmiViewDependency.Visible = isDatabase || isTable;
+            this.tsmiViewDependency.Visible = isDatabase || isTable || isView || isFunction || isProcedure;
             this.tsmiExecuteScript.Visible = isProcedure;
 
             this.tsmiCopyChildrenNames.Visible = node.Level == 1 && node.Nodes.Count > 0 && (node.Nodes[0].Tag != null);
@@ -433,7 +433,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            this.tvDbObjects.BeginInvoke(new Action(() => this.LoadChildNodes(node)));
+            this.tvDbObjects.BeginInvoke(new Action(async () => await this.LoadChildNodes(node)));
         }
 
         private void ClearNodes(TreeNode node)
@@ -1298,21 +1298,24 @@ namespace DatabaseManager.Controls
             TreeNode node = this.GetSelectedNode();
 
             var tag = node.Tag;
-            Database database = null;
-            DatabaseObject dbObject = null;
+            Database database = null;            
 
             if (tag is Database)
             {
                 database = tag as Database;
+
+                frmTableDependency tableDependency = new frmTableDependency(this.databaseType, this.GetConnectionInfo(database.Name), null);
+                
+                tableDependency.Show();
             }
             else if (tag is DatabaseObject dbObj)
             {
                 database = this.GetDatabaseNode(node).Tag as Database;
-                dbObject = dbObj;
-            }
 
-            frmDependency frm = new frmDependency(this.databaseType, this.GetConnectionInfo(database.Name), dbObject);
-            frm.Show();
+                frmDbObjectDependency dbOjectDependency = new frmDbObjectDependency(this.databaseType, this.GetConnectionInfo(database.Name), dbObj);
+
+                dbOjectDependency.Show();
+            }           
         }
 
         private void tsmiCopyChildrenNames_Click(object sender, EventArgs e)

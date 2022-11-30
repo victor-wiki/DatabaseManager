@@ -198,6 +198,16 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null && set.Value != null)
                 {
+                    if (set.IsSetUserVariable)
+                    {
+                        string dataType = AnalyserHelper.GetUserVariableDataType(DatabaseType.SqlServer, set.UserVariableDataType);
+
+                        if (!string.IsNullOrEmpty(dataType))
+                        {
+                            this.AppendLine($"DECLARE {set.Key} {dataType};");
+                        }
+                    }
+
                     TokenInfo valueToken = set.Value;
 
                     if (valueToken != null)
@@ -481,7 +491,9 @@ namespace SqlAnalyser.Core
 
         protected override void BuildSelectStatement(SelectStatement select, bool appendSeparator = true)
         {
-            bool isIntoVariable = select.IntoTableName != null && select.IntoTableName.Symbol.StartsWith("@");
+            TokenInfo intoTableName = AnalyserHelper.GetIntoTableName(select);
+            bool isAssignVariable = intoTableName == null && select.Intos != null && select.Intos.Count > 0;
+
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
             if (select.LimitInfo != null && select.TopInfo == null)
@@ -493,18 +505,33 @@ namespace SqlAnalyser.Core
             }
 
             string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : " ")}";
-            string intoVariable = isIntoVariable ? (select.IntoTableName.Symbol + "=") : "";
 
-            string selectColumns = $"SELECT {top}{intoVariable}{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
+            string selectColumns = $"SELECT {top}";
+
+            if (!isAssignVariable)
+            {
+                selectColumns += $"{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
+            }
 
             if (!isWith)
             {
-                this.AppendLine(selectColumns);
+                this.Append(selectColumns);
             }
 
-            if (select.IntoTableName != null && !isIntoVariable)
+            if (intoTableName != null)
             {
-                this.AppendLine($"INTO {select.IntoTableName.ToString()}");
+                this.AppendLine($"INTO {intoTableName}");
+            }
+            else if (isAssignVariable && select.Columns.Count == select.Intos.Count)
+            {
+                List<string> assigns = new List<string>();
+
+                for (int i = 0; i < select.Intos.Count; i++)
+                {
+                    assigns.Add($"{select.Intos[i]}={select.Columns[i]}");
+                }
+
+                this.AppendLine(String.Join(", ", assigns));
             }
 
             Action appendWith = () =>

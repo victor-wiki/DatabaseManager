@@ -1,4 +1,5 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -39,6 +40,24 @@ namespace SqlAnalyser.Core
             }
 
             statements.RemoveAll(item => statementsNeedToRemove.Contains(item));
+        }
+
+        public static UserVariableDataType DetectUserVariableDataType(string value)
+        {
+            if (DataTypeHelper.StartsWithN(value) || ValueHelper.IsStringValue(value))
+            {
+                return UserVariableDataType.String;
+            }
+            else if(int.TryParse(value, out _))
+            {
+                return UserVariableDataType.Integer;
+            }
+            else if(decimal.TryParse(value, out _))
+            {
+                return UserVariableDataType.Decimal;
+            }
+
+            return UserVariableDataType.Unknown;
         }
     }
 }

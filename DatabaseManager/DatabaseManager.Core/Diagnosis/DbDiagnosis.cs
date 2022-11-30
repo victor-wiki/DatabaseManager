@@ -332,13 +332,7 @@ namespace DatabaseManager.Core
 
         private List<ScriptDiagnoseResult> HandleColumnAliasWithoutQuotationChar(DbInterpreter interpreter, List<View> views)
         {
-            List<ScriptDiagnoseResult> results = new List<ScriptDiagnoseResult>();
-
-            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(this.DatabaseType);
-
-            sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
-            sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
-            sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
+            List<ScriptDiagnoseResult> results = new List<ScriptDiagnoseResult>();           
 
             this.Feedback("Begin to analyse column alias...");
 
@@ -348,7 +342,13 @@ namespace DatabaseManager.Core
 
                 string wrappedDefinition = this.GetWrappedDefinition(definition);
 
-                var analyseResult = sqlAnalyser.Analyse<View>(wrappedDefinition);
+                SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(this.DatabaseType, wrappedDefinition);
+
+                sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
+
+                var analyseResult = sqlAnalyser.Analyse<View>();
 
                 if (analyseResult != null && !analyseResult.HasError)
                 {
@@ -362,7 +362,7 @@ namespace DatabaseManager.Core
 
                         if (selectStatement.UnionStatements != null)
                         {
-                            foreach(var union in selectStatement.UnionStatements)
+                            foreach (var union in selectStatement.UnionStatements)
                             {
                                 result.Details.AddRange(this.ParseSelectStatementColumns(interpreter, union.SelectStatement));
                             }
@@ -464,7 +464,7 @@ namespace DatabaseManager.Core
                 }
                 else if (this.DatabaseType == DatabaseType.MySql)
                 {
-                    var usages = await this.CreateRoutineScriptUsages(interpreter, connection, functions, tables, views, functions);
+                    var usages = await this.GetRoutineScriptUsages(interpreter, connection, functions, tables, views, functions);
 
                     if (usages.Count > 0)
                     {
@@ -490,7 +490,7 @@ namespace DatabaseManager.Core
                 }
                 else if (this.DatabaseType == DatabaseType.MySql)
                 {
-                    var usages = await this.CreateRoutineScriptUsages(interpreter, connection, procedures, tables, views, functions, procedures);
+                    var usages = await this.GetRoutineScriptUsages(interpreter, connection, procedures, tables, views, functions, procedures);
 
                     if (usages.Count > 0)
                     {
@@ -521,7 +521,7 @@ namespace DatabaseManager.Core
             return results;
         }
 
-        private async Task<List<RoutineScriptUsage>> CreateRoutineScriptUsages(DbInterpreter interpreter, DbConnection connection, IEnumerable<ScriptDbObject> scriptDbObjects, List<Table> tables, List<View> views,
+        private async Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbInterpreter interpreter, DbConnection connection, IEnumerable<ScriptDbObject> scriptDbObjects, List<Table> tables, List<View> views,
               List<Function> functions = null, List<Procedure> procedures = null)
         {
             var tableNames = tables.Select(item => item.Name);
@@ -533,17 +533,17 @@ namespace DatabaseManager.Core
 
             foreach (var sdb in scriptDbObjects)
             {
-                usages.AddRange(this.CreateRoutineScriptUsages(sdb, tables, tableNames));
-                usages.AddRange(this.CreateRoutineScriptUsages(sdb, views, viewNames));
+                usages.AddRange(this.GetRoutineScriptUsages(sdb, tables, tableNames));
+                usages.AddRange(this.GetRoutineScriptUsages(sdb, views, viewNames));
 
                 if (functions != null)
                 {
-                    usages.AddRange(this.CreateRoutineScriptUsages(sdb, functions, functionNames));
+                    usages.AddRange(this.GetRoutineScriptUsages(sdb, functions, functionNames));
                 }
 
                 if (procedures != null)
                 {
-                    usages.AddRange(this.CreateRoutineScriptUsages(sdb, procedures, procedureNames));
+                    usages.AddRange(this.GetRoutineScriptUsages(sdb, procedures, procedureNames));
                 }
             }
 
@@ -555,15 +555,17 @@ namespace DatabaseManager.Core
             return usages;
         }
 
-        private List<RoutineScriptUsage> CreateRoutineScriptUsages(ScriptDbObject scriptDbObject, IEnumerable<DatabaseObject> dbObjects, IEnumerable<string> dbObjectNames)
+        private List<RoutineScriptUsage> GetRoutineScriptUsages(ScriptDbObject scriptDbObject, IEnumerable<DatabaseObject> dbObjects, IEnumerable<string> dbObjectNames)
         {
             List<RoutineScriptUsage> usages = new List<RoutineScriptUsage>();
 
             foreach (var name in dbObjectNames)
             {
-                if (Regex.IsMatch(scriptDbObject.Definition, $@"\b{name}\b", RegexOptions.Multiline | RegexOptions.IgnoreCase))
+                string body = ScriptParser.ExtractScriptBody(scriptDbObject.Definition);
+
+                if (Regex.IsMatch(body, $@"\b{name}\b", RegexOptions.Multiline | RegexOptions.IgnoreCase))
                 {
-                    RoutineScriptUsage usage = new RoutineScriptUsage() { ObjectType = "Function", ObjectSchema = scriptDbObject.Schema, ObjectName = scriptDbObject.Name };
+                    RoutineScriptUsage usage = new RoutineScriptUsage() { ObjectType = scriptDbObject.GetType().Name, ObjectSchema = scriptDbObject.Schema, ObjectName = scriptDbObject.Name };
 
                     var dbObj = dbObjects.FirstOrDefault(item => item.Name == name);
 
@@ -719,9 +721,16 @@ namespace DatabaseManager.Core
 
             var matches = Regex.Matches(wrappedDefinition, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
+            int beginAsIndex = ScriptParser.GetBeginAsIndex(wrappedDefinition);
+
             foreach (Match match in matches)
             {
                 string value = match.Value;
+
+                if (beginAsIndex > 0 && match.Index < beginAsIndex)
+                {
+                    continue;
+                }
 
                 //check whether the value is in comment line
                 if (commentLines.Any(item => match.Index > item.FirstCharIndex && match.Index < item.FirstCharIndex + item.Length))

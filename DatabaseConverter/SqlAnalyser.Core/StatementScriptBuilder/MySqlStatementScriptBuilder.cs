@@ -143,7 +143,7 @@ namespace SqlAnalyser.Core
                     this.AppendLine(this.Indent);
 
                     k++;
-                }               
+                }
 
                 if (update.Condition != null && update.Condition.Symbol != null)
                 {
@@ -227,7 +227,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declareVar);
+                    this.DeclareVariableStatements.Add(declareVar);
                 }
             }
             else if (statement is DeclareTableStatement declareTable)
@@ -296,7 +296,7 @@ namespace SqlAnalyser.Core
                     }
                     else if (set.IsSetCursorVariable && set.ValueStatement != null)
                     {
-                        var declareCursorStatement = this.DeclareStatements.FirstOrDefault(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == set.Key.Symbol) as DeclareCursorStatement;
+                        var declareCursorStatement = this.DeclareCursorStatements.FirstOrDefault(item => item.CursorName.Symbol == set.Key.Symbol);
 
                         if (declareCursorStatement == null)
                         {
@@ -318,7 +318,7 @@ namespace SqlAnalyser.Core
                 if (loop.Type != LoopType.LOOP)
                 {
                     bool hasExitStatement = AnalyserHelper.HasExitStatement(loop);
-                    string label = hasExitStatement ?  this.GetNextLoopLabel("w") : "";
+                    string label = hasExitStatement ? this.GetNextLoopLabel("w") : "";
 
                     if (loop.Condition == null)
                     {
@@ -477,7 +477,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(tryCatch);
+                    this.OtherDeclareStatements.Add(tryCatch);
                 }
             }
             else if (statement is ExceptionStatement exception)
@@ -497,7 +497,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(exception);
+                    this.OtherDeclareStatements.Add(exception);
                 }
             }
             else if (statement is DeclareCursorStatement declareCursor)
@@ -514,9 +514,9 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    if (!this.DeclareStatements.Any(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == declareCursor.CursorName.Symbol))
+                    if (!this.DeclareCursorStatements.Any(item => item.CursorName.Symbol == declareCursor.CursorName.Symbol))
                     {
-                        this.DeclareStatements.Add(declareCursor);
+                        this.DeclareCursorStatements.Add(declareCursor);
                     }
                 }
             }
@@ -533,7 +533,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declareCursorHandler);
+                    this.OtherDeclareStatements.Add(declareCursorHandler);
                 }
             }
             else if (statement is OpenCursorStatement openCursor)
@@ -608,11 +608,13 @@ namespace SqlAnalyser.Core
         {
             bool isCreateTemporaryTable = false;
 
-            if (select.IntoTableName != null)
+            TokenInfo intoTableName = AnalyserHelper.GetIntoTableName(select);
+
+            if (intoTableName != null)
             {
                 isCreateTemporaryTable = true;
 
-                this.AppendLine($"CREATE TEMPORARY TABLE IF NOT EXISTS {select.IntoTableName} AS (");
+                this.AppendLine($"CREATE TEMPORARY TABLE IF NOT EXISTS {intoTableName} AS (");
             }
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
@@ -651,6 +653,12 @@ namespace SqlAnalyser.Core
             else if (!isWith)
             {
                 this.AppendLine(selectColumns);
+            }
+
+            if (!isCreateTemporaryTable && select.Intos != null)
+            {
+                this.Append("INTO ");
+                this.AppendLine(String.Join(",", select.Intos));
             }
 
             Action appendWith = () =>
@@ -727,7 +735,7 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                this.AppendLine($"LIMIT {select.LimitInfo.StartRowIndex?.Symbol??"0"},{select.LimitInfo.RowCount}");
+                this.AppendLine($"LIMIT {select.LimitInfo.StartRowIndex?.Symbol ?? "0"},{select.LimitInfo.RowCount}");
             }
 
             if (select.UnionStatements != null)

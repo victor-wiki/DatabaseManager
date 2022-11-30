@@ -284,25 +284,27 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Foreign Key
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN INFORMATION_SCHEMA.STATISTICS AS S ON K.TABLE_SCHEMA=S.TABLE_SCHEMA AND K.TABLE_NAME=S.TABLE_NAME AND K.CONSTRAINT_NAME=S.INDEX_NAME AND K.ORDINAL_POSITION=S.SEQ_IN_INDEX";
 
+            string tableForFilter = !isFilterForReferenced ? "K.`TABLE_NAME`" : "K.`REFERENCED_TABLE_NAME`";
+
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.TABLE_NAME AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
+            sb.Append($@"SELECT C.`CONSTRAINT_SCHEMA` AS `Schema`, K.`TABLE_NAME` AS `TableName`, K.CONSTRAINT_NAME AS `Name`, 
                         K.COLUMN_NAME AS `ColumnName`, K.`REFERENCED_TABLE_NAME` AS `ReferencedTableName`,K.`REFERENCED_COLUMN_NAME` AS `ReferencedColumnName`,
                         CASE RC.UPDATE_RULE WHEN 'CASCADE' THEN 1 ELSE 0 END AS `UpdateCascade`, 
                         CASE RC.`DELETE_RULE` WHEN 'CASCADE' THEN 1 ELSE 0 END AS `DeleteCascade`{commentColumn}
@@ -313,7 +315,7 @@ namespace DatabaseInterpreter.Core
                         WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
                         AND K.`TABLE_SCHEMA` ='{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "C.TABLE_NAME"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, tableForFilter));
 
             return sb.Content;
         }
@@ -567,12 +569,12 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Routine Script Usage
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             return base.GetDbObjectUsagesAsync<RoutineScriptUsage>("");
         }
 
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, "");
         }

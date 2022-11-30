@@ -96,6 +96,7 @@ namespace SqlAnalyser.Model
         ColumnName,
         ParameterName,
         VariableName,
+        UserVariableName, //for mysql
         CursorName,
         DataType,   
         TableAlias,
@@ -113,6 +114,7 @@ namespace SqlAnalyser.Model
         InsertValue,
         UpdateSetValue,
         Subquery,
-        FunctionCall
-    }
+        FunctionCall,
+        StringLiteral
+    }   
 }

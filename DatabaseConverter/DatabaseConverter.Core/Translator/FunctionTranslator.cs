@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace DatabaseConverter.Core
@@ -61,7 +62,7 @@ namespace DatabaseConverter.Core
                 value = value.Replace(@"""substring""", "substring", System.StringComparison.OrdinalIgnoreCase);
             }
 
-            List<FunctionFormula> formulas = GetFunctionFormulas(this.sourceDbType, value);
+            List<FunctionFormula> formulas = GetFunctionFormulas(this.sourceDbInterpreter, value);
 
             foreach (FunctionFormula formula in formulas)
             {
@@ -135,22 +136,24 @@ namespace DatabaseConverter.Core
                 {
                     value = ReplaceValue(value, formula.Expression, newExpression);
                 }
-            }
+            }            
 
             return value;
         }
 
-        public static List<FunctionFormula> GetFunctionFormulas(DatabaseType databaseType, string value, bool extractChildren = true)
+        public static List<FunctionFormula> GetFunctionFormulas(DbInterpreter dbInterpreter, string value, bool extractChildren = true)
         {
             value = StringHelper.GetBalanceParenthesisTrimedValue(value);
 
-            var functionSpecifications = FunctionManager.GetFunctionSpecifications(databaseType);
+            var functionSpecifications = FunctionManager.GetFunctionSpecifications(dbInterpreter.DatabaseType);
 
             List<FunctionFormula> functions = new List<FunctionFormula>();
 
+            var trimChars = TranslateHelper.GetTrimChars(dbInterpreter).ToArray();
+
             Func<string, bool> isValidFunction = (name) =>
             {
-                return functionSpecifications.Any(item => item.Name.ToUpper() == name.Trim().ToUpper());
+                return functionSpecifications.Any(item => item.Name.ToUpper() ==  name.Trim().Trim(trimChars).ToUpper());
             };
 
             if (value.IndexOf("(") < 0)
@@ -162,23 +165,23 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType);
-
-                sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
-                sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
-                sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = extractChildren;
-                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
-
                 string select = "SELECT ";
 
                 string sql = $"{select}{value}";
 
-                if (databaseType == DatabaseType.Oracle)
+                if (dbInterpreter.DatabaseType == DatabaseType.Oracle)
                 {
                     sql += " FROM DUAL";
                 }
 
-                var result = sqlAnalyser.AnalyseCommon(sql);
+                SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(dbInterpreter.DatabaseType, sql);
+
+                sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = extractChildren;
+                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;               
+
+                var result = sqlAnalyser.AnalyseCommon();
 
                 if (!result.HasError)
                 {

@@ -12,24 +12,36 @@ namespace SqlAnalyser.Core
 {
     public abstract class SqlRuleAnalyser
     {
+        public string Content { get; set; }
+
         public SqlRuleAnalyserOption Option { get; set; } = new SqlRuleAnalyserOption();
         public abstract IEnumerable<Type> ParseTableTypes { get; }
         public abstract IEnumerable<Type> ParseColumnTypes { get; }
         public abstract IEnumerable<Type> ParseTableAliasTypes { get; }
         public abstract IEnumerable<Type> ParseColumnAliasTypes { get; }
 
-        public abstract Lexer GetLexer(string content);
-
-        public virtual ICharStream GetCharStreamFromString(string content)
+        public SqlRuleAnalyser(string content)
         {
-            return CharStreams.fromString(content);
+            this.Content = content;
         }
 
-        public abstract Parser GetParser(CommonTokenStream tokenStream);
+        protected abstract Lexer GetLexer();
 
-        public virtual Parser GetParser(string content)
+        protected virtual ICharStream GetCharStreamFromString()
         {
-            Lexer lexer = this.GetLexer(content);
+            if (string.IsNullOrEmpty(this.Content))
+            {
+                throw new Exception("Content can't be empty.");
+            }
+
+            return CharStreams.fromString(this.Content);
+        }
+
+        protected abstract Parser GetParser(CommonTokenStream tokenStream);
+
+        protected virtual Parser GetParser()
+        {
+            Lexer lexer = this.GetLexer();
 
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
@@ -38,7 +50,7 @@ namespace SqlAnalyser.Core
             return parser;
         }
 
-        public SqlSyntaxErrorListener AddParserErrorListener(Parser parser)
+        protected SqlSyntaxErrorListener AddParserErrorListener(Parser parser)
         {
             SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
 
@@ -46,14 +58,14 @@ namespace SqlAnalyser.Core
 
             return errorListener;
         }
+               
+        protected abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
+        protected abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
+        protected abstract TokenInfo ParseTableAlias(ParserRuleContext node);
+        protected abstract TokenInfo ParseColumnAlias(ParserRuleContext node);
+        protected abstract bool IsFunction(IParseTree node);
 
-        public abstract SqlSyntaxError Validate(string content);
-        public abstract TableName ParseTableName(ParserRuleContext node, bool strict = false);
-        public abstract ColumnName ParseColumnName(ParserRuleContext node, bool strict = false);
-        public abstract TokenInfo ParseTableAlias(ParserRuleContext node);
-        public abstract TokenInfo ParseColumnAlias(ParserRuleContext node);
-        public abstract bool IsFunction(IParseTree node);
-        public virtual TokenInfo ParseFunction(ParserRuleContext node)
+        protected virtual TokenInfo ParseFunction(ParserRuleContext node)
         {
             TokenInfo token = new TokenInfo(node as ParserRuleContext);
             return token;
@@ -66,19 +78,19 @@ namespace SqlAnalyser.Core
 
             if (typeof(T) == typeof(Procedure))
             {
-                result = this.AnalyseProcedure(content);
+                result = this.AnalyseProcedure();
             }
             else if (typeof(T) == typeof(Function))
             {
-                result = this.AnalyseFunction(content);
+                result = this.AnalyseFunction();
             }
             else if (typeof(T) == typeof(View))
             {
-                result = this.AnalyseView(content);
+                result = this.AnalyseView();
             }
             else if (typeof(T) == typeof(TableTrigger))
             {
-                result = this.AnalyseTrigger(content);
+                result = this.AnalyseTrigger();
             }
             else
             {
@@ -88,15 +100,17 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public abstract AnalyseResult AnalyseCommon(string content);
+        public abstract SqlSyntaxError Validate();
 
-        public abstract AnalyseResult AnalyseProcedure(string content);
+        public abstract AnalyseResult AnalyseCommon();
 
-        public abstract AnalyseResult AnalyseFunction(string content);
+        public abstract AnalyseResult AnalyseProcedure();
 
-        public abstract AnalyseResult AnalyseTrigger(string content);
+        public abstract AnalyseResult AnalyseFunction();
 
-        public abstract AnalyseResult AnalyseView(string content);
+        public abstract AnalyseResult AnalyseTrigger();
+
+        public abstract AnalyseResult AnalyseView();
 
         public virtual void ExtractFunctions(CommonScript script, ParserRuleContext node)
         {
@@ -212,7 +226,7 @@ namespace SqlAnalyser.Core
 
                 if (!this.IsAliasExisted(columnNameTokens, alias))
                 {
-                    aliasTokens.Add(alias);                    
+                    aliasTokens.Add(alias);
                 }
             }
 

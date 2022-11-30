@@ -94,6 +94,7 @@
   <item name="REMAINDER" args="EXP1,EXP2"></item>
   <item name="REPLACE" args="EXP,OLD[,NEW]" isString="true"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
+  <item name="ROW_NUMBER" args=""></item>
   <!--<item name="ROWNUM" args="" noParenthesess="true"></item>-->
   <item name="RPAD" args="EXP,LENGTH[,PAD]"></item>
   <item name="RTRIM" args="EXP"></item>

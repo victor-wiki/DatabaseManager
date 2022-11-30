@@ -8,9 +8,9 @@ namespace DatabaseManager.Core
     {
         public static SqlSyntaxError ValidateSyntax(DatabaseType databaseType, string script)
         {
-            var sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType);
+            var sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType, script);
 
-            SqlSyntaxError sqlSyntaxError = sqlAnalyser.Validate(script);
+            SqlSyntaxError sqlSyntaxError = sqlAnalyser.Validate();
 
             return sqlSyntaxError;
         }

@@ -310,7 +310,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declareVar);
+                    this.DeclareVariableStatements.Add(declareVar);
                 }
             }
             else if (statement is DeclareTableStatement declareTable)
@@ -341,7 +341,7 @@ namespace SqlAnalyser.Core
                 {
                     if (item.Type == IfStatementType.IF || item.Type == IfStatementType.ELSEIF)
                     {
-                        this.Append($"{(item.Type == IfStatementType.ELSEIF ? "ELSIF": "IF")} ");
+                        this.Append($"{(item.Type == IfStatementType.ELSEIF ? "ELSIF" : "IF")} ");
 
                         this.BuildIfCondition(item);
 
@@ -387,8 +387,20 @@ namespace SqlAnalyser.Core
             {
                 if (set.Key != null)
                 {
-                    if(set.Value!=null)
+                    if (set.Value != null)
                     {
+                        if (set.IsSetUserVariable)
+                        {
+                            string dataType = AnalyserHelper.GetUserVariableDataType(DatabaseType.Oracle, set.UserVariableDataType);
+
+                            if (!string.IsNullOrEmpty(dataType))
+                            {
+                                DeclareVariableStatement declareVariable = new DeclareVariableStatement() { Name = set.Key, DataType = new TokenInfo(dataType) };
+
+                                this.DeclareVariableStatements.Add(declareVariable);
+                            }
+                        }
+
                         string value = set.Value.Symbol;
 
                         value = this.GetSetVariableValue(set.Key.Symbol, set.Value?.Symbol);
@@ -404,7 +416,7 @@ namespace SqlAnalyser.Core
                     }
                     else if (set.IsSetCursorVariable && set.ValueStatement != null)
                     {
-                        var declareCursorStatement = this.DeclareStatements.FirstOrDefault(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == set.Key.Symbol) as DeclareCursorStatement;
+                        var declareCursorStatement = this.DeclareCursorStatements.FirstOrDefault(item => item.CursorName.Symbol == set.Key.Symbol);
 
                         if (declareCursorStatement == null)
                         {
@@ -558,10 +570,10 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    if (!this.DeclareStatements.Any(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == declareCursor.CursorName.Symbol))
+                    if (!this.DeclareCursorStatements.Any(item => item.CursorName.Symbol == declareCursor.CursorName.Symbol))
                     {
-                        this.DeclareStatements.Add(declareCursor);
-                    }                        
+                        this.DeclareCursorStatements.Add(declareCursor);
+                    }
                 }
             }
             else if (statement is OpenCursorStatement openCursor)
@@ -591,10 +603,10 @@ namespace SqlAnalyser.Core
 
                 this.AppendLine($"DROP {objectType} {drop.ObjectName.NameWithSchema};");
 
-                if(drop.ObjectType == DatabaseObjectType.Table)
+                if (drop.ObjectType == DatabaseObjectType.Table)
                 {
                     this.ReplaceTemporaryTableContent(drop.ObjectName, startIndex);
-                }                
+                }
             }
             else if (statement is RaiseErrorStatement error)
             {
@@ -645,12 +657,14 @@ namespace SqlAnalyser.Core
 
             int startIndex = this.Length;
 
-            if (select.IntoTableName != null)
+            TokenInfo intoTableName = AnalyserHelper.GetIntoTableName(select);
+
+            if (intoTableName != null)
             {
                 isCreateTemporaryTable = true;
 
-                this.AppendLine($"CREATE GLOBAL TEMPORARY TABLE {select.IntoTableName} AS (");
-            }         
+                this.AppendLine($"CREATE GLOBAL TEMPORARY TABLE {intoTableName} AS (");
+            }
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
             bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
@@ -713,6 +727,12 @@ namespace SqlAnalyser.Core
             else if (!isWith)
             {
                 this.AppendLine(selectColumns);
+            }
+
+            if (!isCreateTemporaryTable && select.Intos != null)
+            {
+                this.Append("INTO ");
+                this.AppendLine(String.Join(",", select.Intos));
             }
 
             if (!handled)
@@ -797,7 +817,7 @@ namespace SqlAnalyser.Core
 
             if (select.LimitInfo != null)
             {
-                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex?.Symbol??"0"} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
+                this.AppendLine($"OFFSET {select.LimitInfo.StartRowIndex?.Symbol ?? "0"} ROWS FETCH NEXT {select.LimitInfo.RowCount} ROWS ONLY");
             }
 
             if (select.UnionStatements != null)
@@ -817,13 +837,13 @@ namespace SqlAnalyser.Core
             if (appendSeparator)
             {
                 this.AppendLine(";");
-            }            
+            }
 
-            if(isCreateTemporaryTable)
+            if (isCreateTemporaryTable)
             {
-                this.TemporaryTableNames.Add(select.IntoTableName.Symbol);
+                this.TemporaryTableNames.Add(intoTableName.Symbol);
 
-                this.ReplaceTemporaryTableContent(select.IntoTableName, startIndex);
+                this.ReplaceTemporaryTableContent(intoTableName, startIndex);
             }
             else
             {
@@ -917,7 +937,7 @@ namespace SqlAnalyser.Core
 
                 string format = isTimestampValue ? datetimeFormat : dateFormat;
 
-                var declareVariable = this.DeclareStatements.FirstOrDefault(item => (item is DeclareVariableStatement) && (item as DeclareVariableStatement).Name.Symbol?.Trim() == name.Trim()) as DeclareVariableStatement;
+                var declareVariable = this.DeclareVariableStatements.FirstOrDefault(item => item.Name.Symbol?.Trim() == name.Trim());
 
                 if (declareVariable != null)
                 {

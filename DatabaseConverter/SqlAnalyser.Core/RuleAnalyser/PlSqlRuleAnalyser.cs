@@ -13,27 +13,31 @@ namespace SqlAnalyser.Core
 {
     public class PlSqlRuleAnalyser : SqlRuleAnalyser
     {
+        public PlSqlRuleAnalyser(string content) : base(content)
+        {
+        }
+
         public override IEnumerable<Type> ParseTableTypes => new List<Type>() { typeof(Tableview_nameContext) };
 
         public override IEnumerable<Type> ParseColumnTypes => new List<Type>() { typeof(Variable_nameContext), typeof(Column_nameContext) };
         public override IEnumerable<Type> ParseTableAliasTypes => new List<Type>() { typeof(Table_aliasContext) };
         public override IEnumerable<Type> ParseColumnAliasTypes => new List<Type>() { typeof(Column_aliasContext) };
 
-        public override Lexer GetLexer(string content)
+        protected override Lexer GetLexer()
         {
-            return new PlSqlLexer(this.GetCharStreamFromString(content));
+            return new PlSqlLexer(this.GetCharStreamFromString());
         }
 
-        public override Parser GetParser(CommonTokenStream tokenStream)
+        protected override Parser GetParser(CommonTokenStream tokenStream)
         {
             return new PlSqlParser(tokenStream);
         }
 
-        public Sql_scriptContext GetRootContext(string content, out SqlSyntaxError error)
+        private Sql_scriptContext GetRootContext(out SqlSyntaxError error)
         {
             error = null;
 
-            PlSqlParser parser = this.GetParser(content) as PlSqlParser;
+            PlSqlParser parser = this.GetParser() as PlSqlParser;
 
             SqlSyntaxErrorListener errorListener = new SqlSyntaxErrorListener();
 
@@ -61,29 +65,29 @@ namespace SqlAnalyser.Core
             return false;
         }
 
-        public override SqlSyntaxError Validate(string content)
+        public override SqlSyntaxError Validate()
         {
             SqlSyntaxError error = null;
 
-            var rootContext = this.GetRootContext(content, out error);
+            var rootContext = this.GetRootContext(out error);
 
             return error;
         }
 
-        public Unit_statementContext GetUnitStatementContext(string content, out SqlSyntaxError error)
+        private Unit_statementContext GetUnitStatementContext(out SqlSyntaxError error)
         {
             error = null;
 
-            Sql_scriptContext rootContext = this.GetRootContext(content, out error);
+            Sql_scriptContext rootContext = this.GetRootContext(out error);
 
             return rootContext?.unit_statement()?.FirstOrDefault();
         }
 
-        public override AnalyseResult AnalyseCommon(string content)
+        public override AnalyseResult AnalyseCommon()
         {
             SqlSyntaxError error = null;
 
-            Sql_scriptContext rootContext = this.GetRootContext(content, out error);
+            Sql_scriptContext rootContext = this.GetRootContext(out error);
 
             bool canIgnoreError = this.CanIgnoreError(error);
 
@@ -162,11 +166,11 @@ namespace SqlAnalyser.Core
             return result;
         }
 
-        public override AnalyseResult AnalyseProcedure(string content)
+        public override AnalyseResult AnalyseProcedure()
         {
             SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -223,11 +227,11 @@ namespace SqlAnalyser.Core
             #endregion
         }
 
-        public override AnalyseResult AnalyseFunction(string content)
+        public override AnalyseResult AnalyseFunction()
         {
             SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -286,11 +290,11 @@ namespace SqlAnalyser.Core
             #endregion
         }
 
-        public override AnalyseResult AnalyseView(string content)
+        public override AnalyseResult AnalyseView()
         {
             SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -342,11 +346,11 @@ namespace SqlAnalyser.Core
             #endregion
         }
 
-        public override AnalyseResult AnalyseTrigger(string content)
+        public override AnalyseResult AnalyseTrigger()
         {
             SqlSyntaxError error = null;
 
-            Unit_statementContext unitStatement = this.GetUnitStatementContext(content, out error);
+            Unit_statementContext unitStatement = this.GetUnitStatementContext(out error);
 
             AnalyseResult result = new AnalyseResult() { Error = error };
 
@@ -447,12 +451,12 @@ namespace SqlAnalyser.Core
             #endregion
         }
 
-        public void SetScriptBody(CommonScript script, BodyContext body)
+        private void SetScriptBody(CommonScript script, BodyContext body)
         {
             script.Statements.AddRange(this.ParseBody(body));
         }
 
-        public List<Statement> ParseBody(BodyContext node)
+        private List<Statement> ParseBody(BodyContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -472,7 +476,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public void SetRoutineParameters(RoutineScript script, ParameterContext[] parameters)
+        private void SetRoutineParameters(RoutineScript script, ParameterContext[] parameters)
         {
             if (parameters != null)
             {
@@ -500,7 +504,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public List<Statement> ParseSeqStatement(Seq_of_statementsContext node)
+        private List<Statement> ParseSeqStatement(Seq_of_statementsContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -530,7 +534,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public ExceptionStatement ParseException(BodyContext body)
+        private ExceptionStatement ParseException(BodyContext body)
         {
             ExceptionStatement statement = new ExceptionStatement();
 
@@ -551,7 +555,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
+        private void SetParameterType(Parameter parameterInfo, IList<IParseTree> nodes)
         {
             foreach (var child in nodes)
             {
@@ -573,7 +577,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public List<Statement> ParseStatement(StatementContext node)
+        private List<Statement> ParseStatement(StatementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -699,7 +703,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public List<Statement> ParseAnonymousBlock(Anonymous_blockContext node)
+        private List<Statement> ParseAnonymousBlock(Anonymous_blockContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -723,7 +727,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public LoopExitStatement ParseExitStatement(Exit_statementContext node)
+        private LoopExitStatement ParseExitStatement(Exit_statementContext node)
         {
             LoopExitStatement statement = new LoopExitStatement();
 
@@ -736,7 +740,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseFunctionCallStatement(Function_callContext node)
+        private Statement ParseFunctionCallStatement(Function_callContext node)
         {
             Statement statement;
 
@@ -767,7 +771,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseProcedureCallStatement(Procedure_callContext node)
+        private Statement ParseProcedureCallStatement(Procedure_callContext node)
         {
             Statement statement = null;
 
@@ -803,7 +807,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public List<Statement> ParseSqlStatement(Sql_statementContext node)
+        private List<Statement> ParseSqlStatement(Sql_statementContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -826,7 +830,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public CallStatement ParseExecuteImmediate(Execute_immediateContext node)
+        private CallStatement ParseExecuteImmediate(Execute_immediateContext node)
         {
             CallStatement statement = new CallStatement();
 
@@ -849,7 +853,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public List<Statement> ParseDataManipulationLanguageStatement(Data_manipulation_language_statementsContext node)
+        private List<Statement> ParseDataManipulationLanguageStatement(Data_manipulation_language_statementsContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -876,7 +880,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public List<Statement> ParseCursorManipulationtatement(Cursor_manipulation_statementsContext node)
+        private List<Statement> ParseCursorManipulationtatement(Cursor_manipulation_statementsContext node)
         {
             List<Statement> statements = new List<Statement>();
 
@@ -899,7 +903,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public OpenCursorStatement ParseOpenCursorStatement(Open_statementContext node)
+        private OpenCursorStatement ParseOpenCursorStatement(Open_statementContext node)
         {
             OpenCursorStatement statement = new OpenCursorStatement();
 
@@ -908,7 +912,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public FetchCursorStatement ParseFetchCursorStatement(Fetch_statementContext node)
+        private FetchCursorStatement ParseFetchCursorStatement(Fetch_statementContext node)
         {
             FetchCursorStatement statement = new FetchCursorStatement();
 
@@ -918,7 +922,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public CloseCursorStatement ParseCloseCursorStatement(Close_statementContext node)
+        private CloseCursorStatement ParseCloseCursorStatement(Close_statementContext node)
         {
             CloseCursorStatement statement = new CloseCursorStatement() { IsEnd = true };
 
@@ -927,7 +931,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public InsertStatement ParseInsertStatement(Insert_statementContext node)
+        private InsertStatement ParseInsertStatement(Insert_statementContext node)
         {
             InsertStatement statement = new InsertStatement();
 
@@ -975,7 +979,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public UpdateStatement ParseUpdateStatement(Update_statementContext node)
+        private UpdateStatement ParseUpdateStatement(Update_statementContext node)
         {
             UpdateStatement statement = new UpdateStatement();
 
@@ -1067,7 +1071,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public List<DeleteStatement> ParseDeleteStatement(Delete_statementContext node)
+        private List<DeleteStatement> ParseDeleteStatement(Delete_statementContext node)
         {
             List<DeleteStatement> statements = new List<DeleteStatement>();
 
@@ -1086,7 +1090,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public SelectStatement ParseSelectStatement(Select_statementContext node)
+        private SelectStatement ParseSelectStatement(Select_statementContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -1129,7 +1133,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public SelectStatement ParseSelectOnlyStatement(Select_only_statementContext node)
+        private SelectStatement ParseSelectOnlyStatement(Select_only_statementContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -1160,7 +1164,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public SelectStatement ParseSubQuery(SubqueryContext node)
+        private SelectStatement ParseSubQuery(SubqueryContext node)
         {
             SelectStatement statement = null;
 
@@ -1234,7 +1238,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public SelectStatement ParseSubQueryBasic(Subquery_basic_elementsContext node)
+        private SelectStatement ParseSubQueryBasic(Subquery_basic_elementsContext node)
         {
             SelectStatement statement = new SelectStatement();
 
@@ -1262,20 +1266,17 @@ namespace SqlAnalyser.Core
 
             if (into != null)
             {
-                var variables = into.bind_variable();
+                statement.Intos = new List<TokenInfo>();
 
-                ParserRuleContext intoTable = null;
-
-                if (variables.Length > 0)
+                foreach (var child in into.children)
                 {
-                    intoTable = variables.First();
-                }
-                else
-                {
-                    intoTable = into.general_element().First();
-                }
+                    if(child is ParserRuleContext pr)
+                    {
+                        TokenInfo token = new TokenInfo(pr) { Type =  TokenType.VariableName  };
 
-                statement.IntoTableName = new TokenInfo(intoTable) { Type = TokenType.TableName };
+                        statement.Intos.Add(token);
+                    }
+                }                
             }
 
             Where_clauseContext where = block.where_clause();
@@ -1332,7 +1333,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseSubQueryOperation(Subquery_operation_partContext node)
+        private Statement ParseSubQueryOperation(Subquery_operation_partContext node)
         {
             Statement statement = null;
 
@@ -1371,7 +1372,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public List<FromItem> ParseFromClause(From_clauseContext node)
+        private List<FromItem> ParseFromClause(From_clauseContext node)
         {
             List<FromItem> fromItems = new List<FromItem>();
 
@@ -1499,7 +1500,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public PivotItem ParsePivot(Pivot_clauseContext node)
+        private PivotItem ParsePivot(Pivot_clauseContext node)
         {
             PivotItem pivotItem = new PivotItem();
 
@@ -1515,7 +1516,7 @@ namespace SqlAnalyser.Core
             return pivotItem;
         }
 
-        public UnPivotItem ParseUnPivot(Unpivot_clauseContext node)
+        private UnPivotItem ParseUnPivot(Unpivot_clauseContext node)
         {
             UnPivotItem unpivotItem = new UnPivotItem();
             unpivotItem.ValueColumnName = this.ParseColumnName(node.column_name());
@@ -1525,7 +1526,7 @@ namespace SqlAnalyser.Core
             return unpivotItem;
         }
 
-        public List<SetStatement> ParseSetStatement(Assignment_statementContext node)
+        private List<SetStatement> ParseSetStatement(Assignment_statementContext node)
         {
             List<SetStatement> statements = new List<SetStatement>();
 
@@ -1548,7 +1549,7 @@ namespace SqlAnalyser.Core
             return statements;
         }
 
-        public Statement ParseDeclareStatement(Declare_specContext node)
+        private Statement ParseDeclareStatement(Declare_specContext node)
         {
             Statement statement = null;
 
@@ -1588,7 +1589,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public IfStatement ParseIfStatement(If_statementContext node)
+        private IfStatement ParseIfStatement(If_statementContext node)
         {
             IfStatement statement = new IfStatement();
 
@@ -1676,7 +1677,7 @@ namespace SqlAnalyser.Core
             }
         }
 
-        public CaseStatement ParseCaseStatement(Case_statementContext node)
+        private CaseStatement ParseCaseStatement(Case_statementContext node)
         {
             CaseStatement statement = new CaseStatement();
 
@@ -1710,7 +1711,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public LoopStatement ParseLoopStatement(Loop_statementContext node)
+        private LoopStatement ParseLoopStatement(Loop_statementContext node)
         {
             LoopStatement statement = new LoopStatement();
 
@@ -1757,7 +1758,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public Statement ParseReturnStatement(Return_statementContext node)
+        private Statement ParseReturnStatement(Return_statementContext node)
         {
             Statement statement = new ReturnStatement();
 
@@ -1775,7 +1776,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public TransactionStatement ParseTransactionStatement(Transaction_control_statementsContext node)
+        private TransactionStatement ParseTransactionStatement(Transaction_control_statementsContext node)
         {
             TransactionStatement statement = new TransactionStatement();
             statement.Content = new TokenInfo(node);
@@ -1796,7 +1797,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public GotoStatement ParseLabelDeclareStatement(Label_declarationContext node)
+        private GotoStatement ParseLabelDeclareStatement(Label_declarationContext node)
         {
             GotoStatement statement = new GotoStatement();
 
@@ -1805,7 +1806,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public GotoStatement ParseGotoStatement(Goto_statementContext node)
+        private GotoStatement ParseGotoStatement(Goto_statementContext node)
         {
             GotoStatement statement = new GotoStatement();
 
@@ -1814,7 +1815,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public CreateTableStatement ParseCreateTableStatement(Create_tableContext node)
+        private CreateTableStatement ParseCreateTableStatement(Create_tableContext node)
         {
             CreateTableStatement statement = new CreateTableStatement();
 
@@ -1852,7 +1853,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public TruncateStatement ParseTruncateTableStatement(Truncate_tableContext node)
+        private TruncateStatement ParseTruncateTableStatement(Truncate_tableContext node)
         {
             TruncateStatement statement = new TruncateStatement();
 
@@ -1861,7 +1862,7 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
-        public override TableName ParseTableName(ParserRuleContext node, bool strict = false)
+        protected override TableName ParseTableName(ParserRuleContext node, bool strict = false)
         {
             TableName tableName = null;
 
@@ -1945,7 +1946,7 @@ namespace SqlAnalyser.Core
             return tableName;
         }
 
-        public override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
+        protected override ColumnName ParseColumnName(ParserRuleContext node, bool strict = false)
         {
             ColumnName columnName = null;
 
@@ -2057,7 +2058,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public override TokenInfo ParseTableAlias(ParserRuleContext node)
+        protected override TokenInfo ParseTableAlias(ParserRuleContext node)
         {
             if (node != null)
             {
@@ -2070,7 +2071,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public override TokenInfo ParseColumnAlias(ParserRuleContext node)
+        protected override TokenInfo ParseColumnAlias(ParserRuleContext node)
         {
             if (node != null)
             {
@@ -2109,7 +2110,7 @@ namespace SqlAnalyser.Core
             return null;
         }
 
-        public override bool IsFunction(IParseTree node)
+        protected override bool IsFunction(IParseTree node)
         {
             if (node is Standard_functionContext)
             {
@@ -2135,20 +2136,26 @@ namespace SqlAnalyser.Core
                     return true;
                 }
             }
-            else if (node is Non_reserved_keywords_pre12cContext)
+            else if (node is Non_reserved_keywords_pre12cContext n)
             {
                 var parent = node.Parent?.Parent?.Parent;
 
-                if (parent != null && parent is Variable_nameContext)
+                if(parent!=null)
                 {
-                    return true;
-                }
+                    if (parent is Variable_nameContext v)
+                    {
+                        if (!(n.Start.StartIndex == v.Start.StartIndex && n.Stop.StopIndex == v.Stop.StopIndex))
+                        {
+                            return true;
+                        }                            
+                    }
+                }                
             }
 
             return false;
         }
 
-        public override TokenInfo ParseFunction(ParserRuleContext node)
+        protected override TokenInfo ParseFunction(ParserRuleContext node)
         {
             TokenInfo token = base.ParseFunction(node);
 
@@ -2186,7 +2193,7 @@ namespace SqlAnalyser.Core
             return token;
         }
 
-        public bool HasFunction(ParserRuleContext node)
+        private bool HasFunction(ParserRuleContext node)
         {
             if (node == null)
             {
@@ -2223,7 +2230,7 @@ namespace SqlAnalyser.Core
             {
                 return this.IsChildOfType<T>(node.Parent as RuleContext);
             }
-        }
+        }        
     }
 }
 

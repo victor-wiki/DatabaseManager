@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.19</Version>
-    <PackageReleaseNotes>fix bug: query limit no start row index</PackageReleaseNotes>
+    <Version>2.0.20</Version>
+    <PackageReleaseNotes>add class: DepencencyFetcher</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.19</AssemblyVersion>
-    <FileVersion>2.0.19</FileVersion>
+    <AssemblyVersion>2.0.20</AssemblyVersion>
+    <FileVersion>2.0.20</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

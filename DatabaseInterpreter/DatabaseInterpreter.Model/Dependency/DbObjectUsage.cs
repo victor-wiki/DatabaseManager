@@ -2,6 +2,8 @@
 {
     public class DbObjectUsage
     {
+        public virtual string ObjectType { get; set; }
+        public virtual string RefObjectType { get; set; }
         public string ObjectCatalog { get; set; }
         public string ObjectSchema { get; set; }
         public string ObjectName { get; set; }

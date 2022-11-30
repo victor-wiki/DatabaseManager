@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Utility;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -277,7 +278,7 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    this.DeclareStatements.Add(declareVar);
+                    this.DeclareVariableStatements.Add(declareVar);
                 }
             }
             else if (statement is DeclareTableStatement declareTable)
@@ -342,13 +343,25 @@ namespace SqlAnalyser.Core
                 {
                     if (set.Value != null)
                     {
+                        if (set.IsSetUserVariable)
+                        {
+                            string dataType = AnalyserHelper.GetUserVariableDataType(DatabaseType.Postgres, set.UserVariableDataType);
+
+                            if (!string.IsNullOrEmpty(dataType))
+                            {
+                                DeclareVariableStatement declareVariable = new DeclareVariableStatement() { Name = set.Key, DataType = new TokenInfo(dataType) };
+
+                                this.DeclareVariableStatements.Add(declareVariable);
+                            }
+                        }
+
                         string value = this.GetSetVariableValue(set.Key.Symbol, set.Value.Symbol);
 
                         this.AppendLine($"{set.Key} := {value};");
                     }
                     else if (set.IsSetCursorVariable && set.ValueStatement != null)
                     {
-                        var declareCursorStatement = this.DeclareStatements.FirstOrDefault(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == set.Key.Symbol) as DeclareCursorStatement;
+                        var declareCursorStatement = this.DeclareCursorStatements.FirstOrDefault(item => item.CursorName.Symbol == set.Key.Symbol);
 
                         if (declareCursorStatement == null)
                         {
@@ -520,9 +533,9 @@ namespace SqlAnalyser.Core
 
                 if (this.Option != null && this.Option.CollectDeclareStatement)
                 {
-                    if (!this.DeclareStatements.Any(item => (item is DeclareCursorStatement) && (item as DeclareCursorStatement).CursorName.Symbol == declareCursor.CursorName.Symbol))
+                    if (!this.DeclareCursorStatements.Any(item => item.CursorName.Symbol == declareCursor.CursorName.Symbol))
                     {
-                        this.DeclareStatements.Add(declareCursor);
+                        this.DeclareCursorStatements.Add(declareCursor);
                     }
                 }
             }
@@ -599,11 +612,13 @@ namespace SqlAnalyser.Core
         {
             bool isCreateTemporaryTable = false;
 
-            if (select.IntoTableName != null)
+            TokenInfo intoTableName = AnalyserHelper.GetIntoTableName(select);
+
+            if (intoTableName != null)
             {
                 isCreateTemporaryTable = true;
 
-                this.AppendLine($"CREATE TEMPORARY TABLE IF NOT EXISTS {select.IntoTableName} AS (");
+                this.AppendLine($"CREATE TEMPORARY TABLE IF NOT EXISTS {intoTableName} AS (");
             }
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
@@ -642,6 +657,12 @@ namespace SqlAnalyser.Core
             else if (!isWith)
             {
                 this.AppendLine(selectColumns);
+            }
+
+            if (!isCreateTemporaryTable && select.Intos != null)
+            {
+                this.Append("INTO ");
+                this.AppendLine(String.Join(",", select.Intos));
             }
 
             Action appendWith = () =>
@@ -763,7 +784,7 @@ namespace SqlAnalyser.Core
         {
             if (name != null && value != null && ValueHelper.IsStringValue(value))
             {
-                var declareVariable = this.DeclareStatements.FirstOrDefault(item => (item is DeclareVariableStatement) && (item as DeclareVariableStatement).Name.Symbol?.Trim() == name.Trim()) as DeclareVariableStatement;
+                var declareVariable = this.DeclareVariableStatements.FirstOrDefault(item => item.Name.Symbol?.Trim() == name.Trim());
 
                 if (declareVariable != null)
                 {

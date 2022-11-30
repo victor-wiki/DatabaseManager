@@ -295,25 +295,26 @@ namespace DatabaseInterpreter.Core
 
         #region Table Foreign Key      
 
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override Task<List<TableForeignKeyItem>> GetTableForeignKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
-            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter));
+            return base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForTableForeignKeyItems(filter, isFilterForReferenced));
         }
 
-        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null)
+        private string GetSqlForTableForeignKeyItems(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ",ext.value AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext ON object_id(fk.name, 'F')=ext.major_id  AND ext.class_desc='OBJECT_OR_COLUMN' AND ext.name='MS_Description'";
+            string tableAlias = !isFilterForReferenced ? "t" : "rt";
 
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema],object_name(fk.parent_object_id) AS [TableName],fk.name AS [Name],c.name AS [ColumnName],
+            sb.Append($@"SELECT schema_name(t.schema_id) AS [Schema],object_name(t.object_id) AS [TableName],fk.name AS [Name],c.name AS [ColumnName],
                          schema_name(rt.schema_id) AS [ReferencedSchema], object_name(fck.referenced_object_id) AS [ReferencedTableName],rc.name AS [ReferencedColumnName],
                          fk.update_referential_action AS [UpdateCascade],fk.delete_referential_action AS [DeleteCascade]{commentColumn}
                          FROM sys.foreign_keys fk
@@ -325,8 +326,8 @@ namespace DatabaseInterpreter.Core
                          {commentJoin}
                          WHERE 1=1");
 
-            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "object_name(fk.parent_object_id)"));
+            sb.Append(this.GetFilterSchemaCondition(filter, $"schema_name({tableAlias}.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, $"object_name({tableAlias}.object_id)"));
 
             return sb.Content;
         }
@@ -660,17 +661,17 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Routine Script Usage
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
-            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced));
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced, includeViewTableUsages));
         }
 
-        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
-            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced));
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(dbConnection, this.GetSqlForRoutineScriptUsages(filter, isFilterForReferenced, includeViewTableUsages));
         }
 
-        private string GetSqlForRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+        private string GetSqlForRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
             SqlBuilder sb = new SqlBuilder();
 
@@ -682,6 +683,11 @@ namespace DatabaseInterpreter.Core
                         JOIN sys.objects o ON d.referencing_id = o.object_id
                         JOIN sys.objects ro ON d.referenced_id=ro.object_id
                         WHERE o.type IN ('P','FN','TF','U','V') AND ro.type IN ('P','FN','TF','U','V')");
+
+            if (!includeViewTableUsages)
+            {
+                sb.Append("AND NOT (o.type= 'U' AND ro.type='U') AND NOT (o.type= 'V' AND ro.type='U') AND NOT (o.type= 'V' AND ro.type='V')");
+            }
 
             string referenceTable = !isFilterForReferenced ? "o" : "ro";
             string type = null;

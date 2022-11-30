@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
 using System;
@@ -150,6 +151,44 @@ namespace DatabaseManager.Core
             }
 
             return info;
+        }
+
+        public static string ExtractScriptBody(string definition)
+        {
+            var match = MatchWord(definition, "BEGIN|AS");
+
+            if (match != null)
+            {
+                return definition.Substring(match.Index + match.Value.Length);
+            }
+
+            return definition;
+        }
+
+        public static int GetBeginAsIndex(string definition)
+        {
+            var match = MatchWord(definition, "AS");
+
+            if (match == null)
+            {
+                match = MatchWord(definition, "BEGIN");
+
+                if (match != null)
+                {
+                    return match.Index;
+                }
+            }
+            else
+            {
+                return match.Index;
+            }
+
+            return -1;
+        }
+
+        private static Match MatchWord(string value, string word)
+        {
+            return Regex.Match(value, $@"\b({word})\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
         }
     }
 

@@ -17,14 +17,14 @@ namespace DatabaseConverter.Core
         where T : ScriptDbObject
     {
         private IEnumerable<T> scripts;
-
+        private ScriptBuildFactory scriptBuildFactory;
         public bool AutoMakeupSchemaName { get; set; } = true;
         public bool IsCommonScript { get; set; }
 
 
         public ScriptTranslator(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, IEnumerable<T> scripts) : base(sourceDbInterpreter, targetDbInterpreter)
         {
-            this.scripts = scripts;
+            this.scripts = scripts;            
         }
 
         public override void Translate()
@@ -41,8 +41,7 @@ namespace DatabaseConverter.Core
 
             this.LoadMappings();
 
-            SqlAnalyserBase sourceAnalyser = this.GetSqlAnalyser(this.sourceDbInterpreter.DatabaseType);
-            SqlAnalyserBase targetAnalyser = this.GetSqlAnalyser(this.targetDbInterpreter.DatabaseType);
+            this.scriptBuildFactory = this.GetScriptBuildFactory();
 
             int total = this.scripts.Count();
             int count = 0;
@@ -63,7 +62,7 @@ namespace DatabaseConverter.Core
 
                 this.FeedbackInfo($"Begin to translate {type.Name}: \"{dbObj.Name}\"{percent}.");
 
-                TranslateResult result = this.TranslateScript(dbObj, sourceAnalyser, targetAnalyser);
+                TranslateResult result = this.TranslateScript(dbObj);
 
                 if (this.Option.CollectTranslateResultAfterTranslated)
                 {
@@ -82,7 +81,7 @@ namespace DatabaseConverter.Core
             }            
         }
 
-        private TranslateResult TranslateScript(ScriptDbObject dbObj, SqlAnalyserBase sourceAnalyser, SqlAnalyserBase targetAnalyser, bool isPartial = false)
+        private TranslateResult TranslateScript(ScriptDbObject dbObj,  bool isPartial = false)
         {
             TranslateResult translateResult = new TranslateResult() { DbObjectType = DbObjectHelper.GetDatabaseObjectType(dbObj), DbObjectSchema = dbObj.Schema, DbObjectName = dbObj.Name };
 
@@ -121,13 +120,15 @@ namespace DatabaseConverter.Core
                 string originalDefinition = dbObj.Definition;
                 AnalyseResult anlyseResult = null;
 
+                SqlAnalyserBase sqlAnalyser = this.GetSqlAnalyser(this.sourceDbInterpreter.DatabaseType, originalDefinition);               
+
                 if (!isPartial)
                 {
-                    anlyseResult = sourceAnalyser.Analyse<T>(originalDefinition);
+                    anlyseResult = sqlAnalyser.Analyse<T>();
                 }
                 else
                 {
-                    anlyseResult = sourceAnalyser.AnalyseCommon(originalDefinition);
+                    anlyseResult = sqlAnalyser.AnalyseCommon();
                 }
 
                 CommonScript script = anlyseResult.Script;
@@ -172,11 +173,13 @@ namespace DatabaseConverter.Core
 
                             dbObj.Definition = sbNewDefinition.ToString();
 
-                            AnalyseResult procResult = sourceAnalyser.Analyse<Procedure>(dbObj.Definition.ToUpper());
+                            sqlAnalyser = this.GetSqlAnalyser(this.sourceDbType, dbObj.Definition);
+
+                            AnalyseResult procResult = sqlAnalyser.Analyse<Procedure>();
 
                             if (!procResult.HasError)
                             {
-                                this.ProcessTokens(dbObj, procResult.Script, sourceAnalyser, targetAnalyser);
+                                this.ProcessTokens(dbObj, procResult.Script);
 
                                 tokenProcessed = true;
 
@@ -204,7 +207,7 @@ namespace DatabaseConverter.Core
                         dbObj.Name = anlyseResult.Script.Name.Symbol;
                     }
 
-                    this.ProcessTokens(dbObj, script, sourceAnalyser, targetAnalyser);
+                    this.ProcessTokens(dbObj, script);
                 }
 
                 dbObj.Definition = this.ReplaceVariables(dbObj.Definition, this.variableMappings);
@@ -226,7 +229,7 @@ namespace DatabaseConverter.Core
 
                             ScriptDbObject scriptDbObject = new ScriptDbObject() { Definition = declaresAndBody };
 
-                            TranslateResult res = this.TranslateScript(scriptDbObject, sourceAnalyser, targetAnalyser, true);
+                            TranslateResult res = this.TranslateScript(scriptDbObject, true);
 
                             if (!res.HasError)
                             {
@@ -292,11 +295,13 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private void ProcessTokens(ScriptDbObject dbObj, CommonScript script, SqlAnalyserBase sourceAnalyser, SqlAnalyserBase targetAnalyser)
+        private void ProcessTokens(ScriptDbObject dbObj, CommonScript script)
         {
             if (typeof(T) == typeof(Function))
             {
-                AnalyseResult result = sourceAnalyser.AnalyseFunction(dbObj.Definition.ToUpper());
+                SqlAnalyserBase sqlAnalyser = this.GetSqlAnalyser(this.sourceDbType, dbObj.Definition);
+
+                AnalyseResult result = sqlAnalyser.AnalyseFunction();
 
                 if (!result.HasError)
                 {
@@ -333,11 +338,11 @@ namespace DatabaseConverter.Core
 
                         (script as TriggerScript).FunctionName = triggerFunctionName;
 
-                        anotherDefinition = StringHelper.FormatScript(targetAnalyser.GenerateScripts(rs).Script);
+                        anotherDefinition = StringHelper.FormatScript(this.scriptBuildFactory.GenerateScripts(rs).Script);
                     }
                 }
 
-                ScriptBuildResult scriptBuildResult = targetAnalyser.GenerateScripts(script);
+                ScriptBuildResult scriptBuildResult = this.scriptBuildFactory.GenerateScripts(script);
 
                 dbObj.Definition = StringHelper.FormatScript(scriptBuildResult.Script);
 
@@ -358,18 +363,25 @@ namespace DatabaseConverter.Core
             return error;
         }
 
-        public SqlAnalyserBase GetSqlAnalyser(DatabaseType dbType)
+        public SqlAnalyserBase GetSqlAnalyser(DatabaseType dbType, string content)
         {
-            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(dbType);
+            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(dbType, content);
 
             sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = true;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
             sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
-            sqlAnalyser.RuleAnalyser.Option.IsCommonScript = this.IsCommonScript;
-
-            sqlAnalyser.ScriptBuilderOption.OutputRemindInformation = this.Option.OutputRemindInformation;
+            sqlAnalyser.RuleAnalyser.Option.IsCommonScript = this.IsCommonScript;            
 
             return sqlAnalyser;
+        }
+
+        public ScriptBuildFactory GetScriptBuildFactory()
+        {
+            ScriptBuildFactory factory = TranslateHelper.GetScriptBuildFactory(this.targetDbType);
+
+            factory.ScriptBuilderOption.OutputRemindInformation = this.Option.OutputRemindInformation;
+
+            return factory;
         }
     }
 }

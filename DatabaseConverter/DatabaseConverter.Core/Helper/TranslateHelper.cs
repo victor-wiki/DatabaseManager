@@ -197,28 +197,52 @@ namespace DatabaseConverter.Core
             }
         }
 
-        public static SqlAnalyserBase GetSqlAnalyser(DatabaseType databaseType)
+        public static SqlAnalyserBase GetSqlAnalyser(DatabaseType databaseType, string content)
         {
             SqlAnalyserBase sqlAnalyser = null;
 
             if (databaseType == DatabaseType.SqlServer)
             {
-                sqlAnalyser = new TSqlAnalyser();
+                sqlAnalyser = new TSqlAnalyser(content);
             }
             else if (databaseType == DatabaseType.MySql)
             {
-                sqlAnalyser = new MySqlAnalyser();
+                sqlAnalyser = new MySqlAnalyser(content);
             }
             else if (databaseType == DatabaseType.Oracle)
             {
-                sqlAnalyser = new PlSqlAnalyser();
+                sqlAnalyser = new PlSqlAnalyser(content);
             }
             else if (databaseType == DatabaseType.Postgres)
             {
-                sqlAnalyser = new PostgreSqlAnalyser();
+                sqlAnalyser = new PostgreSqlAnalyser(content);
             }
 
             return sqlAnalyser;
+        }
+
+        public static ScriptBuildFactory GetScriptBuildFactory(DatabaseType databaseType)
+        {
+            ScriptBuildFactory factory = null;
+
+            if (databaseType == DatabaseType.SqlServer)
+            {
+                factory = new TSqlScriptBuildFactory();
+            }
+            else if (databaseType == DatabaseType.MySql)
+            {
+                factory = new MySqlScriptBuildFactory();
+            }
+            else if (databaseType == DatabaseType.Oracle)
+            {
+                factory = new PlSqlScriptBuildFactory();
+            }
+            else if (databaseType == DatabaseType.Postgres)
+            {
+                factory = new PostgreSqlScriptBuildFactory();
+            }
+
+            return factory;
         }
 
         public static string TranslateComments(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, string value)

@@ -133,7 +133,7 @@ namespace DatabaseConverter.Core
 
             string functionName = defaultValue;
 
-            List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbType, defaultValue);
+            List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbInterpreter, defaultValue);
 
             if (formulas.Count > 0)
             {
@@ -523,7 +523,7 @@ namespace DatabaseConverter.Core
                             exp = exp.Substring(1, computeExp.Length - 1);
                         }
 
-                        List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbType, exp);
+                        List<FunctionFormula> formulas = FunctionTranslator.GetFunctionFormulas(this.sourceDbInterpreter, exp);
 
                         if (formulas.Count > 0)
                         {

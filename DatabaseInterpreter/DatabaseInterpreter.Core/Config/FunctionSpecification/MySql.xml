@@ -104,6 +104,7 @@
   <item name="REVERSE" args="EXP" isString="true"></item>
   <item name="RIGHT" args="EXP,LENGTH"></item>
   <item name="ROUND" args="EXP,DECIMAL"></item>
+  <item name="ROW_NUMBER" args=""></item>
   <item name="RPAD" args="EXP,LENGTH,PAD" isString="true"></item>
   <item name="RTRIM" args="EXP" isString="true"></item>
   <item name="SEC_TO_TIME" args="SECONDS"></item>

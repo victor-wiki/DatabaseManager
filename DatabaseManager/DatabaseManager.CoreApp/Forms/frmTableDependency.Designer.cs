@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmDependency
+    partial class frmTableDependency
     {
         /// <summary>
         /// Required designer variable.
@@ -36,17 +36,17 @@
             this.tsmiExpandAll = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiExpandChildren = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiCollapseAll = new System.Windows.Forms.ToolStripMenuItem();
-            this.chkShowNotReferenced = new System.Windows.Forms.CheckBox();
             this.tsmiClearStyles = new System.Windows.Forms.ToolStripMenuItem();
+            this.chkShowNotReferenced = new System.Windows.Forms.CheckBox();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnLocate
             // 
             this.btnLocate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLocate.Location = new System.Drawing.Point(388, 10);
+            this.btnLocate.Location = new System.Drawing.Point(388, 9);
             this.btnLocate.Name = "btnLocate";
-            this.btnLocate.Size = new System.Drawing.Size(66, 23);
+            this.btnLocate.Size = new System.Drawing.Size(66, 25);
             this.btnLocate.TabIndex = 0;
             this.btnLocate.Text = "Locate";
             this.btnLocate.UseVisualStyleBackColor = true;
@@ -82,29 +82,36 @@
             this.tsmiCollapseAll,
             this.tsmiClearStyles});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 114);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(172, 92);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // tsmiExpandAll
             // 
             this.tsmiExpandAll.Name = "tsmiExpandAll";
-            this.tsmiExpandAll.Size = new System.Drawing.Size(180, 22);
+            this.tsmiExpandAll.Size = new System.Drawing.Size(171, 22);
             this.tsmiExpandAll.Text = "Expand All";
             this.tsmiExpandAll.Click += new System.EventHandler(this.tsmiExpandAll_Click);
             // 
             // tsmiExpandChildren
             // 
             this.tsmiExpandChildren.Name = "tsmiExpandChildren";
-            this.tsmiExpandChildren.Size = new System.Drawing.Size(180, 22);
+            this.tsmiExpandChildren.Size = new System.Drawing.Size(171, 22);
             this.tsmiExpandChildren.Text = "Expand Children";
             this.tsmiExpandChildren.Click += new System.EventHandler(this.tsmiExpandChildren_Click);
             // 
             // tsmiCollapseAll
             // 
             this.tsmiCollapseAll.Name = "tsmiCollapseAll";
-            this.tsmiCollapseAll.Size = new System.Drawing.Size(180, 22);
+            this.tsmiCollapseAll.Size = new System.Drawing.Size(171, 22);
             this.tsmiCollapseAll.Text = "Collapse All";
             this.tsmiCollapseAll.Click += new System.EventHandler(this.tsmiCollapseAll_Click);
+            // 
+            // tsmiClearStyles
+            // 
+            this.tsmiClearStyles.Name = "tsmiClearStyles";
+            this.tsmiClearStyles.Size = new System.Drawing.Size(171, 22);
+            this.tsmiClearStyles.Text = "Clear Styles";
+            this.tsmiClearStyles.Click += new System.EventHandler(this.tsmiClearStyles_Click);
             // 
             // chkShowNotReferenced
             // 
@@ -118,14 +125,7 @@
             this.chkShowNotReferenced.UseVisualStyleBackColor = true;
             this.chkShowNotReferenced.CheckedChanged += new System.EventHandler(this.chkShowNotReferenced_CheckedChanged);
             // 
-            // tsmiClearStyles
-            // 
-            this.tsmiClearStyles.Name = "tsmiClearStyles";
-            this.tsmiClearStyles.Size = new System.Drawing.Size(180, 22);
-            this.tsmiClearStyles.Text = "Clear Styles";
-            this.tsmiClearStyles.Click += new System.EventHandler(this.tsmiClearStyles_Click);
-            // 
-            // frmDependency
+            // frmTableDependency
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -134,7 +134,7 @@
             this.Controls.Add(this.tvDbObjects);
             this.Controls.Add(this.txtName);
             this.Controls.Add(this.btnLocate);
-            this.Name = "frmDependency";
+            this.Name = "frmTableDependency";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Table Dependencies";
             this.Load += new System.EventHandler(this.frmDependency_Load);

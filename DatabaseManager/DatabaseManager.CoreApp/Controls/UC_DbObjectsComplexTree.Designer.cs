@@ -131,7 +131,7 @@
             this.tsmiCopyChildrenNames,
             this.tsmiMore});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 422);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 444);
             // 
             // tsmiNewQuery
             // 
@@ -179,7 +179,7 @@
             // 
             this.tsmiAlter.Name = "tsmiAlter";
             this.tsmiAlter.Size = new System.Drawing.Size(203, 22);
-            this.tsmiAlter.Text = "Alter";
+            this.tsmiAlter.Text = "Modify";
             this.tsmiAlter.Click += new System.EventHandler(this.tsmiAlter_Click);
             // 
             // tsmiDesign
@@ -297,7 +297,7 @@
             // 
             this.tsmiViewDependency.Name = "tsmiViewDependency";
             this.tsmiViewDependency.Size = new System.Drawing.Size(203, 22);
-            this.tsmiViewDependency.Text = "View Dependency";
+            this.tsmiViewDependency.Text = "View Dependencies";
             this.tsmiViewDependency.Click += new System.EventHandler(this.tsmiViewDependency_Click);
             // 
             // tsmiCopyChildrenNames

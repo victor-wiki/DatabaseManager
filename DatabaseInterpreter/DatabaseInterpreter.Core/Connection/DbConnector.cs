@@ -46,6 +46,7 @@ namespace DatabaseInterpreter.Core
             }
            
             DbConnection connection = factory.CreateConnection();
+
             if (connection != null)
             {
                 connection.ConnectionString = this._connectionString;

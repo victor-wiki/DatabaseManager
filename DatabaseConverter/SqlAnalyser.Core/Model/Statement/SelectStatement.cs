@@ -4,8 +4,8 @@ namespace SqlAnalyser.Model
 {
     public class SelectStatement : Statement
     {
-        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();
-        public TokenInfo IntoTableName { get; set; }
+        public List<ColumnName> Columns { get; set; } = new List<ColumnName>();    
+        public List<TokenInfo> Intos { get; set; }
         public TableName TableName { get; set; }
         public TokenInfo Where { get; set; }
         public List<TokenInfo> GroupBy { get; set; }

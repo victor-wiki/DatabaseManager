@@ -1,14 +1,14 @@
-﻿using DatabaseInterpreter.Utility;
+﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace SqlAnalyser.Core
 {
-    public class StatementScriptBuilder
+    public class StatementScriptBuilder:IDisposable
     {
         private StringBuilder builder = new StringBuilder();
         internal int Level = 0;
@@ -18,7 +18,10 @@ namespace SqlAnalyser.Core
 
         public RoutineType RoutineType { get; set; }
 
-        public List<Statement> DeclareStatements { get; internal set; } = new List<Statement>();
+        public List<DeclareVariableStatement> DeclareVariableStatements { get; internal set; } = new List<DeclareVariableStatement>();
+        public List<DeclareCursorStatement> DeclareCursorStatements { get; internal set; } = new List<DeclareCursorStatement>();
+        public List<Statement> OtherDeclareStatements { get; internal set; } = new List<Statement>();
+
         public List<Statement> SpecialStatements { get; internal set; } = new List<Statement>();
         public Dictionary<string, string> Replacements { get; internal set; } = new Dictionary<string, string>();
         public List<string> TemporaryTableNames { get; set; } = new List<string>();
@@ -31,6 +34,17 @@ namespace SqlAnalyser.Core
             {
                 return this.builder.Length;
             }
+        }
+
+        public List<Statement> GetDeclareStatements()
+        {
+            List<Statement> statements = new List<Statement>();
+
+            statements.AddRange(this.DeclareVariableStatements);
+            statements.AddRange(this.DeclareCursorStatements);
+            statements.AddRange(this.OtherDeclareStatements);
+
+            return statements;
         }
 
         protected void Append(string value, bool appendIndent = true)
@@ -361,6 +375,16 @@ namespace SqlAnalyser.Core
         protected string GetCurrentLoopLabel(string prefix)
         {
             return $"{prefix}{this.LoopCount}";
+        }
+
+        public void Dispose()
+        {
+            this.DeclareVariableStatements.Clear();
+            this.DeclareCursorStatements.Clear();
+            this.OtherDeclareStatements.Clear();
+            this.SpecialStatements.Clear();
+            this.Replacements.Clear();
+            this.TemporaryTableNames.Clear();
         }
     }
 }
