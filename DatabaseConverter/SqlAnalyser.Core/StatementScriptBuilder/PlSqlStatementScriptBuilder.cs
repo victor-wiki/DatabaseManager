@@ -330,6 +330,8 @@ namespace SqlAnalyser.Core
 
                 if (this.RoutineType == RoutineType.PROCEDURE && createTable.TableInfo.IsTemporary)
                 {
+                    this.TemporaryTableNames.Add(createTable.TableInfo.Name.Symbol);
+
                     sql = this.GetExecuteImmediateSql(sql);
                 }
 
@@ -847,7 +849,9 @@ namespace SqlAnalyser.Core
             }
             else
             {
-                this.ReplaceTemporaryTableContent(select.TableName, startIndex);
+                TableName tn = StatementScriptBuilderHelper.GetSelectStatementTableName(select);
+
+                this.ReplaceTemporaryTableContent(tn, startIndex);
             }
         }
 

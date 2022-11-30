@@ -10,6 +10,20 @@ namespace SqlAnalyser.Core
 {
     public class StatementScriptBuilderHelper
     {
+        public static TableName GetSelectStatementTableName(SelectStatement statement)
+        {
+            if(statement.TableName!=null)
+            {
+                return statement.TableName;
+            }
+            else if(statement.HasFromItems)
+            {
+                return statement.FromItems.FirstOrDefault()?.TableName;
+            }
+
+            return null;
+        }
+
         public static TableName GetUpdateSetTableName(UpdateStatement statement)
         {
             TableName tableName = null;

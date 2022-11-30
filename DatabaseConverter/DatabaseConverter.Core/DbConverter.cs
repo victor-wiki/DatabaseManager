@@ -133,7 +133,13 @@ namespace DatabaseConverter.Core
                 {
                     this.Target.DbInterpreter.Option.GetTableAllObjects = false;
 
+                    DatabaseObjectFetchMode oldFetchMode = this.Target.DbInterpreter.Option.ObjectFetchMode;
+
+                    this.Target.DbInterpreter.Option.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
+
                     SchemaInfo targetSchema = await this.Target.DbInterpreter.GetSchemaInfoAsync(filter);
+
+                    this.Target.DbInterpreter.Option.ObjectFetchMode = oldFetchMode;
 
                     SchemaInfoHelper.ExcludeExistingObjects(sourceSchemaInfo, targetSchema);
                 }

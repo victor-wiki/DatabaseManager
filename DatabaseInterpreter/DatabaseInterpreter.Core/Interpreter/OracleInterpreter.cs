@@ -250,7 +250,7 @@ namespace DatabaseInterpreter.Core
             else
             {
                 sb.Append($@"SELECT S.NAME AS ""Name"", P.OWNER AS ""Schema"",A.DATA_TYPE AS ""DataType"",
-                        'CREATE OR REPLACE ' || LISTAGG(TEXT,'') WITHIN GROUP(ORDER BY LINE) ""Definition""
+                        'CREATE OR REPLACE ' || XMLAGG(XMLPARSE(CONTENT TEXT WELLFORMED) ORDER BY LINE).GETCLOBVAL() ""Definition""
                         FROM ALL_PROCEDURES P
                         JOIN ALL_SOURCE S ON P.OWNER = S.OWNER AND P.OBJECT_NAME = S.NAME
                         LEFT JOIN SYS.ALL_ARGUMENTS A ON P.OBJECT_ID = A.OBJECT_ID AND A.ARGUMENT_NAME IS NULL
