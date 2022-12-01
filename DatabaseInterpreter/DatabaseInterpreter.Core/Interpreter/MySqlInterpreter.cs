@@ -419,7 +419,7 @@ namespace DatabaseInterpreter.Core
             {
                 sb.Append(@"SELECT TC.CONSTRAINT_SCHEMA AS `Schema`,TC.TABLE_NAME AS `TableName`, TC.CONSTRAINT_NAME AS `Name`
                         FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC 
-                        WHERE AND CONSTRAINT_TYPE='CHECK'");
+                        WHERE CONSTRAINT_TYPE='CHECK'");
             }
             else
             {
