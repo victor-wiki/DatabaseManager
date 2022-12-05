@@ -309,6 +309,8 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
             bool hasBigDataType = columns.Any(item => this.IsBigDataType(item));
 
+            string option = this.GetCreateTableOption();
+
             #region Create Table
 
             string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
@@ -321,7 +323,7 @@ SET QUOTED_IDENTIFIER ON
 {(this.dbInterpreter.NotCreateIfExists ? existsClause : "")}
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}
-) ON [PRIMARY]{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
+) {option}{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 

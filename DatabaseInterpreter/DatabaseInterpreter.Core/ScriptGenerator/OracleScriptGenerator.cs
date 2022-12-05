@@ -341,11 +341,13 @@ MAXVALUE {sequence.MaxValue}
 
             #region Create Table
 
+            string option = this.GetCreateTableOption();
+
             string tableScript =
 $@"
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-){strTablespace}" + this.scriptsDelimiter;
+){strTablespace}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option) + this.scriptsDelimiter;
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 

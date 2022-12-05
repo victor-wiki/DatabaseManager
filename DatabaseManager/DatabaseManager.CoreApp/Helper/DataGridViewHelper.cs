@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using PgGeom = NetTopologySuite.Geometries;
@@ -29,6 +30,7 @@ namespace DatabaseManager.Helper
         {
             return dgv.CurrentRow;
         }
+
         public static DataTable ConvertDataTable(DataTable dataTable)
         {
             Dictionary<int, DataTableColumnChangeInfo> changedColumns = new Dictionary<int, DataTableColumnChangeInfo>();
@@ -53,14 +55,15 @@ namespace DatabaseManager.Helper
 
                             if (type == typeof(byte[]))
                             {
-                                newColumnType = typeof(String);
-                                newValue = ValueHelper.BytesToHexString(value as byte[]);
+                                newColumnType = typeof(String);                                
+                                newValue = ValueHelper.BytesToHexString(value as byte[]);                              
                             }
                             else if(type == typeof(BitArray))
                             {
                                 newColumnType = typeof(String);
+
                                 BitArray bitArray = value as BitArray;
-                            byte[] bytes =new byte[bitArray.Length];
+                                byte[] bytes =new byte[bitArray.Length];
                                 bitArray.CopyTo(bytes, 0);
 
                                 newValue = ValueHelper.BytesToHexString(bytes);

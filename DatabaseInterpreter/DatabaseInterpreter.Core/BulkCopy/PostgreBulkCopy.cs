@@ -14,6 +14,19 @@ namespace DatabaseInterpreter.Core
     {
         private NpgsqlConnection _connection;
         private NpgsqlTransaction _externalTransaction { get; set; }
+        private static Dictionary<string, NpgsqlDbType> dataTypeMappings = new Dictionary<string, NpgsqlDbType>()
+        {
+            { "smallint",  NpgsqlDbType.Smallint},
+            { "integer",  NpgsqlDbType.Integer},
+            { "bigint",  NpgsqlDbType.Bigint},
+            { "real",  NpgsqlDbType.Real},
+            { "double precision",  NpgsqlDbType.Double},
+            { "numeric",  NpgsqlDbType.Numeric},
+            { "money",  NpgsqlDbType.Money},
+            { "date",  NpgsqlDbType.Date},
+            { "text",  NpgsqlDbType.Text},
+            { "character varying",  NpgsqlDbType.Varchar}
+        };
 
         private bool _ownsTheConnection = false;
 
@@ -180,7 +193,7 @@ namespace DatabaseInterpreter.Core
             }
             else if (t == typeof(string))
             {
-                dbType = NpgsqlDbType.Varchar;
+                dbType = NpgsqlDbType.Text;
             }
             else if (t == typeof(DateTimeOffset))
             {
@@ -189,7 +202,7 @@ namespace DatabaseInterpreter.Core
             else if (t == typeof(Int32))
             {
                 dbType = NpgsqlDbType.Integer;
-            }            
+            }
             else if (t == typeof(sbyte))
             {
                 dbType = NpgsqlDbType.Smallint;
@@ -209,23 +222,27 @@ namespace DatabaseInterpreter.Core
             else
             {
                 string targetColumnDataType = this.FindTableColumnType(columnName)?.ToLower();
-                
+
                 if (t == typeof(Int16))
                 {
-                    if (targetColumnDataType == "integer")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Integer;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
                         dbType = NpgsqlDbType.Smallint;
-                    }                  
+                    }
                 }
                 if (t == typeof(Int64))
                 {
-                    if (targetColumnDataType == "integer")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Integer;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
@@ -234,9 +251,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (t == typeof(float))
                 {
-                    if (targetColumnDataType == "double precision")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Double;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
@@ -245,9 +264,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (t == typeof(double))
                 {
-                    if (targetColumnDataType == "numeric")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Numeric;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
@@ -256,21 +277,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (t == typeof(decimal))
                 {
-                    if (targetColumnDataType == "money")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Money;
-                    }
-                    else if (targetColumnDataType == "real")
-                    {
-                        dbType = NpgsqlDbType.Real;
-                    }
-                    else if (targetColumnDataType == "double precision")
-                    {
-                        dbType = NpgsqlDbType.Double;
-                    }
-                    else if (targetColumnDataType == "integer")
-                    {
-                        dbType = NpgsqlDbType.Integer;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
@@ -279,9 +290,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (t == typeof(DateTime))
                 {
-                    if (targetColumnDataType == "date")
+                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
+
+                    if (mappedDataType.HasValue)
                     {
-                        dbType = NpgsqlDbType.Date;
+                        dbType = mappedDataType.Value;
                     }
                     else
                     {
@@ -310,6 +323,16 @@ namespace DatabaseInterpreter.Core
             }
 
             return null;
+        }
+
+        private NpgsqlDbType? GetMappedDataType(string dataType)
+        {
+            if(dataType!=null && dataTypeMappings.ContainsKey(dataType))
+            {
+                return dataTypeMappings[dataType];
+            }
+
+            return default(NpgsqlDbType?);
         }
     }
 }

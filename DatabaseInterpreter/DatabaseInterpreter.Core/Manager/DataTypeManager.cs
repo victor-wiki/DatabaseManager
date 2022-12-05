@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -62,9 +63,7 @@ namespace DatabaseInterpreter.Core
 
         private static bool IsTrueValue(XAttribute attribute)
         {
-            string value = attribute?.Value;
-
-            return value?.ToLower() == "true" || value == "1";
+            return ValueHelper.IsTrueValue(attribute?.Value);
         }
 
         public static DataTypeSpecification ParseArgument(DataTypeSpecification dataTypeSpecification)

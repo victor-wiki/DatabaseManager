@@ -168,6 +168,7 @@
             this.Controls.Add(this.tvDependencies);
             this.Controls.Add(this.rbThisDependOn);
             this.Controls.Add(this.rbDependOnThis);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmDbObjectDependency";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Database Object Dependencies";

@@ -62,7 +62,7 @@
   <item name="LEN" args="EXP"></item>
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
-  <item name="LOWER" args="EXP"></item>
+  <item name="LOWER" args="EXP" isString="true"></item>
   <item name="LTRIM" args="EXP" isString="true"></item>
   <item name="MAX" args="EXP"></item>
   <item name="MIN" args="EXP"></item>

@@ -3,6 +3,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
@@ -257,18 +258,24 @@ namespace DatabaseManager
         private void txtMessage_MouseHover(object sender, EventArgs e)
         {
             this.toolTip1.SetToolTip(this.txtMessage, this.txtMessage.Text);
-        }
-
-        private void tsmiGeometryView_Click(object sender, EventArgs e)
-        {
-            frmWktViewer geomViewer = new frmWktViewer();
-            geomViewer.Show();
-        }
+        }       
 
         private void tsBtnTranslateScript_Click(object sender, EventArgs e)
         {
             frmTranslateScript translateScript = new frmTranslateScript();
             translateScript.Show();
+        }
+
+        private void tsmiWktView_Click(object sender, EventArgs e)
+        {
+            frmWktViewer geomViewer = new frmWktViewer();
+            geomViewer.Show();
+        }
+
+        private void tsmiImageViewer_Click(object sender, EventArgs e)
+        {
+            frmImageViewer imgViewer = new frmImageViewer();
+            imgViewer.Show();
         }
     }
 }

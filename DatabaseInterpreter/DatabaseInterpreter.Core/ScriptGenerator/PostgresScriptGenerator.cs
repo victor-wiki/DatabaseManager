@@ -380,11 +380,13 @@ MAXVALUE {(long)sequence.MaxValue}
 
             #region Create Table
 
+            string option = this.GetCreateTableOption();
+
             string tableScript =
 $@"
 CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-){(isLowDbVersion ? "" : "USING HEAP")};";
+){(isLowDbVersion ? "" : option)};";
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 

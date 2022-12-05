@@ -18,7 +18,7 @@
   <item name="money" args="" value="-922337203685477.5808~922337203685477.5807"></item>
   <item name="nchar" args="length" range="1~4000" optional="true" displayDefault="10"></item>
   <item name="ntext" args="" size="1GB" indexForbidden="true"></item>
-  <item name="numeric" args="precision,scale" range="1~38,0~38" default="38,4"></item>f
+  <item name="numeric" args="precision,scale" range="1~38,0~38" default="38,4"></item>
   <item name="nvarchar" args="length" range="1~4000" allowMax="true" optional="true" displayDefault="50"></item>
   <item name="real" args="" ></item>
   <item name="rowversion" args="" size="8B"></item>

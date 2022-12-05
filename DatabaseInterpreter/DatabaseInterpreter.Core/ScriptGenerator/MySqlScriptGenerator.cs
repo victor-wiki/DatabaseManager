@@ -119,7 +119,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddTableColumn(Table table, TableColumn column)
         {
-            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} ADD { this.dbInterpreter.ParseColumn(table, column)};");
+            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} ADD {this.dbInterpreter.ParseColumn(table, column)};");
         }
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
@@ -146,7 +146,7 @@ namespace DatabaseInterpreter.Core
         {
             string columnNames = string.Join(",", primaryKey.Columns.Select(item => this.GetQuotedString(item.ColumnName)));
 
-            string sql = $"ALTER TABLE {this.GetQuotedString(primaryKey.TableName)} ADD CONSTRAINT { this.GetQuotedString(this.GetRestrictedLengthName(primaryKey.Name))} PRIMARY KEY ({columnNames})";
+            string sql = $"ALTER TABLE {this.GetQuotedString(primaryKey.TableName)} ADD CONSTRAINT {this.GetQuotedString(this.GetRestrictedLengthName(primaryKey.Name))} PRIMARY KEY ({columnNames})";
 
             if (this.option.TableScriptsGenerateOption.GenerateComment)
             {
@@ -154,7 +154,7 @@ namespace DatabaseInterpreter.Core
                 {
                     sql += $" COMMENT '{this.TransferSingleQuotationString(primaryKey.Comment)}'";
                 }
-            }           
+            }
 
             return new CreateDbObjectScript<TablePrimaryKey>(sql + this.scriptsDelimiter);
         }
@@ -167,9 +167,9 @@ namespace DatabaseInterpreter.Core
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => this.GetQuotedString(item.ColumnName)));
-            string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
+            string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
 
-            string sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.TableName)} ADD CONSTRAINT { this.GetQuotedString(this.GetRestrictedLengthName(foreignKey.Name))} FOREIGN KEY ({columnNames}) REFERENCES { this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})";
+            string sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.TableName)} ADD CONSTRAINT {this.GetQuotedString(this.GetRestrictedLengthName(foreignKey.Name))} FOREIGN KEY ({columnNames}) REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})";
 
             if (foreignKey.UpdateCascade)
             {
@@ -213,13 +213,13 @@ namespace DatabaseInterpreter.Core
 
             string sql = $"ALTER TABLE {this.GetQuotedString(index.TableName)} ADD {type} INDEX {this.GetQuotedString(this.GetRestrictedLengthName(index.Name))} ({columnNames})";
 
-            if(this.option.TableScriptsGenerateOption.GenerateComment)
+            if (this.option.TableScriptsGenerateOption.GenerateComment)
             {
                 if (!string.IsNullOrEmpty(index.Comment))
                 {
                     sql += $" COMMENT '{this.TransferSingleQuotationString(index.Comment)}'";
                 }
-            }            
+            }
 
             return new CreateDbObjectScript<TableIndex>(sql + this.scriptsDelimiter);
         }
@@ -243,7 +243,7 @@ namespace DatabaseInterpreter.Core
         {
             Table table = new Table() { Schema = column.Schema, Name = column.TableName };
 
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE { this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)} {(enabled ? "AUTO_INCREMENT" : "")}");
         }
 
         #endregion
@@ -275,7 +275,7 @@ namespace DatabaseInterpreter.Core
 
             string primaryKeyColumns = "";
 
-            if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey!=null)
+            if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
             {
                 List<IndexColumn> pkColumns = new List<IndexColumn>();
 
@@ -287,18 +287,20 @@ namespace DatabaseInterpreter.Core
 $@"
 ,PRIMARY KEY
 (
-{string.Join(Environment.NewLine, pkColumns.Select(item => $"{ this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+{string.Join(Environment.NewLine, pkColumns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )";
             }
 
             #region Table
+
+            string option = this.GetCreateTableOption();
 
             string tableScript =
 $@"
 CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
 ){(!string.IsNullOrEmpty(table.Comment) && this.option.TableScriptsGenerateOption.GenerateComment ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
-DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
+DEFAULT CHARSET={dbCharSet}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option) + this.scriptsDelimiter;
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
 
@@ -344,7 +346,7 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
             {
                 foreach (TableConstraint constraint in constraints)
                 {
-                    sb.AppendLine(this.AddCheckConstraint(constraint));                   
+                    sb.AppendLine(this.AddCheckConstraint(constraint));
                 }
             }
             #endregion
@@ -396,7 +398,7 @@ DEFAULT CHARSET={dbCharSet}" + this.scriptsDelimiter;
 
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
         {
-            yield return new ExecuteProcedureScript($"SET FOREIGN_KEY_CHECKS = { (enabled ? 1 : 0)};");
+            yield return new ExecuteProcedureScript($"SET FOREIGN_KEY_CHECKS = {(enabled ? 1 : 0)};");
         }
 
         #endregion

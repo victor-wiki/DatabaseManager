@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>1.0.12</Version>
-    <AssemblyVersion>1.0.12</AssemblyVersion>
-    <FileVersion>1.0.12</FileVersion>
+    <Version>1.0.13</Version>
+    <AssemblyVersion>1.0.13</AssemblyVersion>
+    <FileVersion>1.0.13</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>Modify classes for dependencies.</PackageReleaseNotes>
+    <PackageReleaseNotes>Add "CreateTableOptoin".</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

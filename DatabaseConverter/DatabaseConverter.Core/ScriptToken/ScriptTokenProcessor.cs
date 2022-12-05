@@ -729,7 +729,9 @@ namespace DatabaseConverter.Core
                 return false;
             }
 
-            if (token.Symbol.Trim().ToUpper() == "NULL" || (token.Symbol.StartsWith("@") && token.Children.Count == 0))
+            string upperCase = token.Symbol.Trim().ToUpper();
+
+            if (upperCase == "NULL" || upperCase.EndsWith(")") || (token.Symbol.StartsWith("@") && token.Children.Count == 0))
             {
                 return false;
             }
@@ -971,9 +973,9 @@ namespace DatabaseConverter.Core
         private void ReplaceTokens(IEnumerable<TokenInfo> tokens)
         {
             Action<TokenInfo> changeValue = (token) =>
-             {
-                 this.RestoreValue(token);
-             };
+            {
+                this.RestoreValue(token);
+            };
 
             foreach (var token in tokens)
             {
@@ -1140,7 +1142,7 @@ namespace DatabaseConverter.Core
             else
             {
                 return this.GetNewQuotedString(symbol.Trim());
-            }            
+            }
         }
 
         public void Dispose()

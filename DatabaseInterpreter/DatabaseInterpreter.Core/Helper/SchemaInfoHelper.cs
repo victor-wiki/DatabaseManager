@@ -11,6 +11,7 @@ namespace DatabaseInterpreter.Core
         public static SchemaInfo Clone(SchemaInfo schemaInfo)
         {
             SchemaInfo cloneSchemaInfo = (SchemaInfo)JsonConvert.DeserializeObject(JsonConvert.SerializeObject(schemaInfo), typeof(SchemaInfo));
+
             return cloneSchemaInfo;
         }
 
@@ -56,6 +57,7 @@ namespace DatabaseInterpreter.Core
         public static void EnsurePrimaryKeyNameUnique(SchemaInfo schemaInfo)
         {
             List<string> keyNames = new List<string>();
+
             schemaInfo.TablePrimaryKeys.ForEach(item =>
             {
                 if (keyNames.Contains(item.Name))
@@ -70,6 +72,7 @@ namespace DatabaseInterpreter.Core
         public static void ForceRenameMySqlPrimaryKey(SchemaInfo schemaInfo)
         {
             List<string> keyNames = new List<string>();
+
             schemaInfo.TablePrimaryKeys.ForEach(item =>
             {
                 if (item.Name == "PRIMARY")
@@ -140,13 +143,13 @@ namespace DatabaseInterpreter.Core
             ExcludeDbObjects(source.Sequences, target.Sequences);
         }
 
-        public static void ExcludeDbObjects<T>(List<T> sourceObjs, List<T> targetObjs) where T : DatabaseObject
+        public static void ExcludeDbObjects<T>(List<T> sourceDbObjects, List<T> targetDbObjects) where T : DatabaseObject
         {
-            if (sourceObjs.Count > 0 && targetObjs.Count > 0)
+            if (sourceDbObjects.Count > 0 && targetDbObjects.Count > 0)
             {
-                List<T> excludeObjs = new List<T>();
+                List<T> excludeDbObjects = new List<T>();
 
-                foreach (T obj in sourceObjs)
+                foreach (T obj in sourceDbObjects)
                 {
                     bool existed = false;
 
@@ -154,33 +157,33 @@ namespace DatabaseInterpreter.Core
                     {
                         TableForeignKey tfk = obj as TableForeignKey;
 
-                        existed = (targetObjs as List<TableForeignKey>).Any(item => item.TableName.ToLower() == tfk.TableName && item.ReferencedTableName.ToLower() == tfk.ReferencedTableName.ToLower()
+                        existed = (targetDbObjects as List<TableForeignKey>).Any(item => item.TableName.ToLower() == tfk.TableName && item.ReferencedTableName.ToLower() == tfk.ReferencedTableName.ToLower()
                               && IsForeignKeyColumnsEquals(item.Columns, tfk.Columns));
                     }
                     else if (obj is TableColumnChild)
                     {
                         TableColumnChild tk = obj as TableColumnChild;
 
-                        existed = (targetObjs.Cast<TableColumnChild>()).Any(item => item.TableName.ToLower() == tk.TableName && item.ColumnName.ToLower() == tk.ColumnName.ToLower());
+                        existed = (targetDbObjects.Cast<TableColumnChild>()).Any(item => item.TableName.ToLower() == tk.TableName && item.ColumnName.ToLower() == tk.ColumnName.ToLower());
                     }
                     else if (obj is TableChild)
                     {
                         TableChild tc = obj as TableChild;
 
-                        existed = (targetObjs.Cast<TableChild>()).Any(item => item.TableName.ToLower() == tc.TableName && item.Name.ToLower() == tc.Name.ToLower());
+                        existed = (targetDbObjects.Cast<TableChild>()).Any(item => item.TableName.ToLower() == tc.TableName && item.Name.ToLower() == tc.Name.ToLower());
                     }
                     else
                     {
-                        existed = targetObjs.Any(item => item.Name.ToLower() == obj.Name.ToLower());
+                        existed = targetDbObjects.Any(item => item.Name.ToLower() == obj.Name.ToLower());
                     }
 
                     if (existed)
                     {
-                        excludeObjs.Add(obj);
+                        excludeDbObjects.Add(obj);
                     }
                 }
 
-                sourceObjs.RemoveAll(item => excludeObjs.Any(t => t == item));
+                sourceDbObjects.RemoveAll(item => excludeDbObjects.Any(t => t == item));
             }
         }
 
@@ -619,6 +622,11 @@ namespace DatabaseInterpreter.Core
             }
 
             return schemaInfo;
+        }
+
+        public static bool IsSameTableColumnIgnoreCase(TableColumn column1, TableColumn column2)
+        {
+            return column1.TableName.ToLower() == column2.TableName.ToLower() && column1.Name.ToLower() == column2.Name.ToLower();
         }
     }
 }

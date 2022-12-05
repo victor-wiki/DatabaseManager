@@ -31,12 +31,14 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiSettings = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiSetting = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiBackupSetting = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiGeometryView = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLock = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiTools = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiWktView = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiImageViewer = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.navigator = new DatabaseManager.Controls.UC_DbObjectsNavigator();
             this.panelContent = new System.Windows.Forms.Panel();
@@ -66,7 +68,8 @@
             // 
             this.menuStrip1.BackColor = System.Drawing.Color.White;
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem1});
+            this.tsmiSettings,
+            this.tsmiTools});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(7, 3, 0, 3);
@@ -74,24 +77,23 @@
             this.menuStrip1.TabIndex = 5;
             this.menuStrip1.Text = "menuStrip1";
             // 
-            // toolStripMenuItem1
+            // tsmiSettings
             // 
-            this.toolStripMenuItem1.BackColor = System.Drawing.Color.White;
-            this.toolStripMenuItem1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.toolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiSettings.BackColor = System.Drawing.Color.White;
+            this.tsmiSettings.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.tsmiSettings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiSetting,
             this.tsmiDbConnection,
             this.tsmiBackupSetting,
-            this.tsmiGeometryView,
             this.tsmiLock});
-            this.toolStripMenuItem1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripMenuItem1.Image")));
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(68, 21);
-            this.toolStripMenuItem1.Text = "Tools";
+            this.tsmiSettings.Image = global::DatabaseManager.Resources.Settings;
+            this.tsmiSettings.Name = "tsmiSettings";
+            this.tsmiSettings.Size = new System.Drawing.Size(82, 21);
+            this.tsmiSettings.Text = "Settings";
             // 
             // tsmiSetting
             // 
-            this.tsmiSetting.Image = ((System.Drawing.Image)(resources.GetObject("tsmiSetting.Image")));
+            this.tsmiSetting.Image = global::DatabaseManager.Resources.Config;
             this.tsmiSetting.Name = "tsmiSetting";
             this.tsmiSetting.Size = new System.Drawing.Size(163, 22);
             this.tsmiSetting.Text = "Setting";
@@ -113,14 +115,6 @@
             this.tsmiBackupSetting.Text = "Backup Setting";
             this.tsmiBackupSetting.Click += new System.EventHandler(this.tsmiBackupSetting_Click);
             // 
-            // tsmiGeometryView
-            // 
-            this.tsmiGeometryView.Image = global::DatabaseManager.Resources.Polygon;
-            this.tsmiGeometryView.Name = "tsmiGeometryView";
-            this.tsmiGeometryView.Size = new System.Drawing.Size(163, 22);
-            this.tsmiGeometryView.Text = "WKT Viewer";
-            this.tsmiGeometryView.Click += new System.EventHandler(this.tsmiGeometryView_Click);
-            // 
             // tsmiLock
             // 
             this.tsmiLock.Image = global::DatabaseManager.Resources.Lock;
@@ -128,6 +122,32 @@
             this.tsmiLock.Size = new System.Drawing.Size(163, 22);
             this.tsmiLock.Text = "Lock";
             this.tsmiLock.Click += new System.EventHandler(this.tsmiLock_Click);
+            // 
+            // tsmiTools
+            // 
+            this.tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiWktView,
+            this.tsmiImageViewer});
+            this.tsmiTools.Image = global::DatabaseManager.Resources.Tool16;
+            this.tsmiTools.Name = "tsmiTools";
+            this.tsmiTools.Size = new System.Drawing.Size(68, 21);
+            this.tsmiTools.Text = "Tools";
+            // 
+            // tsmiWktView
+            // 
+            this.tsmiWktView.Image = global::DatabaseManager.Resources.Polygon;
+            this.tsmiWktView.Name = "tsmiWktView";
+            this.tsmiWktView.Size = new System.Drawing.Size(180, 22);
+            this.tsmiWktView.Text = "WKT Viewer";
+            this.tsmiWktView.Click += new System.EventHandler(this.tsmiWktView_Click);
+            // 
+            // tsmiImageViewer
+            // 
+            this.tsmiImageViewer.Image = global::DatabaseManager.Resources.Image;
+            this.tsmiImageViewer.Name = "tsmiImageViewer";
+            this.tsmiImageViewer.Size = new System.Drawing.Size(180, 22);
+            this.tsmiImageViewer.Text = "Image Viewer";
+            this.tsmiImageViewer.Click += new System.EventHandler(this.tsmiImageViewer_Click);
             // 
             // splitContainer1
             // 
@@ -357,7 +377,7 @@
         #endregion
 
         private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiSettings;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetting;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private Controls.UC_DbObjectsNavigator navigator;
@@ -377,8 +397,10 @@
         private System.Windows.Forms.ToolStripButton tsBtnCompare;
         private System.Windows.Forms.ToolStripMenuItem tsmiLock;
         private System.Windows.Forms.ToolTip toolTip1;
-        private System.Windows.Forms.ToolStripMenuItem tsmiGeometryView;
         private System.Windows.Forms.ToolStripButton tsBtnTranslateScript;
+        private System.Windows.Forms.ToolStripMenuItem tsmiTools;
+        private System.Windows.Forms.ToolStripMenuItem tsmiWktView;
+        private System.Windows.Forms.ToolStripMenuItem tsmiImageViewer;
     }
 }
 

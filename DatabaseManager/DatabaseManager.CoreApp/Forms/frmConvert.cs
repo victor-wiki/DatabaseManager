@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace DatabaseManager
 {
@@ -24,6 +25,7 @@ namespace DatabaseManager
         private ConnectionInfo targetDbConnectionInfo;
         private DbConverter dbConverter = null;
         private bool useSourceConnector = true;
+        private IEnumerable<CheckBox> configCheckboxes;
         private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
         public frmConvert()
         {
@@ -67,6 +69,13 @@ namespace DatabaseManager
                     this.chkCreateSchemaIfNotExists.Checked = false;
                 }
             }
+
+            this.cboMode.SelectedIndex = 0;
+
+            this.configCheckboxes = this.gbConfiguration.Controls.Cast<Control>()
+                                    .Where(item => item is CheckBox).Cast<CheckBox>().ToArray();
+
+            this.SetControlStateByMode();
         }
 
         private void btnFetch_Click(object sender, EventArgs e)
@@ -168,11 +177,13 @@ namespace DatabaseManager
         private GenerateScriptMode GetGenerateScriptMode()
         {
             GenerateScriptMode scriptMode = GenerateScriptMode.None;
-            if (this.chkScriptSchema.Checked)
+
+            if (this.cboMode.SelectedIndex == 0 || this.cboMode.SelectedIndex == 2)
             {
                 scriptMode = scriptMode | GenerateScriptMode.Schema;
             }
-            if (this.chkScriptData.Checked)
+
+            if (this.cboMode.SelectedIndex == 1 || this.cboMode.SelectedIndex == 2)
             {
                 scriptMode = scriptMode | GenerateScriptMode.Data;
             }
@@ -639,6 +650,66 @@ namespace DatabaseManager
             if (this.chkOutputScripts.Checked && string.IsNullOrEmpty(this.txtOutputFolder.Text) && !string.IsNullOrEmpty(defaultOutputFolder))
             {
                 this.txtOutputFolder.Text = defaultOutputFolder;
+            }
+        }
+
+        private void cboMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.SetControlStateByMode();
+        }
+
+        private void SetControlStateByMode()
+        {
+            if(this.configCheckboxes == null)
+            {
+                return;
+            }
+
+            GenerateScriptMode mode = this.GetGenerateScriptMode();
+
+            bool schemaOnly = mode == GenerateScriptMode.Schema;
+            bool dataOnly = mode == GenerateScriptMode.Data;
+
+            var schemaOnlyCheckboxes = this.configCheckboxes.Where(item => item.Tag?.ToString() == "Schema");
+            var dataOnlyCheckboxes = this.configCheckboxes.Where(item => item.Tag?.ToString() == "Data");
+
+            foreach(var checkbox in schemaOnlyCheckboxes)
+            {
+                checkbox.Enabled = !dataOnly;
+            }
+
+            foreach (var checkbox in dataOnlyCheckboxes)
+            {
+                checkbox.Enabled = !schemaOnly;
+            }
+
+            if(schemaOnly || dataOnly)
+            {
+                this.UncheckIfNotEnable();
+            }
+            else
+            {
+                this.chkCreateSchemaIfNotExists.Checked = true;                
+                
+                this.chkGenerateIdentity.Checked = true;
+                this.chkGenerateComment.Checked = true;
+                this.chkComputeColumn.Checked = true;
+            }
+
+            this.chkBulkCopy.Checked = !schemaOnly;
+            this.chkUseTransaction.Checked = true;
+
+            this.SetControlsStatus();
+        }
+
+        private void UncheckIfNotEnable()
+        {
+            foreach(var checkbox in this.configCheckboxes)
+            {
+                if (!checkbox.Enabled)
+                {
+                    checkbox.Checked = false;
+                }
             }
         }
     }

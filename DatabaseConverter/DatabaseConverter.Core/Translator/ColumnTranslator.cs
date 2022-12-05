@@ -17,7 +17,8 @@ namespace DatabaseConverter.Core
         private DataTypeTranslator dataTypeTranslator;
         private FunctionTranslator functionTranslator;
         private SequenceTranslator sequenceTranslator;
-        private List<FunctionSpecification> targetFuncSpecs;  
+        private List<FunctionSpecification> targetFuncSpecs;
+        public List<TableColumn> ExistedTableColumns { get; set; }
 
         public ColumnTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, IEnumerable<TableColumn> columns) : base(sourceInterpreter, targetInterpreter)
         {
@@ -26,7 +27,7 @@ namespace DatabaseConverter.Core
             this.functionTranslator = new FunctionTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
             this.dataTypeTranslator = new DataTypeTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
             this.sequenceTranslator = new SequenceTranslator(this.sourceDbInterpreter, this.targetDbInterpreter);
-            this.targetFuncSpecs = FunctionManager.GetFunctionSpecifications(this.targetDbType);           
+            this.targetFuncSpecs = FunctionManager.GetFunctionSpecifications(this.targetDbType);
         }
 
         public override void Translate()
@@ -54,27 +55,54 @@ namespace DatabaseConverter.Core
             this.sequenceTranslator.Option = this.Option;
             this.dataTypeTranslator.Option = this.Option;
 
-            this.CheckComputeExpression();
+            bool dataModeOnly = this.Option.GenerateScriptMode == GenerateScriptMode.Data;
+
+            if (!dataModeOnly)
+            {
+                this.CheckComputeExpression();
+            }
 
             foreach (TableColumn column in this.columns)
             {
-                if (!DataTypeHelper.IsUserDefinedType(column))
-                {
-                    TranslateHelper.TranslateTableColumnDataType(this.dataTypeTranslator, column);
-                }
+                TableColumn existedColumn = this.GetExistedColumn(column);
 
-                if (!string.IsNullOrEmpty(column.DefaultValue))
+                if (existedColumn != null)
                 {
-                    this.ConvertDefaultValue(column);
+                    column.DataType = existedColumn.DataType;
                 }
-
-                if (column.IsComputed)
+                else
                 {
-                    this.ConvertComputeExpression(column);
+                    if (!DataTypeHelper.IsUserDefinedType(column))
+                    {
+                        TranslateHelper.TranslateTableColumnDataType(this.dataTypeTranslator, column);
+                    }
+                }                
+
+                if (!dataModeOnly)
+                {
+                    if (!string.IsNullOrEmpty(column.DefaultValue))
+                    {
+                        this.ConvertDefaultValue(column);
+                    }
+
+                    if (column.IsComputed)
+                    {
+                        this.ConvertComputeExpression(column);
+                    }
                 }
             }
 
             this.FeedbackInfo("End translate columns.");
+        }
+
+        private TableColumn GetExistedColumn(TableColumn column)
+        {
+            if (this.ExistedTableColumns == null || this.ExistedTableColumns.Count == 0)
+            {
+                return null;
+            }
+
+            return this.ExistedTableColumns.FirstOrDefault(item => SchemaInfoHelper.IsSameTableColumnIgnoreCase(item, column));
         }
 
         public void ConvertDefaultValue(TableColumn column)
@@ -201,17 +229,17 @@ namespace DatabaseConverter.Core
                         defaultValue = defaultValue.Replace("true", "1").Replace("false", "0");
                     }
 
-                    if(defaultValue.ToUpper().Contains("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"))
+                    if (defaultValue.ToUpper().Contains("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"))
                     {
-                        if(this.targetDbType == DatabaseType.SqlServer)
+                        if (this.targetDbType == DatabaseType.SqlServer)
                         {
                             defaultValue = "GETUTCDATE()";
                         }
-                        else if(this.targetDbType == DatabaseType.MySql)
+                        else if (this.targetDbType == DatabaseType.MySql)
                         {
                             defaultValue = "UTC_TIMESTAMP()";
                         }
-                        else if(this.targetDbType == DatabaseType.Oracle)
+                        else if (this.targetDbType == DatabaseType.Oracle)
                         {
                             defaultValue = "SYS_EXTRACT_UTC(SYSTIMESTAMP)";
                         }
@@ -571,13 +599,13 @@ namespace DatabaseConverter.Core
             {
                 string[] items = column.ComputeExp.Split(this.sourceDbInterpreter.STR_CONCAT_CHARS);
 
-                var charColumns = this.columns.Where(c => items.Any(item=>  this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType)))
-                                  .Select(c=>c.Name);
+                var charColumns = this.columns.Where(c => items.Any(item => this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType)))
+                                  .Select(c => c.Name);
 
                 //if(this.Option.ConvertConcatChar)
                 {
                     column.ComputeExp = ConcatCharsHelper.ConvertConcatChars(this.sourceDbInterpreter, this.targetDbInterpreter, column.ComputeExp, charColumns);
-                }                
+                }
 
                 column.ComputeExp = this.CheckColumnDataTypeForComputeExpression(column.ComputeExp, this.targetDbInterpreter.STR_CONCAT_CHARS, targetDbType);
             }

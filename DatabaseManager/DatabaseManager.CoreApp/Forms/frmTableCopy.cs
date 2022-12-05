@@ -105,18 +105,21 @@ namespace DatabaseManager
 
                 using (this.dbConverter = new DbConverter(source, target))
                 {
-                    this.dbConverter.Option.RenameTableChildren = isTableExisted || this.rbSameDatabase.Checked;
-                    this.dbConverter.Option.GenerateScriptMode = scriptMode;
-                    this.dbConverter.Option.BulkCopy = true;
-                    this.dbConverter.Option.UseTransaction = true;
-                    this.dbConverter.Option.ConvertComputeColumnExpression = true;
-                    this.dbConverter.Option.IgnoreNotSelfForeignKey = true;
-                    this.dbConverter.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
-                    this.dbConverter.Option.OnlyForTableCopy = true;
+                    var option = this.dbConverter.Option;
+
+                    option.RenameTableChildren = isTableExisted || this.rbSameDatabase.Checked;
+                    option.GenerateScriptMode = scriptMode;
+                    option.BulkCopy = true;
+                    option.UseTransaction = true;
+                    option.ConvertComputeColumnExpression = true;
+                    option.IgnoreNotSelfForeignKey = true;
+                    option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
+                    option.OnlyForTableCopy = true;
 
                     if (this.cboSchema.Visible)
                     {
                         string targetSchema = string.IsNullOrEmpty(this.cboSchema.Text) ? target.DbInterpreter.DefaultSchema : this.cboSchema.Text;
+
                         this.dbConverter.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = this.Table.Schema, TargetSchema = targetSchema });
                     }
 

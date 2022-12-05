@@ -5,6 +5,7 @@ using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Noding.Snapround;
+using Newtonsoft.Json.Linq;
 using NpgsqlTypes;
 using System;
 using System.Collections;
@@ -1089,6 +1090,46 @@ namespace DatabaseInterpreter.Core
             }
 
             return ValueHelper.TransferSingleQuotation(comment);
+        }
+
+        protected string GetCreateTableOption()
+        {
+            CreateTableOption option = CreateTableOptionManager.GetCreateTableOption(this.databaseType);
+
+            if (option == null)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            Action<string> appendValue = (value) =>
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    if (sb.Length > 0)
+                    {
+                        sb.AppendLine();
+                    }
+
+                    sb.Append(value);
+                }
+            };
+
+            foreach(var item in option.Items)
+            {
+                if (!string.IsNullOrEmpty(item))
+                {
+                    string[] items = item.Split(CreateTableOptionManager.OptionValueItemsSeperator);
+
+                    foreach (var subItem in items)
+                    {
+                        appendValue(subItem);
+                    }
+                }
+            }       
+
+            return sb.ToString();
         }
         #endregion
 

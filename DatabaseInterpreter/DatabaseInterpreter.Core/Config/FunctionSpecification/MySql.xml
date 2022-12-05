@@ -68,7 +68,7 @@
   <item name="LN" args="EXP"></item>
   <item name="LOCALTIME" args="" ></item>
   <item name="LOCALTIMESTAMP" args=""></item>
-  <item name="LOCATE" args="SEARCH,EXP,[,START]"></item>
+  <item name="LOCATE" args="SEARCH,EXP[,START]"></item>
   <item name="LOG" args="EXP"></item>
   <item name="LOG10" args="EXP"></item>
   <item name="LOG2" args="EXP"></item>
