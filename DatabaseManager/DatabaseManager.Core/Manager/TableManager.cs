@@ -362,7 +362,7 @@ namespace DatabaseManager.Core
                 string oldColumnDefinition = this.dbInterpreter.ParseColumn(newTable, oldColumn);
                 string newColumnDefinition = this.dbInterpreter.ParseColumn(newTable, newColumn);
 
-                if(oldColumnDefinition.ToUpper() != newColumnDefinition.ToUpper())
+                if(!this.IsDefinitionEquals(oldColumnDefinition, newColumnDefinition))
                 {
                     Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
 
@@ -387,6 +387,16 @@ namespace DatabaseManager.Core
             }
 
             return scripts;
+        }
+
+        private bool IsDefinitionEquals(string definiton1, string defintion2)
+        {
+        return this.GetNoWhiteSpaceTrimedString(definiton1.ToUpper()) == this.GetNoWhiteSpaceTrimedString(defintion2.ToUpper());
+        }
+
+        private string GetNoWhiteSpaceTrimedString(string value)
+        {
+            return value.Replace(" ", "").Trim();
         }
 
         public List<Script> GetPrimaryKeyAlterScripts(TablePrimaryKey oldPrimaryKey, TablePrimaryKey newPrimaryKey, bool onlyCompareColumns)
@@ -752,7 +762,10 @@ namespace DatabaseManager.Core
                     return false;
                 }
 
-                columnNames.Add(column.Name);
+                if (!string.IsNullOrEmpty(column.Name) && !columnNames.Contains(column.Name))
+                {
+                    columnNames.Add(column.Name);
+                }
             }
             #endregion
 
@@ -790,6 +803,11 @@ namespace DatabaseManager.Core
                             clursteredCount++;
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(index.Name) && !indexNames.Contains(index.Name))
+                    {
+                        indexNames.Add(index.Name);
+                    }
                 }
 
                 if (clursteredCount > 1)
@@ -824,6 +842,11 @@ namespace DatabaseManager.Core
                         message = $"The \"{key.Name}\" has no any column";
                         return false;
                     }
+
+                    if (!string.IsNullOrEmpty(key.Name) && !keyNames.Contains(key.Name))
+                    {
+                        keyNames.Add(key.Name);
+                    }
                 }
             }
             #endregion
@@ -851,6 +874,11 @@ namespace DatabaseManager.Core
                     {
                         message = "Constraint Expressioni can't be empty";
                         return false;
+                    }
+
+                    if (!string.IsNullOrEmpty(constraint.Name) && !constraintNames.Contains(constraint.Name))
+                    {
+                        constraintNames.Add(constraint.Name);
                     }
                 }
             }

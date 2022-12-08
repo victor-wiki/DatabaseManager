@@ -502,7 +502,7 @@
 	</mapping>
 	<mapping>
 		<source type="timestamp with time zone[]" />
-		<target type="varcchar" length="1000"/>
+		<target type="varchar" length="1000"/>
 	</mapping>
 	<mapping>
 		<source type="timestamp without time zone" />

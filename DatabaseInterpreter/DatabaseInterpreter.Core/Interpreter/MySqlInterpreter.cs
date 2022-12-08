@@ -806,6 +806,7 @@ namespace DatabaseInterpreter.Core
         public override string ParseColumn(Table table, TableColumn column)
         {
             string dataType = this.ParseDataType(column);
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
             bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
 
             if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))
@@ -817,14 +818,13 @@ namespace DatabaseInterpreter.Core
             {
                 string computeExpression = this.GetColumnComputeExpression(column);
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} AS {computeExpression}";
+                return $"{this.GetQuotedString(column.Name)} {dataType} AS {computeExpression} {requiredClause}";
             }
             else
             {
-                string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
                 string commentClause = (!string.IsNullOrEmpty(column.Comment) && this.Option.TableScriptsGenerateOption.GenerateComment ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
-                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && this.AllowDefaultValue(column) && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && this.AllowDefaultValue(column) && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {requiredClause} {identityClause}{defaultValueClause} {scriptComment}{commentClause}";

@@ -294,5 +294,34 @@ namespace SqlAnalyser.Core
                 this.AddChildColumnNameToken(node, token, this.ParseColumnTypes);
             }
         }
+
+        protected ConstraintType GetConstraintType(TerminalNodeImpl node)
+        {
+            ConstraintType constraintType = ConstraintType.None;
+
+            string text = node.GetText().ToUpper();
+
+            switch (text)
+            {
+                case "PRIMARY":
+                    constraintType = ConstraintType.PrimaryKey;
+                    break;
+                case "FOREIGN":
+                case "REFERENCES":
+                    constraintType = ConstraintType.ForeignKey;
+                    break;
+                case "UNIQUE":
+                    constraintType = ConstraintType.UniqueIndex;
+                    break;
+                case "CHECK":
+                    constraintType = ConstraintType.Check;
+                    break;
+                case "DEFAULT":
+                    constraintType = ConstraintType.Default;
+                    break;
+            }
+
+            return constraintType;
+        }
     }
 }

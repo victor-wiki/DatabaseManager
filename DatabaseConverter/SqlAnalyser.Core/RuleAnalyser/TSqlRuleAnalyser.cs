@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Xml.Linq;
 using static TSqlParser;
@@ -685,7 +686,7 @@ namespace SqlAnalyser.Core
 
                         if (alias != null)
                         {
-                            fromItem.Alias = new TokenInfo(alias.table_alias()) { Type = TokenType.TableAlias };
+                            fromItem.Alias = new TokenInfo(alias.table_alias());
                         }
 
                         Derived_tableContext derivedTable = fromTable.derived_table();
@@ -840,7 +841,7 @@ namespace SqlAnalyser.Core
                     #region handle alias
                     var ts = tableSoure.table_source_item_joined()?.table_source_item();
                     var derivedTable = ts?.derived_table();
-                    var derivedTableAlias = ts?.as_table_alias()?.table_alias();
+                    var derivedTableAlias = ts?.as_table_alias()?.table_alias();                   
 
                     if (derivedTable != null && derivedTableAlias != null)
                     {
@@ -863,7 +864,7 @@ namespace SqlAnalyser.Core
                                     break;
                                 }
                             }
-                        }
+                        }                       
                     }
                     #endregion
 
@@ -1437,7 +1438,7 @@ namespace SqlAnalyser.Core
 
                     if (terminalNodeType == TSqlParser.INTO)
                     {
-                        statement.Intos = new List<TokenInfo>() { new TableName(node.table_name())};
+                        statement.Intos = new List<TokenInfo>() { new TableName(node.table_name()) };
                     }
                 }
                 else if (child is Table_sourcesContext table)
@@ -2004,40 +2005,224 @@ namespace SqlAnalyser.Core
             TableInfo tableInfo = new TableInfo();
 
             tableInfo.IsTemporary = this.IsTemporaryTable(name);
-            tableInfo.Name = this.ParseTableName(name);
+            tableInfo.Name = new TableName(name);
 
-            foreach (var column in columns)
+            Func<IList<IParseTree>, ColumnInfo, ConstraintInfo> getConstraintInfo = (node, columnInfo) =>
             {
-                ColumnInfo columnInfo = new ColumnInfo();
+                ConstraintInfo constraintInfo = new ConstraintInfo();
 
-                columnInfo.Name = this.ParseColumnName(column.column_definition().id_());
-
-                var dataType = column.column_definition().data_type();
-
-                foreach (var child in dataType.children)
+                foreach (var c in node)
                 {
-                    if (child is TerminalNodeImpl tni)
+                    if (c is TerminalNodeImpl ctni)
                     {
-                        if (child.GetText().ToUpper() == "IDENTITY")
+                        ConstraintType constraintType = this.GetConstraintType(ctni);
+
+                        if (constraintType != ConstraintType.None)
                         {
-                            columnInfo.DataType = new TokenInfo(dataType.id_());
-                            columnInfo.IsIdentity = true;
-                            break;
+                            constraintInfo.Type = constraintType;
+                        }
+                    }
+                    else if (c is Id_Context cid)
+                    {
+                        constraintInfo.Name = new NameToken(cid);
+                    }
+                    else if (c is ExpressionContext exp)
+                    {
+                        if (constraintInfo.Type == ConstraintType.Check)
+                        {
+                            constraintInfo.Definition = new TokenInfo(exp);
+                        }
+                        else if (constraintInfo.Type == ConstraintType.Default)
+                        {
+                            if (columnInfo != null)
+                            {
+                                columnInfo.DefaultValue = new TokenInfo(exp);
+                            }
+                        }
+                    }
+                    else if (c is Column_name_list_with_orderContext cnlw)
+                    {
+                        if (constraintInfo.ColumnNames == null)
+                        {
+                            constraintInfo.ColumnNames = new List<ColumnName>();
+                        }
+
+                        constraintInfo.ColumnNames.AddRange(cnlw.id_().Select(item => new ColumnName(item)));
+                    }
+                    else if (c is Column_name_listContext cnl)
+                    {
+                        if (constraintInfo.Type == ConstraintType.ForeignKey)
+                        {
+                            if (constraintInfo.ForeignKey == null)
+                            {
+                                constraintInfo.ForeignKey = new ForeignKeyInfo();
+                            }
+
+                            constraintInfo.ForeignKey.ColumnNames.AddRange(cnl.id_().Select(item => new ColumnName(item)));
+                        }
+                    }
+                    else if (c is Check_constraintContext check)
+                    {
+                        constraintInfo.Type = ConstraintType.Check;
+                        constraintInfo.Definition = new TokenInfo(check.search_condition());
+                    }
+                    else if (c is Foreign_key_optionsContext fk)
+                    {
+                        if (constraintInfo.ForeignKey == null)
+                        {
+                            constraintInfo.ForeignKey = this.ParseForeignKey(fk);
+                        }
+                        else
+                        {
+                            ForeignKeyInfo fki = this.ParseForeignKey(fk);
+
+                            constraintInfo.ForeignKey.RefTableName = fki.RefTableName;
+                            constraintInfo.ForeignKey.RefColumNames = fki.RefColumNames;
                         }
                     }
                 }
 
-                if (!columnInfo.IsIdentity)
-                {
-                    columnInfo.DataType = new TokenInfo(dataType);
-                }
+                return constraintInfo;
+            };
 
-                tableInfo.Columns.Add(columnInfo);
+            foreach (var column in columns)
+            {
+                var columnDefiniton = column.column_definition();
+                var tableConstraint = column.table_constraint();
+
+                if (columnDefiniton != null)
+                {
+                    ColumnInfo columnInfo = new ColumnInfo();
+
+                    columnInfo.Name = new ColumnName(columnDefiniton.id_());
+
+                    bool isComputeExp = false;
+
+                    foreach (var child in columnDefiniton.children)
+                    {
+                        if (child is TerminalNodeImpl)
+                        {
+                            if (child.GetText().ToUpper() == "AS")
+                            {
+                                isComputeExp = true;
+                            }
+                        }
+                        else if (child is Data_typeContext dt)
+                        {
+                            columnInfo.DataType = new TokenInfo(dt);
+                        }
+                        else if (child is Column_definition_elementContext cde)
+                        {
+                            string text = cde.GetText().ToUpper();
+                            var constraint = cde.column_constraint();
+
+                            if (text.Contains("NOT") && text.Contains("NULL"))
+                            {
+                                columnInfo.IsNullable = false;
+                            }
+                            else if (text.StartsWith("IDENTITY"))
+                            {
+                                columnInfo.IsIdentity = true;
+
+                                int index = text.IndexOf("(");
+
+                                if (index > 0)
+                                {
+                                    string[] identityItems = text.Substring(index).Trim('(', ')').Split(',');
+
+                                    tableInfo.IdentitySeed = int.Parse(identityItems[0].Trim());
+                                    tableInfo.IdentityIncrement = int.Parse(identityItems[1].Trim());
+                                }
+                            }
+                            else if (text.StartsWith("DEFAULT"))
+                            {
+                                columnInfo.DefaultValue = new TokenInfo(cde.expression());
+                            }
+                            else if (constraint != null)
+                            {
+                                ConstraintInfo constraintInfo = getConstraintInfo(constraint.children, columnInfo);
+
+                                if (columnInfo.Constraints == null)
+                                {
+                                    columnInfo.Constraints = new List<ConstraintInfo>();
+                                }
+
+                                columnInfo.Constraints.Add(constraintInfo);
+                            }
+                        }
+                        else if (child is ExpressionContext exp)
+                        {
+                            if (isComputeExp)
+                            {
+                                columnInfo.ComputeExp = new TokenInfo(exp);
+
+                                isComputeExp = false;
+                            }
+                        }
+                    }
+
+                    tableInfo.Columns.Add(columnInfo);
+                }
+                else if (tableConstraint != null)
+                {
+                    ConstraintInfo constraintInfo = getConstraintInfo(tableConstraint.children, null);
+
+                    if (tableInfo.Constraints == null)
+                    {
+                        tableInfo.Constraints = new List<ConstraintInfo>();
+                    }
+
+                    tableInfo.Constraints.Add(constraintInfo);
+                }
             }
 
             statement.TableInfo = tableInfo;
 
             return statement;
+        }
+
+        private ForeignKeyInfo ParseForeignKey(Foreign_key_optionsContext node)
+        {
+            ForeignKeyInfo fki = new ForeignKeyInfo();
+
+            var refTableName = node.table_name();
+            var refColumnNames = node.column_name_list()._col;
+
+            fki.RefTableName = new TableName(refTableName);
+            fki.RefColumNames.AddRange(refColumnNames.Select(item => new ColumnName(item)));
+
+            bool isUpdate = false;
+            bool isDelete = false;
+            bool isCascade = false;
+
+            foreach (var chilid in node.children)
+            {
+                if (chilid is TerminalNodeImpl fktni)
+                {
+                    string text = fktni.GetText().ToUpper();
+
+                    if (text == "UPDATE")
+                    {
+                        isUpdate = true;
+                    }
+                    else if (text == "DELETE")
+                    {
+                        isDelete = true;
+                    }
+                    else if (text == "CASCADE")
+                    {
+                        isCascade = true;
+                    }
+                }
+            }
+
+            if (isCascade)
+            {
+                fki.UpdateCascade = isUpdate;
+                fki.DeleteCascade = isDelete;
+            }
+
+            return fki;
         }
 
         private bool IsSearchConditionHasSubquery(ParserRuleContext node)
@@ -2316,7 +2501,7 @@ namespace SqlAnalyser.Core
                 {
                     var expression = expElem.expression();
 
-                    columnName = new ColumnName(expression);                   
+                    columnName = new ColumnName(expression);
 
                     var constContext = expression?.primitive_expression()?.constant();
                     var functionCall = expression?.function_call();

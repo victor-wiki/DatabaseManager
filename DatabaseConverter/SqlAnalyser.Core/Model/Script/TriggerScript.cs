@@ -4,6 +4,7 @@ namespace SqlAnalyser.Model
 {
     public class TriggerScript : CommonScript
     {
+        public List<ColumnName> ColumnNames { get; set; }
         public TableName TableName { get; set; }
         public TriggerTime Time { get; set; }
         public List<TriggerEvent> Events { get; set; } = new List<TriggerEvent>();

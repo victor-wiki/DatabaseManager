@@ -116,6 +116,7 @@
             this.dgvColumns.TabIndex = 7;
             this.dgvColumns.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellContentClick);
             this.dgvColumns.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellEnter);
+            this.dgvColumns.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellLeave);
             this.dgvColumns.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvColumns_CellValueChanged);
             this.dgvColumns.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvColumns_DataBindingComplete);
             this.dgvColumns.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvColumns_DataError);
@@ -214,7 +215,7 @@
             this.tsmiDeleteColumn,
             this.tsmiGenerateChangeScripts});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(221, 92);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(221, 70);
             // 
             // tsmiInsertColumn
             // 

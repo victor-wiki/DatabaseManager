@@ -811,20 +811,58 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}(");
+            var columns = table.Columns;
+            var selectStatement = table.SelectStatement;
 
-            int i = 0;
+            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}{(columns.Count > 0 ? "(" : "AS")}");
 
-            foreach (var column in table.Columns)
+            if (columns.Count > 0)
             {
-                string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+                bool hasTableConstraints = table.HasTableConstraints;
 
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{identity}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                int i = 0;
 
-                i++;
+                foreach (var column in columns)
+                {
+                    string name = column.Name.Symbol;
+                    string dataType = column.DataType?.Symbol ?? "";
+                    string require = column.IsNullable ? " NULL" : " NOT NULL";
+                    string seperator = (i == table.Columns.Count - 1 ? (hasTableConstraints ? "," : "") : ",");
+
+                    if (column.IsComputed)
+                    {
+                        sb.AppendLine($"{name}{dataType}{require} GENERATED ALWAYS AS ({column.ComputeExp}) STORED{seperator}");
+                    }
+                    else
+                    {
+                        string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+                        string defaultValue = string.IsNullOrEmpty(column.DefaultValue?.Symbol) ? "" : $" DEFAULT {StringHelper.GetParenthesisedString(column.DefaultValue.Symbol)}";
+                        string constraint = this.GetConstriants(column.Constraints, true);
+                        string strConstraint = string.IsNullOrEmpty(constraint) ? "" : $" {constraint}";
+
+                        sb.AppendLine($"{name} {column.DataType}{defaultValue}{identity}{require}{strConstraint}{seperator}");
+                    }
+
+                    i++;
+                }
+
+                if (hasTableConstraints)
+                {
+                    sb.AppendLine(this.GetConstriants(table.Constraints));
+                }
+
+                sb.AppendLine(")");
+            }
+            else
+            {
+                PostgreSqlStatementScriptBuilder builder = new PostgreSqlStatementScriptBuilder();
+
+                builder.BuildSelectStatement(selectStatement, false);
+
+                sb.AppendLine(builder.ToString());
             }
 
-            sb.AppendLine(");");
+            sb.Append(";");
 
             return sb.ToString();
         }

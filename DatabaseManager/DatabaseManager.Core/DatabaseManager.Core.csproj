@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.20</Version>
-    <PackageReleaseNotes>add class: DepencencyFetcher</PackageReleaseNotes>
+    <Version>2.0.21</Version>
+    <PackageReleaseNotes>table desinger bugs fix.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.20</AssemblyVersion>
-    <FileVersion>2.0.20</FileVersion>
+    <AssemblyVersion>2.0.21</AssemblyVersion>
+    <FileVersion>2.0.21</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

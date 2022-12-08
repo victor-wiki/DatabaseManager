@@ -579,5 +579,18 @@ namespace DatabaseManager.Controls
         {
             e.Row.Cells[this.colNullable.Name].Value = this.defaultNullable;
         }
+
+        private void dgvColumns_CellLeave(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == this.colDataType.Index)
+            {
+                var cell = this.dgvColumns.CurrentCell;
+
+                if (cell != null && cell.IsInEditMode && cell.EditedFormattedValue != cell.Value)
+                {
+                    cell.Value = cell.EditedFormattedValue;
+                }
+            }
+        }
     }
 }

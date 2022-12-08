@@ -8,17 +8,17 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.0.23</Version>
+    <Version>2.0.24</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>add: image viewer</PackageReleaseNotes>
+    <PackageReleaseNotes>table desinger: auto update value when focus leave cell for data type column</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.23</AssemblyVersion>
-    <FileVersion>2.0.23</FileVersion>
+    <AssemblyVersion>2.0.24</AssemblyVersion>
+    <FileVersion>2.0.24</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.2" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="160.900.6-rc0" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.2" />
   </ItemGroup>
 

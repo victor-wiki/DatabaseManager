@@ -1068,6 +1068,7 @@ namespace DatabaseInterpreter.Core
         public override string ParseColumn(Table table, TableColumn column)
         {
             bool isLowDbVersion = this.IsLowDbVersion();
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
 
             //the "GENERATED ALWAYS" can be used since v12.
 
@@ -1075,7 +1076,7 @@ namespace DatabaseInterpreter.Core
             {
                 if (!isLowDbVersion)
                 {
-                    return $"{this.GetQuotedString(column.Name)} {column.DataType} GENERATED ALWAYS AS ({column.ComputeExp}) STORED";
+                    return $"{this.GetQuotedString(column.Name)} {column.DataType} {requiredClause} GENERATED ALWAYS AS ({column.ComputeExp}) STORED";
                 }
                 else
                 {
@@ -1085,8 +1086,6 @@ namespace DatabaseInterpreter.Core
             else
             {
                 string dataType = this.ParseDataType(column);
-                string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
-
                 bool isIdentity = this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity;
                 bool allowIdentity = this.AllowIdentity(column);
 
@@ -1115,7 +1114,7 @@ namespace DatabaseInterpreter.Core
                     }
                 }
 
-                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 string content = $"{this.GetQuotedString(column.Name)} {dataType}{defaultValueClause} {requiredClause}{identityClause}{scriptComment}";

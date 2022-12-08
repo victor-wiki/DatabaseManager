@@ -2,19 +2,12 @@
 
 namespace SqlAnalyser.Model
 {
-    public class TableInfo
-    {
-        public bool IsTemporary { get; set; }
-        public bool IsGlobal { get; set; } = true;
-        public TokenInfo Name { get; set; }
-        public List<ColumnInfo> Columns { get; set; } = new List<ColumnInfo>();
-    }
-
     public class ColumnInfo
     {
         private TokenInfo _dataType;
         public ColumnName Name { get; set; }
         public bool IsIdentity { get; set; }
+        public bool IsNullable { get; set; } = true;
         public TokenInfo DataType
         {
             get { return this._dataType; }
@@ -28,5 +21,10 @@ namespace SqlAnalyser.Model
                 }
             }
         }
+        public TokenInfo DefaultValue { get; set; }
+        public TokenInfo ComputeExp { get; set; }
+
+        public bool IsComputed => this.ComputeExp != null;
+        public List<ConstraintInfo> Constraints { get; set; }
     }
 }

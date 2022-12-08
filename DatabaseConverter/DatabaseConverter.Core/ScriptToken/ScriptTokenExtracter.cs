@@ -28,6 +28,11 @@ namespace DatabaseConverter.Core
 
         private void ExtractTokens(dynamic obj, bool isFirst = true)
         {
+            if (obj == null)
+            {
+                return;
+            }
+
             Type type = obj.GetType();
 
             Action readProperties = () =>
@@ -39,7 +44,7 @@ namespace DatabaseConverter.Core
                     if (property.Name == nameof(TokenInfo.Parent))
                     {
                         continue;
-                    }                  
+                    }
 
                     dynamic value = property.GetValue(obj);
 
@@ -62,7 +67,8 @@ namespace DatabaseConverter.Core
                             this.ExtractTokens(v, false);
                         }
                     }
-                    else if (value is Statement || value is TableInfo || value is StatementItem || value is SelectTopInfo)
+                    else if (value is Statement || value is StatementItem || value is SelectTopInfo
+                    || value is TableInfo || value is ColumnInfo || value is ConstraintInfo || value is ForeignKeyInfo)
                     {
                         this.ExtractTokens(value, false);
                     }

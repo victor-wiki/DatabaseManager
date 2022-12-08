@@ -86,6 +86,7 @@
             this.dgvIndexes.Size = new System.Drawing.Size(884, 396);
             this.dgvIndexes.TabIndex = 8;
             this.dgvIndexes.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellContentClick);
+            this.dgvIndexes.CellLeave += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellLeave);
             this.dgvIndexes.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvIndexes_CellValueChanged);
             this.dgvIndexes.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvIndexes_DataError);
             this.dgvIndexes.RowHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvIndexes_RowHeaderMouseClick);

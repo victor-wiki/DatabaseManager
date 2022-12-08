@@ -98,6 +98,7 @@ namespace SqlAnalyser.Model
         VariableName,
         UserVariableName, //for mysql
         CursorName,
+        ConstraintName,
         DataType,   
         TableAlias,
         ColumnAlias,

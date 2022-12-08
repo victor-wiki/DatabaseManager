@@ -441,5 +441,18 @@ namespace DatabaseManager.Controls
                 this.OnGenerateChangeScripts();
             }
         }
+
+        private void dgvIndexes_CellLeave(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == this.colType.Index)
+            {
+                var cell = this.dgvIndexes.CurrentCell;
+
+                if (cell != null && cell.IsInEditMode && cell.EditedFormattedValue != cell.Value)
+                {
+                    cell.Value = cell.EditedFormattedValue;
+                }
+            }
+        }
     }
 }

@@ -760,7 +760,7 @@ namespace SqlAnalyser.Core
                 statement.SetItems.Add(item);
             }
 
-            var condition = node.whereClause().expr();
+            var condition = node.whereClause()?.expr();
 
             if (condition != null)
             {
@@ -1029,7 +1029,23 @@ namespace SqlAnalyser.Core
                 var tableFactor = tableRef.tableFactor();
                 var joinTables = tableRef.joinedTable();
 
-                fromItem.TableName = this.ParseTableName(tableFactor);
+                var subquery = tableFactor?.derivedTable();
+
+                if (subquery == null)
+                {
+                    fromItem.TableName = this.ParseTableName(tableFactor);
+                }
+                else
+                {
+                    var alias = subquery.tableAlias();
+
+                    fromItem.SubSelectStatement = this.ParseDerivedTable(subquery);
+
+                    if (alias != null)
+                    {
+                        fromItem.Alias = new TokenInfo(alias);
+                    }
+                }
 
                 if (joinTables != null && joinTables.Length > 0)
                 {
@@ -1106,7 +1122,7 @@ namespace SqlAnalyser.Core
             }
 
             return fromItems;
-        }
+        }       
 
         private List<SetStatement> ParseSetStatement(SetStatementContext node)
         {
@@ -1166,13 +1182,43 @@ namespace SqlAnalyser.Core
                         }
                         else
                         {
-                            checkUserVaribleDataType(statement);                          
+                            checkUserVaribleDataType(statement);
                         }
                     }
                 }
             }
 
             return statements;
+        }
+
+        private SelectStatement ParseDerivedTable(DerivedTableContext node)
+        {
+            SelectStatement statement = new SelectStatement();
+
+            foreach(var child in node.children)
+            {
+                if(child is SubqueryContext subquery)
+                {
+                    statement = this.ParseSubquery(subquery);
+                }
+            }
+
+            return statement;
+        }
+
+        private SelectStatement ParseSubquery(SubqueryContext node)
+        {
+            SelectStatement statement = new SelectStatement();
+
+            foreach (var child in node.children)
+            {
+                if (child is QueryExpressionParensContext qe)
+                {
+                    statement = this.ParseQueryExpression(qe.queryExpression());
+                }
+            }
+
+            return statement;
         }
 
         private List<Statement> ParseCompoundStatementList(CompoundStatementListContext node)
@@ -1583,15 +1629,194 @@ namespace SqlAnalyser.Core
 
             var columns = node.tableElementList().tableElement();
 
-            tableInfo.Columns.AddRange(columns.Select(item => new ColumnInfo()
+            foreach (var column in columns)
             {
-                Name = this.ParseColumnName(item.columnDefinition().columnName()),
-                DataType = new TokenInfo(item.columnDefinition().fieldDefinition())
-            }));
+                ColumnInfo columnInfo = new ColumnInfo();
+
+                Action checkConstraints = () =>
+                {
+                    if (columnInfo.Constraints == null)
+                    {
+                        columnInfo.Constraints = new List<ConstraintInfo>();
+                    }
+                };
+
+                var columnDefinition = column.columnDefinition();
+                var constraint = column.tableConstraintDef();
+                var references = columnDefinition?.checkOrReferences();
+
+                if (columnDefinition != null)
+                {
+                    var fieldDefiniton = columnDefinition.fieldDefinition();
+
+                    var columnName = columnDefinition.columnName();
+                    var dataType = fieldDefiniton.dataType();
+                    var attributes = fieldDefiniton.columnAttribute();
+
+
+                    columnInfo.Name = new ColumnName(columnName);
+                    columnInfo.DataType = new TokenInfo(dataType) { Type = TokenType.DataType };
+
+                    foreach (var attr in attributes)
+                    {
+                        string text = attr.GetText().ToUpper().Trim();
+
+                        if (text.Contains("NOT") && text.Contains("NULL"))
+                        {
+                            columnInfo.IsNullable = false;
+                        }
+                        else if (text == "AUTO_INCREMENT")
+                        {
+                            columnInfo.IsIdentity = true;
+                        }
+                        else if (text.Contains("UNIQUE"))
+                        {
+                            checkConstraints();
+
+                            columnInfo.Constraints.Add(new ConstraintInfo() { Type = ConstraintType.UniqueIndex });
+                        }
+                        else if (text.Contains("KEY"))
+                        {
+                            checkConstraints();
+
+                            columnInfo.Constraints.Add(new ConstraintInfo() { Type = ConstraintType.PrimaryKey });
+                        }
+                        else if (text.StartsWith("DEFAULT"))
+                        {
+                            checkConstraints();
+
+                            columnInfo.DefaultValue = new TokenInfo(attr.GetText().Substring(7));
+                        }
+                        else if (text.StartsWith("CHECK"))
+                        {
+                            checkConstraints();
+
+                            columnInfo.Constraints.Add(new ConstraintInfo()
+                            {
+                                Type = ConstraintType.Check,
+                                Definition = new TokenInfo(attr.GetText().Substring(5))
+                            });
+                        }
+                    }
+
+                    tableInfo.Columns.Add(columnInfo);
+                }
+
+                if (references != null)
+                {
+                    ConstraintInfo constraintInfo = new ConstraintInfo() { Type = ConstraintType.ForeignKey };
+
+                    constraintInfo.ForeignKey = this.ParseReferences(references.references());
+
+                    checkConstraints();
+
+                    columnInfo.Constraints.Add(constraintInfo);
+                }
+
+                if (constraint != null)
+                {
+                    ConstraintInfo constraintInfo = null;
+
+                    Action checkConstraintInfo = () =>
+                    {
+                        if (constraintInfo == null)
+                        {
+                            constraintInfo = new ConstraintInfo();
+                        }
+                    };
+
+                    foreach (var child in constraint.children)
+                    {
+                        if (child is TerminalNodeImpl tni)
+                        {
+                            ConstraintType constraintType = this.GetConstraintType(tni);
+
+                            if (constraintType != ConstraintType.None)
+                            {
+                                checkConstraintInfo();
+
+                                constraintInfo.Type = constraintType;
+                            }
+                        }
+                        else if (child is ConstraintNameContext cn)
+                        {
+                            checkConstraintInfo();
+
+                            constraintInfo.Name = new NameToken(cn.identifier());
+                        }
+                        else if(child is CheckConstraintContext check)
+                        {
+                            checkConstraintInfo();
+
+                            constraintInfo.Type = ConstraintType.Check;
+
+                            constraintInfo.Definition = new TokenInfo(check.exprWithParentheses());
+                        }
+                        else if (child is KeyListVariantsContext klv)
+                        {
+                            var cols = klv.keyListWithExpression()?.keyPartOrExpression();
+
+                            if (cols != null)
+                            {
+                                checkConstraintInfo();
+
+                                if (constraintInfo.ColumnNames == null)
+                                {
+                                    constraintInfo.ColumnNames = new List<ColumnName>();
+                                }
+
+                                constraintInfo.ColumnNames.AddRange(cols.Select(item => new ColumnName(item)));
+                            }
+                        }
+                        else if (child is KeyListContext kl)
+                        {
+                            if (constraintInfo != null && constraintInfo.Type == ConstraintType.ForeignKey)
+                            {
+                                if (constraintInfo.ForeignKey == null)
+                                {
+                                    constraintInfo.ForeignKey = new ForeignKeyInfo();
+                                }
+
+                                constraintInfo.ForeignKey.ColumnNames.AddRange(kl.keyPart().Select(item => new ColumnName(item)));
+                            }
+                        }
+                        else if (child is ReferencesContext refc)
+                        {
+                            if (constraintInfo != null && constraintInfo.Type == ConstraintType.ForeignKey)
+                            {
+                                ForeignKeyInfo fki = this.ParseReferences(refc);
+
+                                constraintInfo.ForeignKey.RefTableName = fki.RefTableName;
+                                constraintInfo.ForeignKey.RefColumNames = fki.RefColumNames;
+                            }
+                        }
+                    }
+
+                    if (constraintInfo != null)
+                    {
+                        if (tableInfo.Constraints == null)
+                        {
+                            tableInfo.Constraints = new List<ConstraintInfo>();
+                        }
+
+                        tableInfo.Constraints.Add(constraintInfo);
+                    }
+                }
+            }
 
             statement.TableInfo = tableInfo;
 
             return statement;
+        }
+
+        private ForeignKeyInfo ParseReferences(ReferencesContext node)
+        {
+            ForeignKeyInfo fki = new ForeignKeyInfo();
+
+            fki.RefTableName = new TableName(node.tableRef());
+            fki.RefColumNames.AddRange(node.identifierListWithParentheses().identifierList().identifier().Select(item => new ColumnName(item)));
+
+            return fki;
         }
 
         private TruncateStatement ParseTruncateTableStatement(TruncateTableStatementContext node)

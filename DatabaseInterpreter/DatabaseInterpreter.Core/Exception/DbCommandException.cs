@@ -20,5 +20,13 @@ namespace DatabaseInterpreter.Core
             this.BaseException = ex;
             this.CustomMessage = msg;
         }
+
+        public override string Message
+        {
+            get
+            {
+                return $"{this.BaseException?.Message}{Environment.NewLine}{this.CustomMessage}";
+            }
+        }
     }
 }

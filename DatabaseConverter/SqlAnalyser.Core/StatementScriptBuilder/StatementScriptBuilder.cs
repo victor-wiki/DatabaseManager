@@ -246,7 +246,7 @@ namespace SqlAnalyser.Core
                             }
                             else
                             {
-                                joinTableName = $"({tableName}){(tableName.Alias == null ? "" : $" {tableName.Alias}")}";
+                                joinTableName = $"{StringHelper.GetParenthesisedString(tableName.Symbol)}{(tableName.Alias == null ? "" : $" {tableName.Alias}")}";
                             }
 
                             this.AppendLine($"{joinKeyword}{joinTableName}{condition}");
@@ -376,6 +376,104 @@ namespace SqlAnalyser.Core
         {
             return $"{prefix}{this.LoopCount}";
         }
+
+        protected string GetConstriants(List<ConstraintInfo> constaints, bool isForColumn = false)
+        {
+            if (constaints == null || constaints.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            int i = 0;
+
+            foreach (ConstraintInfo constraint in constaints)
+            {
+                string name = string.IsNullOrEmpty(constraint.Name?.Symbol) ? "" : $" {constraint.Name.Symbol}";
+
+                ConstraintType constraintType = constraint.Type;
+
+                string definition = "";
+
+                switch (constraintType)
+                {
+                    case ConstraintType.PrimaryKey:
+                        definition = "PRIMARY KEY";
+
+                        if (!isForColumn)
+                        {
+                            definition += $" ({string.Join(",", constraint.ColumnNames)})";
+                        }
+
+                        break;
+                    case ConstraintType.UniqueIndex:
+                        definition = "UNIQUE";
+                        
+                        if(!isForColumn)
+                        {
+                            definition += $"({string.Join(",", constraint.ColumnNames)})";
+                        }
+
+                        break;
+                    case ConstraintType.Check:
+                        definition = $"CHECK {StringHelper.GetParenthesisedString(constraint?.Definition?.Symbol)}";
+                        break;
+                    case ConstraintType.ForeignKey:
+                        ForeignKeyInfo fki = constraint.ForeignKey;
+
+                        if (fki != null)
+                        {
+                            if (!isForColumn)
+                            {
+                                definition = $" FOREIGN KEY ({string.Join(",", fki.ColumnNames)})";
+                            }
+
+                            definition += $" REFERENCES {fki.RefTableName}({(string.Join(",", fki.RefColumNames))})";
+
+                            if (fki.UpdateCascade)
+                            {
+                                definition += " UPDATE CASCADE";
+                            }
+
+                            if (fki.DeleteCascade)
+                            {
+                                definition += " DELETE CASCADE";
+                            }
+                        }
+
+                        break;
+
+                }
+
+                if(this is MySqlStatementScriptBuilder && isForColumn)
+                {
+                    sb.Append($" {definition}");
+                }
+                else
+                {
+                    bool hasName = !string.IsNullOrEmpty(name);
+
+                    if (hasName && isForColumn)
+                    {
+                        sb.Append($" {definition}");
+                    }  
+                    else
+                    {
+                        sb.Append($"{(hasName? "CONSTRAINT":"")} {(!hasName?"":$"{name} ")}{definition}".Trim());
+                    }
+                }                
+
+                if (i < constaints.Count - 1)
+                {
+                    sb.AppendLine(",");
+                }
+
+                i++;
+            }
+
+            return sb.ToString();
+        }       
 
         public void Dispose()
         {

@@ -162,52 +162,24 @@ namespace SqlAnalyser.Core
                 }
                 else
                 {
-                    //"delete from join: from table can't use alias.
-
                     string tableName = delete.TableName.Symbol;
-
-                    this.AppendLine($"DELETE {delete.TableName}");
 
                     string alias = null;
 
-                    int i = 0;
+                    FromItem firstFromItem = delete.FromItems[0];
 
-                    foreach (FromItem fromItem in delete.FromItems)
+                    if (firstFromItem.TableName != null && firstFromItem.TableName.Alias != null)
                     {
-                        if (i == 0)
-                        {
-                            if (fromItem.TableName != null && fromItem.TableName.Alias != null)
-                            {
-                                alias = fromItem.TableName.Alias.Symbol;
-                            }
-                            else if (fromItem.Alias != null)
-                            {
-                                alias = fromItem.Alias.Symbol;
-                            }
-                        }
-
-                        foreach (JoinItem joinItem in fromItem.JoinItems)
-                        {
-                            string condition = joinItem.Condition.Symbol;
-
-                            if (!string.IsNullOrEmpty(alias) && condition.Contains(alias))
-                            {
-                                joinItem.Condition.Symbol = AnalyserHelper.ReplaceSymbol(condition, alias, tableName);
-                            }
-                        }
-
-                        i++;
+                        alias = firstFromItem.TableName.Alias.Symbol;
+                    }
+                    else if (firstFromItem.Alias != null)
+                    {
+                        alias = firstFromItem.Alias.Symbol;
                     }
 
-                    this.BuildFromItems(delete.FromItems);
+                    this.AppendLine($"DELETE {(string.IsNullOrEmpty(alias)? delete.TableName.Symbol: alias)}");                      
 
-                    if (!string.IsNullOrEmpty(alias))
-                    {
-                        if (delete.Condition.Symbol.Contains(alias))
-                        {
-                            delete.Condition.Symbol = AnalyserHelper.ReplaceSymbol(delete.Condition.Symbol, alias, tableName);
-                        }
-                    }
+                    this.BuildFromItems(delete.FromItems);                    
                 }
 
                 if (delete.Condition != null)
@@ -778,20 +750,89 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}(");
+            var columns = table.Columns;
+            var selectStatement = table.SelectStatement;
 
-            int i = 0;
+            sb.AppendLine($"CREATE {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {table.Name}{(columns.Count > 0 ? "(" : "AS")}");
 
-            foreach (var column in table.Columns)
+            if (columns.Count > 0)
             {
-                string identity = column.IsIdentity ? " AUTO_INCREMENT PRIMARY KEY" : "";
+                bool hasTableConstraints = table.HasTableConstraints;
 
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{identity}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                int i = 0;
 
-                i++;
+                bool primaryKeyUsed = false;
+                string primaryKeyColumn = null;
+
+                var tablePrimaryKey = table.Constraints.Where(item => item.Type == ConstraintType.PrimaryKey)?.FirstOrDefault();
+                var primaryContraintsColumns = table.Constraints == null ? Enumerable.Empty<ColumnName>() :
+                                               tablePrimaryKey?.ColumnNames;
+
+                foreach (var column in columns)
+                {
+                    string name = column.Name.Symbol;
+                    string dataType = column.DataType?.Symbol ?? "";
+                    string require = column.IsNullable ? " NULL" : " NOT NULL";
+                    string seperator = (i == table.Columns.Count - 1 ? (hasTableConstraints ? "," : "") : ",");
+
+                    bool isComputeExp = column.IsComputed;
+
+                    if (isComputeExp)
+                    {
+                        sb.AppendLine($"{name} {dataType} AS ({column.ComputeExp}){require}{seperator}");
+                    }
+                    else
+                    {
+                        string identity = column.IsIdentity ? " AUTO_INCREMENT" : "";
+                        string defaultValue = string.IsNullOrEmpty(column.DefaultValue?.Symbol) ? "" : $" DEFAULT {StringHelper.GetParenthesisedString(column.DefaultValue.Symbol)}";
+                        string constraint = this.GetConstriants(column.Constraints, true);
+                        string strConstraint = string.IsNullOrEmpty(constraint) ? "" : $" {constraint}";
+
+                        if (column.IsIdentity && !strConstraint.Contains("PRIMARY"))
+                        {
+                            if (primaryContraintsColumns != null && primaryContraintsColumns.Count() == 1 && primaryContraintsColumns.First().Symbol == name)
+                            {
+                                strConstraint += " PRIMARY KEY";
+                                primaryKeyColumn = name;
+
+                                primaryKeyUsed = true;
+                            }
+                            else if (primaryContraintsColumns != null && !primaryContraintsColumns.Any(item=>item.Symbol == name))
+                            {
+                                tablePrimaryKey.ColumnNames.Insert(0, column.Name);
+                            }
+                        }
+
+                        sb.AppendLine($"{name} {column.DataType}{identity}{require}{defaultValue}{strConstraint}{seperator}");
+                    }
+
+                    i++;
+                }
+
+                if (hasTableConstraints)
+                {
+                    var tableConstraints = table.Constraints;
+
+                    if (primaryKeyUsed)
+                    {
+                        tableConstraints = tableConstraints.Where(item => !(item.Type == ConstraintType.PrimaryKey && item.ColumnNames.Any(t => t.Symbol == primaryKeyColumn))).ToList();
+                    }
+
+                    sb.AppendLine(this.GetConstriants(tableConstraints));
+                }
+
+                sb.Append(")");
+            }
+            else
+            {
+                MySqlStatementScriptBuilder builder = new MySqlStatementScriptBuilder();
+
+                builder.BuildSelectStatement(selectStatement, false);
+
+                sb.AppendLine(builder.ToString());
             }
 
-            sb.AppendLine(");");
+            sb.AppendLine(";");
 
             return sb.ToString();
         }

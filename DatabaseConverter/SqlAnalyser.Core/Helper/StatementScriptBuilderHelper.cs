@@ -12,11 +12,11 @@ namespace SqlAnalyser.Core
     {
         public static TableName GetSelectStatementTableName(SelectStatement statement)
         {
-            if(statement.TableName!=null)
+            if (statement.TableName != null)
             {
                 return statement.TableName;
             }
-            else if(statement.HasFromItems)
+            else if (statement.HasFromItems)
             {
                 return statement.FromItems.FirstOrDefault()?.TableName;
             }
@@ -72,18 +72,19 @@ namespace SqlAnalyser.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            var colNames = statement.SetItems.First().Name.Symbol.Trim('(', ')').Split(',');
-            string valueSymbol = statement.SetItems.First().Value.Symbol.Trim();
+            var setItem = statement.SetItems.FirstOrDefault();
+            var valueStatement = setItem.ValueStatement;
 
-            if (valueSymbol.StartsWith('(') && valueSymbol.EndsWith(')'))
+            if (valueStatement == null)
             {
-                valueSymbol = StringHelper.GetBalanceParenthesisTrimedValue(valueSymbol);
+                return string.Empty;
             }
 
-            int fromIndex = valueSymbol.IndexOf("FROM", StringComparison.OrdinalIgnoreCase);
-            int whereIndex = valueSymbol.LastIndexOf("WHERE", StringComparison.OrdinalIgnoreCase);
+            var where = valueStatement.Where;
 
-            var colValues = valueSymbol.Substring(0, fromIndex).Replace("SELECT", "", StringComparison.OrdinalIgnoreCase).Split(',');
+            var colNames = statement.SetItems.FirstOrDefault().Name.Symbol.Trim('(', ')').Split(',');
+
+            var colValues = valueStatement.Columns.Select(item => item.Symbol).ToArray();
 
             Action buildSet = () =>
             {
@@ -98,37 +99,32 @@ namespace SqlAnalyser.Core
                 }
             };
 
-            Action buildFromAndWhere = () =>
+            Func<string> getFromTables = () =>
             {
-                if (fromIndex > 0)
+                if (valueStatement.HasFromItems)
                 {
-                    sb.AppendLine(valueSymbol.Substring(fromIndex).Trim() + ';');
+                    return String.Join(",", valueStatement.FromItems.Select(item => item.TableName.NameWithAlias));
                 }
+
+                return String.Empty;
             };
 
             Action buildWhere = () =>
             {
-                if (whereIndex > 0)
+                if (where != null)
                 {
-                    sb.AppendLine(valueSymbol.Substring(whereIndex));
+                    sb.AppendLine($"WHERE {where.Symbol}");
                 }
             };
 
-            Func<string> getFromTables = () =>
+            Action buildFromAndWhere = () =>
             {
-                string fromTables = null;
+                string fromTables = getFromTables();
 
-                if (whereIndex > 0)
-                {
-                    fromTables = valueSymbol.Substring(fromIndex + 4, whereIndex - fromIndex - 4).Trim();
-                }
-                else
-                {
-                    fromTables = valueSymbol.Substring(fromIndex + 4);
-                }
+                sb.AppendLine($"FROM {fromTables}");
 
-                return fromTables;
-            };
+                buildWhere();
+            };                   
 
             if (builder is TSqlStatementScriptBuilder)
             {
@@ -138,12 +134,9 @@ namespace SqlAnalyser.Core
             }
             else if (builder is MySqlStatementScriptBuilder)
             {
-                if (fromIndex > 0)
-                {
-                    string fromTables = getFromTables();
+                string fromTables = getFromTables();
 
-                    sb.AppendLine(fromTables);
-                }
+                sb.AppendLine(fromTables);
 
                 sb.AppendLine("SET");
 
@@ -163,7 +156,7 @@ namespace SqlAnalyser.Core
 
                 buildSet();
 
-                if (fromIndex > 0)
+                if (valueStatement.HasFromItems)
                 {
                     string fromTables = getFromTables();
 

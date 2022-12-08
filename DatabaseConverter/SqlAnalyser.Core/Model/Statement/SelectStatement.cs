@@ -37,8 +37,21 @@ namespace SqlAnalyser.Model
 
     public class FromItem
     {
+        private TokenInfo _alias;
         public TableName TableName { get; set; }
-        public TokenInfo Alias { get; set; }
+        public TokenInfo Alias 
+        {
+            get { return _alias; }
+            set 
+            {
+                this._alias = value;
+
+                if(value!=null)
+                {
+                    this._alias.Type = TokenType.TableAlias;
+                }
+            }        
+        }
         public SelectStatement SubSelectStatement { get; set; }
         public List<JoinItem> JoinItems { get; set; } = new List<JoinItem>();
 

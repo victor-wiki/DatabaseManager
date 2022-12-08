@@ -1,4 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using Newtonsoft.Json;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
@@ -112,17 +114,25 @@ namespace SqlAnalyser.Core
                         {
                             if (i == 0)
                             {
-                                this.Append($"FROM {fromItem.TableName.NameWithAlias}");
+                                this.Append($"FROM ");
                             }
                             else
                             {
-                                this.Append($",{fromItem.TableName.NameWithAlias}");
+                                this.Append(",");
                             }
 
-                            if (i == fromItemsCount - 1)
+                            if (fromItem.SubSelectStatement != null)
                             {
-                                this.AppendLine();
+                                string alias = fromItem.Alias == null ? "" : fromItem.Alias.Symbol;
+
+                                this.AppendLine("(");
+                                this.BuildSelectStatement(fromItem.SubSelectStatement, false);
+                                this.AppendLine($") {alias}");
                             }
+                            else if (fromItem.TableName != null)
+                            {
+                                this.Append($"{fromItem.TableName.NameWithAlias}");
+                            }                           
                         }
 
                         i++;
@@ -430,7 +440,7 @@ namespace SqlAnalyser.Core
             }
             else if (statement is TruncateStatement truncate)
             {
-                this.AppendLine($"TRUNCATE TABLE {truncate.TableName}");
+                this.AppendLine($"TRUNCATE TABLE {truncate.TableName};");
             }
             else if (statement is DropStatement drop)
             {
@@ -683,18 +693,64 @@ namespace SqlAnalyser.Core
                 }
             }
 
-            sb.AppendLine($"CREATE TABLE {tableName}(");
+            bool hasColumns = table.Columns.Count > 0;
+            bool hasSelect = table.SelectStatement != null;
 
-            int i = 0;
-
-            foreach (var column in table.Columns)
+            if(hasColumns)
             {
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                sb.AppendLine($"CREATE TABLE {tableName}(");
 
-                i++;
+                bool hasTableConstraints = table.HasTableConstraints;
+
+                int i = 0;
+
+                foreach (var column in table.Columns)
+                {
+                    string name = column.Name.Symbol;
+                    string dataType = column.DataType?.Symbol ?? "VARCHAR(MAX)";
+                    string require = column.IsNullable ? " NULL" : " NOT NULL";
+                    string seperator = (i == table.Columns.Count - 1 ? (hasTableConstraints ? "," : "") : ",");
+
+                    bool isComputeExp = column.IsComputed;
+
+                    if(isComputeExp)
+                    {
+                        sb.Append($"{name} AS ({column.ComputeExp}){seperator}");
+                    }
+                    else
+                    {
+                        string identity = column.IsIdentity ? $" IDENTITY({table.IdentitySeed??1},{table.IdentityIncrement??1})" : "";
+                        string defaultValue = string.IsNullOrEmpty(column.DefaultValue?.Symbol) ? "" : $" DEFAULT {StringHelper.GetParenthesisedString(column.DefaultValue.Symbol)}";
+                        string constraint = this.GetConstriants(column.Constraints, true);
+                        string strConstraint = string.IsNullOrEmpty(constraint) ? "" : $" {constraint}";                       
+
+                        sb.AppendLine($"{name} {column.DataType}{identity}{require}{defaultValue}{strConstraint}{seperator}");
+                    }
+
+                    i++;
+                }
+
+                if (hasTableConstraints)
+                {
+                    sb.AppendLine(this.GetConstriants(table.Constraints));
+                }
+
+                sb.Append(")");
+            }
+            else if (hasSelect)
+            {
+                table.SelectStatement.Intos = new List<TokenInfo>();
+
+                table.SelectStatement.Intos.Add(table.Name);
+
+                TSqlStatementScriptBuilder builder = new TSqlStatementScriptBuilder();
+
+                builder.BuildSelectStatement(table.SelectStatement, false);
+
+                sb.AppendLine(builder.ToString());
             }
 
-            sb.AppendLine(");");
+            sb.AppendLine(";");
 
             return sb.ToString();
         }

@@ -92,6 +92,28 @@ namespace DatabaseInterpreter.Utility
             return value;
         }
 
+        public static string GetParenthesisedString(string value)
+        {
+            if (IsParenthesised(value))
+            {
+                return value;
+            }
+
+            return $"({value})";
+        }
+
+        public static bool IsParenthesised(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+
+            string trimedValue = value.Trim();
+
+            return trimedValue.StartsWith("(") && trimedValue.EndsWith(")") && IsParenthesisBalanced(trimedValue);
+        }
+
         public static string GetBalanceParenthesisTrimedValue(string value)
         {
             if (!string.IsNullOrEmpty(value) && value.StartsWith("(") && value.EndsWith(")"))

@@ -116,7 +116,7 @@
 	<mapping>
 		<SqlServer>LOWER</SqlServer>
 		<MySql>LCASE</MySql>
-		<Oracle>LOWER</Oracle>f
+		<Oracle>LOWER</Oracle>
 		<Postgres>LOWER</Postgres>
 	</mapping>
 	<mapping>

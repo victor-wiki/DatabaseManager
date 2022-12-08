@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using static Antlr4.Runtime.Atn.SemanticContext;
 
 namespace SqlAnalyser.Core
 {
@@ -884,25 +885,65 @@ namespace SqlAnalyser.Core
                 tableName = this.GetPrivateTemporaryTableName(tableName);
             }
 
-            sb.AppendLine($"CREATE {(table.IsGlobal ? "GLOBAL" : "PRIVATE")} {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {tableName}(");
+            var columns = table.Columns;
+            var selectStatement = table.SelectStatement;
 
-            int i = 0;
+            string temporaryType = table.IsTemporary ? (table.IsGlobal ? "GLOBAL" : "PRIVATE") : "";
 
-            foreach (var column in table.Columns)
+            sb.AppendLine($"CREATE {temporaryType} {(table.IsTemporary ? "TEMPORARY" : "")} TABLE {tableName}{(columns.Count > 0 ? "(" : "AS")}");
+
+            if (columns.Count > 0)
             {
-                string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+                bool hasTableConstraints = table.HasTableConstraints;
 
-                sb.AppendLine($"{column.Name.FieldName} {column.DataType}{identity}{(i == table.Columns.Count - 1 ? "" : ",")}");
+                int i = 0;
 
-                i++;
+                foreach (var column in columns)
+                {
+                    string name = column.Name.Symbol;
+                    string dataType = column.DataType?.Symbol ?? "";
+                    string require = column.IsNullable ? " NULL" : " NOT NULL";
+                    string seperator = (i == table.Columns.Count - 1 ? (hasTableConstraints ? "," : "") : ",");
+
+                    if (column.IsComputed)
+                    {
+                        sb.Append($"{name} AS ({column.ComputeExp}){require}{seperator}");
+                    }
+                    else
+                    {
+                        string identity = column.IsIdentity ? " GENERATED ALWAYS AS IDENTITY" : "";
+                        string defaultValue = string.IsNullOrEmpty(column.DefaultValue?.Symbol) ? "" : $" DEFAULT {StringHelper.GetParenthesisedString(column.DefaultValue.Symbol)}";
+                        string constraint = this.GetConstriants(column.Constraints, true);
+                        string strConstraint = string.IsNullOrEmpty(constraint) ? "" : $" {constraint}";
+
+                        sb.AppendLine($"{name} {column.DataType}{defaultValue}{identity}{require}{strConstraint}{seperator}");
+                    }                   
+
+                    i++;
+                }
+
+                if (hasTableConstraints)
+                {
+                    sb.AppendLine(this.GetConstriants(table.Constraints));
+                }
+
+                sb.AppendLine(")");
+
+                if (!table.IsGlobal)
+                {
+                    sb.Append("ON COMMIT DROP DEFINITION");
+                }
+            }
+            else
+            {
+                PlSqlStatementScriptBuilder builder = new PlSqlStatementScriptBuilder();
+
+                builder.BuildSelectStatement(selectStatement, false);
+
+                sb.AppendLine(builder.ToString());
             }
 
-            sb.AppendLine(")");
-
-            if (!table.IsGlobal)
-            {
-                sb.Append("ON COMMIT DROP DEFINITION;");
-            }
+            sb.Append(";");
 
             return sb.ToString();
         }

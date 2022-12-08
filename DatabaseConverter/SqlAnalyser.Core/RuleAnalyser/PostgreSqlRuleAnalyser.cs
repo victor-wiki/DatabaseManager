@@ -432,6 +432,18 @@ namespace SqlAnalyser.Core
                 {
                     statements.Add(this.ParseSelectStatement(select));
                 }
+                else if (child is InsertstmtContext insert)
+                {
+                    statements.Add(this.ParseInsertStatement(insert));
+                }
+                else if (child is UpdatestmtContext update)
+                {
+                    statements.Add(this.ParseUpdateStatement(update));
+                }
+                else if (child is DeletestmtContext delete)
+                {
+                    statements.Add(this.ParseDeleteStatement(delete));
+                }
                 else if (child is CreatestmtContext create)
                 {
                     var statement = this.ParseCreateStatement(create);
@@ -578,6 +590,152 @@ namespace SqlAnalyser.Core
             return statement;
         }
 
+        private InsertStatement ParseInsertStatement(InsertstmtContext node)
+        {
+            InsertStatement statement = new InsertStatement();
+
+            var tableName = node.insert_target().qualified_name();
+            var columns = node.insert_rest()?.insert_column_list()?.insert_column_item();
+            var valueClause = node.insert_rest()?.selectstmt()?.select_no_parens()?.select_clause()?.simple_select();
+
+            statement.TableName = this.ParseTableName(tableName);
+
+            if (columns != null)
+            {
+                statement.Columns.AddRange(columns.Select(item => new ColumnName(item)));
+            }
+
+            if (valueClause != null)
+            {
+                var values = valueClause.values_clause();
+
+                if (values != null)
+                {
+                    statement.Values.AddRange(values.expr_list().Select(item => new TokenInfo(item) { Type = TokenType.InsertValue }));
+                }
+                else
+                {
+                    statement.SelectStatements = new List<SelectStatement>() { this.ParseSimpleSelect(valueClause) };
+                }
+            }
+
+            return statement;
+        }
+
+        private UpdateStatement ParseUpdateStatement(UpdatestmtContext node)
+        {
+            UpdateStatement statement = new UpdateStatement();
+
+            var tableName = this.ParseTableName(node.relation_expr_opt_alias());
+            var sets = node.set_clause_list()?.set_clause();
+            var from = node.from_clause();
+            var where = node.where_or_current_clause();  
+
+            statement.TableNames.Add(tableName);
+
+            statement.FromItems = new List<FromItem>();
+
+            statement.FromItems.Add(new FromItem() { TableName = tableName });
+
+            if (sets != null)
+            {
+                foreach (var set in sets)
+                {
+                    NameValueItem nvi = new NameValueItem();
+
+                    nvi.Name = this.ParseColumnName(set.set_target());
+
+                    var value = set.a_expr();
+
+                    bool isSubquery = AnalyserHelper.IsSubquery(value);
+
+                    if (!isSubquery)
+                    {
+                        nvi.Value = new TokenInfo(set.a_expr()) { Type = TokenType.UpdateSetValue };
+                    }
+                    else
+                    {
+                        Select_clauseContext select = this.FindSelectClause(value);
+
+                        nvi.ValueStatement = this.ParseSelectClause(select);
+                    }
+
+                    statement.SetItems.Add(nvi);
+                }
+            }
+
+            if (from != null)
+            {
+                statement.FromItems.AddRange(this.ParseFromClause(from));
+            }           
+
+            if (where != null)
+            {
+                statement.Condition = this.ParseCondition(where.a_expr());
+            }
+
+            return statement;
+        }
+
+        private DeleteStatement ParseDeleteStatement(DeletestmtContext node)
+        {
+            DeleteStatement statement = new DeleteStatement();
+
+            var tableName = node.relation_expr_opt_alias();
+            var usingClause = node.using_clause();
+            var where = node.where_or_current_clause();
+
+            TokenInfo condition = null;
+
+            if (where != null)
+            {
+                condition = this.ParseCondition(where.a_expr());
+            }
+
+            statement.TableName = this.ParseTableName(tableName);
+
+            bool conditionUsed = false;
+
+            if (usingClause != null)
+            {
+                var froms = usingClause.from_list().table_ref();
+
+                statement.FromItems = new List<FromItem>();
+
+                FromItem fromItem = new FromItem() { TableName = statement.TableName };
+
+                int count = froms.Length;
+
+                foreach (var from in froms)
+                {
+                    JoinItem joinItem = new JoinItem();
+
+                    joinItem.TableName = this.ParseTableName(from);
+
+                    if (count == 1)
+                    {
+                        joinItem.Condition = condition;
+                        conditionUsed = true;
+                    }
+                    else
+                    {
+                        joinItem.Condition = new TokenInfo("1=1");
+                    }
+
+                    fromItem.JoinItems.Add(joinItem);
+                }
+
+                statement.FromItems.Add(fromItem);
+            }
+
+            if (!conditionUsed)
+            {
+                statement.Condition = condition;
+            }
+
+            return statement;
+        }
+
         private CreateStatement ParseCreateStatement(CreatestmtContext node)
         {
             CreateStatement statement = null;
@@ -588,34 +746,198 @@ namespace SqlAnalyser.Core
                 {
                     if (tni.GetText().ToUpper() == "TABLE")
                     {
-                        statement = new CreateTableStatement() { TableInfo = new TableInfo() };
-                    }
-                    else if (child is Qualified_nameContext qn)
-                    {
-                        statement.ObjectName = new NameToken(qn);
-                    }
-                    else if (child is OpttableelementlistContext tl)
-                    {
-                        var columns = tl.tableelementlist().tableelement();
-
-                        CreateTableStatement createTable = statement as CreateTableStatement;
-
-                        createTable.TableInfo.Columns = columns.Select(item => new ColumnInfo()
-                        {
-                            Name = this.ParseColumnName(item.columnDef().colid()),
-                            DataType = new TokenInfo(item.columnDef().typename())
-                        }).ToList();
+                        statement = this.ParseCreateTable(node);
                     }
                 }
             }
 
-            if (statement != null)
+            return statement;
+        }
+
+        private CreateTableStatement ParseCreateTable(CreatestmtContext node)
+        {
+            CreateTableStatement statement = new CreateTableStatement();
+
+            TableInfo tableInfo = new TableInfo();
+
+            var tableName = node.qualified_name().FirstOrDefault();
+            var columns = node.opttableelementlist().tableelementlist().tableelement();
+
+            tableInfo.Name = new TableName(tableName);
+
+            Action<ConstraintInfo> checkForeginKey = (constraintInfo) =>
             {
-                if (statement is CreateTableStatement createTable)
+                if (constraintInfo.ForeignKey == null)
                 {
-                    createTable.TableInfo.Name = statement.ObjectName;
+                    constraintInfo.ForeignKey = new ForeignKeyInfo();
+                }
+            };
+
+            Action<ConstraintInfo, IParseTree> setConstraintInfo = (constraintInfo, node) =>
+            {
+                if (node is TerminalNodeImpl tni)
+                {
+                    ConstraintType constraintType = this.GetConstraintType(tni);
+
+                    if (constraintType != ConstraintType.None)
+                    {
+                        constraintInfo.Type = constraintType;
+                    }
+                }
+                else if (node is Qualified_nameContext qn)
+                {
+                    if (constraintInfo.Type == ConstraintType.ForeignKey)
+                    {
+                        checkForeginKey(constraintInfo);
+                        constraintInfo.ForeignKey.RefTableName = new TableName(qn);
+                    }
+                }
+                else if (node is ColumnlistContext cl)
+                {
+                    if (constraintInfo.Type == ConstraintType.ForeignKey)
+                    {
+                        checkForeginKey(constraintInfo);
+
+                        constraintInfo.ForeignKey.ColumnNames.AddRange(cl.columnElem().Select(item => new ColumnName(item)));
+                    }
+                    else
+                    {
+                        if (constraintInfo.ColumnNames == null)
+                        {
+                            constraintInfo.ColumnNames = new List<ColumnName>();
+                        }
+
+                        constraintInfo.ColumnNames.AddRange(cl.columnElem().Select(item => new ColumnName(item)));
+                    }
+                }
+                else if (node is Opt_column_listContext ocl)
+                {
+                    if (constraintInfo.Type == ConstraintType.ForeignKey)
+                    {
+                        checkForeginKey(constraintInfo);
+
+                        constraintInfo.ForeignKey.RefColumNames.AddRange(ocl.columnlist().columnElem().Select(item => new ColumnName(item)));
+                    }
+                }
+            };
+
+            foreach (var column in columns)
+            {
+                var columnDefinition = column.columnDef();
+                var tableConstraint = column.tableconstraint();
+
+                if (columnDefinition != null)
+                {
+                    var columnName = columnDefinition.colid();
+
+                    //ANTLR can't parse table check constraint correctly(it takes that as a column).
+                    if (columnName.GetText().ToUpper() == "CONSTRAINT")
+                    {
+                        continue;
+                    }
+
+                    ColumnInfo columnInfo = new ColumnInfo();
+
+                    var dataType = columnDefinition.typename();
+                    var constraints = columnDefinition.colquallist()?.colconstraint();
+
+                    columnInfo.Name = new ColumnName(columnName);
+                    columnInfo.DataType = new TokenInfo(dataType) { Type = TokenType.DataType };
+
+                    if (constraints != null)
+                    {
+                        foreach (var constraint in constraints)
+                        {
+                            string text = constraint.GetText().ToUpper();
+
+                            if (text.Contains("NOT") && text.Contains("NULL"))
+                            {
+                                columnInfo.IsNullable = false;
+                            }
+                            else if (text.Contains("IDENTITY"))
+                            {
+                                columnInfo.IsIdentity = true;
+                            }
+                            else
+                            {
+                                ColconstraintelemContext ce = constraint.colconstraintelem();
+
+                                if (ce != null)
+                                {
+                                    ConstraintInfo constraintInfo = new ConstraintInfo();
+                                    bool ignore = false;
+
+                                    var cn = constraint.name();
+
+                                    if (cn != null)
+                                    {
+                                        constraintInfo.Name = new NameToken(cn);
+                                    }
+
+                                    foreach (var c in ce.children)
+                                    {
+                                        setConstraintInfo(constraintInfo, c);
+
+                                        if (c is A_exprContext aexpr)
+                                        {
+                                            if (constraintInfo.Type == ConstraintType.Check)
+                                            {
+                                                constraintInfo.Definition = new TokenInfo(aexpr);
+                                            }
+                                        }
+                                        else if (c is B_exprContext bexpr)
+                                        {
+                                            if (constraintInfo.Type == ConstraintType.Default)
+                                            {
+                                                columnInfo.DefaultValue = new TokenInfo(bexpr);
+
+                                                ignore = true;
+                                            }
+                                        }
+                                    }
+
+                                    if (columnInfo.Constraints == null)
+                                    {
+                                        columnInfo.Constraints = new List<ConstraintInfo>();
+                                    }
+
+                                    if (!ignore)
+                                    {
+                                        columnInfo.Constraints.Add(constraintInfo);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    tableInfo.Columns.Add(columnInfo);
+                }
+                else if (tableConstraint != null)
+                {
+                    ConstraintInfo constraintInfo = new ConstraintInfo();
+
+                    var cn = tableConstraint.name();
+
+                    if (cn != null)
+                    {
+                        constraintInfo.Name = new NameToken(cn);
+                    }
+
+                    foreach (var child in tableConstraint.constraintelem().children)
+                    {
+                        setConstraintInfo(constraintInfo, child);
+                    }
+
+                    if (tableInfo.Constraints == null)
+                    {
+                        tableInfo.Constraints = new List<ConstraintInfo>();
+                    }
+
+                    tableInfo.Constraints.Add(constraintInfo);
                 }
             }
+
+            statement.TableInfo = tableInfo;
 
             return statement;
         }
@@ -895,6 +1217,17 @@ namespace SqlAnalyser.Core
                         this.AddChildTableAndColumnNameToken(swp, tableName);
                     }
                 }
+                else if (node is Relation_expr_opt_aliasContext reo)
+                {
+                    tableName = new TableName(reo.relation_expr());
+
+                    var alias = reo.colid();
+
+                    if (alias != null)
+                    {
+                        tableName.Alias = new TokenInfo(alias);
+                    }
+                }
                 else if (node is Qualified_nameContext qualified)
                 {
                     if (qualified.indirection() != null)
@@ -949,6 +1282,18 @@ namespace SqlAnalyser.Core
 
                     this.AddChildColumnNameToken(exp, columnName);
                 }
+                else if (node is Set_targetContext st)
+                {
+                    columnName = new ColumnName(st);
+
+                    var cid = st.colid();
+                    var indirection = st.opt_indirection();
+
+                    if (indirection != null)
+                    {
+                        columnName.TableName = new TableName(cid);
+                    }
+                }
                 else if (node is Target_starContext star)
                 {
                     columnName = new ColumnName(star);
@@ -970,17 +1315,27 @@ namespace SqlAnalyser.Core
 
         private ColumnrefContext FindColumnRefByLabel(ParserRuleContext node)
         {
+            return this.FindContext(node, typeof(ColumnrefContext)) as ColumnrefContext;
+        }
+
+        private Select_clauseContext FindSelectClause(ParserRuleContext node)
+        {
+            return this.FindContext(node, typeof(Select_clauseContext)) as Select_clauseContext;
+        }
+
+        private ParserRuleContext FindContext(ParserRuleContext node, Type type)
+        {
             if (node != null && node.children != null)
             {
                 foreach (var child in node.children)
                 {
-                    if (child is ColumnrefContext columnRef)
+                    if (child.GetType() == type)
                     {
-                        return columnRef;
+                        return child as ParserRuleContext;
                     }
                     else if (!(child is TerminalNodeImpl))
                     {
-                        return FindColumnRefByLabel(child as ParserRuleContext);
+                        return FindSelectClause(child as ParserRuleContext);
                     }
                 }
             }

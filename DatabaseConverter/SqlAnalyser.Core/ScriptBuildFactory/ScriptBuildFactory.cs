@@ -49,10 +49,10 @@ namespace SqlAnalyser.Core
             else if (this.DatabaseType == DatabaseType.Postgres)
             {
                 builder = new PostgreSqlStatementScriptBuilder();
-            }
+            }            
             else
             {
-                throw new NotSupportedException($"Not support buid statement for: {this.DatabaseType}");
+                throw new NotSupportedException($"Not support build statement for: {this.DatabaseType}");
             }
 
             builder.Option = this.ScriptBuilderOption;
@@ -104,7 +104,10 @@ namespace SqlAnalyser.Core
                 }
             }
 
-            this.statementBuilder.Dispose();
+            if (this.statementBuilder != null)
+            {
+                this.statementBuilder.Dispose();
+            }
 
             return result;
         }
@@ -127,9 +130,12 @@ namespace SqlAnalyser.Core
 
             this.PostHandleStatements(sb);
 
-            result.Script = sb.ToString();
+            result.Script = sb.ToString().Trim();
 
-            this.statementBuilder.Dispose();
+            if (this.statementBuilder != null)
+            {
+                this.statementBuilder.Dispose();
+            }
 
             return result;
         }

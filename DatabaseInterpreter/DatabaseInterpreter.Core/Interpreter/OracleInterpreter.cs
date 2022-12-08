@@ -1004,24 +1004,25 @@ namespace DatabaseInterpreter.Core
         #region Parse Column & DataType
         public override string ParseColumn(Table table, TableColumn column)
         {
+            string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+
             if (column.IsComputed)
             {
                 string computeExpression = this.GetColumnComputeExpression(column);
 
-                return $"{this.GetQuotedString(column.Name)} AS ({computeExpression})";
+                return $"{this.GetQuotedString(column.Name)} AS ({computeExpression}) {requiredClause}";
             }
             else
             {
                 bool isLowDbVersion = this.IsLowDbVersion();
 
                 string dataType = this.ParseDataType(column);
-                string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && !isLowDbVersion ? $"GENERATED ALWAYS AS IDENTITY" : "");
                 string defaultValueClause = "";
 
                 if (column.DefaultValue != null && !ValueHelper.IsSequenceNextVal(column.DefaultValue))
                 {
-                    defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + this.GetColumnDefaultValue(column)) : "";
+                    defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
                 }
 
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
