@@ -56,19 +56,35 @@ namespace DatabaseManager.Core
 
         public bool IsSelect()
         {
-            if (Regex.IsMatch(this.cleanScript, selectPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline)
-                && !Regex.IsMatch(this.originalScript, dmlPattern, RegexOptions.IgnoreCase)
-                && !Regex.IsMatch(this.originalScript, routinePattern, RegexOptions.IgnoreCase))
+            RegexOptions options = RegexOptions.IgnoreCase | RegexOptions.Multiline;
+
+            var selectMatches = Regex.Matches(this.originalScript, selectPattern, options);
+
+            if (selectMatches.Any(item => !this.IsWordInSingleQuotation(this.cleanScript, item.Index)))
             {
-                return true;
+                var dmlMatches = Regex.Matches(this.originalScript, dmlPattern, options);
+                var routineMathes = Regex.Matches(this.originalScript, routinePattern, RegexOptions.IgnoreCase);
+
+                if (!(dmlMatches.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index))
+                   || routineMathes.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index))))
+                {
+                    return true;
+                }
             }
 
             return false;
         }
 
+        private bool IsWordInSingleQuotation(string content, int startIndex)
+        {
+            return content.Substring(0, startIndex).Count(item => item == '\'') % 2 != 0;
+        }
+
         public bool IsCreateOrAlterScript()
         {
-            return Regex.IsMatch(this.cleanScript, this.createAlterScriptPattern);
+            var mathes = Regex.Matches(this.originalScript, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            return mathes.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index));
         }
 
         public static ScriptType DetectScriptType(string script, DbInterpreter dbInterpreter)
