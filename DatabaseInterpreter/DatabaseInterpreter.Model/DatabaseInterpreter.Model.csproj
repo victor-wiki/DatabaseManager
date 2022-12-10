@@ -7,8 +7,8 @@
     <AssemblyVersion>2.1.0</AssemblyVersion>
     <FileVersion>2.1.0</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>1. add: sqlite database type
-2. SchemaInfoFilter: add "IsForView"</PackageReleaseNotes>
+    <PackageReleaseNotes>add "Definition" for "Table";
+add "ColumnName" for "TableConstraint"</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
