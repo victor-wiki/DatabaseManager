@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.22</Version>
-    <PackageReleaseNotes>detect sql query type: handle quoted keyword</PackageReleaseNotes>
+    <Version>2.0.23</Version>
+    <PackageReleaseNotes>bug fix: script translate not use details mode to fetch definition</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.0.22</AssemblyVersion>
-    <FileVersion>2.0.22</FileVersion>
+    <AssemblyVersion>2.0.23</AssemblyVersion>
+    <FileVersion>2.0.23</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -83,7 +83,7 @@ namespace DatabaseManager.Controls
 
         private void CopyText()
         {
-            Clipboard.SetDataObject(this.txtEditor.SelectedText);            
+            Clipboard.SetDataObject(this.txtEditor.SelectedText);
         }
 
         private void tsmiPaste_Click(object sender, EventArgs e)
@@ -120,7 +120,7 @@ namespace DatabaseManager.Controls
             {
                 this.ShowFindBox();
             }
-            else if(e.Control && e.KeyCode == Keys.C)
+            else if (e.Control && e.KeyCode == Keys.C)
             {
                 this.CopyText();
             }
@@ -278,6 +278,11 @@ namespace DatabaseManager.Controls
             {
                 if (this.enableIntellisense)
                 {
+                    if (token.Type == SqlWordTokenType.String)
+                    {
+                        return;
+                    }
+
                     SqlWord word = this.FindWord(token.Text);
 
                     if (word.Type == SqlWordTokenType.Table)
@@ -319,9 +324,26 @@ namespace DatabaseManager.Controls
             {
                 if (this.enableIntellisense)
                 {
-                    this.ShowWordListByToken(token);
+                    if (!this.IsWordInQuotationChar(token))
+                    {
+                        this.ShowWordListByToken(token);
+                    }
                 }
             }
+        }
+
+        private bool IsWordInQuotationChar(SqlWordToken token)
+        {
+            int startIndex = token.StopIndex;
+
+            if (startIndex == 0)
+            {
+                return false;
+            }
+
+            int singleQotationCharCount = this.txtEditor.Text.Substring(0, startIndex).Count(item => item == '\'');
+
+            return singleQotationCharCount % 2 != 0;
         }
 
         private void HighlightingWord(SqlWordToken token)
@@ -554,7 +576,7 @@ namespace DatabaseManager.Controls
 
                 int i = -1;
 
-                bool exited = false;
+                bool existed = false;
                 for (i = index; i >= 0; i--)
                 {
                     char c = this.txtEditor.Text[i];
@@ -580,7 +602,7 @@ namespace DatabaseManager.Controls
                     }
                     else
                     {
-                        exited = true;
+                        existed = true;
                         break;
                     }
                 }
@@ -596,7 +618,7 @@ namespace DatabaseManager.Controls
 
                 token.Text = word;
 
-                token.StartIndex = i + (exited ? 1 : 0);
+                token.StartIndex = i + (existed ? 1 : 0);
 
                 if (token.StartIndex == token.StopIndex && isInsert && word.Length > 0)
                 {
@@ -612,9 +634,11 @@ namespace DatabaseManager.Controls
                     if (isQuotationPaired && word.StartsWith("'"))
                     {
                         List<char> afterChars = new List<char>();
+
                         for (int j = currentIndex; j < this.txtEditor.Text.Length; j++)
                         {
                             char c = this.txtEditor.Text[j];
+
                             if (Regex.IsMatch(c.ToString(), delimeterPattern))
                             {
                                 break;
@@ -644,7 +668,11 @@ namespace DatabaseManager.Controls
 
                     if (token.Type == SqlWordTokenType.String)
                     {
-                        this.SetWordColor(token);
+                        if (!isDot)
+                        {
+                            this.SetWordColor(token);
+                        }
+
                         return token;
                     }
                 }
@@ -680,6 +708,7 @@ namespace DatabaseManager.Controls
                 else if (isComment)
                 {
                     token.Type = SqlWordTokenType.Comment;
+
                     this.SetWordColor(token, true);
                 }
                 else if (long.TryParse(word, out _))
@@ -688,7 +717,7 @@ namespace DatabaseManager.Controls
                 }
                 else
                 {
-                    if (!isDot)
+                    if (!isDot && !this.IsWordInQuotationChar(token))
                     {
                         this.ClearStyle(token);
                     }
