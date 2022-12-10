@@ -30,7 +30,7 @@ namespace DatabaseManager.Helper
                     var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Schema, search)).Select(item => item.Schema).Distinct();
 
                     words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Schema, Text = item, Source = item }));
-                }               
+                }
 
                 FilterDbObjects(words, schemaInfo.Tables, SqlWordTokenType.Table, tokenType, search, parentName);
 
@@ -100,7 +100,7 @@ namespace DatabaseManager.Helper
 
         public static bool Contains(string source, string search)
         {
-            if (search == null)
+            if (source == null || search == null)
             {
                 return false;
             }

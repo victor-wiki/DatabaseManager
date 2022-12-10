@@ -140,5 +140,17 @@ namespace DatabaseInterpreter.Utility
 
             return false;
         }
+
+        public static int BooleanToInteger(bool value)
+        {
+            if (value)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
     }
 }

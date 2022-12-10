@@ -27,6 +27,10 @@ namespace DatabaseInterpreter.Core
             {
                 dbInterpreter = new PostgresInterpreter(connectionInfo, option);
             }
+            else if(dbType == DatabaseType.Sqlite)
+            {
+                dbInterpreter = new SqliteInterpreter(connectionInfo, option);
+            }
 
             return dbInterpreter;
         }      

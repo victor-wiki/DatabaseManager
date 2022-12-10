@@ -2,6 +2,6 @@
 {
     public class SqlServerProvider:IDbProvider
     {
-        public string ProviderName => "System.Data.SqlClient";           
+        public string ProviderName => "Microsoft.Data.SqlClient";           
     }
 }

@@ -48,5 +48,47 @@ namespace DatabaseConverter.Core
         {
             return value != null && value.Contains(" ");
         }
+
+        public static string GetUniformUnit(string unit)
+        {
+            string upperUnit = unit?.ToUpper();
+
+            //https://learn.microsoft.com/en-us/sql/t-sql/functions/datepart-transact-sql?view=sql-server-ver16
+            switch (upperUnit)
+            {
+                case "YY":
+                case "YYYY":
+                    return "YEAR";
+                case "Q":
+                case "QQ":
+                    return "QUARTER";
+                case "M":
+                case "MM":
+                    return "MONTH";                 
+                case "WK":
+                case "WW":
+                    return "WEEK";
+                case "Y":
+                case "DW":          
+                    return "WEEKDAY";
+                case "D":
+                case "DD":
+                    return "DAY";                    
+                case "HH":
+                    return  "HOUR";                 
+                case "MI":
+                case "N":
+                    return  "MINUTE";                  
+                case "S":
+                case "SS":
+                    return "SECOND";
+                case "MS":
+                    return "MILLISECOND";
+                case "MCS":
+                    return "MICROSECOND";
+                default:
+                    return upperUnit;
+            }
+        }
     }
 }

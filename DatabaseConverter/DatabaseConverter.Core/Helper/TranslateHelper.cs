@@ -217,6 +217,10 @@ namespace DatabaseConverter.Core
             {
                 sqlAnalyser = new PostgreSqlAnalyser(content);
             }
+            else if(databaseType == DatabaseType.Sqlite)
+            {
+                sqlAnalyser = new SqliteAnalyser(content);
+            }
 
             return sqlAnalyser;
         }
@@ -240,6 +244,10 @@ namespace DatabaseConverter.Core
             else if (databaseType == DatabaseType.Postgres)
             {
                 factory = new PostgreSqlScriptBuildFactory();
+            }
+            else if(databaseType == DatabaseType.Sqlite)
+            {
+                factory = new SqliteScriptBuildFactory();
             }
 
             return factory;

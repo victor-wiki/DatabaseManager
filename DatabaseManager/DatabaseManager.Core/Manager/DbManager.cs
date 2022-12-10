@@ -1,6 +1,4 @@
-﻿using DatabaseConverter.Core;
-using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Helper;
@@ -161,7 +159,7 @@ namespace DatabaseManager.Core
                     await this.DropDbObjects(connection, schemaInfo.Procedures);
                     await this.DropDbObjects(connection, schemaInfo.Views);
                     await this.DropDbObjects(connection, schemaInfo.TableTriggers);
-                    await this.DropDbObjects(connection, schemaInfo.TableForeignKeys);              
+                    await this.DropDbObjects(connection, schemaInfo.TableForeignKeys);
                     await this.DropDbObjects(connection, schemaInfo.Tables);
                     await this.DropDbObjects(connection, schemaInfo.Functions);
                     await this.DropDbObjects(connection, schemaInfo.UserDefinedTypes);
@@ -205,7 +203,7 @@ namespace DatabaseManager.Core
             }
         }
 
-        private async Task DropDbObject(DatabaseObject dbObject, DbConnection connection = null, bool continueWhenErrorOccurs = false)
+        private async Task<bool> DropDbObject(DatabaseObject dbObject, DbConnection connection = null, bool continueWhenErrorOccurs = false)
         {
             string typeName = dbObject.GetType().Name;
 
@@ -232,18 +230,24 @@ namespace DatabaseManager.Core
                 {
                     await this.dbInterpreter.ExecuteNonQueryAsync(commandInfo);
                 }
+
+                return true;
             }
+
+            return false;
         }
 
-        public async Task DropDbObject(DatabaseObject dbObject)
+        public async Task<bool> DropDbObject(DatabaseObject dbObject)
         {
             try
             {
-                await this.DropDbObject(dbObject, null);
+                return await this.DropDbObject(dbObject, null);
             }
             catch (Exception ex)
             {
                 this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+
+                return false;
             }
         }
 

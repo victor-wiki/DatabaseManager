@@ -1,0 +1,22 @@
+<mappings>
+	<mapping>
+		<source type="blob" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="number" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="float" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="varchar2" length="100" substitute="clob"/>		
+	</mapping>	
+</mappings>

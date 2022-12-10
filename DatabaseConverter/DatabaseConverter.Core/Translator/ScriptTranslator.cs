@@ -54,6 +54,11 @@ namespace DatabaseConverter.Core
                     break;
                 }
 
+                if(string.IsNullOrEmpty(dbObj.Definition))
+                {
+                    continue;
+                }
+
                 count++;
 
                 Type type = typeof(T);

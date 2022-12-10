@@ -35,6 +35,9 @@ namespace DatabaseManager.Controls
         public UC_TableForeignKeys()
         {
             InitializeComponent();
+
+            this.colUpdateCascade.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.colDeleteCascade.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         private void UC_TableForeignKeys_Load(object sender, EventArgs e)
@@ -43,6 +46,16 @@ namespace DatabaseManager.Controls
 
         public void InitControls(IEnumerable<Table> tables)
         {
+            if (!ManagerUtil.SupportComment(this.DatabaseType))
+            {
+                if (this.colComment.Visible)
+                {
+                    this.colComment.Visible = false;
+                    this.colKeyName.Width += 100;
+                    this.colColumns.Width += 100;
+                }               
+            }
+
             List<Table> sortedTables = new List<Table>();
 
             foreach (var table in tables.Where(item => item.Schema == this.DefaultSchema).OrderBy(item => item.Name))

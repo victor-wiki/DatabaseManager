@@ -160,10 +160,10 @@ namespace DatabaseConverter.Core
             {
                 return "SIGNED";
             }
-            else if (upperTypeName == "FLOAT" || upperTypeName == "DOUBLE" || upperTypeName == "NUMBER")
+            else if (upperTypeName == "NUMBER")
             {
-                return "DECIMAL";
-            }
+                return "DOUBLE";
+            }            
             else if (DataTypeHelper.IsCharType(dataTypeName) || upperTypeName.Contains("TEXT"))
             {
                 return "CHAR";
@@ -212,7 +212,9 @@ namespace DatabaseConverter.Core
                 VariableMapping sourceVariable = mapping.FirstOrDefault(item => item.DbType == this.sourceDbInterpreter.DatabaseType.ToString());
                 VariableMapping targetVariable = mapping.FirstOrDefault(item => item.DbType == this.targetDbInterpreter.DatabaseType.ToString());
 
-                if (sourceVariable != null && !string.IsNullOrEmpty(sourceVariable.Variable) && targetVariable.Variable != null && !string.IsNullOrEmpty(targetVariable.Variable))
+                if (sourceVariable != null && !string.IsNullOrEmpty(sourceVariable.Variable) 
+                    && targetVariable!= null && targetVariable.Variable != null && !string.IsNullOrEmpty(targetVariable.Variable)
+                   )
                 {
                     script = ReplaceValue(script, sourceVariable.Variable, targetVariable.Variable);
                 }
@@ -305,34 +307,7 @@ namespace DatabaseConverter.Core
                                 break;
                             case "UNIT":
 
-                                #region SqlServer date part short name
-                                switch (oldArg?.ToUpper())
-                                {
-                                    case "Y":
-                                    case "YY":
-                                    case "YYYY":
-                                        newArg = "YEAR";
-                                        break;
-                                    case "M":
-                                    case "MM":
-                                        newArg = "MONTH";
-                                        break;
-                                    case "D":
-                                    case "DD":
-                                        newArg = "DAY";
-                                        break;
-                                    case "HH":
-                                        newArg = "HOUR";
-                                        break;
-                                    case "MI":
-                                        newArg = "MINUTE";
-                                        break;
-                                    case "S":
-                                    case "SS":
-                                        newArg = "SECOND";
-                                        break;
-                                } 
-                                #endregion
+                                newArg = DatetimeHelper.GetUniformUnit(oldArg);
 
                                 break;
                         }

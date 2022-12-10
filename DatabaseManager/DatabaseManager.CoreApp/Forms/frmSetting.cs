@@ -6,6 +6,7 @@ using DatabaseManager.Controls;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using DatabaseManager.Profile;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -28,12 +29,12 @@ namespace DatabaseManager
             this.InitControls();
         }
 
-        private void InitControls()
+        private async void InitControls()
         {
             this.tabControl1.SelectedIndex = 0;
 
             var dbObjectNameModes = Enum.GetNames(typeof(DbObjectNameMode));
-            this.cboDbObjectNameMode.Items.AddRange(dbObjectNameModes);           
+            this.cboDbObjectNameMode.Items.AddRange(dbObjectNameModes);
 
             Setting setting = SettingManager.Setting;
 
@@ -59,15 +60,17 @@ namespace DatabaseManager
             this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
             this.txtOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
 
-            if(!string.IsNullOrEmpty(setting.LockPassword))
+            PersonalSetting ps = await PersonalSettingManager.GetPersonalSetting();
+
+            if (ps != null && !string.IsNullOrEmpty(ps.LockPassword))
             {
-                this.txtLockPassword.Text = AesHelper.Decrypt(setting.LockPassword);
+                this.txtLockPassword.Text = ps.LockPassword;
             }
 
             this.convertConcatCharTargetDatabases = setting.ConvertConcatCharTargetDatabases;
         }
 
-        private void btnConfirm_Click(object sender, EventArgs e)
+        private async void btnConfirm_Click(object sender, EventArgs e)
         {
             Setting setting = SettingManager.Setting;
             setting.CommandTimeout = (int)this.numCommandTimeout.Value;
@@ -82,29 +85,24 @@ namespace DatabaseManager
             setting.RememberPasswordDuringSession = this.chkRememberPasswordDuringSession.Checked;
             setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
             setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;
-            setting.ExcludePostgresExtensionObjects = this.chkExcludePostgresExtensionObjects.Checked;           
+            setting.ExcludePostgresExtensionObjects = this.chkExcludePostgresExtensionObjects.Checked;
             setting.ScriptsDefaultOutputFolder = this.txtOutputFolder.Text;
             setting.ValidateScriptsAfterTranslated = this.chkValidateScriptsAfterTranslated.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 
-            if(!string.IsNullOrEmpty(password))
-            {
-                setting.LockPassword = AesHelper.Encrypt(password);
-            }
-            else
-            {
-                setting.LockPassword = "";
-            }
+            PersonalSetting ps = new PersonalSetting() { LockPassword = password };
 
-            if(this.cboPreferredDatabase.SelectedIndex>=0)
+            await PersonalSettingManager.Save(ps);
+
+            if (this.cboPreferredDatabase.SelectedIndex >= 0)
             {
-                setting.PreferredDatabase =(DatabaseType) Enum.Parse(typeof(DatabaseType), this.cboPreferredDatabase.Text);
+                setting.PreferredDatabase = (DatabaseType)Enum.Parse(typeof(DatabaseType), this.cboPreferredDatabase.Text);
             }
 
             LogType logType = LogType.None;
 
-            if(this.chkLogInfo.Checked)
+            if (this.chkLogInfo.Checked)
             {
                 logType |= LogType.Info;
             }
@@ -114,7 +112,7 @@ namespace DatabaseManager
                 logType |= LogType.Error;
             }
 
-            setting.LogType = logType;          
+            setting.LogType = logType;
 
             setting.ConvertConcatCharTargetDatabases = this.convertConcatCharTargetDatabases;
 
@@ -144,7 +142,7 @@ namespace DatabaseManager
 
             if (selector.ShowDialog() == DialogResult.OK)
             {
-                this.convertConcatCharTargetDatabases = selector.CheckedItem.Select(item=> item.Name).ToList();
+                this.convertConcatCharTargetDatabases = selector.CheckedItem.Select(item => item.Name).ToList();
             }
         }
     }

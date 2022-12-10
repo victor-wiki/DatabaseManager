@@ -15,8 +15,10 @@ namespace DatabaseManager
 {
     public partial class frmColumSelect : Form
     {
+        private bool isIndexColumn;
         public bool ColumnIsReadOnly { get; set; }
-        public List<IndexColumn> SelectedColumns { get; private set; }
+        public bool IsSingleSelect { get; set; }
+        public List<SimpleColumn> SelectedColumns { get; private set; }
         public frmColumSelect()
         {
             InitializeComponent();
@@ -29,7 +31,7 @@ namespace DatabaseManager
 
         private void InitGrid()
         {
-            if(this.ColumnIsReadOnly)
+            if (this.ColumnIsReadOnly)
             {
                 this.colColumName.ReadOnly = true;
                 this.dgvColumns.AllowUserToAddRows = false;
@@ -44,12 +46,14 @@ namespace DatabaseManager
             }
         }
 
-        public void InitControls(IEnumerable<IndexColumn> columns, bool showSortColumn = true)
+        public void InitControls(IEnumerable<SimpleColumn> columns, bool showSortColumn = true)
         {
+            this.isIndexColumn = columns?.FirstOrDefault()?.GetType() == typeof(IndexColumn);
+
             this.colSort.DataSource = Enum.GetValues(typeof(SortType));
             this.colColumName.DataSource = columns.ToList();
-            this.colColumName.DisplayMember = nameof(IndexColumn.ColumnName);
-            this.colColumName.ValueMember = nameof(IndexColumn.ColumnName);
+            this.colColumName.DisplayMember = nameof(SimpleColumn.ColumnName);
+            this.colColumName.ValueMember = nameof(SimpleColumn.ColumnName);
 
             if (!showSortColumn)
             {
@@ -58,33 +62,48 @@ namespace DatabaseManager
             }
         }
 
-        public void LoadColumns(IEnumerable<IndexColumn> columns)
+        public void LoadColumns(IEnumerable<SimpleColumn> columns)
         {
             this.dgvColumns.Rows.Clear();
 
-            foreach (IndexColumn column in columns)
+            foreach (var column in columns)
             {
                 int rowIndex = this.dgvColumns.Rows.Add();
 
                 DataGridViewRow row = this.dgvColumns.Rows[rowIndex];
 
                 row.Cells[this.colColumName.Name].Value = column.ColumnName;
-                row.Cells[this.colSort.Name].Value = column.IsDesc ? SortType.Descending : SortType.Ascending;
+
+                if(this.isIndexColumn)
+                {
+                    row.Cells[this.colSort.Name].Value = (column as IndexColumn).IsDesc ? SortType.Descending : SortType.Ascending;
+                }                
             }
         }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            List<IndexColumn> columns = new List<IndexColumn>();
+            List<SimpleColumn> columns = new List<SimpleColumn>();
 
             int order = 1;
             foreach (DataGridViewRow row in this.dgvColumns.Rows)
             {
                 if (!row.IsNewRow)
                 {
-                    IndexColumn columnInfo = new IndexColumn() { Order = order };
+                    SimpleColumn columnInfo = null;
+
+                    if (this.isIndexColumn)
+                    {
+                        columnInfo = new IndexColumn();
+                        (columnInfo as IndexColumn).IsDesc = row.Cells[this.colSort.Name].Value?.ToString() == SortType.Descending.ToString();
+                    }
+                    else
+                    {
+                        columnInfo = new SimpleColumn();
+                    }
+
+                    columnInfo.Order = order;
                     columnInfo.ColumnName = row.Cells[this.colColumName.Name].Value?.ToString();
-                    columnInfo.IsDesc = row.Cells[this.colSort.Name].Value?.ToString() == SortType.Descending.ToString();
 
                     columns.Add(columnInfo);
 
@@ -96,6 +115,14 @@ namespace DatabaseManager
             {
                 MessageBox.Show("Please select column(s).");
                 return;
+            }
+            else if (columns.Count > 1)
+            {
+                if (this.IsSingleSelect)
+                {
+                    MessageBox.Show("Only allow select one column.");
+                    return;
+                }
             }
 
             this.SelectedColumns = columns;

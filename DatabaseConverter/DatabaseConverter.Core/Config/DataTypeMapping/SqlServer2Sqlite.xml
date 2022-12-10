@@ -1,0 +1,146 @@
+<mappings>
+	<mapping>
+		<source type="bigint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="binary" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="integer"/>
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="datetime" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="datetime2" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="datetimeoffset" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="decimal" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="real"/>
+	</mapping>
+	<mapping>
+		<source type="geography" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="hierarchyid" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="image" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="money" />
+		<target type="numeric" precision="19" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="nchar" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="ntext" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="numeric" />		
+	</mapping>
+	<mapping>
+		<source type="nvarchar" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real"/>
+	</mapping>
+	<mapping>
+		<source type="rowversion" />
+		<target type="blob"/>
+	</mapping>
+	<mapping>
+		<source type="smalldatetime" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="smallmoney" />
+		<target type="numeric" precision="10" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="sql_variant" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="sysname" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="time" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="tinyint" />
+		<target type="integer"/>
+	</mapping>
+	<mapping>
+		<source type="uniqueidentifier" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="varbinary" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xml" />
+		<target type="text" />
+	</mapping>
+</mappings>

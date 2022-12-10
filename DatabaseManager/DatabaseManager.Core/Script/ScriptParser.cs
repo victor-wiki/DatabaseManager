@@ -60,7 +60,7 @@ namespace DatabaseManager.Core
 
             var selectMatches = Regex.Matches(this.originalScript, selectPattern, options);
 
-            if (selectMatches.Any(item => !this.IsWordInSingleQuotation(this.cleanScript, item.Index)))
+            if (selectMatches.Any(item=> !this.IsWordInSingleQuotation(this.cleanScript, item.Index)))
             {
                 var dmlMatches = Regex.Matches(this.originalScript, dmlPattern, options);
                 var routineMathes = Regex.Matches(this.originalScript, routinePattern, RegexOptions.IgnoreCase);
@@ -69,7 +69,7 @@ namespace DatabaseManager.Core
                    || routineMathes.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index))))
                 {
                     return true;
-                }
+                }                
             }
 
             return false;
@@ -84,7 +84,7 @@ namespace DatabaseManager.Core
         {
             var mathes = Regex.Matches(this.originalScript, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
-            return mathes.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index));
+            return mathes.Any(item=> !this.IsWordInSingleQuotation(this.originalScript, item.Index));
         }
 
         public static ScriptType DetectScriptType(string script, DbInterpreter dbInterpreter)

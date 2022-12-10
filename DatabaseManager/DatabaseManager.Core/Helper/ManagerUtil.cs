@@ -19,6 +19,16 @@ namespace DatabaseManager.Helper
             }
         }
 
+        public static bool IsFileConnection(DatabaseType databaseType)
+        {
+            if(databaseType == DatabaseType.Sqlite)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static void OpenInExplorer(string filePath)
         {
             string cmd = "explorer.exe";
@@ -34,6 +44,16 @@ namespace DatabaseManager.Helper
         public static string GetPluralString(string value)
         {
             return value.Pluralize();
-        }       
+        } 
+        
+        public static bool SupportComment(DatabaseType databaseType)
+        {
+            if(databaseType == DatabaseType.Sqlite)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

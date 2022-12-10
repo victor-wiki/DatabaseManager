@@ -1,14 +1,10 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using Microsoft.SqlServer.Types;
-using MySqlConnector;
-using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -149,6 +145,7 @@ namespace DatabaseInterpreter.Core
                 }
 
             }
+
             return false;
         }
         #endregion

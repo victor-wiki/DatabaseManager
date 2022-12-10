@@ -7,6 +7,6 @@ namespace DatabaseManager.Model
 {
     public class TableConstraintDesignerInfo: TableConstraint
     {
-        public string OldName { get; set; }
+        public string OldName { get; set; }     
     }
 }

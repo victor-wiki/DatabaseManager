@@ -9,7 +9,6 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PgGeom = NetTopologySuite.Geometries;
 
@@ -34,14 +33,16 @@ namespace DatabaseInterpreter.Core
         public int DataBatchSize => Setting.DataBatchSize;
         public bool NotCreateIfExists => Setting.NotCreateIfExists;
         public abstract string CommandParameterChar { get; }
-        public abstract char QuotationLeftChar { get; }
-        public abstract char QuotationRightChar { get; }
+        public abstract bool SupportQuotationChar { get; }
+        public virtual char QuotationLeftChar { get; }
+        public virtual char QuotationRightChar { get; }
         public virtual IndexType IndexType => IndexType.Normal;
+        public abstract DatabaseObjectType SupportDbObjectType { get; }
         public abstract DatabaseType DatabaseType { get; }
         public abstract string DefaultDataType { get; }
         public abstract string DefaultSchema { get; }
         public abstract bool SupportBulkCopy { get; }
-        public abstract bool SupportNchar { get; }
+        public abstract bool SupportNchar { get; }     
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
@@ -945,7 +946,7 @@ namespace DatabaseInterpreter.Core
 
         public string GetQuotedString(string str)
         {
-            if (str != null && (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || str.Contains(" ")))
+            if (str != null && this.SupportQuotationChar && (this.DbObjectNameMode == DbObjectNameMode.WithQuotation || str.Contains(" ")))
             {
                 return $"{this.QuotationLeftChar}{str}{this.QuotationRightChar}";
             }
@@ -1079,7 +1080,7 @@ namespace DatabaseInterpreter.Core
         {
             if (!(this.DatabaseType == DatabaseType.Postgres && dataType == "\"char\""))
             {
-                dataType = dataType.Trim(this.QuotationLeftChar, this.QuotationRightChar);
+                dataType = dataType.Trim(this.QuotationLeftChar, this.QuotationRightChar).Trim();
             }
 
             return DataTypeHelper.GetDataTypeInfo(dataType);
@@ -1146,7 +1147,7 @@ namespace DatabaseInterpreter.Core
             if (dataTypeSpecification != null)
             {
                 long precision = column.Precision.HasValue ? column.Precision.Value : 0;
-                int scale = column.Scale.HasValue ? column.Scale.Value : 0;
+                long scale = column.Scale.HasValue ? column.Scale.Value : 0;
 
                 if (dataTypeSpecification.Args.Contains(","))
                 {

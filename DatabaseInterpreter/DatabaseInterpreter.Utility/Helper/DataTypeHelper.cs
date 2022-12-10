@@ -88,7 +88,7 @@ namespace DatabaseInterpreter.Utility
                 }
                 else
                 {
-                    dataTypeInfo.DataType = dataType.Substring(0, index);
+                    dataTypeInfo.DataType = dataType.Substring(0, index).Trim();
                     dataTypeInfo.Args = dataType.Substring(index).Trim('(', ')').Trim();
                 }
             }

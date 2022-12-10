@@ -129,12 +129,12 @@ namespace DatabaseInterpreter.Core
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, newColumn)}");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(table.Name)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, newColumn)};");
         }
 
         public override Script SetTableColumnComment(Table table, TableColumn column, bool isNew = true)
         {
-            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)}");
+            return new AlterDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedString(column.TableName)} MODIFY COLUMN {this.dbInterpreter.ParseColumn(table, column)};");
         }
 
         public override Script DropTableColumn(TableColumn column)
@@ -161,7 +161,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script DropPrimaryKey(TablePrimaryKey primaryKey)
         {
-            return new DropDbObjectScript<TablePrimaryKey>($"ALTER TABLE {this.GetQuotedString(primaryKey.TableName)} DROP PRIMARY KEY");
+            return new DropDbObjectScript<TablePrimaryKey>($"ALTER TABLE {this.GetQuotedString(primaryKey.TableName)} DROP PRIMARY KEY;");
         }
 
         public override Script AddForeignKey(TableForeignKey foreignKey)
@@ -226,7 +226,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script DropIndex(TableIndex index)
         {
-            return new DropDbObjectScript<TableIndex>($"ALTER TABLE {this.GetQuotedString(index.TableName)} DROP INDEX {this.GetQuotedString(index.Name)}");
+            return new DropDbObjectScript<TableIndex>($"ALTER TABLE {this.GetQuotedString(index.TableName)} DROP INDEX {this.GetQuotedString(index.Name)};");
         }
 
         public override Script AddCheckConstraint(TableConstraint constraint)
@@ -283,11 +283,13 @@ namespace DatabaseInterpreter.Core
                 pkColumns.AddRange(primaryKey.Columns.Where(item => columns.Any(col => col.Name == item.ColumnName && col.IsIdentity)));
                 pkColumns.AddRange(primaryKey.Columns.Where(item => columns.Any(col => col.Name == item.ColumnName && !col.IsIdentity)));
 
+                string primaryKeyName = this.GetQuotedString(primaryKey.Name);
+
                 primaryKeyColumns =
 $@"
 ,PRIMARY KEY
 (
-{string.Join(Environment.NewLine, pkColumns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
+  {string.Join(Environment.NewLine, pkColumns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )";
             }
 

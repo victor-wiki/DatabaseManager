@@ -41,7 +41,7 @@ namespace DatabaseManager
                 this.rbSelfReferenceSame.Checked = true;
             }
 
-            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres)
+            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.Postgres || this.DatabaseType == DatabaseType.Sqlite)
             {
                 this.tabControl.TabPages.Remove(this.tabForScript);
             }

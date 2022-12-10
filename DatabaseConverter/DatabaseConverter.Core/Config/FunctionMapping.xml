@@ -4,173 +4,216 @@
 		<MySql>CURRENT_TIMESTAMP</MySql>
 		<Oracle>SYSDATE</Oracle>
 		<Postgres>CURRENT_TIMESTAMP,NOW</Postgres>
+		<Sqlite args="'NOW','LOCALTIME'" isFixedArgs="true">DATETIME</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>GETUTCDATE</SqlServer>
 		<MySql>UTC_TIMESTAMP</MySql>
 		<Oracle args="SYSTIMESTAMP" isFixedArgs="true">SYS_EXTRACT_UTC</Oracle>
 		<Postgres args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'" isFixedArgs="true"></Postgres>
+		<Sqlite defaults="FORMAT:;">DATETIME</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>NEWID</SqlServer>
 		<MySql>UUID</MySql>
 		<Oracle>SYS_GUID</Oracle>
 		<Postgres>GEN_RANDOM_UUID</Postgres>
+		<Sqlite direction="IN" args="HEX(RANDOMBLOB(16))" isFixedArgs="true"></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>LEN</SqlServer>
 		<MySql>CHAR_LENGTH</MySql>
 		<Oracle>LENGTH</Oracle>
 		<Postgres>LENGTH,CHAR_LENGTH,CHARACTER_LENGTH</Postgres>
+		<Sqlite>LENGTH</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DATALENGTH</SqlServer>
 		<MySql>LENGTH</MySql>
 		<Oracle>LENGTHB</Oracle>
 		<Postgres>OCTET_LENGTH</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>SUBSTRING</SqlServer>
 		<MySql>SUBSTRING,SUBSTR</MySql>
 		<Oracle>SUBSTR</Oracle>
 		<Postgres>SUBSTRING,SUBSTR</Postgres>
+		<Sqlite>SUBSTRING,SUBSTR</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>CHARINDEX</SqlServer>
 		<MySql defaults="START:1">LOCATE,INSTR,POSITION</MySql>
 		<Oracle defaults="START:1">INSTR</Oracle>
 		<Postgres>POSITION,STRPOS</Postgres>
+		<Sqlite>INSTR</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>STUFF</SqlServer>
 		<MySql>INSERT</MySql>
 		<Oracle direction="IN" expression="SUBSTR(EXP,1,START-1) || SUBSTR(VALUE,1,LENGTH) || SUBSTR(EXP,LENGTH+START)"></Oracle>
 		<Postgres>OVERLAY</Postgres>
+		<Sqlite direction="IN" expression="SUBSTR(EXP,1,START-1) || SUBSTR(VALUE,1,LENGTH) || SUBSTR(EXP,LENGTH+START)"></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>ISNULL</SqlServer>
 		<MySql>IFNULL</MySql>
 		<Oracle>NVL</Oracle>
 		<Postgres>COALESCE</Postgres>
+		<Sqlite>IFNULL</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer defaults="UNIT:DAY" translator="DateDiffTranslator">DATEDIFF</SqlServer>
 		<MySql translator="DateDiffTranslator">TIMESTAMPDIFF,DATEDIFF</MySql>
 		<Oracle direction="IN" translator="DateDiffTranslator"></Oracle>
 		<Postgres direction="IN" translator="DateDiffTranslator"></Postgres>
+		<Sqlite direction="IN" translator="DateDiffTranslator"></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DATEADD</SqlServer>
 		<MySql>DATE_ADD</MySql>
 		<Oracle direction="IN" translator="DateAddTranslator"></Oracle>
 		<Postgres direction="IN" translator="DateAddTranslator"></Postgres>
+		<Sqlite direction="IN" translator="DateAddTranslator"></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>REPLICATE</SqlServer>
 		<MySql>REPEAT</MySql>
 		<Oracle direction="IN" expression="RPAD(EXP,LENGTH(EXP)*TIMES,EXP)"></Oracle>
 		<Postgres>REPEAT</Postgres>
+		<Sqlite direction="IN" expression="REPLACE(SUBSTR(QUOTE(ZEROBLOB((TIMES + 1) / 2)), 3, TIMES), '0', EXP)"></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>CONVERT</SqlServer>
 		<MySql>CONVERT</MySql>
 		<Oracle>CAST</Oracle>
 		<Postgres>CAST</Postgres>
+		<Sqlite>CAST</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>SYSTEM_USER,SUSER_SNAME</SqlServer>
 		<MySql>CURRENT_USER</MySql>
 		<Oracle args="'USERENV', 'CURRENT_USER'" isFixedArgs="true">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_USER</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>USER_NAME</SqlServer>
 		<MySql direction="IN">DATABASE</MySql>
 		<Oracle direction="IN" args="'USERENV', 'CURRENT_SCHEMA'" isFixedArgs="true">SYS_CONTEXT</Oracle>
 		<Postgres>CURRENT_SCHEMA</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DB_NAME</SqlServer>
 		<MySql>DATABASE</MySql>
 		<Oracle>ORA_DATABASE_NAME</Oracle>
 		<Postgres>CURRENT_DATABASE</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DAY</SqlServer>
-		<MySql>DAYOFMONTH</MySql>
+		<MySql>DAYOFMONTH,DAY</MySql>
 		<Oracle direction="IN" args="DAY FROM DATE">EXTRACT</Oracle>
 		<Postgres direction="IN" args="'DAY',DATE">DATE_PART</Postgres>
+		<Sqlite direction="IN" args="'%d',DATE">STRFTIME</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DATEPART</SqlServer>
 		<MySql>EXTRACT</MySql>
 		<Oracle>EXTRACT</Oracle>
 		<Postgres>DATE_PART,EXTRACT</Postgres>
+		<Sqlite direction="IN" translator="DateExtractTranslator"></Sqlite>
+	</mapping>
+	<mapping>
+		<SqlServer direction="IN" args="WEEKDAY,DATE">DATEPART</SqlServer>
+		<MySql>DAYOFWEEK</MySql>
+		<Oracle direction="IN" args="DATE, 'd'">TO_CHAR</Oracle>
+		<Postgres direction="IN" args="'DOW',DATE">DATE_PART</Postgres>
+		<Sqlite direction="IN" args="'%w',DATE">STRFTIME</Sqlite>
+	</mapping>
+	<mapping>
+		<SqlServer direction="IN" args="DAYOFYEAR,DATE">DATEPART</SqlServer>
+		<MySql>DAYOFYEAR</MySql>
+		<Oracle direction="IN" args="DATE, 'ddd'">TO_CHAR</Oracle>
+		<Postgres direction="IN" args="'DOY',DATE">DATE_PART</Postgres>
+		<Sqlite direction="IN" args="'%j',DATE">STRFTIME</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>IIF</SqlServer>
 		<MySql>IF</MySql>
 		<Oracle direction="IN" expression="(CASE WHEN EXP THEN TRUE_VALUE ELSE FALSE_VALUE END)"></Oracle>
 		<Postgres direction="IN" expression="(CASE WHEN EXP THEN TRUE_VALUE ELSE FALSE_VALUE END)"></Postgres>
+		<Sqlite>IIF</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>LOWER</SqlServer>
 		<MySql>LCASE</MySql>
 		<Oracle>LOWER</Oracle>
 		<Postgres>LOWER</Postgres>
+		<Sqlite>LOWER</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>UPPER</SqlServer>
 		<MySql>UCASE</MySql>
 		<Oracle>UPPER</Oracle>
 		<Postgres>UPPER</Postgres>
+		<Sqlite>UPPER</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>LOG</SqlServer>
 		<MySql>LN</MySql>
 		<Oracle>LN</Oracle>
 		<Postgres>LN</Postgres>
+		<Sqlite>LN</Sqlite>
 	</mapping>	
 	<mapping>
 		<SqlServer direction="IN" defaults="PAD:' '" expression="REPLICATE(PAD,LENGTH-LEN(EXP))+EXP"></SqlServer>
 		<MySql defaults="PAD:' '">LPAD</MySql>
 		<Oracle>LPAD</Oracle>
 		<Postgres defaults="PAD:' '">LPAD</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer direction="IN" defaults="PAD:' '" expression="EXP+REPLICATE(PAD,LENGTH-LEN(EXP))"></SqlServer>
 		<MySql  defaults="PAD:' '">RPAD</MySql>
 		<Oracle>RPAD</Oracle>
 		<Postgres  defaults="PAD:' '">RPAD</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>	
 	<mapping>
 		<SqlServer>CEILING</SqlServer>
 		<MySql>CEILING,CEIL</MySql>
 		<Oracle>CEIL</Oracle>
 		<Postgres>CEILING,CEIL</Postgres>
+		<Sqlite>CEILING,CEIL</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>CHAR</SqlServer>
 		<MySql>CHAR</MySql>
 		<Oracle>CHR,NCHR</Oracle>
 		<Postgres>CHR</Postgres>
+		<Sqlite>CHAR</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer direction="IN">ROUND</SqlServer>
 		<MySql>TRUNCATE</MySql>
 		<Oracle>TRUNC</Oracle>
 		<Postgres>TRUNC</Postgres>
+		<Sqlite>ROUND</Sqlite>
 	</mapping>
 	<mapping>
-		<SqlServer direction="IN" args="EXP AS INT">CAST</SqlServer>
-		<MySql direction="IN" args="EXP AS UNSIGNED">CAST</MySql>
+		<SqlServer direction="IN" args="EXP AS FLOAT">CAST</SqlServer>
+		<MySql direction="IN" args="EXP AS FLOAT">CAST</MySql>
 		<Oracle>TO_NUMBER</Oracle>
-		<Postgres direction="IN" args="EXP AS INTEGER">CAST</Postgres>
+		<Postgres direction="IN" args="EXP AS FLOAT">CAST</Postgres>
+		<Sqlite direction="IN" args="EXP AS REAL">CAST</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>SCOPE_IDENTITY</SqlServer>
 		<MySql>LAST_INSERT_ID</MySql>
 		<Oracle></Oracle>
 		<Postgres>LASTVAL</Postgres>
+		<Sqlite>LAST_INSERT_ROWID</Sqlite>s
 	</mapping>
 </mappings>

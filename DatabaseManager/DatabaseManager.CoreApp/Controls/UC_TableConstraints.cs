@@ -25,6 +25,7 @@ namespace DatabaseManager.Controls
         public DatabaseType DatabaseType { get; set; }
 
         public GeneateChangeScriptsHandler OnGenerateChangeScripts;
+        public event ColumnSelectHandler OnColumnSelect;
 
         public UC_TableConstraints()
         {
@@ -41,9 +42,14 @@ namespace DatabaseManager.Controls
 
         public void InitControls()
         {
-            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.MySql)
+            if (this.DatabaseType == DatabaseType.Oracle || this.DatabaseType == DatabaseType.MySql || this.DatabaseType == DatabaseType.Sqlite)
             {
                 this.colComment.Visible = false;
+            }
+
+            if(this.DatabaseType == DatabaseType.Sqlite)
+            {
+                this.colColumnName.Visible = true;
             }
 
             this.inited = true;
@@ -59,6 +65,7 @@ namespace DatabaseManager.Controls
 
                 DataGridViewRow row = this.dgvConstraints.Rows[rowIndex];
 
+                row.Cells[this.colColumnName.Name].Value = constriant.ColumnName;
                 row.Cells[this.colName.Name].Value = constriant.Name;
                 row.Cells[this.colDefinition.Name].Value = constriant.Definition;
                 row.Cells[this.colComment.Name].Value = constriant.Comment;
@@ -86,13 +93,15 @@ namespace DatabaseManager.Controls
                 TableConstraintDesignerInfo constraint = new TableConstraintDesignerInfo();
 
                 string constraintName = row.Cells[this.colName.Name].Value?.ToString();
+                string columnName = row.Cells[this.colColumnName.Name].Value?.ToString();
 
-                if (!string.IsNullOrEmpty(constraintName))
+                if (!string.IsNullOrEmpty(constraintName) || !string.IsNullOrEmpty(columnName))
                 {
                     TableConstraintDesignerInfo tag = row.Tag as TableConstraintDesignerInfo;
 
                     constraint.OldName = tag?.OldName;
                     constraint.Name = constraintName;
+                    constraint.ColumnName = columnName;
                     constraint.Definition = DataGridViewHelper.GetCellStringValue(row, this.colDefinition.Name);
                     constraint.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
 
@@ -192,6 +201,53 @@ namespace DatabaseManager.Controls
             if (this.OnGenerateChangeScripts != null)
             {
                 this.OnGenerateChangeScripts();
+            }
+        }
+
+        private void dgvConstraints_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            if (e.ColumnIndex == this.colColumnName.Index)
+            {
+                DataGridViewRow row = this.dgvConstraints.Rows[e.RowIndex];
+                DataGridViewCell cell = row.Cells[this.colColumnName.Name];           
+
+                TableConstraintDesignerInfo designerInfo = row.Tag as TableConstraintDesignerInfo;
+
+                if (this.OnColumnSelect != null)
+                {
+                    this.OnColumnSelect(DatabaseObjectType.Constraint,
+                        designerInfo?.ColumnName == null ? Enumerable.Empty<SimpleColumn>() : new SimpleColumn[] { new SimpleColumn() { ColumnName = designerInfo.ColumnName } },
+                        false, true
+                    );
+                }
+            }
+        }
+
+        public void SetRowColumns(IEnumerable<SimpleColumn> columnInfos)
+        {
+            DataGridViewCell cell = this.dgvConstraints.CurrentCell;
+
+            if (cell != null)
+            {
+                string columnName = columnInfos.FirstOrDefault()?.ColumnName;
+
+                cell.Value = columnName;
+
+                TableConstraintDesignerInfo designerInfo = cell.OwningRow.Tag as TableConstraintDesignerInfo;
+
+                if (designerInfo == null)
+                {
+                    designerInfo = new TableConstraintDesignerInfo();
+                }
+
+                designerInfo.ColumnName = columnName;
+
+                cell.OwningRow.Tag = designerInfo;
             }
         }
     }

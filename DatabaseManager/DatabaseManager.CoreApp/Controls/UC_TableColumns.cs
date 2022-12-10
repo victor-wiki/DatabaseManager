@@ -30,6 +30,8 @@ namespace DatabaseManager.Controls
         public UC_TableColumns()
         {
             InitializeComponent();
+
+            this.colIdentity.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         private void UC_TableColumns_Load(object sender, EventArgs e)
@@ -39,7 +41,18 @@ namespace DatabaseManager.Controls
 
         public void InitControls()
         {
-            this.LoadDataTypes();           
+            if (!ManagerUtil.SupportComment(this.DatabaseType))
+            {
+                if(this.colComment.Visible)
+                {
+                    this.colComment.Visible = false;
+                    this.colColumnName.Width += 50;
+                    this.colDataType.Width += 50;
+                    this.colDefaultValue.Width += 50;
+                }                
+            }
+
+            this.LoadDataTypes();
         }
 
         private void InitColumnsGrid()
@@ -119,7 +132,7 @@ namespace DatabaseManager.Controls
                     columnDesingerInfo.OldName = columnDesingerInfo.Name;
                 }
             }
-        }        
+        }
 
         private void LoadDataTypes()
         {
@@ -321,7 +334,7 @@ namespace DatabaseManager.Controls
                     if (isPrimaryReadOnly)
                     {
                         primaryCell.Value = false;
-                    }                  
+                    }
 
                     if (isIdentityReadOnly)
                     {
@@ -480,7 +493,7 @@ namespace DatabaseManager.Controls
 
             if (row != null)
             {
-                int rowIndex = row.Index< 0 ? 0 : row.Index;
+                int rowIndex = row.Index < 0 ? 0 : row.Index;
 
                 this.dgvColumns.Rows.Insert(rowIndex);
                 this.dgvColumns.Rows[rowIndex].Selected = true;
@@ -568,9 +581,10 @@ namespace DatabaseManager.Controls
             if (this.dgvColumns.CurrentCellAddress.X == this.colDataType.DisplayIndex)
             {
                 ComboBox combo = e.Control as ComboBox;
+
                 if (combo != null)
                 {
-                    combo.DropDownStyle = ComboBoxStyle.DropDown;                    
+                    combo.DropDownStyle = ComboBoxStyle.DropDown;
                 }
             }
         }
@@ -588,7 +602,7 @@ namespace DatabaseManager.Controls
 
                 if (cell != null && cell.IsInEditMode && cell.EditedFormattedValue != cell.Value)
                 {
-                    cell.Value = cell.EditedFormattedValue;
+                    cell.Value = cell.EditedFormattedValue;                    
                 }
             }
         }

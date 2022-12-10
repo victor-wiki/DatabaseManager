@@ -6,6 +6,7 @@
         SqlServer = 1,
         MySql = 2,
         Oracle = 3,
-        Postgres = 4
+        Postgres = 4,
+        Sqlite = 5
     }
 }

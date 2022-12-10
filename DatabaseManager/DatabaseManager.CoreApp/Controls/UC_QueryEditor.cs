@@ -334,6 +334,11 @@ namespace DatabaseManager.Controls
 
         private bool IsWordInQuotationChar(SqlWordToken token)
         {
+            if(token == null)
+            {
+                return false;
+            }
+
             int startIndex = token.StopIndex;
 
             if (startIndex == 0)

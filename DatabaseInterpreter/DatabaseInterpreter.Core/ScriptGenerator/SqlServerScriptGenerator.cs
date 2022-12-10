@@ -217,7 +217,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script AddIndex(TableIndex index)
         {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}{(item.IsDesc ? " DESC" : "")}"));
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}{(item.IsDesc?" DESC":"")}"));
 
             string unique = index.IsUnique ? "UNIQUE" : "";
             string clustered = index.Clustered ? "CLUSTERED" : "NONCLUSTERED";
@@ -275,7 +275,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             string defaultValue = StringHelper.GetParenthesisedString(this.dbInterpreter.GetColumnDefaultValue(column));
 
-            return new AlterDbObjectScript<Table>($"ALTER TABLE {this.GetQuotedFullTableName(column)} ADD CONSTRAINT {this.GetQuotedString($"DF_{column.TableName}_{column.Name}")}  DEFAULT {defaultValue} FOR { this.GetQuotedString(column.Name)}");
+            return new AlterDbObjectScript<Table>($"ALTER TABLE {this.GetQuotedFullTableName(column)} ADD CONSTRAINT {this.GetQuotedString($"DF_{column.TableName}_{column.Name}")}  DEFAULT {defaultValue} FOR {this.GetQuotedString(column.Name)}");
         }
 
         public Script DropDefaultValueConstraint(TableDefaultValueConstraint defaultValueConstraint)

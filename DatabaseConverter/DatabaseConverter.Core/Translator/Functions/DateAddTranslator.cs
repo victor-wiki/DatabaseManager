@@ -34,7 +34,7 @@ namespace DatabaseConverter.Core.Functions
 
             if (dateAdd.HasValue)
             {
-                string unit = dateAdd.Value.Unit.ToUpper();
+                string unit = DatetimeHelper.GetUniformUnit(dateAdd.Value.Unit);
 
                 bool isStringValue = ValueHelper.IsStringValue(dateAdd.Value.Date);
                 string date = dateAdd.Value.Date;
@@ -71,6 +71,18 @@ namespace DatabaseConverter.Core.Functions
                     string strDate = $"{dataType}{date}";
 
                     newExpression = $"{strDate} + INTERVAL '{intervalNumber}' {unit}";                   
+                }
+                else if(this.TargetDbType == DatabaseType.Sqlite)
+                {
+                    if(unit == "WEEK")
+                    {
+                        intervalNumber = intervalNumber.StartsWith("-")?  "-7":"7";
+                        unit = "DAY";
+                    }
+
+                    string function = isStringValue ? (isTimestampStr ? "DATETIME" : "DATE") : "";                    
+
+                    newExpression = $"{function}({date}, '{intervalNumber} {unit}')";
                 }
             }
 

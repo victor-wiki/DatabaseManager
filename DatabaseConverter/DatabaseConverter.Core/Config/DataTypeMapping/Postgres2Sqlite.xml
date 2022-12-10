@@ -1,0 +1,594 @@
+<mappings>
+	<mapping>
+		<source type="aclitem" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="aclitem[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="bigint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="bigint[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="bigserial" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="bit" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="bit[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="bit varying" />
+		<target type="blob"/>
+	</mapping>
+	<mapping>
+		<source type="bit varying[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="boolean" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="boolean[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="box" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="box[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="bytea" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="&quot;char&quot;" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="&quot;char[]&quot;" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="character" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="character[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="character varying" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="cidr" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="cidr[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="circle" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="circle[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="cstring[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="date[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="datemultirange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="daterange" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="double precision" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="double precision[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="geography" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="geography[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="geometry" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="geometry[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="gtsvector" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="gtsvector[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="inet" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="inet[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="int2vector[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="int4range" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="int4range[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="int8range" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="int8range[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer"/>
+	</mapping>
+	<mapping>
+		<source type="integer[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="interval" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="interval[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="json" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="json[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="jsonb" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="jsonb[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="jsonpath" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="line" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="line[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="lseg" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="lseg[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr8" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="macaddr8[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="money" />
+		<target type="numeric" precision="19" scale="4" />
+	</mapping>
+	<mapping>
+		<source type="money[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="name" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="name[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="numeric"/>
+	</mapping>
+	<mapping>
+		<source type="numeric[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="nummultirange[]" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="numrange" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="numrange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="oid" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="oid[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="oidvector" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="oidvector[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="path" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_brin_bloom_summary" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_brin_minmax_multi_summary" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_dependencies" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_lsn" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_lsn[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_mcv_list" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_ndistinct" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_node_tree" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_snapshot" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="pg_snapshot[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="point" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="point[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="polygon" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="polygon[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="real[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="refcursor" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="refcursor[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regclass" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regclass[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regcollation" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regcollation[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regconfig" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xregconfig[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regdictionary" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regdictionary[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regnamespace" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regnamespace[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regoper" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regoper[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regoperator" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regoperator[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regproc" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regproc[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regprocedure" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regprocedure[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regrole" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regrole[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regtype" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="regtype[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="serial" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="smallint[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="text[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tid" />
+		<target type="text"/>
+	</mapping>
+	<mapping>
+		<source type="time with time zone" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="time with time zone[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="time without time zone" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="time without time zone[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp with time zone" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp with time zone[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp without time zone" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp without time zone[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsmultirange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsquery" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsquery[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsrange" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsrange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tstzmultirange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tstzrange" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tstzrange[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsvector" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="tsvector[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="txid_snapshot" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="txid_snapshot[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="uuid" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="uuid[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xid" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xid[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xid8" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xid8[]" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xml" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="xml[]" />
+		<target type="text" />
+	</mapping>
+</mappings>

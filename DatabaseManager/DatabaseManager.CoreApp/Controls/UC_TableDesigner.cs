@@ -1,22 +1,21 @@
-﻿using System;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
+using DatabaseManager.Helper;
+using DatabaseManager.Model;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.Data;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
-using DatabaseManager.Core;
-using DatabaseManager.Model;
-using DatabaseManager.Helper;
-using DatabaseInterpreter.Utility;
 
 namespace DatabaseManager.Controls
 {
     public delegate void GeneateChangeScriptsHandler();
+    public delegate void ColumnSelectHandler(DatabaseObjectType databaseObjectType, IEnumerable<SimpleColumn> columns, bool columnIsReadOnly, bool isSingleSelect = false);
+
     public partial class UC_TableDesigner : UserControl, IDbObjContentDisplayer, IObserver<FeedbackInfo>
     {
         private readonly string selfTableName = "<self>";
@@ -30,6 +29,7 @@ namespace DatabaseManager.Controls
             InitializeComponent();
 
             this.ucIndexes.OnColumnSelect += this.ShowColumnSelector;
+            this.ucConstraints.OnColumnSelect += this.ShowColumnSelector;
             this.ucForeignKeys.OnColumnMappingSelect += this.ShowColumnMappingSelector;
         }
 
@@ -47,6 +47,21 @@ namespace DatabaseManager.Controls
             {
                 this.lblSchema.Text = "Tablespace:";
             }
+            else if (this.displayInfo.DatabaseType == DatabaseType.Sqlite)
+            {
+                this.lblSchema.Visible = false;
+                this.cboSchema.Visible = false;
+            }
+
+            if (!ManagerUtil.SupportComment(this.displayInfo.DatabaseType))
+            {
+                if(this.lblComment.Visible)
+                {
+                    this.lblComment.Visible = this.txtTableComment.Visible = false;
+                    this.tabControl1.Top -= (this.txtTableComment.Height + 10);
+                    this.tabControl1.Height += this.txtTableComment.Height + 10;
+                }                
+            }
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
@@ -57,7 +72,10 @@ namespace DatabaseManager.Controls
 
             if (this.displayInfo.IsNew)
             {
-                this.LoadDatabaseSchemas();
+                if (this.displayInfo.DatabaseType != DatabaseType.Sqlite)
+                {
+                    this.LoadDatabaseSchemas();
+                }
             }
             else
             {
@@ -102,27 +120,27 @@ namespace DatabaseManager.Controls
 
             string defaultSchema = dbInterpreter.DefaultSchema;
 
-            if(!string.IsNullOrEmpty(defaultSchema) && schemas.Any(item=> item.Name == defaultSchema))
+            if (!string.IsNullOrEmpty(defaultSchema) && schemas.Any(item => item.Name == defaultSchema))
             {
                 defaultItem = defaultSchema;
-            }           
-            
+            }
+
             if (this.displayInfo.DatabaseType == DatabaseType.Oracle || this.displayInfo.DatabaseType == DatabaseType.MySql)
             {
-                this.cboSchema.Enabled = false;               
-            }           
+                this.cboSchema.Enabled = false;
+            }
 
-            cboSchema.Items.AddRange(items.ToArray());
+            this.cboSchema.Items.AddRange(items.ToArray());
 
-            if (cboSchema.Items.Count == 1)
+            if (this.cboSchema.Items.Count == 1)
             {
-                cboSchema.SelectedIndex = 0;
+                this.cboSchema.SelectedIndex = 0;
             }
             else
             {
                 if (defaultItem != null)
                 {
-                    cboSchema.Text = defaultItem;
+                    this.cboSchema.Text = defaultItem;
                 }
             }
         }
@@ -230,7 +248,11 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.Feedback("Table saved.");
+                string message = "Table saved.";
+
+                this.Feedback(message);
+
+                MessageBox.Show(message);
 
                 Table table = result.ResultData as Table;
 
@@ -288,7 +310,7 @@ namespace DatabaseManager.Controls
             {
                 TableDesignerGenerateScriptsData scriptsData = result.ResultData as TableDesignerGenerateScriptsData;
 
-                if (scriptsData.Scripts.Count > 0)
+                if (scriptsData.Scripts.Count > 0 && !scriptsData.Scripts.All(item => string.IsNullOrEmpty(item.Content)))
                 {
                     return true;
                 }
@@ -440,13 +462,13 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private void ShowColumnSelector(DatabaseObjectType databaseObjectType, IEnumerable<IndexColumn> values, bool columnIsReadonly)
+        private void ShowColumnSelector(DatabaseObjectType databaseObjectType, IEnumerable<SimpleColumn> values, bool columnIsReadonly, bool isSingleSelect)
         {
-            frmColumSelect columnSelect = new frmColumSelect() { ColumnIsReadOnly = columnIsReadonly };
+            frmColumSelect columnSelect = new frmColumSelect() { ColumnIsReadOnly = columnIsReadonly, IsSingleSelect = isSingleSelect };
 
             IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name));
 
-            List<IndexColumn> columnInfos = new List<IndexColumn>();
+            List<SimpleColumn> columnInfos = new List<SimpleColumn>();
 
             foreach (TableColumnDesingerInfo column in columns)
             {
@@ -462,16 +484,32 @@ namespace DatabaseManager.Controls
                         }
                     }
                 }
+                else
+                {
+                    columnInfos.Add(new SimpleColumn() { ColumnName = column.Name });
+                }
             }
 
             columnSelect.InitControls(columnInfos, this.displayInfo.DatabaseType == DatabaseType.SqlServer);
-            columnSelect.LoadColumns(values);
+
+            if (databaseObjectType == DatabaseObjectType.Index)
+            {
+                columnSelect.LoadColumns(values.Select(item => item as IndexColumn));
+            }
+            else
+            {
+                columnSelect.LoadColumns(values);
+            }
 
             if (columnSelect.ShowDialog() == DialogResult.OK)
             {
                 if (databaseObjectType == DatabaseObjectType.Index)
                 {
-                    this.ucIndexes.SetRowColumns(columnSelect.SelectedColumns);
+                    this.ucIndexes.SetRowColumns(columnSelect.SelectedColumns.Select(item => item as IndexColumn));
+                }
+                else if (databaseObjectType == DatabaseObjectType.Constraint)
+                {
+                    this.ucConstraints.SetRowColumns(columnSelect.SelectedColumns);
                 }
             }
         }

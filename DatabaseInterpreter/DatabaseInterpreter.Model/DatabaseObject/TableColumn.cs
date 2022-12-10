@@ -8,8 +8,8 @@
         public bool IsNullable { get; set; }
         public bool IsIdentity { get; set; }
         public long? MaxLength { get; set; }
-        public int? Precision { get; set; }
-        public int? Scale { get; set; }       
+        public long? Precision { get; set; }
+        public long? Scale { get; set; }       
         public string DefaultValue { get; set; }      
         public bool IsUserDefined { get; set; }       
         public bool IsComputed => !string.IsNullOrEmpty(this.ComputeExp);

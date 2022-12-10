@@ -1,12 +1,14 @@
 ﻿using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Data;
+using DatabaseManager.Profile;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager
@@ -23,11 +25,16 @@ namespace DatabaseManager
 
         private void frmLockApp_Load(object sender, EventArgs e)
         {
-            string password = SettingManager.Setting.LockPassword;
+            this.InitControls();
+        }
 
-            if (!string.IsNullOrEmpty(password))
+        private async Task InitControls()
+        {
+            PersonalSetting ps = await PersonalSettingManager.GetPersonalSetting();
+
+            if (ps != null && !string.IsNullOrEmpty(ps.LockPassword))
             {
-                this.txtPassword.Text = AesHelper.Decrypt(password);
+                this.txtPassword.Text = ps.LockPassword;
             }
         }
 

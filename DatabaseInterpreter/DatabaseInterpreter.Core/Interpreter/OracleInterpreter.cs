@@ -27,6 +27,7 @@ namespace DatabaseInterpreter.Core
         public override string CommandParameterChar => ":";
         public const char QuotedLeftChar = '"';
         public const char QuotedRightChar = '"';
+        public override bool SupportQuotationChar => true;
         public override char QuotationLeftChar { get { return QuotedLeftChar; } }
         public override char QuotationRightChar { get { return QuotedRightChar; } }
         public override string CommentString => "--";
@@ -34,6 +35,8 @@ namespace DatabaseInterpreter.Core
         public override string DefaultDataType => "varchar2";
         public override string DefaultSchema => this.ConnectionInfo.UserId?.ToUpper();
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
+        public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function
+                                                                | DatabaseObjectType.Procedure | DatabaseObjectType.Type | DatabaseObjectType.Sequence;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => true;
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };

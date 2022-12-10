@@ -71,16 +71,16 @@ namespace DatabaseManager
             }
         }
 
-        private void LoadProfile()
+        private async void LoadProfile()
         {
-            ConnectionInfo connectionInfo = ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);          
+            ConnectionInfo connectionInfo = await ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);
 
             this.ucDbAccountInfo.LoadData(connectionInfo, this.ConnectionInfo?.Password);
 
             this.cboDatabase.Text = connectionInfo.Database;
         }
 
-        private async void TestConnect()
+        private void TestConnect()
         {
             this.PopulateDatabases();
         }
@@ -121,7 +121,7 @@ namespace DatabaseManager
             return connectionInfo;
         }
 
-        private void btnConfirm_Click(object sender, EventArgs e)
+        private async void btnConfirm_Click(object sender, EventArgs e)
         {
             if (!this.ucDbAccountInfo.ValidateInfo())
             {
@@ -141,9 +141,9 @@ namespace DatabaseManager
 
             if (!this.NotUseProfile)
             {
-                IEnumerable<ConnectionProfileInfo> profiles = ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
+                IEnumerable<ConnectionProfileInfo> profiles = await ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
 
-                Guid? oldAccountProfileId = null;
+                string oldAccountProfileId = null;
 
                 if (!string.IsNullOrEmpty(profileName) && profiles.Any(item => item.Name == profileName))
                 {
@@ -166,34 +166,56 @@ namespace DatabaseManager
                     }
                     else //edit
                     {
-                        oldAccountProfileId = profiles.FirstOrDefault(item => item.Name == profileName).AccountProfileId;
+                        oldAccountProfileId = profiles.FirstOrDefault(item => item.Name == profileName).AccountId;
+                    }
+                }
+                else
+                {
+                    AccountProfileInfo accountProfile = await AccountProfileManager.GetProfile(this.DatabaseType.ToString(), this.ConnectionInfo.Server, this.ConnectionInfo.Port, this.ConnectionInfo.IntegratedSecurity, this.ConnectionInfo.UserId);
+
+                    if (accountProfile != null)
+                    {
+                        oldAccountProfileId = accountProfile.Id;
                     }
                 }
 
-                ConnectionProfileInfo profile = new ConnectionProfileInfo() { ConnectionInfo = this.ConnectionInfo };
-
-                if (oldAccountProfileId.HasValue)
+                ConnectionProfileInfo profile = new ConnectionProfileInfo()
                 {
-                    profile.AccountProfileId = oldAccountProfileId.Value;
+                    AccountId = oldAccountProfileId,
+                    DatabaseType = this.DatabaseType.ToString(),
+                    Server = this.ConnectionInfo.Server,
+                    Port = this.ConnectionInfo.Port,
+                    Database = this.ConnectionInfo.Database,
+                    IntegratedSecurity = this.InvokeRequired,
+                    UserId = this.ConnectionInfo.UserId,
+                    Password =this.ConnectionInfo.Password,
+                    IsDba = this.ConnectionInfo.IsDba,
+                    UseSsl = this.ConnectionInfo.UseSsl
+                };
+
+                if (!string.IsNullOrEmpty(oldAccountProfileId))
+                {
+                    profile.AccountId = oldAccountProfileId;
                 }
 
                 profile.Name = profileName;
                 profile.DatabaseType = this.DatabaseType.ToString();
 
-                this.ProflieName = ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);     
-                
-                if(SettingManager.Setting.RememberPasswordDuringSession)
+                this.ProflieName = await ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
+
+                if (SettingManager.Setting.RememberPasswordDuringSession)
                 {
-                    if(!this.ConnectionInfo.IntegratedSecurity && !this.ucDbAccountInfo.RememberPassword && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                    if (!this.ConnectionInfo.IntegratedSecurity && !this.ucDbAccountInfo.RememberPassword && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
                     {
-                        AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { Id = profile.AccountProfileId };
+                        AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { Id = profile.AccountId };
+
                         ObjectHelper.CopyProperties(this.ConnectionInfo, accountProfileInfo);
                         accountProfileInfo.Password = this.ConnectionInfo.Password;
 
                         DataStore.SetAccountProfileInfo(accountProfileInfo);
                     }
                 }
-            }           
+            }
 
             this.DialogResult = DialogResult.OK;
         }
@@ -229,7 +251,7 @@ namespace DatabaseManager
                 {
                     string password = null;
 
-                    if(SettingManager.Setting.RememberPasswordDuringSession)
+                    if (SettingManager.Setting.RememberPasswordDuringSession)
                     {
                         var storeInfo = DataStore.GetAccountProfileInfo(frm.SelectedAccountProfileInfo.Id);
 
@@ -237,13 +259,13 @@ namespace DatabaseManager
                         {
                             password = storeInfo.Password;
                         }
-                    }                   
+                    }
 
                     this.ucDbAccountInfo.LoadData(frm.SelectedAccountProfileInfo, password);
                 }
             }
         }
-     
+
 
         private void cboDatabase_MouseClick(object sender, MouseEventArgs e)
         {

@@ -4,8 +4,6 @@ using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
 using MySqlConnector;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.Noding.Snapround;
-using Newtonsoft.Json.Linq;
 using NpgsqlTypes;
 using System;
 using System.Collections;
@@ -855,7 +853,10 @@ namespace DatabaseInterpreter.Core
         #region Append Scripts
         public string GetScriptOutputFilePath(GenerateScriptMode generateScriptMode)
         {
-            string fileName = $"{this.dbInterpreter.ConnectionInfo.Database}_{this.databaseType}_{DateTime.Today.ToString("yyyyMMdd")}_{generateScriptMode.ToString()}.sql";
+            string database = this.dbInterpreter.ConnectionInfo.Database;
+            string databaseName = !string.IsNullOrEmpty(database) && File.Exists(database) ? Path.GetFileNameWithoutExtension(database) : database;
+
+            string fileName = $"{databaseName}_{this.databaseType}_{DateTime.Today.ToString("yyyyMMdd")}_{generateScriptMode.ToString()}.sql";
             string filePath = Path.Combine(this.option.ScriptOutputFolder, fileName);
             return filePath;
         }

@@ -555,7 +555,14 @@ namespace DatabaseManager.Controls
                     {
                         string schema = info.Schema ?? dbObject.Schema;
 
-                        name = $"{schema}.{dbObject.Name}";
+                        if(!string.IsNullOrEmpty(schema))
+                        {
+                            name = $"{schema}.{dbObject.Name}";
+                        }
+                        else
+                        {
+                            name = dbObject.Name;
+                        }
                     }
                 }
             }

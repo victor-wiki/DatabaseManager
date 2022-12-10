@@ -22,6 +22,9 @@ namespace DatabaseInterpreter.Core
                 case DatabaseType.Postgres:
                     dbScriptGenerator = new PostgresScriptGenerator(dbInterpreter);
                     break;
+                case DatabaseType.Sqlite:
+                    dbScriptGenerator = new SqliteScriptGenerator(dbInterpreter);
+                    break;
 
             }
 

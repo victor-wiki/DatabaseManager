@@ -156,11 +156,11 @@ namespace DatabaseConverter.Core.Functions
 
                     Func<string, bool, bool, string> getDateFormatStr = (date, isDateStr, isTimestampStr) =>
                     {
-                        if(isDateStr)
+                        if (isDateStr)
                         {
                             return $"TO_DATE({date}, {dateFormat})";
                         }
-                        else if(isTimestampStr)
+                        else if (isTimestampStr)
                         {
                             return $"TO_DATE({date}, {datetimeFormat})";
                         }
@@ -172,7 +172,7 @@ namespace DatabaseConverter.Core.Functions
 
                     Func<string, string> getDiffValue = (multiplier) =>
                     {
-                        string value = $"({getDateFormatStr(date1, isDateStr1, isTimestampStr1)}-{getDateFormatStr(date2, isDateStr2, isTimestampStr2)})"; ;
+                        string value = $"({getDateFormatStr(date1, isDateStr1, isTimestampStr1)}-{getDateFormatStr(date2, isDateStr2, isTimestampStr2)})";
 
                         return $"ROUND({value}*{multiplier})";
                     };
@@ -184,6 +184,9 @@ namespace DatabaseConverter.Core.Functions
                             break;
                         case "MONTH":
                             newExpression = $"MONTHS_BETWEEN({strDate1},{strDate2})";
+                            break;
+                        case "WEEK":
+                            newExpression = $"ROUND(EXTRACT(DAY FROM ({strDate1MinusData2}))/7)";
                             break;
                         case "DAY":
                             newExpression = $"EXTRACT(DAY FROM ({strDate1MinusData2}))";
@@ -201,9 +204,50 @@ namespace DatabaseConverter.Core.Functions
                             break;
                     }
                 }
+                else if (this.TargetDbType == DatabaseType.Sqlite)
+                {
+                    Func<string, string> getDiffValue = (multiplier) =>
+                    {
+                        string value = $"(JULIANDAY({date1})-JULIANDAY({date2}))"; 
+
+                        if(unit== "YEAR")
+                        {
+                            return $"FLOOR(ROUND({value}{multiplier},2))";
+                        }
+                        else
+                        {
+                            return $"ROUND({value}{multiplier})";
+                        }                        
+                    };
+
+                    switch (unit)
+                    {
+                        case "YEAR":
+                            newExpression = getDiffValue("/365");
+                            break;
+                        case "MONTH":
+                            newExpression = getDiffValue("/30");
+                            break;
+                        case "WEEK":
+                            newExpression = getDiffValue("/7");
+                            break;
+                        case "DAY":
+                            newExpression = getDiffValue("");
+                            break;
+                        case "HOUR":
+                            newExpression = getDiffValue("*24");
+                            break;
+                        case "MINUTE":                           
+                            newExpression = getDiffValue("24*60");
+                            break;
+                        case "SECOND":                            
+                            newExpression = getDiffValue("24*60*60");
+                            break;
+                    }
+                }
             }
 
             return newExpression;
-        }       
+        }
     }
 }

@@ -145,6 +145,7 @@
             this.colUpdateCascade.DataPropertyName = "UpdateCascade";
             this.colUpdateCascade.HeaderText = "Update Cascade";
             this.colUpdateCascade.Name = "colUpdateCascade";
+            this.colUpdateCascade.Width = 110;
             // 
             // colDeleteCascade
             // 

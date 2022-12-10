@@ -4,11 +4,13 @@
 		<MySql>NEW</MySql>
 		<Oracle>:NEW</Oracle>
 		<Postgres>NEW</Postgres>
+		<Sqlite>NEW</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>DELETED</SqlServer>
 		<MySql>OLD</MySql>
 		<Oracle>:OLD</Oracle>
 		<Postgres>OLD</Postgres>
+		<Sqlite>OLD</Sqlite>
 	</mapping>	
 </mappings>

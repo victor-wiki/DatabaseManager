@@ -224,6 +224,10 @@ namespace DatabaseManager.Core
             {
                 return new PostgresDiagnosis(connectionInfo);
             }
+            else if(databaseType == DatabaseType.Sqlite)
+            {
+                return new SqliteDiagnosis(connectionInfo);
+            }
 
             throw new NotImplementedException($"Not implemente diagnosis for {databaseType}.");
         }

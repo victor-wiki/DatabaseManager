@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Npgsql;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Common;
@@ -43,6 +44,10 @@ namespace DatabaseInterpreter.Core
             else if (lowerProviderName.Contains("npgsql"))
             {
                 factory = NpgsqlFactory.Instance;
+            }
+            else if(lowerProviderName.Contains("sqlite"))
+            {
+                factory = SqliteFactory.Instance;
             }
            
             DbConnection connection = factory.CreateConnection();

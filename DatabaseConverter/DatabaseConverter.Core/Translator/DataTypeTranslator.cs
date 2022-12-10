@@ -309,7 +309,7 @@ namespace DatabaseConverter.Core
                             {
                                 ArgumentRange? targetScaleRange = DataTypeManager.GetArgumentRange(targetDataTypeSpec, "scale");
 
-                                int scale = dataTypeInfo.Scale == null ? 0 : dataTypeInfo.Scale.Value;
+                                long scale = dataTypeInfo.Scale == null ? 0 : dataTypeInfo.Scale.Value;
 
                                 if (targetScaleRange.HasValue && scale > targetScaleRange.Value.Max)
                                 {
@@ -428,7 +428,7 @@ namespace DatabaseConverter.Core
             return false;
         }
 
-        private bool IsValueEqual(string value1, int? value2)
+        private bool IsValueEqual(string value1, long? value2)
         {
             string v2 = value2?.ToString();
             if (value1 == v2)

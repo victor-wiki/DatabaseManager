@@ -1,0 +1,22 @@
+<mappings>
+	<mapping>
+		<source type="blob" />
+		<target type="bytea" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="numeric" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="real" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="text" />
+		<target type="character varying"/>		
+	</mapping>	
+</mappings>

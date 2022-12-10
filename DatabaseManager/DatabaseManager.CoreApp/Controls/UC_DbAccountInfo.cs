@@ -16,19 +16,20 @@ namespace DatabaseManager.Controls
 
     public partial class UC_DbAccountInfo : UserControl
     {
+        private string serverVersion;
+
         public DatabaseType DatabaseType { get; set; }
 
-        public TestDbConnectHandler OnTestConnect;
-
         public bool RememberPassword => this.chkRememberPassword.Checked;
-        private string serverVersion;
+
+        public TestDbConnectHandler OnTestConnect;         
 
         public UC_DbAccountInfo()
         {
             InitializeComponent();
         }
 
-        public void InitControls()
+        public async void InitControls()
         {
             if (this.DatabaseType == DatabaseType.MySql)
             {
@@ -62,7 +63,7 @@ namespace DatabaseManager.Controls
 
             this.chkAsDba.Visible = this.DatabaseType == DatabaseType.Oracle;
 
-            var profiles = AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
+            var profiles = await AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
             var serverNames = profiles.Select(item => item.Server).Distinct().OrderBy(item => item).ToArray();
             this.cboServer.Items.AddRange(serverNames);
         }

@@ -33,7 +33,7 @@ namespace DatabaseManager.Controls
             this.label1 = new System.Windows.Forms.Label();
             this.txtTableName = new System.Windows.Forms.TextBox();
             this.lblSchema = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
+            this.lblComment = new System.Windows.Forms.Label();
             this.txtTableComment = new System.Windows.Forms.TextBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabColumns = new System.Windows.Forms.TabPage();
@@ -81,15 +81,15 @@ namespace DatabaseManager.Controls
             this.lblSchema.TabIndex = 3;
             this.lblSchema.Text = "Schema:";
             // 
-            // label3
+            // lblComment
             // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(5, 46);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(67, 17);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "Comment:";
+            this.lblComment.AutoSize = true;
+            this.lblComment.Location = new System.Drawing.Point(5, 46);
+            this.lblComment.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblComment.Name = "lblComment";
+            this.lblComment.Size = new System.Drawing.Size(67, 17);
+            this.lblComment.TabIndex = 5;
+            this.lblComment.Text = "Comment:";
             // 
             // txtTableComment
             // 
@@ -235,7 +235,7 @@ namespace DatabaseManager.Controls
             this.Controls.Add(this.cboSchema);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.txtTableComment);
-            this.Controls.Add(this.label3);
+            this.Controls.Add(this.lblComment);
             this.Controls.Add(this.lblSchema);
             this.Controls.Add(this.txtTableName);
             this.Controls.Add(this.label1);
@@ -257,7 +257,7 @@ namespace DatabaseManager.Controls
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtTableName;
         private System.Windows.Forms.Label lblSchema;
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label lblComment;
         private System.Windows.Forms.TextBox txtTableComment;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabForeignKeys;

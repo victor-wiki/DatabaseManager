@@ -257,6 +257,7 @@ namespace DatabaseManager.Controls
             if (this.displayInfo.ConnectionInfo == null)
             {
                 frmDbConnect dbConnect = new frmDbConnect(this.displayInfo.DatabaseType) { NotUseProfile = true };
+
                 if (dbConnect.ShowDialog() == DialogResult.OK)
                 {
                     this.displayInfo.ConnectionInfo = dbConnect.ConnectionInfo;

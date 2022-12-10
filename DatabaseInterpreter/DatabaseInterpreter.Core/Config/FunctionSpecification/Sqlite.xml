@@ -1,0 +1,58 @@
+﻿<items>
+  <item name="ABS" args="EXP"></item>
+  <item name="AVG" args="EXP"></item>
+  <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
+  <item name="CEILING" args="EXP"></item>
+  <item name="CHANGES" args=""></item>
+  <item name="CHAR" args="EXP1,EXP2,..." isString="true"></item>
+  <item name="COALESCE" args="EXP,DEFAULT"></item>
+  <item name="DATE" args="FORMAT"></item>
+  <item name="DATETIME" args="FORMAT"></item>
+  <item name="FORMAT" args="FORMAT,EXP" isString="true"></item>
+  <item name="GLOB" args="X,Y"></item>
+  <item name="HEX" args="EXP"></item>
+  <item name="IFNULL" args="EXP,DEFAULT"></item>
+  <item name="IIF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
+  <item name="INSTR" args="EXP,SEARCH" isString="true"></item>	
+  <item name="LAST_INSERT_ROWID" args=""></item>
+  <item name="LENGTH" args="EXP"></item>
+  <item name="LIKE" args="PATTERN,EXP"></item>
+  <item name="LIKE" args="PATTERN,EXP,ESCAPE"></item>
+  <item name="LIKELIHOOD" args="PATTERN,EXP"></item>
+  <item name="LIKELY" args="EXP"></item>
+  <item name="LN" args="EXP"></item>
+  <item name="LOWER" args="EXP"></item>
+  <item name="LTRIM" args="EXP[,TRIM_CHAR]" isString="true"></item>
+  <item name="LOWER" args="EXP"></item>
+  <item name="MAX" args="EXP"></item>
+  <!--<item name="MAX" args="VALUE1,VALUE2,..."></item>-->
+  <item name="MIN" args="EXP"></item>
+  <!--<item name="MIN" args="VALUE1,VALUE2,..."></item>-->
+  <item name="NULLIF" args="EXP1,EXP2"></item>
+  <item name="PRINTF" args="[FORMAT],EXP1,EXP2"></item>
+  <item name="QUOTE" args="EXP"></item>
+  <item name="RANDOM" args=""></item>
+  <item name="RANDOMBLOB" args="NUMBER"></item>
+  <item name="REPLACE" args="EXP,OLD,NEW" isString="true"></item>
+  <item name="ROUND" args="EXP[,DECIMAL]"></item>
+  <item name="ROW_NUMBER" args=""></item>
+  <item name="RTRIM" args="EXP[,TRIM_CHAR]" isString="true"></item>
+  <item name="SIN" args="EXP"></item>
+  <item name="SOUNDEX" args="EXP"></item>
+  <item name="STRFTIME" args="FORMAMT,DATE[,MODIFIER1,MODIFIER2,...]"></item>
+  <item name="SQLITE_COMPILEOPTION_GET" args="NUMBER"></item>
+  <item name="SQLITE_COMPILEOPTION_USED" args="EXP"></item>
+  <item name="SQLITE_OFFSET" args="EXP"></item>
+  <item name="SQLITE_SOURCE_ID" args=""></item>
+  <item name="SQLITE_VERSION" args=""></item>
+  <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
+  <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
+  <item name="SUM" args="EXP"></item>
+  <item name="TOTAL_CHANGES" args=""></item>
+  <item name="TRIM" args="EXP[,TRIM_CHAR]" isString="true"></item>
+  <item name="TYPEOF" args="EXP"></item>
+  <item name="UNICODE" args="EXP"></item>
+  <item name="UNLIKELY" args="EXP"></item>
+  <item name="UPPER" args="EXP" isString="true"></item>
+  <item name="ZEROBLOB" args="EXP"></item>
+</items>

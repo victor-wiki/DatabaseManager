@@ -15,6 +15,7 @@ namespace DatabaseInterpreter.Model
         public string[] ProcedureNames { get; set; }
         public string[] TableTriggerNames { get; set; }
         public ColumnType ColumnType { get; set; } = ColumnType.TableColumn;
+        public bool IsForView { get; set; }
     }
 
     [Flags]

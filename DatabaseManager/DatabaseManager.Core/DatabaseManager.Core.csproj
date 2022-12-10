@@ -5,8 +5,8 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.0.23</Version>
-    <PackageReleaseNotes>bug fix: script translate not use details mode to fetch definition</PackageReleaseNotes>
+    <Version>2.1.0</Version>
+    <PackageReleaseNotes>Support sqlite table designer.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
     <AssemblyVersion>2.0.23</AssemblyVersion>
     <FileVersion>2.0.23</FileVersion>

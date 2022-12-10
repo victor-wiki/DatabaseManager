@@ -1,10 +1,9 @@
-﻿using SqlAnalyser.Model;
+﻿using DatabaseInterpreter.Utility;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
+using System.Text;
 
 namespace SqlAnalyser.Core
 {
@@ -126,7 +125,7 @@ namespace SqlAnalyser.Core
                 buildWhere();
             };                   
 
-            if (builder is TSqlStatementScriptBuilder)
+            if (builder is TSqlStatementScriptBuilder || builder is SqliteStatementScriptBuilder)
             {
                 buildSet();
 

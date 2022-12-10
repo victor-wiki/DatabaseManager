@@ -15,8 +15,6 @@ using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {
-    public delegate void ColumnSelectHandler(DatabaseObjectType databaseObjectType, IEnumerable<IndexColumn> columns, bool columnIsReadOnly);
-
     public partial class UC_TableIndexes : UserControl
     {
         private bool inited = false;
@@ -43,6 +41,11 @@ namespace DatabaseManager.Controls
                 return;
             }
 
+            if (!ManagerUtil.SupportComment(this.DatabaseType))
+            {
+                this.colComment.Visible = false;
+            }
+
             var types = Enum.GetValues(typeof(IndexType));
 
             List<string> typeNames = new List<string>();
@@ -51,7 +54,7 @@ namespace DatabaseManager.Controls
             {
                 if (dbInterpreter.IndexType.HasFlag((IndexType)type) && (IndexType)type != IndexType.None)
                 {
-                    typeNames.Add(type.ToString());                    
+                    typeNames.Add(type.ToString());
                 }
             }
 
@@ -78,7 +81,7 @@ namespace DatabaseManager.Controls
                 row.Cells[this.colIndexName.Name].Value = index.Name;
                 row.Cells[this.colType.Name].Value = this.GetIndexTypeEnumName(index.Type);
                 row.Cells[this.colColumns.Name].Value = this.GetColumnsDisplayText(index.Columns);
-                row.Cells[this.colComment.Name].Value = index.Comment;              
+                row.Cells[this.colComment.Name].Value = index.Comment;
 
                 row.Tag = index;
             }
@@ -87,15 +90,15 @@ namespace DatabaseManager.Controls
 
             this.AutoSizeColumns();
             this.dgvIndexes.ClearSelection();
-        }   
-        
+        }
+
         private string GetIndexTypeEnumName(string type)
         {
             var typeNames = Enum.GetNames(typeof(IndexType));
 
-            foreach(var tn in typeNames)
+            foreach (var tn in typeNames)
             {
-                if(tn.ToLower()== type.ToLower())
+                if (tn.ToLower() == type.ToLower())
                 {
                     return tn;
                 }
@@ -149,7 +152,7 @@ namespace DatabaseManager.Controls
 
                 tableIndexDesignerInfo.Columns.AddRange(columnDesingerInfos.Select(item => new IndexColumn() { ColumnName = item.Name }));
 
-                DataGridViewRow primaryRow = this.dgvIndexes.Rows[rowIndex];               
+                DataGridViewRow primaryRow = this.dgvIndexes.Rows[rowIndex];
                 primaryRow.Cells[this.colType.Name].Value = tableIndexDesignerInfo.Type;
                 primaryRow.Cells[this.colIndexName.Name].Value = tableIndexDesignerInfo.Name;
                 primaryRow.Cells[this.colColumns.Name].Value = this.GetColumnsDisplayText(tableIndexDesignerInfo.Columns);
@@ -288,12 +291,12 @@ namespace DatabaseManager.Controls
                     nameCell.Value = type == IndexType.Primary.ToString() ? IndexManager.GetPrimaryKeyDefaultName(this.Table) : IndexManager.GetIndexDefaultName(type, this.Table);
                 }
 
-                if(row.Tag !=null)
+                if (row.Tag != null)
                 {
                     (row.Tag as TableIndexDesignerInfo).IsPrimary = type == IndexType.Primary.ToString();
-                }               
+                }
             }
-        }      
+        }
 
         private void dgvIndexes_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -305,7 +308,7 @@ namespace DatabaseManager.Controls
             if (e.ColumnIndex == this.colColumns.Index)
             {
                 DataGridViewRow row = this.dgvIndexes.Rows[e.RowIndex];
-                DataGridViewCell cell = row.Cells[this.colColumns.Name];          
+                DataGridViewCell cell = row.Cells[this.colColumns.Name];
 
                 string indexName = DataGridViewHelper.GetCellStringValue(row, this.colIndexName.Name);
                 string type = DataGridViewHelper.GetCellStringValue(row, this.colType.Name);

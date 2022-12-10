@@ -1,12 +1,12 @@
-﻿using DatabaseManager.Profile;
+﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
+using DatabaseManager.Data;
+using DatabaseManager.Profile;
 using System;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using DatabaseInterpreter.Model;
-using DatabaseManager.Data;
-using DatabaseManager.Core;
 
 namespace DatabaseManager
 {
@@ -14,7 +14,7 @@ namespace DatabaseManager
     {
         private bool requriePassword = false;
         public DatabaseType DatabaseType { get; set; }
-        public Guid AccountProfileId { get; set; }
+        public string AccountProfileId { get; set; }
         public AccountProfileInfo AccountProfileInfo { get; set; }
 
         public frmAccountInfo(DatabaseType dbType)
@@ -56,7 +56,7 @@ namespace DatabaseManager
             }
         }
 
-        private void btnConfirm_Click(object sender, EventArgs e)
+        private async void btnConfirm_Click(object sender, EventArgs e)
         {
             if (!this.ucAccountInfo.ValidateInfo())
             {
@@ -65,7 +65,7 @@ namespace DatabaseManager
 
             AccountProfileInfo accountProfileInfo = this.GetAccountProfileInfo();
 
-            var profiles = AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
+            var profiles = await AccountProfileManager.GetProfiles(this.DatabaseType.ToString());
 
             bool isAdd = this.AccountProfileInfo == null;
 
@@ -92,7 +92,7 @@ namespace DatabaseManager
                 }
             }
 
-            this.AccountProfileId = AccountProfileManager.Save(accountProfileInfo, this.ucAccountInfo.RememberPassword);
+            this.AccountProfileId = await AccountProfileManager.Save(accountProfileInfo, this.ucAccountInfo.RememberPassword);
 
             this.AccountProfileInfo = accountProfileInfo;
 

@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Core;
-using DatabaseManager.Model;
-using System.Linq;
 using DatabaseInterpreter.Utility;
-using System.Data.Common;
+using DatabaseManager.Model;
+using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 
 namespace DatabaseManager.Core
@@ -362,7 +359,7 @@ namespace DatabaseManager.Core
                 string oldColumnDefinition = this.dbInterpreter.ParseColumn(newTable, oldColumn);
                 string newColumnDefinition = this.dbInterpreter.ParseColumn(newTable, newColumn);
 
-                if(!this.IsDefinitionEquals(oldColumnDefinition, newColumnDefinition))
+                if (!this.IsDefinitionEquals(oldColumnDefinition, newColumnDefinition))
                 {
                     Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
 
@@ -379,7 +376,7 @@ namespace DatabaseManager.Core
                     }
 
                     scripts.Add(alterColumnScript);
-                }                
+                }
             }
             else if (!ValueHelper.IsStringEquals(newColumn.Comment, oldColumn.Comment))
             {
@@ -391,7 +388,7 @@ namespace DatabaseManager.Core
 
         private bool IsDefinitionEquals(string definiton1, string defintion2)
         {
-        return this.GetNoWhiteSpaceTrimedString(definiton1.ToUpper()) == this.GetNoWhiteSpaceTrimedString(defintion2.ToUpper());
+            return this.GetNoWhiteSpaceTrimedString(definiton1.ToUpper()) == this.GetNoWhiteSpaceTrimedString(defintion2.ToUpper());
         }
 
         private string GetNoWhiteSpaceTrimedString(string value)
@@ -695,6 +692,7 @@ namespace DatabaseManager.Core
                 {
                     TableConstraint constraint = new TableConstraint() { Schema = constraintDesignerInfo.Schema, TableName = constraintDesignerInfo.TableName };
                     constraint.Name = constraintDesignerInfo.Name;
+                    constraint.ColumnName = constraintDesignerInfo.ColumnName;
                     constraint.Definition = constraintDesignerInfo.Definition;
                     constraint.Comment = constraintDesignerInfo.Comment;
 
@@ -762,10 +760,10 @@ namespace DatabaseManager.Core
                     return false;
                 }
 
-                if (!string.IsNullOrEmpty(column.Name) && !columnNames.Contains(column.Name))
+                if(!string.IsNullOrEmpty(column.Name) && !columnNames.Contains(column.Name))
                 {
                     columnNames.Add(column.Name);
-                }
+                }               
             }
             #endregion
 
@@ -804,7 +802,7 @@ namespace DatabaseManager.Core
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(index.Name) && !indexNames.Contains(index.Name))
+                    if(!string.IsNullOrEmpty(index.Name) && !indexNames.Contains(index.Name))
                     {
                         indexNames.Add(index.Name);
                     }
@@ -857,10 +855,11 @@ namespace DatabaseManager.Core
                 List<TableConstraintDesignerInfo> constraints = schemaDesignerInfo.TableConstraintDesignerInfos;
 
                 List<string> constraintNames = new List<string>();
+                List<string> constraintColumnNames = new List<string>();
 
                 foreach (TableConstraintDesignerInfo constraint in constraints)
                 {
-                    if (string.IsNullOrEmpty(constraint.Name))
+                    if (string.IsNullOrEmpty(constraint.Name) && this.dbInterpreter.DatabaseType != DatabaseType.Sqlite)
                     {
                         message = "Constraint Name can't be empty";
                         return false;
@@ -872,13 +871,28 @@ namespace DatabaseManager.Core
                     }
                     else if (string.IsNullOrEmpty(constraint.Definition))
                     {
-                        message = "Constraint Expressioni can't be empty";
+                        message = "Constraint Expression can't be empty";
+                        return false;
+                    }
+                    else if (string.IsNullOrEmpty(constraint.ColumnName) && this.dbInterpreter.DatabaseType == DatabaseType.Sqlite)
+                    {
+                        message = "Column Name can't be empty";
+                        return false;
+                    }
+                    else if (!string.IsNullOrEmpty(constraint.ColumnName) && constraintColumnNames.Contains(constraint.ColumnName))
+                    {
+                        message = $"Column Name \"{constraint.ColumnName}\" is duplicated";
                         return false;
                     }
 
                     if (!string.IsNullOrEmpty(constraint.Name) && !constraintNames.Contains(constraint.Name))
                     {
                         constraintNames.Add(constraint.Name);
+                    }
+
+                    if (!string.IsNullOrEmpty(constraint.ColumnName) && !constraintColumnNames.Contains(constraint.ColumnName))
+                    {
+                        constraintColumnNames.Add(constraint.ColumnName);
                     }
                 }
             }

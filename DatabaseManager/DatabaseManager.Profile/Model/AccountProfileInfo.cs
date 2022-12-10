@@ -1,18 +1,14 @@
 ﻿using DatabaseInterpreter.Model;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DatabaseManager.Profile
 {
     public class AccountProfileInfo : DatabaseAccountInfo
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; }
 
         public string DatabaseType { get; set; }
-
-        [JsonIgnore]
+      
         public string Description
         {
             get

@@ -28,7 +28,7 @@ namespace DatabaseConverter.Core
 
         private void ExtractTokens(dynamic obj, bool isFirst = true)
         {
-            if (obj == null)
+            if(obj == null)
             {
                 return;
             }
@@ -44,7 +44,7 @@ namespace DatabaseConverter.Core
                     if (property.Name == nameof(TokenInfo.Parent))
                     {
                         continue;
-                    }
+                    }                   
 
                     dynamic value = property.GetValue(obj);
 
@@ -68,7 +68,7 @@ namespace DatabaseConverter.Core
                         }
                     }
                     else if (value is Statement || value is StatementItem || value is SelectTopInfo
-                    || value is TableInfo || value is ColumnInfo || value is ConstraintInfo || value is ForeignKeyInfo)
+                    || value is TableInfo || value is ColumnInfo || value is ConstraintInfo || value is ForeignKeyInfo )
                     {
                         this.ExtractTokens(value, false);
                     }

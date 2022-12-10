@@ -28,13 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnCancel = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
             this.dgvDbConnection = new System.Windows.Forms.DataGridView();
-            this.Id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Control = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Word = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.UseCodeTemplate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Port = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnClear = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnAdd = new System.Windows.Forms.Button();
@@ -44,22 +39,31 @@
             this.btnSelect = new System.Windows.Forms.Button();
             this.panelOperation = new System.Windows.Forms.Panel();
             this.panelDbType = new System.Windows.Forms.Panel();
+            this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colServer = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colIntegratedSecurity = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.colUserName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colProfiles = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.colDatabaseVisibility = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDbConnection)).BeginInit();
             this.panelOperation.SuspendLayout();
             this.panelDbType.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btnCancel
+            // btnClose
             // 
-            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(624, 358);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(88, 33);
-            this.btnCancel.TabIndex = 19;
-            this.btnCancel.Text = "Close";
-            this.btnCancel.UseVisualStyleBackColor = true;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClose.Location = new System.Drawing.Point(773, 407);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(88, 33);
+            this.btnClose.TabIndex = 19;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
             // dgvDbConnection
             // 
@@ -69,11 +73,15 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvDbConnection.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvDbConnection.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.Id,
-            this.Control,
-            this.Word,
-            this.UseCodeTemplate,
-            this.Port});
+            this.colId,
+            this.colServer,
+            this.colPort,
+            this.colIntegratedSecurity,
+            this.colUserName,
+            this.colName,
+            this.colDatabase,
+            this.colProfiles,
+            this.colDatabaseVisibility});
             this.dgvDbConnection.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvDbConnection.Location = new System.Drawing.Point(5, 45);
             this.dgvDbConnection.Margin = new System.Windows.Forms.Padding(4);
@@ -83,50 +91,11 @@
             this.dgvDbConnection.RowHeadersWidth = 20;
             this.dgvDbConnection.RowTemplate.Height = 23;
             this.dgvDbConnection.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvDbConnection.Size = new System.Drawing.Size(716, 302);
+            this.dgvDbConnection.Size = new System.Drawing.Size(865, 351);
             this.dgvDbConnection.TabIndex = 20;
+            this.dgvDbConnection.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvDbConnection_CellContentClick);
+            this.dgvDbConnection.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvDbConnection_DataBindingComplete);
             this.dgvDbConnection.DoubleClick += new System.EventHandler(this.dgvDbConnection_DoubleClick);
-            // 
-            // Id
-            // 
-            this.Id.DataPropertyName = "Id";
-            this.Id.HeaderText = "Id";
-            this.Id.Name = "Id";
-            this.Id.ReadOnly = true;
-            this.Id.Visible = false;
-            // 
-            // Control
-            // 
-            this.Control.DataPropertyName = "Server";
-            this.Control.HeaderText = "Server";
-            this.Control.Name = "Control";
-            this.Control.ReadOnly = true;
-            this.Control.Width = 250;
-            // 
-            // Word
-            // 
-            this.Word.DataPropertyName = "IntegratedSecurity";
-            this.Word.HeaderText = "Integrated Security";
-            this.Word.Name = "Word";
-            this.Word.ReadOnly = true;
-            this.Word.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.Word.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            this.Word.Width = 150;
-            // 
-            // UseCodeTemplate
-            // 
-            this.UseCodeTemplate.DataPropertyName = "UserId";
-            this.UseCodeTemplate.HeaderText = "User Name";
-            this.UseCodeTemplate.Name = "UseCodeTemplate";
-            this.UseCodeTemplate.ReadOnly = true;
-            this.UseCodeTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.UseCodeTemplate.Width = 150;
-            // 
-            // Port
-            // 
-            this.Port.HeaderText = "Port";
-            this.Port.Name = "Port";
-            this.Port.ReadOnly = true;
             // 
             // btnClear
             // 
@@ -202,7 +171,7 @@
             // btnSelect
             // 
             this.btnSelect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSelect.Location = new System.Drawing.Point(530, 358);
+            this.btnSelect.Location = new System.Drawing.Point(679, 407);
             this.btnSelect.Margin = new System.Windows.Forms.Padding(4);
             this.btnSelect.Name = "btnSelect";
             this.btnSelect.Size = new System.Drawing.Size(88, 33);
@@ -219,7 +188,7 @@
             this.panelOperation.Controls.Add(this.btnAdd);
             this.panelOperation.Controls.Add(this.btnDelete);
             this.panelOperation.Controls.Add(this.btnClear);
-            this.panelOperation.Location = new System.Drawing.Point(5, 354);
+            this.panelOperation.Location = new System.Drawing.Point(5, 403);
             this.panelOperation.Margin = new System.Windows.Forms.Padding(4);
             this.panelOperation.Name = "panelOperation";
             this.panelOperation.Size = new System.Drawing.Size(446, 44);
@@ -235,16 +204,87 @@
             this.panelDbType.Size = new System.Drawing.Size(422, 34);
             this.panelDbType.TabIndex = 41;
             // 
+            // colId
+            // 
+            this.colId.DataPropertyName = "Id";
+            this.colId.HeaderText = "Id";
+            this.colId.Name = "colId";
+            this.colId.ReadOnly = true;
+            this.colId.Visible = false;
+            // 
+            // colServer
+            // 
+            this.colServer.DataPropertyName = "Server";
+            this.colServer.HeaderText = "Server";
+            this.colServer.Name = "colServer";
+            this.colServer.ReadOnly = true;
+            this.colServer.Width = 250;
+            // 
+            // colPort
+            // 
+            this.colPort.HeaderText = "Port";
+            this.colPort.Name = "colPort";
+            this.colPort.ReadOnly = true;
+            // 
+            // colIntegratedSecurity
+            // 
+            this.colIntegratedSecurity.DataPropertyName = "IntegratedSecurity";
+            this.colIntegratedSecurity.HeaderText = "Integrated Security";
+            this.colIntegratedSecurity.Name = "colIntegratedSecurity";
+            this.colIntegratedSecurity.ReadOnly = true;
+            this.colIntegratedSecurity.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colIntegratedSecurity.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.colIntegratedSecurity.Width = 150;
+            // 
+            // colUserName
+            // 
+            this.colUserName.DataPropertyName = "UserId";
+            this.colUserName.HeaderText = "User Name";
+            this.colUserName.Name = "colUserName";
+            this.colUserName.ReadOnly = true;
+            this.colUserName.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colUserName.Width = 150;
+            // 
+            // colName
+            // 
+            this.colName.HeaderText = "Name";
+            this.colName.Name = "colName";
+            this.colName.ReadOnly = true;
+            this.colName.Visible = false;
+            this.colName.Width = 150;
+            // 
+            // colDatabase
+            // 
+            this.colDatabase.HeaderText = "File Path";
+            this.colDatabase.Name = "colDatabase";
+            this.colDatabase.ReadOnly = true;
+            this.colDatabase.Visible = false;
+            this.colDatabase.Width = 400;
+            // 
+            // colProfiles
+            // 
+            this.colProfiles.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.colProfiles.HeaderText = "Profiles";
+            this.colProfiles.Name = "colProfiles";
+            this.colProfiles.ReadOnly = true;
+            // 
+            // colDatabaseVisibility
+            // 
+            this.colDatabaseVisibility.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.colDatabaseVisibility.HeaderText = "Database Visibility";
+            this.colDatabaseVisibility.Name = "colDatabaseVisibility";
+            this.colDatabaseVisibility.ReadOnly = true;
+            // 
             // frmDbConnectionManage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(726, 408);
+            this.ClientSize = new System.Drawing.Size(875, 457);
             this.Controls.Add(this.panelDbType);
             this.Controls.Add(this.panelOperation);
             this.Controls.Add(this.btnSelect);
             this.Controls.Add(this.dgvDbConnection);
-            this.Controls.Add(this.btnCancel);
+            this.Controls.Add(this.btnClose);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "frmDbConnectionManage";
@@ -261,7 +301,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.DataGridView dgvDbConnection;
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.Button btnDelete;
@@ -272,10 +312,14 @@
         private System.Windows.Forms.Button btnSelect;
         private System.Windows.Forms.Panel panelOperation;
         private System.Windows.Forms.Panel panelDbType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Id;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Control;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Word;
-        private System.Windows.Forms.DataGridViewTextBoxColumn UseCodeTemplate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Port;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colServer;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPort;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colIntegratedSecurity;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colUserName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colDatabase;
+        private System.Windows.Forms.DataGridViewButtonColumn colProfiles;
+        private System.Windows.Forms.DataGridViewButtonColumn colDatabaseVisibility;
     }
 }

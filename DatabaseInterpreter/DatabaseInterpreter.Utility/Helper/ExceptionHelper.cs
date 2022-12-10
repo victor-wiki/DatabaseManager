@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace DatabaseInterpreter.Utility
 {
@@ -10,7 +11,8 @@ namespace DatabaseInterpreter.Utility
             {
                 return GetExceptionDetails(ex.InnerException);
             }
-            return ex.Message + Environment.NewLine + ex.StackTrace;
+            
+            return  ex.Message + Environment.NewLine + ex.StackTrace;
         }
     }
 }

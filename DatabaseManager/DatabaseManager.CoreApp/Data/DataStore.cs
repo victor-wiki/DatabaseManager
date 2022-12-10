@@ -11,6 +11,7 @@ namespace DatabaseManager.Data
         public static String LockPassword;
         private static Dictionary<DatabaseType, SchemaInfo> _dictSchemaInfo;
         private static List<AccountProfileInfo> _accountProfileInfos;
+        private static List<FileConnectionProfileInfo> _fileProfileInfos;
 
         #region SchemaInfo
         public static SchemaInfo GetSchemaInfo(DatabaseType databaseType)
@@ -42,7 +43,7 @@ namespace DatabaseManager.Data
         #endregion
 
         #region AccountProfileInfo
-        public static AccountProfileInfo GetAccountProfileInfo(Guid id)
+        public static AccountProfileInfo GetAccountProfileInfo(string id)
         {
             if (_accountProfileInfos != null)
             {
@@ -68,6 +69,37 @@ namespace DatabaseManager.Data
             else
             {
                 _accountProfileInfos.Add(accountProfileInfo);
+            }
+        }
+        #endregion
+
+        #region FileConnectionProfileInfo
+        public static FileConnectionProfileInfo GetFileConnectionProfileInfo(string id)
+        {
+            if (_fileProfileInfos != null)
+            {
+                return _fileProfileInfos.FirstOrDefault(item => item.Id == id);
+            }
+
+            return null;
+        }
+
+        public static void SetFileConnectionProfileInfo(FileConnectionProfileInfo fileConnectionProfileInfo)
+        {
+            if (_fileProfileInfos == null)
+            {
+                _fileProfileInfos = new List<FileConnectionProfileInfo>();
+            }
+
+            FileConnectionProfileInfo oldInfo = _fileProfileInfos.FirstOrDefault(item => item.Id == fileConnectionProfileInfo.Id);
+
+            if (oldInfo != null)
+            {
+                oldInfo = fileConnectionProfileInfo;
+            }
+            else
+            {
+                _fileProfileInfos.Add(fileConnectionProfileInfo);
             }
         }
         #endregion

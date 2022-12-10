@@ -56,6 +56,15 @@ namespace DatabaseInterpreter.Core
         {
             string typeName = dbObject.GetType().Name;
 
+            if (typeName == nameof(TablePrimaryKeyItem))
+            {
+                return DatabaseObjectType.PrimaryKey;
+            }
+            else if (typeName == nameof(TableForeignKeyItem))
+            {
+                return DatabaseObjectType.ForeignKey;
+            }
+
             if (typeName.StartsWith(nameof(Table)) && typeName != nameof(Table))
             {
                 typeName = typeName.Replace(nameof(Table), "");
@@ -64,7 +73,7 @@ namespace DatabaseInterpreter.Core
             if (typeName == nameof(UserDefinedType))
             {
                 return DatabaseObjectType.Type;
-            }
+            }            
             else
             {
                 if (Enum.TryParse(typeof(DatabaseObjectType), typeName, out _))

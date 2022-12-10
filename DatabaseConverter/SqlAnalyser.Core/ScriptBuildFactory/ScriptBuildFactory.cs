@@ -49,7 +49,11 @@ namespace SqlAnalyser.Core
             else if (this.DatabaseType == DatabaseType.Postgres)
             {
                 builder = new PostgreSqlStatementScriptBuilder();
-            }            
+            }
+            else if (this.DatabaseType == DatabaseType.Sqlite)
+            {
+                builder = new SqliteStatementScriptBuilder();
+            }
             else
             {
                 throw new NotSupportedException($"Not support build statement for: {this.DatabaseType}");

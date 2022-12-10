@@ -4,41 +4,48 @@
 		<MySql>(SELECT ROW_COUNT())</MySql>
 		<Oracle>SQL%ROWCOUNT</Oracle>
 		<Postgres>ROW_COUNT</Postgres>
+		<Sqlite>(SELECT CHANGES())</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>@@IDENTITY</SqlServer>
 		<MySql>(SELECT LAST_INSERT_ID())</MySql>
 		<Oracle></Oracle>
 		<Postgres>(SELECT LASTVAL())</Postgres>
+		<Sqlite>(SELECT LAST_INSERT_ROWID())</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>@@VERSION</SqlServer>
 		<MySql>(SELECT VERSION())</MySql>
 		<Oracle>(SELECT VERSION FROM V$INSTANCE)</Oracle>
 		<Postgres>(SELECT VERSION())</Postgres>
+		<Sqlite>(SELECT SQLITE_VERSION())</Sqlite>
 	</mapping>	
 	<mapping>
 		<SqlServer>@@SPID</SqlServer>
 		<MySql>(SELECT CONNECTION_ID())</MySql>
 		<Oracle>(SELECT SYS_CONTEXT('USERENV','SESSIONID') FROM DUAL)</Oracle>
 		<Postgres>(SELECT PG_BACKEND_PID())</Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>@@ERROR</SqlServer>
 		<MySql>@@ERROR_COUNT</MySql>
 		<Oracle></Oracle>
 		<Postgres></Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>@@CURSOR_ROWS</SqlServer>
 		<MySql>(SELECT FOUND_ROWS())</MySql>
 		<Oracle></Oracle>
 		<Postgres></Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>@@SERVERNAME</SqlServer>
 		<MySql>@@HOSTNAME</MySql>
 		<Oracle>(SELECT SYS_CONTEXT('USERENV','SERVER_HOST') FROM DUAL)</Oracle>
 		<Postgres></Postgres>
+		<Sqlite></Sqlite>
 	</mapping>
 </mappings>

@@ -1,23 +1,17 @@
 ﻿using DatabaseInterpreter.Model;
-using Newtonsoft.Json;
-using System;
 
 namespace DatabaseManager.Profile
 {
-    public class ConnectionProfileInfo
-    {       
-        public Guid AccountProfileId { get; set; }      
+    public class ConnectionProfileInfo : ConnectionInfo
+    {
+        public string Id { get; set; }
+        public string AccountId { get; set; }
         public string Name { get; set; }
         public string DatabaseType { get; set; }
-        public string Database { get; set; }
-        
-        [JsonIgnore]
-        public ConnectionInfo ConnectionInfo { get; set; }
+        public bool Visible { get; set; } = true;
 
-        [JsonIgnore]
-        public string ConnectionDescription => $"server={this.ConnectionInfo?.Server}{(string.IsNullOrEmpty(this.ConnectionInfo?.Port)?"":(":"+ this.ConnectionInfo?.Port))};database={this.ConnectionInfo?.Database}";
+        public string ConnectionDescription => $"server={this.Server}{(string.IsNullOrEmpty(this.Port) ? "" : (":" + this.Port))};database={this.Database}";
 
-        [JsonIgnore]
         public string Description
         {
             get
@@ -34,5 +28,5 @@ namespace DatabaseManager.Profile
                 }
             }
         }
-    }   
+    }
 }

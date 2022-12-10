@@ -12,8 +12,8 @@ namespace DatabaseInterpreter.Model
         public string TypeName { get; set; }
         public string DataType { get; set; }
         public long? MaxLength { get; set; }
-        public int? Precision { get; set; }
-        public int? Scale { get; set; }
+        public long? Precision { get; set; }
+        public long? Scale { get; set; }
 
         public bool IsRequired => !IsNullable;
 

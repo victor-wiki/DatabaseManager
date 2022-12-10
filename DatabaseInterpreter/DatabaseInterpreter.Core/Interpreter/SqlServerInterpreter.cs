@@ -8,10 +8,8 @@ using NpgsqlTypes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using PgGeom = NetTopologySuite.Geometries;
@@ -23,15 +21,16 @@ namespace DatabaseInterpreter.Core
         #region Field & Property
         public const string AzureSQLFlag = "SQL Azure";
         public override string CommandParameterChar => "@";
-        public const char QuotedLeftChar = '[';
-        public const char QuotedRightChar = ']';
-        public override char QuotationLeftChar { get { return QuotedLeftChar; } }
-        public override char QuotationRightChar { get { return QuotedRightChar; } }
+        public override bool SupportQuotationChar => true;
+        public override char QuotationLeftChar => '[';
+        public override char QuotationRightChar => ']';
         public override DatabaseType DatabaseType => DatabaseType.SqlServer;
         public override string DefaultDataType => "varchar";
         public override string DefaultSchema => "dbo";
         public override string STR_CONCAT_CHARS => "+";
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.ColumnStore;
+        public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function
+                                                                 | DatabaseObjectType.Procedure | DatabaseObjectType.Type | DatabaseObjectType.Sequence;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => true;
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
@@ -334,7 +333,6 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Index       
-
         public override Task<List<TableIndexItem>> GetTableIndexItemsAsync(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
             return base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForTableIndexItems(filter, includePrimaryKey));
@@ -345,11 +343,12 @@ namespace DatabaseInterpreter.Core
             return base.GetDbObjectsAsync<TableIndexItem>(dbConnection, this.GetSqlForTableIndexItems(filter, includePrimaryKey));
         }
 
-        private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
+        private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false, bool isForView = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ("," + (includePrimaryKey ? "ISNULL(ext.value,ext2.value)" : "ext.value")) + " AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext on i.object_id=ext.major_id AND i.index_id= ext.minor_id AND ext.class_desc='INDEX' AND ext.name='MS_Description'";
+            string tableOrViewName = filter?.IsForView != true ? "tables":"views";
 
             if (!isSimpleMode && includePrimaryKey)
             {
@@ -362,12 +361,12 @@ namespace DatabaseInterpreter.Core
                           i.is_primary_key AS [IsPrimary], i.is_unique AS [IsUnique], c.name AS [ColumnName], ic.key_ordinal AS [Order],ic.is_descending_key AS [IsDesc],
                           CASE i.type WHEN 1 THEN 1 ELSE 0 END AS [Clustered]{commentColumn},
                           CASE WHEN i.is_primary_key=1 THEN 'Primary' WHEN i.is_unique=1 THEN 'Unique' WHEN i.type=6 THEN 'ColumnStore' ELSE 'Normal' END AS [Type]
-                        FROM sys.index_columns ic
-                        JOIN sys.columns c ON ic.object_id=c.object_id AND ic.column_id=c.column_id
-                        JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
-                        JOIN sys.tables t ON c.object_id=t.object_id
-                        {commentJoin}
-                        WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0))");
+                          FROM sys.index_columns ic
+                          JOIN sys.columns c ON ic.object_id=c.object_id AND ic.column_id=c.column_id
+                          JOIN sys.indexes i ON ic.object_id=i.object_id AND ic.index_id=i.index_id
+                          JOIN sys.{tableOrViewName} t ON c.object_id=t.object_id
+                          {commentJoin}
+                          WHERE {(includePrimaryKey ? "" : "i.is_primary_key=0 AND ")} i.type_desc<>'XML' AND (i.type= 6 OR (i.type <> 6 AND ic.key_ordinal > 0))");
 
             sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
@@ -1095,7 +1094,7 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (args.ToLower().Contains(","))//ie. numeric,decimal
                 {
-                    int scale = column.Scale == null ? 0 : column.Scale.Value;
+                    long scale = column.Scale == null ? 0 : column.Scale.Value;
 
                     return $"{column.Precision},{scale}";
                 }

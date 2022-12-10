@@ -170,7 +170,7 @@ namespace DatabaseInterpreter.Core
                     {
                         TableChild tc = obj as TableChild;
 
-                        existed = (targetDbObjects.Cast<TableChild>()).Any(item => item.TableName.ToLower() == tc.TableName && item.Name.ToLower() == tc.Name.ToLower());
+                        existed = (targetDbObjects.Cast<TableChild>()).Any(item => item.TableName.ToLower() == tc.TableName && item.Name?.ToLower() == tc.Name?.ToLower());
                     }
                     else
                     {
@@ -331,7 +331,7 @@ namespace DatabaseInterpreter.Core
                     Comment = group.Key.Comment
                 };
 
-                index.Columns.AddRange(group.Select(item => new IndexColumn() { ColumnName = item.ColumnName, IsDesc = item.IsDesc, Order = item.Order }));
+                index.Columns.AddRange(group.Select(item => new IndexColumn() { ColumnName = item.ColumnName, IsDesc = item.IsDesc, Order = item.Order }).Where(item => item.ColumnName != null));
 
                 indexes.Add(index);
             }
@@ -500,7 +500,7 @@ namespace DatabaseInterpreter.Core
                && IsPrecisionScaleEquals(column1.Scale, column2.Scale);
         }
 
-        private static bool IsPrecisionScaleEquals(int? value1, int? value2)
+        private static bool IsPrecisionScaleEquals(long? value1, long? value2)
         {
             if ((!value1.HasValue || value1 <= 0) && (!value2.HasValue || value2 <= 0))
             {

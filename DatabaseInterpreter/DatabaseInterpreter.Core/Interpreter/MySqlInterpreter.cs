@@ -23,6 +23,7 @@ namespace DatabaseInterpreter.Core
         public override string CommandParameterChar => "@";
         public const char QuotedLeftChar = '`';
         public const char QuotedRightChar = '`';
+        public override bool SupportQuotationChar => true;
         public override char QuotationLeftChar { get { return QuotedLeftChar; } }
         public override char QuotationRightChar { get { return QuotedRightChar; } }
         public override string CommentString => "#";
@@ -31,6 +32,7 @@ namespace DatabaseInterpreter.Core
         public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07");
         public override string DefaultSchema => this.ConnectionInfo.Database;
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
+        public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => false;
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
@@ -78,6 +80,7 @@ namespace DatabaseInterpreter.Core
         public string GetDatabaseVersion(DbConnection dbConnection)
         {
             string sql = "select version() as version";
+
             return dbConnection.QuerySingleOrDefault(sql).version;
         }
         #endregion
@@ -340,17 +343,17 @@ namespace DatabaseInterpreter.Core
             var sb = this.CreateSqlBuilder();
 
             sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`,
-	                        TABLE_NAME AS `TableName`,
-	                        INDEX_NAME AS `Name`,
-	                        COLUMN_NAME AS `ColumnName`,
-                            CASE INDEX_NAME WHEN 'PRIMARY' THEN 1 ELSE 0 END AS `IsPrimary`,
-	                        CASE  NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
-                            INDEX_TYPE AS `Type`,
-	                        SEQ_IN_INDEX  AS `Order`,    
-	                        0 AS `IsDesc`{commentColumn}
-	                        FROM INFORMATION_SCHEMA.STATISTICS                           
-	                        WHERE INDEX_NAME NOT IN({(includePrimaryKey ? "" : "'PRIMARY',")} 'FOREIGN')                          
-	                        AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
+	                    TABLE_NAME AS `TableName`,
+	                    INDEX_NAME AS `Name`,
+	                    COLUMN_NAME AS `ColumnName`,
+                        CASE INDEX_NAME WHEN 'PRIMARY' THEN 1 ELSE 0 END AS `IsPrimary`,
+	                    CASE  NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
+                        INDEX_TYPE AS `Type`,
+	                    SEQ_IN_INDEX  AS `Order`,    
+	                    0 AS `IsDesc`{commentColumn}
+	                    FROM INFORMATION_SCHEMA.STATISTICS                           
+	                    WHERE INDEX_NAME NOT IN({(includePrimaryKey ? "" : "'PRIMARY',")} 'FOREIGN')                          
+	                    AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
 
@@ -807,6 +810,7 @@ namespace DatabaseInterpreter.Core
         {
             string dataType = this.ParseDataType(column);
             string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
+
             bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
 
             if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))

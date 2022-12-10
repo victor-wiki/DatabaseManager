@@ -1,0 +1,111 @@
+<mappings>
+	<mapping>
+		<source type="bfile" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="binary_double" />
+		<target type="numeric" />
+	</mapping>
+	<mapping>
+		<source type="binary_float" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="blob" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="clob" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="char" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="date" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="float" />
+		<target type="real" />
+	</mapping>
+	<mapping>
+		<source type="int" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="integer" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="interval day([(]\d[)])? to second([(]\d[)])?" isExp="true"/>
+		<target type="text"  />
+	</mapping>
+	<mapping>
+		<source type="interval year([(]\d[)])? to month" isExp="true"/>
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="long" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="long raw" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="nchar" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="nclob" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="number" />
+		<target type="numeric" />
+		<special name="scale" value="0" type="integer"></special>
+	</mapping>
+	<mapping>
+		<source type="nvarchar2" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="raw" />
+		<target type="blob" />
+	</mapping>
+	<mapping>
+		<source type="sdo_geometry" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="smallint" />
+		<target type="integer" />
+	</mapping>
+	<mapping>
+		<source type="st_geometry" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp([(]\d[)])? with local time zone" isExp="true"/>
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="timestamp([(]\d[)])? with time zone" isExp="true"/>
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="varchar" />
+		<target type="text" />
+	</mapping>
+	<mapping>
+		<source type="varchar2" />
+		<target type="text" />
+	</mapping>
+</mappings>
