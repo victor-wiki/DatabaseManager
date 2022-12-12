@@ -177,9 +177,9 @@ namespace SqlAnalyser.Core
                         alias = firstFromItem.Alias.Symbol;
                     }
 
-                    this.AppendLine($"DELETE {(string.IsNullOrEmpty(alias)? delete.TableName.Symbol: alias)}");                      
+                    this.AppendLine($"DELETE {(string.IsNullOrEmpty(alias) ? delete.TableName.Symbol : alias)}");
 
-                    this.BuildFromItems(delete.FromItems);                    
+                    this.BuildFromItems(delete.FromItems);
                 }
 
                 if (delete.Condition != null)
@@ -627,7 +627,7 @@ namespace SqlAnalyser.Core
                 this.AppendLine(selectColumns);
             }
 
-            if (!isCreateTemporaryTable && select.Intos != null)
+            if (!isCreateTemporaryTable && select.Intos != null && select.Intos.Count > 0)
             {
                 this.Append("INTO ");
                 this.AppendLine(String.Join(",", select.Intos));
@@ -797,7 +797,7 @@ namespace SqlAnalyser.Core
 
                                 primaryKeyUsed = true;
                             }
-                            else if (primaryContraintsColumns != null && !primaryContraintsColumns.Any(item=>item.Symbol == name))
+                            else if (primaryContraintsColumns != null && !primaryContraintsColumns.Any(item => item.Symbol == name))
                             {
                                 tablePrimaryKey.ColumnNames.Insert(0, column.Name);
                             }

@@ -44,7 +44,8 @@ namespace DatabaseConverter.Core
                 Expression = t.Attribute("expression")?.Value,
                 Replacements = t.Attribute("replacements")?.Value,
                 Defaults = t.Attribute("defaults")?.Value,
-                Translator = t.Attribute("translator")?.Value
+                Translator = t.Attribute("translator")?.Value,
+                Specials = t.Attribute("specials")?.Value
             }))
             .ToList();
         }

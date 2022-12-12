@@ -120,7 +120,7 @@
 	</mapping>
 	<mapping>
 		<SqlServer>DATEPART</SqlServer>
-		<MySql>EXTRACT</MySql>
+		<MySql specials="UNIT=DAYOFYEAR:DAYOFYEAR;UNIT=WEEKDAY:DAYOFWEEK">EXTRACT</MySql>
 		<Oracle>EXTRACT</Oracle>
 		<Postgres>DATE_PART,EXTRACT</Postgres>
 		<Sqlite direction="IN" translator="DateExtractTranslator"></Sqlite>

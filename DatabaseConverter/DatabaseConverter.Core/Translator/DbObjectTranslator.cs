@@ -306,8 +306,9 @@ namespace DatabaseConverter.Core
 
                                 break;
                             case "UNIT":
+                            case "'UNIT'":
 
-                                newArg = DatetimeHelper.GetUniformUnit(oldArg);
+                                newArg = DatetimeHelper.GetMappedUnit(sourceDbType, targetDbType, oldArg);                                
 
                                 break;
                         }
@@ -680,6 +681,7 @@ namespace DatabaseConverter.Core
                         functionInfo.Expression = mapping.Expression;
                         functionInfo.Defaults = mapping.Defaults;
                         functionInfo.Translator = mapping.Translator;
+                        functionInfo.Specials = mapping.Specials;
                         functionInfo.Replacements = mapping.Replacements;
                     }
                 }

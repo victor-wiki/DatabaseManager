@@ -10,6 +10,7 @@ using System.Data;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using static TSqlParser;
 
 namespace DatabaseConverter.Core
 {
@@ -88,20 +89,75 @@ namespace DatabaseConverter.Core
                 {
                     if (targetFunctionInfo.Name.ToUpper().Trim() != name.ToUpper().Trim())
                     {
-                        string oldExp = formula.Expression;
-                        //string newExp = ReplaceValue(formula.Expression, name, targetFunctionInfo.Name);
-                        string newExp = $"{targetFunctionInfo.Name}{(formula.HasParentheses ? "(" : "")}{formula.Body}{(formula.HasParentheses ? ")" : "")}";
-
                         bool noParenthesess = false;
                         bool hasArgs = false;
+
                         var targetFuncSpec = this.targetFuncSpecs.FirstOrDefault(item => item.Name == targetFunctionInfo.Name);
 
                         if (targetFuncSpec != null)
                         {
+                            #region Handle specials
+                            if (!string.IsNullOrEmpty(targetFunctionInfo.Specials))
+                            {
+                                List<FunctionArgumentItemInfo> sourceArgItems = GetFunctionArgumentTokens(sourceFuncSpec, null);
+                                List<FunctionArgumentItemInfo> targetArgItems = GetFunctionArgumentTokens(targetFuncSpec, targetFunctionInfo.Args);
+
+                                var args = formula.GetArgs();
+
+                                Func<string, string> getTrimedContent = (content) =>
+                                {
+                                    return content.Trim('\'');
+                                };
+
+                                foreach (var tai in targetArgItems)
+                                {
+                                    string upperContent = tai.Content.ToUpper();
+
+                                    if (upperContent == "UNIT" || upperContent == "'UNIT'")
+                                    {
+                                        var sourceItem = sourceArgItems.FirstOrDefault(item => getTrimedContent(item.Content) == getTrimedContent(tai.Content));
+
+                                        if (sourceItem != null && args.Count > sourceItem.Index)
+                                        {
+                                            string arg = args[sourceItem.Index];
+
+                                            string[] specials = targetFunctionInfo.Specials.Split(';');
+
+                                            foreach (var special in specials)
+                                            {
+                                                string[] items = special.Split(':');
+
+                                                string[] subItems = items[0].Split('=');
+
+                                                string k = subItems[0];
+                                                string v = subItems[1];
+
+                                                if (k.ToUpper() == upperContent)
+                                                {
+                                                    string mappedUnit = DatetimeHelper.GetMappedUnit(this.sourceDbType, this.targetDbType, arg);
+
+                                                    if (mappedUnit == v)
+                                                    {
+                                                        targetFunctionInfo = new MappingFunctionInfo() { Name = items[1] };
+
+                                                        targetFuncSpec = this.targetFuncSpecs.FirstOrDefault(item => item.Name == targetFunctionInfo.Name);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } 
+                            #endregion
+
                             noParenthesess = targetFuncSpec.NoParenthesess;
 
                             hasArgs = !string.IsNullOrEmpty(targetFuncSpec.Args);
                         }
+
+                        string oldExp = formula.Expression;
+                        //string newExp = ReplaceValue(formula.Expression, name, targetFunctionInfo.Name);
+                        string newExp = $"{targetFunctionInfo.Name}{(formula.HasParentheses ? "(" : "")}{formula.Body}{(formula.HasParentheses ? ")" : "")}";
 
                         if (!hasArgs && !string.IsNullOrEmpty(formula.Body))
                         {
@@ -136,10 +192,15 @@ namespace DatabaseConverter.Core
                 {
                     value = ReplaceValue(value, formula.Expression, newExpression);
                 }
-            }            
+            }
 
             return value;
         }
+
+        //private string GetSpecialFunction()
+        //{
+
+        //}
 
         public static List<FunctionFormula> GetFunctionFormulas(DbInterpreter dbInterpreter, string value, bool extractChildren = true)
         {
@@ -153,7 +214,7 @@ namespace DatabaseConverter.Core
 
             Func<string, bool> isValidFunction = (name) =>
             {
-                return functionSpecifications.Any(item => item.Name.ToUpper() ==  name.Trim().Trim(trimChars).ToUpper());
+                return functionSpecifications.Any(item => item.Name.ToUpper() == name.Trim().Trim(trimChars).ToUpper());
             };
 
             if (value.IndexOf("(") < 0)
@@ -179,7 +240,7 @@ namespace DatabaseConverter.Core
                 sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
                 sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = true;
                 sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = extractChildren;
-                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;               
+                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
 
                 var result = sqlAnalyser.AnalyseCommon();
 

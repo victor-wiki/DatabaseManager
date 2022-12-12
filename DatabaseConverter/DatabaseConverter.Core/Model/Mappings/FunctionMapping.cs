@@ -11,6 +11,7 @@
         public string Replacements { get; set; }
         public string Defaults { get; set; }
         public string Translator { get; set; }
+        public string Specials { get; set; }
     }
 
     public enum FunctionMappingDirection
@@ -29,5 +30,6 @@
         public string Defaults { get; set; }
         public string Translator { get; set; }
         public string Replacements { get; set; }
+        public string Specials { get; set; }
     }
 }

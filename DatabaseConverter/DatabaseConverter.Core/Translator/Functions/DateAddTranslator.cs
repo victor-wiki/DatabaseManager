@@ -34,7 +34,7 @@ namespace DatabaseConverter.Core.Functions
 
             if (dateAdd.HasValue)
             {
-                string unit = DatetimeHelper.GetUniformUnit(dateAdd.Value.Unit);
+                string unit = DatetimeHelper.GetMappedUnit(this.SourceDbType, this.TargetDbType, dateAdd.Value.Unit);
 
                 bool isStringValue = ValueHelper.IsStringValue(dateAdd.Value.Date);
                 string date = dateAdd.Value.Date;

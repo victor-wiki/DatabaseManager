@@ -732,7 +732,7 @@ namespace SqlAnalyser.Core
                 this.AppendLine(selectColumns);
             }
 
-            if (!isCreateTemporaryTable && select.Intos != null)
+            if (!isCreateTemporaryTable && select.Intos != null && select.Intos.Count > 0)
             {
                 this.Append("INTO ");
                 this.AppendLine(String.Join(",", select.Intos));
@@ -917,7 +917,7 @@ namespace SqlAnalyser.Core
                         string strConstraint = string.IsNullOrEmpty(constraint) ? "" : $" {constraint}";
 
                         sb.AppendLine($"{name} {column.DataType}{defaultValue}{identity}{require}{strConstraint}{seperator}");
-                    }                   
+                    }
 
                     i++;
                 }

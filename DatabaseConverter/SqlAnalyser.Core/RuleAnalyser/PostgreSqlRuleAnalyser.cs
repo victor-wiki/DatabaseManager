@@ -516,7 +516,7 @@ namespace SqlAnalyser.Core
                 }
             }
 
-            if (intos != null)
+            if (intos != null && intos.Length > 0)
             {
                 statement.Intos = new List<TokenInfo>();
 
@@ -629,7 +629,7 @@ namespace SqlAnalyser.Core
             var tableName = this.ParseTableName(node.relation_expr_opt_alias());
             var sets = node.set_clause_list()?.set_clause();
             var from = node.from_clause();
-            var where = node.where_or_current_clause();  
+            var where = node.where_or_current_clause();
 
             statement.TableNames.Add(tableName);
 
@@ -667,7 +667,7 @@ namespace SqlAnalyser.Core
             if (from != null)
             {
                 statement.FromItems.AddRange(this.ParseFromClause(from));
-            }           
+            }
 
             if (where != null)
             {

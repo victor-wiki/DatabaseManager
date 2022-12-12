@@ -1,0 +1,50 @@
+<mappings>
+	<mapping name="YEAR">
+		<SqlServer>YY,YYYY</SqlServer>	
+	</mapping>
+	<mapping name="QUARTER">
+		<SqlServer>Q,QQ</SqlServer>		
+	</mapping>
+	<mapping name="MONTH">
+		<SqlServer>M,MM</SqlServer>		
+	</mapping>	
+	<mapping name="WEEK">
+		<SqlServer>WK,WW</SqlServer>		
+	</mapping>
+	<mapping name="WEEKDAY">
+		<SqlServer>DW</SqlServer>		
+		<Postgres formal="true">DOW</Postgres>
+	</mapping>
+	<mapping name="DAYOFYEAR">
+		<SqlServer>Y,DY</SqlServer>
+		<Postgres formal="true">DOY</Postgres>
+		<Sqlite caseSensitive="true">j</Sqlite>
+	</mapping>
+	<mapping name="DAY">
+		<SqlServer>D,DD</SqlServer>		
+	</mapping>	
+	<mapping name="HOUR">
+		<SqlServer>hh</SqlServer>		
+	</mapping>
+	<mapping name="MINUTE">
+		<SqlServer>N,MI</SqlServer>		
+	</mapping>
+	<mapping name="SECOND">
+		<SqlServer>S,SS</SqlServer>		
+	</mapping>
+	<mapping name="MILLISECOND">
+		<SqlServer>MS</SqlServer>	
+	</mapping>
+	<mapping name="MICROSECOND">
+		<SqlServer>MCS</SqlServer>		
+	</mapping>
+	<mapping name="NANOSECOND">
+		<SqlServer>NS</SqlServer>		
+	</mapping>	
+	<mapping name="TZOFFSET">
+		<SqlServer>TZ</SqlServer>		
+	</mapping>
+	<mapping name="ISO_WEEK">
+		<SqlServer>ISOWK,ISOWW</SqlServer>		
+	</mapping>
+</mappings>

@@ -34,46 +34,8 @@ namespace DatabaseConverter.Core.Functions
 
             if (dateExtract.HasValue)
             {
-                string unit = DatetimeHelper.GetUniformUnit(dateExtract.Value.Unit);
                 string date = dateExtract.Value.Date;
-
-                string format = "";
-
-                switch (unit)
-                {
-                    case "YEAR":
-                        format = "Y";
-                        break;
-                    case "MONTH":
-                        format = "m";
-                        break;
-                    case "WEEK":
-                        if(dateExtract.Value.Unit.ToUpper()=="W")
-                        {
-                            format = "w";
-                        }
-                        else
-                        {
-                            format = "W";
-                        }
-                        break;
-                    case "DAY":
-                        format = "d";
-                        break;
-                    case "HOUR":
-                        format = "H";
-                        break;
-                    case "MINUTE":
-                        format = "M";
-                        break;
-                    case "SECOND":
-                        format = "S";
-                        break;
-                    case "DY":
-                    case "DAYOFYEAR":
-                        format = "j";
-                        break;
-                }
+                string format = DatetimeHelper.GetSqliteStrfTimeFormat(this.SourceDbType, dateExtract.Value.Unit);
 
                 if (this.TargetDbType == DatabaseType.Sqlite)
                 {
