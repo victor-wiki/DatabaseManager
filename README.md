@@ -1,17 +1,17 @@
-## A simple tool for databases : SqlServer, MySql, Oracle and Postgres.
+## A simple tool for databases : SqlServer, MySql, Oracle, Postgres and SQLite.
 
 ## Features
 ### Convert Database
- Convert one database objects to another.
+ Convert database schemas and migrate data.
  
 ### Compare Database
-  Compare database objects, generate scripts of changes and sync the changes to target database. 
+  Compare database objects, generate scripts of differences. 
 
 ### Generate Scripts
-   Generate database objects scripts of create schema and insert data.   
+   Generate scripts of database objects, including schema and data.   
     
 ### View Data
-  It supports pagination, sort and filter for single table.
+  It supports pagination, sort and filter for single table or view.
   
 ### Table Copy
   Clone table schema and copy data to another database.
@@ -27,20 +27,17 @@
   Delete all objects of a database.
   
 ### Translate Script
-  The windows translate form can translate script to one database kind to another .
+  The translate form can translate script to one database kind to another without database connection.
 <br/>(Note:Most function and procedure of Postgres currently can't be translated to others.)
 
-### Translate Script Online
-  The web application under this project provides a page which translates script as same as windows form do except highlighting.
-
 ## UI - Convert Database
-![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=2)
+![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
 
 ## UI - Compare Database
 ![Compare Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Compare.png?raw=true&rid=1)
 
 ## UI - Table Designer
-![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=2)
+![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=1)
 
 ## UI - Translate Script
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
