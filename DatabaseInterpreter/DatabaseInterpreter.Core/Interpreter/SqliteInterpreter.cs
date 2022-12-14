@@ -186,12 +186,24 @@ namespace DatabaseInterpreter.Core
         #region Column
         public override Task<List<TableColumn>> GetTableColumnsAsync(SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(this.GetSqlForTableColumns(filter));
+            return this.GetTableColumnsAsync(this.CreateConnection(), filter);
         }
 
-        public override Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public override async Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
-            return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
+            if (filter?.TableNames == null)
+            {
+                if(filter == null)
+                {
+                    filter = new SchemaInfoFilter();
+                }               
+
+                filter.TableNames= (await this.GetTableNamesAsync());
+            }
+
+            var columns = await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
+
+            return columns;
         }
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
@@ -200,7 +212,7 @@ namespace DatabaseInterpreter.Core
 
             string[] tableNames = filter?.TableNames;
 
-            if (tableNames != null)
+            if(tableNames!=null)
             {
                 for (int i = 0; i < tableNames.Length; i++)
                 {
@@ -220,8 +232,8 @@ namespace DatabaseInterpreter.Core
                                 dflt_value AS DefaultValue, pk AS IsPrimaryKey, cid AS ""Order""
                                 FROM PRAGMA_TABLE_INFO('{tableName}')");
                 }
-            }
-
+            }        
+            
             return sb.Content;
         }
         #endregion
@@ -234,6 +246,16 @@ namespace DatabaseInterpreter.Core
 
         public override async Task<List<TablePrimaryKeyItem>> GetTablePrimaryKeyItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
+            if (filter?.TableNames == null)
+            {
+                if (filter == null)
+                {
+                    filter = new SchemaInfoFilter();
+                }
+
+                filter.TableNames = (await this.GetTableNamesAsync());
+            }
+
             List<TablePrimaryKeyItem> primaryKeyItems = await base.GetDbObjectsAsync<TablePrimaryKeyItem>(dbConnection, this.GetSqlForPrimaryKeys(filter));
 
             await this.MakeupTableChildrenNames(primaryKeyItems, filter);
@@ -408,14 +430,12 @@ namespace DatabaseInterpreter.Core
         {
             if (filter?.TableNames == null)
             {
-                var tables = await this.GetTablesAsync();
-
                 if (filter == null)
                 {
                     filter = new SchemaInfoFilter();
                 }
 
-                filter = new SchemaInfoFilter() { TableNames = tables.Select(item => item.Name).ToArray() };
+                filter = new SchemaInfoFilter() { TableNames =  await GetTableNamesAsync() };
             }
 
             List<TableForeignKeyItem> foreignKeyItems = await base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForForeignKeys(filter, isFilterForReferenced));
@@ -423,6 +443,13 @@ namespace DatabaseInterpreter.Core
             await this.MakeupTableChildrenNames(foreignKeyItems, filter);
 
             return foreignKeyItems;
+        }
+
+        private async Task<string[]> GetTableNamesAsync()
+        {
+            var tables = await this.GetTablesAsync();
+
+            return tables.Select(item => item.Name).ToArray();
         }
 
         private string GetSqlForForeignKeys(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
@@ -805,32 +832,35 @@ namespace DatabaseInterpreter.Core
 
         private string ExtractNameFromColumnDefintion(List<string> columnItems, DatabaseObjectType dbObjectType)
         {
-            int index = this.FindIndexInList(columnItems, "CONSTRAINT");
+            IEnumerable<int> indexes = this.FindAllIndexesInList(columnItems, "CONSTRAINT");
 
-            if (index >= 0)
+            if (indexes.Count() > 0)
             {
                 bool matched = false;
+                int index = -1;
 
-                if (dbObjectType == DatabaseObjectType.PrimaryKey && this.FindIndexInList(columnItems, "PRIMARY") > 0)
+                if (dbObjectType == DatabaseObjectType.PrimaryKey && (index= this.FindIndexInList(columnItems, "PRIMARY")) > 0)
                 {
                     matched = true;
                 }
-                else if (dbObjectType == DatabaseObjectType.ForeignKey && this.FindIndexInList(columnItems, "REFERENCES") > 0)
+                else if (dbObjectType == DatabaseObjectType.ForeignKey && (index = this.FindIndexInList(columnItems, "REFERENCES")) > 0)
                 {
                     matched = true;
                 }
-                else if (dbObjectType == DatabaseObjectType.Constraint && this.FindIndexInList(columnItems, "CHECK") > 0)
+                else if (dbObjectType == DatabaseObjectType.Constraint && (index = this.FindIndexInList(columnItems, "CHECK")) > 0)
                 {
                     matched = true;
                 }
-                else if (dbObjectType == DatabaseObjectType.Index && this.FindIndexInList(columnItems, "UNIQUE") > 0)
+                else if (dbObjectType == DatabaseObjectType.Index && (index = this.FindIndexInList(columnItems, "UNIQUE")) > 0)
                 {
                     matched = true;
                 }
 
                 if (matched)
                 {
-                    return this.ExtractTableChildName(columnItems, index + 1);
+                    int closestConstraintIndex = indexes.Where(item => item < index).Max();
+
+                    return this.ExtractTableChildName(columnItems, closestConstraintIndex + 1);
                 }
             }
 
@@ -873,8 +903,6 @@ namespace DatabaseInterpreter.Core
             {
                 return columnItems.Skip(startIndex + 1).FirstOrDefault(item => item.Trim().Length > 0);
             }
-
-            return string.Empty;
         }
 
         private int FindIndexInList(List<string> list, string value)
@@ -890,6 +918,19 @@ namespace DatabaseInterpreter.Core
             }
 
             return -1;
+        }
+
+        private IEnumerable<int> FindAllIndexesInList(List<string> list, string value)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                string item = list[i].Trim().ToUpper();
+
+                if (item == value || item.StartsWith($"{value}("))
+                {
+                    yield return i;
+                }
+            }
         }
 
         private string ExtractTableChildName(List<string> items, int startIndex)

@@ -96,7 +96,7 @@ namespace DatabaseManager.Core
 
                         var foreignKeyDifferences = this.CompareTableChildren<TableForeignKey>("Foreign Key", DatabaseObjectType.ForeignKey, sourceForeignKeys, targetForeignKeys);
 
-                        difference.SubDifferences.AddRange(indexDifferences);
+                        difference.SubDifferences.AddRange(foreignKeyDifferences);
                         #endregion
 
                         #region Constraint
@@ -105,7 +105,7 @@ namespace DatabaseManager.Core
 
                         var constraintDifferences = this.CompareTableChildren<TableConstraint>("Constraint", DatabaseObjectType.Constraint, sourceConstraints, targetConstraints);
 
-                        difference.SubDifferences.AddRange(indexDifferences);
+                        difference.SubDifferences.AddRange(constraintDifferences);
                         #endregion
 
                         difference.SubDifferences.ForEach(item => item.Parent = difference);
