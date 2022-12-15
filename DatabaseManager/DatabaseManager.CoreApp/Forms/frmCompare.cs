@@ -116,7 +116,11 @@ namespace DatabaseManager
 
         private async void btnCompare_Click(object sender, EventArgs e)
         {
-            frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType));
+            var dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, new ConnectionInfo(), new DbInterpreterOption());
+
+            List<CheckItemInfo> checkItems = ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType, dbInterpreter.SupportDbObjectType);
+           
+            frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", checkItems);
 
             if (selector.ShowDialog() == DialogResult.OK)
             {

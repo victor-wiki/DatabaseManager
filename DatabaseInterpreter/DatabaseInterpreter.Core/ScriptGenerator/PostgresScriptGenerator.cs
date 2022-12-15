@@ -199,9 +199,11 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
         {
+            string pkName = string.IsNullOrEmpty(primaryKey.Name) ? this.GetQuotedString($"PK_{primaryKey.TableName}") : this.GetQuotedString(primaryKey.Name);
+
             string sql =
 $@"
-ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQuotedString(primaryKey.Name)} PRIMARY KEY 
+ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {pkName} PRIMARY KEY 
 (
 {string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 );";
@@ -219,11 +221,13 @@ ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQu
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
             string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
 
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString($"FK_{foreignKey.TableName}_{foreignKey.ReferencedTableName}") : this.GetQuotedString(foreignKey.Name);
+
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(
 $@"
-ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {this.GetQuotedString(foreignKey.Name)} FOREIGN KEY ({columnNames})
+ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {fkName} FOREIGN KEY ({columnNames})
 REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, foreignKey.ReferencedTableName)}({referenceColumnName})");
 
             if (foreignKey.UpdateCascade)
@@ -255,12 +259,14 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
+            string indexName = string.IsNullOrEmpty(index.Name) ? this.GetQuotedString($"IX_{index.TableName}") : this.GetQuotedString(index.Name);
+
             string type = index.Type;
             IndexType indexType = IndexType.None;
 
             foreach (var name in Enum.GetNames(typeof(IndexType)))
             {
-                if (name.ToUpper() == type.ToUpper())
+                if (name.ToUpper() == type?.ToUpper())
                 {
                     indexType = (IndexType)Enum.Parse(typeof(IndexType), name);
                     break;
@@ -276,15 +282,15 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
             Action addNormOrUnique = () =>
             {
-                if(type == IndexType.Unique.ToString())
+                if (type == IndexType.Unique.ToString())
                 {
                     //use unique constraint, it can be used for foreign key reference.
-                    sql = $"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {this.GetQuotedString(index.Name)} UNIQUE ({columnNames});";
+                    sql = $"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {indexName} UNIQUE ({columnNames});";
                 }
                 else
                 {
                     sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
-                }               
+                }
             };
 
             if (indexType == IndexType.Unique)
@@ -320,7 +326,9 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE IF EXISTS {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK {constraint.Definition};");
+            string ckName = string.IsNullOrEmpty(constraint.Name) ? this.GetQuotedString($"CK_{constraint.Name}") : this.GetQuotedString(constraint.Name);
+
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE IF EXISTS {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {ckName} CHECK {constraint.Definition};");
         }
 
         public override Script DropCheckConstraint(TableConstraint constraint)
@@ -500,7 +508,7 @@ CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 
         private string GetDropSql(string typeName, DatabaseObject dbObject)
         {
-            string cascadeOption = (typeName == nameof(Table) || typeName == nameof(View) || typeName == nameof(Function) 
+            string cascadeOption = (typeName == nameof(Table) || typeName == nameof(View) || typeName == nameof(Function)
                 || typeName == nameof(Procedure)) ? " CASCADE" : "";
 
             return $"DROP {typeName.ToUpper()} IF EXISTS {this.GetQuotedDbObjectNameWithSchema(dbObject)}{cascadeOption};";

@@ -1027,7 +1027,7 @@ namespace DatabaseInterpreter.Core
             {
                 string dataType = this.ParseDataType(column);
 
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"IDENTITY({table.IdentitySeed},{table.IdentityIncrement})" : "");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && column.IsRequired ? $"IDENTITY({table.IdentitySeed??1},{table.IdentityIncrement??1})" : "");
                 string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
@@ -1094,9 +1094,10 @@ namespace DatabaseInterpreter.Core
                 }
                 else if (args.ToLower().Contains(","))//ie. numeric,decimal
                 {
+                    long precision = column.Precision == null ? 0 : column.Precision.Value;
                     long scale = column.Scale == null ? 0 : column.Scale.Value;
 
-                    return $"{column.Precision},{scale}";
+                    return $"{precision},{scale}";
                 }
                 else if (args == "precision" || args == "scale") //ie. datetime2,datetimeoffset
                 {

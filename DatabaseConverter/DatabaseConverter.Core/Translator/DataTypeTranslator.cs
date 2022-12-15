@@ -195,11 +195,15 @@ namespace DatabaseConverter.Core
                             if (name == "maxLength")
                             {
                                 matched = this.IsSpecialMaxLengthMatched(special, dataTypeInfo);
+                            } 
+                            else if (name == "precisionScale")
+                            {
+                                matched = this.IsSpecialPrecisionAndScaleMatched(special, dataTypeInfo);
                             }
                             else if (name.Contains("precision") || name.Contains("scale"))
                             {
                                 matched = this.IsSpecialPrecisionOrScaleMatched(special, dataTypeInfo);
-                            }
+                            }                           
                             else if (name == "expression")
                             {
                                 matched = this.IsSpecialExpressionMatched(special, originalDataType);
@@ -208,6 +212,7 @@ namespace DatabaseConverter.Core
                             {
                                 matched = dataTypeInfo.IsIdentity;
                             }
+                            
 
                             if (matched)
                             {
@@ -426,6 +431,26 @@ namespace DatabaseConverter.Core
                 return this.IsValueEqual(scale, dataTypeInfo.Scale);
             }
             return false;
+        }
+
+        private bool IsSpecialPrecisionAndScaleMatched(DataTypeMappingSpecial special, DataTypeInfo dataTypeInfo)
+        {
+            string precision = special.Precison;
+            string scale = special.Scale;
+
+            
+            if((precision == "isNullOrZero" && this.IsNullOrZero(dataTypeInfo.Precision))
+               &&(scale == "isNullOrZero" && this.IsNullOrZero(dataTypeInfo.Scale)))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsNullOrZero(long? value)
+        {
+            return value == null || value == 0;
         }
 
         private bool IsValueEqual(string value1, long? value2)

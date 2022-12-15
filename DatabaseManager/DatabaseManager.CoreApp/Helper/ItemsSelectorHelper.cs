@@ -16,7 +16,7 @@ namespace DatabaseManager.Helper
 
     public class ItemsSelectorHelper
     {
-        public static List<CheckItemInfo> GetDatabaseObjectTypeItems(DatabaseType databaseType)
+        public static List<CheckItemInfo> GetDatabaseObjectTypeItems(DatabaseType databaseType, DatabaseObjectType supportDatabaseObjectType = DatabaseObjectType.None)
         {
             List<DatabaseObjectType> dbObjTypes = new List<DatabaseObjectType>()
             {
@@ -27,9 +27,22 @@ namespace DatabaseManager.Helper
                 DatabaseObjectType.Procedure,
                 DatabaseObjectType.Type,
                 DatabaseObjectType.Sequence
-            };            
+            };
 
-            return dbObjTypes.Select(item => new CheckItemInfo() { Name = ManagerUtil.GetPluralString(item.ToString()), Checked = true }).ToList();
+            List<CheckItemInfo> checkItems = new List<CheckItemInfo>();
+
+            if (supportDatabaseObjectType != DatabaseObjectType.None)
+            {
+                foreach (var dbObjType in dbObjTypes)
+                {
+                    if (dbObjType == DatabaseObjectType.Trigger || supportDatabaseObjectType.HasFlag(dbObjType))
+                    {
+                        checkItems.Add(new CheckItemInfo() { Name = ManagerUtil.GetPluralString(dbObjType.ToString()), Checked = true });
+                    }
+                }
+            }
+
+            return checkItems;
         }
 
         public static DatabaseObjectType GetDatabaseObjectTypeByCheckItems(List<CheckItemInfo> items)

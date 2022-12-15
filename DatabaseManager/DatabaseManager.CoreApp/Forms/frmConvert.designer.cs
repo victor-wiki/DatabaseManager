@@ -479,7 +479,7 @@ namespace DatabaseManager
             // lblScriptsMode
             // 
             this.lblScriptsMode.AutoSize = true;
-            this.lblScriptsMode.Location = new System.Drawing.Point(9, 27);
+            this.lblScriptsMode.Location = new System.Drawing.Point(8, 27);
             this.lblScriptsMode.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblScriptsMode.Name = "lblScriptsMode";
             this.lblScriptsMode.Size = new System.Drawing.Size(129, 17);

@@ -82,7 +82,7 @@ namespace DatabaseInterpreter.Core
 
         private string GetRestrictedLengthName(string name)
         {
-            if (name.Length > MySqlInterpreter.NameMaxLength)
+            if (name != null && name.Length > MySqlInterpreter.NameMaxLength)
             {
                 return name.Substring(0, MySqlInterpreter.NameMaxLength);
             }

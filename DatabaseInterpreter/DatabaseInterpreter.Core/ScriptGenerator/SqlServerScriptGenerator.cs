@@ -167,9 +167,11 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
         {
+            string pkName = string.IsNullOrEmpty(primaryKey.Name)? this.GetQuotedString($"PK_{primaryKey.TableName}"): this.GetQuotedString(primaryKey.Name);
+
             string script =
 $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
-{this.GetQuotedString(primaryKey.Name)} PRIMARY KEY {(primaryKey.Clustered ? "CLUSTERED" : "NONCLUSTERED")}
+{pkName} PRIMARY KEY {(primaryKey.Clustered ? "CLUSTERED" : "NONCLUSTERED")}
 (
     {string.Join(",", primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)} {(item.IsDesc ? "DESC" : "")}"))}
 ) WITH(STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON[PRIMARY]";
@@ -185,6 +187,7 @@ $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
             string quotedTableName = this.GetQuotedFullTableName(foreignKey);
+            string fkName = string.IsNullOrEmpty(foreignKey.Name)? this.GetQuotedString($"FK_{foreignKey.TableName}_{foreignKey.ReferencedTableName}"): this.GetQuotedString(foreignKey.Name);
 
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
             string referencedColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
@@ -192,7 +195,7 @@ $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(
-$@"ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT { this.GetQuotedString(foreignKey.Name)} FOREIGN KEY({columnNames})
+$@"ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT { fkName } FOREIGN KEY({columnNames})
 REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, foreignKey.ReferencedTableName)} ({referencedColumnName})");
 
             if (foreignKey.UpdateCascade)
@@ -240,7 +243,9 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)}  WITH CHECK ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition})");
+            string ckName = string.IsNullOrEmpty(constraint.Name) ? this.GetQuotedString($"CK_{constraint.TableName}") : this.GetQuotedString(constraint.Name);
+
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)}  WITH CHECK ADD CONSTRAINT {ckName} CHECK  ({constraint.Definition})");
         }
 
         public override Script DropCheckConstraint(TableConstraint constraint)

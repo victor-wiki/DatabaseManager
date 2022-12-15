@@ -494,6 +494,21 @@ namespace DatabaseInterpreter.Core
         {
             var items = await base.GetDbObjectsAsync<TableIndexItem>(dbConnection, this.GetSqlForIndexes(filter));
 
+            items.ForEach(item =>
+            {
+                if(item.Type == null)
+                {
+                    if(item.IsUnique)
+                    {
+                        item.Type = "Unique";
+                    }
+                    else
+                    {
+                        item.Type = "Normal";
+                    }
+                }
+            });
+
             var columns = await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(items));
 
             foreach (var item in items)

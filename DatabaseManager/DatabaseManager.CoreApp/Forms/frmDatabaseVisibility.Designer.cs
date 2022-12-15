@@ -29,15 +29,15 @@
         private void InitializeComponent()
         {
             this.dgvDatabases = new System.Windows.Forms.DataGridView();
+            this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colVisible = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.btnRefresh = new System.Windows.Forms.Button();
             this.btnVisible = new System.Windows.Forms.Button();
             this.btnInVisible = new System.Windows.Forms.Button();
-            this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colVisible = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvDatabases)).BeginInit();
             this.SuspendLayout();
             // 
@@ -64,78 +64,6 @@
             this.dgvDatabases.Size = new System.Drawing.Size(616, 413);
             this.dgvDatabases.TabIndex = 21;
             // 
-            // btnDelete
-            // 
-            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnDelete.Location = new System.Drawing.Point(314, 423);
-            this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(88, 33);
-            this.btnDelete.TabIndex = 24;
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
-            // 
-            // btnClear
-            // 
-            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClear.Location = new System.Drawing.Point(418, 423);
-            this.btnClear.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(88, 33);
-            this.btnClear.TabIndex = 25;
-            this.btnClear.Text = "Clear";
-            this.btnClear.UseVisualStyleBackColor = true;
-            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
-            // 
-            // btnClose
-            // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClose.Location = new System.Drawing.Point(522, 423);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(88, 33);
-            this.btnClose.TabIndex = 26;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
-            // 
-            // btnRefresh
-            // 
-            this.btnRefresh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnRefresh.Location = new System.Drawing.Point(2, 423);
-            this.btnRefresh.Margin = new System.Windows.Forms.Padding(4);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(88, 33);
-            this.btnRefresh.TabIndex = 27;
-            this.btnRefresh.Text = "Refresh";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
-            // 
-            // btnVisible
-            // 
-            this.btnVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnVisible.Location = new System.Drawing.Point(210, 423);
-            this.btnVisible.Margin = new System.Windows.Forms.Padding(4);
-            this.btnVisible.Name = "btnVisible";
-            this.btnVisible.Size = new System.Drawing.Size(88, 33);
-            this.btnVisible.TabIndex = 28;
-            this.btnVisible.Text = "Visibile";
-            this.btnVisible.UseVisualStyleBackColor = true;
-            this.btnVisible.Click += new System.EventHandler(this.btnVisible_Click);
-            // 
-            // btnInVisible
-            // 
-            this.btnInVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnInVisible.Location = new System.Drawing.Point(106, 423);
-            this.btnInVisible.Margin = new System.Windows.Forms.Padding(4);
-            this.btnInVisible.Name = "btnInVisible";
-            this.btnInVisible.Size = new System.Drawing.Size(88, 33);
-            this.btnInVisible.TabIndex = 29;
-            this.btnInVisible.Text = "Invisible";
-            this.btnInVisible.UseVisualStyleBackColor = true;
-            this.btnInVisible.Click += new System.EventHandler(this.btnInVisible_Click);
-            // 
             // colId
             // 
             this.colId.DataPropertyName = "Id";
@@ -157,6 +85,78 @@
             this.colVisible.Name = "colVisible";
             this.colVisible.ReadOnly = true;
             this.colVisible.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnDelete.Location = new System.Drawing.Point(316, 423);
+            this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(88, 33);
+            this.btnDelete.TabIndex = 24;
+            this.btnDelete.Text = "Delete";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnClear.Location = new System.Drawing.Point(420, 423);
+            this.btnClear.Margin = new System.Windows.Forms.Padding(4);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(88, 33);
+            this.btnClear.TabIndex = 25;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
+            // btnClose
+            // 
+            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClose.Location = new System.Drawing.Point(524, 423);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(88, 33);
+            this.btnClose.TabIndex = 26;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnRefresh.Location = new System.Drawing.Point(4, 423);
+            this.btnRefresh.Margin = new System.Windows.Forms.Padding(4);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(88, 33);
+            this.btnRefresh.TabIndex = 27;
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnVisible
+            // 
+            this.btnVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnVisible.Location = new System.Drawing.Point(212, 423);
+            this.btnVisible.Margin = new System.Windows.Forms.Padding(4);
+            this.btnVisible.Name = "btnVisible";
+            this.btnVisible.Size = new System.Drawing.Size(88, 33);
+            this.btnVisible.TabIndex = 28;
+            this.btnVisible.Text = "Visibile";
+            this.btnVisible.UseVisualStyleBackColor = true;
+            this.btnVisible.Click += new System.EventHandler(this.btnVisible_Click);
+            // 
+            // btnInVisible
+            // 
+            this.btnInVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnInVisible.Location = new System.Drawing.Point(108, 423);
+            this.btnInVisible.Margin = new System.Windows.Forms.Padding(4);
+            this.btnInVisible.Name = "btnInVisible";
+            this.btnInVisible.Size = new System.Drawing.Size(88, 33);
+            this.btnInVisible.TabIndex = 29;
+            this.btnInVisible.Text = "Invisible";
+            this.btnInVisible.UseVisualStyleBackColor = true;
+            this.btnInVisible.Click += new System.EventHandler(this.btnInVisible_Click);
             // 
             // frmDatabaseVisibility
             // 

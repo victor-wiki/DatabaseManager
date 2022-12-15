@@ -8,13 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. Support sqlite.
-2. New feature: database visibility setting for object navigator.</PackageReleaseNotes>
+    <PackageReleaseNotes>minor ui changes</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.0</AssemblyVersion>
-    <FileVersion>2.1.0</FileVersion>
+    <AssemblyVersion>2.1.1</AssemblyVersion>
+    <FileVersion>2.1.1</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

@@ -783,7 +783,9 @@ namespace DatabaseManager.Controls
 
             if (MessageBox.Show($"Are you sure to delete all objects of the database?{Environment.NewLine}Please handle this operation carefully!", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.databaseType));
+                var dbInterpreter = this.GetDbInterpreter((this.GetSelectedNode().Tag as Database).Name, true);
+
+                frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.databaseType, dbInterpreter.SupportDbObjectType));
 
                 if (selector.ShowDialog() == DialogResult.OK)
                 {

@@ -10,6 +10,7 @@
 	<mapping>
 		<source type="numeric" />
 		<target type="numeric" />
+		<special name="precisionScale" precision="isNullOrZero" scale="isNullOrZero"  type="float"></special>
 	</mapping>
 	<mapping>
 		<source type="real" />

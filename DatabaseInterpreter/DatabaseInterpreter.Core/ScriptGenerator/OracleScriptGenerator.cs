@@ -197,10 +197,11 @@ namespace DatabaseInterpreter.Core
         {
             string tablespace = this.dbInterpreter.ConnectionInfo.Database;
             string strTablespace = string.IsNullOrEmpty(tablespace) ? "" : $"TABLESPACE {tablespace}";
+            string pkName = string.IsNullOrEmpty(primaryKey.Name) ? this.GetQuotedString($"PK_{primaryKey.TableName}") : this.GetQuotedString(primaryKey.Name);
 
             string sql =
 $@"
-ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {this.GetQuotedString(primaryKey.Name)} PRIMARY KEY 
+ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT {pkName} PRIMARY KEY 
 (
 {string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
 )
@@ -219,12 +220,13 @@ USING INDEX
         {
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
             string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString($"FK_{foreignKey.TableName}_{foreignKey.ReferencedTableName}") : this.GetQuotedString(foreignKey.Name);
 
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(
 $@"
-ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {this.GetQuotedString(foreignKey.Name)} FOREIGN KEY ({columnNames})
+ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {fkName} FOREIGN KEY ({columnNames})
 REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})");
 
             if (foreignKey.DeleteCascade)
@@ -250,6 +252,7 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
         public override Script AddIndex(TableIndex index)
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
+            string indexName = string.IsNullOrEmpty(index.Name) ? this.GetQuotedString($"IX_{index.TableName}") : this.GetQuotedString(index.Name);
 
             string type = "";
 
@@ -264,7 +267,7 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
             string reverse = index.Type == IndexType.Reverse.ToString() ? "REVERSE" : "";
 
-            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
+            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {indexName} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
         }
 
         public override Script DropIndex(TableIndex index)
@@ -274,7 +277,9 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK ({constraint.Definition});");
+            string ckName = string.IsNullOrEmpty(constraint.Name) ? this.GetQuotedString($"CK_{constraint.TableName}") : this.GetQuotedString(constraint.Name);
+
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {ckName} CHECK ({constraint.Definition});");
         }
 
         private Script AddUniqueConstraint(TableIndex index)
