@@ -195,13 +195,8 @@ namespace DatabaseConverter.Core
             }
 
             return value;
-        }
-
-        //private string GetSpecialFunction()
-        //{
-
-        //}
-
+        }   
+        
         public static List<FunctionFormula> GetFunctionFormulas(DbInterpreter dbInterpreter, string value, bool extractChildren = true)
         {
             value = StringHelper.GetBalanceParenthesisTrimedValue(value);

@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmTableDiagnoseResult
+    partial class frmTableRecordCount
     {
         /// <summary>
         /// Required designer variable.
@@ -30,14 +30,11 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTableDiagnoseResult));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTableRecordCount));
             this.dgvResult = new System.Windows.Forms.DataGridView();
             this.colTableName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colObjectType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colObjectName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colInvalidRecordCount = new System.Windows.Forms.DataGridViewLinkColumn();
+            this.colRecordCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnClose = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
@@ -68,26 +65,23 @@
             this.dgvResult.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvResult.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colTableName,
-            this.colObjectType,
-            this.colObjectName,
-            this.colInvalidRecordCount});
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.ControlLight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvResult.DefaultCellStyle = dataGridViewCellStyle3;
+            this.colRecordCount});
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.ControlLight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvResult.DefaultCellStyle = dataGridViewCellStyle2;
             this.dgvResult.Location = new System.Drawing.Point(0, 0);
             this.dgvResult.Margin = new System.Windows.Forms.Padding(4);
             this.dgvResult.Name = "dgvResult";
             this.dgvResult.ReadOnly = true;
             this.dgvResult.RowHeadersVisible = false;
             this.dgvResult.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvResult.Size = new System.Drawing.Size(694, 322);
+            this.dgvResult.Size = new System.Drawing.Size(419, 322);
             this.dgvResult.TabIndex = 1;
-            this.dgvResult.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvResult_CellContentClick);
             this.dgvResult.DataBindingComplete += new System.Windows.Forms.DataGridViewBindingCompleteEventHandler(this.dgvResult_DataBindingComplete);
             this.dgvResult.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvResult_RowsAdded);
             this.dgvResult.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvResult_MouseUp);
@@ -98,38 +92,19 @@
             this.colTableName.HeaderText = "Table Name";
             this.colTableName.Name = "colTableName";
             this.colTableName.ReadOnly = true;
-            this.colTableName.Width = 180;
+            this.colTableName.Width = 250;
             // 
-            // colObjectType
+            // colRecordCount
             // 
-            this.colObjectType.HeaderText = "Object Type";
-            this.colObjectType.Name = "colObjectType";
-            this.colObjectType.ReadOnly = true;
-            this.colObjectType.Width = 150;
-            // 
-            // colObjectName
-            // 
-            this.colObjectName.HeaderText = "Object Name";
-            this.colObjectName.Name = "colObjectName";
-            this.colObjectName.ReadOnly = true;
-            this.colObjectName.Width = 200;
-            // 
-            // colInvalidRecordCount
-            // 
-            this.colInvalidRecordCount.ActiveLinkColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.colInvalidRecordCount.DefaultCellStyle = dataGridViewCellStyle2;
-            this.colInvalidRecordCount.HeaderText = "Invalid Record Count";
-            this.colInvalidRecordCount.Name = "colInvalidRecordCount";
-            this.colInvalidRecordCount.ReadOnly = true;
-            this.colInvalidRecordCount.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colInvalidRecordCount.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            this.colInvalidRecordCount.Width = 150;
+            this.colRecordCount.HeaderText = "Record Count";
+            this.colRecordCount.Name = "colRecordCount";
+            this.colRecordCount.ReadOnly = true;
+            this.colRecordCount.Width = 150;
             // 
             // btnClose
             // 
             this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnClose.Location = new System.Drawing.Point(353, 334);
+            this.btnClose.Location = new System.Drawing.Point(216, 334);
             this.btnClose.Margin = new System.Windows.Forms.Padding(4);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(88, 33);
@@ -175,7 +150,7 @@
             // btnSave
             // 
             this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btnSave.Location = new System.Drawing.Point(227, 334);
+            this.btnSave.Location = new System.Drawing.Point(90, 334);
             this.btnSave.Margin = new System.Windows.Forms.Padding(4);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(88, 33);
@@ -184,20 +159,20 @@
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
-            // frmTableDiagnoseResult
+            // frmTableRecordCount
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(697, 376);
+            this.ClientSize = new System.Drawing.Size(422, 376);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.dgvResult);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "frmTableDiagnoseResult";
+            this.Name = "frmTableRecordCount";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Table Diagnose Result";
-            this.Load += new System.EventHandler(this.frmTableDiagnoseResult_Load);
+            this.Text = "Table Record Count";
+            this.Load += new System.EventHandler(this.frmTableRecordCount_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvResult)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -211,12 +186,10 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyWithHeader;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTableName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colObjectType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colObjectName;
-        private System.Windows.Forms.DataGridViewLinkColumn colInvalidRecordCount;
         private System.Windows.Forms.ToolStripMenuItem tsmiSave;
         private System.Windows.Forms.SaveFileDialog dlgSave;
         private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTableName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colRecordCount;
     }
 }

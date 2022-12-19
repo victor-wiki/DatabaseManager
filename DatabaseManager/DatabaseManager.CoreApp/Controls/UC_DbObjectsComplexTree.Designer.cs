@@ -60,6 +60,7 @@
             this.tsmiMore = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiBackup = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDiagnose = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiStatistic = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
@@ -131,7 +132,7 @@
             this.tsmiCopyChildrenNames,
             this.tsmiMore});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 444);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(204, 422);
             // 
             // tsmiNewQuery
             // 
@@ -312,6 +313,7 @@
             this.tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiBackup,
             this.tsmiDiagnose,
+            this.tsmiStatistic,
             this.tsmiClearData,
             this.tsmiEmptyDatabase});
             this.tsmiMore.Name = "tsmiMore";
@@ -321,28 +323,35 @@
             // tsmiBackup
             // 
             this.tsmiBackup.Name = "tsmiBackup";
-            this.tsmiBackup.Size = new System.Drawing.Size(137, 22);
+            this.tsmiBackup.Size = new System.Drawing.Size(180, 22);
             this.tsmiBackup.Text = "Backup";
             this.tsmiBackup.Click += new System.EventHandler(this.tsmiBackup_Click);
             // 
             // tsmiDiagnose
             // 
             this.tsmiDiagnose.Name = "tsmiDiagnose";
-            this.tsmiDiagnose.Size = new System.Drawing.Size(137, 22);
+            this.tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
             this.tsmiDiagnose.Text = "Diagnose";
             this.tsmiDiagnose.Click += new System.EventHandler(this.tsmiDiagnose_Click);
+            // 
+            // tsmiStatistic
+            // 
+            this.tsmiStatistic.Name = "tsmiStatistic";
+            this.tsmiStatistic.Size = new System.Drawing.Size(180, 22);
+            this.tsmiStatistic.Text = "Statistic";
+            this.tsmiStatistic.Click += new System.EventHandler(this.tsmiStatistic_Click);
             // 
             // tsmiClearData
             // 
             this.tsmiClearData.Name = "tsmiClearData";
-            this.tsmiClearData.Size = new System.Drawing.Size(137, 22);
+            this.tsmiClearData.Size = new System.Drawing.Size(180, 22);
             this.tsmiClearData.Text = "Clear Data";
             this.tsmiClearData.Click += new System.EventHandler(this.tsmiClearData_Click);
             // 
             // tsmiEmptyDatabase
             // 
             this.tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
+            this.tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
             this.tsmiEmptyDatabase.Text = "Empty";
             this.tsmiEmptyDatabase.Click += new System.EventHandler(this.tsmiEmptyDatabase_Click);
             // 
@@ -393,5 +402,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiViewDependency;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyChildrenNames;
         private System.Windows.Forms.ToolStripMenuItem tsmiExecuteScript;
+        private System.Windows.Forms.ToolStripMenuItem tsmiStatistic;
     }
 }

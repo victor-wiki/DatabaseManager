@@ -361,8 +361,7 @@ namespace DatabaseConverter.Core
 
                         string content = tai.Content;
                         string trimedContent = getTrimedContent(content);
-                        bool hasQuoted = content != trimedContent;
-
+                   
                         var sourceItem = sourceArgItems.FirstOrDefault(item => getTrimedContent(item.Content) == trimedContent);
 
                         if (sourceItem != null)
@@ -376,7 +375,17 @@ namespace DatabaseConverter.Core
                                     value = getTrimedContent(value);
                                 }
 
-                                sbArgs.Append(!hasQuoted ? value : $"'{value}'");
+                                if(content.StartsWith('\''))
+                                {
+                                    sbArgs.Append('\'');
+                                }
+
+                                sbArgs.Append(value);
+
+                                if (content.EndsWith('\''))
+                                {
+                                    sbArgs.Append('\'');
+                                }                                
                             }
                             else
                             {
@@ -420,18 +429,13 @@ namespace DatabaseConverter.Core
                         else if (content == "START")
                         {
                             sbArgs.Append("0");
-                        }
-                        else if (!string.IsNullOrEmpty(targetFunctionInfo.Args))
-                        {
-                            sbArgs.Append(content);
-                        }
+                        }                        
                         else if (tai.Details.Count > 0)
                         {
                             foreach (FunctionArgumentItemDetailInfo detail in tai.Details)
                             {
                                 string dc = detail.Content;
-                                string trimedDc = getTrimedContent(dc);
-                                bool hasQuotedDc = dc != trimedDc;
+                                string trimedDc = getTrimedContent(dc);                   
 
                                 var si = sourceArgItems.FirstOrDefault(item => getTrimedContent(item.Content) == trimedDc);
 
@@ -444,13 +448,27 @@ namespace DatabaseConverter.Core
                                         value = getTrimedContent(value);
                                     }
 
-                                    sbArgs.Append(!hasQuotedDc ? value : $"'{value}'");
+                                    if (dc.StartsWith('\''))
+                                    {
+                                        sbArgs.Append('\'');
+                                    }
+
+                                    sbArgs.Append(value);
+
+                                    if (dc.EndsWith('\''))
+                                    {
+                                        sbArgs.Append('\'');
+                                    }
                                 }
                                 else
                                 {
                                     sbArgs.Append(detail.Content);
                                 }
                             }
+                        }
+                        else if (!string.IsNullOrEmpty(targetFunctionInfo.Args))
+                        {
+                            sbArgs.Append(content);
                         }
                         else if (defaults.ContainsKey(content))
                         {

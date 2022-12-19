@@ -1454,5 +1454,22 @@ namespace DatabaseManager.Controls
         {
             this.GenerateScripts(ScriptAction.EXECUTE);
         }
+
+        private async void tsmiStatistic_Click(object sender, EventArgs e)
+        {
+            ConnectionInfo connectionInfo = this.GetCurrentConnectionInfo();
+
+            DbStatistic statistic = new DbStatistic(this.databaseType, connectionInfo);
+
+            statistic.OnFeedback += this.OnFeedback;
+
+            IEnumerable<TableRecordCount> records = await statistic.CountTableRecords();
+
+            frmTableRecordCount form = new frmTableRecordCount();            
+
+            form.LoadData(records);
+
+            form.ShowDialog();
+        }
     }
 }

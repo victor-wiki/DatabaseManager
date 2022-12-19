@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.1.2</Version>
+    <Version>2.1.3</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.2</AssemblyVersion>
-    <FileVersion>2.1.2</FileVersion>
-    <PackageReleaseNotes>resolve numeric that has no precision and scale</PackageReleaseNotes>
+    <AssemblyVersion>2.1.3</AssemblyVersion>
+    <FileVersion>2.1.3</FileVersion>
+    <PackageReleaseNotes>optimize: function translator</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

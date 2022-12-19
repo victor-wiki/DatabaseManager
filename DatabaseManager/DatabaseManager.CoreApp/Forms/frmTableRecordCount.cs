@@ -4,54 +4,38 @@ using System.Windows.Forms;
 using DatabaseManager.Model;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DatabaseManager
 {
-    public partial class frmTableDiagnoseResult : Form
+    public partial class frmTableRecordCount : Form
     {
-        public DatabaseType DatabaseType { get; set; }
-        public ConnectionInfo ConnectionInfo { get; set; }
 
-        public frmTableDiagnoseResult()
+        public frmTableRecordCount()
         {
             InitializeComponent();
         }
 
-        private void frmTableDiagnoseResult_Load(object sender, EventArgs e)
+        private void frmTableRecordCount_Load(object sender, EventArgs e)
         {
             this.dgvResult.ClearSelection();
         }
 
-        public void LoadResult(TableDiagnoseResult result)
+        public void LoadData(IEnumerable<TableRecordCount> records)
         {
-            foreach (TableDiagnoseResultDetail item in result.Details)
+            foreach (TableRecordCount item in records.OrderByDescending(item=>item.RecordCount))
             {
                 int rowIndex = this.dgvResult.Rows.Add();
 
                 DataGridViewRow row = this.dgvResult.Rows[rowIndex];
 
-                row.Cells[this.colTableName.Name].Value = this.GetTableName(item.DatabaseObject);
-                row.Cells[this.colObjectType.Name].Value = item.DatabaseObject.GetType().Name;
-                row.Cells[this.colObjectName.Name].Value = item.DatabaseObject.Name;
-                row.Cells[this.colInvalidRecordCount.Name].Value = item.RecordCount;
+                row.Cells[this.colTableName.Name].Value = item.TableName;
+                row.Cells[this.colRecordCount.Name].Value = item.RecordCount;               
 
                 row.Tag = item;
             }
-        }
-
-        private string GetTableName(DatabaseObject dbObject)
-        {
-            if (dbObject is TableChild tableChild)
-            {
-                return tableChild.TableName;
-            }
-            else if (dbObject is Table table)
-            {
-                return table.Name;
-            }
-
-            return string.Empty;
-        }
+        }      
 
         private void btnClose_Click(object sender, EventArgs e)
         {
@@ -96,37 +80,7 @@ namespace DatabaseManager
         private void dgvResult_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
         {
             this.dgvResult.ClearSelection();
-        }
-
-        private void dgvResult_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0)
-            {
-                return;
-            }
-
-            if (e.ColumnIndex == this.colInvalidRecordCount.Index)
-            {
-                TableDiagnoseResultDetail resultItem = this.dgvResult.Rows[e.RowIndex].Tag as TableDiagnoseResultDetail;
-
-                string sql = resultItem.Sql;
-
-                frmSqlQuery form = new frmSqlQuery() { ReadOnly = true, ShowEditorMessage = false, SplitterDistance = 80 };
-
-                form.Init();
-
-                DatabaseObjectDisplayInfo displayInfo = new DatabaseObjectDisplayInfo()
-                {
-                    DatabaseType = this.DatabaseType,
-                    ConnectionInfo = this.ConnectionInfo,
-                    Content = sql
-                };
-
-                form.Query(displayInfo);
-
-                form.ShowDialog();
-            }
-        }
+        }      
 
         private void tsmiSave_Click(object sender, EventArgs e)
         {

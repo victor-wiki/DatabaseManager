@@ -77,6 +77,13 @@
 		<Sqlite direction="IN" translator="DateAddTranslator"></Sqlite>
 	</mapping>
 	<mapping>
+		<SqlServer direction="IN" args="MONTH,NUMBER,DATE">DATEADD</SqlServer>
+		<MySql direction="IN" args="DATE,INTERVAL NUMBER MONTH">DATE_ADD</MySql>
+		<Oracle>ADD_MONTHS</Oracle>
+		<Postgres direction="IN" expression="DATE::TIMESTAMP + INTERVAL 'NUMBER MONTH'"></Postgres>
+		<Sqlite direction="IN" args="DATE,'NUMBER MONTH'">DATETIME</Sqlite>
+	</mapping>
+	<mapping>
 		<SqlServer>REPLICATE</SqlServer>
 		<MySql>REPEAT</MySql>
 		<Oracle direction="IN" expression="RPAD(EXP,LENGTH(EXP)*TIMES,EXP)"></Oracle>
