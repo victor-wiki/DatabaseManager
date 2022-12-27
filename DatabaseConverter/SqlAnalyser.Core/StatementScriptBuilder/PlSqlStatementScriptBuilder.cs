@@ -440,6 +440,27 @@ namespace SqlAnalyser.Core
                 {
                     this.AppendLine("LOOP");
                 }
+                else if(loop.Type == LoopType.FOR)
+                {
+                    var loopCursor = loop.LoopCursorInfo;
+
+                    this.Append($"FOR {loopCursor.IteratorName} IN ");
+
+                    if(loopCursor.IsIntegerIterate)
+                    {
+                        this.Append($"{(loopCursor.IsReverse ? "REVERSE" : "")} {loopCursor.StartValue}..{loopCursor.StopValue}");
+                    }
+                    else
+                    {
+                        PlSqlStatementScriptBuilder builder = new PlSqlStatementScriptBuilder();
+
+                        builder.Build(loopCursor.SelectStatement, false);
+
+                        this.Append($"({builder.ToString()})");
+                    }
+
+                    this.AppendLine(" LOOP");
+                }
                 else
                 {
                     this.AppendLine($"{loop.Type.ToString()} {loop.Condition} LOOP");

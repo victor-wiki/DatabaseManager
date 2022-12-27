@@ -53,7 +53,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            return this.IsLowDbVersion(version, 9);
+            return this.IsLowDbVersion(version, "9");
         }
         #endregion
 

@@ -58,7 +58,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            return this.IsLowDbVersion(version, 12);
+            return this.IsLowDbVersion(version, "12");
         }
 
         private bool IsBuiltinDatabase()

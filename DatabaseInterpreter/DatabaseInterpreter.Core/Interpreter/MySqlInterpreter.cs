@@ -59,7 +59,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            return this.IsLowDbVersion(version, 8);
+            return this.IsLowDbVersion(version, "8");
         }
         #endregion
 
@@ -221,13 +221,36 @@ namespace DatabaseInterpreter.Core
             return base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
         }
 
+        private bool IsSupportComputeColumn()
+        {
+            string serverVersion = this.ServerVersion;
+
+            if (string.IsNullOrEmpty(serverVersion))
+            {
+                serverVersion = this.GetDbVersion(this.CreateConnection());
+            }
+
+            string[] versionItems = serverVersion.Split('.');
+
+            if (versionItems.Length > 1)
+            {
+                return !(int.Parse(versionItems[0]) < 5 || (int.Parse(versionItems[0]) == 5 && int.Parse(versionItems[1]) < 7));  
+            }
+            else
+            {
+                return int.Parse(versionItems[0]) > 5;
+            }
+        }
+
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             bool isForView = this.IsForViewColumnFilter(filter);
 
-            string detailColums = (isForView || isSimpleMode) ? "" : $@",COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`,REPLACE(REPLACE(REPLACE(C.GENERATION_EXPRESSION,'\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ""INFORMATION_SCHEMA""),''),
-                        (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{this.ConnectionInfo.Database}'),'') AS `ComputeExp`";
+            bool supportComputeColumn = this.IsSupportComputeColumn();
+
+            string computeExp = !supportComputeColumn ? "NULL":$"REPLACE(REPLACE(REPLACE(C.GENERATION_EXPRESSION,'\\\\',''),(SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = \"INFORMATION_SCHEMA\"),''),\r\n                        (SELECT CONCAT('_',DEFAULT_CHARACTER_SET_NAME) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{this.ConnectionInfo.Database}'),'')";
+            string detailColums = (isForView || isSimpleMode) ? "" : $@",COLUMN_DEFAULT AS `DefaultValue`,COLUMN_COMMENT AS `Comment`, {computeExp} AS `ComputeExp`";
 
             string joinTable = !isForView ? "JOIN INFORMATION_SCHEMA.`TABLES` AS T ON T.`TABLE_NAME`= C.`TABLE_NAME` AND T.TABLE_TYPE='BASE TABLE' AND T.TABLE_SCHEMA=C.TABLE_SCHEMA" :
                               "JOIN INFORMATION_SCHEMA.`VIEWS` AS V ON V.`TABLE_NAME`= C.`TABLE_NAME` AND V.TABLE_SCHEMA=C.TABLE_SCHEMA";
@@ -415,6 +438,13 @@ namespace DatabaseInterpreter.Core
 
         private string GetSqlForTableConstraints(SchemaInfoFilter filter = null)
         {
+            bool isLowDbVersion = this.IsLowDbVersion(this.GetDbVersion(), "8.0.16");
+
+            if(isLowDbVersion)
+            {
+                return String.Empty;
+            }
+
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             var sb = this.CreateSqlBuilder();
 
@@ -810,7 +840,7 @@ namespace DatabaseInterpreter.Core
         {
             string dataType = this.ParseDataType(column);
             string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
-
+            bool supportComputeColumn = this.IsSupportComputeColumn();
             bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
 
             if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))
@@ -818,7 +848,7 @@ namespace DatabaseInterpreter.Core
                 dataType += $" CHARACTER SET {DbCharset} COLLATE {DbCharsetCollation} ";
             }
 
-            if (column.IsComputed)
+            if (column.IsComputed && supportComputeColumn)
             {
                 string computeExpression = this.GetColumnComputeExpression(column);
 

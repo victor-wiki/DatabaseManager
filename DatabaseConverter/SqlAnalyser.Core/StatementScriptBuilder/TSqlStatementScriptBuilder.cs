@@ -297,10 +297,48 @@ namespace SqlAnalyser.Core
             }
             else if (statement is LoopStatement loop)
             {
-                this.AppendLine($"WHILE {loop.Condition}");
+                bool isReverse = false;
+                bool isForLoop = false;
+                bool isIntegerIterate = false;
+                string iteratorName = null;
+
+                if(loop.Type != LoopType.FOR)
+                {
+                    this.AppendLine($"WHILE {loop.Condition}");
+                }
+                else if(loop.LoopCursorInfo != null)
+                {
+                    isForLoop = true;
+                    isReverse = loop.LoopCursorInfo.IsReverse;
+
+                    iteratorName = "@"+ loop.LoopCursorInfo.IteratorName.Symbol;
+
+                    if(loop.LoopCursorInfo.IsIntegerIterate)
+                    {
+                        isIntegerIterate = true;
+                        this.AppendLine($"DECLARE {iteratorName} INT;");
+
+                        if (!isReverse)
+                        {
+                            this.AppendLine($"SET {iteratorName}={loop.LoopCursorInfo.StartValue};");
+                            this.AppendLine($"WHILE {iteratorName}<={loop.LoopCursorInfo.StopValue}");
+                        }
+                        else
+                        {
+                            this.AppendLine($"SET {iteratorName}={loop.LoopCursorInfo.StopValue};");
+                            this.AppendLine($"WHILE {iteratorName}>={loop.LoopCursorInfo.StartValue}");
+                        }
+                    }                   
+                }
+
                 this.AppendLine("BEGIN");
 
                 this.AppendChildStatements(loop.Statements, true);
+
+                if(isForLoop && isIntegerIterate)
+                {
+                    this.AppendLine($"SET {iteratorName}= {iteratorName}{(isReverse? "-":"+")}1;");
+                }
 
                 this.AppendLine("END");
             }

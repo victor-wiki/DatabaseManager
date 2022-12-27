@@ -42,7 +42,7 @@ namespace DatabaseInterpreter.Core
         public abstract string DefaultDataType { get; }
         public abstract string DefaultSchema { get; }
         public abstract bool SupportBulkCopy { get; }
-        public abstract bool SupportNchar { get; }     
+        public abstract bool SupportNchar { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
@@ -983,6 +983,41 @@ namespace DatabaseInterpreter.Core
             return false;
         }
 
+        protected string GetDbVersion()
+        {
+            if (!string.IsNullOrEmpty(this.ServerVersion))
+            {
+                return this.ServerVersion;
+            }
+
+            return this.GetDbVersion(this.CreateConnection());
+        }
+
+        protected string GetDbVersion(DbConnection connection)
+        {
+            bool needClose = false;
+
+            if (connection == null)
+            {
+                connection = this.CreateConnection();
+                needClose = true;
+            }
+
+            if (connection.State != ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            string serverVersion = connection.ServerVersion;
+
+            if (needClose)
+            {
+                connection.Close();
+            }
+
+            return serverVersion;
+        }
+
         public bool IsLowDbVersion(DbConnection connection)
         {
             string serverVersion = this.ServerVersion;
@@ -991,25 +1026,7 @@ namespace DatabaseInterpreter.Core
             {
                 try
                 {
-                    bool needClose = false;
-
-                    if (connection == null)
-                    {
-                        connection = this.CreateConnection();
-                        needClose = true;
-                    }
-
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
-                    serverVersion = connection.ServerVersion;
-
-                    if (needClose)
-                    {
-                        connection.Close();
-                    }
+                    serverVersion = this.GetDbVersion(connection);
                 }
                 catch (Exception ex)
                 {
@@ -1020,17 +1037,27 @@ namespace DatabaseInterpreter.Core
             return this.IsLowDbVersion(serverVersion);
         }
 
-        public bool IsLowDbVersion(string version, int majorVersion)
+        public bool IsLowDbVersion(string version, string versionToCompare)
         {
-            if (version != null)
+            if (version != null && versionToCompare != null)
             {
-                string majorVer = version.Split('.')[0];
+                string[] versionItems = version.Split('.');
+                string[] versionItemsToCompare = versionToCompare.Split('.');
 
-                if (int.TryParse(majorVer, out _))
+                int length = Math.Max(versionItems.Length, versionItemsToCompare.Length);
+
+                for (int i = 0; i < length; i++)
                 {
-                    if (int.Parse(majorVer) < majorVersion)
+                    string item = i < versionItems.Length ? versionItems[i] : "0";
+                    string itemToCompare = i < versionItemsToCompare.Length ? versionItemsToCompare[i] : "0";
+
+                    if (!string.IsNullOrEmpty(item) && !string.IsNullOrEmpty(itemToCompare) 
+                        && int.TryParse(item, out _) && int.TryParse(itemToCompare, out _))
                     {
-                        return true;
+                        if (int.Parse(item) < int.Parse(itemToCompare))
+                        {
+                            return true;
+                        }
                     }
                 }
             }

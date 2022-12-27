@@ -378,9 +378,42 @@ namespace SqlAnalyser.Core
             }
             else if (statement is LoopStatement loop)
             {
+                bool isReverse = false;
+                bool isForLoop = false;
+                bool isIntegerIterate = false;
+                string iteratorName = null;
+
                 if (loop.Type == LoopType.LOOP)
                 {
                     this.AppendLine("LOOP");
+                }
+                else if (loop.Type == LoopType.FOR && loop.LoopCursorInfo != null)
+                {
+                    isForLoop = true;
+                    isReverse = loop.LoopCursorInfo.IsReverse;
+                    iteratorName = loop.LoopCursorInfo.IteratorName.Symbol;
+
+                    if(loop.LoopCursorInfo.IsIntegerIterate)
+                    {
+                        isIntegerIterate = true;
+
+                        DeclareVariableStatement declareVariable = new DeclareVariableStatement();
+                        declareVariable.Name = loop.LoopCursorInfo.IteratorName;
+                        declareVariable.DataType = new TokenInfo("INTEGER");
+
+                        this.DeclareVariableStatements.Add(declareVariable);
+
+                        if (!isReverse)
+                        {
+                            this.AppendLine($"{iteratorName}:={loop.LoopCursorInfo.StartValue};");
+                            this.AppendLine($"WHILE {iteratorName}<={loop.LoopCursorInfo.StopValue} LOOP");
+                        }
+                        else
+                        {
+                            this.AppendLine($"{iteratorName}:={loop.LoopCursorInfo.StopValue};");
+                            this.AppendLine($"WHILE {iteratorName}>={loop.LoopCursorInfo.StartValue} LOOP");
+                        }
+                    }                    
                 }
                 else
                 {
@@ -388,6 +421,12 @@ namespace SqlAnalyser.Core
                 }
 
                 this.AppendChildStatements(loop.Statements, true);
+
+                if (isForLoop && isIntegerIterate)
+                {
+                    this.AppendLine($"{iteratorName}:={iteratorName}{(isReverse ? "-" : "+")}1;");
+                }
+
                 this.AppendLine("END LOOP;");
             }
             else if (statement is LoopExitStatement loopExit)

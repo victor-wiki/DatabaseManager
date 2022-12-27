@@ -56,7 +56,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            return this.IsLowDbVersion(version, 12);
+            return this.IsLowDbVersion(version, "12");
         }
         #endregion
 
@@ -173,7 +173,7 @@ namespace DatabaseInterpreter.Core
 
             var sb = this.CreateSqlBuilder();
 
-            bool isLowDbVersion = this.IsLowDbVersion(this.ServerVersion, 10);
+            bool isLowDbVersion = this.IsLowDbVersion(this.GetDbVersion(), "10");
 
             if (!isLowDbVersion)
             {

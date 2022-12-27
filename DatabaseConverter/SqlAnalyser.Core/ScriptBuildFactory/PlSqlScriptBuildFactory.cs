@@ -8,7 +8,7 @@ using System.Text;
 
 namespace SqlAnalyser.Core
 {
-    public class PlSqlScriptBuildFactory:ScriptBuildFactory
+    public class PlSqlScriptBuildFactory : ScriptBuildFactory
     {
         public override DatabaseType DatabaseType => DatabaseType.Oracle;
 
@@ -60,7 +60,7 @@ namespace SqlAnalyser.Core
                     result.BodyStartIndex += sbDeclare.Length;
                     result.BodyStopIndex += sbDeclare.Length;
                 }
-            }         
+            }
         }
 
         public override ScriptBuildResult GenerateRoutineScripts(RoutineScript script)
@@ -84,6 +84,7 @@ namespace SqlAnalyser.Core
                     ParameterType parameterType = parameter.ParameterType;
 
                     string dataType = parameter.DataType.Symbol;
+                    string defaultValue = parameter.DefaultValue == null ? "" : $" DEFAULT {parameter.DefaultValue}";
                     string strParameterType = "";
 
                     int parenthesesIndex = dataType.IndexOf("(");
@@ -102,7 +103,7 @@ namespace SqlAnalyser.Core
                         strParameterType = parameterType.ToString();
                     }
 
-                    sb.AppendLine($"{parameter.Name} {strParameterType} {dataType}{(i == script.Parameters.Count - 1 ? "" : ",")}");
+                    sb.AppendLine($"{parameter.Name} {strParameterType} {dataType}{defaultValue}{(i == script.Parameters.Count - 1 ? "" : ",")}");
 
                     i++;
                 }

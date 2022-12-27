@@ -708,7 +708,7 @@ namespace DatabaseInterpreter.Core
         #region Common Method
         public override bool IsLowDbVersion(string serverVersion)
         {
-            return this.IsLowDbVersion(serverVersion, 3);
+            return this.IsLowDbVersion(serverVersion, "3");
         }
 
         public override DbConnector GetDbConnector()

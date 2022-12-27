@@ -330,6 +330,7 @@ namespace SqlAnalyser.Core
                     parameterInfo.DataType = new TokenInfo(parameter.func_arg().func_type().GetText()) { Type = TokenType.DataType };
 
                     bool hasDefault = false;
+
                     foreach (var child in parameter.children)
                     {
                         if (child is TerminalNodeImpl impl)
@@ -349,6 +350,7 @@ namespace SqlAnalyser.Core
                                 {
                                     parameterInfo.DefaultValue = new TokenInfo(defaultValue);
                                 }
+
                                 break;
                             }
                         }

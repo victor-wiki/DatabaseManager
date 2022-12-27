@@ -1254,24 +1254,24 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
-            foreach(var child in node.children)
+            foreach (var child in node.children)
             {
-                if(child is SubqueryContext subquery)
+                if (child is SubqueryContext subquery)
                 {
                     statement = this.ParseSubquery(subquery);
                 }
-                else if(child is Query_blockContext block)
+                else if (child is Query_blockContext block)
                 {
                     statement = this.ParseQueryBlock(block);
                 }
-            }            
+            }
 
             return statement;
         }
 
         private SelectStatement ParseQueryBlock(Query_blockContext node)
         {
-            SelectStatement statement = new SelectStatement();            
+            SelectStatement statement = new SelectStatement();
 
             List<ColumnName> columnNames = new List<ColumnName>();
 
@@ -1778,7 +1778,37 @@ namespace SqlAnalyser.Core
                 }
                 else if (child is Cursor_loop_paramContext cursor)
                 {
-                    statement.Condition = new TokenInfo(cursor) { Type = TokenType.IfCondition };
+                    LoopCursorInfo loopCursorInfo = new LoopCursorInfo();
+
+                    var indexName = cursor.index_name();
+                    var recordName = cursor.record_name();
+
+                    if (indexName != null)
+                    {
+                        loopCursorInfo.IsIntegerIterate = true;
+                        loopCursorInfo.IteratorName = new TokenInfo(indexName);
+                        loopCursorInfo.StartValue = new TokenInfo(cursor.lower_bound());
+                        loopCursorInfo.StopValue = new TokenInfo(cursor.upper_bound());
+                    }
+                    else if (recordName != null)
+                    {
+                        loopCursorInfo.IteratorName = new TokenInfo(recordName);
+                        loopCursorInfo.SelectStatement = this.ParseSelectStatement(cursor.select_statement());
+                    }
+
+                    foreach (var c in cursor.children)
+                    {
+                        if (c is TerminalNodeImpl tni)
+                        {
+                            if (c.GetText().ToUpper() == "REVERSE")
+                            {
+                                loopCursorInfo.IsReverse = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    statement.LoopCursorInfo = loopCursorInfo;
                 }
 
                 i++;
@@ -1886,7 +1916,7 @@ namespace SqlAnalyser.Core
                     columnInfo.Name = new ColumnName(columnName);
                     columnInfo.DataType = new TokenInfo(dataType) { Type = TokenType.DataType };
 
-                    bool isDefault = false;            
+                    bool isDefault = false;
 
                     foreach (var child in (columnDefinition != null ? columnDefinition.children : virtualColumnDefition.children))
                     {
@@ -1922,7 +1952,7 @@ namespace SqlAnalyser.Core
                                             break;
                                         }
                                     }
-                                    else if(c is Check_constraintContext check)
+                                    else if (c is Check_constraintContext check)
                                     {
                                         constraintInfo = new ConstraintInfo() { Type = ConstraintType.Check };
                                         constraintInfo.Definition = new TokenInfo(check.condition());
@@ -1957,7 +1987,7 @@ namespace SqlAnalyser.Core
                             if (text == "DEFAULT")
                             {
                                 isDefault = true;
-                            }                           
+                            }
                         }
                         else if (child is ExpressionContext exp)
                         {
@@ -1966,7 +1996,7 @@ namespace SqlAnalyser.Core
                                 columnInfo.DefaultValue = new TokenInfo(exp);
 
                                 isDefault = false;
-                            }                            
+                            }
                         }
                     }
 
@@ -2011,10 +2041,10 @@ namespace SqlAnalyser.Core
                             }
                             else if (child is ConditionContext condition)
                             {
-                                if(constraintInfo.Type == ConstraintType.Check)
+                                if (constraintInfo.Type == ConstraintType.Check)
                                 {
                                     constraintInfo.Definition = new TokenInfo(condition);
-                                }                               
+                                }
                             }
                             else if (child is Foreign_key_clauseContext fk)
                             {

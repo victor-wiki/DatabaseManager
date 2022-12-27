@@ -83,6 +83,7 @@ namespace SqlAnalyser.Core
                     ParameterType parameterType = parameter.ParameterType;
 
                     string dataType = parameter.DataType.Symbol;
+                    string defaultValue = parameter.DefaultValue == null ? "" : $" DEFAULT {parameter.DefaultValue}";
                     string strParameterType = "";
 
                     int parenthesesIndex = dataType.IndexOf("(");
@@ -101,7 +102,7 @@ namespace SqlAnalyser.Core
                         strParameterType = parameterType.ToString();
                     }
 
-                    sb.AppendLine($"{parameter.Name} {strParameterType} {dataType}{(i == script.Parameters.Count - 1 ? "" : ",")}");
+                    sb.AppendLine($"{parameter.Name} {strParameterType} {dataType}{defaultValue}{(i == script.Parameters.Count - 1 ? "" : ",")}");
 
                     i++;
                 }
