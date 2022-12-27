@@ -223,23 +223,7 @@ namespace DatabaseInterpreter.Core
 
         private bool IsSupportComputeColumn()
         {
-            string serverVersion = this.ServerVersion;
-
-            if (string.IsNullOrEmpty(serverVersion))
-            {
-                serverVersion = this.GetDbVersion(this.CreateConnection());
-            }
-
-            string[] versionItems = serverVersion.Split('.');
-
-            if (versionItems.Length > 1)
-            {
-                return !(int.Parse(versionItems[0]) < 5 || (int.Parse(versionItems[0]) == 5 && int.Parse(versionItems[1]) < 7));  
-            }
-            else
-            {
-                return int.Parse(versionItems[0]) > 5;
-            }
+            return !this.IsLowDbVersion(this.GetDbVersion(), "5.7");
         }
 
         private string GetSqlForTableColumns(SchemaInfoFilter filter = null)

@@ -1051,10 +1051,17 @@ namespace DatabaseInterpreter.Core
                     string item = i < versionItems.Length ? versionItems[i] : "0";
                     string itemToCompare = i < versionItemsToCompare.Length ? versionItemsToCompare[i] : "0";
 
-                    if (!string.IsNullOrEmpty(item) && !string.IsNullOrEmpty(itemToCompare) 
+                    if (!string.IsNullOrEmpty(item) && !string.IsNullOrEmpty(itemToCompare)
                         && int.TryParse(item, out _) && int.TryParse(itemToCompare, out _))
                     {
-                        if (int.Parse(item) < int.Parse(itemToCompare))
+                        int vItem = int.Parse(item);
+                        int vItemToCompare = int.Parse(itemToCompare);
+
+                        if (vItem > vItemToCompare)
+                        {
+                            return false;
+                        }
+                        else if (vItem < vItemToCompare)
                         {
                             return true;
                         }
