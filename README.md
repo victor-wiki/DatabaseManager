@@ -41,3 +41,6 @@
 
 ## UI - Translate Script
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
+
+## Executable Files
+[Windows Binaries](https://matix.li/f6d0155cdeaa)
