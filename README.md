@@ -28,7 +28,7 @@
   
 ### Translate Script
   The translate form can translate script to one database kind to another without database connection.
-<br/>(Note:Most function and procedure of Postgres currently can't be translated to others.)
+<br/>(Note: Most function and procedure of Postgres currently can't be translated to others.)
 
 ## UI - Convert Database
 ![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
@@ -43,4 +43,5 @@
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
 
 ## Executable Files
-[Windows Binaries](https://matix.li/f6d0155cdeaa)
+[Windows Binaries](https://matix.li/f6d0155cdeaa) | [Windows Installer](https://matix.li/b2a2b3c45f5f)
+<br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/3.1) is required.)
