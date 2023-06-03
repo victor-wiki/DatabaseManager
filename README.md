@@ -43,5 +43,5 @@
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
 
 ## Executable Files
-[Windows Binaries](https://matix.li/f6d0155cdeaa) | [Windows Installer](https://matix.li/b2a2b3c45f5f)
+[Windows Binaries](https://matix.li/16ffd9b373d0) | [Windows Installer](https://matix.li/1388163487f5)
 <br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/3.1) is required.)
