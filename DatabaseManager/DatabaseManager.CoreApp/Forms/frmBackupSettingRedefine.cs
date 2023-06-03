@@ -71,8 +71,11 @@ namespace DatabaseManager
 
             if (this.Setting == null)
             {
-                this.Setting = new BackupSetting() { DatabaseType = this.DatabaseType.ToString(), SaveFolder = saveFolder, ZipFile = zipFile };
+                this.Setting = new BackupSetting() { DatabaseType = this.DatabaseType.ToString() };
             }
+
+            this.Setting.SaveFolder = saveFolder;
+            this.Setting.ZipFile = zipFile;
 
             if (this.chkSetAsDefault.Checked)
             {
