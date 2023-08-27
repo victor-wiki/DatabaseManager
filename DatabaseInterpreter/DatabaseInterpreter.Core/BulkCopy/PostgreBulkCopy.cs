@@ -25,7 +25,8 @@ namespace DatabaseInterpreter.Core
             { "money",  NpgsqlDbType.Money},
             { "date",  NpgsqlDbType.Date},
             { "text",  NpgsqlDbType.Text},
-            { "character varying",  NpgsqlDbType.Varchar}
+            { "character varying",  NpgsqlDbType.Varchar},
+            { "boolean", NpgsqlDbType.Boolean}
         };
 
         private bool _ownsTheConnection = false;
@@ -92,14 +93,10 @@ namespace DatabaseInterpreter.Core
         }
         private async Task<ulong> CopyData(DataTable table)
         {
-            NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
-
             string columnList = this.GetColumnList(table);
 
             this.ValidateConnection();
             await this.OpenConnectionAsync();
-
-            this._connection.TypeMapper.UseNetTopologySuite();
 
             string commandText = $"COPY {this.DestinationTableName}({columnList}) FROM STDIN (FORMAT BINARY)";
 
@@ -115,7 +112,22 @@ namespace DatabaseInterpreter.Core
                     {
                         var result = this.ParseDbTypeFromDotnetType(col.ColumnName, row[col.ColumnName], col.DataType);
 
-                        await writer.WriteAsync(result.Value, result.Type);
+                        dynamic value = result.Value;
+                        string strValue = value?.ToString();
+
+                        if(!string.IsNullOrEmpty(strValue))
+                        {
+                            if (result.Type == NpgsqlDbType.Boolean && (strValue == "0" || strValue == "1"))
+                            {
+                                value = Convert.ToBoolean(result.Value);
+                            }
+                            else if (result.Type == NpgsqlDbType.Money && col.DataType == typeof(double))
+                            {
+                                value = Convert.ToDecimal(value);
+                            }
+                        }                       
+
+                        await writer.WriteAsync(value, result.Type);
                     }
                 }
 
@@ -198,11 +210,7 @@ namespace DatabaseInterpreter.Core
             else if (t == typeof(DateTimeOffset))
             {
                 dbType = NpgsqlDbType.TimestampTz;
-            }
-            else if (t == typeof(Int32))
-            {
-                dbType = NpgsqlDbType.Integer;
-            }
+            }           
             else if (t == typeof(sbyte))
             {
                 dbType = NpgsqlDbType.Smallint;
@@ -222,89 +230,47 @@ namespace DatabaseInterpreter.Core
             else
             {
                 string targetColumnDataType = this.FindTableColumnType(columnName)?.ToLower();
+                NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
 
-                if (t == typeof(Int16))
+                if (mappedDataType.HasValue)
                 {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
-                    {
-                        dbType = mappedDataType.Value;
-                    }
-                    else
+                    dbType = mappedDataType.Value;
+                }
+                else
+                {
+                    if (t == typeof(Int16))
                     {
                         dbType = NpgsqlDbType.Smallint;
                     }
-                }
-                if (t == typeof(Int64))
-                {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
+                    else if (t == typeof(Int32))
                     {
-                        dbType = mappedDataType.Value;
+                        dbType = NpgsqlDbType.Integer;
                     }
-                    else
+                    else if (t == typeof(Int64))
                     {
                         dbType = NpgsqlDbType.Bigint;
                     }
-                }
-                else if (t == typeof(float))
-                {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
-                    {
-                        dbType = mappedDataType.Value;
-                    }
-                    else
+                    else if (t == typeof(float))
                     {
                         dbType = NpgsqlDbType.Real;
                     }
-                }
-                else if (t == typeof(double))
-                {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
-                    {
-                        dbType = mappedDataType.Value;
-                    }
-                    else
+                    else if (t == typeof(double))
                     {
                         dbType = NpgsqlDbType.Double;
                     }
-                }
-                else if (t == typeof(decimal))
-                {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
-                    {
-                        dbType = mappedDataType.Value;
-                    }
-                    else
+                    else if (t == typeof(decimal))
                     {
                         dbType = NpgsqlDbType.Numeric;
                     }
-                }
-                else if (t == typeof(DateTime))
-                {
-                    NpgsqlDbType? mappedDataType = this.GetMappedDataType(targetColumnDataType);
-
-                    if (mappedDataType.HasValue)
-                    {
-                        dbType = mappedDataType.Value;
-                    }
-                    else
+                    else if (t == typeof(DateTime))
                     {
                         dbType = NpgsqlDbType.Timestamp;
                     }
-                }
-                else if (Enum.TryParse(t.Name, out NpgsqlDbType _))
-                {
-                    dbType = (NpgsqlDbType)Enum.Parse(typeof(NpgsqlDbType), t.Name);
-                }
+                    else if (Enum.TryParse(t.Name, out NpgsqlDbType _))
+                    {
+                        dbType = (NpgsqlDbType)Enum.Parse(typeof(NpgsqlDbType), t.Name);
+                    }
+                }               
             }
 
             if (dbType == NpgsqlDbType.Unknown)
@@ -327,7 +293,7 @@ namespace DatabaseInterpreter.Core
 
         private NpgsqlDbType? GetMappedDataType(string dataType)
         {
-            if(dataType!=null && dataTypeMappings.ContainsKey(dataType))
+            if (dataType != null && dataTypeMappings.ContainsKey(dataType))
             {
                 return dataTypeMappings[dataType];
             }

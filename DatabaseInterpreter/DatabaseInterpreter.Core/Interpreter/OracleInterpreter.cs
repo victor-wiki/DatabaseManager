@@ -492,14 +492,14 @@ namespace DatabaseInterpreter.Core
             }
         }
 
-        private Task<List<TableTrigger>> GetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
+        private async Task<List<TableTrigger>> GetTriggerDefinition(Task<List<TableTrigger>> tableTriggers)
         {
-            foreach (TableTrigger trigger in tableTriggers.Result)
+            foreach (TableTrigger trigger in (await tableTriggers).ToList())
             {
                 trigger.Definition = trigger.CreateClause + trigger.Definition;
             }
 
-            return tableTriggers;
+            return await tableTriggers;
         }
 
         private string GetSqlForTableTriggers(SchemaInfoFilter filter = null)

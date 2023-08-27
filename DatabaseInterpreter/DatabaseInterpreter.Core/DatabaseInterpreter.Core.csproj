@@ -3,24 +3,24 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.4</AssemblyVersion>
-    <FileVersion>2.1.4</FileVersion>
-    <Version>2.1.4</Version>
-    <PackageReleaseNotes>bug fix: not detect mysql version for compute column and check constraint</PackageReleaseNotes>
+    <AssemblyVersion>2.1.5</AssemblyVersion>
+    <FileVersion>2.1.5</FileVersion>
+    <Version>2.1.5</Version>
+    <PackageReleaseNotes>upgrade nuget packages; fix issue for postgres bulkcopy</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="15.0.1" />
-    <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0" />
+    <PackageReference Include="Dapper" Version="2.0.151" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.0" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
-    <PackageReference Include="MySqlConnector" Version="2.1.13" />
-    <PackageReference Include="Npgsql" Version="6.0.7" />
-    <PackageReference Include="Npgsql.NetTopologySuite" Version="6.0.7" />
-    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="3.21.80" />
+    <PackageReference Include="MySqlConnector" Version="2.2.7" />
+    <PackageReference Include="Npgsql" Version="7.0.4" />
+    <PackageReference Include="Npgsql.NetTopologySuite" Version="7.0.4" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.2.0-dev" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.3" />
   </ItemGroup>
 
