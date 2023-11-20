@@ -44,4 +44,4 @@
 
 ## Executable Files
 [Windows Binaries](https://matix.li/16ffd9b373d0) | [Windows Installer](https://matix.li/1388163487f5)
-<br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/3.1) is required.)
+<br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) is required.)
