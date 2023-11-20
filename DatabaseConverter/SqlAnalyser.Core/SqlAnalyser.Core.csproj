@@ -6,11 +6,11 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql, PostgreSql and SqliteSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.1.2</Version>
+    <Version>2.1.3</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.2</AssemblyVersion>
-    <FileVersion>2.1.2</FileVersion>
-    <PackageReleaseNotes>SqlAnalyser: add "for loop" parse for Oracle</PackageReleaseNotes>
+    <AssemblyVersion>2.1.3</AssemblyVersion>
+    <FileVersion>2.1.3</FileVersion>
+    <PackageReleaseNotes>fix issue: outer/cross apply for tsql.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
