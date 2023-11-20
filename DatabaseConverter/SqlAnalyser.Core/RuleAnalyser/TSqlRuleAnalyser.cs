@@ -768,10 +768,23 @@ namespace SqlAnalyser.Core
             JoinItem joinItem = new JoinItem();
 
             Join_onContext joinOn = node.join_on();
+            Apply_Context apply = node.apply_();
+
+            IList<IParseTree> children = null;
 
             if (joinOn != null)
             {
-                foreach (var child in joinOn.children)
+                children = joinOn.children;
+            }
+            else if (node.apply_() != null)
+            {
+                children = node.apply_().children;
+                joinItem.IsApply = true;
+            }
+
+            if (children != null)
+            {
+                foreach (var child in children)
                 {
                     if (child is TerminalNodeImpl terminalNode)
                     {
@@ -794,6 +807,9 @@ namespace SqlAnalyser.Core
                             case TSqlParser.CROSS:
                                 joinItem.Type = JoinType.CROSS;
                                 break;
+                            case TSqlParser.OUTER:
+                                joinItem.Type = JoinType.OUTER;
+                                break;
                             case TSqlParser.PIVOT:
                                 joinItem.Type = JoinType.PIVOT;
                                 break;
@@ -809,6 +825,12 @@ namespace SqlAnalyser.Core
             Pivot_clauseContext pivot = node.pivot()?.pivot_clause();
             Unpivot_clauseContext unpivot = node.unpivot()?.unpivot_clause();
 
+
+            if (tableSoure == null && apply?.table_source() != null)
+            {
+                tableSoure = apply?.table_source();
+            }
+
             As_table_aliasContext alias = tableSoure?.table_source_item_joined()?.table_source_item()?.as_table_alias();
 
             if (alias != null)
@@ -817,11 +839,12 @@ namespace SqlAnalyser.Core
             }
 
             joinItems.Add(joinItem);
-
+          
             if (tableSoure != null)
             {
                 joinItem.TableName = asWhole ? new TableName(tableSoure) : this.ParseTableName(tableSoure);
-                joinItem.Condition = this.ParseCondition(joinOn.search_condition());
+                
+                joinItem.Condition = this.ParseCondition(joinOn?.search_condition());
 
                 if (!asWhole)
                 {
@@ -841,7 +864,7 @@ namespace SqlAnalyser.Core
                     #region handle alias
                     var ts = tableSoure.table_source_item_joined()?.table_source_item();
                     var derivedTable = ts?.derived_table();
-                    var derivedTableAlias = ts?.as_table_alias()?.table_alias();                   
+                    var derivedTableAlias = ts?.as_table_alias()?.table_alias();
 
                     if (derivedTable != null && derivedTableAlias != null)
                     {
@@ -864,7 +887,7 @@ namespace SqlAnalyser.Core
                                     break;
                                 }
                             }
-                        }                       
+                        }
                     }
                     #endregion
 

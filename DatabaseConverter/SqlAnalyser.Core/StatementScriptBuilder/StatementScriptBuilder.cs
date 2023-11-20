@@ -8,7 +8,7 @@ using System.Text;
 
 namespace SqlAnalyser.Core
 {
-    public class StatementScriptBuilder:IDisposable
+    public class StatementScriptBuilder : IDisposable
     {
         private StringBuilder builder = new StringBuilder();
         internal int Level = 0;
@@ -232,7 +232,44 @@ namespace SqlAnalyser.Core
 
                             string condition = joinItem.Condition == null ? "" : $" {(isPostgresDeleteFromJoin && j == 0 ? "WHERE" : "ON")} {joinItem.Condition}";
 
-                            string joinKeyword = (isPostgresDeleteFromJoin && j == 0) ? "USING " : $"{joinItem.Type} JOIN ";
+
+                            string joinKeyword = " ";
+                            bool handled = false;
+
+                            if (isPostgresDeleteFromJoin && j == 0)
+                            {
+                                joinKeyword = "USING ";
+                                handled = true;
+                            }
+                            else if (joinItem.IsApply)
+                            {
+                                if (this is TSqlStatementScriptBuilder || this is PlSqlStatementScriptBuilder)
+                                {
+                                    joinKeyword = $"{joinItem.Type} APPLY ";
+                                    handled = true;
+                                }
+                                else if(this is PostgreSqlStatementScriptBuilder)
+                                {
+                                    if (joinItem.Type == JoinType.OUTER || joinItem.Type == JoinType.CROSS)
+                                    {
+                                        joinKeyword = $"LEFT JOIN LATERAL ";
+                                        handled = true;
+                                    }                                   
+                                }
+                                else if (this is MySqlStatementScriptBuilder)
+                                {
+                                    if (joinItem.Type == JoinType.OUTER || joinItem.Type == JoinType.CROSS)
+                                    {
+                                        joinKeyword = $"LEFT {joinItem.Type} JOIN ";
+                                        handled = true;
+                                    }
+                                }
+                            }
+
+                            if (!handled)
+                            {
+                                joinKeyword = $"{joinItem.Type} JOIN ";
+                            }
 
                             TableName tableName = joinItem.TableName;
 
@@ -353,7 +390,7 @@ namespace SqlAnalyser.Core
             this.AppendLine($"{unpivotItem.ValueColumnName}");
             this.AppendLine($"FOR {unpivotItem.ForColumnName} IN ({(string.Join(",", unpivotItem.InColumnNames.Select(item => $"{item}")))})");
             this.AppendLine(")");
-        }     
+        }
 
         protected bool HasAssignVariableColumn(SelectStatement statement)
         {
@@ -409,8 +446,8 @@ namespace SqlAnalyser.Core
                         break;
                     case ConstraintType.UniqueIndex:
                         definition = "UNIQUE";
-                        
-                        if(!isForColumn)
+
+                        if (!isForColumn)
                         {
                             definition += $"({string.Join(",", constraint.ColumnNames)})";
                         }
@@ -446,7 +483,7 @@ namespace SqlAnalyser.Core
 
                 }
 
-                if(this is MySqlStatementScriptBuilder && isForColumn)
+                if (this is MySqlStatementScriptBuilder && isForColumn)
                 {
                     sb.Append($" {definition}");
                 }
@@ -457,12 +494,12 @@ namespace SqlAnalyser.Core
                     if (hasName && isForColumn)
                     {
                         sb.Append($" {definition}");
-                    }  
+                    }
                     else
                     {
-                        sb.Append($"{(hasName? "CONSTRAINT":"")} {(!hasName?"":$"{name} ")}{definition}".Trim());
+                        sb.Append($"{(hasName ? "CONSTRAINT" : "")} {(!hasName ? "" : $"{name} ")}{definition}".Trim());
                     }
-                }                
+                }
 
                 if (i < constaints.Count - 1)
                 {
@@ -473,7 +510,7 @@ namespace SqlAnalyser.Core
             }
 
             return sb.ToString();
-        }       
+        }
 
         public void Dispose()
         {

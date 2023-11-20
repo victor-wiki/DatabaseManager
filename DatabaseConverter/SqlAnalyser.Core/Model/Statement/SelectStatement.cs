@@ -66,6 +66,7 @@ namespace SqlAnalyser.Model
         public PivotItem PivotItem { get; set; }
         public UnPivotItem UnPivotItem { get; set; }
         public TokenInfo Alias { get; set; }
+        public bool IsApply { get; set; }
     }
 
     public class PivotItem : StatementItem
@@ -91,6 +92,7 @@ namespace SqlAnalyser.Model
         FULL = 3,
         CROSS = 4,
         PIVOT = 5,
-        UNPIVOT = 6
+        UNPIVOT = 6,
+        OUTER = 7
     }
 }
