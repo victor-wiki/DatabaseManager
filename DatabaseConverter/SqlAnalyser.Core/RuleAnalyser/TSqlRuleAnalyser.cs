@@ -722,7 +722,7 @@ namespace SqlAnalyser.Core
                     {
                         var tsij = join.join_on()?.table_source()?.table_source_item_joined();
 
-                        if (!asWhole && (tsij.table_source_item_joined() != null || tsij.table_source_item()?.derived_table() != null))
+                        if (!asWhole && (tsij?.table_source_item_joined() != null || tsij?.table_source_item()?.derived_table() != null))
                         {
                             asWhole = true;
                         }
