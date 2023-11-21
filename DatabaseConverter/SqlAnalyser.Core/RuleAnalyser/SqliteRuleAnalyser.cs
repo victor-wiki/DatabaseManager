@@ -540,9 +540,21 @@ namespace SqlAnalyser.Core
                     {
                         joinItem.Type = JoinType.LEFT;
                     }
+                    if (text.Contains("RIGHT"))
+                    {
+                        joinItem.Type = JoinType.RIGHT;
+                    }
                     else if (text.Contains("CROSS"))
                     {
                         joinItem.Type = JoinType.CROSS;
+                    }
+                    else if (text.Contains("FULL"))
+                    {
+                        joinItem.Type = JoinType.FULL;
+                    }
+                    else if (text.Contains("OUTER"))
+                    {
+                        joinItem.Type = JoinType.OUTER;
                     }
                     else
                     {

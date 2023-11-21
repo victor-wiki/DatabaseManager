@@ -6,6 +6,7 @@ using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using static PlSqlParser;
 
@@ -1330,6 +1331,8 @@ namespace SqlAnalyser.Core
 
             if (groupby != null)
             {
+                statement.GroupBy = new List<TokenInfo>();
+
                 Group_by_elementsContext[] groupbyElements = groupby.group_by_elements();
                 Having_clauseContext having = groupby.having_clause();
 
@@ -1523,6 +1526,9 @@ namespace SqlAnalyser.Core
                 case nameof(PlSqlParser.CROSS):
                     matched = true;
                     return JoinType.CROSS;
+                case nameof(PlSqlParser.OUTER):
+                    matched = true;
+                    return JoinType.OUTER;
                 default:
                     matched = false;
                     return JoinType.INNER;
