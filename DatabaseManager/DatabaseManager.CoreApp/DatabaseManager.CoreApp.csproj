@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.2" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
-    <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.2" />
+    <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

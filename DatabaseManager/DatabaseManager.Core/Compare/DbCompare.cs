@@ -234,7 +234,7 @@ namespace DatabaseManager.Core
 
         private bool IsNameEquals(string name1, string name2)
         {
-            return name1.ToLower() == name2.ToLower();
+            return name1?.ToLower() == name2?.ToLower();
         }
 
         private bool IsDbObjectEquals(DatabaseObject source, DatabaseObject target)
