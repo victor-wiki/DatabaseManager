@@ -8,13 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.1.4</Version>
+    <Version>2.1.5</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>upgrade package "ObjectListView.Repack.Core3" to 2.9.3 (it supports .net7)
-</PackageReleaseNotes>
+    <PackageReleaseNotes>fix issue:no data copied when copy data to sqlite(bulkcopy is not supported).</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.4</AssemblyVersion>
-    <FileVersion>2.1.4</FileVersion>
+    <AssemblyVersion>2.1.5</AssemblyVersion>
+    <FileVersion>2.1.5</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
