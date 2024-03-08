@@ -99,6 +99,11 @@ namespace DatabaseManager
                     source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column;
                 }
 
+                if(this.chkScriptData.Checked && !target.DbInterpreter.SupportBulkCopy)
+                {
+                    target.DbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
+                }
+
                 source.TableNameMappings.Add(this.Table.Name, name);
 
                 this.btnExecute.Enabled = false;
