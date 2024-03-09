@@ -16,7 +16,7 @@
   <item name="CHAR" args="NUMBER" isString="true"></item>
   <item name="CHAR_LENGTH" args="EXP"></item>
   <item name="CHARACTER_LENGTH" args=""></item>
-  <item name="COALESCE" args="EXP,DEFAULT,..."></item>
+  <item name="COALESCE" args="EXP,DEFAULT,..." isCheck="true"></item>
   <item name="CONCAT" args="EXP1,EXP2,..." isString="true"></item>
   <item name="CONCAT_WS" args="SEPARATOR,EXP1,EXP2,..." isString="true"></item>
   <item name="CONNECTION_ID" args=""></item>
@@ -55,7 +55,7 @@
   <item name="GREATEST" args="EXP1,EXP2,..."></item>
   <item name="HOUR" args="DATE"></item>
   <item name="IF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
-  <item name="IFNULL" args="EXP,DEFAULT"></item>
+  <item name="IFNULL" args="EXP,DEFAULT" isCheck="true"></item>
   <item name="INSERT" args="EXP,START,LENGTH,VALUE" isString="true"></item>
   <item name="INSTR" args="EXP,SEARCH" isString="true"></item>
   <item name="ISNULL" args="EXP"></item>

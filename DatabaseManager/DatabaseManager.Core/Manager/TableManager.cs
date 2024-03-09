@@ -319,7 +319,7 @@ namespace DatabaseManager.Core
 
             if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
             {
-                defaultValueConstraints = await (this.dbInterpreter as SqlServerInterpreter).GetTableDefautValueConstraintsAsync(filter);
+                defaultValueConstraints = await (this.dbInterpreter as SqlServerInterpreter).GetTableDefaultValueConstraintsAsync(filter);
             }
 
             return defaultValueConstraints;

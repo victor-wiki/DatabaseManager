@@ -106,7 +106,7 @@ namespace DatabaseConverter.Core
                             int equalMarkIndex = result.IndexOf("=");
 
                             strAssign = result.Substring(0, equalMarkIndex + 1);
-                            parseContent = result.Substring(equalMarkIndex + 1); 
+                            parseContent = result.Substring(equalMarkIndex + 1);
                         }
 
                         var symbolItems = SplitByConcatChars(StringHelper.GetBalanceParenthesisTrimedValue(parseContent), sourceConcatChars);
@@ -125,7 +125,7 @@ namespace DatabaseConverter.Core
                             }
                             else
                             {
-                                string upperContent = content.Trim('(', ')').Trim().ToUpper();
+                                string upperContent = StringHelper.GetBalanceParenthesisTrimedValue(content).ToUpper();
 
                                 if (upperContent.StartsWith("CASE") && upperContent.EndsWith("END"))
                                 {
@@ -472,9 +472,36 @@ namespace DatabaseConverter.Core
                 {
                     return true;
                 }
-                else
+                else if (IsStringConvertFunction(databaseType, specification, value))
                 {
-                    return IsStringConvertFunction(databaseType, specification, value);
+                    return true;
+                }
+                else if (specification.IsCheck)
+                {
+                    var tokens = FunctionTranslator.GetFunctionArgumentTokens(specification, null);
+
+                    var formular = new FunctionFormula(value);
+                    var args = formular.GetArgs(specification.Delimiter ?? ",");
+
+                    if (args != null)
+                    {
+                        for (int i = 0; i < tokens.Count; i++)
+                        {
+                            if (args.Count > 0 && i < args.Count)
+                            {
+                                string argName = tokens[i].Content;
+                                string argValue = args[i];
+
+                                if (argName == "DEFAULT" || argName == "NOT_NULL_DEFAULT")
+                                {
+                                    if (ValueHelper.IsStringValue(argValue))
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }                    
                 }
             }
 

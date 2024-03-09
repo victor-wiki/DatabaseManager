@@ -11,7 +11,7 @@
   <item name="FORMAT" args="FORMAT,EXP" isString="true"></item>
   <item name="GLOB" args="X,Y"></item>
   <item name="HEX" args="EXP"></item>
-  <item name="IFNULL" args="EXP,DEFAULT"></item>
+  <item name="IFNULL" args="EXP,DEFAULT" isCheck="true"></item>
   <item name="IIF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
   <item name="INSTR" args="EXP,SEARCH" isString="true"></item>	
   <item name="LAST_INSERT_ROWID" args=""></item>

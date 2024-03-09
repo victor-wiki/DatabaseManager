@@ -7,6 +7,7 @@
         public string Args { get; set; }
         public bool NoParenthesess { get; set; }
         public bool IsString { get; set; }
+        public bool IsCheck { get; set; }
 
         public string Delimiter
         {

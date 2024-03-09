@@ -82,8 +82,8 @@
   <item name="NULLIF" args="EXP1,EXP2"></item>
   <item name="NUMTODSINTERVAL" args="NUMBER,UNIT"></item>
   <item name="NUMTOYMINTERVAL" args="NUMBER,UNIT"></item>
-  <item name="NVL" args="EXP,DEFAULT"></item>
-  <item name="NVL2" args="EXP,NOT_NULL_DEFAUT,DEFAUT"></item>
+  <item name="NVL" args="EXP,DEFAULT" isCheck="true"></item>
+  <item name="NVL2" args="EXP,NOT_NULL_DEFAULT,DEFAULT" isCheck="true"></item>
   <item name="POWER" args="EXP,Y"></item>
   <!--<item name="RANK" args=""></item>-->
   <item name="RAWTOHEX" args="EXP"></item>

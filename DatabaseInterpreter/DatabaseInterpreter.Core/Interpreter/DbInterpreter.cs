@@ -993,6 +993,21 @@ namespace DatabaseInterpreter.Core
             return this.GetDbVersion(this.CreateConnection());
         }
 
+        protected bool ValidateConnection(DbConnection connection)
+        {
+            if (connection == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(connection.DataSource) && string.IsNullOrEmpty(connection.Database))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         protected string GetDbVersion(DbConnection connection)
         {
             bool needClose = false;
@@ -1001,6 +1016,13 @@ namespace DatabaseInterpreter.Core
             {
                 connection = this.CreateConnection();
                 needClose = true;
+            }
+            else
+            {
+                if (!this.ValidateConnection(connection))
+                {
+                    return null;
+                }
             }
 
             if (connection.State != ConnectionState.Open)

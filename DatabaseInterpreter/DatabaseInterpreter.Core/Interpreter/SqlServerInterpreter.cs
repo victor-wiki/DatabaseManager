@@ -532,12 +532,12 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Table Constraint
-        public Task<List<TableDefaultValueConstraint>> GetTableDefautValueConstraintsAsync(SchemaInfoFilter filter = null)
+        public Task<List<TableDefaultValueConstraint>> GetTableDefaultValueConstraintsAsync(SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<TableDefaultValueConstraint>(this.GetSqlForTableDefaultValueConstraints(filter));
         }
 
-        public Task<List<TableDefaultValueConstraint>> GetTableDefautValueConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
+        public Task<List<TableDefaultValueConstraint>> GetTableDefaultValueConstraintsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
             return base.GetDbObjectsAsync<TableDefaultValueConstraint>(dbConnection, this.GetSqlForTableDefaultValueConstraints(filter));
         }

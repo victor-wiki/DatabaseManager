@@ -224,10 +224,10 @@ namespace DatabaseInterpreter.Core
                     }
 
                     sb.Append($@"SELECT name AS Name,'{tableName}' AS TableName,
-                                TRIM(REPLACE(type,'AUTO_INCREMENT','')) AS DataType,
+                                type AS DataType,
                                 CASE WHEN INSTR(UPPER(type),'NUMERIC')>=1 AND INSTR(type,'(')>0 THEN CAST(TRIM(SUBSTR(type,INSTR(type,'(')+1,IIF(INSTR(type,',')==0, INSTR(type,')'),INSTR(type,','))-INSTR(type,'(')-1)) AS INTEGER) ELSE NULL END AS Precision,
                                 CASE WHEN INSTR(UPPER(type),'NUMERIC')>=1 AND INSTR(type,',')>0 THEN CAST(TRIM(SUBSTR(type,INSTR(type,',')+1,INSTR(type,')')-INSTR(type,',')-1)) AS INTEGER) ELSE NULL END AS Scale,
-                                CASE WHEN INSTR(type,'AUTO_INCREMENT')>0 THEN 1 ELSE 0 END AS IsIdentity,
+                                CASE WHEN type='INTEGER' AND pk=1 AND EXISTS( SELECT 1 FROM sqlite_master WHERE  name = '{tableName}' AND sql LIKE '%AUTOINCREMENT%') THEN 1 ELSE 0 END AS IsIdentity,
                                 CASE WHEN ""notnull""=1 THEN 0 ELSE 1 END AS IsNullable,
                                 dflt_value AS DefaultValue, pk AS IsPrimaryKey, cid AS ""Order""
                                 FROM PRAGMA_TABLE_INFO('{tableName}')");
@@ -968,10 +968,10 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"AUTO_INCREMENT" : "");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"PRIMARY KEY AUTOINCREMENT" : "");
                 string commentClause = (!string.IsNullOrEmpty(column.Comment) && this.Option.TableScriptsGenerateOption.GenerateComment ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
-                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";                             
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requiredClause} {defaultValueClause} {scriptComment}{commentClause}";
             }

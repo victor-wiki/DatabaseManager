@@ -181,14 +181,17 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.TableScriptsGenerateOption.GeneratePrimaryKey && primaryKey != null)
             {
-                string primaryKeyName = primaryKey.Name ?? "";
+                if(!columns.Any(item=>item.IsIdentity))
+                {
+                    string primaryKeyName = primaryKey.Name ?? "";
 
-                primaryKeyConstraint =
-$@"
+                    primaryKeyConstraint =
+    $@"
 ,CONSTRAINT {primaryKeyName} PRIMARY KEY
  (
   {string.Join(Environment.NewLine, primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)},")).TrimEnd(',')}
  )";
+                }               
             }
             #endregion
 
