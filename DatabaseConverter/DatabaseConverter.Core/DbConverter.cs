@@ -112,12 +112,7 @@ namespace DatabaseConverter.Core
 
             sourceInterpreterOption.BulkCopy = this.Option.BulkCopy;
             sourceInterpreterOption.GetTableAllObjects = false;
-            targetInterpreterOption.GetTableAllObjects = false;
-
-            if (dataModeOnly)
-            {
-                sourceInterpreterOption.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
-            }
+            targetInterpreterOption.GetTableAllObjects = false;        
 
             targetInterpreterOption.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
