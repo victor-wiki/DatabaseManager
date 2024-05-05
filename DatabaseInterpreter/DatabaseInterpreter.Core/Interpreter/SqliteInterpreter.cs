@@ -97,7 +97,7 @@ namespace DatabaseInterpreter.Core
             string definition = ((isScriptDbObject && !isSimpleMode) || includeDefinition) ? ",sql as Definition" : "";
 
             sb.Append($@"SELECT name AS Name{definition}                         
-                        FROM sqlite_schema WHERE type= '{type}'");
+                        FROM sqlite_schema WHERE type= '{type}' AND name not in('sqlite_sequence')");
 
             sb.Append(this.GetFilterNamesCondition(filter, objectNames, "name"));
 
