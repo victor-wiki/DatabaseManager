@@ -10,5 +10,6 @@
         public bool GenerateComment { get; set; } = true;
         public bool GenerateTrigger { get; set; } = true;
         public bool GenerateConstraint { get; set; } = true;
+        public bool ExecuteScriptOnServer { get; set; } = false;
     }
 }

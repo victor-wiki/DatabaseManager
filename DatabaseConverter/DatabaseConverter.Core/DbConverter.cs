@@ -109,10 +109,11 @@ namespace DatabaseConverter.Core
 
             var sourceInterpreterOption = sourceInterpreter.Option;
             var targetInterpreterOption = targetInterpreter.Option;
-
+            
             sourceInterpreterOption.BulkCopy = this.Option.BulkCopy;
             sourceInterpreterOption.GetTableAllObjects = false;
-            targetInterpreterOption.GetTableAllObjects = false;        
+            targetInterpreterOption.GetTableAllObjects = false;
+            targetInterpreterOption.TableScriptsGenerateOption.ExecuteScriptOnServer = executeScriptOnTargetServer;
 
             targetInterpreterOption.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
@@ -238,7 +239,7 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
+            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);            
 
             #region Create schema if not exists
 
@@ -348,13 +349,16 @@ namespace DatabaseConverter.Core
                     {
                         if (!onlyForTranslate)
                         {
-                            string serverVersion = targetInterpreter.ConnectionInfo?.ServerVersion;
-                            bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? targetInterpreter.IsLowDbVersion() : targetInterpreter.IsLowDbVersion(dbConnection);
-
-                            if (isLowDbVersion)
+                            if(executeScriptOnTargetServer)
                             {
-                                SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
-                            }
+                                string serverVersion = targetInterpreter.ConnectionInfo?.ServerVersion;
+                                bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? targetInterpreter.IsLowDbVersion() : targetInterpreter.IsLowDbVersion(dbConnection);
+
+                                if (isLowDbVersion)
+                                {
+                                    SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
+                                }
+                            }                            
                         }
                     }
                     #endregion

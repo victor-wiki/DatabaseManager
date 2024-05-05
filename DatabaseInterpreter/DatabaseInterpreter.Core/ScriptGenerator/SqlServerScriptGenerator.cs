@@ -225,8 +225,15 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             string unique = index.IsUnique ? "UNIQUE" : "";
             string clustered = index.Clustered ? "CLUSTERED" : "NONCLUSTERED";
             string type = index.Type == IndexType.ColumnStore.ToString() ? "COLUMNSTORE" : "";
+       
+            string indexName = index.Name;
 
-            string sql = $@"CREATE {unique} {clustered} {type} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames})";
+            if(string.IsNullOrEmpty(indexName))
+            {
+                indexName = (index.IsUnique ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item=>item.ColumnName));
+            }
+
+            string sql = $@"CREATE {unique} {clustered} {type} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)}({columnNames})";
 
             return new CreateDbObjectScript<TableIndex>(sql);
         }

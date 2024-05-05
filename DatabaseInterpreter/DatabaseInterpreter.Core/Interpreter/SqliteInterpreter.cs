@@ -492,9 +492,9 @@ namespace DatabaseInterpreter.Core
 
         public override async Task<List<TableIndexItem>> GetTableIndexItemsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
-            var items = await base.GetDbObjectsAsync<TableIndexItem>(dbConnection, this.GetSqlForIndexes(filter));
+            var indexes = await base.GetDbObjectsAsync<TableIndex>(dbConnection, this.GetSqlForIndexes(filter));
 
-            items.ForEach(item =>
+            indexes.ForEach(item =>
             {
                 if(item.Type == null)
                 {
@@ -509,17 +509,21 @@ namespace DatabaseInterpreter.Core
                 }
             });
 
-            var columns = await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(items));
+            List<TableIndexItem> items = new List<TableIndexItem>();
 
-            foreach (var item in items)
+            var indexColumns = await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(indexes));
+
+            foreach(var ic in indexColumns)
             {
-                var column = columns.FirstOrDefault(item => item.Name == item.Name);
+                var index = indexes.FirstOrDefault(item => item.Name == ic.Name);
 
-                if (column != null)
+                if(index!=null)
                 {
-                    item.ColumnName = column.ColumnName;
+                    ic.TableName = index.TableName;
                 }
             }
+
+            items.AddRange(indexColumns);
 
             var uniqueIndexes = await this.GetTableChildren(DatabaseObjectType.Index, null, filter);
 
@@ -545,7 +549,7 @@ namespace DatabaseInterpreter.Core
             return this.GetSqlForTableChildren(DatabaseObjectType.Index, filter);
         }
 
-        private string GetSqlForIndexColumns(List<TableIndexItem> indexes)
+        private string GetSqlForIndexColumns(List<TableIndex> indexes)
         {
             SqlBuilder sb = new SqlBuilder();
 

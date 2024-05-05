@@ -259,8 +259,8 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
-            string indexName = string.IsNullOrEmpty(index.Name) ? this.GetQuotedString($"IX_{index.TableName}") : this.GetQuotedString(index.Name);
-
+            string indexName = index.Name;
+           
             string type = index.Type;
             IndexType indexType = IndexType.None;
 
@@ -278,18 +278,25 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
                 indexType = IndexType.BTree;
             }
 
+            bool isUnique = type == IndexType.Unique.ToString();
+
+            if (string.IsNullOrEmpty(indexName))
+            {
+                indexName = ((index.IsUnique || isUnique) ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item => item.ColumnName));
+            }
+
             string sql = "";
 
             Action addNormOrUnique = () =>
             {
-                if (type == IndexType.Unique.ToString())
+                if (isUnique)
                 {
                     //use unique constraint, it can be used for foreign key reference.
-                    sql = $"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {indexName} UNIQUE ({columnNames});";
+                    sql = $"ALTER TABLE {this.GetQuotedFullTableName(index)} ADD CONSTRAINT {this.GetQuotedString(indexName)} UNIQUE ({columnNames});";
                 }
                 else
                 {
-                    sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
+                    sql = $"CREATE INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)}({columnNames});";
                 }
             };
 
@@ -301,7 +308,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             {
                 if ((indexType | this.dbInterpreter.IndexType) == this.dbInterpreter.IndexType)
                 {
-                    sql = $"CREATE INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedFullTableName(index)} USING {indexType.ToString().ToUpper()}({columnNames});";
+                    sql = $"CREATE INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)} USING {indexType.ToString().ToUpper()}({columnNames});";
                 }
                 else
                 {

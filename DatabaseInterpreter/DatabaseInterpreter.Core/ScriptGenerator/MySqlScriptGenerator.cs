@@ -199,6 +199,7 @@ namespace DatabaseInterpreter.Core
         public override Script AddIndex(TableIndex index)
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
+            bool isUnique = index.Type == IndexType.FullText.ToString();
 
             string type = "";
 
@@ -206,12 +207,19 @@ namespace DatabaseInterpreter.Core
             {
                 type = "UNIQUE";
             }
-            else if (index.Type == IndexType.FullText.ToString())
+            else if (isUnique)
             {
                 type = "FULLTEXT";
             }
 
-            string sql = $"ALTER TABLE {this.GetQuotedString(index.TableName)} ADD {type} INDEX {this.GetQuotedString(this.GetRestrictedLengthName(index.Name))} ({columnNames})";
+            string indexName = index.Name;
+
+            if (string.IsNullOrEmpty(indexName))
+            {
+                indexName = ((index.IsUnique || isUnique) ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item => item.ColumnName));
+            }
+
+            string sql = $"ALTER TABLE {this.GetQuotedString(index.TableName)} ADD {type} INDEX {this.GetQuotedString(this.GetRestrictedLengthName(indexName))} ({columnNames})";
 
             if (this.option.TableScriptsGenerateOption.GenerateComment)
             {

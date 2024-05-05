@@ -134,14 +134,23 @@ namespace DatabaseInterpreter.Core
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
+            bool isUnique = index.Type == IndexType.Unique.ToString();
+
             string type = "";
 
-            if (index.Type == IndexType.Unique.ToString())
+            if (isUnique)
             {
                 type = "UNIQUE";
             }
 
-            string sql = $"CREATE {type} INDEX {this.GetQuotedString(index.Name)} ON {this.GetQuotedString(index.TableName)}({columnNames})";
+            string indexName = index.Name;
+
+            if (string.IsNullOrEmpty(indexName))
+            {
+                indexName = ((index.IsUnique || isUnique) ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item => item.ColumnName));
+            }
+
+            string sql = $"CREATE {type} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedString(index.TableName)}({columnNames})";
 
             return new CreateDbObjectScript<TableIndex>(sql + this.scriptsDelimiter);
         }

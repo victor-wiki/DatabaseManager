@@ -21,7 +21,7 @@ namespace DatabaseInterpreter.Core
         {
             ScriptBuilder sb = new ScriptBuilder();
 
-            string dbSchema = this.GetDbSchema();
+            string dbSchema = this.GetDbSchema();            
 
             #region User Defined Type          
 
@@ -92,7 +92,26 @@ namespace DatabaseInterpreter.Core
 
         private string GetDbSchema()
         {
-            return (this.dbInterpreter as OracleInterpreter).GetDbSchema();
+            string dbSchema = "";
+            string defaultDbSchema = this.dbInterpreter?.DefaultSchema;
+
+            try
+            {
+                if(dbInterpreter.Option?.TableScriptsGenerateOption?.ExecuteScriptOnServer == true)
+                {
+                    dbSchema = (this.dbInterpreter as OracleInterpreter).GetDbSchema();
+                }
+                else
+                {
+                    dbSchema = defaultDbSchema;
+                }
+            }
+            catch (Exception ex)
+            {
+                dbSchema = defaultDbSchema;
+            }
+
+            return dbSchema;
         }
         #endregion
 
@@ -251,12 +270,12 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
         public override Script AddIndex(TableIndex index)
         {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
-            string indexName = string.IsNullOrEmpty(index.Name) ? this.GetQuotedString($"IX_{index.TableName}") : this.GetQuotedString(index.Name);
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));         
+            bool isUnique = index.Type == IndexType.Unique.ToString();
 
             string type = "";
 
-            if (index.Type == IndexType.Unique.ToString())
+            if (isUnique)
             {
                 type = "UNIQUE";
             }
@@ -265,9 +284,16 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
                 type = "BITMAP";
             }
 
+            string indexName = index.Name;
+
+            if (string.IsNullOrEmpty(indexName))
+            {
+                indexName = ((index.IsUnique || isUnique) ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item => item.ColumnName));
+            }
+
             string reverse = index.Type == IndexType.Reverse.ToString() ? "REVERSE" : "";
 
-            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {indexName} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
+            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
         }
 
         public override Script DropIndex(TableIndex index)
