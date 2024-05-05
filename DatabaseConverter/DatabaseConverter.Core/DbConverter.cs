@@ -109,7 +109,7 @@ namespace DatabaseConverter.Core
 
             var sourceInterpreterOption = sourceInterpreter.Option;
             var targetInterpreterOption = targetInterpreter.Option;
-            
+
             sourceInterpreterOption.BulkCopy = this.Option.BulkCopy;
             sourceInterpreterOption.GetTableAllObjects = false;
             targetInterpreterOption.GetTableAllObjects = false;
@@ -239,7 +239,7 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);            
+            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
 
             #region Create schema if not exists
 
@@ -252,36 +252,41 @@ namespace DatabaseConverter.Core
                         await dbConnection.OpenAsync();
                     }
 
-                    var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
-                    var targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
-
-                    var notExistsSchemas = sourceSchemas.Where(item => item != sourceInterpreter.DefaultSchema).Select(item => item)
-                         .Union(this.Option.SchemaMappings.Select(item => item.TargetSchema))
-                         .Except(targetSchemas.Select(item => item)).Distinct();
-
-                    foreach (var schemaName in notExistsSchemas)
+                    #region Schema handle
+                    if (sourceDbType != DatabaseType.Sqlite)
                     {
-                        string createSchemaScript = targetDbScriptGenerator.CreateSchema(new DatabaseSchema() { Name = schemaName }).Content;
+                        var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
+                        var targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
 
-                        await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(createSchemaScript));
-                    }
+                        var notExistsSchemas = sourceSchemas.Where(item => item != sourceInterpreter.DefaultSchema).Select(item => item)
+                             .Union(this.Option.SchemaMappings.Select(item => item.TargetSchema))
+                             .Except(targetSchemas.Select(item => item)).Distinct();
 
-                    if (this.Option.SchemaMappings.Count == 1 && this.Option.SchemaMappings.First().SourceSchema == "")
-                    {
-                        this.Option.SchemaMappings.Clear();
-                    }
-
-                    foreach (var ss in sourceSchemas)
-                    {
-                        string mappedSchema = SchemaInfoHelper.GetMappedSchema(ss, this.Option.SchemaMappings);
-
-                        if (string.IsNullOrEmpty(mappedSchema))
+                        foreach (var schemaName in notExistsSchemas)
                         {
-                            string targetSchema = ss == sourceInterpreter.DefaultSchema ? targetInterpreter.DefaultSchema : ss;
+                            string createSchemaScript = targetDbScriptGenerator.CreateSchema(new DatabaseSchema() { Name = schemaName }).Content;
 
-                            this.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = ss, TargetSchema = targetSchema });
+                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(createSchemaScript));
                         }
-                    }
+
+                        if (this.Option.SchemaMappings.Count == 1 && this.Option.SchemaMappings.First().SourceSchema == "")
+                        {
+                            this.Option.SchemaMappings.Clear();
+                        }
+
+                        foreach (var ss in sourceSchemas)
+                        {
+                            string mappedSchema = SchemaInfoHelper.GetMappedSchema(ss, this.Option.SchemaMappings);
+
+                            if (string.IsNullOrEmpty(mappedSchema))
+                            {
+                                string targetSchema = ss == sourceInterpreter.DefaultSchema ? targetInterpreter.DefaultSchema : ss;
+
+                                this.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = ss, TargetSchema = targetSchema });
+                            }
+                        }
+                    } 
+                    #endregion
                 }
             }
 
@@ -304,7 +309,7 @@ namespace DatabaseConverter.Core
 
             await Task.Run(() => translateEngine.Translate(translateDbObjectType));
 
-            result.TranslateResults = translateEngine.TranslateResults;            
+            result.TranslateResults = translateEngine.TranslateResults;
 
             #endregion
 
@@ -349,7 +354,7 @@ namespace DatabaseConverter.Core
                     {
                         if (!onlyForTranslate)
                         {
-                            if(executeScriptOnTargetServer)
+                            if (executeScriptOnTargetServer)
                             {
                                 string serverVersion = targetInterpreter.ConnectionInfo?.ServerVersion;
                                 bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? targetInterpreter.IsLowDbVersion() : targetInterpreter.IsLowDbVersion(dbConnection);
@@ -358,7 +363,7 @@ namespace DatabaseConverter.Core
                                 {
                                     SchemaInfoHelper.RistrictNameLength(targetSchemaInfo, 30);
                                 }
-                            }                            
+                            }
                         }
                     }
                     #endregion
@@ -527,7 +532,7 @@ namespace DatabaseConverter.Core
 
                 #region Data sync
 
-                if(!schemaModeOnly)
+                if (!schemaModeOnly)
                 {
                     await this.SyncData(sourceInterpreter, targetInterpreter, dbConnection, sourceSchemaInfo, targetSchemaInfo, targetDbScriptGenerator, result);
                 }
