@@ -203,6 +203,46 @@ namespace DatabaseInterpreter.Core
 
             var columns = await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
 
+            #region Get generated column expression
+            var tablesSql = this.GetSqlForTableViews(DatabaseObjectType.Table, filter, true);
+
+            var tables = await this.GetDbObjectsAsync<Table>(dbConnection, tablesSql);
+
+            foreach (var table in tables)
+            {
+                string tableName = table.Name;
+                string definition = table.Definition;
+
+                List<List<string>> columnDetails = this.GetTableColumnDetails(definition);
+
+                var tableColumns = columns.Where(item => item.TableName == tableName);
+
+                foreach (var tableColumn in tableColumns)
+                {
+                    foreach (var cd in columnDetails)
+                    {
+                        string name = cd.FirstOrDefault();
+
+                        if (tableColumn.Name == name)
+                        {
+                            for (int i = 0; i < cd.Count; i++)
+                            {
+                                string item = cd[i];
+
+                                if (item.ToUpper() == "GENERATED")
+                                {
+                                    tableColumn.ComputeExp = cd.Skip(i + 1).Where(item => item.ToUpper() != "ALWAYS" && item.ToUpper() != "AS").FirstOrDefault();
+                                    break;
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            } 
+            #endregion
+
             return columns;
         }
 
@@ -230,7 +270,7 @@ namespace DatabaseInterpreter.Core
                                 CASE WHEN type='INTEGER' AND pk=1 AND EXISTS( SELECT 1 FROM sqlite_master WHERE  name = '{tableName}' AND sql LIKE '%AUTOINCREMENT%') THEN 1 ELSE 0 END AS IsIdentity,
                                 CASE WHEN ""notnull""=1 THEN 0 ELSE 1 END AS IsNullable,
                                 dflt_value AS DefaultValue, pk AS IsPrimaryKey, cid AS ""Order""
-                                FROM PRAGMA_TABLE_INFO('{tableName}')");
+                                FROM PRAGMA_TABLE_XINFO('{tableName}')");
                 }
             }        
             
@@ -281,7 +321,7 @@ namespace DatabaseInterpreter.Core
                     }
 
                     sb.Append($@"SELECT '{tableName}' as TableName, name AS ColumnName
-                        FROM PRAGMA_TABLE_INFO('{tableName}')
+                        FROM PRAGMA_TABLE_XINFO('{tableName}')
                         WHERE pk>0");
                 }
             }

@@ -3,12 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.9</AssemblyVersion>
-    <FileVersion>2.1.9</FileVersion>
-    <Version>2.1.9</Version>
-    <PackageReleaseNotes>isssue fix
-1. script generation of index which has no name
-2. oracle: use default schema if not execute script on server</PackageReleaseNotes>
+    <AssemblyVersion>2.1.10</AssemblyVersion>
+    <FileVersion>2.1.10</FileVersion>
+    <Version>2.1.10</Version>
+    <PackageReleaseNotes>sqlite: get generated column expression</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>
