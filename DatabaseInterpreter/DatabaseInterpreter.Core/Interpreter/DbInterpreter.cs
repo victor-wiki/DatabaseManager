@@ -43,6 +43,7 @@ namespace DatabaseInterpreter.Core
         public abstract string DefaultSchema { get; }
         public abstract bool SupportBulkCopy { get; }
         public abstract bool SupportNchar { get; }
+        public abstract bool SupportTruncateTable { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
@@ -1145,6 +1146,19 @@ namespace DatabaseInterpreter.Core
         protected bool IsForViewColumnFilter(SchemaInfoFilter filter)
         {
             return filter != null && filter.ColumnType == ColumnType.ViewColumn;
+        }
+
+        protected void ExcludeComputedColumnsForBulkCopy(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
+        {
+            if (bulkCopyInfo.Columns != null)
+            {
+                var computedColumnNames = bulkCopyInfo.Columns.Where(item => item.IsComputed).Select(item => item.Name);
+
+                foreach (string colName in computedColumnNames)
+                {
+                    dataTable.Columns.Remove(colName);
+                }
+            }
         }
         #endregion
 

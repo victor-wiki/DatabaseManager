@@ -33,6 +33,7 @@ namespace DatabaseInterpreter.Core
                                                                  | DatabaseObjectType.Procedure | DatabaseObjectType.Type | DatabaseObjectType.Sequence;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => true;
+        public override bool SupportTruncateTable => true;
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };
@@ -348,7 +349,7 @@ namespace DatabaseInterpreter.Core
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
             string commentColumn = isSimpleMode ? "" : ("," + (includePrimaryKey ? "ISNULL(ext.value,ext2.value)" : "ext.value")) + " AS [Comment]";
             string commentJoin = isSimpleMode ? "" : "LEFT JOIN sys.extended_properties ext on i.object_id=ext.major_id AND i.index_id= ext.minor_id AND ext.class_desc='INDEX' AND ext.name='MS_Description'";
-            string tableOrViewName = filter?.IsForView != true ? "tables":"views";
+            string tableOrViewName = filter?.IsForView != true ? "tables" : "views";
 
             if (!isSimpleMode && includePrimaryKey)
             {
@@ -740,6 +741,8 @@ namespace DatabaseInterpreter.Core
         #region BulkCopy
         public override async Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo)
         {
+            base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
+
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
             {
                 foreach (DataColumn column in dataTable.Columns)
@@ -1027,7 +1030,7 @@ namespace DatabaseInterpreter.Core
             {
                 string dataType = this.ParseDataType(column);
 
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && column.IsRequired ? $"IDENTITY({table.IdentitySeed??1},{table.IdentityIncrement??1})" : "");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && column.IsRequired ? $"IDENTITY({table.IdentitySeed ?? 1},{table.IdentityIncrement ?? 1})" : "");
                 string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 

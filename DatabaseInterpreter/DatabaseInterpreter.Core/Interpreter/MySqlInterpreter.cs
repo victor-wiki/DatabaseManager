@@ -35,6 +35,7 @@ namespace DatabaseInterpreter.Core
         public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => false;
+        public override bool SupportTruncateTable => true;
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
 
         public const int NameMaxLength = 64;
@@ -174,7 +175,7 @@ namespace DatabaseInterpreter.Core
 
                 sb.Append(this.GetFilterNamesCondition(filter, objectNames, "r.ROUTINE_NAME"));
 
-                sb.Append(@"GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME,r.DATA_TYPE
+                sb.Append(@"GROUP BY ROUTINE_SCHEMA,ROUTINE_NAME,r.DATA_TYPE, r.ROUTINE_DEFINITION
                           ORDER BY r.ROUTINE_NAME");
             }
 
@@ -609,6 +610,8 @@ namespace DatabaseInterpreter.Core
             {
                 return;
             }
+
+            base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
             MySqlBulkCopy bulkCopy = new MySqlBulkCopy(connection as MySqlConnection, bulkCopyInfo.Transaction as MySqlTransaction);
 

@@ -39,6 +39,7 @@ namespace DatabaseInterpreter.Core
                                                                 | DatabaseObjectType.Procedure | DatabaseObjectType.Type | DatabaseObjectType.Sequence;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => true;
+        public override bool SupportTruncateTable => true;
         public override List<string> BuiltinDatabases => new List<string> { "SYSTEM", "USERS", "TEMP", "SYSAUX" };
         public static readonly string[] GeometryTypeSchemas = { "PUBLIC", "SDE" };
         #endregion
@@ -773,6 +774,8 @@ namespace DatabaseInterpreter.Core
             {
                 return;
             }
+
+            base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
             using (var bulkCopy = new OracleBulkCopy(conn, bulkCopyInfo.Transaction as OracleTransaction))
             {

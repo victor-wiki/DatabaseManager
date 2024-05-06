@@ -24,6 +24,7 @@ namespace DatabaseInterpreter.Core
         public override string DefaultSchema => this.ConnectionInfo.Database;
         public override bool SupportBulkCopy => false;
         public override bool SupportNchar => false;
+        public override bool SupportTruncateTable => false;
         public override string STR_CONCAT_CHARS => "||";
         #endregion
 

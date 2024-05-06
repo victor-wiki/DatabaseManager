@@ -36,6 +36,7 @@ namespace DatabaseInterpreter.Core
                                                                 | DatabaseObjectType.Procedure | DatabaseObjectType.Type | DatabaseObjectType.Sequence;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => false;
+        public override bool SupportTruncateTable => true;
         public override List<string> BuiltinDatabases => new List<string> { "postgres" };
         public List<string> SystemSchemas => new List<string> { "pg_catalog", "pg_toast", "information_schema" };
         #endregion
@@ -827,6 +828,8 @@ namespace DatabaseInterpreter.Core
             {
                 return;
             }
+
+            base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
             using (var bulkCopy = new PostgreBulkCopy(conn, bulkCopyInfo.Transaction as NpgsqlTransaction))
             {

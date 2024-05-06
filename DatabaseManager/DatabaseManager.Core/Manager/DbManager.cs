@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
 
 
 namespace DatabaseManager.Core
@@ -56,34 +58,65 @@ namespace DatabaseManager.Core
 
                 using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
                 {
-                    await dbConnection.OpenAsync();
-
-                    await this.SetConstrainsEnabled(dbConnection, false);
+                    await dbConnection.OpenAsync();                   
 
                     transaction = await dbConnection.BeginTransactionAsync();
 
+                    var tableForeignKeys = await this.dbInterpreter.GetTableForeignKeysAsync();
+
+                    var scriptsDelimiters = this.dbInterpreter.ScriptsDelimiter.ToArray();
+
+                    foreach (var foreignKey in tableForeignKeys)
+                    {
+                        string sql = scriptGenerator.DropForeignKey(foreignKey).Content.TrimEnd(scriptsDelimiters);
+
+                        await this.ExecuteNonQueryAsync(sql, dbConnection, transaction);
+                    }                  
+
                     foreach (Table table in tables)
                     {
-                        string sql = $"DELETE FROM {this.dbInterpreter.GetQuotedDbObjectNameWithSchema(table)}";
+                        string tableName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(table);
+                        bool useTruncate = false;
+                        string truncateSql = $"TRUNCATE TABLE {tableName}";
+                        string deleteSql = $"DELETE FROM {tableName}";
 
-                        this.FeedbackInfo(sql);
-
-                        CommandInfo commandInfo = new CommandInfo()
+                        try
                         {
-                            CommandType = CommandType.Text,
-                            CommandText = sql,
-                            Transaction = transaction
-                        };
+                            if (this.dbInterpreter.SupportTruncateTable)
+                            {
+                                useTruncate = true;
 
-                        await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                                await this.ExecuteNonQueryAsync(truncateSql, dbConnection, transaction);
+                            }
+                            else
+                            {
+                                await this.ExecuteNonQueryAsync(deleteSql, dbConnection, transaction);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (useTruncate)
+                            {
+                                await this.ExecuteNonQueryAsync(deleteSql, dbConnection, transaction);
+                            }
+                            else
+                            {
+                                throw ex;
+                            }
+                        }
+                    }
+
+                    foreach (var foreignKey in tableForeignKeys)
+                    {
+                        string sql = scriptGenerator.AddForeignKey(foreignKey).Content.TrimEnd(scriptsDelimiters);
+
+                        await this.ExecuteNonQueryAsync(sql, dbConnection, transaction);
                     }
 
                     if (!this.dbInterpreter.HasError)
                     {
                         transaction.Commit();
-                    }
-
-                    await this.SetConstrainsEnabled(dbConnection, true);
+                    }                    
                 }
             }
             catch (Exception ex)
@@ -102,42 +135,24 @@ namespace DatabaseManager.Core
                         LogHelper.LogError(iex.Message);
                     }
                 }
-            }
-            finally
-            {
-                if (failed)
-                {
-                    this.FeedbackInfo("Enable constrains.");
-
-                    await this.SetConstrainsEnabled(null, true);
-                }
-            }
+            }            
 
             this.FeedbackInfo("End clear data.");
         }
 
-        private async Task SetConstrainsEnabled(DbConnection dbConnection, bool enabled)
+        private async Task ExecuteNonQueryAsync(string sql, DbConnection dbConnection, DbTransaction transaction = null)
         {
-            bool needDispose = false;
+            this.FeedbackInfo(sql);
 
-            if (dbConnection == null)
+            CommandInfo commandInfo = new CommandInfo()
             {
-                needDispose = true;
-                dbConnection = this.dbInterpreter.CreateConnection();
-            }
+                CommandType = CommandType.Text,
+                CommandText = sql,
+                Transaction = transaction
+            };
 
-            IEnumerable<Script> scripts = this.scriptGenerator.SetConstrainsEnabled(enabled);
-
-            foreach (Script script in scripts)
-            {
-                await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, script.Content);
-            }
-
-            if (needDispose)
-            {
-                using (dbConnection) { };
-            }
-        }
+            await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+        }       
 
         public async Task EmptyDatabase(DatabaseObjectType databaseObjectType)
         {
