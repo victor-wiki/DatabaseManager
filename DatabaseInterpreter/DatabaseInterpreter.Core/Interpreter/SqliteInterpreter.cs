@@ -25,6 +25,7 @@ namespace DatabaseInterpreter.Core
         public override bool SupportBulkCopy => false;
         public override bool SupportNchar => false;
         public override bool SupportTruncateTable => false;
+        public override bool CanInsertIdentityByDefault => true;
         public override string STR_CONCAT_CHARS => "||";
         #endregion
 

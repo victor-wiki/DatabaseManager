@@ -34,6 +34,7 @@ namespace DatabaseInterpreter.Core
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => true;
         public override bool SupportTruncateTable => true;
+        public override bool CanInsertIdentityByDefault => false;
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };
@@ -744,7 +745,7 @@ namespace DatabaseInterpreter.Core
             base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
             SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
-            {
+            {               
                 foreach (DataColumn column in dataTable.Columns)
                 {
                     bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
@@ -988,10 +989,7 @@ namespace DatabaseInterpreter.Core
         {
             SqlBulkCopyOptions option = SqlBulkCopyOptions.Default;
 
-            if (bulkCopyInfo.KeepIdentity)
-            {
-                option = SqlBulkCopyOptions.KeepIdentity;
-            }
+            option = SqlBulkCopyOptions.KeepIdentity;
 
             SqlBulkCopy bulkCopy = new SqlBulkCopy(connection as SqlConnection, option, bulkCopyInfo.Transaction as SqlTransaction);
 

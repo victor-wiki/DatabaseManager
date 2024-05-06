@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.1.7</Version>
+    <Version>2.1.8</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.7</AssemblyVersion>
-    <FileVersion>2.1.7</FileVersion>
-    <PackageReleaseNotes>issue fix: convert sqlite to other database if mode is shcema &amp; data.</PackageReleaseNotes>
+    <AssemblyVersion>2.1.8</AssemblyVersion>
+    <FileVersion>2.1.8</FileVersion>
+    <PackageReleaseNotes>delete code: remove computed columns when use bulkcopy. </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

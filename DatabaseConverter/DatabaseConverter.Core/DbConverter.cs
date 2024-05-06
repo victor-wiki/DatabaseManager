@@ -657,20 +657,7 @@ namespace DatabaseConverter.Core
                                             {
                                                 bulkCopyInfo.DetectDateTimeTypeByValues = true;
                                             }
-                                        }
-
-                                        if (this.Option.ConvertComputeColumnExpression)
-                                        {
-                                            IEnumerable<DataColumn> dataColumns = dataTable.Columns.OfType<DataColumn>();
-
-                                            foreach (TableColumn column in bulkCopyInfo.Columns)
-                                            {
-                                                if (column.IsComputed && dataColumns.Any(item => item.ColumnName == column.Name))
-                                                {
-                                                    dataTable.Columns.Remove(column.Name);
-                                                }
-                                            }
-                                        }
+                                        }                                       
 
                                         await targetInterpreter.BulkCopyAsync(dbConnection, dataTable, bulkCopyInfo);
                                     }

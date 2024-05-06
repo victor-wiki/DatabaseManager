@@ -285,7 +285,7 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                if (this.option.TableScriptsGenerateOption.GenerateIdentity)
+                if (!this.dbInterpreter.CanInsertIdentityByDefault)
                 {
                     excludeIdentityColumn = true;
                 }

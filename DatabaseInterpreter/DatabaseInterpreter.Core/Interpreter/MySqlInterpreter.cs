@@ -36,6 +36,7 @@ namespace DatabaseInterpreter.Core
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => false;
         public override bool SupportTruncateTable => true;
+        public override bool CanInsertIdentityByDefault => true;
         public override List<string> BuiltinDatabases => new List<string> { "sys", "mysql", "information_schema", "performance_schema" };
 
         public const int NameMaxLength = 64;

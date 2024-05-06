@@ -10,6 +10,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -44,6 +45,7 @@ namespace DatabaseInterpreter.Core
         public abstract bool SupportBulkCopy { get; }
         public abstract bool SupportNchar { get; }
         public abstract bool SupportTruncateTable { get; }
+        public abstract bool CanInsertIdentityByDefault { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public bool CancelRequested { get; set; }
         public bool HasError => this.hasError;
@@ -1152,11 +1154,16 @@ namespace DatabaseInterpreter.Core
         {
             if (bulkCopyInfo.Columns != null)
             {
+                IEnumerable<DataColumn> dataColumns = dataTable.Columns.OfType<DataColumn>();
+
                 var computedColumnNames = bulkCopyInfo.Columns.Where(item => item.IsComputed).Select(item => item.Name);
 
                 foreach (string colName in computedColumnNames)
                 {
-                    dataTable.Columns.Remove(colName);
+                    if(dataColumns.Any(item => item.ColumnName == colName))
+                    {
+                        dataTable.Columns.Remove(colName);
+                    }                    
                 }
             }
         }
