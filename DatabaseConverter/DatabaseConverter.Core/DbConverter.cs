@@ -845,8 +845,7 @@ namespace DatabaseConverter.Core
 
             BulkCopyInfo bulkCopyInfo = new BulkCopyInfo()
             {
-                SourceDatabaseType = this.Source.DbInterpreter.DatabaseType,
-                KeepIdentity = this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateIdentity,
+                SourceDatabaseType = this.Source.DbInterpreter.DatabaseType,               
                 DestinationTableName = tableName,
                 Transaction = transaction,
                 CancellationToken = this.CancellationTokenSource.Token

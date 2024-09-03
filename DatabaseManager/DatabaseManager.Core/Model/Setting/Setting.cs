@@ -13,5 +13,13 @@ namespace DatabaseManager.Model
         public string ScriptsDefaultOutputFolder { get; set; }
         public bool ValidateScriptsAfterTranslated { get; set; } = true;
         public List<string> ConvertConcatCharTargetDatabases { get; set; } = new List<string>();
+        public TextEditorOption TextEditorOption { get; set; } = new TextEditorOption();
     }   
+
+    public class TextEditorOption
+    {
+        public bool ShowLineNumber { get; set; } = true;
+        public string FontName { get; set; } = "Courier New";
+        public float FontSize { get; set; } = 10;       
+    }
 }

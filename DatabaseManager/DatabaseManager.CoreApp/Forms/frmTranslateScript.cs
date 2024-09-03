@@ -5,12 +5,10 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using SqlAnalyser.Model;
+using SqlCodeEditor;
+using SqlCodeEditor.Document;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -19,21 +17,33 @@ namespace DatabaseManager
     public partial class frmTranslateScript : Form
     {
         private bool isPasting = false;
-        private bool isHighlightingRequesting = false;
         private delegate void AddNodeDelegate();
 
         public frmTranslateScript()
         {
             InitializeComponent();
+
+            this.InitControls();
         }
 
         private void frmTranslateScript_Load(object sender, EventArgs e)
         {
-            this.InitControls();
+            ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
+            tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
+            this.txtTarget.ActiveTextAreaControl.ContextMenuStrip.Items.Add(tsmiValidateScripts);
+            this.txtTarget.ActiveTextAreaControl.ContextMenuStrip.Opening += this.targetContextMenuStrip_Opening;
         }
 
         private void InitControls()
         {
+            (this.txtSource.Document.TextBufferStrategy as GapTextBufferStrategy).CheckTread = false;
+            (this.txtTarget.Document.TextBufferStrategy as GapTextBufferStrategy).CheckTread = false;           
+
+            var option = SettingManager.Setting.TextEditorOption;
+
+            TextEditorHelper.ApplySetting(this.txtSource, option);
+            TextEditorHelper.ApplySetting(this.txtTarget, option);
+
             this.splitContainer1.SplitterDistance = (int)((this.splitContainer1.Width - this.splitContainer1.SplitterWidth) / 2);
 
             this.LoadDbTypes();
@@ -42,6 +52,9 @@ namespace DatabaseManager
             {
                 this.chkValidateScriptsAfterTranslated.Checked = true;
             }
+
+            this.txtSource.SyntaxHighlighting = string.Empty;
+            this.txtTarget.SyntaxHighlighting = string.Empty;           
         }
 
         public void LoadDbTypes()
@@ -104,7 +117,7 @@ namespace DatabaseManager
 
             this.btnTranlate.Enabled = false;
             this.ClearSelection(this.txtSource);
-            this.txtTarget.Clear();
+            this.txtTarget.Text = "";
 
             var sourceDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), sourceDbTypeName);
             var targetDbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), targetDbTypeName);
@@ -124,7 +137,7 @@ namespace DatabaseManager
                     frmTextContent msgBox = new frmTextContent("Error Message", result.Error.ToString(), true);
                     msgBox.ShowDialog();
 
-                    RichTextBoxHelper.HighlightingError(this.txtSource, result.Error);
+                    TextEditorHelper.HighlightingError(this.txtSource, result.Error);
 
                     return;
                 }
@@ -139,7 +152,7 @@ namespace DatabaseManager
                     this.ValidateScripts(targetDbType);
                 }
 
-                this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
+                this.SetHighlighting(this.txtTarget, this.cboTargetDbType.Text);
             }
             catch (Exception ex)
             {
@@ -170,12 +183,16 @@ namespace DatabaseManager
                     msgBox.ShowDialog();
                 }
 
-                RichTextBoxHelper.HighlightingError(this.txtTarget, error);
+                TextEditorHelper.ClearMarkers(this.txtTarget);
+
+                TextEditorHelper.HighlightingError(this.txtTarget, error);
             }
             else
             {
                 if (showMessageBox)
                 {
+                    TextEditorHelper.ClearMarkers(this.txtTarget);
+
                     MessageBox.Show("The scripts is valid.");
                 }
             }
@@ -186,17 +203,14 @@ namespace DatabaseManager
             this.Close();
         }
 
-        private void HighlightingRichTextBox(RichTextBox richTextBox, ComboBox comboBox)
+        private DatabaseType GetDatabaseType(string type)
         {
-            if (!string.IsNullOrEmpty(comboBox.Text))
+            if (!string.IsNullOrEmpty(type))
             {
-                var dbType = (DatabaseType)Enum.Parse(typeof(DatabaseType), comboBox.Text);
-
-                if (this.chkHighlighting.Checked)
-                {
-                    RichTextBoxHelper.Highlighting(richTextBox, dbType, false, null, null, true);
-                }
+                return (DatabaseType)Enum.Parse(typeof(DatabaseType), type);
             }
+
+            return DatabaseType.Unknown;
         }
 
         private void txtSource_KeyDown(object sender, KeyEventArgs e)
@@ -212,75 +226,26 @@ namespace DatabaseManager
             if (this.isPasting)
             {
                 this.HandlePaste();
+                this.isPasting = false;
             }
         }
 
         private void HandlePaste()
         {
-            this.txtSource.SelectAll();
-            this.txtSource.SelectionColor = Color.Black;
-        }
-
-        private void txtSource_SelectionChanged(object sender, EventArgs e)
-        {
-            if (this.isPasting || this.isHighlightingRequesting)
-            {
-                this.isPasting = false;
-                this.isHighlightingRequesting = false;
-
-                this.HighlightingRichTextBox(this.txtSource, this.cboSourceDbType);
-            }
+            this.txtSource.ActiveTextAreaControl.TextArea.Focus();
         }
 
         private void btnClear_Click(object sender, EventArgs e)
         {
             this.txtSource.Text = "";
             this.txtTarget.Text = "";
-        }
 
-        private void txtSource_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                this.tsmiPaste.Visible = this.txtSource.Text.Trim().Length == 0 || this.txtSource.SelectionLength == this.txtSource.Text.Length;
+            this.txtSource.Refresh();
+            this.txtTarget.Refresh();
 
-                this.sourceContextMenuStrip.Show(this.txtSource, e.Location);
-            }
-        }
-
-        private void tsmiPaste_Click(object sender, EventArgs e)
-        {
-            var data = Clipboard.GetDataObject();
-
-            if (data != null)
-            {
-                this.HandlePaste();
-
-                this.txtSource.Text = data.GetData(DataFormats.UnicodeText)?.ToString();
-
-                this.isPasting = true;
-                this.txtSource.SelectAll();
-                this.txtSource.Select(0, 0);
-            }
-        }
-
-        private void tsmiCopy_Click(object sender, EventArgs e)
-        {
-            if (!string.IsNullOrEmpty(this.txtTarget.Text))
-            {
-                Clipboard.SetDataObject(this.txtTarget.Text);
-            }
-        }
-
-        private void txtTarget_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                this.tsmiCopy.Visible = this.txtTarget.Text.Length > 0;
-
-                this.targetContextMenuStrip.Show(this.txtTarget, e.Location);
-            }
-        }
+            this.txtSource.Invalidate();
+            this.txtTarget.Invalidate();
+        }            
 
         private void btnExchange_Click(object sender, EventArgs e)
         {
@@ -294,11 +259,8 @@ namespace DatabaseManager
 
         private void chkHighlighting_CheckedChanged(object sender, EventArgs e)
         {
-            if (this.chkHighlighting.Checked)
-            {
-                this.HighlightingRichTextBox(this.txtSource, this.cboSourceDbType);
-                this.HighlightingRichTextBox(this.txtTarget, this.cboTargetDbType);
-            }
+            this.SetHighlighting(this.txtSource, this.cboSourceDbType.Text);
+            this.SetHighlighting(this.txtTarget, this.cboTargetDbType.Text);            
         }
 
         private void frmTranslateScript_KeyDown(object sender, KeyEventArgs e)
@@ -309,14 +271,9 @@ namespace DatabaseManager
             }
         }
 
-        private void ClearSelection(RichTextBox txtEditor)
+        private void ClearSelection(TextEditorControlEx txtEditor)
         {
-            int start = txtEditor.SelectionStart;
-
-            txtEditor.SelectAll();
-            txtEditor.SelectionBackColor = Color.White;
-            txtEditor.SelectionStart = start;
-            txtEditor.SelectionLength = 0;
+            txtEditor.ActiveTextAreaControl.SelectionManager.ClearSelection();
         }
 
         private void tsmiValidateScripts_Click(object sender, EventArgs e)
@@ -335,7 +292,37 @@ namespace DatabaseManager
 
         private void targetContextMenuStrip_Opening(object sender, CancelEventArgs e)
         {
-            this.tsmiValidateScripts.Visible = this.txtTarget.Text.Trim().Length > 0;
+            foreach (ToolStripItem item in this.txtTarget.ActiveTextAreaControl.ContextMenuStrip.Items)
+            {
+                if (item.Name == "tsmiValidateScripts")
+                {
+                    bool hasText = !string.IsNullOrEmpty(this.cboTargetDbType.Text) && this.txtTarget.Text.Trim().Length > 0;
+                    item.Visible = hasText;
+                    break;
+                }                
+            }            
+        }
+
+        private void cboSourceDbType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.SetHighlighting(this.txtSource, this.cboSourceDbType.Text);
+        }
+
+        private void cboTargetDbType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.SetHighlighting(this.txtTarget, this.cboTargetDbType.Text);
+        }
+
+        private void SetHighlighting(TextEditorControlEx editor, string databaseType)
+        {
+            if (this.chkHighlighting.Checked)
+            {
+                TextEditorHelper.Highlighting(editor, this.GetDatabaseType(databaseType));
+            }
+            else
+            {
+                TextEditorHelper.ClearHighlighting(editor);
+            }
         }
     }
 }

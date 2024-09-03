@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseManager.Data;
 using DatabaseManager.Model;
+using SqlCodeEditor.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

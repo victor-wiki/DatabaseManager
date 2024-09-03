@@ -2,24 +2,25 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>DatabaseManager</RootNamespace>
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.1.5</Version>
+    <Version>2.1.6</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>fix issue:no data copied when copy data to sqlite(bulkcopy is not supported).</PackageReleaseNotes>
+    <PackageReleaseNotes>use control "SqlTextEditor"  instead of RichTextBox for sql editor.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.5</AssemblyVersion>
-    <FileVersion>2.1.5</FileVersion>
+    <AssemblyVersion>2.1.6</AssemblyVersion>
+    <FileVersion>2.1.6</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.6.2" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
+    <PackageReference Include="SqlCodeEditor" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

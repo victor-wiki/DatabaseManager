@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
-//using DatabaseManager.Controls.Model;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
@@ -10,6 +9,8 @@ using DatabaseManager.Profile;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Drawing;
+using System.Drawing.Text;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -53,6 +54,10 @@ namespace DatabaseManager
             this.chkEditorEnableIntellisence.Checked = setting.EnableEditorIntellisence;
             this.chkExcludePostgresExtensionObjects.Checked = setting.ExcludePostgresExtensionObjects;
             this.chkValidateScriptsAfterTranslated.Checked = setting.ValidateScriptsAfterTranslated;
+            this.chkShowTextEditorLineNumber.Checked = setting.TextEditorOption.ShowLineNumber;
+            this.AddFonts(this.cboTextEditorFontName);
+            this.cboTextEditorFontName.Text = setting.TextEditorOption.FontName;
+            this.numTextEditorFontSize.Value =(decimal) setting.TextEditorOption.FontSize;
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
@@ -68,6 +73,16 @@ namespace DatabaseManager
             }
 
             this.convertConcatCharTargetDatabases = setting.ConvertConcatCharTargetDatabases;
+        }
+
+        private void AddFonts(ComboBox comboBox)
+        {
+            InstalledFontCollection fonts = new InstalledFontCollection();
+
+            foreach (FontFamily font in fonts.Families)
+            {
+                comboBox.Items.Add(font.Name);
+            }
         }
 
         private async void btnConfirm_Click(object sender, EventArgs e)
@@ -115,6 +130,15 @@ namespace DatabaseManager
             setting.LogType = logType;
 
             setting.ConvertConcatCharTargetDatabases = this.convertConcatCharTargetDatabases;
+
+            TextEditorOption textEditorOption = new TextEditorOption()
+            {
+                ShowLineNumber = this.chkShowTextEditorLineNumber.Checked,
+                FontName = this.cboTextEditorFontName.Text,
+                FontSize =(float) this.numTextEditorFontSize.Value
+            };
+
+            setting.TextEditorOption = textEditorOption;
 
             SettingManager.SaveConfig(setting);
 

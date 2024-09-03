@@ -98,11 +98,9 @@ namespace DatabaseManager.Controls
 
                 if (!string.IsNullOrEmpty(sqlQuery.Editor.Text))
                 {
-                    RichTextBoxHelper.Highlighting(sqlQuery.Editor, info.DatabaseType, false);
-
                     if (info.Error != null)
                     {
-                        RichTextBoxHelper.HighlightingError(sqlQuery.Editor, info.Error);
+                        TextEditorHelper.HighlightingError(sqlQuery.QueryEditor.Editor, info.Error);
                     }
 
                     if ((info.DatabaseObject is ScriptDbObject) && SettingManager.Setting.ValidateScriptsAfterTranslated && info.IsTranlatedScript)

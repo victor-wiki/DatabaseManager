@@ -37,9 +37,7 @@ namespace DatabaseManager
 
         public void Query(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.ucSqlQuery.Editor.AppendText(displayInfo.Content);
-
-            RichTextBoxHelper.Highlighting(this.ucSqlQuery.Editor, displayInfo.DatabaseType, false);
+            this.ucSqlQuery.Editor.Text = displayInfo.Content;           
 
             this.ucSqlQuery.RunScripts(displayInfo);
         }

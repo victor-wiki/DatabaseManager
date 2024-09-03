@@ -6,16 +6,18 @@ using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using SqlAnalyser.Model;
+using SqlCodeEditor;
+using SqlCodeEditor.Document;
+using SqlCodeEditor.Gui.CompletionWindow;
+using SqlCodeEditor.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace DatabaseManager.Controls
 {
@@ -23,7 +25,6 @@ namespace DatabaseManager.Controls
 
     public partial class UC_QueryEditor : UserControl
     {
-        private Regex nameRegex = new Regex(@"\b(^[_a-zA-Z][ _0-9a-zA-Z]+$)\b");
         private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]+)\b";
         private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]+)\b";
         private SchemaInfo schemaInfo;
@@ -31,150 +32,82 @@ namespace DatabaseManager.Controls
         private IEnumerable<FunctionSpecification> builtinFunctions;
         private List<SqlWord> allWords;
         private bool intellisenseSetuped;
-        private bool enableIntellisense;
-        private bool isPasting = false;
+        private bool enableIntellisense;       
         private List<string> dbSchemas;
-        private const int WordListMinWidth = 160;
-        private string commentString { get { return RichTextBoxHelper.GetCommentString(this.DatabaseType); } }
-        private frmFindBox findBox;
+        private CodeCompletionWindow codeCompletionWindow;
+        private string commentString { get { return RichTextBoxHelper.GetCommentString(this.DatabaseType); } }      
+
         public DatabaseType DatabaseType { get; set; }
         public DbInterpreter DbInterpreter { get; set; }
         public event EventHandler SetupIntellisenseRequired;
-
         public QueryEditorInfoMessageHandler OnQueryEditorInfoMessage;
+        public IDocument Document => this.txtEditor.Document;
+        public TextEditorControlEx Editor => this.txtEditor;
+        public TextArea TextArea => this.txtEditor.ActiveTextAreaControl.TextArea;
+        public SelectionManager SelectionManager => this.TextArea.SelectionManager;
+        public string SelectedText => this.SelectionManager.SelectedText;
+        public ContextMenuStrip ContextMenu => this.txtEditor.ActiveTextAreaControl.ContextMenuStrip;
+
+        private int CurrentCharIndex
+        {
+            get
+            {
+                return this.TextArea.Caret.Offset;
+            }
+        }
+
+        private int SelectionStart { get { return this.CurrentCharIndex; } }
+
         public UC_QueryEditor()
         {
             InitializeComponent();
-
-            this.lvWords.MouseWheel += LvWords_MouseWheel;
-            this.panelWords.VerticalScroll.Enabled = true;
-            this.panelWords.VerticalScroll.Visible = true;
         }
 
         public void Init()
         {
+            TextEditorControlBase.CheckForIllegalCrossThreadCalls = false;
+            (this.Document.TextBufferStrategy as GapTextBufferStrategy).CheckTread = false;
+
+            TextEditorHelper.ApplySetting(this.txtEditor, SettingManager.Setting.TextEditorOption);
+
             this.keywords = KeywordManager.GetKeywords(this.DatabaseType);
             this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
+
+            this.txtEditor.FindForm.Shown += this.FindForm_Shown;
+            this.TextArea.KeyDown += this.txtEditor_KeyDown;
+            this.TextArea.KeyUp += this.txtEditor_KeyUp;
+            this.TextArea.MouseDown += this.txtEditor_MouseDown;
+            this.TextArea.MouseClick += this.txtEditor_MouseClick;
+
+            ToolStripMenuItem tsmiDisableIntellisense = new ToolStripMenuItem("Disable Intellisense") { Name = "tsmiDisableIntellisense" };
+            tsmiDisableIntellisense.Click += this.tsmiDisableIntellisense_Click;
+            this.ContextMenu.Items.Add(tsmiDisableIntellisense);
+
+            ToolStripMenuItem tsmiUpdateIntellisense = new ToolStripMenuItem("Update Intellisense") { Name = "tsmiUpdateIntellisense" };
+            tsmiUpdateIntellisense.Click += this.tsmiUpdateIntellisense_Click;
+            this.ContextMenu.Items.Add(tsmiUpdateIntellisense);
+
+            ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
+            tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
+            this.ContextMenu.Items.Add(tsmiValidateScripts);
+
+            this.ContextMenu.Opening += this.editorContexMenu_Opening;            
+
+            this.txtEditor.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(this.DatabaseType);           
         }
 
-        private void LvWords_MouseWheel(object sender, MouseEventArgs e)
+        private void FindForm_Shown(object sender, EventArgs e)
         {
-            if (this.panelWords.Visible && this.txtToolTip.Visible)
-            {
-                this.txtToolTip.Visible = false;
-            }
-        }
-
-        public RichTextBox Editor => this.txtEditor;
-
-        public void SetupIntellisence()
-        {
-            this.intellisenseSetuped = true;
-            this.enableIntellisense = true;
-            this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
-            this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
-            this.dbSchemas = this.allWords.Where(item => item.Type == SqlWordTokenType.Schema).Select(item => item.Text).ToList();
-        }
-
-        private void tsmiCopy_Click(object sender, EventArgs e)
-        {
-            this.CopyText();
-        }
-
-        private void CopyText()
-        {
-            Clipboard.SetDataObject(this.txtEditor.SelectedText);
-        }
-
-        private void tsmiPaste_Click(object sender, EventArgs e)
-        {
-            this.txtEditor.Paste();
-        }
-
-        private void txtEditor_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                this.tsmiCopy.Enabled = this.txtEditor.SelectionLength > 0;
-                this.tsmiDisableIntellisense.Text = $"{(this.enableIntellisense ? "Disable" : "Enable")} Intellisense";
-                this.tsmiUpdateIntellisense.Visible = this.enableIntellisense;
-                this.editorContexMenu.Show(this.txtEditor, e.Location);
-            }
-        }
-
-        private void txtEditor_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.F5)
-            {
-                if (FormEventCenter.OnRunScripts != null)
-                {
-                    FormEventCenter.OnRunScripts();
-                }
-            }
-            else if (e.Control && e.KeyCode == Keys.V)
-            {
-                this.isPasting = true;
-                return;
-            }
-            else if (e.Control && e.KeyCode == Keys.F)
-            {
-                this.ShowFindBox();
-            }
-            else if (e.Control && e.KeyCode == Keys.C)
-            {
-                this.CopyText();
-            }
-
-            if (!this.enableIntellisense)
-            {
-                return;
-            }
-
-            if (e.KeyCode == Keys.Down)
-            {
-                if (this.panelWords.Visible && !this.lvWords.Focused)
-                {
-                    this.lvWords.Focus();
-
-                    if (this.lvWords.Items.Count > 0)
-                    {
-                        this.lvWords.Items[0].Selected = true;
-                    }
-
-                    e.SuppressKeyPress = true;
-                }
-            }
-        }
-
-        private void ShowFindBox()
-        {
-            if (this.findBox == null || this.findBox.IsDisposed)
-            {
-                this.findBox = new frmFindBox(true);
-
-                this.findBox.OnFind += this.FindBox_OnFind;
-                this.findBox.OnEndFind += this.FindBox_OnEndFind;
-            }
-
-            this.findBox.StartPosition = FormStartPosition.Manual;
-
             Control topControl = this.GetTopConrol();
 
             if (topControl != null)
             {
-                this.findBox.Location = new Point(topControl.Left + topControl.Width - this.findBox.Width - 40, topControl.Top + 130);
+                this.txtEditor.FindForm.Location = new Point(topControl.Left + topControl.Width - this.txtEditor.FindForm.Width - 30, topControl.Top + 120);
             }
             else
             {
-                this.findBox.Location = new Point(1000, 150);
+                this.txtEditor.FindForm.Location = new Point(950, 112);
             }
-
-            this.findBox.Show();
-        }
-
-        private void FindBox_OnEndFind()
-        {
-            this.ClearSelection();
         }
 
         private Control GetTopConrol()
@@ -194,19 +127,29 @@ namespace DatabaseManager.Controls
             return null;
         }
 
-        private void FindBox_OnFind()
+        public void SetupIntellisence()
         {
-            RichTextBoxHelper.HighlightingFindWord(this.txtEditor, findBox.FindWord, findBox.MatchCase, findBox.MatchWholeWord);
+            this.intellisenseSetuped = true;
+            this.enableIntellisense = true;
+            this.schemaInfo = DataStore.GetSchemaInfo(this.DatabaseType);
+            this.allWords = SqlWordFinder.FindWords(this.DatabaseType, "");
+            this.dbSchemas = this.allWords.Where(item => item.Type == SqlWordTokenType.Schema).Select(item => item.Text).ToList();
+        }
+
+        private void txtEditor_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F5)
+            {
+                if (FormEventCenter.OnRunScripts != null)
+                {
+                    FormEventCenter.OnRunScripts();
+                }
+            }            
         }
 
         private void txtEditor_KeyUp(object sender, KeyEventArgs e)
         {
             this.ShowCurrentPosition();
-
-            if (this.isPasting)
-            {
-                return;
-            }
 
             try
             {
@@ -219,43 +162,36 @@ namespace DatabaseManager.Controls
 
         private void HandleKeyUpForIntellisense(KeyEventArgs e)
         {
-            if (e.KeyValue >= 112 && e.KeyValue <= 123)
+            if ((e.KeyValue >= 112 && e.KeyValue <= 123) || e.KeyData == Keys.Space || e.KeyData == Keys.Enter || e.KeyData == Keys.Escape)
             {
-                this.SetWordListViewVisible(false);
+                this.CloseCodeCompletionWindow();
                 return;
             }
 
-            if (e.KeyCode == Keys.Space)
+            if (e.KeyData == Keys.Up || e.KeyData == Keys.Down)
             {
-                this.ClearStyleForSpace();
-
-                this.SetWordListViewVisible(false);
+                if (this.IsCodeCompletionWindowVisible())
+                {
+                    return;
+                }
             }
 
             SqlWordToken token = this.GetLastWordToken();
 
             if (token == null || token.Text == null || token.Type != SqlWordTokenType.None)
             {
-                this.SetWordListViewVisible(false);
-
-                if (token != null && token.Text != null)
-                {
-                    if (token.Type != SqlWordTokenType.String && token.Text.Contains("'"))
-                    {
-                        this.ClearStyle(token);
-                    }
-                }
+                this.CloseCodeCompletionWindow();
             }
 
-            if (this.enableIntellisense && this.panelWords.Visible)
+            if (this.enableIntellisense && this.IsCodeCompletionWindowVisible())
             {
-                if (this.lvWords.Tag is SqlWord word)
+                if (this.codeCompletionWindow.Tag is SqlWord word)
                 {
                     if (word.Type == SqlWordTokenType.Table)
                     {
                         string columnName = null;
 
-                        int index = this.txtEditor.SelectionStart;
+                        int index = this.SelectionStart;
                         char c = this.txtEditor.Text[index - 1];
 
                         if (c != '.')
@@ -278,7 +214,7 @@ namespace DatabaseManager.Controls
             {
                 if (this.enableIntellisense)
                 {
-                    if (token.Type == SqlWordTokenType.String)
+                    if (token == null || token.Type == SqlWordTokenType.String)
                     {
                         return;
                     }
@@ -288,37 +224,32 @@ namespace DatabaseManager.Controls
                     if (word.Type == SqlWordTokenType.Table)
                     {
                         this.ShowTableColumns(word.Text);
-                        this.lvWords.Tag = word;
+                        this.SetCodeCompletionWindowTag(word);
                     }
                     else if (word.Type == SqlWordTokenType.Schema)
                     {
                         this.ShowDbObjects(null, word.Text);
-                        this.lvWords.Tag = word;
+                        this.SetCodeCompletionWindowTag(word);
                     }
                 }
             }
             else if (e.KeyCode == Keys.Back)
             {
-                if (this.enableIntellisense && this.panelWords.Visible)
+                if (this.enableIntellisense && this.IsCodeCompletionWindowVisible())
                 {
                     if (!this.IsMatchWord(token.Text) || this.txtEditor.Text.Length == 0)
                     {
-                        this.SetWordListViewVisible(false);
+                        this.CloseCodeCompletionWindow();
                     }
                     else
                     {
                         this.ShowWordListByToken(token);
                     }
                 }
-
-                if (token != null && token.Text.Length > 0 && this.commentString.Contains(token.Text.Last()))
-                {
-                    this.HighlightingWord(token);
-                }
             }
             else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
             {
-                this.SetWordListViewVisible(false);
+                this.CloseCodeCompletionWindow();
             }
             else
             {
@@ -332,9 +263,29 @@ namespace DatabaseManager.Controls
             }
         }
 
+        private void SetCodeCompletionWindowTag(SqlWord word)
+        {
+            if (this.codeCompletionWindow != null)
+            {
+                this.codeCompletionWindow.Tag = word;
+            }
+        }
+
+        private bool IsMatchWord(string word)
+        {
+            if (string.IsNullOrEmpty(word))
+            {
+                return false;
+            }
+
+            var words = SqlWordFinder.FindWords(this.DatabaseType, word);
+
+            return words.Count > 0;
+        }
+
         private bool IsWordInQuotationChar(SqlWordToken token)
         {
-            if(token == null)
+            if (token == null)
             {
                 return false;
             }
@@ -351,21 +302,10 @@ namespace DatabaseManager.Controls
             return singleQotationCharCount % 2 != 0;
         }
 
-        private void HighlightingWord(SqlWordToken token)
-        {
-            int start = this.txtEditor.SelectionStart;
-            int lineIndex = this.txtEditor.GetLineFromCharIndex(start);
-            int stop = this.txtEditor.GetFirstCharIndexFromLine(lineIndex) + this.txtEditor.Lines[lineIndex].Length - 1;
-
-            RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType, true, start, stop); ;
-        }
-
         private void ShowWordListByToken(SqlWordToken token)
         {
-            if (token == null || string.IsNullOrEmpty(token.Text) || token.Type == SqlWordTokenType.Number)
+            if (token == null)
             {
-                this.SetWordListViewVisible(false);
-
                 return;
             }
 
@@ -406,86 +346,28 @@ namespace DatabaseManager.Controls
         {
             if (words.Count() > 0)
             {
-                this.lvWords.Items.Clear();
+                SqlCompletionDataProvider provider = new SqlCompletionDataProvider();
+                provider.InsertSelected += this.InsertSelectedWord;
 
-                foreach (SqlWord sw in words)
-                {
-                    ListViewItem item = new ListViewItem();
+                SqlWordToken[] tokens = words.Select(item => new SqlWordToken() { Type = item.Type, Text = item.Text }).ToArray();
 
-                    switch (sw.Type)
-                    {
-                        case SqlWordTokenType.Keyword:
-                            item.ImageIndex = 0;
-                            break;
-                        case SqlWordTokenType.BuiltinFunction:
-                        case SqlWordTokenType.Function:
-                            item.ImageIndex = 1;
-                            break;
-                        case SqlWordTokenType.Table:
-                            item.ImageIndex = 2;
-                            break;
-                        case SqlWordTokenType.View:
-                            item.ImageIndex = 3;
-                            break;
-                        case SqlWordTokenType.TableColumn:
-                            item.ImageIndex = 4;
-                            break;
-                        case SqlWordTokenType.Schema:
-                            item.ImageIndex = 5;
-                            break;
-                    }
-
-                    item.SubItems.Add(sw.Text);
-                    item.SubItems[1].Tag = sw.Type;
-                    item.Tag = sw.Source;
-
-                    this.lvWords.Items.Add(item);
-                }
-
-                string longestText = words.OrderByDescending(item => item.Text.Length).FirstOrDefault().Text;
-
-                int width = this.MeasureTextWidth(this.lvWords, longestText);
-
-                this.lvWords.Columns[1].Width = width + 20;
-
-                int totalWidth = this.lvWords.Columns.Cast<ColumnHeader>().Sum(item => item.Width) + 50;
-
-                this.panelWords.Width = totalWidth < WordListMinWidth ? WordListMinWidth : totalWidth;
-
-                this.SetWordListPanelPostition();
-
-                this.SetWordListViewVisible(true);
+                this.codeCompletionWindow = CodeCompletionWindow.ShowCompletionWindow(this.ParentForm, this.txtEditor, tokens, provider, ' ', false, false);
             }
-            else
+        }
+
+        private bool IsCodeCompletionWindowVisible()
+        {
+            return this.codeCompletionWindow != null && this.codeCompletionWindow.Visible;
+        }
+
+        private void CloseCodeCompletionWindow()
+        {
+            if (this.codeCompletionWindow != null)
             {
-                this.SetWordListViewVisible(false);
+                this.codeCompletionWindow.Close();
+                this.codeCompletionWindow.Dispose();
+                this.codeCompletionWindow = null;
             }
-        }
-
-        private void SetWordListPanelPostition()
-        {
-            Point point = this.txtEditor.GetPositionFromCharIndex(txtEditor.SelectionStart);
-            point.Y += (int)Math.Ceiling(this.txtEditor.Font.GetHeight()) + 2;
-            point.X += 2;
-
-            this.panelWords.Location = point;
-        }
-
-        private void ClearStyle(SqlWordToken token)
-        {
-            this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
-            this.txtEditor.SelectionColor = Color.Black;
-            this.txtEditor.SelectionStart = token.StopIndex + 1;
-            this.txtEditor.SelectionLength = 0;
-        }
-
-        private void ClearStyleForSpace()
-        {
-            int start = this.txtEditor.SelectionStart;
-            this.txtEditor.Select(start - 1, 1);
-            this.txtEditor.SelectionColor = Color.Black;
-            this.txtEditor.SelectionStart = start;
-            this.txtEditor.SelectionLength = 0;
         }
 
         private SqlWordTokenType DetectTypeByWord(string word)
@@ -499,40 +381,27 @@ namespace DatabaseManager.Controls
             return SqlWordTokenType.None;
         }
 
-        private bool IsMatchWord(string word)
+        private int GetFirstCharIndexOfLine(int line)
         {
-            if (string.IsNullOrEmpty(word))
+            int total = 0;
+
+            for (int i = 0; i < line; i++)
             {
-                return false;
+                var segment = this.Document.GetLineSegment(i);
+
+                total += segment.Length;
             }
 
-            var words = SqlWordFinder.FindWords(this.DatabaseType, word);
-
-            return words.Count > 0;
-        }
-
-        private void SetWordListViewVisible(bool visible)
-        {
-            if (visible)
-            {
-                this.panelWords.BringToFront();
-                this.panelWords.Show();
-            }
-            else
-            {
-                this.txtToolTip.Hide();
-                this.panelWords.Hide();
-                this.lvWords.Tag = null;
-            }
+            return total;
         }
 
         private SqlWordToken GetLastWordToken(bool noAction = false, bool isInsert = false)
         {
             SqlWordToken token = null;
 
-            int currentIndex = this.txtEditor.SelectionStart;
-            int lineIndex = this.txtEditor.GetLineFromCharIndex(currentIndex);
-            int lineFirstCharIndex = this.txtEditor.GetFirstCharIndexOfCurrentLine();
+            int currentIndex = this.CurrentCharIndex;
+            int lineIndex = this.TextArea.Caret.Line;
+            int lineFirstCharIndex = this.GetFirstCharIndexOfLine(lineIndex);
 
             int index = currentIndex - 1;
 
@@ -543,15 +412,11 @@ namespace DatabaseManager.Controls
 
             token = new SqlWordToken();
 
-            bool isDot = false;
-
             if (this.txtEditor.Text[index] == '.')
             {
-                isDot = true;
-
                 if (isInsert)
                 {
-                    token.StartIndex = token.StopIndex = this.txtEditor.SelectionStart;
+                    token.StartIndex = token.StopIndex = this.SelectionStart;
                     token.Text = ".";
 
                     return token;
@@ -623,12 +488,7 @@ namespace DatabaseManager.Controls
 
                 token.Text = word;
 
-                token.StartIndex = i + (existed ? 1 : 0);
-
-                if (token.StartIndex == token.StopIndex && isInsert && word.Length > 0)
-                {
-                    token.StopIndex = token.StartIndex + word.Length;
-                }
+                token.StartIndex = i + (existed ? 1 : 0);                
 
                 if (word.Contains("'"))
                 {
@@ -673,11 +533,6 @@ namespace DatabaseManager.Controls
 
                     if (token.Type == SqlWordTokenType.String)
                     {
-                        if (!isDot)
-                        {
-                            this.SetWordColor(token);
-                        }
-
                         return token;
                     }
                 }
@@ -701,31 +556,18 @@ namespace DatabaseManager.Controls
                 else if (this.keywords.Any(item => item.ToUpper() == word.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.Keyword;
-
-                    this.SetWordColor(token);
                 }
                 else if (this.builtinFunctions.Any(item => item.Name.ToUpper() == trimedWord.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.BuiltinFunction;
-
-                    this.SetWordColor(token);
                 }
                 else if (isComment)
                 {
                     token.Type = SqlWordTokenType.Comment;
-
-                    this.SetWordColor(token, true);
                 }
                 else if (long.TryParse(word, out _))
                 {
                     token.Type = SqlWordTokenType.Number;
-                }
-                else
-                {
-                    if (!isDot && !this.IsWordInQuotationChar(token))
-                    {
-                        this.ClearStyle(token);
-                    }
                 }
             }
 
@@ -807,69 +649,31 @@ namespace DatabaseManager.Controls
             return value;
         }
 
-        private void SetWordColor(SqlWordToken token, bool keepCurrentPos = false)
-        {
-            if (!SettingManager.Setting.EnableEditorHighlighting)
-            {
-                return;
-            }
-
-            Color color = Color.Black;
-
-            if (token.Type == SqlWordTokenType.Keyword)
-            {
-                color = Color.Blue;
-            }
-            else if (token.Type == SqlWordTokenType.BuiltinFunction)
-            {
-                color = ColorTranslator.FromHtml("#FF00FF");
-            }
-            else if (token.Type == SqlWordTokenType.String)
-            {
-                color = Color.Red;
-            }
-            else if (token.Type == SqlWordTokenType.Comment)
-            {
-                color = ColorTranslator.FromHtml("#008000");
-            }
-
-            int start = this.txtEditor.SelectionStart;
-
-            this.txtEditor.Select(token.StartIndex, token.StopIndex - token.StartIndex + 1);
-            this.txtEditor.SelectionBackColor = this.txtEditor.BackColor;
-            this.txtEditor.SelectionColor = color;
-            this.txtEditor.SelectionStart = keepCurrentPos ? start : token.StopIndex + 1;
-            this.txtEditor.SelectionLength = 0;
-        }
-
-        private void InsertSelectedWord()
+        private void InsertSelectedWord(ICompletionData data, int offset, char key)
         {
             try
             {
                 SqlWordToken token = this.GetLastWordToken(true, true);
 
-                ListViewItem item = this.lvWords.SelectedItems[0];
-                object tag = item.Tag;
+                string selectedWord = data.Text;
 
-                string selectedWord = item.SubItems[1].Text;
+                int length = token.StopIndex - token.StartIndex + 1;
 
-                int length = token.StartIndex == token.StopIndex ? 0 : token.StopIndex - token.StartIndex + 1;
+                string quotationValue = selectedWord;               
 
-                this.txtEditor.Select(token.StartIndex, length);
-
-                string quotationValue = selectedWord;
-
-                if (!(tag is FunctionSpecification))
+                if (!this.builtinFunctions.Any(item=>item.Name.ToUpper() == data.Text.ToUpper()))
                 {
                     quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
                 }
 
-                this.txtEditor.SelectedText = quotationValue;
+                if (length > 0)
+                {
+                    this.txtEditor.SelectText(token.StartIndex, length);
+                }
 
-                this.SetWordListViewVisible(false);
+                this.TextArea.InsertString(quotationValue);
 
-                this.txtEditor.SelectionStart = this.txtEditor.SelectionStart;
-                this.txtEditor.Focus();
+                this.TextArea.Focus();
             }
             catch (Exception ex)
             {
@@ -881,46 +685,15 @@ namespace DatabaseManager.Controls
         {
             string message = "";
 
-            if (this.txtEditor.SelectionStart >= 0)
-            {
-                int lineIndex = this.txtEditor.GetLineFromCharIndex(this.txtEditor.SelectionStart);
-                int column = this.txtEditor.SelectionStart - this.txtEditor.GetFirstCharIndexOfCurrentLine() + 1;
+            int lineIndex = this.TextArea.Caret.Line;
+            int column = this.TextArea.Caret.Column;
+            int index = this.CurrentCharIndex;
 
-                message = $"Line:{lineIndex + 1}  Column:{column} Index:{this.txtEditor.SelectionStart}";
-            }
-            else
-            {
-                message = "";
-            }
+            message = $"Line:{lineIndex + 1}  Column:{column + 1} Index:{index}";
 
             if (this.OnQueryEditorInfoMessage != null)
             {
                 this.OnQueryEditorInfoMessage(message);
-            }
-        }
-
-        private void lvWords_DoubleClick(object sender, EventArgs e)
-        {
-            if (this.lvWords.SelectedItems.Count > 0)
-            {
-                this.InsertSelectedWord();
-            }
-        }
-
-        private void lvWords_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                this.InsertSelectedWord();
-            }
-            else if (!(e.KeyCode == Keys.Up || e.KeyCode == Keys.Down))
-            {
-                if (this.panelWords.Visible)
-                {
-                    this.panelWords.Visible = false;
-                    this.txtEditor.SelectionStart = this.txtEditor.SelectionStart;
-                    this.txtEditor.Focus();
-                }
             }
         }
 
@@ -940,62 +713,6 @@ namespace DatabaseManager.Controls
                         this.SetupIntellisenseRequired(this, null);
                     }
                 }
-            }
-        }
-
-        private void txtEditor_SelectionChanged(object sender, EventArgs e)
-        {
-            if (this.isPasting)
-            {
-                this.isPasting = false;
-
-                RichTextBoxHelper.Highlighting(this.txtEditor, this.DatabaseType);
-            }
-        }
-
-        private void lvWords_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            this.txtToolTip.Visible = false;
-
-            if (this.lvWords.SelectedItems.Count > 0)
-            {
-                ListViewItem item = this.lvWords.SelectedItems[0];
-
-                object source = item.Tag;
-                string tooltip = null;
-
-                if (source is FunctionSpecification funcSpec)
-                {
-                    tooltip = $"{funcSpec.Name}({funcSpec.Args})";
-                }
-                else if (source is TableColumn column)
-                {
-                    tooltip = $"{column.Name}({this.DbInterpreter.ParseDataType(column)})";
-                }
-
-                if (!string.IsNullOrEmpty(tooltip))
-                {
-                    this.ShowTooltip(tooltip, item);
-                }
-            }
-        }
-
-        private void ShowTooltip(string text, ListViewItem item)
-        {
-            this.txtToolTip.Text = text;
-
-            this.txtToolTip.Location = new Point(this.panelWords.Location.X + this.panelWords.Width, this.panelWords.Location.Y + item.Position.Y);
-
-            this.txtToolTip.Width = this.MeasureTextWidth(this.txtToolTip, text);
-
-            this.txtToolTip.Visible = true;
-        }
-
-        private int MeasureTextWidth(Control control, string text)
-        {
-            using (Graphics g = this.CreateGraphics())
-            {
-                return (int)Math.Ceiling(g.MeasureString(text, control.Font).Width);
             }
         }
 
@@ -1020,8 +737,7 @@ namespace DatabaseManager.Controls
         private void HandleMouseDownClick(MouseEventArgs e)
         {
             this.ShowCurrentPosition();
-
-            this.isPasting = false;
+            this.CloseCodeCompletionWindow();
 
             if (!this.enableIntellisense)
             {
@@ -1029,18 +745,6 @@ namespace DatabaseManager.Controls
             }
 
             this.txtToolTip.Visible = false;
-
-            if (this.panelWords.Visible && !this.panelWords.Bounds.Contains(e.Location))
-            {
-                this.panelWords.Visible = false;
-                this.lvWords.Items.Clear();
-                this.lvWords.Tag = null;
-            }
-        }
-
-        private void tsmiSelectAll_Click(object sender, EventArgs e)
-        {
-            this.txtEditor.SelectAll();
         }
 
         private void tsmiValidateScripts_Click(object sender, EventArgs e)
@@ -1062,46 +766,52 @@ namespace DatabaseManager.Controls
                     msgBox.ShowDialog();
                 }
 
-                RichTextBoxHelper.HighlightingError(this.txtEditor, error);
+                TextEditorHelper.HighlightingError(this.txtEditor, error);
             }
             else
             {
+                TextEditorHelper.ClearMarkers(this.txtEditor);
+
                 if (showMessageBox)
                 {
                     MessageBox.Show("The scripts is valid.");
                 }
             }
-        }
+        }       
 
         private void ClearSelection()
         {
-            int start = this.txtEditor.SelectionStart;
-
-            this.txtEditor.SelectAll();
-            this.txtEditor.SelectionBackColor = Color.White;
-            this.txtEditor.SelectionStart = start;
-            this.txtEditor.SelectionLength = 0;
+            this.SelectionManager.ClearSelection();
         }
 
         private void editorContexMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            bool hasText = this.txtEditor.Text.Trim().Length > 0;
-            this.tsmiValidateScripts.Visible = hasText;
-            this.tsmiFindText.Visible = hasText;
+            this.SetContextMenuItemDisplay();
+        }
+
+        private void SetContextMenuItemDisplay()
+        {
+            foreach (ToolStripItem item in this.ContextMenu.Items)
+            {
+                if (item.Name == "tsmiValidateScripts")
+                {
+                    bool hasText = this.txtEditor.Text.Trim().Length > 0;
+                    item.Visible = hasText;
+                }
+                else if (item.Name == "tsmiDisableIntellisense")
+                {
+                    item.Text = $"{(this.enableIntellisense ? "Disable" : "Enable")} Intellisense";
+                }
+                else if (item.Name == "tsmiUpdateIntellisense")
+                {
+                    item.Visible = this.enableIntellisense;
+                }
+            }
         }
 
         internal void DisposeResources()
         {
-            if (this.findBox != null && !this.findBox.IsDisposed)
-            {
-                this.findBox.Close();
-                this.findBox.Dispose();
-            }
-        }
-
-        private void tsmiFindText_Click(object sender, EventArgs e)
-        {
-            this.ShowFindBox();
+            this.CloseCodeCompletionWindow();
         }
     }
 }

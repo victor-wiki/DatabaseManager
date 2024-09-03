@@ -14,7 +14,6 @@ namespace DatabaseInterpreter.Model
         public DbTransaction Transaction { get; set; }
         public CancellationToken CancellationToken { get; set; }
         public bool DetectDateTimeTypeByValues { get; set; }
-        public IEnumerable<TableColumn> Columns { get; set; }
-        public bool KeepIdentity { get; set; }
+        public IEnumerable<TableColumn> Columns { get; set; }       
     }
 }

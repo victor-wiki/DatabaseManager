@@ -11,6 +11,7 @@ using DatabaseInterpreter.Model;
 using DatabaseManager.Data;
 using System.Drawing;
 using System.Linq;
+using SqlCodeEditor;
 
 namespace DatabaseManager.Controls
 {
@@ -22,6 +23,8 @@ namespace DatabaseManager.Controls
         private bool showEditorMessage = true;
         private string originalText = "";
 
+        public UC_QueryEditor QueryEditor => this.queryEditor;
+
 
         public bool ReadOnly
         {
@@ -29,7 +32,7 @@ namespace DatabaseManager.Controls
             set
             {
                 this.readOnly = value;
-                this.Editor.ReadOnly = value;
+                this.Editor.IsReadOnly = value;
                 this.Editor.BackColor = Color.White;
             }
         }
@@ -79,7 +82,7 @@ namespace DatabaseManager.Controls
             this.SetupIntellisence();
         }
 
-        public RichTextBox Editor => this.queryEditor.Editor;
+        public TextEditorControlEx Editor => this.queryEditor.Editor;
 
         private void ShowEditorInfoMessage(string message)
         {
@@ -97,11 +100,11 @@ namespace DatabaseManager.Controls
 
             if (!string.IsNullOrEmpty(displayInfo.Content))
             {
-                this.Editor.AppendText(displayInfo.Content);                
+                this.Editor.Text = displayInfo.Content;                
             }
             else if (File.Exists(displayInfo.FilePath))
             {
-                this.Editor.AppendText(File.ReadAllText(displayInfo.FilePath));
+                this.Editor.Text = File.ReadAllText(displayInfo.FilePath);
             }
 
             this.queryEditor.DatabaseType = this.displayInfo.DatabaseType;
@@ -232,7 +235,7 @@ namespace DatabaseManager.Controls
         {
             this.displayInfo = data;
 
-            string script = this.Editor.SelectionLength > 0 ? this.Editor.SelectedText : this.Editor.Text;
+            string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
 
             if (script.Trim().Length == 0)
             {
