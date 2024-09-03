@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.1.2</Version>
-    <AssemblyVersion>2.1.2</AssemblyVersion>
-    <FileVersion>2.1.2</FileVersion>
+    <Version>2.1.3</Version>
+    <AssemblyVersion>2.1.3</AssemblyVersion>
+    <FileVersion>2.1.3</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>add "ExecuteScriptOnServer" to "TableScriptsGenerateOption".</PackageReleaseNotes>
+    <PackageReleaseNotes>remove property "KeepIdentity" for class "BulkCopyInfo".</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
