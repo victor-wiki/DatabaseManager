@@ -44,4 +44,4 @@
 
 ## Executable Files
 [Windows Binaries](https://raw.githubusercontent.com/victor-wiki/StaticResources/master/StaticResources/executeFiles/projs/DatabaseManager/DatabaseManager.zip?rid=1)
-<br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) is required.)
+<br/>(Note: [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) is required.)
