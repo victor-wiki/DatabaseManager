@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.0.0</Version>
-    <AssemblyVersion>2.0.0</AssemblyVersion>
-    <FileVersion>2.0.0</FileVersion>
-    <PackageReleaseNotes>use sqlite store profile data instead of json files.</PackageReleaseNotes>
+    <Version>2.0.1</Version>
+    <AssemblyVersion>2.0.1</AssemblyVersion>
+    <FileVersion>2.0.1</FileVersion>
+    <PackageReleaseNotes>check whether db template file exists.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
 

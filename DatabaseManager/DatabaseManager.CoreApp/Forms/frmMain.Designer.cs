@@ -336,7 +336,7 @@
             Margin = new System.Windows.Forms.Padding(4);
             Name = "frmMain";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "Database Manager2";
+            Text = "Database Manager";
             WindowState = System.Windows.Forms.FormWindowState.Maximized;
             Load += frmMain_Load;
             DragDrop += frmMain_DragDrop;

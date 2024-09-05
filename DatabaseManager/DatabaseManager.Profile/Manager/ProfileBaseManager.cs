@@ -35,6 +35,11 @@ namespace DatabaseManager.Profile
 
             string templateFilePath = Path.Combine(assemblyFolder, "Template", dataFileName);
 
+            if (!File.Exists(templateFilePath))
+            {
+                return;
+            }
+
             if (!File.Exists(dataFilePath))
             {
                 if (!File.Exists(templateFilePath))
