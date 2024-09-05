@@ -8,20 +8,19 @@ using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using SqlCodeEditor;
+using SqlCodeEditor.Document;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static BrightIdeasSoftware.TreeListView;
-using static Humanizer.In;
 
 namespace DatabaseManager
 {
@@ -31,7 +30,7 @@ namespace DatabaseManager
         private ConnectionInfo sourceDbConnectionInfo;
         private ConnectionInfo targetDbConnectionInfo;
         private bool useSourceConnector = true;
-        private bool isRichTextBoxScrolling = false;
+        private bool isTextEditorScrolling = false;
         private List<DbDifference> differences;
         private DbInterpreter sourceInterpreter;
         private DbInterpreter targetInterpreter;
@@ -52,12 +51,12 @@ namespace DatabaseManager
             this.sourceDatabaseType = sourceDatabaseType;
             this.sourceDbConnectionInfo = sourceConnectionInfo;
             this.useSourceConnector = false;
+
+            this.InitControls();
         }
 
         private void frmCompare_Load(object sender, EventArgs e)
         {
-            this.InitControls();
-
             if (!this.useSourceConnector)
             {
                 this.targetDbProfile.DatabaseType = sourceDatabaseType;
@@ -67,6 +66,19 @@ namespace DatabaseManager
 
         private void InitControls()
         {
+            var option = SettingManager.Setting.TextEditorOption;
+
+            TextEditorHelper.ApplySetting(this.txtSource, option);
+            TextEditorHelper.ApplySetting(this.txtTarget, option);
+
+            TextEditorHelper.Highlighting(this.txtSource, this.sourceDatabaseType);
+            TextEditorHelper.Highlighting(this.txtTarget, this.sourceDatabaseType);
+
+            this.txtSource.ActiveTextAreaControl.VScrollBar.Scroll += this.SourceVScrollBar_Scroll;
+            this.txtSource.ActiveTextAreaControl.HScrollBar.Scroll += this.SourceHScrollBar_Scroll;
+            this.txtTarget.ActiveTextAreaControl.VScrollBar.Scroll += this.TargetVScrollBar_Scroll;
+            this.txtTarget.ActiveTextAreaControl.HScrollBar.Scroll += this.TargetHScrollBar_Scroll;
+
             if (!this.useSourceConnector)
             {
                 int increaseHeight = this.sourceDbProfile.Height;
@@ -114,19 +126,40 @@ namespace DatabaseManager
             this.tlvDifferences.Refresh();
         }
 
+        private void SourceHScrollBar_Scroll(object sender, ScrollEventArgs e)
+        {
+            this.SyncScrollBar(this.txtSource, false);
+        }
+
+        private void SourceVScrollBar_Scroll(object sender, ScrollEventArgs e)
+        {
+            this.SyncScrollBar(this.txtSource, true);
+        }
+
+        private void TargetVScrollBar_Scroll(object sender, ScrollEventArgs e)
+        {
+            this.SyncScrollBar(this.txtTarget, true);
+        }
+
+        private void TargetHScrollBar_Scroll(object sender, ScrollEventArgs e)
+        {
+            this.SyncScrollBar(this.txtTarget, false);
+        }
+
         private async void btnCompare_Click(object sender, EventArgs e)
         {
             var dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, new ConnectionInfo(), new DbInterpreterOption());
 
             List<CheckItemInfo> checkItems = ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType, dbInterpreter.SupportDbObjectType);
-           
+
             frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", checkItems);
 
             if (selector.ShowDialog() == DialogResult.OK)
             {
                 this.tlvDifferences.Items.Clear();
-                this.txtSource.Clear();
-                this.txtTarget.Clear();
+
+                TextEditorHelper.ClearText(this.txtSource);
+                TextEditorHelper.ClearText(this.txtTarget);
 
                 var databaseObjectType = ItemsSelectorHelper.GetDatabaseObjectTypeByCheckItems(selector.CheckedItem);
 
@@ -603,33 +636,31 @@ namespace DatabaseManager
             this.ShowScripts(this.txtTarget, scripts);
         }
 
-        private void ShowScripts(RichTextBox textBox, string scripts)
+        private void ShowScripts(TextEditorControlEx editor, string scripts)
         {
-            textBox.Clear();
+            TextEditorHelper.ClearText(editor);
 
             if (!string.IsNullOrEmpty(scripts))
             {
-                textBox.AppendText(scripts.Trim());
-
-                RichTextBoxHelper.Highlighting(textBox, this.targetDbProfile.DatabaseType, false);
+                editor.Text = scripts.Trim();
             }
         }
 
-        private void HighlightingDifferences(RichTextBox sourceTextBox, RichTextBox targetTextBox)
+        private void HighlightingDifferences(TextEditorControlEx sourceTextBox, TextEditorControlEx targetTextBox)
         {
-            if (sourceTextBox.TextLength > 0 && targetTextBox.TextLength > 0)
+            if (sourceTextBox.Text.Length > 0 && targetTextBox.Text.Length > 0)
             {
                 SideBySideDiffModel model = SideBySideDiffBuilder.Instance.BuildDiffModel(targetTextBox.Text, sourceTextBox.Text);
 
                 this.HighlightingChanges(targetTextBox, model.OldText.Lines);
                 this.HighlightingChanges(sourceTextBox, model.NewText.Lines);
 
-                sourceTextBox.SelectionStart = 0;
-                targetTextBox.SelectionStart = 0;
+                sourceTextBox.Focus();
+                targetTextBox.Focus();
             }
         }
 
-        private void HighlightingChanges(RichTextBox richTextBox, List<DiffPiece> lines)
+        private void HighlightingChanges(TextEditorControlEx editor, List<DiffPiece> lines)
         {
             int lineIndex = 0;
 
@@ -637,11 +668,11 @@ namespace DatabaseManager
             {
                 if (line.Position.HasValue && line.Type != ChangeType.Unchanged)
                 {
-                    int lineFirstCharIndex = richTextBox.GetFirstCharIndexFromLine(lineIndex);
+                    int lineFirstCharIndex = TextEditorHelper.GetFirstCharIndexOfLine(editor, lineIndex);
 
                     if (line.Type == ChangeType.Inserted || line.Type == ChangeType.Deleted)
                     {
-                        this.HighlightingText(richTextBox, lineFirstCharIndex, line.Text.Length, line.Type);
+                        this.HighlightingText(editor, lineFirstCharIndex, line.Text.Length, line.Type);
                     }
                     else if (line.Type == ChangeType.Modified)
                     {
@@ -655,7 +686,7 @@ namespace DatabaseManager
                                 {
                                     int startIndex = lineFirstCharIndex + subLength;
 
-                                    this.HighlightingText(richTextBox, startIndex, subPiece.Text.Length, ChangeType.Modified);
+                                    this.HighlightingText(editor, startIndex, subPiece.Text.Length, ChangeType.Modified);
                                 }
 
                                 subLength += subPiece.Text.Length;
@@ -671,7 +702,7 @@ namespace DatabaseManager
             }
         }
 
-        private void HighlightingText(RichTextBox richTextBox, int startIndex, int length, ChangeType changeType)
+        private void HighlightingText(TextEditorControlEx editor, int startIndex, int length, ChangeType changeType)
         {
             if (startIndex < 0)
             {
@@ -693,49 +724,45 @@ namespace DatabaseManager
                 color = ColorTranslator.FromHtml("#F2C4C4");
             }
 
-            richTextBox.Select(startIndex, length);
-            richTextBox.SelectionBackColor = color;
+            TextEditorHelper.AddMarker(editor, startIndex, length, color);
         }
 
-        private void txtSource_VScroll(object sender, EventArgs e)
+        private void SyncScrollBar(TextEditorControlEx editor, bool isVertical)
         {
-            this.SyncScrollBar(sender as RichTextBox);
-        }
-
-        private void txtTarget_VScroll(object sender, EventArgs e)
-        {
-            this.SyncScrollBar(sender as RichTextBox);
-        }
-
-        private void SyncScrollBar(RichTextBox richTextBox)
-        {
-            if (this.isRichTextBoxScrolling)
+            if (this.isTextEditorScrolling)
             {
                 return;
             }
 
-            this.isRichTextBoxScrolling = true;
+            this.isTextEditorScrolling = true;
 
-            this.SyncScrollBarLocation(richTextBox);
+            this.SyncScrollBarLocation(editor, isVertical);
 
-            this.isRichTextBoxScrolling = false;
+            this.isTextEditorScrolling = false;
         }
 
-        private void SyncScrollBarLocation(RichTextBox richTextBox)
+        private void SyncScrollBarLocation(TextEditorControlEx editor, bool isVertical)
         {
-            Point point = richTextBox.Location;
-            int charIndex = richTextBox.GetCharIndexFromPosition(point);
-            int lineIndex = richTextBox.GetLineFromCharIndex(charIndex);
+            TextEditorControlEx anotherEditor = editor.Name == this.txtSource.Name ? this.txtTarget : this.txtSource;
 
-            RichTextBox anotherTextbox = richTextBox.Name == this.txtSource.Name ? this.txtTarget : this.txtSource;
+            ScrollBar currentBar;
+            ScrollBar anotherBar;
 
-            int firstCharIndexOfLine = anotherTextbox.GetFirstCharIndexFromLine(lineIndex);
 
-            if (firstCharIndexOfLine >= 0)
+            if (isVertical)
             {
-                anotherTextbox.SelectionStart = firstCharIndexOfLine;
-                anotherTextbox.SelectionLength = 0;
-                anotherTextbox.ScrollToCaret();
+                currentBar = editor.ActiveTextAreaControl.VScrollBar;
+                anotherBar = anotherEditor.ActiveTextAreaControl.VScrollBar;
+            }
+            else
+            {
+                currentBar = editor.ActiveTextAreaControl.HScrollBar;
+                anotherBar = anotherEditor.ActiveTextAreaControl.HScrollBar;
+            }
+
+            if (currentBar.Value >= anotherBar.Minimum && currentBar.Value <= anotherBar.Maximum)
+            {
+                anotherBar.Value = currentBar.Value;
             }
         }
 

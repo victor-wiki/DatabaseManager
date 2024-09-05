@@ -2,7 +2,6 @@
 using DatabaseManager.Model;
 using SqlAnalyser.Model;
 using SqlCodeEditor;
-using SqlCodeEditor.Actions;
 using SqlCodeEditor.Document;
 using System.Drawing;
 
@@ -64,14 +63,19 @@ namespace DatabaseManager.Helper
             {
                 foreach (SqlSyntaxErrorItem item in sqlSyntaxError.Items)
                 {
-                    var marker = new TextMarker(item.StartIndex, item.StopIndex - item.StartIndex + 1,
-                               TextMarkerType.SolidBlock, Color.Yellow, Color.Black);
-
-                    editor.Document.MarkerStrategy.AddMarker(marker);
+                    AddMarker(editor, item.StartIndex, item.StopIndex - item.StartIndex + 1, Color.Yellow);
                 }
             }
 
             editor.Refresh();
+        }
+
+        public static void AddMarker(TextEditorControlEx editor, int startIndex, int length, Color color)
+        {
+            var marker = new TextMarker(startIndex, length,
+                              TextMarkerType.SolidBlock, color, Color.Black);
+
+            editor.Document.MarkerStrategy.AddMarker(marker);
         }
 
         public static void ClearMarkers(TextEditorControlEx editor)
@@ -80,11 +84,25 @@ namespace DatabaseManager.Helper
             editor.Refresh();
         }
 
-        public static void Paste(TextEditorControlEx editor)
+        public static int GetFirstCharIndexOfLine(TextEditorControlEx editor, int line)
         {
-            new Paste().Execute(editor.ActiveTextAreaControl.TextArea);
-            editor.ActiveTextAreaControl.Focus();
-            editor.ActiveTextAreaControl.TextArea.Focus();
-        }        
+            int total = 0;
+
+            for (int i = 0; i < line; i++)
+            {
+                var segment = editor.Document.GetLineSegment(i);
+
+                total += segment.TotalLength;
+            }
+
+            return total;
+        }
+
+        public static void ClearText(TextEditorControlEx editor)
+        {
+            editor.Text = "";
+            editor.Refresh();
+            editor.Invalidate();
+        }
     }
 }

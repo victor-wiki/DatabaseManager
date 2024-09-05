@@ -42,7 +42,6 @@ namespace DatabaseManager.Helper
             }
         }
 
-
         public static void Highlighting(RichTextBox richTextBox, DatabaseType databaseType, bool keepPosition = true, int? startIndex = null, int? stopIndex = null, bool forceHighlightling = false)
         {
             if (!SettingManager.Setting.EnableEditorHighlighting && !forceHighlightling)

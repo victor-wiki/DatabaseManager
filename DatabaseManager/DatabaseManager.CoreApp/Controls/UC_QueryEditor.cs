@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
 using DatabaseManager.Data;
-using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using SqlAnalyser.Model;
@@ -25,8 +24,8 @@ namespace DatabaseManager.Controls
 
     public partial class UC_QueryEditor : UserControl
     {
-        private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]+)\b";
-        private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]+)\b";
+        private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]*)\b";
+        private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]*)\b";
         private SchemaInfo schemaInfo;
         private IEnumerable<string> keywords;
         private IEnumerable<FunctionSpecification> builtinFunctions;
@@ -35,7 +34,7 @@ namespace DatabaseManager.Controls
         private bool enableIntellisense;       
         private List<string> dbSchemas;
         private CodeCompletionWindow codeCompletionWindow;
-        private string commentString { get { return RichTextBoxHelper.GetCommentString(this.DatabaseType); } }      
+        private string commentString => this.DbInterpreter?.CommentString;
 
         public DatabaseType DatabaseType { get; set; }
         public DbInterpreter DbInterpreter { get; set; }
@@ -149,10 +148,10 @@ namespace DatabaseManager.Controls
 
         private void txtEditor_KeyUp(object sender, KeyEventArgs e)
         {
-            this.ShowCurrentPosition();
-
             try
             {
+                this.ShowCurrentPosition();
+
                 this.HandleKeyUpForIntellisense(e);
             }
             catch (Exception ex)
@@ -379,21 +378,7 @@ namespace DatabaseManager.Controls
             }
 
             return SqlWordTokenType.None;
-        }
-
-        private int GetFirstCharIndexOfLine(int line)
-        {
-            int total = 0;
-
-            for (int i = 0; i < line; i++)
-            {
-                var segment = this.Document.GetLineSegment(i);
-
-                total += segment.Length;
-            }
-
-            return total;
-        }
+        }       
 
         private SqlWordToken GetLastWordToken(bool noAction = false, bool isInsert = false)
         {
@@ -401,7 +386,7 @@ namespace DatabaseManager.Controls
 
             int currentIndex = this.CurrentCharIndex;
             int lineIndex = this.TextArea.Caret.Line;
-            int lineFirstCharIndex = this.GetFirstCharIndexOfLine(lineIndex);
+            int lineFirstCharIndex = TextEditorHelper.GetFirstCharIndexOfLine(this.Editor, lineIndex);
 
             int index = currentIndex - 1;
 
@@ -665,8 +650,8 @@ namespace DatabaseManager.Controls
                 {
                     quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
                 }
-
-                if (length > 0)
+              
+                if (length > 0 && token.Text != ".")
                 {
                     this.txtEditor.SelectText(token.StartIndex, length);
                 }
@@ -677,7 +662,6 @@ namespace DatabaseManager.Controls
             }
             catch (Exception ex)
             {
-
             }
         }
 
@@ -689,7 +673,7 @@ namespace DatabaseManager.Controls
             int column = this.TextArea.Caret.Column;
             int index = this.CurrentCharIndex;
 
-            message = $"Line:{lineIndex + 1}  Column:{column + 1} Index:{index}";
+            message = $"Line:{lineIndex + 1}  Column:{column + 1}  Index:{index}";
 
             if (this.OnQueryEditorInfoMessage != null)
             {

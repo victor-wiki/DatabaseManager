@@ -51,10 +51,7 @@ namespace DatabaseManager
             if (SettingManager.Setting.ValidateScriptsAfterTranslated)
             {
                 this.chkValidateScriptsAfterTranslated.Checked = true;
-            }
-
-            this.txtSource.SyntaxHighlighting = string.Empty;
-            this.txtTarget.SyntaxHighlighting = string.Empty;           
+            }            
         }
 
         public void LoadDbTypes()
@@ -237,14 +234,8 @@ namespace DatabaseManager
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-            this.txtSource.Text = "";
-            this.txtTarget.Text = "";
-
-            this.txtSource.Refresh();
-            this.txtTarget.Refresh();
-
-            this.txtSource.Invalidate();
-            this.txtTarget.Invalidate();
+            TextEditorHelper.ClearText(this.txtSource);
+            TextEditorHelper.ClearText(this.txtTarget);
         }            
 
         private void btnExchange_Click(object sender, EventArgs e)
