@@ -23,7 +23,8 @@ namespace DatabaseManager.Model
     public enum DatabaseObjectDisplayType
     {
         Script = 0,
-        Data = 1,
-        TableDesigner = 2
+        ViewData = 1,
+        EditData = 2,
+        TableDesigner = 3
     }
 }

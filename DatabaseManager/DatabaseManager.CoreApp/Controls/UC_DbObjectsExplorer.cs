@@ -19,7 +19,7 @@ using DatabaseManager.Forms;
 
 namespace DatabaseManager.Controls
 {
-    public partial class UC_DbObjectsNavigator : UserControl
+    public partial class UC_DbObjectsExplorer : UserControl
     {
         public ShowDbObjectContentHandler OnShowContent;
         public FeedbackHandler OnFeedback;
@@ -32,7 +32,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        public UC_DbObjectsNavigator()
+        public UC_DbObjectsExplorer()
         {
             InitializeComponent();
         }

@@ -63,21 +63,21 @@ namespace DatabaseManager
             IEnumerable<Table> tables = schemaInfo.Tables;
             var foreignKeys = schemaInfo.TableForeignKeys;
 
-            bool isUniqueDbSchema = tables.GroupBy(item => item.Schema).Count() == 1;
+            bool showSchema = DbObjectsTreeHelper.NeedShowSchema(dbInterpreter, tables);
 
             var notReferencedTables = schemaInfo.Tables.Where(item => !foreignKeys.Any(fk => fk.ReferencedTableName == item.Name));
 
-            this.notReferencedTreeNodes = DbObjectsTreeHelper.CreateDbObjectNodes(notReferencedTables, !isUniqueDbSchema);
+            this.notReferencedTreeNodes = DbObjectsTreeHelper.CreateDbObjectNodes(notReferencedTables, showSchema);
 
             IEnumerable<string> topReferencedTableNames = TableReferenceHelper.GetTopReferencedTableNames(foreignKeys);
 
             var topReferencedTables = tables.Where(item => topReferencedTableNames.Any(t => t == item.Name));
 
-            var children = DbObjectsTreeHelper.CreateDbObjectNodes(topReferencedTables, !isUniqueDbSchema).ToArray();
+            var children = DbObjectsTreeHelper.CreateDbObjectNodes(topReferencedTables, showSchema).ToArray();
 
             this.tvDbObjects.Nodes.AddRange(children);
 
-            this.LoadChildNodes(this.tvDbObjects.Nodes.Cast<TreeNode>(), isUniqueDbSchema, tables, foreignKeys);
+            this.LoadChildNodes(this.tvDbObjects.Nodes.Cast<TreeNode>(), showSchema, tables, foreignKeys);
 
             if (this.dbObject != null)
             {
@@ -87,7 +87,7 @@ namespace DatabaseManager
             }
         }
 
-        private void LoadChildNodes(IEnumerable<TreeNode> nodes, bool isUniqueSchema, IEnumerable<Table> tables, IEnumerable<TableForeignKey> foreignKeys)
+        private void LoadChildNodes(IEnumerable<TreeNode> nodes, bool showSchema, IEnumerable<Table> tables, IEnumerable<TableForeignKey> foreignKeys)
         {
             foreach (TreeNode tn in nodes)
             {
@@ -97,11 +97,11 @@ namespace DatabaseManager
 
                 var refTables = tables.Where(item => refTableNames.Any(t => t == item.Name));
 
-                var children = DbObjectsTreeHelper.CreateDbObjectNodes(refTables, !isUniqueSchema).ToArray();
+                var children = DbObjectsTreeHelper.CreateDbObjectNodes(refTables, showSchema).ToArray();
 
                 tn.Nodes.AddRange(children);
 
-                this.LoadChildNodes(children.Where(item => item.Text != tn.Text), isUniqueSchema, tables, foreignKeys);
+                this.LoadChildNodes(children.Where(item => item.Text != tn.Text), showSchema, tables, foreignKeys);
             }
         }
 

@@ -9,17 +9,26 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace DatabaseManager.Controls
 {
+    public delegate void OnContentSavedHandler(string title, string tip);
+
     public partial class UC_DbObjectContent : UserControl
     {
+        private DatabaseObjectDisplayInfo info;
+        private IDbObjContentDisplayer control;
         private Dictionary<int, Rectangle> dictCloseButtonRectangle = new Dictionary<int, Rectangle>();
 
         public DataFilterHandler OnDataFilter;
         public FeedbackHandler OnFeedback;
+        public OnContentSavedHandler OnContentSaved;
+
+        internal IEnumerable<IDockContent> ExistingContents { get; set; }
 
         public UC_DbObjectContent()
         {
@@ -27,72 +36,18 @@ namespace DatabaseManager.Controls
 
             TabControl.CheckForIllegalCrossThreadCalls = false;
             TabPage.CheckForIllegalCrossThreadCalls = false;
-
-            FormEventCenter.OnSave += this.Save;
-            FormEventCenter.OnRunScripts += this.RunScripts;
         }
 
         public void ShowContent(DatabaseObjectDisplayInfo info)
         {
-            this.Visible = true;
+            this.info = info;
 
-            TabPage page = this.FindTabPage(info);
-
-            string title = this.GetFormatTabHeaderText(this.GetInfoName(info));
-
-            if (page == null)
-            {
-                page = new TabPage(title) { };
-
-                this.tabControl1.TabPages.Insert(0, page);
-
-                this.tabControl1.SelectedTab = page;
-            }
-            else
-            {
-                this.tabControl1.SelectedTab = page;
-            }
-
-            page.Tag = info;
-
-            page.BackColor = Color.Transparent;
-
-            this.SetTabPageContent(info, page);
-
-            this.SetTabPageTooltip(page);
-        }
-
-        private string GetFormatTabHeaderText(string text)
-        {
-            return $" {text}  ";
-        }
-
-        private void SetTabPageTooltip(TabPage page)
-        {
-            DatabaseObjectDisplayInfo info = page.Tag as DatabaseObjectDisplayInfo;
-
-            if (info != null)
-            {
-                string database = info.ConnectionInfo == null ? "" : $@": {info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
-
-                string filePath = File.Exists(info.FilePath) ? (info.FilePath + "  -  ") : "";
-
-                string title = string.IsNullOrEmpty(filePath) ? $" - {page.Text}" : "";
-
-                page.ToolTipText = $@"{filePath}{info.DatabaseType}{database}{title}";
-            }
-        }
-
-        private void SetTabPageContent(DatabaseObjectDisplayInfo info, TabPage tabPage)
-        {
             if (info.DisplayType == DatabaseObjectDisplayType.Script)
             {
-                UC_SqlQuery sqlQuery = this.GetUcControl<UC_SqlQuery>(tabPage);
+                UC_SqlQuery sqlQuery = new UC_SqlQuery();
+                this.control = sqlQuery;
 
-                if (sqlQuery == null)
-                {
-                    sqlQuery = this.AddControlToTabPage<UC_SqlQuery>(tabPage);
-                }
+                this.AddControl(sqlQuery);
 
                 sqlQuery.Show(info);
 
@@ -112,31 +67,59 @@ namespace DatabaseManager.Controls
                 {
                     sqlQuery.Editor.Focus();
                 }
-            }
-            else if (info.DisplayType == DatabaseObjectDisplayType.Data)
-            {
-                UC_DataViewer dataViewer = this.GetUcControl<UC_DataViewer>(tabPage);
 
-                if (dataViewer == null)
-                {
-                    dataViewer = this.AddControlToTabPage<UC_DataViewer>(tabPage);
-                    dataViewer.OnDataFilter += this.DataFilter;
-                }
+                sqlQuery.QueryEditor.OnRunScripts += this.RunScripts;
+            }
+            else if (info.DisplayType == DatabaseObjectDisplayType.ViewData)
+            {
+                UC_DataViewer dataViewer = new UC_DataViewer();
+                this.control = dataViewer;
+
+                dataViewer.OnDataFilter += this.DataFilter;
 
                 dataViewer.Show(info);
+
+                this.AddControl(dataViewer);
+            }
+            else if (info.DisplayType == DatabaseObjectDisplayType.EditData)
+            {
+                UC_DataEditor dataEditor= new UC_DataEditor();
+                this.control = dataEditor;
+
+                dataEditor.OnDataFilter += this.DataFilter;
+
+                dataEditor.Show(info);
+
+                this.AddControl(dataEditor);
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.TableDesigner)
             {
-                UC_TableDesigner tableDesigner = this.GetUcControl<UC_TableDesigner>(tabPage);
+                UC_TableDesigner tableDesigner = new UC_TableDesigner();
+                this.control = tableDesigner;
 
-                if (tableDesigner == null)
-                {
-                    tableDesigner = this.AddControlToTabPage<UC_TableDesigner>(tabPage);
-                    tableDesigner.OnFeedback += this.Feedback;
-                }
+                tableDesigner.OnFeedback += this.Feedback;
 
                 tableDesigner.Show(info);
+
+                this.AddControl(tableDesigner);
             }
+        }
+
+        private void AddControl(Control control)
+        {
+            control.Dock = DockStyle.Fill;
+            this.Controls.Add(control);
+        }
+
+        public string GetTooltip(DatabaseObjectDisplayInfo info)
+        {
+            string database = info.ConnectionInfo == null ? "" : $@": {info.ConnectionInfo?.Server}-{info.ConnectionInfo?.Database}";
+
+            string filePath = File.Exists(info.FilePath) ? (info.FilePath + "  -  ") : "";
+
+            string title = string.IsNullOrEmpty(filePath) ? $" - {this.GetInfoName(info)}" : "";
+
+            return $@"{filePath}{info.DatabaseType}{database}{title}";
         }
 
         private void DataFilter(object sender)
@@ -147,290 +130,21 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private T AddControlToTabPage<T>(TabPage tabPage) where T : UserControl
+        internal bool Save()
         {
-            T control = (T)Activator.CreateInstance(typeof(T));
-            control.Dock = DockStyle.Fill;
-            tabPage.Controls.Add(control);
-
-            return control;
-        }
-
-        private T GetUcControl<T>(TabPage tabPage) where T : UserControl
-        {
-            foreach (Control control in tabPage.Controls)
+            if (this.info == null)
             {
-                if (control is T)
+                return false;
+            }
+
+            DatabaseObjectDisplayType displayType = this.info.DisplayType;
+
+            if (displayType == DatabaseObjectDisplayType.Script || displayType == DatabaseObjectDisplayType.ViewData)
+            {
+                if (File.Exists(info.FilePath))
                 {
-                    return control as T;
-                }
-            }
-
-            return null;
-        }
-
-        public TabPage FindTabPage(DatabaseObjectDisplayInfo displayInfo)
-        {
-            foreach (TabPage page in this.tabControl1.TabPages)
-            {
-                DatabaseObjectDisplayInfo data = page.Tag as DatabaseObjectDisplayInfo;
-
-                if (data.Name == displayInfo.Name && displayInfo.DatabaseType == data.DatabaseType && displayInfo.DisplayType == data.DisplayType)
-                {
-                    return page;
-                }
-            }
-
-            return null;
-        }
-
-        private void tabControl1_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            if (e.Index >= this.tabControl1.TabPages.Count)
-            {
-                return;
-            }
-
-            Bitmap imgClose = Resources.TabClose;
-
-            int headerCloseButtonSize = imgClose.Size.Width;
-
-            bool isSelected = e.Index == this.tabControl1.SelectedIndex;
-
-            SolidBrush backBrush = new SolidBrush(isSelected ? Color.White : ColorTranslator.FromHtml("#DEE1E6"));
-
-            Rectangle headerRect = tabControl1.GetTabRect(e.Index);
-
-            e.Graphics.FillRectangle(backBrush, headerRect);
-
-            Font font = new Font(this.Font, isSelected ? FontStyle.Bold : FontStyle.Regular);
-
-            Brush fontBrush = new SolidBrush(Color.Black);
-
-            e.Graphics.DrawString(this.tabControl1.TabPages[e.Index].Text.TrimEnd(), font, fontBrush, headerRect.X, headerRect.Y + 2);
-
-            Rectangle closeButtonRect = new Rectangle(headerRect.X + headerRect.Width - headerCloseButtonSize, headerRect.Y + 2, headerCloseButtonSize, headerCloseButtonSize);
-
-            e.Graphics.DrawImage(imgClose, closeButtonRect);
-
-            if (!this.dictCloseButtonRectangle.ContainsKey(e.Index))
-            {
-                this.dictCloseButtonRectangle.Add(e.Index, closeButtonRect);
-            }
-            else
-            {
-                this.dictCloseButtonRectangle[e.Index] = closeButtonRect;
-            }
-
-            e.Graphics.Dispose();
-        }
-
-        private int FindTabPageIndex(int x, int y)
-        {
-            foreach (var kp in this.dictCloseButtonRectangle)
-            {
-                Rectangle rect = kp.Value;
-
-                if (x >= rect.X && x <= rect.X + rect.Width
-                 && y >= rect.Y && y <= rect.Y + rect.Height)
-                {
-                    return kp.Key;
-                }
-            }
-
-            return -1;
-        }
-
-        private void tabControl1_MouseClick(object sender, MouseEventArgs e)
-        {
-            int tabPageIndex = this.FindTabPageIndex(e.X, e.Y);
-
-            if (tabPageIndex >= 0)
-            {
-                this.CloseTabPage(tabPageIndex);
-            }
-        }
-
-        private void tabControl1_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                for (int i = 0; i < this.tabControl1.TabPages.Count; i++)
-                {
-                    Rectangle r = this.tabControl1.GetTabRect(i);
-
-                    if (r.Contains(e.Location))
-                    {
-                        this.tabControl1.SelectedIndex = i;
-
-                        this.SetMenuItemsVisible();
-
-                        this.scriptContentMenu.Show(this, e.Location);
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        private void SetMenuItemsVisible()
-        {
-            this.tsmiCloseOthers.Visible = this.tabControl1.TabPages.Count > 1;
-            this.tsmiCloseAll.Visible = this.tabControl1.TabPages.Count > 1;
-        }
-
-        private async void tsmiClose_Click(object sender, EventArgs e)
-        {
-            if (this.tabControl1.SelectedIndex >= 0)
-            {
-                await this.CloseTabPage(this.tabControl1.SelectedIndex);
-            }
-
-            this.SetControlVisible();
-        }
-
-        private async Task<bool> CloseTabPage(int tabPageIndex)
-        {
-            bool canClose = true;
-
-            TabPage tabPage = this.tabControl1.TabPages[tabPageIndex];
-
-            DatabaseObjectDisplayInfo info = tabPage.Tag as DatabaseObjectDisplayInfo;
-
-            bool isNew = info.IsNew;
-
-            if (info != null)
-            {
-                IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
-
-                bool saveRequired = false;
-
-                if (control is UC_SqlQuery sqlQuery)
-                {
-                    if (isNew)
-                    {
-                        if (sqlQuery.Editor.Text.Trim().Length > 0)
-                        {
-                            saveRequired = true;
-                        }
-                    }
-                    else
-                    {
-                        if (sqlQuery.IsTextChanged())
-                        {
-                            saveRequired = true;
-                        }
-                    }
-                }
-                else if (control is UC_TableDesigner tableDesigner)
-                {
-                    if (await tableDesigner.IsChanged())
-                    {
-                        saveRequired = true;
-                    }
-                }
-
-                if (saveRequired)
-                {
-                    DialogResult result = MessageBox.Show($"Do you want to save {info.Name}?", "Confirm", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
-                    {
-                        this.Save();
-                    }
-                    else if (result == DialogResult.Cancel)
-                    {
-                        canClose = false;
-                    }
-                }
-            }
-
-            if (canClose)
-            {
-                if (info.DisplayType == DatabaseObjectDisplayType.Script)
-                {
-                    var sqlQueryControl = this.GetUcControlInterface(tabPage) as UC_SqlQuery;
-
-                    sqlQueryControl.DisposeResources();
-                }
-
-                this.tabControl1.TabPages.RemoveAt(tabPageIndex);
-                this.dictCloseButtonRectangle.Remove(tabPageIndex);
-            }
-
-            this.SetControlVisible();
-
-            return canClose;
-        }
-
-        private async void tsmiCloseOthers_Click(object sender, EventArgs e)
-        {
-            this.dictCloseButtonRectangle.Clear();
-
-            int index = this.tabControl1.SelectedIndex;
-
-            for (int i = this.tabControl1.TabPages.Count - 1; i >= index + 1; i--)
-            {
-                await this.CloseTabPage(i);
-            }
-
-            while (this.tabControl1.TabPages.Count > 1)
-            {
-                await this.CloseTabPage(0);
-            }
-
-            this.SetControlVisible();
-        }
-
-        private void SetControlVisible()
-        {
-            this.Visible = this.tabControl1.TabPages.Count > 0;
-        }
-
-        private async void tsmiCloseAll_Click(object sender, EventArgs e)
-        {
-            for (int i = this.tabControl1.TabCount - 1; i >= 0; i--)
-            {
-                await this.CloseTabPage(i);
-            }
-
-            this.SetControlVisible();
-        }
-
-        private void tsmiSave_Click(object sender, EventArgs e)
-        {
-            this.Save();
-        }
-
-        private void Save()
-        {
-            if (this.tabControl1.TabCount < 1)
-            {
-                return;
-            }
-
-            TabPage tabPage = this.tabControl1.SelectedTab;
-
-            if (tabPage == null)
-            {
-                return;
-            }
-
-            DatabaseObjectDisplayInfo displayInfo = tabPage.Tag as DatabaseObjectDisplayInfo;
-
-            if (displayInfo == null)
-            {
-                return;
-            }
-
-            DatabaseObjectDisplayType displayType = displayInfo.DisplayType;
-
-            if (displayType == DatabaseObjectDisplayType.Script || displayType == DatabaseObjectDisplayType.Data)
-            {
-                if (File.Exists(displayInfo.FilePath))
-                {
-                    this.SaveToFile(tabPage, displayInfo.FilePath);
-                    return;
+                    this.SaveToFile(info.FilePath);
+                    return true;
                 }
 
                 if (this.dlgSave == null)
@@ -438,13 +152,13 @@ namespace DatabaseManager.Controls
                     this.dlgSave = new SaveFileDialog();
                 }
 
-                this.dlgSave.FileName = tabPage.Text.Trim();
+                this.dlgSave.FileName = this.GetInfoName(info).Trim();
 
                 if (displayType == DatabaseObjectDisplayType.Script)
                 {
                     this.dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
                 }
-                else if (displayType == DatabaseObjectDisplayType.Data)
+                else if (displayType == DatabaseObjectDisplayType.ViewData)
                 {
                     this.dlgSave.Filter = "csv file|*.csv|txt file|*.txt";
                 }
@@ -455,44 +169,56 @@ namespace DatabaseManager.Controls
                 {
                     string filePath = this.dlgSave.FileName;
 
-                    this.SaveToFile(tabPage, filePath);
+                    this.SaveToFile(filePath);
 
-                    displayInfo.FilePath = filePath;
+                    this.info.FilePath = filePath;
 
                     string name = Path.GetFileNameWithoutExtension(filePath);
 
-                    displayInfo.IsNew = false;
-                    displayInfo.Name = name;
+                    this.info.IsNew = false;
+                    this.info.Name = name;
 
-                    tabPage.Text = this.GetFormatTabHeaderText(name);
-
-                    this.SetTabPageTooltip(tabPage);
+                    this.AfterSaved();
+                }
+                else
+                {
+                    return false;
                 }
             }
             else if (displayType == DatabaseObjectDisplayType.TableDesigner)
             {
-                UC_TableDesigner tableDesigner = this.GetUcControl<UC_TableDesigner>(tabPage);
+                UC_TableDesigner tableDesigner = this.control as UC_TableDesigner;
                 ContentSaveResult result = tableDesigner.Save(new ContentSaveInfo() { });
 
                 if (result.IsOK)
                 {
                     Table table = result.ResultData as Table;
 
-                    displayInfo.IsNew = false;
-                    displayInfo.Name = table.Name;
+                    this.info.IsNew = false;
+                    this.info.Name = table.Name;
 
-                    tabPage.Text = this.GetFormatTabHeaderText(this.GetInfoName(displayInfo));
-
-                    this.SetTabPageTooltip(tabPage);
+                    this.AfterSaved();
                 }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void AfterSaved()
+        {
+            if (this.info != null && this.OnContentSaved != null)
+            {
+                this.OnContentSaved(this.GetInfoName(this.info), this.GetTooltip(this.info));
             }
         }
 
-        private void SaveToFile(TabPage tabPage, string filePath)
+        private void SaveToFile(string filePath)
         {
-            IDbObjContentDisplayer control = this.GetUcControlInterface(tabPage);
-
-            if (control != null)
+            if (this.control != null)
             {
                 control.Save(new ContentSaveInfo() { FilePath = filePath });
             }
@@ -511,7 +237,7 @@ namespace DatabaseManager.Controls
             return null;
         }
 
-        private string GetInfoName(DatabaseObjectDisplayInfo info)
+        public string GetInfoName(DatabaseObjectDisplayInfo info)
         {
             string name = info.Name;
             bool isOpenFile = !string.IsNullOrEmpty(info.FilePath);
@@ -553,7 +279,7 @@ namespace DatabaseManager.Controls
                     {
                         string schema = info.Schema ?? dbObject.Schema;
 
-                        if(!string.IsNullOrEmpty(schema))
+                        if (!string.IsNullOrEmpty(schema))
                         {
                             name = $"{schema}.{dbObject.Name}";
                         }
@@ -576,15 +302,19 @@ namespace DatabaseManager.Controls
             }
 
             List<string> names = new List<string>();
-            foreach (TabPage page in this.tabControl1.TabPages)
-            {
-                DatabaseObjectDisplayInfo data = page.Tag as DatabaseObjectDisplayInfo;
 
-                if (data.Name.Trim().StartsWith(prefix))
+            if (this.ExistingContents != null)
+            {
+                foreach (IDockContent doc in this.ExistingContents)
                 {
-                    names.Add(data.Name.Trim());
+                    DatabaseObjectDisplayInfo data = (doc as Form).Tag as DatabaseObjectDisplayInfo;
+
+                    if (data.Name.Trim().StartsWith(prefix))
+                    {
+                        names.Add(data.Name.Trim());
+                    }
                 }
-            }
+            }          
 
             string maxName = names.OrderByDescending(item => item.Length).ThenByDescending(item => item).FirstOrDefault();
 
@@ -602,41 +332,21 @@ namespace DatabaseManager.Controls
             return num;
         }
 
-        public void RunScripts()
+        internal void RunScripts()
         {
-            if (this.tabControl1.TabCount == 0)
-            {
-                return;
-            }
-
-            TabPage tabPage = this.tabControl1.SelectedTab;
-
-            if (tabPage == null)
-            {
-                return;
-            }
-
-            DatabaseObjectDisplayInfo data = tabPage.Tag as DatabaseObjectDisplayInfo;
+            DatabaseObjectDisplayInfo data = this.info;
 
             if (data == null || data.DisplayType != DatabaseObjectDisplayType.Script)
             {
                 return;
             }
 
-            UC_SqlQuery sqlQuery = this.GetUcControl<UC_SqlQuery>(tabPage);
+            UC_SqlQuery sqlQuery = this.control as UC_SqlQuery;
 
             sqlQuery.RunScripts(data);
         }
 
-        private void tabControl1_MouseHover(object sender, EventArgs e)
-        {
-            TabPage tabPage = this.tabControl1.SelectedTab;
-
-            if (tabPage != null)
-            {
-                this.SetTabPageTooltip(tabPage);
-            }
-        }
+        
 
         private void Feedback(FeedbackInfo info)
         {

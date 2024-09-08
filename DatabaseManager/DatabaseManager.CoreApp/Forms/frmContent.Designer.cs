@@ -1,13 +1,13 @@
-﻿namespace DatabaseManager.Controls
+﻿namespace DatabaseManager.Forms
 {
-    partial class UC_DbObjectContent
+    partial class frmContent
     {
-        /// <summary> 
+        /// <summary>
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
+        /// <summary>
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -20,33 +20,41 @@
             base.Dispose(disposing);
         }
 
-        #region Component Designer generated code
+        #region Windows Form Designer generated code
 
-        /// <summary> 
+        /// <summary>
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
-            dlgSave = new System.Windows.Forms.SaveFileDialog();
+            ucContent = new Controls.UC_DbObjectContent();
             SuspendLayout();
             // 
-            // dlgSave
+            // ucContent
             // 
-            dlgSave.Filter = "sql file|*.sql|txt file|*.txt";
+            ucContent.BackColor = System.Drawing.Color.White;
+            ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucContent.Location = new System.Drawing.Point(0, 0);
+            ucContent.Margin = new System.Windows.Forms.Padding(4);
+            ucContent.Name = "ucContent";
+            ucContent.Size = new System.Drawing.Size(800, 450);
+            ucContent.TabIndex = 0;
             // 
-            // UC_DbObjectContent
+            // frmContent
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            BackColor = System.Drawing.Color.White;
-            Margin = new System.Windows.Forms.Padding(4);
-            Name = "UC_DbObjectContent";
-            Size = new System.Drawing.Size(579, 653);
+            ClientSize = new System.Drawing.Size(800, 450);
+            Controls.Add(ucContent);
+            Name = "frmContent";
+            Text = "Content";
+            FormClosing += frmContent_FormClosing;
             ResumeLayout(false);
         }
 
         #endregion
-        private System.Windows.Forms.SaveFileDialog dlgSave;
+
+        private Controls.UC_DbObjectContent ucContent;
     }
 }

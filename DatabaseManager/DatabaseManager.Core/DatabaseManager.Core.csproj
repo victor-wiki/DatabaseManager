@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle and Postgres.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.1.6</Version>
-    <PackageReleaseNotes>add text editor options to setting.</PackageReleaseNotes>
+    <Version>2.1.7</Version>
+    <PackageReleaseNotes>add theme options to setting.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.6</AssemblyVersion>
-    <FileVersion>2.1.6</FileVersion>
+    <AssemblyVersion>2.1.7</AssemblyVersion>
+    <FileVersion>2.1.7</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

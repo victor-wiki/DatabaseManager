@@ -663,7 +663,7 @@ namespace DatabaseConverter.Core
                                     }
                                     else
                                     {
-                                        (Dictionary<string, object> Paramters, string Script) scriptResult = this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
+                                        (Dictionary<string, object> Parameters, string Script) scriptResult = this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
 
                                         string script = scriptResult.Script;
 
@@ -671,7 +671,7 @@ namespace DatabaseConverter.Core
 
                                         if (!script.Contains(delimiter))
                                         {
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, scriptResult.Paramters, this.transaction));
+                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, scriptResult.Parameters, this.transaction));
                                         }
                                         else
                                         {
@@ -685,7 +685,7 @@ namespace DatabaseConverter.Core
 
                                                 var cmd = count < items.Length ? (item + delimiter).Trim().Trim(';') : item;
 
-                                                await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Paramters, this.transaction));
+                                                await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Parameters, this.transaction));
                                             }
                                         }
                                     }

@@ -20,6 +20,7 @@ using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
+    public delegate void RunScriptsHandler();
     public delegate void QueryEditorInfoMessageHandler(string information);
 
     public partial class UC_QueryEditor : UserControl
@@ -36,6 +37,7 @@ namespace DatabaseManager.Controls
         private CodeCompletionWindow codeCompletionWindow;
         private string commentString => this.DbInterpreter?.CommentString;
 
+        public RunScriptsHandler OnRunScripts;
         public DatabaseType DatabaseType { get; set; }
         public DbInterpreter DbInterpreter { get; set; }
         public event EventHandler SetupIntellisenseRequired;
@@ -101,7 +103,7 @@ namespace DatabaseManager.Controls
 
             if (topControl != null)
             {
-                this.txtEditor.FindForm.Location = new Point(topControl.Left + topControl.Width - this.txtEditor.FindForm.Width - 30, topControl.Top + 120);
+                this.txtEditor.FindForm.Location = new Point(topControl.Left + topControl.Width - this.txtEditor.FindForm.Width - 10, topControl.Top + 120);
             }
             else
             {
@@ -139,9 +141,9 @@ namespace DatabaseManager.Controls
         {
             if (e.KeyCode == Keys.F5)
             {
-                if (FormEventCenter.OnRunScripts != null)
+                if (this.OnRunScripts != null)
                 {
-                    FormEventCenter.OnRunScripts();
+                    this.OnRunScripts();
                 }
             }            
         }
@@ -180,6 +182,38 @@ namespace DatabaseManager.Controls
             if (token == null || token.Text == null || token.Type != SqlWordTokenType.None)
             {
                 this.CloseCodeCompletionWindow();
+            }
+
+            if (this.enableIntellisense && token != null && !string.IsNullOrEmpty(token.Text))
+            {
+                bool needHandle = true;
+
+                if(token.Type == SqlWordTokenType.Keyword)
+                {
+                    needHandle = false;
+                }
+                else
+                {
+                    string text = token.Text;
+
+                    bool isKeywordStart = this.keywords.Any(item => item.ToUpper().StartsWith(text.ToUpper()));
+                    bool isAllWordsStart = this.allWords.Any(item => item.Text.ToUpper().StartsWith(text.ToUpper()));
+
+                    if (isKeywordStart && !isAllWordsStart)
+                    {
+                        needHandle = false;
+                    }
+                }              
+
+                if (!needHandle)
+                {
+                    if(this.IsCodeCompletionWindowVisible())
+                    {
+                        this.CloseCodeCompletionWindow();
+                    }
+                   
+                    return;
+                }
             }
 
             if (this.enableIntellisense && this.IsCodeCompletionWindowVisible())
@@ -246,7 +280,7 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
-            else if (e.KeyValue < 48 || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
+            else if ((e.KeyValue < 48 && e.KeyValue!=16) || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122 )
             {
                 this.CloseCodeCompletionWindow();
             }

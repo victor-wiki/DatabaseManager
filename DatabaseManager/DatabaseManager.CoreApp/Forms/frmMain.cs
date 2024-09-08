@@ -11,74 +11,175 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WeifenLuo.WinFormsUI.Docking;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace DatabaseManager
 {
     public partial class frmMain : Form, IObserver<FeedbackInfo>
     {
+        frmObjectsExplorer explorerForm = new frmObjectsExplorer();
+        frmMessage messageForm = new frmMessage();
+
         public frmMain()
         {
             InitializeComponent();
+
+            AutoScaleMode = AutoScaleMode.Dpi;
+
+            this.InitControls();
         }
 
         private void frmMain_Load(object sender, EventArgs e)
         {
-            this.InitControls();
-
-            TreeView.CheckForIllegalCrossThreadCalls = false;
-            TextBox.CheckForIllegalCrossThreadCalls = false;            
-
-            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
-            LogHelper.LogType = SettingManager.Setting.LogType;
-            FeedbackHelper.EnableDebug = true;
         }
 
         private void InitControls()
         {
-            this.navigator.OnShowContent += this.ShowDbObjectContent;
-            this.navigator.OnFeedback += this.Feedback;
-            this.ucContent.OnDataFilter += this.DataFilter;
-            this.ucContent.OnFeedback += this.Feedback;
+            TreeView.CheckForIllegalCrossThreadCalls = false;
+            TextBox.CheckForIllegalCrossThreadCalls = false;
+
+            FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
+            LogHelper.LogType = SettingManager.Setting.LogType;
+            FeedbackHelper.EnableDebug = true;
+
+            this.explorerForm.HideOnClose = true;
+            this.messageForm.HideOnClose = true;
+
+            this.explorerForm.Explorer.OnShowContent += this.ShowDbObjectContent;
+            this.explorerForm.Explorer.OnFeedback += this.Feedback;
+
+            this.ApplyTheme();
+
+                     
+            this.explorerForm.Show(this.dockPanelMain, DockState.DockLeft);
+            this.messageForm.Show(this.dockPanelMain, DockState.DockBottomAutoHide);
         }
 
-        private void ShowDbObjectContent(DatabaseObjectDisplayInfo content)
+        private void ApplyTheme()
         {
-            this.ucContent.ShowContent(content);
+            ThemeOption themeOption = SettingManager.Setting.ThemeOption;
+
+            ThemeBase theme = null;
+
+            switch (themeOption.ThemeType)
+            {
+                case ThemeType.Light:
+                    theme = new WeifenLuo.WinFormsUI.Docking.VS2015LightTheme();
+                    break;
+                case ThemeType.Blue:
+                    theme = new WeifenLuo.WinFormsUI.Docking.VS2015BlueTheme();
+                    break;
+                case ThemeType.Dark:
+                    theme = new WeifenLuo.WinFormsUI.Docking.VS2015DarkTheme();
+                    break;
+            }
+
+            this.dockPanelMain.Theme = theme;
         }
+
+        private void ShowDbObjectContent(DatabaseObjectDisplayInfo info)
+        {
+            IDockContent content = this.FindContent(info);
+
+            frmContent contentForm = null;
+
+            if (content != null)
+            {
+                contentForm = content as frmContent;
+
+                contentForm.Show(this.dockPanelMain);
+            }
+            else
+            {
+                contentForm = new frmContent();
+
+                var documents = this.dockPanelMain.Documents;
+
+                contentForm.Tag = info;
+                contentForm.ContentControl.ExistingContents = documents;
+                contentForm.Text = contentForm.ContentControl.GetInfoName(info);
+                contentForm.ToolTipText = contentForm.ContentControl.GetTooltip(info);
+
+                contentForm.ContentControl.OnDataFilter += this.DataFilter;
+                contentForm.ContentControl.OnFeedback += this.Feedback;
+                contentForm.ContentControl.OnContentSaved += (title, tip) =>
+                {
+                    contentForm.Text = title;
+                    contentForm.ToolTipText = tip;
+                };
+
+                contentForm.Show(this.dockPanelMain, DockState.Document);
+
+                if (documents != null && documents.Count() > 1)
+                {
+                    contentForm.DockTo(this.dockPanelMain.ActiveDocumentPane, DockStyle.Fill, 0);
+                }
+
+                contentForm.ContentControl.ShowContent(info);
+            }
+        }
+
+        private IDockContent FindContent(DatabaseObjectDisplayInfo info)
+        {
+            foreach (IDockContent content in this.dockPanelMain.Documents)
+            {
+                frmContent form = content as frmContent;
+
+                DatabaseObjectDisplayInfo data = form.Tag as DatabaseObjectDisplayInfo;
+
+                if (data.Name == info.Name && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
+                {
+                    return content;
+                }
+            }
+
+            return null;
+        }
+
 
         private void DataFilter(object sender)
         {
-            UC_DataViewer dataViewer = sender as UC_DataViewer;
+            IEnumerable<DataGridViewColumn> columns = null;
+            QueryConditionBuilder queryConditionBuilder = null;
 
-            frmDataFilter filter = new frmDataFilter() { Columns = dataViewer.Columns.ToList(), ConditionBuilder = dataViewer.ConditionBuilder };
+            if(sender is UC_DataViewer dataViewer)
+            {
+                columns = dataViewer.Columns;
+                queryConditionBuilder = dataViewer.ConditionBuilder;
+            }
+            else if (sender is UC_DataEditor dataEditor)
+            {
+                columns = dataEditor.Columns;
+                queryConditionBuilder = dataEditor.ConditionBuilder;
+            }
+
+            frmDataFilter filter = new frmDataFilter() { Columns = columns.ToList(), ConditionBuilder = queryConditionBuilder };
+
             if (filter.ShowDialog() == DialogResult.OK)
             {
-                dataViewer.FilterData(filter.ConditionBuilder);
+                if (sender is UC_DataViewer dv)
+                {
+                    dv.FilterData(filter.ConditionBuilder);
+                }
+                else if (sender is UC_DataEditor de)
+                {
+                    de.FilterData(filter.ConditionBuilder);
+                }               
             }
         }
 
         private void Feedback(FeedbackInfo info)
         {
-            this.txtMessage.ForeColor = Color.Black;
+            this.messageForm.ShowMessage(info);
 
-            if (info.InfoType == FeedbackInfoType.Error)
+            if(info.InfoType == FeedbackInfoType.Error)
             {
-                if (!info.IgnoreError)
-                {
-                    MessageBox.Show(info.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-                this.txtMessage.Text = info.Message;
-                this.txtMessage.BackColor = this.BackColor;
-                this.txtMessage.ForeColor = Color.Red;       
-            }
-            else
-            {
-                this.txtMessage.Text = info.Message;
-            }
-            
+                this.ShowMessage();
+            }           
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)
@@ -97,11 +198,13 @@ namespace DatabaseManager
         {
             if (e.Control && e.KeyCode == Keys.S)
             {
-                if (FormEventCenter.OnSave != null)
-                {
-                    FormEventCenter.OnSave();
-                }
+                this.SaveContent();
             }
+        }
+
+        private void SaveContent()
+        {
+            this.GetCurrentContentForm()?.ContentControl?.Save();
         }
 
         public void OnNext(FeedbackInfo value)
@@ -139,11 +242,11 @@ namespace DatabaseManager
 
         private void tsBtnAddQuery_Click(object sender, EventArgs e)
         {
-            ConnectionInfo connectionInfo = this.navigator.GetCurrentConnectionInfo();
+            ConnectionInfo connectionInfo = this.explorerForm.Explorer.GetCurrentConnectionInfo();
 
             if (connectionInfo != null)
             {
-                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.navigator.DatabaseType };
+                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.explorerForm.Explorer.DatabaseType };
 
                 info.ConnectionInfo = connectionInfo;
 
@@ -162,15 +265,12 @@ namespace DatabaseManager
 
         private void RunScripts()
         {
-            this.ucContent.RunScripts();
+            this.GetCurrentContentForm()?.ContentControl?.RunScripts();
         }
 
         private void tsBtnSave_Click(object sender, EventArgs e)
         {
-            if (FormEventCenter.OnSave != null)
-            {
-                FormEventCenter.OnSave();
-            }
+            this.SaveContent();
         }
 
         private void tsBtnOpenFile_Click(object sender, EventArgs e)
@@ -193,13 +293,20 @@ namespace DatabaseManager
                 return;
             }
 
-            DatabaseObjectDisplayInfo info = this.navigator.GetDisplayInfo();
+            DatabaseObjectDisplayInfo info = this.explorerForm.Explorer.GetDisplayInfo();
 
             info.DisplayType = DatabaseObjectDisplayType.Script;
             info.FilePath = filePath;
             info.Name = Path.GetFileName(info.FilePath);
 
-            this.ucContent.ShowContent(info);
+            this.GetCurrentContentForm()?.ContentControl?.ShowContent(info);
+        }
+
+        private frmContent GetCurrentContentForm()
+        {
+            var doc = this.dockPanelMain.ActiveDocument;
+
+            return (doc as frmContent);
         }
 
         private void frmMain_DragOver(object sender, DragEventArgs e)
@@ -255,11 +362,6 @@ namespace DatabaseManager
             lockApp.ShowDialog();
         }
 
-        private void txtMessage_MouseHover(object sender, EventArgs e)
-        {
-            this.toolTip1.SetToolTip(this.txtMessage, this.txtMessage.Text);
-        }       
-
         private void tsBtnTranslateScript_Click(object sender, EventArgs e)
         {
             frmTranslateScript translateScript = new frmTranslateScript();
@@ -276,6 +378,55 @@ namespace DatabaseManager
         {
             frmImageViewer imgViewer = new frmImageViewer();
             imgViewer.Show();
+        }
+
+        private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.CloseContentForms();
+
+            e.Cancel = this.dockPanelMain.DocumentsCount > 0;
+        }
+
+        private void CloseContentForms()
+        {
+            var documents = this.dockPanelMain.Documents;
+            var currentDocument = this.dockPanelMain.ActiveDocument;
+
+            List<Form> forms = new List<Form>();
+
+            foreach (IDockContent document in documents)
+            {
+                frmContent conentForm = document as frmContent;
+
+                forms.Add(conentForm);
+            }
+
+            foreach (var item in forms)
+            {
+                item.Close();
+            }
+        }
+
+        private void tsmiObjectsExplorer_Click(object sender, EventArgs e)
+        {
+            this.explorerForm.Show(this.dockPanelMain);
+        }
+        
+
+        private void tsmiMessage_Click(object sender, EventArgs e)
+        {
+            this.ShowMessage();
+        }
+
+        private void ShowMessage()
+        {
+            this.messageForm.Show(this.dockPanelMain);
+
+            if(this.messageForm.DockHandler.DockState.ToString().Contains("AutoHide"))
+            {
+                this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
+                this.messageForm.DockHandler.Activate();
+            }            
         }
     }
 }

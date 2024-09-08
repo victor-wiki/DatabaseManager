@@ -65,6 +65,10 @@ namespace DatabaseManager
             this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
             this.txtOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
 
+            var themeTypes = Enum.GetNames(typeof(ThemeType));
+            this.cboThemeType.Items.AddRange(themeTypes);
+            this.cboThemeType.Text = setting.ThemeOption.ThemeType.ToString();
+
             PersonalSetting ps = await PersonalSettingManager.GetPersonalSetting();
 
             if (ps != null && !string.IsNullOrEmpty(ps.LockPassword))
@@ -139,6 +143,10 @@ namespace DatabaseManager
             };
 
             setting.TextEditorOption = textEditorOption;
+
+            ThemeOption themeOption = new ThemeOption() { ThemeType =(ThemeType) Enum.Parse(typeof(ThemeType), this.cboThemeType.Text) };
+
+            setting.ThemeOption = themeOption;
 
             SettingManager.SaveConfig(setting);
 

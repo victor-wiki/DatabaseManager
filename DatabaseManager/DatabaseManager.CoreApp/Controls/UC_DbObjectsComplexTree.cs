@@ -57,7 +57,7 @@ namespace DatabaseManager.Controls
 
             bool isFileConnection = ManagerUtil.IsFileConnection(dbType);
 
-            if(!isFileConnection && dbType != DatabaseType.Oracle)
+            if (!isFileConnection && dbType != DatabaseType.Oracle)
             {
                 AccountProfileInfo profileInfo = await AccountProfileManager.GetProfile(dbType.ToString(), connectionInfo.Server, connectionInfo.Port, connectionInfo.IntegratedSecurity, connectionInfo.UserId);
 
@@ -65,7 +65,7 @@ namespace DatabaseManager.Controls
                 {
                     visibilities = await DatabaseVisibilityManager.GetVisibilities(profileInfo.Id);
                 }
-            }            
+            }
 
             foreach (Database database in databases)
             {
@@ -158,6 +158,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable || isView;
+            this.tsmiEditData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
@@ -295,13 +296,15 @@ namespace DatabaseManager.Controls
 
             if (types.HasFlag(type))
             {
+                bool alwaysShowSchemaName = this.NeedShowSchema(node, dbObjects);
+
                 if (createFolderNode)
                 {
                     targetNode = node.AddDbObjectFolderNode(dbObjects);
                 }
                 else
                 {
-                    targetNode = node.AddDbObjectNodes(dbObjects);
+                    targetNode = node.AddDbObjectNodes(dbObjects, alwaysShowSchemaName);
                 }
             }
 
@@ -314,6 +317,13 @@ namespace DatabaseManager.Controls
             }
 
             return node.Nodes;
+        }
+
+        private bool NeedShowSchema<T>(TreeNode node, IEnumerable<T> dbObjects) where T : DatabaseObject
+        {
+            var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
+
+            return DbObjectsTreeHelper.NeedShowSchema(dbInterpreter, dbObjects);            
         }
 
         private void AddTableFakeNodes(TreeNode tableNode, Table table)
@@ -989,6 +999,16 @@ namespace DatabaseManager.Controls
 
         private void tsmiViewData_Click(object sender, EventArgs e)
         {
+            this.ProcessData(DatabaseObjectDisplayType.ViewData);
+        }
+
+        private void tsmiEditData_Click(object sender, EventArgs e)
+        {
+            this.ProcessData(DatabaseObjectDisplayType.EditData);
+        }
+
+        private void ProcessData(DatabaseObjectDisplayType type)
+        {
             if (!this.IsValidSelectedNode())
             {
                 return;
@@ -996,15 +1016,10 @@ namespace DatabaseManager.Controls
 
             TreeNode node = this.GetSelectedNode();
 
-            this.ViewData(node);
-        }
-
-        private void ViewData(TreeNode node)
-        {
             string database = this.GetDatabaseNode(node).Name;
             DatabaseObject dbObject = node.Tag as DatabaseObject;
 
-            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = this.databaseType, DatabaseObject = dbObject, DisplayType = DatabaseObjectDisplayType.Data, ConnectionInfo = this.GetConnectionInfo(database) });
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = this.databaseType, DatabaseObject = dbObject, DisplayType = type, ConnectionInfo = this.GetConnectionInfo(database) });
         }
 
         public void OnNext(FeedbackInfo value)
@@ -1031,7 +1046,7 @@ namespace DatabaseManager.Controls
 
             var node = this.GetSelectedNode();
 
-            if(node == null || node.Tag == null)
+            if (node == null || node.Tag == null)
             {
                 return;
             }
@@ -1046,13 +1061,13 @@ namespace DatabaseManager.Controls
                 {
                     var dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, new ConnectionInfo(), new DbInterpreterOption());
 
-                    if(dbInterpreter.SupportDbObjectType.HasFlag(dbObjectType))
+                    if (dbInterpreter.SupportDbObjectType.HasFlag(dbObjectType))
                     {
                         ToolStripMenuItem item = new ToolStripMenuItem(dbType.ToString());
                         item.Click += TranslateItem_Click;
 
                         this.tsmiTranslate.DropDownItems.Add(item);
-                    }                    
+                    }
                 }
             }
         }
@@ -1439,9 +1454,9 @@ namespace DatabaseManager.Controls
             {
                 var dbObjects = node.Nodes.Cast<TreeNode>().Select(item => item.Tag as DatabaseObject);
 
-                bool isUniqueSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
+                bool showSchema = this.NeedShowSchema(node, dbObjects);
 
-                var names = dbObjects.Select(item => (isUniqueSchema ? item.Name : $"{item.Schema}.{item.Name}"));
+                var names = dbObjects.Select(item => (showSchema ? $"{item.Schema}.{item.Name}" : item.Name));
 
                 string content = string.Join(Environment.NewLine, names);
 
@@ -1465,11 +1480,11 @@ namespace DatabaseManager.Controls
 
             IEnumerable<TableRecordCount> records = await statistic.CountTableRecords();
 
-            frmTableRecordCount form = new frmTableRecordCount();            
+            frmTableRecordCount form = new frmTableRecordCount();
 
             form.LoadData(records);
 
             form.ShowDialog();
-        }
+        }      
     }
 }

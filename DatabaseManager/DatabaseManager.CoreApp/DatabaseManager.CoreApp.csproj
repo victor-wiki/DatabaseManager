@@ -8,20 +8,22 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.1.7</Version>
+    <Version>2.2.0</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>sql scripts fomrs: use SqlTextEditor instead of RichTextBox.
+    <PackageReleaseNotes>1. use dock panel to layout forms on the main page;
+2. add feature: edit table data.
 </PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.7</AssemblyVersion>
-    <FileVersion>2.1.7</FileVersion>
+    <AssemblyVersion>2.2.0</AssemblyVersion>
+    <FileVersion>2.2.0</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
+    <PackageReference Include="DockPanelSuite.ThemeVS2015" Version="3.1.1" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
-    <PackageReference Include="SqlCodeEditor" Version="1.0.3" />
+    <PackageReference Include="SqlCodeEditor" Version="1.0.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,12 +71,6 @@
     </Compile>
     <Compile Update="Controls\UC_DbObjectsComplexTree.Designer.cs">
       <DependentUpon>UC_DbObjectsComplexTree.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\UC_DbObjectsNavigator.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Update="Controls\UC_DbObjectsNavigator.Designer.cs">
-      <DependentUpon>UC_DbObjectsNavigator.cs</DependentUpon>
     </Compile>
     <Compile Update="Controls\UC_DbObjectsSimpleTree.cs">
       <SubType>UserControl</SubType>
@@ -272,9 +268,6 @@
     </EmbeddedResource>
     <EmbeddedResource Update="Controls\UC_DbObjectsComplexTree.resx">
       <DependentUpon>UC_DbObjectsComplexTree.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Update="Controls\UC_DbObjectsNavigator.resx">
-      <DependentUpon>UC_DbObjectsNavigator.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Controls\UC_DbObjectsSimpleTree.resx">
       <DependentUpon>UC_DbObjectsSimpleTree.cs</DependentUpon>

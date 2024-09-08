@@ -76,6 +76,9 @@
             tabPostgres = new System.Windows.Forms.TabPage();
             chkExcludePostgresExtensionObjects = new System.Windows.Forms.CheckBox();
             dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
+            groupBox2 = new System.Windows.Forms.GroupBox();
+            cboThemeType = new System.Windows.Forms.ComboBox();
+            label9 = new System.Windows.Forms.Label();
             tabMySql.SuspendLayout();
             tabGeneral.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numDataBatchSize).BeginInit();
@@ -85,6 +88,7 @@
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numTextEditorFontSize).BeginInit();
             tabPostgres.SuspendLayout();
+            groupBox2.SuspendLayout();
             SuspendLayout();
             // 
             // btnConfirm
@@ -508,6 +512,7 @@
             // tabApperance
             // 
             tabApperance.BackColor = System.Drawing.SystemColors.Control;
+            tabApperance.Controls.Add(groupBox2);
             tabApperance.Controls.Add(groupBox1);
             tabApperance.Location = new System.Drawing.Point(4, 26);
             tabApperance.Name = "tabApperance";
@@ -523,9 +528,9 @@
             groupBox1.Controls.Add(cboTextEditorFontName);
             groupBox1.Controls.Add(chkShowTextEditorLineNumber);
             groupBox1.Controls.Add(label7);
-            groupBox1.Location = new System.Drawing.Point(3, 3);
+            groupBox1.Location = new System.Drawing.Point(6, 83);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(503, 120);
+            groupBox1.Size = new System.Drawing.Size(500, 120);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
             groupBox1.Text = "Text Editor";
@@ -611,6 +616,35 @@
             chkExcludePostgresExtensionObjects.Text = "Exclude extension objects";
             chkExcludePostgresExtensionObjects.UseVisualStyleBackColor = true;
             // 
+            // groupBox2
+            // 
+            groupBox2.Controls.Add(cboThemeType);
+            groupBox2.Controls.Add(label9);
+            groupBox2.Location = new System.Drawing.Point(6, 8);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Size = new System.Drawing.Size(500, 69);
+            groupBox2.TabIndex = 3;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "Theme";
+            // 
+            // cboThemeType
+            // 
+            cboThemeType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboThemeType.FormattingEnabled = true;
+            cboThemeType.Location = new System.Drawing.Point(84, 29);
+            cboThemeType.Name = "cboThemeType";
+            cboThemeType.Size = new System.Drawing.Size(139, 25);
+            cboThemeType.TabIndex = 5;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new System.Drawing.Point(6, 32);
+            label9.Name = "label9";
+            label9.Size = new System.Drawing.Size(39, 17);
+            label9.TabIndex = 4;
+            label9.Text = "Type:";
+            // 
             // frmSetting
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -639,6 +673,8 @@
             ((System.ComponentModel.ISupportInitialize)numTextEditorFontSize).EndInit();
             tabPostgres.ResumeLayout(false);
             tabPostgres.PerformLayout();
+            groupBox2.ResumeLayout(false);
+            groupBox2.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -690,5 +726,8 @@
         private System.Windows.Forms.Label cboTextEditorFontSize;
         private System.Windows.Forms.ComboBox cboTextEditorFontName;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.ComboBox cboThemeType;
+        private System.Windows.Forms.Label label9;
     }
 }

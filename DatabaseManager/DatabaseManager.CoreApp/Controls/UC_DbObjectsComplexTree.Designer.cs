@@ -63,6 +63,7 @@
             tsmiStatistic = new System.Windows.Forms.ToolStripMenuItem();
             tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiEditData = new System.Windows.Forms.ToolStripMenuItem();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -111,9 +112,9 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(204, 444);
+            contextMenuStrip1.Size = new System.Drawing.Size(204, 466);
             // 
             // tsmiNewQuery
             // 
@@ -209,42 +210,42 @@
             // tsmiCreateScript
             // 
             tsmiCreateScript.Name = "tsmiCreateScript";
-            tsmiCreateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiCreateScript.Size = new System.Drawing.Size(180, 22);
             tsmiCreateScript.Text = "Create Script";
             tsmiCreateScript.Click += tsmiCreateScript_Click;
             // 
             // tsmiSelectScript
             // 
             tsmiSelectScript.Name = "tsmiSelectScript";
-            tsmiSelectScript.Size = new System.Drawing.Size(157, 22);
+            tsmiSelectScript.Size = new System.Drawing.Size(180, 22);
             tsmiSelectScript.Text = "Select Script";
             tsmiSelectScript.Click += tsmiSelectScript_Click;
             // 
             // tsmiInsertScript
             // 
             tsmiInsertScript.Name = "tsmiInsertScript";
-            tsmiInsertScript.Size = new System.Drawing.Size(157, 22);
+            tsmiInsertScript.Size = new System.Drawing.Size(180, 22);
             tsmiInsertScript.Text = "Insert Script";
             tsmiInsertScript.Click += tsmiInsertScript_Click;
             // 
             // tsmiUpdateScript
             // 
             tsmiUpdateScript.Name = "tsmiUpdateScript";
-            tsmiUpdateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiUpdateScript.Size = new System.Drawing.Size(180, 22);
             tsmiUpdateScript.Text = "Update Script";
             tsmiUpdateScript.Click += tsmiUpdateScript_Click;
             // 
             // tsmiDeleteScript
             // 
             tsmiDeleteScript.Name = "tsmiDeleteScript";
-            tsmiDeleteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiDeleteScript.Size = new System.Drawing.Size(180, 22);
             tsmiDeleteScript.Text = "Delete Script";
             tsmiDeleteScript.Click += tsmiDeleteScript_Click;
             // 
             // tsmiExecuteScript
             // 
             tsmiExecuteScript.Name = "tsmiExecuteScript";
-            tsmiExecuteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiExecuteScript.Size = new System.Drawing.Size(180, 22);
             tsmiExecuteScript.Text = "Execute Script";
             tsmiExecuteScript.Click += tsmiExecuteScript_Click;
             // 
@@ -325,6 +326,13 @@
             tsmiEmptyDatabase.Text = "Empty";
             tsmiEmptyDatabase.Click += tsmiEmptyDatabase_Click;
             // 
+            // tsmiEditData
+            // 
+            tsmiEditData.Name = "tsmiEditData";
+            tsmiEditData.Size = new System.Drawing.Size(203, 22);
+            tsmiEditData.Text = "Edit Data";
+            tsmiEditData.Click += tsmiEditData_Click;
+            // 
             // UC_DbObjectsComplexTree
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -372,5 +380,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyChildrenNames;
         private System.Windows.Forms.ToolStripMenuItem tsmiExecuteScript;
         private System.Windows.Forms.ToolStripMenuItem tsmiStatistic;
+        private System.Windows.Forms.ToolStripMenuItem tsmiEditData;
     }
 }

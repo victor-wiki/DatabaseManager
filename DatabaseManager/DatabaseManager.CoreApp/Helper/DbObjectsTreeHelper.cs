@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
@@ -84,10 +85,10 @@ namespace DatabaseManager.Helper
             return node;
         }
 
-        public static TreeNode AddDbObjectNodes<T>(this TreeNode treeNode, IEnumerable<T> dbObjects)
+        public static TreeNode AddDbObjectNodes<T>(this TreeNode treeNode, IEnumerable<T> dbObjects, bool showSchema = false)
          where T : DatabaseObject
         {
-            treeNode.Nodes.AddRange(CreateDbObjectNodes(dbObjects).ToArray());
+            treeNode.Nodes.AddRange(CreateDbObjectNodes(dbObjects, showSchema).ToArray());
 
             return treeNode;
         }
@@ -136,7 +137,7 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects, bool alwaysShowSchema = false)
+        public static IEnumerable<TreeNode> CreateDbObjectNodes<T>(IEnumerable<T> dbObjects, bool showSchema = false)
            where T : DatabaseObject
         {
             bool isUniqueDbSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
@@ -148,7 +149,7 @@ namespace DatabaseManager.Helper
 
             foreach (var dbObj in dbObjects)
             {
-                string text = (alwaysShowSchema || !isUniqueDbSchema) ? $"{dbObj.Schema}.{dbObj.Name}" : dbObj.Name;
+                string text = showSchema  ? $"{dbObj.Schema}.{dbObj.Name}" : dbObj.Name;
 
                 string imgKeyName = typeof(T).Name;              
 
@@ -167,5 +168,19 @@ namespace DatabaseManager.Helper
             }
         }
         #endregion
-    }
+
+        public static bool NeedShowSchema<T>(DbInterpreter dbInterpreter, IEnumerable<T> dbObjects) where T : DatabaseObject
+        {
+            string defaultSchema = dbInterpreter?.DefaultSchema;
+
+            if (!string.IsNullOrEmpty(defaultSchema))
+            {
+                return !dbObjects.All(item => item.Schema == defaultSchema);
+            }
+            else
+            {
+                return dbObjects.GroupBy(item => item.Schema).Count() > 1;
+            }            
+        }
+    }   
 }

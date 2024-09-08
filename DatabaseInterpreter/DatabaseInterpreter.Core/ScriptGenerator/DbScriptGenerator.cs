@@ -521,7 +521,7 @@ namespace DatabaseInterpreter.Core
             return null;
         }
 
-        private object ParseValue(TableColumn column, object value, bool bytesAsString = false)
+        public object ParseValue(TableColumn column, object value, bool bytesAsString = false)
         {
             if (value != null)
             {

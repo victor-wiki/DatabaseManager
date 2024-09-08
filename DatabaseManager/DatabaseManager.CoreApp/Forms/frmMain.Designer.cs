@@ -39,10 +39,6 @@
             tsmiTools = new System.Windows.Forms.ToolStripMenuItem();
             tsmiWktView = new System.Windows.Forms.ToolStripMenuItem();
             tsmiImageViewer = new System.Windows.Forms.ToolStripMenuItem();
-            splitContainer1 = new System.Windows.Forms.SplitContainer();
-            navigator = new Controls.UC_DbObjectsNavigator();
-            panelContent = new System.Windows.Forms.Panel();
-            ucContent = new Controls.UC_DbObjectContent();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
             tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
@@ -52,22 +48,20 @@
             tsBtnConvert = new System.Windows.Forms.ToolStripButton();
             tsBtnTranslateScript = new System.Windows.Forms.ToolStripButton();
             tsBtnRun = new System.Windows.Forms.ToolStripButton();
-            txtMessage = new System.Windows.Forms.TextBox();
             dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            dockPanelMain = new WeifenLuo.WinFormsUI.Docking.DockPanel();
+            tsmiViews = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiObjectsExplorer = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiMessage = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
-            splitContainer1.Panel1.SuspendLayout();
-            splitContainer1.Panel2.SuspendLayout();
-            splitContainer1.SuspendLayout();
-            panelContent.SuspendLayout();
             toolStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
             // 
             menuStrip1.BackColor = System.Drawing.Color.White;
-            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSettings, tsmiTools });
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSettings, tsmiViews, tsmiTools });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new System.Windows.Forms.Padding(7, 3, 0, 3);
@@ -80,16 +74,15 @@
             tsmiSettings.BackColor = System.Drawing.Color.White;
             tsmiSettings.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             tsmiSettings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSetting, tsmiDbConnection, tsmiBackupSetting, tsmiLock });
-            tsmiSettings.Image = Resources.Settings;
             tsmiSettings.Name = "tsmiSettings";
-            tsmiSettings.Size = new System.Drawing.Size(82, 21);
+            tsmiSettings.Size = new System.Drawing.Size(66, 21);
             tsmiSettings.Text = "Settings";
             // 
             // tsmiSetting
             // 
             tsmiSetting.Image = Resources.Config;
             tsmiSetting.Name = "tsmiSetting";
-            tsmiSetting.Size = new System.Drawing.Size(163, 22);
+            tsmiSetting.Size = new System.Drawing.Size(180, 22);
             tsmiSetting.Text = "Setting";
             tsmiSetting.Click += tsmiSetting_Click;
             // 
@@ -97,7 +90,7 @@
             // 
             tsmiDbConnection.Image = (System.Drawing.Image)resources.GetObject("tsmiDbConnection.Image");
             tsmiDbConnection.Name = "tsmiDbConnection";
-            tsmiDbConnection.Size = new System.Drawing.Size(163, 22);
+            tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
             tsmiDbConnection.Text = "Connection";
             tsmiDbConnection.Click += tsmiDbConnection_Click;
             // 
@@ -105,7 +98,7 @@
             // 
             tsmiBackupSetting.Image = (System.Drawing.Image)resources.GetObject("tsmiBackupSetting.Image");
             tsmiBackupSetting.Name = "tsmiBackupSetting";
-            tsmiBackupSetting.Size = new System.Drawing.Size(163, 22);
+            tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
             tsmiBackupSetting.Text = "Backup Setting";
             tsmiBackupSetting.Click += tsmiBackupSetting_Click;
             // 
@@ -113,23 +106,22 @@
             // 
             tsmiLock.Image = Resources.Lock;
             tsmiLock.Name = "tsmiLock";
-            tsmiLock.Size = new System.Drawing.Size(163, 22);
+            tsmiLock.Size = new System.Drawing.Size(180, 22);
             tsmiLock.Text = "Lock";
             tsmiLock.Click += tsmiLock_Click;
             // 
             // tsmiTools
             // 
             tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiWktView, tsmiImageViewer });
-            tsmiTools.Image = Resources.Tool16;
             tsmiTools.Name = "tsmiTools";
-            tsmiTools.Size = new System.Drawing.Size(68, 21);
+            tsmiTools.Size = new System.Drawing.Size(52, 21);
             tsmiTools.Text = "Tools";
             // 
             // tsmiWktView
             // 
             tsmiWktView.Image = Resources.Polygon;
             tsmiWktView.Name = "tsmiWktView";
-            tsmiWktView.Size = new System.Drawing.Size(156, 22);
+            tsmiWktView.Size = new System.Drawing.Size(180, 22);
             tsmiWktView.Text = "WKT Viewer";
             tsmiWktView.Click += tsmiWktView_Click;
             // 
@@ -137,58 +129,9 @@
             // 
             tsmiImageViewer.Image = Resources.Image;
             tsmiImageViewer.Name = "tsmiImageViewer";
-            tsmiImageViewer.Size = new System.Drawing.Size(156, 22);
+            tsmiImageViewer.Size = new System.Drawing.Size(180, 22);
             tsmiImageViewer.Text = "Image Viewer";
             tsmiImageViewer.Click += tsmiImageViewer_Click;
-            // 
-            // splitContainer1
-            // 
-            splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            splitContainer1.Location = new System.Drawing.Point(0, 65);
-            splitContainer1.Margin = new System.Windows.Forms.Padding(4);
-            splitContainer1.Name = "splitContainer1";
-            // 
-            // splitContainer1.Panel1
-            // 
-            splitContainer1.Panel1.Controls.Add(navigator);
-            // 
-            // splitContainer1.Panel2
-            // 
-            splitContainer1.Panel2.BackColor = System.Drawing.Color.White;
-            splitContainer1.Panel2.Controls.Add(panelContent);
-            splitContainer1.Size = new System.Drawing.Size(917, 495);
-            splitContainer1.SplitterDistance = 175;
-            splitContainer1.TabIndex = 8;
-            // 
-            // navigator
-            // 
-            navigator.Dock = System.Windows.Forms.DockStyle.Fill;
-            navigator.Location = new System.Drawing.Point(0, 0);
-            navigator.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            navigator.Name = "navigator";
-            navigator.Size = new System.Drawing.Size(175, 495);
-            navigator.TabIndex = 0;
-            // 
-            // panelContent
-            // 
-            panelContent.Controls.Add(ucContent);
-            panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            panelContent.Location = new System.Drawing.Point(0, 0);
-            panelContent.Margin = new System.Windows.Forms.Padding(4);
-            panelContent.Name = "panelContent";
-            panelContent.Size = new System.Drawing.Size(738, 495);
-            panelContent.TabIndex = 0;
-            // 
-            // ucContent
-            // 
-            ucContent.BackColor = System.Drawing.SystemColors.Control;
-            ucContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            ucContent.Location = new System.Drawing.Point(0, 0);
-            ucContent.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            ucContent.Name = "ucContent";
-            ucContent.Size = new System.Drawing.Size(738, 495);
-            ucContent.TabIndex = 0;
-            ucContent.Visible = false;
             // 
             // toolStrip1
             // 
@@ -303,22 +246,38 @@
             tsBtnRun.ToolTipText = "Run(F5)";
             tsBtnRun.Click += tsBtnRun_Click;
             // 
-            // txtMessage
-            // 
-            txtMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            txtMessage.Dock = System.Windows.Forms.DockStyle.Bottom;
-            txtMessage.ForeColor = System.Drawing.Color.Black;
-            txtMessage.Location = new System.Drawing.Point(0, 563);
-            txtMessage.Margin = new System.Windows.Forms.Padding(4);
-            txtMessage.Name = "txtMessage";
-            txtMessage.ReadOnly = true;
-            txtMessage.Size = new System.Drawing.Size(917, 16);
-            txtMessage.TabIndex = 11;
-            txtMessage.MouseHover += txtMessage_MouseHover;
-            // 
             // dlgOpenFile
             // 
             dlgOpenFile.Filter = "sql file|*.sql|all files|*.*";
+            // 
+            // dockPanelMain
+            // 
+            dockPanelMain.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dockPanelMain.Location = new System.Drawing.Point(0, 64);
+            dockPanelMain.Name = "dockPanelMain";
+            dockPanelMain.Size = new System.Drawing.Size(917, 514);
+            dockPanelMain.TabIndex = 12;
+            // 
+            // tsmiViews
+            // 
+            tsmiViews.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiObjectsExplorer, tsmiMessage });
+            tsmiViews.Name = "tsmiViews";
+            tsmiViews.Size = new System.Drawing.Size(53, 21);
+            tsmiViews.Text = "Views";
+            // 
+            // tsmiObjectsExplorer
+            // 
+            tsmiObjectsExplorer.Name = "tsmiObjectsExplorer";
+            tsmiObjectsExplorer.Size = new System.Drawing.Size(180, 22);
+            tsmiObjectsExplorer.Text = "Objects Explorer";
+            tsmiObjectsExplorer.Click += tsmiObjectsExplorer_Click;
+            // 
+            // tsmiMessage
+            // 
+            tsmiMessage.Name = "tsmiMessage";
+            tsmiMessage.Size = new System.Drawing.Size(180, 22);
+            tsmiMessage.Text = "Message";
+            tsmiMessage.Click += tsmiMessage_Click;
             // 
             // frmMain
             // 
@@ -327,9 +286,8 @@
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.SystemColors.Control;
             ClientSize = new System.Drawing.Size(917, 579);
-            Controls.Add(txtMessage);
+            Controls.Add(dockPanelMain);
             Controls.Add(toolStrip1);
-            Controls.Add(splitContainer1);
             Controls.Add(menuStrip1);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             KeyPreview = true;
@@ -338,17 +296,13 @@
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Database Manager";
             WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            FormClosing += frmMain_FormClosing;
             Load += frmMain_Load;
             DragDrop += frmMain_DragDrop;
             DragOver += frmMain_DragOver;
             KeyDown += frmMain_KeyDown;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
-            splitContainer1.Panel1.ResumeLayout(false);
-            splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
-            splitContainer1.ResumeLayout(false);
-            panelContent.ResumeLayout(false);
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
             ResumeLayout(false);
@@ -360,15 +314,10 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiSettings;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetting;
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private Controls.UC_DbObjectsNavigator navigator;
-        private System.Windows.Forms.Panel panelContent;
-        private Controls.UC_DbObjectContent ucContent;
         private System.Windows.Forms.ToolStripMenuItem tsmiDbConnection;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton tsBtnGenerateScripts;
         private System.Windows.Forms.ToolStripButton tsBtnConvert;
-        private System.Windows.Forms.TextBox txtMessage;
         private System.Windows.Forms.ToolStripButton tsBtnAddQuery;
         private System.Windows.Forms.ToolStripButton tsBtnRun;
         private System.Windows.Forms.ToolStripButton tsBtnSave;
@@ -382,6 +331,10 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiTools;
         private System.Windows.Forms.ToolStripMenuItem tsmiWktView;
         private System.Windows.Forms.ToolStripMenuItem tsmiImageViewer;
+        private WeifenLuo.WinFormsUI.Docking.DockPanel dockPanelMain;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViews;
+        private System.Windows.Forms.ToolStripMenuItem tsmiObjectsExplorer;
+        private System.Windows.Forms.ToolStripMenuItem tsmiMessage;
     }
 }
 
