@@ -12,6 +12,9 @@
     
 ### View Data
   It supports pagination, sort and filter for single table or view.
+
+### Edit Data
+  Edit single table data.
   
 ### Table Copy
   Clone table schema and copy data to another database.
@@ -38,6 +41,9 @@
 
 ## UI - Table Designer
 ![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=1)
+
+## UI - Edit Data
+![Edit Data](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/EditData.png?raw=true&rid=1)
 
 ## UI - Translate Script
 ![Translate Script](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TranslateScript.png?raw=true&rid=1)
