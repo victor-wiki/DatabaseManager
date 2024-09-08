@@ -33,6 +33,9 @@
   The translate form can translate script to one database kind to another without database connection.
 <br/>(Note: Most function and procedure of Postgres currently can't be translated to others.)
 
+## UI - Main Page
+![Main Page](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=1)
+
 ## UI - Convert Database
 ![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
 
