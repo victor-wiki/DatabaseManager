@@ -239,7 +239,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition})");
+            return new CreateDbObjectScript<TableConstraint>($"ALTER TABLE {this.GetQuotedFullTableName(constraint)} ADD CONSTRAINT {this.GetQuotedString(constraint.Name)} CHECK  ({constraint.Definition});");
         }
 
         public override Script DropCheckConstraint(TableConstraint constraint)

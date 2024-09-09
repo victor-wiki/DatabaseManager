@@ -37,7 +37,7 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task ClearData(List<Table> tables = null)
+        public async Task<bool> ClearData(List<Table> tables = null)
         {
             this.FeedbackInfo("Begin to clear data...");
 
@@ -106,14 +106,22 @@ namespace DatabaseManager.Core
                         }
                     }
 
+                    bool hasError = false;
+
                     foreach (var foreignKey in tableForeignKeys)
                     {
                         string sql = scriptGenerator.AddForeignKey(foreignKey).Content.TrimEnd(scriptsDelimiters);
 
-                        await this.ExecuteNonQueryAsync(sql, dbConnection, transaction);
+                        var executeResult = await this.ExecuteNonQueryAsync(sql, dbConnection, transaction);
+
+                        if (executeResult.HasError)
+                        {
+                            hasError = true;                         
+                            break;
+                        }
                     }
 
-                    if (!this.dbInterpreter.HasError)
+                    if (!hasError)
                     {
                         transaction.Commit();
                     }                    
@@ -138,9 +146,11 @@ namespace DatabaseManager.Core
             }            
 
             this.FeedbackInfo("End clear data.");
+
+            return !failed;
         }
 
-        private async Task ExecuteNonQueryAsync(string sql, DbConnection dbConnection, DbTransaction transaction = null)
+        private async Task<ExecuteResult> ExecuteNonQueryAsync(string sql, DbConnection dbConnection, DbTransaction transaction = null)
         {
             this.FeedbackInfo(sql);
 
@@ -151,10 +161,10 @@ namespace DatabaseManager.Core
                 Transaction = transaction
             };
 
-            await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+            return await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
         }       
 
-        public async Task EmptyDatabase(DatabaseObjectType databaseObjectType)
+        public async Task<bool> EmptyDatabase(DatabaseObjectType databaseObjectType)
         {
             bool sortObjectsByReference = this.dbInterpreter.Option.SortObjectsByReference;
             DatabaseObjectFetchMode fetchMode = this.dbInterpreter.Option.ObjectFetchMode;
@@ -184,6 +194,7 @@ namespace DatabaseManager.Core
             catch (Exception ex)
             {
                 this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex));
+                return false;
             }
             finally
             {
@@ -192,6 +203,8 @@ namespace DatabaseManager.Core
             }
 
             this.FeedbackInfo("End empty database.");
+
+            return true;
         }
 
         private async Task DropDbObjects<T>(DbConnection connection, List<T> dbObjects) where T : DatabaseObject

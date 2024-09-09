@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
@@ -25,6 +26,7 @@ namespace DatabaseManager
         private ConnectionInfo targetDbConnectionInfo;
         private DbConverter dbConverter = null;
         private bool useSourceConnector = true;
+        private CancellationTokenSource cancellationTokenSource;
         private IEnumerable<CheckBox> configCheckboxes;
         private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
         public frmConvert()
@@ -139,7 +141,9 @@ namespace DatabaseManager
             this.txtMessage.ForeColor = Color.Black;
             this.txtMessage.Text = "";
 
-            await Task.Run(() => this.Convert());
+            this.cancellationTokenSource = new CancellationTokenSource();
+
+            await Task.Run(() => this.Convert(), this.cancellationTokenSource.Token);
         }
 
         private bool ValidateSource(SchemaInfo schemaInfo)
@@ -256,7 +260,8 @@ namespace DatabaseManager
                 targetScriptOption.TreatBytesAsNullForExecuting = true;
             }
 
-            targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
+            targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;            
+            targetScriptOption.TableScriptsGenerateOption.GenerateConstraint = this.chkGenerateCheckConstraint.Checked;
             targetScriptOption.TableScriptsGenerateOption.GenerateComment = this.chkGenerateComment.Checked;
 
             GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
@@ -272,6 +277,7 @@ namespace DatabaseManager
             DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.sourceDbConnectionInfo, sourceScriptOption) };
             DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, targetScriptOption) };
 
+            bool iscancelled = false;
             try
             {
                 using (this.dbConverter = new DbConverter(source, target))
@@ -330,24 +336,37 @@ namespace DatabaseManager
                     }
                     else if (result.InfoType == DbConvertResultInfoType.Error)
                     {
-                        MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if(result.ExceptionType != typeof(OperationCanceledException))
+                        {
+                            MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            iscancelled = true;
+                        }
                     }
                 }
             }
-            catch (Exception ex)
+            catch(TaskCanceledException tce)
             {
-                if (this.dbConverter != null)
-                {
-                    this.dbConverter = null;
-                }
-
+                iscancelled = true;
+            }
+            catch (Exception ex)
+            {               
                 this.HandleException(ex);
             }
             finally
             {
+                this.dbConverter = null;
+
                 GC.Collect();
             }
-        }
+
+            if(iscancelled)
+            {
+                MessageBox.Show("Operation has been cancelled.");
+            }
+        }       
 
         private void SetExecuteButtonEnabled(bool enable)
         {
@@ -416,21 +435,20 @@ namespace DatabaseManager
 
         private async void btnCancel_Click(object sender, EventArgs e)
         {
-            await Task.Run(() =>
+            if (this.dbConverter != null && this.dbConverter.IsBusy)
             {
-                if (this.dbConverter != null && this.dbConverter.IsBusy)
+                if (this.ConfirmCancel())
                 {
-                    if (this.ConfirmCancel())
-                    {
-                        if (this.dbConverter != null)
-                        {
-                            this.dbConverter.Cancle();
-                        }
+                    await this.cancellationTokenSource.CancelAsync();
 
-                        this.SetExecuteButtonEnabled(true);
+                    if (this.dbConverter != null)
+                    {
+                        this.dbConverter.Cancle();
                     }
+
+                    this.SetExecuteButtonEnabled(true);
                 }
-            });
+            }
         }
 
         #region IObserver<FeedbackInfo>
@@ -689,8 +707,8 @@ namespace DatabaseManager
             }
             else
             {
-                this.chkCreateSchemaIfNotExists.Checked = true;                
-                
+                this.chkCreateSchemaIfNotExists.Checked = true;
+                this.chkGenerateCheckConstraint.Checked = true;
                 this.chkGenerateIdentity.Checked = true;
                 this.chkGenerateComment.Checked = true;
                 this.chkComputeColumn.Checked = true;

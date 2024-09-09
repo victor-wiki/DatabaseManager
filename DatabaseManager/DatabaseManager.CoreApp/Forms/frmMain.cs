@@ -54,7 +54,7 @@ namespace DatabaseManager
 
             this.ApplyTheme();
 
-                     
+
             this.explorerForm.Show(this.dockPanelMain, DockState.DockLeft);
             this.messageForm.Show(this.dockPanelMain, DockState.DockBottomAutoHide);
         }
@@ -146,7 +146,7 @@ namespace DatabaseManager
             IEnumerable<DataGridViewColumn> columns = null;
             QueryConditionBuilder queryConditionBuilder = null;
 
-            if(sender is UC_DataViewer dataViewer)
+            if (sender is UC_DataViewer dataViewer)
             {
                 columns = dataViewer.Columns;
                 queryConditionBuilder = dataViewer.ConditionBuilder;
@@ -168,7 +168,7 @@ namespace DatabaseManager
                 else if (sender is UC_DataEditor de)
                 {
                     de.FilterData(filter.ConditionBuilder);
-                }               
+                }
             }
         }
 
@@ -176,10 +176,10 @@ namespace DatabaseManager
         {
             this.messageForm.ShowMessage(info);
 
-            if(info.InfoType == FeedbackInfoType.Error)
+            if (info.InfoType == FeedbackInfoType.Error)
             {
                 this.ShowMessage();
-            }           
+            }
         }
 
         private void tsmiSetting_Click(object sender, EventArgs e)
@@ -204,7 +204,12 @@ namespace DatabaseManager
 
         private void SaveContent()
         {
-            this.GetCurrentContentForm()?.ContentControl?.Save();
+            var contentControl = this.GetCurrentContentForm()?.ContentControl;
+
+            if (contentControl != null)
+            {
+                contentControl.Save();
+            }
         }
 
         public void OnNext(FeedbackInfo value)
@@ -411,7 +416,7 @@ namespace DatabaseManager
         {
             this.explorerForm.Show(this.dockPanelMain);
         }
-        
+
 
         private void tsmiMessage_Click(object sender, EventArgs e)
         {
@@ -422,11 +427,17 @@ namespace DatabaseManager
         {
             this.messageForm.Show(this.dockPanelMain);
 
-            if(this.messageForm.DockHandler.DockState.ToString().Contains("AutoHide"))
+            try
             {
-                this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
-                this.messageForm.DockHandler.Activate();
-            }            
+                if (this.messageForm.DockHandler.DockState.ToString().Contains("AutoHide"))
+                {
+                    this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
+                    this.messageForm.DockHandler.Activate();
+                }
+            }
+            catch (Exception ex) 
+            {
+            }
         }
     }
 }

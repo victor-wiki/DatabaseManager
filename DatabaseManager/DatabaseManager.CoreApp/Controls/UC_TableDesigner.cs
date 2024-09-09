@@ -464,7 +464,7 @@ namespace DatabaseManager.Controls
 
         private void ShowColumnSelector(DatabaseObjectType databaseObjectType, IEnumerable<SimpleColumn> values, bool columnIsReadonly, bool isSingleSelect)
         {
-            frmColumSelect columnSelect = new frmColumSelect() { ColumnIsReadOnly = columnIsReadonly, IsSingleSelect = isSingleSelect };
+            frmColumnSelect columnSelect = new frmColumnSelect() { ColumnIsReadOnly = columnIsReadonly, IsSingleSelect = isSingleSelect };
 
             IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name));
 

@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace DatabaseConverter.Model
 {
     public class DbConvertResult
     {
-        public DbConvertResultInfoType InfoType { get; internal set; }
+        public DbConvertResultInfoType InfoType { get; internal set; }     
         public string Message { get; internal set; }
+        public Type ExceptionType { get; set; }
         public List<TranslateResult> TranslateResults { get; set; } = new List<TranslateResult>();
     }
 

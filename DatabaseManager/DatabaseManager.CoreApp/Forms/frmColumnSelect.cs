@@ -13,13 +13,13 @@ using DatabaseManager.Model;
 
 namespace DatabaseManager
 {
-    public partial class frmColumSelect : Form
+    public partial class frmColumnSelect : Form
     {
         private bool isIndexColumn;
         public bool ColumnIsReadOnly { get; set; }
         public bool IsSingleSelect { get; set; }
         public List<SimpleColumn> SelectedColumns { get; private set; }
-        public frmColumSelect()
+        public frmColumnSelect()
         {
             InitializeComponent();
         }

@@ -11,6 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -23,6 +24,9 @@ namespace DatabaseManager
         private bool isBusy = false;
         private DbInterpreter dbInterpreter;
         private bool useConnector = true;
+        private bool isFormClosed = false;
+        private bool isTaskCancelled = false;
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public frmGenerateScripts()
         {
@@ -151,6 +155,7 @@ namespace DatabaseManager
             }
 
             this.isBusy = true;
+            this.isTaskCancelled = false; 
             this.btnGenerate.Enabled = false;
 
             DatabaseType dbType = this.useConnector ? this.dbConnectionProfile.DatabaseType : this.databaseType;
@@ -212,13 +217,21 @@ namespace DatabaseManager
                 if (scriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
                     mode = GenerateScriptMode.Schema;
-                    dbScriptGenerator.GenerateSchemaScripts(schemaInfo);
+
+                    await Task.Run(() =>
+                    {
+                        dbScriptGenerator.GenerateSchemaScripts(schemaInfo);
+                    }, this.cancellationTokenSource.Token);                   
                 }
 
                 if (scriptMode.HasFlag(GenerateScriptMode.Data))
                 {
                     mode = GenerateScriptMode.Data;
-                    await dbScriptGenerator.GenerateDataScriptsAsync(schemaInfo);
+
+                    await Task.Run(async () =>
+                    {
+                        await dbScriptGenerator.GenerateDataScriptsAsync(schemaInfo);
+                    }, this.cancellationTokenSource.Token);                    
                 }
 
                 this.isBusy = false;
@@ -227,6 +240,10 @@ namespace DatabaseManager
                 string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text)? ($", the file path is:{Environment.NewLine}{filePath}"):"";
 
                 MessageBox.Show($"Scripts have been generated{tip}", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch(TaskCanceledException tcex)
+            {
+                this.isTaskCancelled = true;               
             }
             catch (Exception ex)
             {
@@ -304,17 +321,29 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            this.Invoke(new Action(() =>
+            if(!this.Visible || this.isFormClosed || this.isTaskCancelled)
             {
-                if (info.InfoType == FeedbackInfoType.Error)
-                {
-                    this.AppendMessage(info.Message, true);
-                }
-                else
-                {
-                    this.AppendMessage(info.Message, false);
-                }
-            }));
+                return;
+            }
+
+            try
+            {
+                this.Invoke(new Action(() =>
+                    {
+                        if (info.InfoType == FeedbackInfoType.Error)
+                        {
+                            this.AppendMessage(info.Message, true);
+                        }
+                        else
+                        {
+                            this.AppendMessage(info.Message, false);
+                        }
+                    }));
+            }
+            catch (Exception ex)
+            {
+               
+            }
         }
 
         private void AppendMessage(string message, bool isError = false)
@@ -348,32 +377,27 @@ namespace DatabaseManager
                     e.Cancel = true;
                 }
             }
+
+            if(e.Cancel == false)
+            {
+                this.isFormClosed = true;
+            }
         }
 
         private bool ConfirmCancel()
         {
             if (MessageBox.Show("Are you sure to abandon current task?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
-                if (this.dbInterpreter != null)
-                {
-                    this.dbInterpreter.CancelRequested = true;
-                }
+                this.cancellationTokenSource.Cancel();
 
                 return true;
             }
+
             return false;
         }
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            if (this.isBusy)
-            {
-                if (!this.ConfirmCancel())
-                {
-                    return;
-                }
-            }
-
             this.Close();
         }
     }

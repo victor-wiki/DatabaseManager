@@ -43,7 +43,13 @@ namespace DatabaseInterpreter.Core
             }
             else if (lowerProviderName.Contains("npgsql"))
             {
-                factory = NpgsqlFactory.Instance;
+                //factory = NpgsqlFactory.Instance;
+
+                var dataSourceBuilder = new NpgsqlDataSourceBuilder(this._connectionString);
+                dataSourceBuilder.UseNetTopologySuite();
+                var dataSource = dataSourceBuilder.Build();
+
+                return dataSource.CreateConnection();
             }
             else if(lowerProviderName.Contains("sqlite"))
             {

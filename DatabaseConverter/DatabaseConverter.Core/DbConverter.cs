@@ -117,6 +117,8 @@ namespace DatabaseConverter.Core
 
             targetInterpreterOption.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
+            this.isBusy = true;
+
             #region Schema filter
 
             DatabaseObjectType databaseObjectType = (DatabaseObjectType)Enum.GetValues(typeof(DatabaseObjectType)).Cast<int>().Sum();
@@ -132,6 +134,11 @@ namespace DatabaseConverter.Core
                 databaseObjectType = databaseObjectType & this.Source.DatabaseObjectType;
             }
 
+            if(this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateConstraint==false)
+            {
+                databaseObjectType = databaseObjectType ^ DatabaseObjectType.Constraint;
+            }
+
             SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true, DatabaseObjectType = databaseObjectType };
 
             if (schema != null)
@@ -145,7 +152,7 @@ namespace DatabaseConverter.Core
 
             SchemaInfo sourceSchemaInfo = await sourceInterpreter.GetSchemaInfoAsync(filter);
 
-            if (sourceInterpreter.HasError)
+            if (this.hasError)
             {
                 result.InfoType = DbConvertResultInfoType.Error;
                 result.Message = "Source database interpreter has error occured.";
@@ -386,8 +393,7 @@ namespace DatabaseConverter.Core
 
                     return result;
                 }
-
-                this.isBusy = true;
+               
                 bool canCommit = false;
 
                 if (executeScriptOnTargetServer)
@@ -466,7 +472,7 @@ namespace DatabaseConverter.Core
                                         sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
                                     }
 
-                                    if (!targetInterpreter.HasError || (isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs))
+                                    if (!this.hasError|| (isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs))
                                     {
                                         targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
 
@@ -474,9 +480,9 @@ namespace DatabaseConverter.Core
 
                                         commandInfo.ContinueWhenErrorOccurs = isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs;
 
-                                        await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                                        ExecuteResult executeResult = await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
-                                        if (commandInfo.HasError)
+                                        if (executeResult.HasError)
                                         {
                                             this.hasError = true;
 
@@ -493,7 +499,7 @@ namespace DatabaseConverter.Core
                                             }
                                         }
 
-                                        if (commandInfo.TransactionRollbacked)
+                                        if (executeResult.TransactionRollbacked)
                                         {
                                             canCommit = false;
                                         }
@@ -504,7 +510,7 @@ namespace DatabaseConverter.Core
                     }
                     catch (Exception ex)
                     {
-                        targetInterpreter.CancelRequested = true;
+                        this.Cancle();
 
                         this.Rollback(ex);
 
@@ -520,9 +526,18 @@ namespace DatabaseConverter.Core
                         };
 
                         var res = this.HandleError(schemaTransferException);
-
+                       
                         result.InfoType = res.InfoType;
                         result.Message = res.Message;
+
+                        if(ex is DbCommandException dce)
+                        {
+                            result.ExceptionType = dce.BaseException?.GetType();
+                        }
+                        else
+                        {
+                            result.ExceptionType = ex.GetType();
+                        }
                     }
 
                     targetInterpreter.Feedback(FeedbackInfoType.Info, "End sync schema.");
@@ -594,7 +609,7 @@ namespace DatabaseConverter.Core
             bool executeScriptOnTargetServer = this.Option.ExecuteScriptOnTargetServer;
             bool generateIdentity = targetInterpreterOption.TableScriptsGenerateOption.GenerateIdentity;
 
-            if (!targetInterpreter.HasError && !schemaModeOnly && sourceSchemaInfo.Tables.Count > 0)
+            if (!this.hasError && !schemaModeOnly && sourceSchemaInfo.Tables.Count > 0)
             {
                 if (targetDbType == DatabaseType.Oracle && generateIdentity)
                 {
@@ -714,7 +729,7 @@ namespace DatabaseConverter.Core
                             }
                             catch (Exception ex)
                             {
-                                sourceInterpreter.CancelRequested = true;
+                                this.Cancle();
 
                                 this.Rollback(ex);
 
@@ -886,19 +901,7 @@ namespace DatabaseConverter.Core
 
         public void Cancle()
         {
-            this.cancelRequested = true;
-
-            if (this.Source != null)
-            {
-                this.Source.DbInterpreter.CancelRequested = true;
-            }
-
-            if (this.Target != null)
-            {
-                this.Target.DbInterpreter.CancelRequested = true;
-            }
-
-            this.Rollback();
+            this.cancelRequested = true;           
 
             if (this.CancellationTokenSource != null)
             {

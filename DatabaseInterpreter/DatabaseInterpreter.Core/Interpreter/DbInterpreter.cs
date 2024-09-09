@@ -20,7 +20,6 @@ namespace DatabaseInterpreter.Core
         #region Field & Property       
         private IObserver<FeedbackInfo> observer;
         protected DbConnector dbConnector;
-        protected bool hasError = false;
 
         public string ServerVersion => this.ConnectionInfo?.ServerVersion;
         public readonly DateTime MinDateTime = new DateTime(1970, 1, 1);
@@ -47,8 +46,6 @@ namespace DatabaseInterpreter.Core
         public abstract bool SupportTruncateTable { get; }
         public abstract bool CanInsertIdentityByDefault { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
-        public bool CancelRequested { get; set; }
-        public bool HasError => this.hasError;
         public static DbInterpreterSetting Setting = new DbInterpreterSetting();
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
         public ConnectionInfo ConnectionInfo { get; protected set; }
@@ -438,32 +435,32 @@ namespace DatabaseInterpreter.Core
             }
         }
 
-        public Task<int> ExecuteNonQueryAsync(string sql)
+        public Task<ExecuteResult> ExecuteNonQueryAsync(string sql)
         {
             return this.InternalExecuteNonQuery(this.CreateConnection(), new CommandInfo() { CommandText = sql });
         }
 
-        public Task<int> ExecuteNonQueryAsync(CommandInfo commandInfo)
+        public Task<ExecuteResult> ExecuteNonQueryAsync(CommandInfo commandInfo)
         {
             return this.InternalExecuteNonQuery(this.CreateConnection(), commandInfo, true);
         }
 
-        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = false)
+        public Task<ExecuteResult> ExecuteNonQueryAsync(DbConnection dbConnection, string sql, bool disposeConnection = false)
         {
             return this.InternalExecuteNonQuery(dbConnection, new CommandInfo() { CommandText = sql }, disposeConnection);
         }
 
-        public Task<int> ExecuteNonQueryAsync(DbConnection dbConnection, CommandInfo commandInfo)
+        public Task<ExecuteResult> ExecuteNonQueryAsync(DbConnection dbConnection, CommandInfo commandInfo)
         {
             return this.InternalExecuteNonQuery(dbConnection, commandInfo, false);
         }
 
-        protected async Task<int> InternalExecuteNonQuery(DbConnection dbConnection, CommandInfo commandInfo, bool disposeConnection = true)
+        protected async Task<ExecuteResult> InternalExecuteNonQuery(DbConnection dbConnection, CommandInfo commandInfo, bool disposeConnection = true)
         {
-            if (this.CancelRequested || this.hasError)
-            {
-                return 0;
-            }
+            int numberOfRowsAffected = 0;
+            bool hasError = false;
+            string message = null;
+            bool transactionRollbacked = false;
 
             DbCommand command = dbConnection.CreateCommand();
             command.CommandType = commandInfo.CommandType;
@@ -492,7 +489,30 @@ namespace DatabaseInterpreter.Core
                 }
             }
 
-            Func<Task<int>> exec = async () =>
+            Action<Exception> handleError = (ex) =>
+            {
+                hasError = true;
+
+                if (!commandInfo.ContinueWhenErrorOccurs)
+                {
+                    if (dbConnection.State == ConnectionState.Open && command.Transaction != null)
+                    {
+                        command.Transaction.Rollback();
+                        transactionRollbacked = true;
+                    }
+                }
+
+                message = ExceptionHelper.GetExceptionDetails(ex);
+
+                this.FeedbackError(message, commandInfo.ContinueWhenErrorOccurs);
+
+                if (this.Option.ThrowExceptionWhenErrorOccurs && !commandInfo.ContinueWhenErrorOccurs)
+                {
+                    throw new DbCommandException(ex) { HasRollbackedTransaction = transactionRollbacked };
+                }
+            };
+
+            Func<Task> exec = async () =>
             {
                 bool isClosed = dbConnection.State == ConnectionState.Closed;
 
@@ -503,35 +523,32 @@ namespace DatabaseInterpreter.Core
                         await dbConnection.OpenAsync(commandInfo.CancellationToken).ConfigureAwait(false);
                     }
 
-                    int result = await command.ExecuteNonQueryAsync(commandInfo.CancellationToken).ConfigureAwait(false);
-
-                    return result;
+                    numberOfRowsAffected = await command.ExecuteNonQueryAsync(commandInfo.CancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception ex)
+                catch (AggregateException ae)
                 {
-                    commandInfo.HasError = true;
+                    bool found = false;
 
-                    bool hasRollbackedTransaction = false;
-
-                    if (!commandInfo.ContinueWhenErrorOccurs)
+                    foreach (var iex in ae.InnerExceptions)
                     {
-                        if (dbConnection.State == ConnectionState.Open && command.Transaction != null)
+                        if (iex is OperationCanceledException)
                         {
-                            command.Transaction.Rollback();
-                            commandInfo.TransactionRollbacked = true;
+                            found = true;
+                            this.Feedback(FeedbackInfoType.Info, "Operation has been cancelled.");
+                            break;
+                        }
 
-                            hasRollbackedTransaction = true;
+                        if (found)
+                        {
+                            break;
                         }
                     }
 
-                    this.FeedbackError(ExceptionHelper.GetExceptionDetails(ex), commandInfo.ContinueWhenErrorOccurs);
-
-                    if (this.Option.ThrowExceptionWhenErrorOccurs && !commandInfo.ContinueWhenErrorOccurs)
-                    {
-                        throw new DbCommandException(ex) { HasRollbackedTransaction = hasRollbackedTransaction };
-                    }
-
-                    return 0;
+                    handleError(ae);
+                }
+                catch (Exception ex)
+                {
+                    handleError(ex);
                 }
                 finally
                 {
@@ -546,13 +563,15 @@ namespace DatabaseInterpreter.Core
             {
                 using (dbConnection)
                 {
-                    return await exec();
+                    await exec();
                 }
             }
             else
             {
-                return await exec();
+                await exec();
             }
+
+            return new ExecuteResult() { NumberOfRowsAffected = numberOfRowsAffected, HasError = hasError, Message = message, TransactionRollbacked = transactionRollbacked };
         }
 
         public abstract Task BulkCopyAsync(DbConnection connection, DataTable dataTable, BulkCopyInfo bulkCopyInfo);
@@ -616,11 +635,6 @@ namespace DatabaseInterpreter.Core
 
         public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql)
         {
-            if (this.DatabaseType == DatabaseType.Postgres)
-            {
-                NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite(geographyAsDefault: false);
-            }
-
             if (this.DatabaseType == DatabaseType.Oracle)
             {
                 GeometryUtility.Hook();
@@ -827,11 +841,6 @@ namespace DatabaseInterpreter.Core
 
             for (long pageNumber = 1; pageNumber <= pageCount; pageNumber++)
             {
-                if (this.CancelRequested)
-                {
-                    break;
-                }
-
                 DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, pageSize, pageNumber, whereClause);
 
                 List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
@@ -884,7 +893,7 @@ namespace DatabaseInterpreter.Core
 
                 dictPagedData.Add(pageNumber, rows);
 
-                if (this.OnDataRead != null && !this.CancelRequested && !this.HasError)
+                if (this.OnDataRead != null)
                 {
                     await this.OnDataRead(new TableDataReadInfo()
                     {
@@ -1160,10 +1169,10 @@ namespace DatabaseInterpreter.Core
 
                 foreach (string colName in computedColumnNames)
                 {
-                    if(dataColumns.Any(item => item.ColumnName == colName))
+                    if (dataColumns.Any(item => item.ColumnName == colName))
                     {
                         dataTable.Columns.Remove(colName);
-                    }                    
+                    }
                 }
             }
         }
@@ -1278,10 +1287,8 @@ namespace DatabaseInterpreter.Core
         {
             if (!skipError)
             {
-                this.hasError = true;
-            }
-
-            this.Feedback(FeedbackInfoType.Error, message, skipError);
+                this.Feedback(FeedbackInfoType.Error, message, skipError);
+            }           
         }
 
         public void FeedbackInfo(OperationState state, DatabaseObject dbObject)

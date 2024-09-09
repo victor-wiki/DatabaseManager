@@ -17,6 +17,7 @@ namespace DatabaseManager
     {
         private bool requriePassword = false;
         private bool isAdd = true;
+        private bool isPopulating = false;
 
         public DatabaseType DatabaseType { get; set; }
         public string ProflieName { get; set; }
@@ -82,6 +83,7 @@ namespace DatabaseManager
 
         private void TestConnect()
         {
+            this.isPopulating = true;
             this.PopulateDatabases();
         }
 
@@ -111,6 +113,8 @@ namespace DatabaseManager
             {
                 MessageBox.Show("Failed:" + ex.Message);
             }
+
+            this.isPopulating = false;
         }
 
         public ConnectionInfo GetConnectionInfo()
@@ -269,7 +273,7 @@ namespace DatabaseManager
 
         private void cboDatabase_MouseClick(object sender, MouseEventArgs e)
         {
-            if (this.cboDatabase.Items.Count == 0)
+            if (this.cboDatabase.Items.Count == 0 && !this.isPopulating)
             {
                 this.PopulateDatabases();
             }

@@ -46,19 +46,19 @@ namespace DatabaseManager.Helper
 
                     if (value != null)
                     {
-                        Type type = value.GetType();
+                        Type valueType = value.GetType();
 
-                        if (type != typeof(DBNull))
+                        if (valueType != typeof(DBNull))
                         {
                             Type newColumnType = null;
                             object newValue = null;
 
-                            if (type == typeof(byte[]))
+                            if (valueType == typeof(byte[]))
                             {
                                 newColumnType = typeof(String);                                
                                 newValue = ValueHelper.BytesToHexString(value as byte[]);                              
                             }
-                            else if(type == typeof(BitArray))
+                            else if(valueType == typeof(BitArray))
                             {
                                 newColumnType = typeof(String);
 
@@ -68,19 +68,20 @@ namespace DatabaseManager.Helper
 
                                 newValue = ValueHelper.BytesToHexString(bytes);
                             }
-                            else if (type == typeof(SqlGeography))
+                            else if (valueType == typeof(SqlGeography))
                             {
                                 newColumnType = typeof(String);
                                 SqlGeography geography = value as SqlGeography;
                                 newValue = geography.IsNull ? "" : geography.ToString();
                             }
-                            else if (type == typeof(SqlGeometry))
+                            else if (valueType == typeof(SqlGeometry))
                             {
                                 newColumnType = typeof(String);
                                 SqlGeometry geom = value as SqlGeometry;
                                 newValue = geom.IsNull ? "" : geom.ToString();
                             }
-                            else if (type == typeof(PgGeom.Geometry))
+                            else if (valueType == typeof(PgGeom.Geometry)
+                                || valueType.FullName.Contains(nameof(NetTopologySuite.Geometries)))
                             {
                                 newColumnType = typeof(String);
                                 newValue = (value as PgGeom.Geometry)?.AsText();

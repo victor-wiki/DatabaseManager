@@ -27,6 +27,7 @@ namespace DatabaseManager.Controls
         private SortOrder sortOrder = SortOrder.None;
         private bool isSorting = false;
         private QueryConditionBuilder conditionBuilder;
+        private DataTable originalTable;
         private DataTable table;
         private List<TableColumn> columns;
         private List<TableColumn> identityColumns;
@@ -89,25 +90,27 @@ namespace DatabaseManager.Controls
             if (this.dgvData.SortedColumn != null)
             {
                 string sortOrder = (this.sortOrder == SortOrder.Descending ? "DESC" : "ASC");
-                orderColumns = $"{dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
+                orderColumns = $"{this.dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
             }
 
             string conditionClause = "";
 
             if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
             {
-                this.conditionBuilder.DatabaseType = dbInterpreter.DatabaseType;
-                this.conditionBuilder.QuotationLeftChar = dbInterpreter.QuotationLeftChar;
-                this.conditionBuilder.QuotationRightChar = dbInterpreter.QuotationRightChar;
+                this.conditionBuilder.DatabaseType = this.dbInterpreter.DatabaseType;
+                this.conditionBuilder.QuotationLeftChar = this.dbInterpreter.QuotationLeftChar;
+                this.conditionBuilder.QuotationRightChar = this.dbInterpreter.QuotationRightChar;
 
                 conditionClause = "WHERE " + this.conditionBuilder.ToString();
             }
 
             try
             {
-                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, false);
+                (long Total, DataTable Data) result = await this.dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, false);
 
                 this.pagination.TotalCount = result.Total;
+
+                this.originalTable = result.Data;
 
                 this.table = DataGridViewHelper.ConvertDataTable(result.Data);
 
@@ -160,7 +163,7 @@ namespace DatabaseManager.Controls
                     HeaderText = tc.ColumnName,
                     ValueType = tc.DataType,
                     Visible = tc.ColumnName != GUID_ROW_NAME,
-                    ReadOnly = this.IsReadOnlyColumnByDataType(tc.DataType) || this.IsReadOnlyColumn(tc)
+                    ReadOnly = tc.ColumnName == GUID_ROW_NAME ? true : (this.IsReadOnlyColumnByDataType(tc) || this.IsReadOnlyColumn(tc))
                 };
 
                 if (!this.CanSort(column))
@@ -174,12 +177,25 @@ namespace DatabaseManager.Controls
 
         private bool CanSort(DataGridViewColumn column)
         {
-            if (column.ValueType == typeof(byte[]) || DataTypeHelper.IsGeometryType(column.ValueType.Name))
+            if (column.Name == GUID_ROW_NAME)
+            {
+                return false;
+            }
+
+            DataColumn dc = this.GetDataColumn(column.Name);
+            DataColumn originalColumn = this.GetOriginalDataColumn(dc);
+
+            if (originalColumn.DataType == typeof(byte[]) || DataTypeHelper.IsGeometryType(originalColumn.DataType.Name))
             {
                 return false;
             }
 
             return true;
+        }
+
+        private DataColumn GetOriginalDataColumn(DataColumn column)
+        {
+            return this.originalTable.Columns.OfType<DataColumn>().FirstOrDefault(item => item.ColumnName == column.ColumnName);
         }
 
         private bool IsReadOnlyColumn(DataColumn column)
@@ -226,8 +242,11 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private bool IsReadOnlyColumnByDataType(Type dataType)
+        private bool IsReadOnlyColumnByDataType(DataColumn column)
         {
+            DataColumn originalColumn = this.GetOriginalDataColumn(column);
+            Type dataType = originalColumn.DataType;
+
             if (dataType == typeof(byte[]) || dataType == typeof(BitArray))
             {
                 return true;
@@ -244,13 +263,6 @@ namespace DatabaseManager.Controls
         private void pagination_OnPageNumberChanged(long pageNum)
         {
             this.LoadData(this.displayInfo, pageNum);
-        }
-
-        public ContentSaveResult Save(ContentSaveInfo info)
-        {
-            DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, info.FilePath);
-
-            return new ContentSaveResult() { IsOK = true };
         }
 
         private void dgvData_Sorted(object sender, EventArgs e)
@@ -430,7 +442,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private bool IsDataChanged()
+        internal bool IsDataChanged()
         {
             for (int i = 0; i < this.dgvData.Rows.Count; i++)
             {
@@ -634,33 +646,7 @@ namespace DatabaseManager.Controls
 
         private void dgvData_CellLeave(object sender, DataGridViewCellEventArgs e)
         {
-            var cell = this.dgvData.CurrentCell;
-
-            if (cell != null)
-            {
-                int columnIndex = cell.ColumnIndex;
-
-                if (columnIndex >= 0 && this.dgvData.Columns[columnIndex].ReadOnly)
-                {
-                    return;
-                }
-
-                if (cell.IsInEditMode)
-                {
-                    if (cell.EditedFormattedValue != cell.Value)
-                    {
-                        cell.Value = cell.EditedFormattedValue;
-                    }
-
-                    if (cell.Value?.ToString() == string.Empty)
-                    {
-                        cell.Value = null;
-                        this.dgvData.InvalidateCell(cell);
-                    }
-
-                    this.SetControlState();
-                }
-            }
+            
         }
 
         private void btnRemove_Click(object sender, EventArgs e)
@@ -689,18 +675,21 @@ namespace DatabaseManager.Controls
 
         private void tsmiSetCellValueToNull_Click(object sender, EventArgs e)
         {
-            var cell = this.dgvData.CurrentCell;
+            var cells = this.dgvData.SelectedCells;
 
-            if (cell != null)
+            if (cells != null)
             {
-                cell.Value = DBNull.Value;
+                foreach (DataGridViewCell cell in cells)
+                {
+                    cell.Value = DBNull.Value;
+                }
             }
         }
 
         private void SetButtonEnabled(bool enabled)
         {
             this.btnRevert.Enabled = enabled;
-            this.btnCommit.Enabled = enabled;          
+            this.btnCommit.Enabled = enabled;
         }
 
         private void SetPaginationAndFilterEnabled(bool enabled)
@@ -852,14 +841,22 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            this.SaveChanges();
+            this.Save(new ContentSaveInfo());
         }
 
-        private async void SaveChanges()
+        public ContentSaveResult Save(ContentSaveInfo saveInfo)
+        {
+            return Task.Run(() => this.SaveChanges()).Result;
+        }
+
+        private async Task<ContentSaveResult> SaveChanges()
         {
             List<Dictionary<string, object>> insertData = new List<Dictionary<string, object>>();
             Dictionary<string, List<UpdateDataItemInfo>> updateData = new Dictionary<string, List<UpdateDataItemInfo>>();
             List<string> deleteData = new List<string>();
+
+            bool success = true;
+            string errorMsg = null;
 
             for (int i = 0; i < this.dgvData.Rows.Count; i++)
             {
@@ -958,18 +955,25 @@ namespace DatabaseManager.Controls
 
                     transaction.Commit();
 
-                    MessageBox.Show("Saved.");
+                    MessageBox.Show("Data saved.");
 
                     this.ResetTableData();
 
                     this.SetButtonEnabled(false);
                     this.SetPaginationAndFilterEnabled(true);
+
+                    success = true;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                errorMsg = ex.Message;
+
+                MessageBox.Show(errorMsg);
+                success = false;
             }
+
+            return new ContentSaveResult() { IsOK = success, ResultData = errorMsg };
         }
 
         private void ResetTableData()
@@ -1072,13 +1076,26 @@ namespace DatabaseManager.Controls
                         {
                             TableColumn tc = this.GetTableColumn(info.ColumnName);
 
-                            object value = info.NewValue;
+                            object value = info.NewValue;                        
 
-                            string parameterName = $"{this.dbInterpreter.CommandParameterChar}{info.ColumnName}{i}";
+                            bool isGeometry = DataTypeHelper.IsGeometryType(tc.DataType);
 
-                            sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parameterName}");
+                            if(!isGeometry)
+                            {
+                                string parameterName = $"{this.dbInterpreter.CommandParameterChar}{info.ColumnName}{i}";
 
-                            parameters.Add(parameterName, value);
+                                sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parameterName}");
+
+                                parameters.Add(parameterName, value);
+                            }
+                            else
+                            {
+                                object parsedValue = scriptGenerator.ParseValue(tc, value, false);
+
+                                sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parsedValue}");
+                            }                           
+
+                           
                         }
 
                         scripts.Add($"UPDATE {tableName} SET {string.Join(" ", sets)} WHERE {condition};");
@@ -1125,16 +1142,18 @@ namespace DatabaseManager.Controls
                 {
                     continue;
                 }
-              
+
                 TableColumn tc = this.GetTableColumn(columnName);
 
-                if(tc.IsComputed)
+                if (tc.IsComputed)
                 {
                     continue;
                 }
 
                 var value = row[columnName];
                 object parsedValue = scriptGenerator.ParseValue(tc, value, false);
+
+                bool isGeometry = DataTypeHelper.IsGeometryType(tc.DataType);
 
                 if (this.identityColumns.Any(item => item.Name == columnName))
                 {
@@ -1165,9 +1184,9 @@ namespace DatabaseManager.Controls
                         needAdd = true;
                     }
 
-                    if(needAdd)
+                    if (needAdd)
                     {
-                        conditions.Add(this.GetConditionItem(columnName, parsedValue));
+                        conditions.Add(this.GetConditionItem(columnName, parsedValue, isGeometry));
                     }
                 }
             }
@@ -1175,9 +1194,19 @@ namespace DatabaseManager.Controls
             return string.Join(" AND ", conditions);
         }
 
-        private string GetConditionItem(string columnName, object value)
+        private string GetConditionItem(string columnName, object value, bool isGeometry)
         {
-            return $"{this.dbInterpreter.GetQuotedString(columnName)} {(ValueHelper.IsNullValue(value)? " IS ":"=")} {value}";
+            string qetQuotedColumnName = this.dbInterpreter.GetQuotedString(columnName);
+
+            if(isGeometry)
+            {
+                if(this.displayInfo.DatabaseType == DatabaseType.SqlServer)
+                {
+                    qetQuotedColumnName += ".STAsText()";
+                }
+            }
+
+            return $"{qetQuotedColumnName} {(ValueHelper.IsNullValue(value) ? " IS " : "=")} {value}";
         }
 
         internal class UpdateDataItemInfo
@@ -1185,6 +1214,33 @@ namespace DatabaseManager.Controls
             internal string ColumnName { get; set; }
             internal object OldValue { get; set; }
             internal object NewValue { get; set; }
+        }
+
+        private void dgvData_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            int columnIndex = e.ColumnIndex;            
+
+            if (rowIndex >=0 && columnIndex >=0 )
+            {
+                var cell = this.dgvData.Rows[rowIndex].Cells[columnIndex];
+
+                if (this.dgvData.Columns[columnIndex].ReadOnly)
+                {
+                    return;
+                }
+
+                if (cell.IsInEditMode)
+                {
+                    if (cell.Value?.ToString() == string.Empty)
+                    {
+                        cell.Value = null;
+                        this.dgvData.InvalidateCell(cell);
+                    }
+
+                    this.SetControlState();
+                }
+            }
         }
     }
 }

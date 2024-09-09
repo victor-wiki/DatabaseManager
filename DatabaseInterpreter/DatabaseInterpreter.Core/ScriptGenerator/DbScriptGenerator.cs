@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -91,11 +92,6 @@ namespace DatabaseInterpreter.Core
 
                 foreach (Table table in schemaInfo.Tables)
                 {
-                    if (this.dbInterpreter.CancelRequested)
-                    {
-                        break;
-                    }
-
                     count++;
 
                     string strTableCount = $"({count}/{tableCount})";
@@ -529,6 +525,8 @@ namespace DatabaseInterpreter.Core
                 bool needQuotated = false;
                 string strValue = "";
 
+                bool isGeometryType = DataTypeHelper.IsGeometryType(column.DataType);
+
                 if (type == typeof(DBNull))
                 {
                     return "NULL";
@@ -583,21 +581,29 @@ namespace DatabaseInterpreter.Core
 
                     case nameof(String):
 
-                        needQuotated = true;
-                        strValue = value.ToString();
-
-                        if (this.databaseType == DatabaseType.Oracle)
+                        if(isGeometryType)
                         {
-                            if (strValue.Contains(";"))
+                            strValue = this.GetGeometryValue(column, value, dataType, out needQuotated);
+                        }
+                        else
+                        {
+                            needQuotated = true;
+                            strValue = value.ToString();
+
+                            if (this.databaseType == DatabaseType.Oracle)
                             {
-                                oracleSemicolon = true;
-                            }
-                            else if (DataTypeHelper.IsGeometryType(dataType))
-                            {
-                                needQuotated = false;
-                                strValue = this.GetOracleGeometryInsertValue(column, value);
+                                if (strValue.Contains(";"))
+                                {
+                                    oracleSemicolon = true;
+                                }
+                                else if (DataTypeHelper.IsGeometryType(dataType))
+                                {
+                                    needQuotated = false;
+                                    strValue = this.GetOracleGeometryInsertValue(column, value);
+                                }
                             }
                         }
+                       
                         break;
 
                     case nameof(DateTime):
@@ -706,26 +712,8 @@ namespace DatabaseInterpreter.Core
                     case nameof(MultiLineString):
                     case nameof(MultiPolygon):
                     case nameof(GeometryCollection):
-                        int srid = 0;
 
-                        if (value is SqlGeography sgg) srid = sgg.STSrid.Value;
-                        else if (value is SqlGeometry sgm) srid = sgm.STSrid.Value;
-                        else if (value is PgGeom.Geometry g) srid = g.SRID;
-
-                        if (this.databaseType == DatabaseType.MySql)
-                        {
-                            strValue = $"ST_GeomFromText('{this.GetCorrectGeometryText(value, dataType)}',{srid})";
-                        }
-                        else if (this.databaseType == DatabaseType.Oracle)
-                        {
-                            strValue = this.GetOracleGeometryInsertValue(column, value, srid);
-                        }
-                        else
-                        {
-                            needQuotated = true;
-                            strValue = value.ToString();
-                        }
-
+                        strValue = this.GetGeometryValue(column, value, dataType, out needQuotated);
                         break;
                     case nameof(SqlHierarchyId):
                     case nameof(NpgsqlLine):
@@ -773,6 +761,34 @@ namespace DatabaseInterpreter.Core
             {
                 return null;
             }
+        }
+
+        private string GetGeometryValue(TableColumn column, object value, string dataType, out bool needQuotated)
+        {
+            string strValue = string.Empty;            
+            int srid = 0;
+
+            needQuotated = false;
+
+            if (value is SqlGeography sgg) srid = sgg.STSrid.Value;
+            else if (value is SqlGeometry sgm) srid = sgm.STSrid.Value;
+            else if (value is PgGeom.Geometry g) srid = g.SRID;
+
+            if (this.databaseType == DatabaseType.MySql)
+            {
+                strValue = $"ST_GeomFromText('{this.GetCorrectGeometryText(value, dataType)}',{srid})";
+            }
+            else if (this.databaseType == DatabaseType.Oracle)
+            {
+                strValue = this.GetOracleGeometryInsertValue(column, value, srid);
+            }
+            else
+            {
+                needQuotated = true;
+                strValue = value.ToString();
+            }
+
+            return strValue;
         }
 
         private string GetOracleGeometryInsertValue(TableColumn column, object value, int? srid = null)

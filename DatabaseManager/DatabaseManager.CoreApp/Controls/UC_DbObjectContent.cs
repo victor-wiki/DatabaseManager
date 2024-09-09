@@ -185,6 +185,19 @@ namespace DatabaseManager.Controls
                     return false;
                 }
             }
+            else if(displayType == DatabaseObjectDisplayType.EditData)
+            {
+                UC_DataEditor dataEditor = this.control as UC_DataEditor;
+
+                ContentSaveResult result = dataEditor.Save(new ContentSaveInfo());
+
+                if(!result.IsOK)
+                {
+                    this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
+                }    
+
+                return result.IsOK;
+            }
             else if (displayType == DatabaseObjectDisplayType.TableDesigner)
             {
                 UC_TableDesigner tableDesigner = this.control as UC_TableDesigner;
@@ -201,6 +214,8 @@ namespace DatabaseManager.Controls
                 }
                 else
                 {
+                    this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
+
                     return false;
                 }
             }

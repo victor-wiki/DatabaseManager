@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DataEditor));
             dgvData = new System.Windows.Forms.DataGridView();
             btnFilter = new System.Windows.Forms.Button();
@@ -47,6 +47,7 @@
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
             cboAddMode = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
             SuspendLayout();
@@ -55,13 +56,13 @@
             // 
             dgvData.AllowUserToAddRows = false;
             dgvData.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvData.Location = new System.Drawing.Point(0, 33);
             dgvData.Margin = new System.Windows.Forms.Padding(4);
@@ -73,6 +74,7 @@
             dgvData.CellLeave += dgvData_CellLeave;
             dgvData.CellMouseClick += dgvData_CellMouseClick;
             dgvData.CellValidating += dgvData_CellValidating;
+            dgvData.CellValueChanged += dgvData_CellValueChanged;
             dgvData.DataError += dgvData_DataError;
             dgvData.Sorted += dgvData_Sorted;
             dgvData.KeyUp += dgvData_KeyUp;
@@ -169,6 +171,7 @@
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new System.Drawing.Size(34, 26);
             btnRemove.TabIndex = 10;
+            toolTip1.SetToolTip(btnRemove, "Remove");
             btnRemove.UseVisualStyleBackColor = true;
             btnRemove.Click += btnRemove_Click;
             // 
@@ -180,6 +183,7 @@
             btnRevert.Name = "btnRevert";
             btnRevert.Size = new System.Drawing.Size(37, 26);
             btnRevert.TabIndex = 11;
+            toolTip1.SetToolTip(btnRevert, "Revert");
             btnRevert.UseVisualStyleBackColor = true;
             btnRevert.Click += btnRevert_Click;
             // 
@@ -191,6 +195,7 @@
             btnCommit.Name = "btnCommit";
             btnCommit.Size = new System.Drawing.Size(37, 26);
             btnCommit.TabIndex = 12;
+            toolTip1.SetToolTip(btnCommit, "Commit");
             btnCommit.UseVisualStyleBackColor = true;
             btnCommit.Click += btnCommit_Click;
             // 
@@ -261,5 +266,6 @@
         private System.Windows.Forms.ComboBox cboAddMode;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetCellValueToNull;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

@@ -8,14 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.0</Version>
+    <Version>2.2.1</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. use dock panel to layout forms on the main page;
-2. add feature: edit table data.
+    <PackageReleaseNotes>fix issue: edit data.
 </PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.0</AssemblyVersion>
-    <FileVersion>2.2.0</FileVersion>
+    <AssemblyVersion>2.2.1</AssemblyVersion>
+    <FileVersion>2.2.1</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
@@ -156,11 +155,11 @@
     <Compile Update="Forms\frmColumnMapping.Designer.cs">
       <DependentUpon>frmColumnMapping.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmColumSelect.cs">
+    <Compile Update="Forms\frmColumnSelect.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmColumSelect.Designer.cs">
-      <DependentUpon>frmColumSelect.cs</DependentUpon>
+    <Compile Update="Forms\frmColumnSelect.Designer.cs">
+      <DependentUpon>frmColumnSelect.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmConvert.cs">
       <SubType>Form</SubType>
@@ -311,8 +310,8 @@
     <EmbeddedResource Update="Forms\frmColumnMapping.resx">
       <DependentUpon>frmColumnMapping.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmColumSelect.resx">
-      <DependentUpon>frmColumSelect.cs</DependentUpon>
+    <EmbeddedResource Update="Forms\frmColumnSelect.resx">
+      <DependentUpon>frmColumnSelect.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>

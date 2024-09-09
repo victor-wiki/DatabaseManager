@@ -54,6 +54,13 @@ namespace DatabaseManager.Forms
                         }
                     }
                 }
+                else if(control is UC_DataEditor dataEditor)
+                {
+                    if(dataEditor.IsDataChanged())
+                    {
+                        saveRequired = true;
+                    }
+                }
                 else if (control is UC_TableDesigner tableDesigner)
                 {
                     if (await tableDesigner.IsChanged())
@@ -68,7 +75,7 @@ namespace DatabaseManager.Forms
 
                     if (result == DialogResult.Yes)
                     {
-                        bool success = this.ucContent.Save();
+                        bool success =  this.ucContent.Save();
 
                         canClose = success;
                     }

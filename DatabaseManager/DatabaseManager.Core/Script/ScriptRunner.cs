@@ -24,6 +24,7 @@ namespace DatabaseManager.Core
         private bool cancelRequested = false;
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
+        private bool hasError = false;
 
         public CancellationTokenSource CancellationTokenSource { get; private set; }
         public bool CancelRequested => this.cancelRequested;
@@ -146,14 +147,14 @@ namespace DatabaseManager.Core
                                 }
                             }
 
-                            int res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                            ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
-                            affectedRows += (res == -1 ? 0 : res);
+                            affectedRows += (res.NumberOfRowsAffected == -1 ? 0 : res.NumberOfRowsAffected);
                         }
 
                         result.Result = affectedRows;
 
-                        if (!dbInterpreter.HasError && !this.cancelRequested)
+                        if (!this.cancelRequested)
                         {
                             this.transaction.Commit();
                         }
@@ -248,7 +249,7 @@ namespace DatabaseManager.Core
                             sql = sql.TrimEnd(dbInterpreter.ScriptsDelimiter.ToArray());
                         }
 
-                        if (!dbInterpreter.HasError)
+                        if (!this.hasError)
                         {
                             CommandInfo commandInfo = new CommandInfo()
                             {
@@ -389,6 +390,11 @@ namespace DatabaseManager.Core
             FeedbackInfo info = new FeedbackInfo() { InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(content), Owner = owner };
 
             FeedbackHelper.Feedback(suppressError ? null : this.observer, info, enableLog);
+
+            if(infoType == FeedbackInfoType.Error && !suppressError)
+            {
+                this.hasError = true;
+            }
 
             if (this.OnFeedback != null)
             {

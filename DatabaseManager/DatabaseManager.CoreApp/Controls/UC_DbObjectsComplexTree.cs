@@ -763,9 +763,9 @@ namespace DatabaseManager.Controls
             dbManager.Subscribe(this);
             dbInterpreter.Subscribe(this);
 
-            await dbManager.ClearData();
+            bool success = await dbManager.ClearData();
 
-            if (!dbInterpreter.HasError)
+            if (success)
             {
                 MessageBox.Show("Data has been cleared.");
             }
@@ -819,9 +819,9 @@ namespace DatabaseManager.Controls
             dbInterpreter.Subscribe(this);
             dbManager.Subscribe(this);
 
-            await dbManager.EmptyDatabase(databaseObjectType);
+            bool success = await dbManager.EmptyDatabase(databaseObjectType);
 
-            if (!dbInterpreter.HasError)
+            if (success)
             {
                 MessageBox.Show("Seleted database objects have been deleted.");
             }
@@ -974,7 +974,7 @@ namespace DatabaseManager.Controls
 
             bool success = await dbManager.DropDbObject(dbObject);
 
-            if (!dbInterpreter.HasError && success)
+            if (success)
             {
                 bool parentIsChildFolderOfDatabase = node.Parent?.Parent?.Tag is Database;
                 TreeNode parentNode = node.Parent;

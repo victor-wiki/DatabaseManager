@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager
 {
-    partial class frmColumSelect
+    partial class frmColumnSelect
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmColumSelect));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmColumnSelect));
             this.dgvColumns = new System.Windows.Forms.DataGridView();
             this.colColumName = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.colSort = new System.Windows.Forms.DataGridViewComboBoxColumn();
