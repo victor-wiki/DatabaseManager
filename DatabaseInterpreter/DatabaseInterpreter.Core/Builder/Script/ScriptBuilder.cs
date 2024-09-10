@@ -27,7 +27,7 @@ namespace DatabaseInterpreter.Core
 
         public void AppendLine()
         {
-            this.Append(new NewLineSript());
+            this.Append(new NewLineScript());
         }
 
         public void AppendRange(IEnumerable<Script> scripts)

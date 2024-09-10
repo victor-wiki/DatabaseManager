@@ -442,7 +442,7 @@ namespace DatabaseConverter.Core
                         {
                             Func<Script, bool> isValidScript = (s) =>
                             {
-                                return !(s is NewLineSript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsDelimiter);
+                                return !(s is NewLineScript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsDelimiter);
                             };
 
                             int count = scripts.Where(item => isValidScript(item)).Count();

@@ -240,6 +240,8 @@ namespace DatabaseManager.Controls
 
                 this.dgvData.Rows.Add(row);
             }
+
+            this.dgvData.ClearSelection();
         }
 
         private bool IsReadOnlyColumnByDataType(DataColumn column)
@@ -604,6 +606,14 @@ namespace DatabaseManager.Controls
 
                 var cell = this.dgvData.Rows[rowIndex].Cells[columnIndex];
 
+                string value = cell.Value?.ToString();
+                string editValue = cell.EditedFormattedValue?.ToString();
+
+                if (value != editValue)
+                {
+                    cell.Value = cell.EditedFormattedValue;
+                }
+
                 if (!this.IsCellValid(cell))
                 {
                     cell.ErrorText = "value can't be null";
@@ -646,7 +656,7 @@ namespace DatabaseManager.Controls
 
         private void dgvData_CellLeave(object sender, DataGridViewCellEventArgs e)
         {
-            
+
         }
 
         private void btnRemove_Click(object sender, EventArgs e)
@@ -660,10 +670,15 @@ namespace DatabaseManager.Controls
                 foreach (DataGridViewCell cell in cells)
                 {
                     int rowIndex = cell.RowIndex;
+                    int columnIndex = cell.ColumnIndex;
+                    string columnName = this.dgvData.Columns[columnIndex].Name;
 
-                    if (rowIndex >= 0)
+                    if (columnName != GUID_ROW_NAME)
                     {
-                        rowIndexes.Add(rowIndex);
+                        if (rowIndex >= 0 && !rowIndexes.Contains(rowIndex))
+                        {
+                            rowIndexes.Add(rowIndex);
+                        }
                     }
                 }
 
@@ -926,18 +941,18 @@ namespace DatabaseManager.Controls
 
             this.dbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
 
-            var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
-
-            (Table Table, List<TableColumn> Columns) tableAndColumns = (new Table() { Schema = this.displayInfo.Schema, Name = this.displayInfo.Name }, this.columns);
-
-            (Dictionary<string, object> Parameters, string Script) insertScriptResult = this.GenerateScripts(scriptGenerator, tableAndColumns, insertData);
-
-            string insertScript = insertScriptResult.Script;
-            var updateScriptResult = this.GetUpdateScript(scriptGenerator, updateData);
-            string deleteScript = this.GetDeleteScript(scriptGenerator, deleteData);
-
             try
             {
+                var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
+
+                (Table Table, List<TableColumn> Columns) tableAndColumns = (new Table() { Schema = this.displayInfo.Schema, Name = this.displayInfo.Name }, this.columns);
+
+                (Dictionary<string, object> Parameters, string Script) insertScriptResult = this.GenerateScripts(scriptGenerator, tableAndColumns, insertData);
+
+                string insertScript = insertScriptResult.Script.TrimEnd(';');
+                var updateScripts = this.GetUpdateScripts(scriptGenerator, updateData);
+                List<string> deleteScripts = this.GetDeleteScript(scriptGenerator, deleteData);
+
                 using (DbConnection dbConnection = this.dbInterpreter.CreateConnection())
                 {
                     if (dbConnection.State != ConnectionState.Open)
@@ -947,11 +962,11 @@ namespace DatabaseManager.Controls
 
                     var transaction = await dbConnection.BeginTransactionAsync();
 
-                    await this.ExecuteScript(dbConnection, transaction, deleteScript, null);
+                    await this.ExecuteScript(dbConnection, transaction, deleteScripts.Select(item => new ExecuteScriptInfo() { Script = item }).ToList());
 
-                    await this.ExecuteScript(dbConnection, transaction, updateScriptResult.Script, updateScriptResult.Parameters);
+                    await this.ExecuteScript(dbConnection, transaction, updateScripts);
 
-                    await this.ExecuteScript(dbConnection, transaction, insertScript, insertScriptResult.Parameters);
+                    await this.ExecuteScript(dbConnection, transaction, new List<ExecuteScriptInfo>() { new ExecuteScriptInfo() { Script = insertScript, Parameters = insertScriptResult.Parameters } });
 
                     transaction.Commit();
 
@@ -996,33 +1011,23 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private async Task ExecuteScript(DbConnection dbConnection, DbTransaction transaction, string script, Dictionary<string, object> parameters)
+        private async Task ExecuteScript(DbConnection dbConnection, DbTransaction transaction, List<ExecuteScriptInfo> scripts)
         {
-            if (string.IsNullOrEmpty(script))
+            if (scripts.Count == 0)
             {
                 return;
             }
 
-            string delimiter = ");" + Environment.NewLine;
-
-            if (!script.Contains(delimiter))
+            foreach (var item in scripts)
             {
-                await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, parameters, transaction));
-            }
-            else
-            {
-                var items = script.Split(delimiter);
-
-                int count = 0;
-
-                foreach (var item in items)
+                if (string.IsNullOrEmpty(item.Script))
                 {
-                    count++;
-
-                    var cmd = count < items.Length ? (item + delimiter).Trim().Trim(';') : item;
-
-                    await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, parameters, transaction));
+                    continue;
                 }
+
+                string sql = item.Script.TrimEnd(';');
+
+                await this.dbInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(sql, item.Parameters, transaction));
             }
         }
 
@@ -1050,12 +1055,10 @@ namespace DatabaseManager.Controls
             return (paramters, script);
         }
 
-        private (string Script, Dictionary<string, object> Parameters) GetUpdateScript(DbScriptGenerator scriptGenerator, Dictionary<string, List<UpdateDataItemInfo>> updateData)
+        private List<ExecuteScriptInfo> GetUpdateScripts(DbScriptGenerator scriptGenerator, Dictionary<string, List<UpdateDataItemInfo>> updateData)
         {
-            List<string> scripts = new List<string>();
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            List<ExecuteScriptInfo> scripts = new List<ExecuteScriptInfo>();
 
-            int i = 1;
             foreach (var kp in updateData)
             {
                 string rowid = kp.Key;
@@ -1070,43 +1073,54 @@ namespace DatabaseManager.Controls
                     {
                         string tableName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(this.displayInfo.Schema, this.displayInfo.Name);
 
+                        ExecuteScriptInfo scriptInfo = new ExecuteScriptInfo();
+                        Dictionary<string, object> parameters = new Dictionary<string, object>();
                         List<string> sets = new List<string>();
 
+                        int i = 1;
                         foreach (var info in kp.Value)
                         {
                             TableColumn tc = this.GetTableColumn(info.ColumnName);
 
-                            object value = info.NewValue;                        
+                            object value = info.NewValue;
 
                             bool isGeometry = DataTypeHelper.IsGeometryType(tc.DataType);
 
-                            if(!isGeometry)
+                            if (!isGeometry)
                             {
                                 string parameterName = $"{this.dbInterpreter.CommandParameterChar}{info.ColumnName}{i}";
 
                                 sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parameterName}");
 
                                 parameters.Add(parameterName, value);
+
+                                i++;
                             }
                             else
                             {
                                 object parsedValue = scriptGenerator.ParseValue(tc, value, false);
 
                                 sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parsedValue}");
-                            }                           
-
-                           
+                            }
                         }
 
-                        scripts.Add($"UPDATE {tableName} SET {string.Join(" ", sets)} WHERE {condition};");
+                        if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+                        {
+                            tableName = $"{tableName} {this.GetTableNameAlias()}";
+                        }
+
+                        scriptInfo.Script = $"UPDATE {tableName} SET {string.Join(" ", sets)} WHERE {condition};";
+                        scriptInfo.Parameters = parameters;
+
+                        scripts.Add(scriptInfo);
                     }
                 }
             }
 
-            return (string.Join(Environment.NewLine, scripts), parameters);
+            return scripts;
         }
 
-        private string GetDeleteScript(DbScriptGenerator scriptGenerator, List<string> deleteData)
+        private List<string> GetDeleteScript(DbScriptGenerator scriptGenerator, List<string> deleteData)
         {
             List<string> scripts = new List<string>();
 
@@ -1120,12 +1134,19 @@ namespace DatabaseManager.Controls
 
                     if (!string.IsNullOrEmpty(condition))
                     {
-                        scripts.Add($"DELETE FROM {this.dbInterpreter.GetQuotedDbObjectNameWithSchema(this.displayInfo.Schema, this.displayInfo.Name)} WHERE {condition};");
+                        string tableName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(this.displayInfo.Schema, this.displayInfo.Name);
+
+                        if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+                        {
+                            tableName += $" {this.GetTableNameAlias()}";
+                        }
+
+                        scripts.Add($"DELETE FROM {tableName} WHERE {condition};");
                     }
                 }
             }
 
-            return string.Join(Environment.NewLine, scripts);
+            return scripts;
         }
 
         private string GetDdlWhereCondition(DbScriptGenerator scriptGenerator, DataRow row)
@@ -1186,7 +1207,7 @@ namespace DatabaseManager.Controls
 
                     if (needAdd)
                     {
-                        conditions.Add(this.GetConditionItem(columnName, parsedValue, isGeometry));
+                        conditions.Add(this.GetConditionItem(columnName, value, parsedValue, isGeometry));
                     }
                 }
             }
@@ -1194,34 +1215,51 @@ namespace DatabaseManager.Controls
             return string.Join(" AND ", conditions);
         }
 
-        private string GetConditionItem(string columnName, object value, bool isGeometry)
+        private string GetConditionItem(string columnName, object value, object parsedValue, bool isGeometry)
         {
-            string qetQuotedColumnName = this.dbInterpreter.GetQuotedString(columnName);
+            string quotedColumnName = this.dbInterpreter.GetQuotedString(columnName);
 
-            if(isGeometry)
+            string sqlOperator = "=";
+
+            bool isNullValue = ValueHelper.IsNullValue(value, true) || ValueHelper.IsNullValue(parsedValue, true);
+
+            if (isNullValue)
             {
-                if(this.displayInfo.DatabaseType == DatabaseType.SqlServer)
+                sqlOperator = " IS ";
+            }
+
+            if (isGeometry)
+            {
+                if (this.displayInfo.DatabaseType == DatabaseType.SqlServer)
                 {
-                    qetQuotedColumnName += ".STAsText()";
+                    quotedColumnName += ".STAsText()";
+                }
+                else if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+                {
+                    quotedColumnName = $"{this.GetTableNameAlias()}.{quotedColumnName}";
+
+                    parsedValue = $"SDO_GEOMETRY('{value}',{quotedColumnName}.ST_SRID())";
+
+                    return $"TO_CHAR(SDO_EQUAL({quotedColumnName},{parsedValue}))='TRUE'";
                 }
             }
 
-            return $"{qetQuotedColumnName} {(ValueHelper.IsNullValue(value) ? " IS " : "=")} {value}";
+            return $"{quotedColumnName} {sqlOperator} {(isNullValue ? "NULL" : parsedValue)}";
         }
 
-        internal class UpdateDataItemInfo
+
+
+        private string GetTableNameAlias()
         {
-            internal string ColumnName { get; set; }
-            internal object OldValue { get; set; }
-            internal object NewValue { get; set; }
+            return $"{this.displayInfo.Name}_Alias";
         }
 
         private void dgvData_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             int rowIndex = e.RowIndex;
-            int columnIndex = e.ColumnIndex;            
+            int columnIndex = e.ColumnIndex;
 
-            if (rowIndex >=0 && columnIndex >=0 )
+            if (rowIndex >= 0 && columnIndex >= 0)
             {
                 var cell = this.dgvData.Rows[rowIndex].Cells[columnIndex];
 
@@ -1242,6 +1280,22 @@ namespace DatabaseManager.Controls
                 }
             }
         }
+
+        private void UC_DataEditor_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (this.btnCommit.Enabled == false && this.dgvData.IsCurrentCellInEditMode)
+            {
+                int x = e.X; int y = e.Y;
+                int width = this.btnCommit.Width;
+                int height = this.btnCommit.Height;
+
+                if ((x >= this.btnCommit.Location.X && x <= this.btnCommit.Location.X + width)
+                    && (y > this.btnCommit.Location.Y && y <= this.btnCommit.Location.Y + height))
+                {
+                    this.dgvData.EndEdit();
+                }
+            }
+        }       
     }
 }
 

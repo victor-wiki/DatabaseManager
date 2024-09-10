@@ -504,11 +504,17 @@ namespace DatabaseInterpreter.Core
 
                 message = ExceptionHelper.GetExceptionDetails(ex);
 
-                this.FeedbackError(message, commandInfo.ContinueWhenErrorOccurs);
+                bool hasThrownException = false;
 
                 if (this.Option.ThrowExceptionWhenErrorOccurs && !commandInfo.ContinueWhenErrorOccurs)
                 {
+                    hasThrownException = true;
                     throw new DbCommandException(ex) { HasRollbackedTransaction = transactionRollbacked };
+                }
+                
+                if(!hasThrownException)
+                {
+                    this.FeedbackError(message, commandInfo.ContinueWhenErrorOccurs);
                 }
             };
 

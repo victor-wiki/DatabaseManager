@@ -149,7 +149,7 @@ namespace DatabaseManager.Helper
 
             foreach (var dbObj in dbObjects)
             {
-                string text = showSchema  ? $"{dbObj.Schema}.{dbObj.Name}" : dbObj.Name;
+                string text = showSchema  ? $"{dbObj.Schema}{(string.IsNullOrEmpty(dbObj.Schema)? "":".")}{dbObj.Name}" : dbObj.Name;
 
                 string imgKeyName = typeof(T).Name;              
 
@@ -175,7 +175,7 @@ namespace DatabaseManager.Helper
 
             if (!string.IsNullOrEmpty(defaultSchema))
             {
-                return !dbObjects.All(item => item.Schema == defaultSchema);
+                return !dbObjects.All(item => item.Schema == defaultSchema) && !dbObjects.All(item => string.IsNullOrEmpty(item.Schema));
             }
             else
             {

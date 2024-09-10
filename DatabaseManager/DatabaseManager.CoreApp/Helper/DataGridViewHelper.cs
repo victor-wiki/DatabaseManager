@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
@@ -85,6 +86,11 @@ namespace DatabaseManager.Helper
                             {
                                 newColumnType = typeof(String);
                                 newValue = (value as PgGeom.Geometry)?.AsText();
+                            }
+                            else if(valueType == typeof(StGeometry))
+                            {
+                                newColumnType = typeof(String);
+                                newValue = (value as StGeometry)?.ToString();
                             }
 
                             if (newColumnType != null && !changedColumns.ContainsKey(i))

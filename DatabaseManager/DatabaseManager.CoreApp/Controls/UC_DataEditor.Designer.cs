@@ -76,7 +76,7 @@
             dgvData.CellValidating += dgvData_CellValidating;
             dgvData.CellValueChanged += dgvData_CellValueChanged;
             dgvData.DataError += dgvData_DataError;
-            dgvData.Sorted += dgvData_Sorted;
+            dgvData.Sorted += dgvData_Sorted;          
             dgvData.KeyUp += dgvData_KeyUp;
             // 
             // btnFilter
@@ -218,7 +218,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(296, 3);
+            label1.Location = new System.Drawing.Point(296, 5);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(99, 17);
             label1.TabIndex = 15;
@@ -242,6 +242,7 @@
             Margin = new System.Windows.Forms.Padding(0);
             Name = "UC_DataEditor";
             Size = new System.Drawing.Size(825, 479);
+            MouseMove += UC_DataEditor_MouseMove;
             ((System.ComponentModel.ISupportInitialize)dgvData).EndInit();
             cellContextMenu.ResumeLayout(false);
             ResumeLayout(false);

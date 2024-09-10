@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -782,19 +783,37 @@ namespace DatabaseInterpreter.Core
 
             base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
-            using (var bulkCopy = new OracleBulkCopy(conn))
-            {
-                bulkCopy.BatchSize = dataTable.Rows.Count;
-                bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
-                bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : Setting.CommandTimeout; 
-          
-                foreach (DataColumn column in dataTable.Columns)
-                {
-                    bulkCopy.ColumnMappings.Add(column.ColumnName, this.GetQuotedString(column.ColumnName));
-                }              
+            bool hasGeometryDataType = bulkCopyInfo.Columns.Any(item => DataTypeHelper.IsGeometryType(item.DataType));
 
-                bulkCopy.WriteToServer(this.ConvertDataTable(dataTable, bulkCopyInfo));
+            if(!hasGeometryDataType)
+            {
+                using (var bulkCopy = new OracleBulkCopy(conn))
+                {
+                    bulkCopy.BatchSize = dataTable.Rows.Count;
+                    bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+                    bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : Setting.CommandTimeout;
+
+                    foreach (DataColumn column in dataTable.Columns)
+                    {
+                        bulkCopy.ColumnMappings.Add(column.ColumnName, this.GetQuotedString(column.ColumnName));
+                    }
+
+                    bulkCopy.WriteToServer(this.ConvertDataTable(dataTable, bulkCopyInfo));
+                }
             }
+            else
+            {
+                using (var bulkCopy = new OracleBulkCopyCustom(conn, bulkCopyInfo.Transaction as OracleTransaction))
+                {
+                    bulkCopy.BatchSize = dataTable.Rows.Count;
+                    bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
+                    bulkCopy.BulkCopyTimeout = bulkCopyInfo.Timeout.HasValue ? bulkCopyInfo.Timeout.Value : Setting.CommandTimeout; ;
+                    bulkCopy.ColumnNameNeedQuoted = this.DbObjectNameMode == DbObjectNameMode.WithQuotation;
+                    bulkCopy.DetectDateTimeTypeByValues = bulkCopyInfo.DetectDateTimeTypeByValues;
+
+                    await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo));
+                }
+            }           
         }
 
         private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)

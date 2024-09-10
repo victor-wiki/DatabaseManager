@@ -296,7 +296,7 @@ namespace DatabaseManager.Controls
 
             if (types.HasFlag(type))
             {
-                bool alwaysShowSchemaName = this.NeedShowSchema(node, dbObjects);
+                bool showSchemaName = this.NeedShowSchema(node, dbObjects);
 
                 if (createFolderNode)
                 {
@@ -304,7 +304,7 @@ namespace DatabaseManager.Controls
                 }
                 else
                 {
-                    targetNode = node.AddDbObjectNodes(dbObjects, alwaysShowSchemaName);
+                    targetNode = node.AddDbObjectNodes(dbObjects, showSchemaName);
                 }
             }
 

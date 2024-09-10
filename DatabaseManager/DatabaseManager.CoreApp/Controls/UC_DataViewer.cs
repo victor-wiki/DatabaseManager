@@ -83,7 +83,7 @@ namespace DatabaseManager.Controls
             {
                 bool isForView = false;
 
-                if(dbObject is View)
+                if (dbObject is View)
                 {
                     dbObject = ObjectHelper.CloneObject<Table>(dbObject);
 
@@ -227,6 +227,11 @@ namespace DatabaseManager.Controls
         private void tsmiShowContent_Click(object sender, EventArgs e)
         {
             DataGridViewHelper.ShowCellContent(this.dgvData);
+        }      
+
+        private void dgvData_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            this.dgvData.ClearSelection();
         }
     }
 }

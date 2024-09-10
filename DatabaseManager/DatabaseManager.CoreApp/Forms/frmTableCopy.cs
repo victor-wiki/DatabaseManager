@@ -5,6 +5,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using System;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -44,11 +45,37 @@ namespace DatabaseManager
             await this.CopyTable();
         }
 
+        private async Task<bool> TestTargetConnection()
+        {
+            DbInterpreter dbInterpreter = this.GetTargetDbInterpreter();
+
+            try
+            {
+                using (DbConnection connection = dbInterpreter.CreateConnection())
+                {
+                    await connection.OpenAsync();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+
+                return false;
+            }            
+        }
+
         private async Task CopyTable()
         {
             string name = this.txtName.Text.Trim();
 
             if (!this.ValidateInputs())
+            {
+                return;
+            }
+
+            if(await this.TestTargetConnection() == false)
             {
                 return;
             }

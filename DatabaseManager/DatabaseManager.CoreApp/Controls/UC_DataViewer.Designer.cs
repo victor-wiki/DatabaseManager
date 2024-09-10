@@ -28,123 +28,117 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DataViewer));
-            this.dgvData = new System.Windows.Forms.DataGridView();
-            this.btnFilter = new System.Windows.Forms.Button();
-            this.pagination = new DatabaseManager.Controls.UC_Pagination();
-            this.cellContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
-            this.tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvData)).BeginInit();
-            this.cellContextMenu.SuspendLayout();
-            this.SuspendLayout();
+            dgvData = new System.Windows.Forms.DataGridView();
+            btnFilter = new System.Windows.Forms.Button();
+            pagination = new UC_Pagination();
+            cellContextMenu = new System.Windows.Forms.ContextMenuStrip(components);
+            tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
+            ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
+            cellContextMenu.SuspendLayout();
+            SuspendLayout();
             // 
             // dgvData
             // 
-            this.dgvData.AllowUserToAddRows = false;
-            this.dgvData.AllowUserToDeleteRows = false;
-            this.dgvData.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
-            this.dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvData.Location = new System.Drawing.Point(0, 0);
-            this.dgvData.Margin = new System.Windows.Forms.Padding(4);
-            this.dgvData.Name = "dgvData";
-            this.dgvData.ReadOnly = true;
-            this.dgvData.RowHeadersVisible = false;
-            this.dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvData.Size = new System.Drawing.Size(818, 428);
-            this.dgvData.TabIndex = 5;
-            this.dgvData.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dgvData_CellFormatting);
-            this.dgvData.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvData_CellMouseClick);
-            this.dgvData.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvData_DataError);
-            this.dgvData.Sorted += new System.EventHandler(this.dgvData_Sorted);
+            dgvData.AllowUserToAddRows = false;
+            dgvData.AllowUserToDeleteRows = false;
+            dgvData.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvData.Location = new System.Drawing.Point(0, 0);
+            dgvData.Margin = new System.Windows.Forms.Padding(4);
+            dgvData.Name = "dgvData";
+            dgvData.ReadOnly = true;
+            dgvData.RowHeadersVisible = false;
+            dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            dgvData.Size = new System.Drawing.Size(818, 428);
+            dgvData.TabIndex = 5;
+            dgvData.CellFormatting += dgvData_CellFormatting;
+            dgvData.CellMouseClick += dgvData_CellMouseClick;
+            dgvData.DataBindingComplete += dgvData_DataBindingComplete;
+            dgvData.DataError += dgvData_DataError;        
+            dgvData.Sorted += dgvData_Sorted;
             // 
             // btnFilter
             // 
-            this.btnFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnFilter.FlatAppearance.BorderSize = 0;
-            this.btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnFilter.Image = ((System.Drawing.Image)(resources.GetObject("btnFilter.Image")));
-            this.btnFilter.Location = new System.Drawing.Point(4, 446);
-            this.btnFilter.Margin = new System.Windows.Forms.Padding(4);
-            this.btnFilter.Name = "btnFilter";
-            this.btnFilter.Size = new System.Drawing.Size(36, 25);
-            this.btnFilter.TabIndex = 7;
-            this.btnFilter.UseVisualStyleBackColor = true;
-            this.btnFilter.Click += new System.EventHandler(this.btnFilter_Click);
+            btnFilter.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            btnFilter.FlatAppearance.BorderSize = 0;
+            btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnFilter.Image = (System.Drawing.Image)resources.GetObject("btnFilter.Image");
+            btnFilter.Location = new System.Drawing.Point(4, 446);
+            btnFilter.Margin = new System.Windows.Forms.Padding(4);
+            btnFilter.Name = "btnFilter";
+            btnFilter.Size = new System.Drawing.Size(36, 25);
+            btnFilter.TabIndex = 7;
+            btnFilter.UseVisualStyleBackColor = true;
+            btnFilter.Click += btnFilter_Click;
             // 
             // pagination
             // 
-            this.pagination.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pagination.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.pagination.Location = new System.Drawing.Point(47, 442);
-            this.pagination.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.pagination.Name = "pagination";
-            this.pagination.PageCount = ((long)(0));
-            this.pagination.PageNum = ((long)(1));
-            this.pagination.PageSize = 10;
-            this.pagination.Size = new System.Drawing.Size(769, 37);
-            this.pagination.TabIndex = 6;
-            this.pagination.TotalCount = ((long)(0));
-            this.pagination.OnPageNumberChanged += new DatabaseManager.Controls.UC_Pagination.PageNumberChangeHandler(this.pagination_OnPageNumberChanged);
+            pagination.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            pagination.BackColor = System.Drawing.Color.WhiteSmoke;
+            pagination.Location = new System.Drawing.Point(47, 442);
+            pagination.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            pagination.Name = "pagination";
+            pagination.PageCount = 0L;
+            pagination.PageNum = 1L;
+            pagination.PageSize = 10;
+            pagination.Size = new System.Drawing.Size(769, 37);
+            pagination.TabIndex = 6;
+            pagination.TotalCount = 0L;
+            pagination.OnPageNumberChanged += pagination_OnPageNumberChanged;
             // 
             // cellContextMenu
             // 
-            this.cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiCopy,
-            this.tsmiShowContent,
-            this.tsmiViewGeometry});
-            this.cellContextMenu.Name = "cellContextMenu";
-            this.cellContextMenu.Size = new System.Drawing.Size(181, 92);
+            cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiShowContent, tsmiViewGeometry });
+            cellContextMenu.Name = "cellContextMenu";
+            cellContextMenu.Size = new System.Drawing.Size(165, 70);
             // 
             // tsmiCopy
             // 
-            this.tsmiCopy.Name = "tsmiCopy";
-            this.tsmiCopy.Size = new System.Drawing.Size(164, 22);
-            this.tsmiCopy.Text = "Copy Content";
-            this.tsmiCopy.Click += new System.EventHandler(this.tsmiCopy_Click);
-            // 
-            // tsmiViewGeometry
-            // 
-            this.tsmiViewGeometry.Name = "tsmiViewGeometry";
-            this.tsmiViewGeometry.Size = new System.Drawing.Size(164, 22);
-            this.tsmiViewGeometry.Text = "View Geometry";
-            this.tsmiViewGeometry.Click += new System.EventHandler(this.tsmiViewGeometry_Click);
+            tsmiCopy.Name = "tsmiCopy";
+            tsmiCopy.Size = new System.Drawing.Size(164, 22);
+            tsmiCopy.Text = "Copy Content";
+            tsmiCopy.Click += tsmiCopy_Click;
             // 
             // tsmiShowContent
             // 
-            this.tsmiShowContent.Name = "tsmiShowContent";
-            this.tsmiShowContent.Size = new System.Drawing.Size(180, 22);
-            this.tsmiShowContent.Text = "Show Content";
-            this.tsmiShowContent.Click += new System.EventHandler(this.tsmiShowContent_Click);
+            tsmiShowContent.Name = "tsmiShowContent";
+            tsmiShowContent.Size = new System.Drawing.Size(164, 22);
+            tsmiShowContent.Text = "Show Content";
+            tsmiShowContent.Click += tsmiShowContent_Click;
+            // 
+            // tsmiViewGeometry
+            // 
+            tsmiViewGeometry.Name = "tsmiViewGeometry";
+            tsmiViewGeometry.Size = new System.Drawing.Size(164, 22);
+            tsmiViewGeometry.Text = "View Geometry";
+            tsmiViewGeometry.Click += tsmiViewGeometry_Click;
             // 
             // UC_DataViewer
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.Controls.Add(this.btnFilter);
-            this.Controls.Add(this.pagination);
-            this.Controls.Add(this.dgvData);
-            this.Margin = new System.Windows.Forms.Padding(0);
-            this.Name = "UC_DataViewer";
-            this.Size = new System.Drawing.Size(825, 479);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvData)).EndInit();
-            this.cellContextMenu.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(btnFilter);
+            Controls.Add(pagination);
+            Controls.Add(dgvData);
+            Margin = new System.Windows.Forms.Padding(0);
+            Name = "UC_DataViewer";
+            Size = new System.Drawing.Size(825, 479);
+            ((System.ComponentModel.ISupportInitialize)dgvData).EndInit();
+            cellContextMenu.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion

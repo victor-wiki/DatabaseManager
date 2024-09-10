@@ -61,11 +61,11 @@ namespace DatabaseInterpreter.Core
                 }
                 else
                 {
-                    scripts.Add(new NewLineSript());
+                    scripts.Add(new NewLineScript());
                     scripts.Add(new SpliterScript(this.scriptsDelimiter));
                 }
 
-                scripts.Add(new NewLineSript());
+                scripts.Add(new NewLineScript());
 
                 this.dbInterpreter.FeedbackInfo(OperationState.End, dbObject);
             }
