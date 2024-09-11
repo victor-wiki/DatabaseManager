@@ -780,6 +780,8 @@ namespace DatabaseInterpreter.Core
             }
             else if (this.databaseType == DatabaseType.Oracle)
             {
+                srid = OracleInterpreter.DEFAULT_GEOMETRY_SRID;
+
                 strValue = this.GetOracleGeometryInsertValue(column, value, srid);
             }
             else

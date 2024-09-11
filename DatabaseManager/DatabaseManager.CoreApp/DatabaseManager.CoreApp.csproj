@@ -8,13 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.2</Version>
+    <Version>2.2.3</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>fix issue: edit data.
+    <PackageReleaseNotes>edit data: handle oracle sdo_geometry.
 </PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.2</AssemblyVersion>
-    <FileVersion>2.2.2</FileVersion>
+    <AssemblyVersion>2.2.3</AssemblyVersion>
+    <FileVersion>2.2.3</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

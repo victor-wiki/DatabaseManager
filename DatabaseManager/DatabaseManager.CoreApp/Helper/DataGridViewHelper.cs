@@ -92,6 +92,11 @@ namespace DatabaseManager.Helper
                                 newColumnType = typeof(String);
                                 newValue = (value as StGeometry)?.ToString();
                             }
+                            else if (valueType == typeof(SdoGeometry))
+                            {
+                                newColumnType = typeof(String);
+                                newValue = (value as SdoGeometry)?.ToString();
+                            }
 
                             if (newColumnType != null && !changedColumns.ContainsKey(i))
                             {

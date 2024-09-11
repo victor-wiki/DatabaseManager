@@ -34,6 +34,7 @@ namespace DatabaseInterpreter.Core
         public override string CommentString => "--";
         public override DatabaseType DatabaseType => DatabaseType.Oracle;
         public override string DefaultDataType => "varchar2";
+        public const int DEFAULT_GEOMETRY_SRID = 4326;
         public override string DefaultSchema => this.ConnectionInfo.UserId?.ToUpper();
         public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique | IndexType.Bitmap | IndexType.Reverse;
         public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function

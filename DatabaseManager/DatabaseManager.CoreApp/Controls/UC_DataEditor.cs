@@ -1083,6 +1083,7 @@ namespace DatabaseManager.Controls
                             TableColumn tc = this.GetTableColumn(info.ColumnName);
 
                             object value = info.NewValue;
+                            string quotedColumnName = this.dbInterpreter.GetQuotedString(info.ColumnName);
 
                             bool isGeometry = DataTypeHelper.IsGeometryType(tc.DataType);
 
@@ -1090,7 +1091,7 @@ namespace DatabaseManager.Controls
                             {
                                 string parameterName = $"{this.dbInterpreter.CommandParameterChar}{info.ColumnName}{i}";
 
-                                sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parameterName}");
+                                sets.Add($"{quotedColumnName}={parameterName}");
 
                                 parameters.Add(parameterName, value);
 
@@ -1100,7 +1101,13 @@ namespace DatabaseManager.Controls
                             {
                                 object parsedValue = scriptGenerator.ParseValue(tc, value, false);
 
-                                sets.Add($"{this.dbInterpreter.GetQuotedString(info.ColumnName)}={parsedValue}");
+                                if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+                                {
+                                    parsedValue = parsedValue?.ToString()?.Replace($",{OracleInterpreter.DEFAULT_GEOMETRY_SRID})", 
+                                        $",{this.GetTableNameAlias()}.{quotedColumnName}.{this.GetOracleSridCall(tc.DataType)})");
+                                }                              
+
+                                sets.Add($"{quotedColumnName}={parsedValue}");
                             }
                         }
 
@@ -1207,7 +1214,7 @@ namespace DatabaseManager.Controls
 
                     if (needAdd)
                     {
-                        conditions.Add(this.GetConditionItem(columnName, value, parsedValue, isGeometry));
+                        conditions.Add(this.GetConditionItem(columnName, value, parsedValue, tc.DataType, isGeometry));
                     }
                 }
             }
@@ -1215,7 +1222,7 @@ namespace DatabaseManager.Controls
             return string.Join(" AND ", conditions);
         }
 
-        private string GetConditionItem(string columnName, object value, object parsedValue, bool isGeometry)
+        private string GetConditionItem(string columnName, object value, object parsedValue, string dataType, bool isGeometry)
         {
             string quotedColumnName = this.dbInterpreter.GetQuotedString(columnName);
 
@@ -1238,7 +1245,7 @@ namespace DatabaseManager.Controls
                 {
                     quotedColumnName = $"{this.GetTableNameAlias()}.{quotedColumnName}";
 
-                    parsedValue = $"SDO_GEOMETRY('{value}',{quotedColumnName}.ST_SRID())";
+                    parsedValue = $"SDO_GEOMETRY('{value}',{quotedColumnName}.{this.GetOracleSridCall(dataType)})";
 
                     return $"TO_CHAR(SDO_EQUAL({quotedColumnName},{parsedValue}))='TRUE'";
                 }
@@ -1247,7 +1254,17 @@ namespace DatabaseManager.Controls
             return $"{quotedColumnName} {sqlOperator} {(isNullValue ? "NULL" : parsedValue)}";
         }
 
-
+        private string GetOracleSridCall(string dataType)
+        {
+            if(dataType.ToLower().EndsWith("st_geometry"))
+            {
+                return "ST_SRID()";
+            }
+            else
+            {
+                return "SDO_SRID";
+            }
+        }
 
         private string GetTableNameAlias()
         {
