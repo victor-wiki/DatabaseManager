@@ -1103,9 +1103,15 @@ namespace DatabaseManager.Controls
 
                                 if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
                                 {
-                                    parsedValue = parsedValue?.ToString()?.Replace($",{OracleInterpreter.DEFAULT_GEOMETRY_SRID})", 
-                                        $",{this.GetTableNameAlias()}.{quotedColumnName}.{this.GetOracleSridCall(tc.DataType)})");
-                                }                              
+                                    if (parsedValue != null)
+                                    {
+                                        string strParsedValue = parsedValue.ToString();
+                                        int index = strParsedValue.LastIndexOf(',');
+
+                                        parsedValue = strParsedValue.Substring(0, index)
+                                            + $",{this.GetTableNameAlias()}.{quotedColumnName}.{this.GetOracleSridCall(tc.DataType)})";
+                                    }
+                                }
 
                                 sets.Add($"{quotedColumnName}={parsedValue}");
                             }
@@ -1256,7 +1262,7 @@ namespace DatabaseManager.Controls
 
         private string GetOracleSridCall(string dataType)
         {
-            if(dataType.ToLower().EndsWith("st_geometry"))
+            if (dataType.ToLower().EndsWith("st_geometry"))
             {
                 return "ST_SRID()";
             }
@@ -1312,7 +1318,7 @@ namespace DatabaseManager.Controls
                     this.dgvData.EndEdit();
                 }
             }
-        }       
+        }
     }
 }
 
