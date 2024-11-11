@@ -37,7 +37,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Schema Information
-
+        
         #region Database & Schema
         public override async Task<List<Database>> GetDatabasesAsync()
         {
@@ -1014,12 +1014,11 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"PRIMARY KEY AUTOINCREMENT" : "");
-                string commentClause = (!string.IsNullOrEmpty(column.Comment) && this.Option.TableScriptsGenerateOption.GenerateComment ? $"COMMENT '{this.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(column.Comment))}'" : "");
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"PRIMARY KEY AUTOINCREMENT" : "");               
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
                 string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";                             
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requiredClause} {defaultValueClause} {scriptComment}{commentClause}";
+                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requiredClause} {defaultValueClause} {scriptComment}";
             }
         }
 
