@@ -21,7 +21,7 @@ namespace DatabaseManager
 
         public frmTranslateScript()
         {
-            InitializeComponent();
+            InitializeComponent();            
 
             this.InitControls();
         }
@@ -127,7 +127,9 @@ namespace DatabaseManager
 
                 string resultData = result.Data?.ToString();
 
-                this.txtTarget.Text = resultData;
+                this.txtTarget.Invoke(() => {
+                    this.txtTarget.Text = resultData;
+                });               
 
                 if (result.HasError)
                 {
@@ -154,6 +156,8 @@ namespace DatabaseManager
             catch (Exception ex)
             {
                 MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex));
+
+                this.txtTarget.Focus();
             }
             finally
             {
