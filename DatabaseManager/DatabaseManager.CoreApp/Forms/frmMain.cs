@@ -133,6 +133,14 @@ namespace DatabaseManager
 
                 if (data.Name == info.Name && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
                 {
+                    if(info.DisplayType == DatabaseObjectDisplayType.Script)
+                    {
+                        if(info.ScriptAction != data.ScriptAction)
+                        {
+                            return null;
+                        }
+                    }
+
                     return content;
                 }
             }

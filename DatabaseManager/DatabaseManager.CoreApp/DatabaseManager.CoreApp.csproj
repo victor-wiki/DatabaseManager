@@ -8,13 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.4</Version>
+    <Version>2.2.5</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>fix issue: error occurs when set text to sql editor on the script translation form.
+    <PackageReleaseNotes>fix issue: select different script actions of a table, only one form is shown.
 </PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.4</AssemblyVersion>
-    <FileVersion>2.2.4</FileVersion>
+    <AssemblyVersion>2.2.5</AssemblyVersion>
+    <FileVersion>2.2.5</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

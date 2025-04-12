@@ -40,6 +40,7 @@ namespace DatabaseManager
             splitContainer2 = new System.Windows.Forms.SplitContainer();
             tvDbObjects = new Controls.UC_DbObjectsSimpleTree();
             gbConfiguration = new System.Windows.Forms.GroupBox();
+            chkGenerateCheckConstraint = new System.Windows.Forms.CheckBox();
             cboMode = new System.Windows.Forms.ComboBox();
             chkNcharToDoubleChar = new System.Windows.Forms.CheckBox();
             pictureBox1 = new System.Windows.Forms.PictureBox();
@@ -72,7 +73,6 @@ namespace DatabaseManager
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
             tsmiCopySelection = new System.Windows.Forms.ToolStripMenuItem();
-            chkGenerateCheckConstraint = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -214,6 +214,20 @@ namespace DatabaseManager
             gbConfiguration.TabIndex = 21;
             gbConfiguration.TabStop = false;
             gbConfiguration.Text = "Configuration";
+            // 
+            // chkGenerateCheckConstraint
+            // 
+            chkGenerateCheckConstraint.AutoSize = true;
+            chkGenerateCheckConstraint.Checked = true;
+            chkGenerateCheckConstraint.CheckState = System.Windows.Forms.CheckState.Checked;
+            chkGenerateCheckConstraint.Location = new System.Drawing.Point(293, 175);
+            chkGenerateCheckConstraint.Margin = new System.Windows.Forms.Padding(4);
+            chkGenerateCheckConstraint.Name = "chkGenerateCheckConstraint";
+            chkGenerateCheckConstraint.Size = new System.Drawing.Size(178, 21);
+            chkGenerateCheckConstraint.TabIndex = 65;
+            chkGenerateCheckConstraint.Tag = "Schema";
+            chkGenerateCheckConstraint.Text = "Generate check constraint";
+            chkGenerateCheckConstraint.UseVisualStyleBackColor = true;
             // 
             // cboMode
             // 
@@ -383,6 +397,7 @@ namespace DatabaseManager
             chkBulkCopy.AutoSize = true;
             chkBulkCopy.Checked = true;
             chkBulkCopy.CheckState = System.Windows.Forms.CheckState.Checked;
+            chkBulkCopy.Enabled = false;
             chkBulkCopy.Location = new System.Drawing.Point(12, 145);
             chkBulkCopy.Margin = new System.Windows.Forms.Padding(4);
             chkBulkCopy.Name = "chkBulkCopy";
@@ -568,20 +583,6 @@ namespace DatabaseManager
             tsmiCopySelection.Size = new System.Drawing.Size(161, 22);
             tsmiCopySelection.Text = "Copy selection";
             tsmiCopySelection.Click += tsmiCopySelection_Click;
-            // 
-            // chkGenerateCheckConstraint
-            // 
-            chkGenerateCheckConstraint.AutoSize = true;
-            chkGenerateCheckConstraint.Checked = true;
-            chkGenerateCheckConstraint.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkGenerateCheckConstraint.Location = new System.Drawing.Point(293, 175);
-            chkGenerateCheckConstraint.Margin = new System.Windows.Forms.Padding(4);
-            chkGenerateCheckConstraint.Name = "chkGenerateCheckConstraint";
-            chkGenerateCheckConstraint.Size = new System.Drawing.Size(178, 21);
-            chkGenerateCheckConstraint.TabIndex = 65;
-            chkGenerateCheckConstraint.Tag = "Schema";
-            chkGenerateCheckConstraint.Text = "Generate check constraint";
-            chkGenerateCheckConstraint.UseVisualStyleBackColor = true;
             // 
             // frmConvert
             // 

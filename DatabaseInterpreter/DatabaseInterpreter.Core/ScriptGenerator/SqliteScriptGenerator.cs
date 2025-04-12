@@ -192,7 +192,7 @@ namespace DatabaseInterpreter.Core
             {
                 if(!columns.Any(item=>item.IsIdentity))
                 {
-                    string primaryKeyName = primaryKey.Name ?? "";
+                    string primaryKeyName = primaryKey.Name ?? this.GetTableObjectDefaultName(primaryKey);
 
                     primaryKeyConstraint =
     $@"
@@ -215,7 +215,7 @@ namespace DatabaseInterpreter.Core
                     string columnNames = string.Join(",", foreignKey.Columns.Select(item => this.GetQuotedString(item.ColumnName)));
                     string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
 
-                    string foreignKeyName = this.GetQuotedString(foreignKey.Name) ?? "";
+                    string foreignKeyName = this.GetQuotedString(foreignKey.Name) ?? this.GetTableObjectDefaultName(foreignKey);
 
                     StringBuilder sbForeignKeyItem = new StringBuilder();
 
@@ -284,7 +284,9 @@ namespace DatabaseInterpreter.Core
 
                     if (index != null)
                     {
-                        parsedColumn += $"{Environment.NewLine}CONSTRAINT {(this.GetQuotedString(index.Name) ?? "")} UNIQUE";
+                        string indexName = index.Name ?? this.GetTableObjectDefaultName(index);
+
+                        parsedColumn += $"{Environment.NewLine}CONSTRAINT {(this.GetQuotedString(indexName))} UNIQUE";
                     }
                 }
 
@@ -294,7 +296,9 @@ namespace DatabaseInterpreter.Core
 
                     if (checkConstraint != null)
                     {
-                        parsedColumn += $"{Environment.NewLine}CONSTRAINT {(this.GetQuotedString(checkConstraint.Name) ?? "")} CHECK ({checkConstraint.Definition})";
+                        string checkConstraintName = checkConstraint.Name ?? this.GetTableObjectDefaultName(checkConstraint);
+
+                        parsedColumn += $"{Environment.NewLine}CONSTRAINT {(this.GetQuotedString(checkConstraintName))} CHECK ({checkConstraint.Definition})";
                     }
                 }
 

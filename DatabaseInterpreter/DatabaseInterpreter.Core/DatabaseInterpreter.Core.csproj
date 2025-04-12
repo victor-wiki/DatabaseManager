@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.1.18</AssemblyVersion>
-    <FileVersion>2.1.18</FileVersion>
-    <Version>2.1.18</Version>
-    <PackageReleaseNotes>fix bug: sqlite shouldn't have comment for coulumn.</PackageReleaseNotes>
+    <AssemblyVersion>2.1.19</AssemblyVersion>
+    <FileVersion>2.1.19</FileVersion>
+    <Version>2.1.19</Version>
+    <PackageReleaseNotes>fix bug for sqlite: makeup a default name for primary key, foreign key, index and check constraint.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>

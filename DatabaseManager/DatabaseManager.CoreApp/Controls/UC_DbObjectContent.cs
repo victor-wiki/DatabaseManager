@@ -28,6 +28,8 @@ namespace DatabaseManager.Controls
         public FeedbackHandler OnFeedback;
         public OnContentSavedHandler OnContentSaved;
 
+        internal DatabaseObjectDisplayInfo DisplayInfo => this.info;
+
         internal IEnumerable<IDockContent> ExistingContents { get; set; }
 
         public UC_DbObjectContent()
@@ -304,6 +306,11 @@ namespace DatabaseManager.Controls
                         }
                     }
                 }
+            }
+
+            if(info.DisplayType == DatabaseObjectDisplayType.Script)
+            {
+                return $"{name}({info.ScriptAction.ToString()})";
             }
 
             return name;

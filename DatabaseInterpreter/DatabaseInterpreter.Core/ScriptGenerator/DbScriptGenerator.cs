@@ -581,7 +581,7 @@ namespace DatabaseInterpreter.Core
 
                     case nameof(String):
 
-                        if(isGeometryType)
+                        if (isGeometryType)
                         {
                             strValue = this.GetGeometryValue(column, value, dataType, out needQuotated);
                         }
@@ -603,7 +603,7 @@ namespace DatabaseInterpreter.Core
                                 }
                             }
                         }
-                       
+
                         break;
 
                     case nameof(DateTime):
@@ -765,7 +765,7 @@ namespace DatabaseInterpreter.Core
 
         private string GetGeometryValue(TableColumn column, object value, string dataType, out bool needQuotated)
         {
-            string strValue = string.Empty;            
+            string strValue = string.Empty;
             int srid = 0;
 
             needQuotated = false;
@@ -1135,7 +1135,7 @@ namespace DatabaseInterpreter.Core
                 }
             };
 
-            foreach(var item in option.Items)
+            foreach (var item in option.Items)
             {
                 if (!string.IsNullOrEmpty(item))
                 {
@@ -1146,9 +1146,72 @@ namespace DatabaseInterpreter.Core
                         appendValue(subItem);
                     }
                 }
-            }       
+            }
 
             return sb.ToString();
+        }
+
+        protected virtual string GetTableObjectDefaultName(DatabaseObject dbObject)
+        {
+            DatabaseObjectType type = DbObjectHelper.GetDatabaseObjectType(dbObject);
+
+            string prefix = "";
+
+            string tableName = null;
+            IEnumerable<string> columnNames = null;
+
+            switch (type)
+            {
+                case DatabaseObjectType.PrimaryKey:
+                    prefix = "PK";
+
+                    TablePrimaryKey primaryKey = dbObject as TablePrimaryKey;
+
+                    tableName = primaryKey.TableName;
+                    columnNames = primaryKey.Columns.Select(item => item.ColumnName);
+                    break;
+                case DatabaseObjectType.ForeignKey:
+                    prefix = "FK";
+
+                    TableForeignKey foreignKey = dbObject as TableForeignKey;
+
+                    tableName = foreignKey.TableName;
+                    columnNames = foreignKey.Columns.Select(item => item.ColumnName);                   
+                    break;
+                case DatabaseObjectType.Constraint:
+                    prefix = "CK";
+
+                    TableConstraint constraint = dbObject as TableConstraint;
+
+                    tableName = constraint.TableName;
+                    columnNames = new string[] { constraint.ColumnName };
+                  
+                    break;
+                case DatabaseObjectType.Index:
+                    TableIndex tableIndex = dbObject as TableIndex;
+
+                    if (tableIndex.Type == IndexType.Unique.ToString() || tableIndex.IsUnique)
+                    {
+                        prefix = "UX";
+                    }
+                    else
+                    {
+                        prefix = "IX";
+                    }
+
+                    tableName = tableIndex.TableName;
+                    columnNames = tableIndex.Columns.Select(item => item.ColumnName);
+                    break;
+            }
+
+            if(tableName!=null && columnNames!=null)
+            {
+                string name = $"{(prefix.Length > 0 ? prefix + "_" : "")}{tableName}_{string.Join('_', columnNames)}";
+
+                return name;
+            }
+
+            return string.Empty;
         }
         #endregion
 

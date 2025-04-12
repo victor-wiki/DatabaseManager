@@ -546,6 +546,7 @@ namespace DatabaseManager
             this.targetDbConnectionInfo = connectionInfo;
 
             this.SetControlsStatus();
+            this.SetControlStateByMode();
         }
 
         private void SetControlsStatus()
@@ -712,9 +713,22 @@ namespace DatabaseManager
                 this.chkGenerateIdentity.Checked = true;
                 this.chkGenerateComment.Checked = true;
                 this.chkComputeColumn.Checked = true;
+            }           
+
+            bool supportBulkCopy = true;
+
+            if(this.targetDbProfile.DatabaseType!=DatabaseType.Unknown)
+            {
+                DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo, new DbInterpreterOption());
+
+                if(targetInterpreter != null)
+                {
+                    supportBulkCopy = targetInterpreter.SupportBulkCopy;
+                }                
             }
 
-            this.chkBulkCopy.Checked = !schemaOnly;
+            this.chkBulkCopy.Enabled = !schemaOnly && supportBulkCopy;
+            this.chkBulkCopy.Checked = !schemaOnly && supportBulkCopy;
             this.chkUseTransaction.Checked = true;
 
             this.SetControlsStatus();

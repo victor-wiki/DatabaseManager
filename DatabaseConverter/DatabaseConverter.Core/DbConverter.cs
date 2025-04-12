@@ -692,13 +692,30 @@ namespace DatabaseConverter.Core
                                         {
                                             var items = script.Split(delimiter);
 
-                                            int count = 0;
+                                            List<string> insertItems = new List<string>();
 
-                                            foreach (var item in items)
+                                            foreach(var item in items)
+                                            {
+                                                if(item.Trim().ToUpper().StartsWith("INSERT INTO "))
+                                                {
+                                                    insertItems.Add(item);
+                                                }
+                                                else
+                                                {
+                                                    if(insertItems.Any())
+                                                    {
+                                                        insertItems[insertItems.Count - 1] += (delimiter + item);
+                                                    }
+                                                }
+                                            }
+
+                                            int count = 0;                                         
+
+                                            foreach (var item in insertItems)
                                             {
                                                 count++;
 
-                                                var cmd = count < items.Length ? (item + delimiter).Trim().Trim(';') : item;
+                                                var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
 
                                                 await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Parameters, this.transaction));
                                             }
