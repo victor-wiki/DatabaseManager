@@ -461,7 +461,7 @@ namespace DatabaseManager.Controls
             {
                 List<char> chars = new List<char>();
 
-                string delimeterPattern = @"[ ,\.\r\n=]";
+                string delimiterPattern = @"[ ,\.\r\n=]";
 
                 int i = -1;
 
@@ -470,7 +470,7 @@ namespace DatabaseManager.Controls
                 {
                     char c = this.txtEditor.Text[i];
 
-                    if (!Regex.IsMatch(c.ToString(), delimeterPattern))
+                    if (!Regex.IsMatch(c.ToString(), delimiterPattern))
                     {
                         chars.Add(c);
 
@@ -523,7 +523,7 @@ namespace DatabaseManager.Controls
                         {
                             char c = this.txtEditor.Text[j];
 
-                            if (Regex.IsMatch(c.ToString(), delimeterPattern))
+                            if (Regex.IsMatch(c.ToString(), delimiterPattern))
                             {
                                 break;
                             }

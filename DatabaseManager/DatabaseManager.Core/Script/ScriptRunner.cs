@@ -115,7 +115,73 @@ namespace DatabaseManager.Core
                         {
                             string delimiter = dbInterpreter.ScriptsDelimiter;
 
-                            commands = script.Split(new string[] { delimiter, delimiter.Replace("\r", "\n") }, StringSplitOptions.RemoveEmptyEntries);
+                            StringBuilder sb = new StringBuilder();
+
+                            var lines = script.Split(Environment.NewLine);
+
+                            foreach( var line in lines )
+                            {
+                                if(line.Trim() == delimiter.Trim())
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    sb.AppendLine(line);
+                                }
+                            }            
+                            
+                            string str= sb.ToString();
+
+                            string defaultDelimiter = ";";
+
+                            var items = str.Split(new string[] { defaultDelimiter }, StringSplitOptions.RemoveEmptyEntries);
+
+                            List<string> cmds = new List<string>();
+
+                            int totalSingleQuotationCount = 0;
+
+                            Action<string> appendToLastItem = (item) =>
+                            {
+                                if(cmds.Any())
+                                {
+                                    cmds[cmds.Count - 1] += defaultDelimiter + item;
+                                }
+                                else
+                                {
+                                    cmds.Add(item);
+                                }
+                            };
+
+                            foreach (var item in items)
+                            {
+                                if (!item.Contains("'"))
+                                {
+                                    if(totalSingleQuotationCount % 2 == 0)
+                                    {
+                                        cmds.Add(item);
+                                    }
+                                    else
+                                    {
+                                        appendToLastItem(item);
+                                    }
+                                }
+                                else
+                                {
+                                    if (item.Count(t => t == '\'') % 2 != 0)
+                                    {
+                                        appendToLastItem(item);
+                                    }
+                                    else
+                                    {
+                                        cmds.Add(item);
+                                    }
+                                }
+
+                                totalSingleQuotationCount += item.Count(t => t == '\'');
+                            }
+
+                            commands = cmds.ToArray();
                         }
 
                         int affectedRows = 0;
@@ -391,7 +457,7 @@ namespace DatabaseManager.Core
 
             FeedbackHelper.Feedback(suppressError ? null : this.observer, info, enableLog);
 
-            if(infoType == FeedbackInfoType.Error && !suppressError)
+            if (infoType == FeedbackInfoType.Error && !suppressError)
             {
                 this.hasError = true;
             }

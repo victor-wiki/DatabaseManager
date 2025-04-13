@@ -85,7 +85,7 @@ namespace DatabaseManager.Controls
             }
             else if (info.DisplayType == DatabaseObjectDisplayType.EditData)
             {
-                UC_DataEditor dataEditor= new UC_DataEditor();
+                UC_DataEditor dataEditor = new UC_DataEditor();
                 this.control = dataEditor;
 
                 dataEditor.OnDataFilter += this.DataFilter;
@@ -187,16 +187,16 @@ namespace DatabaseManager.Controls
                     return false;
                 }
             }
-            else if(displayType == DatabaseObjectDisplayType.EditData)
+            else if (displayType == DatabaseObjectDisplayType.EditData)
             {
                 UC_DataEditor dataEditor = this.control as UC_DataEditor;
 
                 ContentSaveResult result = dataEditor.Save(new ContentSaveInfo());
 
-                if(!result.IsOK)
+                if (!result.IsOK)
                 {
                     this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
-                }    
+                }
 
                 return result.IsOK;
             }
@@ -308,7 +308,7 @@ namespace DatabaseManager.Controls
                 }
             }
 
-            if(info.DisplayType == DatabaseObjectDisplayType.Script)
+            if (info.DisplayType == DatabaseObjectDisplayType.Script && info.ScriptAction != ScriptAction.NONE)
             {
                 return $"{name}({info.ScriptAction.ToString()})";
             }
@@ -336,7 +336,7 @@ namespace DatabaseManager.Controls
                         names.Add(data.Name.Trim());
                     }
                 }
-            }          
+            }
 
             string maxName = names.OrderByDescending(item => item.Length).ThenByDescending(item => item).FirstOrDefault();
 
@@ -368,7 +368,7 @@ namespace DatabaseManager.Controls
             sqlQuery.RunScripts(data);
         }
 
-        
+
 
         private void Feedback(FeedbackInfo info)
         {
