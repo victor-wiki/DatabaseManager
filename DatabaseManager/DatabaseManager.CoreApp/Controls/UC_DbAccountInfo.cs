@@ -188,7 +188,11 @@ namespace DatabaseManager.Controls
         {
             bool isWindowsAuth = this.cboAuthentication.Text == AuthenticationType.IntegratedSecurity.ToString();
 
-            this.txtUserId.Enabled = !isWindowsAuth;
+            if(this.DatabaseType != DatabaseType.Postgres)
+            {
+                this.txtUserId.Enabled = !isWindowsAuth;
+            }
+           
             this.txtPassword.Enabled = !isWindowsAuth;
             this.chkRememberPassword.Enabled = !isWindowsAuth;
 

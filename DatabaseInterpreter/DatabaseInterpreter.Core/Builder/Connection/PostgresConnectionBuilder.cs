@@ -20,7 +20,7 @@ namespace DatabaseInterpreter.Core
 
             if (connectionInfo.IntegratedSecurity)
             {
-                sb.Append($"Integrated Security=True;Username={connectionInfo.UserId};");
+                sb.Append($"Username={connectionInfo.UserId};");
             }
             else
             {

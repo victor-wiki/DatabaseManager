@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <Version>1.0.1</Version>
-    <PackageReleaseNotes>use TranslateResult as return type; use async method</PackageReleaseNotes>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <FileVersion>1.1.0</FileVersion>
+    <Version>1.1.0</Version>
+    <PackageReleaseNotes>use .net8</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
