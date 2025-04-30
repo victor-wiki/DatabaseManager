@@ -121,12 +121,34 @@ namespace DatabaseManager
                 DbConveterInfo source = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, this.ConnectionInfo, sourceOption) };
                 DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDatabaseType, targetConnectionInfo, targetOption) };
 
-                if (this.chkOnlyCopyTable.Checked)
+                source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column;
+
+                if (this.chkPrimaryKey.Checked)
                 {
-                    source.DatabaseObjectType = DatabaseObjectType.Table | DatabaseObjectType.Column;
+                    source.DatabaseObjectType |= DatabaseObjectType.PrimaryKey;
                 }
 
-                if(this.chkScriptData.Checked && !target.DbInterpreter.SupportBulkCopy)
+                if (this.chkForeignKey.Checked)
+                {
+                    source.DatabaseObjectType |= DatabaseObjectType.ForeignKey;
+                }
+
+                if (this.chkIndex.Checked)
+                {
+                    source.DatabaseObjectType |= DatabaseObjectType.Index;
+                }
+
+                if (this.chkCheckConstraint.Checked)
+                {
+                    source.DatabaseObjectType |= DatabaseObjectType.Constraint;
+                }
+
+                if (this.chkTrigger.Checked)
+                {
+                    source.DatabaseObjectType |= DatabaseObjectType.Trigger;
+                }
+
+                if (this.chkScriptData.Checked && !target.DbInterpreter.SupportBulkCopy)
                 {
                     target.DbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
                 }
@@ -144,7 +166,7 @@ namespace DatabaseManager
                     option.BulkCopy = true;
                     option.UseTransaction = true;
                     option.ConvertComputeColumnExpression = true;
-                    option.IgnoreNotSelfForeignKey = true;
+                    //option.IgnoreNotSelfForeignKey = true;
                     option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
                     option.OnlyForTableCopy = true;
 

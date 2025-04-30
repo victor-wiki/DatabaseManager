@@ -41,7 +41,7 @@ namespace DatabaseInterpreter.Core
 
         public static string Rename(string name)
         {
-            return name + "1";
+            return !string.IsNullOrEmpty(name) ?  name + "1": name;
         }
 
         public static string GetMappedTableName(string tableName, Dictionary<string, string> tableNameMappings)
