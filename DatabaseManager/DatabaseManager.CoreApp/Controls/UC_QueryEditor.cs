@@ -618,8 +618,8 @@ namespace DatabaseManager.Controls
                 word = new SqlWord() { Text = text };
             }
 
-            char quotationLeftChar = this.DbInterpreter.QuotationLeftChar;
-            char quotationRightChar = this.DbInterpreter.QuotationRightChar;
+            char? quotationLeftChar = this.DbInterpreter.QuotationLeftChar;
+            char? quotationRightChar = this.DbInterpreter.QuotationRightChar;
 
             string quotationNamePattern = $@"([{quotationLeftChar}]{nameWithSpacePattern}[{quotationRightChar}])";
 
@@ -662,7 +662,14 @@ namespace DatabaseManager.Controls
         {
             if (this.DbInterpreter != null)
             {
-                return value.Trim(this.DbInterpreter.QuotationLeftChar, this.DbInterpreter.QuotationRightChar, '"');
+                if(this.DbInterpreter.QuotationLeftChar.HasValue)
+                {
+                    return value.Trim(this.DbInterpreter.QuotationLeftChar.Value, this.DbInterpreter.QuotationRightChar.Value, '"');
+                }
+                else
+                {
+                    return value.Trim('"');
+                }
             }
 
             return value;

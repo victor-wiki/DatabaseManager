@@ -482,7 +482,7 @@ namespace DatabaseConverter.Core
                 }
 
                 //custom function
-                if (defaultValue.Contains(this.sourceDbInterpreter.QuotationLeftChar) && this.sourceDbInterpreter.QuotationLeftChar != this.targetDbInterpreter.QuotationLeftChar)
+                if (this.sourceDbInterpreter.QuotationLeftChar.HasValue && defaultValue.Contains(this.sourceDbInterpreter.QuotationLeftChar.Value) && this.sourceDbInterpreter.QuotationLeftChar != this.targetDbInterpreter.QuotationLeftChar)
                 {
                     defaultValue = this.ParseDefinition(defaultValue);
 

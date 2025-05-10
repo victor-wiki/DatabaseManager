@@ -238,7 +238,12 @@ namespace DatabaseConverter.Core
                             {
                                 if (text.StartsWith(this.sourceDbInterpreter.QuotationLeftChar.ToString()) && text.EndsWith(this.sourceDbInterpreter.QuotationRightChar.ToString()))
                                 {
-                                    sb.Append(this.GetQuotedString(text.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar)));
+                                    if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+                                    {
+                                        text = text.Trim(this.sourceDbInterpreter.QuotationLeftChar.Value, this.sourceDbInterpreter.QuotationRightChar.Value);
+                                    }
+
+                                    sb.Append(this.GetQuotedString(text));
                                 }
                                 else
                                 {
@@ -307,7 +312,13 @@ namespace DatabaseConverter.Core
         {
             if (!text.StartsWith(this.targetDbInterpreter.QuotationLeftChar.ToString()) && !text.EndsWith(this.targetDbInterpreter.QuotationRightChar.ToString()))
             {
-                return this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"', this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar));
+                text= this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"'));
+            
+                if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+                {
+                    text = text.Trim(this.sourceDbInterpreter.QuotationLeftChar.Value, this.sourceDbInterpreter.QuotationRightChar.Value);
+                }
+            
             }
 
             return text;

@@ -8,8 +8,8 @@ namespace DatabaseManager.Core
     public class QueryConditionBuilder
     {
         public DatabaseType DatabaseType { get; set; }
-        public char QuotationLeftChar { get; set; }
-        public char QuotationRightChar { get; set; }
+        public char? QuotationLeftChar { get; set; }
+        public char? QuotationRightChar { get; set; }
 
         private List<QueryConditionItem> conditions = new List<QueryConditionItem>();
 

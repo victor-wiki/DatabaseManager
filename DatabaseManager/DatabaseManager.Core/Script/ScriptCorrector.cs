@@ -13,8 +13,8 @@ namespace DatabaseManager.Core
     public class ScriptCorrector
     {
         private DbInterpreter dbInterpreter;
-        private char quotationLeftChar;
-        private char quotationRightChar;
+        private char? quotationLeftChar;
+        private char? quotationRightChar;
 
         public ScriptCorrector(DbInterpreter dbInterpreter)
         {

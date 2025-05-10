@@ -199,7 +199,10 @@ namespace DatabaseInterpreter.Core
 
             var dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, batchCount, pageSize, whereClause);
 
-            List<object> parentValues = dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.dbInterpreter.QuotationLeftChar, this.dbInterpreter.QuotationRightChar)])).ToList();
+            List<object> parentValues = (this.dbInterpreter.QuotationLeftChar.HasValue ?
+                dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.dbInterpreter.QuotationLeftChar.Value, this.dbInterpreter.QuotationRightChar.Value)])):
+                dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns]))
+                ).ToList();
 
             if (parentValues.Count > 0)
             {

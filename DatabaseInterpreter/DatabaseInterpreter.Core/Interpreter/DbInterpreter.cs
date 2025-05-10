@@ -34,8 +34,8 @@ namespace DatabaseInterpreter.Core
         public bool NotCreateIfExists => Setting.NotCreateIfExists;
         public abstract string CommandParameterChar { get; }
         public abstract bool SupportQuotationChar { get; }
-        public virtual char QuotationLeftChar { get; }
-        public virtual char QuotationRightChar { get; }
+        public virtual char? QuotationLeftChar { get; } = default(char?);
+        public virtual char? QuotationRightChar { get; } = default(char?);
         public virtual IndexType IndexType => IndexType.Normal;
         public abstract DatabaseObjectType SupportDbObjectType { get; }
         public abstract DatabaseType DatabaseType { get; }
@@ -589,12 +589,9 @@ namespace DatabaseInterpreter.Core
 
         private Task<long> GetRecordCount(DatabaseObject dbObject, DbConnection connection, string whereClause = "")
         {
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(dbObject)}";
+            string where = string.IsNullOrEmpty(whereClause) ? "" : $" {whereClause}";
 
-            if (!string.IsNullOrEmpty(whereClause))
-            {
-                sql += whereClause;
-            }
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(dbObject)}{where}";           
 
             return this.GetTableRecordCountAsync(connection, sql);
         }
@@ -1154,7 +1151,10 @@ namespace DatabaseInterpreter.Core
         {
             if (!(this.DatabaseType == DatabaseType.Postgres && dataType == "\"char\""))
             {
-                dataType = dataType.Trim(this.QuotationLeftChar, this.QuotationRightChar).Trim();
+                if(this.QuotationLeftChar.HasValue)
+                {
+                    dataType = dataType.Trim(this.QuotationLeftChar.Value, this.QuotationRightChar.Value).Trim();
+                }                
             }
 
             return DataTypeHelper.GetDataTypeInfo(dataType);

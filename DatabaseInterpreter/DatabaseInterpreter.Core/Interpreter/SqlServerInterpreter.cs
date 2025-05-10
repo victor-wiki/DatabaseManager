@@ -22,8 +22,8 @@ namespace DatabaseInterpreter.Core
         public const string AzureSQLFlag = "SQL Azure";
         public override string CommandParameterChar => "@";
         public override bool SupportQuotationChar => true;
-        public override char QuotationLeftChar => '[';
-        public override char QuotationRightChar => ']';
+        public override char? QuotationLeftChar => '[';
+        public override char? QuotationRightChar => ']';
         public override DatabaseType DatabaseType => DatabaseType.SqlServer;
         public override string DefaultDataType => "varchar";
         public override string DefaultSchema => "dbo";

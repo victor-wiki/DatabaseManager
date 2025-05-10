@@ -5,8 +5,8 @@
     <Platforms>AnyCPU;x64</Platforms>
     <AssemblyVersion>2.2.1</AssemblyVersion>
     <FileVersion>2.2.1</FileVersion>
-    <Version>2.2.1</Version>
-    <PackageReleaseNotes>fix issue: not rename db object if its name is null.</PackageReleaseNotes>
+    <Version>2.2.2</Version>
+    <PackageReleaseNotes>fix issue: handle the situation that no quotation char</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>

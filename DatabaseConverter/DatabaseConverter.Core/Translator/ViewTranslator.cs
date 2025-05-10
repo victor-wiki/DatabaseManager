@@ -56,12 +56,17 @@ namespace DatabaseConverter.Core
                     string definition = view.Definition;
 
                     definition = definition
-                               .Replace(sourceDbInterpreter.QuotationLeftChar, '"')
-                               .Replace(sourceDbInterpreter.QuotationRightChar, '"')
                                .Replace("<>", "!=")
                                .Replace(">", " > ")
                                .Replace("<", " < ")
                                .Replace("!=", "<>");
+
+                    if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+                    {
+                        definition = definition
+                               .Replace(sourceDbInterpreter.QuotationLeftChar.Value, '"')
+                               .Replace(sourceDbInterpreter.QuotationRightChar.Value, '"');
+                    }
 
                     StringBuilder sb = new StringBuilder();
 

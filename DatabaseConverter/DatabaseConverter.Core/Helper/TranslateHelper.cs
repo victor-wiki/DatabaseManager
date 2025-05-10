@@ -37,7 +37,7 @@ namespace DatabaseConverter.Core
             return str;
         }
 
-        public static string RemovePostgresDataTypeConvertExpression(string value, IEnumerable<DataTypeSpecification> dataTypeSpecifications, char quotationLeftChar, char quotationRightChar)
+        public static string RemovePostgresDataTypeConvertExpression(string value, IEnumerable<DataTypeSpecification> dataTypeSpecifications, char? quotationLeftChar, char? quotationRightChar)
         {
             if (value.Contains("::")) //datatype convert operator
             {
@@ -62,8 +62,11 @@ namespace DatabaseConverter.Core
         {
             foreach (var interpreter in dbInterpreters)
             {
-                yield return interpreter.QuotationLeftChar;
-                yield return interpreter.QuotationRightChar;
+                if(interpreter.QuotationLeftChar.HasValue)
+                {
+                    yield return interpreter.QuotationLeftChar.Value;
+                    yield return interpreter.QuotationRightChar.Value;
+                }               
             }
         }
 

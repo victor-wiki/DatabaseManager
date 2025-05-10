@@ -393,7 +393,7 @@ namespace DatabaseManager.Core
 
             foreach (var col in columns)
             {
-                if (col.Alias != null && !col.Alias.Symbol.StartsWith(interpreter.QuotationLeftChar))
+                if (col.Alias != null &&(!interpreter.QuotationLeftChar.HasValue || !col.Alias.Symbol.StartsWith(interpreter.QuotationLeftChar.Value)))
                 {
                     ScriptDiagnoseResultDetail detail = new ScriptDiagnoseResultDetail();
 

@@ -182,7 +182,14 @@ namespace DatabaseConverter.Core
 
         private string GetTrimedValue(string value)
         {
-            return value?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar);
+            if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+            {
+                return value?.Trim(this.sourceDbInterpreter.QuotationLeftChar.Value, this.sourceDbInterpreter.QuotationRightChar.Value);
+            }
+            else
+            {
+                return value;
+            }
         }
 
         public static string ReplaceValue(string source, string oldValue, string newValue, RegexOptions option = RegexOptions.IgnoreCase)
@@ -721,7 +728,17 @@ namespace DatabaseConverter.Core
 
         protected string GetTrimedName(string name)
         {
-            return name?.Trim(this.sourceDbInterpreter.QuotationLeftChar, this.sourceDbInterpreter.QuotationRightChar, this.targetDbInterpreter.QuotationLeftChar, this.targetDbInterpreter.QuotationRightChar, '"');
+            if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+            {
+                name = name?.Trim(this.sourceDbInterpreter.QuotationLeftChar.Value, this.sourceDbInterpreter.QuotationRightChar.Value);
+            }
+
+            if(this.targetDbInterpreter.QuotationRightChar.HasValue)
+            {
+                name = name?.Trim(this.targetDbInterpreter.QuotationLeftChar.Value, this.targetDbInterpreter.QuotationRightChar.Value);
+            }
+
+            return name?.Trim('"');
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

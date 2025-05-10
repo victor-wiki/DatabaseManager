@@ -34,7 +34,21 @@ namespace DatabaseConverter.Core
         {
             get
             {
-                return new char[] { '"', this.SourceDbInterpreter.QuotationLeftChar, this.SourceDbInterpreter.QuotationRightChar, this.TargetDbInterpreter.QuotationLeftChar, this.TargetDbInterpreter.QuotationRightChar };
+                List<char> chars = new List<char>() { '"'};
+
+                if(this.SourceDbInterpreter.QuotationLeftChar.HasValue)
+                {
+                    chars.Add(this.SourceDbInterpreter.QuotationLeftChar.Value);
+                    chars.Add(this.SourceDbInterpreter.QuotationRightChar.Value);
+                }
+
+                if (this.TargetDbInterpreter.QuotationLeftChar.HasValue)
+                {
+                    chars.Add(this.TargetDbInterpreter.QuotationLeftChar.Value);
+                    chars.Add(this.TargetDbInterpreter.QuotationRightChar.Value);
+                }
+
+                return chars.ToArray();
             }
         }
 
@@ -589,7 +603,7 @@ namespace DatabaseConverter.Core
         {
             if (token.Alias != null)
             {
-                if (token.Alias.Symbol.StartsWith(this.SourceDbInterpreter.QuotationLeftChar))
+                if (this.SourceDbInterpreter.QuotationLeftChar.HasValue && token.Alias.Symbol.StartsWith(this.SourceDbInterpreter.QuotationLeftChar.Value))
                 {
                     string oldAliasSymbol = token.Alias.Symbol;
 
@@ -599,7 +613,7 @@ namespace DatabaseConverter.Core
                 }
                 else if (token is ColumnName)
                 {
-                    if (!token.Alias.Symbol.StartsWith(this.TargetDbInterpreter.QuotationLeftChar))
+                    if (!this.TargetDbInterpreter.QuotationLeftChar.HasValue || !token.Alias.Symbol.StartsWith(this.TargetDbInterpreter.QuotationLeftChar.Value))
                     {
                         token.Alias.Symbol = this.GetNewQuotedString(token.Alias.Symbol);
 
@@ -644,7 +658,7 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                if (oldSymbol.EndsWith(this.SourceDbInterpreter.QuotationRightChar))
+                if (this.SourceDbInterpreter.QuotationRightChar.HasValue && oldSymbol.EndsWith(this.SourceDbInterpreter.QuotationRightChar.Value))
                 {
                     pattern = $"({oldSymbolPattern})";
                 }
@@ -745,11 +759,18 @@ namespace DatabaseConverter.Core
 
         private string RemoveRepeatedQuotationChars(string symbol)
         {
-            string repeatedQuotationLeftChars = this.TargetDbInterpreter.QuotationLeftChar.ToString().PadLeft(2, this.TargetDbInterpreter.QuotationLeftChar);
-            string repeatedQuotationRightChars = this.TargetDbInterpreter.QuotationRightChar.ToString().PadLeft(2, this.TargetDbInterpreter.QuotationRightChar);
+            if(this.TargetDbInterpreter.QuotationLeftChar.HasValue)
+            {
+                string repeatedQuotationLeftChars = this.TargetDbInterpreter.QuotationLeftChar.ToString().PadLeft(2, this.TargetDbInterpreter.QuotationLeftChar.Value);
+                string repeatedQuotationRightChars = this.TargetDbInterpreter.QuotationRightChar.ToString().PadLeft(2, this.TargetDbInterpreter.QuotationRightChar.Value);
 
-            return symbol.Replace(repeatedQuotationLeftChars, this.TargetDbInterpreter.QuotationLeftChar.ToString())
-                         .Replace(repeatedQuotationRightChars, this.TargetDbInterpreter.QuotationRightChar.ToString());
+                return symbol.Replace(repeatedQuotationLeftChars, this.TargetDbInterpreter.QuotationLeftChar.ToString())
+                             .Replace(repeatedQuotationRightChars, this.TargetDbInterpreter.QuotationRightChar.ToString());
+            }
+            else
+            {
+                return symbol;
+            }            
         }
 
         private bool IsAlias(TokenInfo token, IEnumerable<TokenInfo> tokens, TokenType tokenType, TokenSymbolNameInfo nameInfo = null)
@@ -790,7 +811,7 @@ namespace DatabaseConverter.Core
 
         private bool IsQuoted(TokenInfo token)
         {
-            if (token != null && token.Symbol?.StartsWith(this.SourceDbInterpreter.QuotationLeftChar) == true)
+            if (token != null && (this.SourceDbInterpreter.QuotationLeftChar.HasValue && token.Symbol?.StartsWith(this.SourceDbInterpreter.QuotationLeftChar.Value) == true))
             {
                 return true;
             }
@@ -830,7 +851,7 @@ namespace DatabaseConverter.Core
 
         private bool HasBeenQuoted(string symbol)
         {
-            if (symbol?.StartsWith(this.TargetDbInterpreter.QuotationLeftChar) == true && symbol?.EndsWith(this.TargetDbInterpreter.QuotationRightChar) == true)
+            if (this.TargetDbInterpreter.QuotationLeftChar.HasValue && (symbol?.StartsWith(this.TargetDbInterpreter.QuotationLeftChar.Value) == true && symbol?.EndsWith(this.TargetDbInterpreter.QuotationRightChar.Value) == true))
             {
                 return true;
             }
@@ -914,7 +935,7 @@ namespace DatabaseConverter.Core
 
         private string GetAppropriateAlias(string alias)
         {
-            if (alias.StartsWith(this.SourceDbInterpreter.QuotationLeftChar))
+            if (this.SourceDbInterpreter.QuotationLeftChar.HasValue && alias.StartsWith(this.SourceDbInterpreter.QuotationLeftChar.Value))
             {
                 return this.GetNewQuotedString(alias);
             }
@@ -960,7 +981,12 @@ namespace DatabaseConverter.Core
 
         private string GetTrimedName(string name)
         {
-            return name?.Trim(this.SourceDbInterpreter.QuotationLeftChar, this.SourceDbInterpreter.QuotationRightChar, '"');
+            if(this.SourceDbInterpreter.QuotationLeftChar.HasValue)
+            {
+                return name?.Trim(this.SourceDbInterpreter.QuotationLeftChar.Value, this.SourceDbInterpreter.QuotationRightChar.Value, '"');
+            }
+
+            return name;
         }
 
         private string GetOriginalValue(TokenInfo token)
