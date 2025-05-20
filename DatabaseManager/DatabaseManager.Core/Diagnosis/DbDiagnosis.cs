@@ -13,6 +13,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 
 
 namespace DatabaseManager.Core
@@ -45,6 +46,10 @@ namespace DatabaseManager.Core
             {
                 return this.DiagnoseWithLeadingOrTrailingWhitespaceForTable();
             }
+            else if(diagnoseType == TableDiagnoseType.EmptyValueRatherThanNull)
+            {
+                return this.DiagnoseEmptyValueRatherThanNullForTable();
+            }
 
             throw new NotSupportedException($"Not support diagnose for {diagnoseType}");
         }
@@ -54,6 +59,17 @@ namespace DatabaseManager.Core
             this.Feedback("Begin to diagnose not null fields with empty value...");
 
             TableDiagnoseResult result = await this.DiagnoseTableColumn(TableDiagnoseType.NotNullWithEmpty);
+
+            this.Feedback("End diagnose not null fields with empty value.");
+
+            return result;
+        }
+
+        public virtual async Task<TableDiagnoseResult> DiagnoseEmptyValueRatherThanNullForTable()
+        {
+            this.Feedback("Begin to diagnose not null fields with empty value...");
+
+            TableDiagnoseResult result = await this.DiagnoseTableColumn(TableDiagnoseType.EmptyValueRatherThanNull);
 
             this.Feedback("End diagnose not null fields with empty value.");
 
@@ -87,18 +103,14 @@ namespace DatabaseManager.Core
 
             this.Feedback("End get table columns.");
 
-            dynamic groups = null;
+            var filterColumns = columns.Where(item => DataTypeHelper.IsCharType(item.DataType, this.DatabaseType) && !item.DataType.EndsWith("[]"));          
 
             if (diagnoseType == TableDiagnoseType.NotNullWithEmpty)
             {
-                groups = columns.Where(item => DataTypeHelper.IsCharType(item.DataType) && !item.DataType.EndsWith("[]") && !item.IsNullable)
-                         .GroupBy(item => new { item.Schema, item.TableName });
-            }
-            else if (diagnoseType == TableDiagnoseType.WithLeadingOrTrailingWhitespace)
-            {
-                groups = columns.Where(item => DataTypeHelper.IsCharType(item.DataType) && !item.DataType.EndsWith("[]"))
-                         .GroupBy(item => new { item.Schema, item.TableName });
-            }
+                filterColumns = filterColumns.Where(item => !item.IsNullable);                       
+            }           
+
+            var groups = filterColumns.GroupBy(item => new { item.Schema, item.TableName });
 
             using (DbConnection dbConnection = interpreter.CreateConnection())
             {
@@ -108,7 +120,7 @@ namespace DatabaseManager.Core
                     {
                         string countSql = "";
 
-                        if (diagnoseType == TableDiagnoseType.NotNullWithEmpty)
+                        if (diagnoseType == TableDiagnoseType.NotNullWithEmpty || diagnoseType == TableDiagnoseType.EmptyValueRatherThanNull)
                         {
                             countSql = this.GetTableColumnWithEmptyValueSql(interpreter, column, true);
                         }
@@ -127,7 +139,7 @@ namespace DatabaseManager.Core
                         {
                             string sql = "";
 
-                            if (diagnoseType == TableDiagnoseType.NotNullWithEmpty)
+                            if (diagnoseType == TableDiagnoseType.NotNullWithEmpty || diagnoseType == TableDiagnoseType.EmptyValueRatherThanNull)
                             {
                                 sql = this.GetTableColumnWithEmptyValueSql(interpreter, column, false);
                             }
@@ -234,7 +246,9 @@ namespace DatabaseManager.Core
 
         protected virtual string GetTableColumnWithEmptyValueSql(DbInterpreter interpreter, TableColumn column, bool isCount)
         {
-            string tableName = $"{column.Schema}.{interpreter.GetQuotedString(column.TableName)}";
+            string schema = string.IsNullOrEmpty(column.Schema) ? "" : $"{column.Schema}.";
+
+            string tableName = $"{schema}{interpreter.GetQuotedString(column.TableName)}";
             string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
 
             string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {this.GetStringLengthFunction()}({interpreter.GetQuotedString(column.Name)})=0";
@@ -244,7 +258,9 @@ namespace DatabaseManager.Core
 
         protected virtual string GetTableColumnWithLeadingOrTrailingWhitespaceSql(DbInterpreter interpreter, TableColumn column, bool isCount)
         {
-            string tableName = $"{column.Schema}.{interpreter.GetQuotedString(column.TableName)}";
+            string schema = string.IsNullOrEmpty(column.Schema) ? "" : $"{column.Schema}.";
+
+            string tableName = $"{schema}{interpreter.GetQuotedString(column.TableName)}";
             string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
             string columnName = interpreter.GetQuotedString(column.Name);
             string lengthFunName = this.GetStringLengthFunction();
@@ -264,7 +280,9 @@ namespace DatabaseManager.Core
 
         protected virtual string GetTableColumnReferenceSql(DbInterpreter interpreter, TableForeignKey foreignKey, bool isCount)
         {
-            string tableName = $"{foreignKey.Schema}.{interpreter.GetQuotedString(foreignKey.TableName)}";
+            string schema = string.IsNullOrEmpty(foreignKey.Schema) ? "" : $"{foreignKey.Schema}.";
+
+            string tableName = $"{schema}{interpreter.GetQuotedString(foreignKey.TableName)}";
             string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
             string whereClause = string.Join(" AND ", foreignKey.Columns.Select(item => $"{interpreter.GetQuotedString(item.ColumnName)}={interpreter.GetQuotedString(item.ReferencedColumnName)}"));
 

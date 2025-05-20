@@ -323,7 +323,7 @@ namespace DatabaseManager.Controls
         {
             var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
 
-            return DbObjectsTreeHelper.NeedShowSchema(dbInterpreter, dbObjects);            
+            return DbObjectsTreeHelper.NeedShowSchema(dbInterpreter, dbObjects);
         }
 
         private void AddTableFakeNodes(TreeNode tableNode, Table table)
@@ -497,7 +497,12 @@ namespace DatabaseManager.Controls
 
         private string GetColumnText(DbInterpreter dbInterpreter, Table table, TableColumn column)
         {
-            string text = dbInterpreter.ParseColumn(table, column).Replace(dbInterpreter.QuotationLeftChar.ToString(), "").Replace(dbInterpreter.QuotationRightChar.ToString(), "");
+            string text = dbInterpreter.ParseColumn(table, column);
+
+            if (dbInterpreter.QuotationLeftChar.HasValue)
+            {
+                text = text.Replace(dbInterpreter.QuotationLeftChar.ToString(), "").Replace(dbInterpreter.QuotationRightChar.ToString(), "");
+            }
 
             int index = text.IndexOf(column.Name);
 
@@ -1485,6 +1490,6 @@ namespace DatabaseManager.Controls
             form.LoadData(records);
 
             form.ShowDialog();
-        }      
+        }
     }
 }

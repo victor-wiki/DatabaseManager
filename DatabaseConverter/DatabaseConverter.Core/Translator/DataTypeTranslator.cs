@@ -70,7 +70,7 @@ namespace DatabaseConverter.Core
 
                 dataTypeInfo.DataType = targetDataType;
 
-                bool isChar = DataTypeHelper.IsCharType(dataTypeInfo.DataType);
+                bool isChar = DataTypeHelper.IsCharType(dataTypeInfo.DataType, this.targetDbType);
                 bool isBinary = DataTypeHelper.IsBinaryType(dataTypeInfo.DataType);
 
                 if (isChar || isBinary)

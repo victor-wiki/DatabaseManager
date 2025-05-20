@@ -30,16 +30,31 @@ namespace DatabaseConverter.Core
                 StringBuilder sb = new StringBuilder();
 
                 sb.AppendLine($"ObjectType:{this.ObjectType}");
-                sb.AppendLine($"SourceServer:{this.SourceServer}");
-                sb.AppendLine( $"SourceDatabase:{this.SourceDatabase}");
+
+                if(!string.IsNullOrEmpty(this.SourceServer))
+                {
+                    sb.AppendLine($"SourceServer:{this.SourceServer}");
+                }
+               
+                if(!string.IsNullOrEmpty(this.SourceDatabase))
+                {
+                    sb.AppendLine($"SourceDatabase:{this.SourceDatabase}");
+                }               
 
                 if(!string.IsNullOrEmpty(this.SourceObject))
                 {
                     sb.AppendLine($"SourceObject:{this.SourceObject}");
                 }
 
-                sb.AppendLine($"TargetServer:{this.TargetServer}");
-                sb.AppendLine($"TargetDatabase:{this.TargetDatabase}");
+                if(!string.IsNullOrEmpty(this.TargetServer))
+                {
+                    sb.AppendLine($"TargetServer:{this.TargetServer}");
+                }
+
+                if(!string.IsNullOrEmpty(this.TargetDatabase))
+                {
+                    sb.AppendLine($"TargetDatabase:{this.TargetDatabase}");
+                }                
 
                 if(!string.IsNullOrEmpty(this.TargetObject))
                 {

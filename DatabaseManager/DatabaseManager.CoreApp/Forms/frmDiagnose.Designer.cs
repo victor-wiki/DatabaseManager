@@ -29,153 +29,165 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDiagnose));
-            this.btnStart = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.rbNameNotMatchForScript = new System.Windows.Forms.RadioButton();
-            this.rbSelfReferenceSame = new System.Windows.Forms.RadioButton();
-            this.rbWithLeadingOrTrailingWhitespace = new System.Windows.Forms.RadioButton();
-            this.rbNotNullWithEmpty = new System.Windows.Forms.RadioButton();
-            this.tabControl = new System.Windows.Forms.TabControl();
-            this.tabForTable = new System.Windows.Forms.TabPage();
-            this.tabForScript = new System.Windows.Forms.TabPage();
-            this.rbViewColumnAliasWithoutQuotationChar = new System.Windows.Forms.RadioButton();
-            this.tabControl.SuspendLayout();
-            this.tabForTable.SuspendLayout();
-            this.tabForScript.SuspendLayout();
-            this.SuspendLayout();
+            btnStart = new System.Windows.Forms.Button();
+            btnClose = new System.Windows.Forms.Button();
+            rbNameNotMatchForScript = new System.Windows.Forms.RadioButton();
+            rbSelfReferenceSame = new System.Windows.Forms.RadioButton();
+            rbWithLeadingOrTrailingWhitespace = new System.Windows.Forms.RadioButton();
+            rbNotNullWithEmpty = new System.Windows.Forms.RadioButton();
+            tabControl = new System.Windows.Forms.TabControl();
+            tabForTable = new System.Windows.Forms.TabPage();
+            rbEmptyValueRatherThanNull = new System.Windows.Forms.RadioButton();
+            tabForScript = new System.Windows.Forms.TabPage();
+            rbViewColumnAliasWithoutQuotationChar = new System.Windows.Forms.RadioButton();
+            tabControl.SuspendLayout();
+            tabForTable.SuspendLayout();
+            tabForScript.SuspendLayout();
+            SuspendLayout();
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(109, 217);
-            this.btnStart.Margin = new System.Windows.Forms.Padding(4);
-            this.btnStart.Name = "btnStart";
-            this.btnStart.Size = new System.Drawing.Size(88, 33);
-            this.btnStart.TabIndex = 3;
-            this.btnStart.Text = "Start";
-            this.btnStart.UseVisualStyleBackColor = true;
-            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
+            btnStart.Location = new System.Drawing.Point(109, 217);
+            btnStart.Margin = new System.Windows.Forms.Padding(4);
+            btnStart.Name = "btnStart";
+            btnStart.Size = new System.Drawing.Size(88, 33);
+            btnStart.TabIndex = 3;
+            btnStart.Text = "Start";
+            btnStart.UseVisualStyleBackColor = true;
+            btnStart.Click += btnStart_Click;
             // 
             // btnClose
             // 
-            this.btnClose.Location = new System.Drawing.Point(216, 217);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(88, 33);
-            this.btnClose.TabIndex = 4;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            btnClose.Location = new System.Drawing.Point(216, 217);
+            btnClose.Margin = new System.Windows.Forms.Padding(4);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new System.Drawing.Size(88, 33);
+            btnClose.TabIndex = 4;
+            btnClose.Text = "Close";
+            btnClose.UseVisualStyleBackColor = true;
+            btnClose.Click += btnClose_Click;
             // 
             // rbNameNotMatchForScript
             // 
-            this.rbNameNotMatchForScript.AutoSize = true;
-            this.rbNameNotMatchForScript.Location = new System.Drawing.Point(9, 7);
-            this.rbNameNotMatchForScript.Name = "rbNameNotMatchForScript";
-            this.rbNameNotMatchForScript.Size = new System.Drawing.Size(370, 21);
-            this.rbNameNotMatchForScript.TabIndex = 0;
-            this.rbNameNotMatchForScript.Text = "Object names in script don\'t matched with they are defined";
-            this.rbNameNotMatchForScript.UseVisualStyleBackColor = true;
+            rbNameNotMatchForScript.AutoSize = true;
+            rbNameNotMatchForScript.Location = new System.Drawing.Point(9, 7);
+            rbNameNotMatchForScript.Name = "rbNameNotMatchForScript";
+            rbNameNotMatchForScript.Size = new System.Drawing.Size(370, 21);
+            rbNameNotMatchForScript.TabIndex = 0;
+            rbNameNotMatchForScript.Text = "Object names in script don't matched with they are defined";
+            rbNameNotMatchForScript.UseVisualStyleBackColor = true;
             // 
             // rbSelfReferenceSame
             // 
-            this.rbSelfReferenceSame.AutoSize = true;
-            this.rbSelfReferenceSame.Location = new System.Drawing.Point(7, 64);
-            this.rbSelfReferenceSame.Margin = new System.Windows.Forms.Padding(4);
-            this.rbSelfReferenceSame.Name = "rbSelfReferenceSame";
-            this.rbSelfReferenceSame.Size = new System.Drawing.Size(196, 21);
-            this.rbSelfReferenceSame.TabIndex = 1;
-            this.rbSelfReferenceSame.Text = "table self refer to same value";
-            this.rbSelfReferenceSame.UseVisualStyleBackColor = true;
+            rbSelfReferenceSame.AutoSize = true;
+            rbSelfReferenceSame.Location = new System.Drawing.Point(7, 93);
+            rbSelfReferenceSame.Margin = new System.Windows.Forms.Padding(4);
+            rbSelfReferenceSame.Name = "rbSelfReferenceSame";
+            rbSelfReferenceSame.Size = new System.Drawing.Size(196, 21);
+            rbSelfReferenceSame.TabIndex = 1;
+            rbSelfReferenceSame.Text = "table self refer to same value";
+            rbSelfReferenceSame.UseVisualStyleBackColor = true;
             // 
             // rbWithLeadingOrTrailingWhitespace
             // 
-            this.rbWithLeadingOrTrailingWhitespace.AutoSize = true;
-            this.rbWithLeadingOrTrailingWhitespace.Location = new System.Drawing.Point(7, 36);
-            this.rbWithLeadingOrTrailingWhitespace.Margin = new System.Windows.Forms.Padding(4);
-            this.rbWithLeadingOrTrailingWhitespace.Name = "rbWithLeadingOrTrailingWhitespace";
-            this.rbWithLeadingOrTrailingWhitespace.Size = new System.Drawing.Size(225, 21);
-            this.rbWithLeadingOrTrailingWhitespace.TabIndex = 5;
-            this.rbWithLeadingOrTrailingWhitespace.Text = "with leading or trailing whitespace";
-            this.rbWithLeadingOrTrailingWhitespace.UseVisualStyleBackColor = true;
+            rbWithLeadingOrTrailingWhitespace.AutoSize = true;
+            rbWithLeadingOrTrailingWhitespace.Location = new System.Drawing.Point(7, 65);
+            rbWithLeadingOrTrailingWhitespace.Margin = new System.Windows.Forms.Padding(4);
+            rbWithLeadingOrTrailingWhitespace.Name = "rbWithLeadingOrTrailingWhitespace";
+            rbWithLeadingOrTrailingWhitespace.Size = new System.Drawing.Size(225, 21);
+            rbWithLeadingOrTrailingWhitespace.TabIndex = 5;
+            rbWithLeadingOrTrailingWhitespace.Text = "with leading or trailing whitespace";
+            rbWithLeadingOrTrailingWhitespace.UseVisualStyleBackColor = true;
             // 
             // rbNotNullWithEmpty
             // 
-            this.rbNotNullWithEmpty.AutoSize = true;
-            this.rbNotNullWithEmpty.Location = new System.Drawing.Point(7, 7);
-            this.rbNotNullWithEmpty.Margin = new System.Windows.Forms.Padding(4);
-            this.rbNotNullWithEmpty.Name = "rbNotNullWithEmpty";
-            this.rbNotNullWithEmpty.Size = new System.Drawing.Size(199, 21);
-            this.rbNotNullWithEmpty.TabIndex = 0;
-            this.rbNotNullWithEmpty.Text = "not null field with empty value";
-            this.rbNotNullWithEmpty.UseVisualStyleBackColor = true;
+            rbNotNullWithEmpty.AutoSize = true;
+            rbNotNullWithEmpty.Location = new System.Drawing.Point(7, 7);
+            rbNotNullWithEmpty.Margin = new System.Windows.Forms.Padding(4);
+            rbNotNullWithEmpty.Name = "rbNotNullWithEmpty";
+            rbNotNullWithEmpty.Size = new System.Drawing.Size(199, 21);
+            rbNotNullWithEmpty.TabIndex = 0;
+            rbNotNullWithEmpty.Text = "not null field with empty value";
+            rbNotNullWithEmpty.UseVisualStyleBackColor = true;
             // 
             // tabControl
             // 
-            this.tabControl.Controls.Add(this.tabForTable);
-            this.tabControl.Controls.Add(this.tabForScript);
-            this.tabControl.Location = new System.Drawing.Point(6, 3);
-            this.tabControl.Name = "tabControl";
-            this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(396, 206);
-            this.tabControl.TabIndex = 8;
+            tabControl.Controls.Add(tabForTable);
+            tabControl.Controls.Add(tabForScript);
+            tabControl.Location = new System.Drawing.Point(6, 3);
+            tabControl.Name = "tabControl";
+            tabControl.SelectedIndex = 0;
+            tabControl.Size = new System.Drawing.Size(463, 206);
+            tabControl.TabIndex = 8;
             // 
             // tabForTable
             // 
-            this.tabForTable.BackColor = System.Drawing.SystemColors.Control;
-            this.tabForTable.Controls.Add(this.rbNotNullWithEmpty);
-            this.tabForTable.Controls.Add(this.rbWithLeadingOrTrailingWhitespace);
-            this.tabForTable.Controls.Add(this.rbSelfReferenceSame);
-            this.tabForTable.Location = new System.Drawing.Point(4, 26);
-            this.tabForTable.Name = "tabForTable";
-            this.tabForTable.Padding = new System.Windows.Forms.Padding(3);
-            this.tabForTable.Size = new System.Drawing.Size(388, 176);
-            this.tabForTable.TabIndex = 0;
-            this.tabForTable.Text = "For Table";
+            tabForTable.BackColor = System.Drawing.SystemColors.Control;
+            tabForTable.Controls.Add(rbEmptyValueRatherThanNull);
+            tabForTable.Controls.Add(rbNotNullWithEmpty);
+            tabForTable.Controls.Add(rbWithLeadingOrTrailingWhitespace);
+            tabForTable.Controls.Add(rbSelfReferenceSame);
+            tabForTable.Location = new System.Drawing.Point(4, 26);
+            tabForTable.Name = "tabForTable";
+            tabForTable.Padding = new System.Windows.Forms.Padding(3);
+            tabForTable.Size = new System.Drawing.Size(455, 176);
+            tabForTable.TabIndex = 0;
+            tabForTable.Text = "For Table";
+            // 
+            // rbEmptyValueRatherThanNull
+            // 
+            rbEmptyValueRatherThanNull.AutoSize = true;
+            rbEmptyValueRatherThanNull.Location = new System.Drawing.Point(7, 36);
+            rbEmptyValueRatherThanNull.Margin = new System.Windows.Forms.Padding(4);
+            rbEmptyValueRatherThanNull.Name = "rbEmptyValueRatherThanNull";
+            rbEmptyValueRatherThanNull.Size = new System.Drawing.Size(408, 21);
+            rbEmptyValueRatherThanNull.TabIndex = 6;
+            rbEmptyValueRatherThanNull.Text = "empty value rather than null (no matter the field is not null or not)";
+            rbEmptyValueRatherThanNull.UseVisualStyleBackColor = true;
             // 
             // tabForScript
             // 
-            this.tabForScript.BackColor = System.Drawing.SystemColors.Control;
-            this.tabForScript.Controls.Add(this.rbViewColumnAliasWithoutQuotationChar);
-            this.tabForScript.Controls.Add(this.rbNameNotMatchForScript);
-            this.tabForScript.Location = new System.Drawing.Point(4, 26);
-            this.tabForScript.Name = "tabForScript";
-            this.tabForScript.Padding = new System.Windows.Forms.Padding(3);
-            this.tabForScript.Size = new System.Drawing.Size(388, 176);
-            this.tabForScript.TabIndex = 1;
-            this.tabForScript.Text = "For Script";
+            tabForScript.BackColor = System.Drawing.SystemColors.Control;
+            tabForScript.Controls.Add(rbViewColumnAliasWithoutQuotationChar);
+            tabForScript.Controls.Add(rbNameNotMatchForScript);
+            tabForScript.Location = new System.Drawing.Point(4, 26);
+            tabForScript.Name = "tabForScript";
+            tabForScript.Padding = new System.Windows.Forms.Padding(3);
+            tabForScript.Size = new System.Drawing.Size(388, 176);
+            tabForScript.TabIndex = 1;
+            tabForScript.Text = "For Script";
             // 
             // rbViewColumnAliasWithoutQuotationChar
             // 
-            this.rbViewColumnAliasWithoutQuotationChar.AutoSize = true;
-            this.rbViewColumnAliasWithoutQuotationChar.Location = new System.Drawing.Point(9, 32);
-            this.rbViewColumnAliasWithoutQuotationChar.Name = "rbViewColumnAliasWithoutQuotationChar";
-            this.rbViewColumnAliasWithoutQuotationChar.Size = new System.Drawing.Size(277, 21);
-            this.rbViewColumnAliasWithoutQuotationChar.TabIndex = 1;
-            this.rbViewColumnAliasWithoutQuotationChar.Text = "Column alias of view has no quotation char";
-            this.rbViewColumnAliasWithoutQuotationChar.UseVisualStyleBackColor = true;
+            rbViewColumnAliasWithoutQuotationChar.AutoSize = true;
+            rbViewColumnAliasWithoutQuotationChar.Location = new System.Drawing.Point(9, 32);
+            rbViewColumnAliasWithoutQuotationChar.Name = "rbViewColumnAliasWithoutQuotationChar";
+            rbViewColumnAliasWithoutQuotationChar.Size = new System.Drawing.Size(277, 21);
+            rbViewColumnAliasWithoutQuotationChar.TabIndex = 1;
+            rbViewColumnAliasWithoutQuotationChar.Text = "Column alias of view has no quotation char";
+            rbViewColumnAliasWithoutQuotationChar.UseVisualStyleBackColor = true;
             // 
             // frmDiagnose
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(408, 261);
-            this.Controls.Add(this.tabControl);
-            this.Controls.Add(this.btnClose);
-            this.Controls.Add(this.btnStart);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.MaximizeBox = false;
-            this.Name = "frmDiagnose";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database Diagnose";
-            this.Load += new System.EventHandler(this.frmDiagnose_Load);
-            this.tabControl.ResumeLayout(false);
-            this.tabForTable.ResumeLayout(false);
-            this.tabForTable.PerformLayout();
-            this.tabForScript.ResumeLayout(false);
-            this.tabForScript.PerformLayout();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(481, 261);
+            Controls.Add(tabControl);
+            Controls.Add(btnClose);
+            Controls.Add(btnStart);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4);
+            MaximizeBox = false;
+            Name = "frmDiagnose";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Database Diagnose";
+            Load += frmDiagnose_Load;
+            tabControl.ResumeLayout(false);
+            tabForTable.ResumeLayout(false);
+            tabForTable.PerformLayout();
+            tabForScript.ResumeLayout(false);
+            tabForScript.PerformLayout();
+            ResumeLayout(false);
         }
 
         #endregion
@@ -189,5 +201,6 @@
         private System.Windows.Forms.TabPage tabForTable;
         private System.Windows.Forms.TabPage tabForScript;
         private System.Windows.Forms.RadioButton rbViewColumnAliasWithoutQuotationChar;
+        private System.Windows.Forms.RadioButton rbEmptyValueRatherThanNull;
     }
 }

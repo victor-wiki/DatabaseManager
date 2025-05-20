@@ -110,7 +110,7 @@ namespace DatabaseConverter.Core
 
             column.DataType = dataTypeName;
 
-            bool isChar = DataTypeHelper.IsCharType(dataTypeName);
+            bool isChar = DataTypeHelper.IsCharType(dataTypeName, dbInterpreter.DatabaseType);
             bool isBinary = DataTypeHelper.IsBinaryType(dataTypeName);
 
             string args = dataTypeInfo.Args;

@@ -320,14 +320,17 @@ namespace DatabaseManager
 
                     if (result.InfoType == DbConvertResultInfoType.Information)
                     {
-                        if (!this.dbConverter.CancelRequested)
+                        if(this.dbConverter != null)
                         {
-                            this.txtMessage.AppendText(Environment.NewLine + DONE);
-                            MessageBox.Show(result.Message, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        else
-                        {
-                            MessageBox.Show("Task has been canceled.");
+                            if (!this.dbConverter.CancelRequested)
+                            {
+                                this.txtMessage.AppendText(Environment.NewLine + DONE);
+                                MessageBox.Show(result.Message, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Task has been canceled.");
+                            }
                         }
                     }
                     else if (result.InfoType == DbConvertResultInfoType.Warnning)

@@ -458,11 +458,11 @@ namespace DatabaseInterpreter.Core
                 return true;
             }
 
-            bool isChar1 = DataTypeHelper.IsCharType(dataType1);
-            bool isChar2 = DataTypeHelper.IsCharType(dataType2);
+            bool isChar1 = DataTypeHelper.IsCharType(dataType1, databaseType);
+            bool isChar2 = DataTypeHelper.IsCharType(dataType2, databaseType);
 
-            bool isBytes1 = DataTypeHelper.IsCharType(dataType1);
-            bool isBytes2 = DataTypeHelper.IsCharType(dataType2);
+            bool isBytes1 = DataTypeHelper.IsBinaryType(dataType1);
+            bool isBytes2 = DataTypeHelper.IsBinaryType(dataType2);
 
             if (isBytes1 && isBytes2)
             {

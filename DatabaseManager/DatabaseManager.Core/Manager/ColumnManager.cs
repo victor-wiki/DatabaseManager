@@ -208,7 +208,7 @@ namespace DatabaseManager.Core
 
                 if (argName == "length")
                 {
-                    bool isChar = DataTypeHelper.IsCharType(dataType);
+                    bool isChar = DataTypeHelper.IsCharType(dataType, databaseType);
 
                     if (isChar)
                     {

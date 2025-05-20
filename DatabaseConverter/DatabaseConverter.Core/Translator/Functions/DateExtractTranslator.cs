@@ -2,6 +2,7 @@
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using System;
 
 namespace DatabaseConverter.Core.Functions
 {
@@ -23,11 +24,21 @@ namespace DatabaseConverter.Core.Functions
 
             if (this.SourceDbType == DatabaseType.SqlServer)
             {
+                if (args.Count < 2)
+                {
+                    throw new Exception("Function parameter is invalid!");
+                }
+
                 dateExtract = new DateExtract() { Unit = args[0], Date = args[1]};
             }
             else if (this.SourceDbType == DatabaseType.MySql)
             {
-                string[] items = args[1].Split(' ');
+                if (args.Count < 2)
+                {
+                    throw new Exception("Function parameter is invalid!");
+                }
+
+                string[] items = args[1].Split(' ');               
 
                 dateExtract = new DateExtract() { Unit = items[0].Trim(), Date = args[0] };
             }

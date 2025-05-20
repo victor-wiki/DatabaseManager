@@ -1038,9 +1038,7 @@ namespace DatabaseInterpreter.Core
 
         public override string GetColumnDataLength(TableColumn column)
         {
-            string dataType = column.DataType;
-            bool isChar = DataTypeHelper.IsCharType(dataType);
-            bool isBinary = DataTypeHelper.IsBinaryType(dataType);
+            string dataType = column.DataType;          
 
             DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
 

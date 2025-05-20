@@ -84,6 +84,10 @@ namespace DatabaseManager
             {
                 diagnoseType = TableDiagnoseType.SelfReferenceSame;
             }
+            else if(this.rbEmptyValueRatherThanNull.Checked)
+            {
+                diagnoseType = TableDiagnoseType.EmptyValueRatherThanNull;
+            }
 
             if (diagnoseType == TableDiagnoseType.None)
             {

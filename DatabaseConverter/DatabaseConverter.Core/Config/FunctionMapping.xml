@@ -63,7 +63,7 @@
 		<Sqlite>IFNULL</Sqlite>
 	</mapping>
 	<mapping>
-		<SqlServer defaults="UNIT:DAY" translator="DateDiffTranslator">DATEDIFF</SqlServer>
+		<SqlServer defaults="UNIT:DAY" translator="DateDiffTranslator">DATEDIFF,DATEDIFF_BIG</SqlServer>
 		<MySql translator="DateDiffTranslator">TIMESTAMPDIFF,DATEDIFF</MySql>
 		<Oracle direction="IN" translator="DateDiffTranslator"></Oracle>
 		<Postgres direction="IN" translator="DateDiffTranslator"></Postgres>

@@ -137,7 +137,7 @@ namespace DatabaseConverter.Core
 
                     token.Symbol = this.TargetDbInterpreter.ParseDataType(column);
 
-                    if ((statement is DeclareVariableStatement) && DataTypeHelper.IsCharType(column.DataType))
+                    if ((statement is DeclareVariableStatement) && DataTypeHelper.IsCharType(column.DataType, this.sourceDbType))
                     {
                         this.charTokenSymbols.Add((statement as DeclareVariableStatement).Name.Symbol);
                     }

@@ -12,13 +12,27 @@ namespace DatabaseInterpreter.Utility
         public static readonly string[] TextTypeFlags = { "text" };
         public static readonly string[] BinaryTypeFlags = { "binary", "bytea", "raw", "blob" };
         public static readonly string[] DateOrTimeTypeFlags = { "date", "time" };
-        public static readonly string[] DatetimeOrTimestampTypeFlags = { "datetime", "timestamp"};
+        public static readonly string[] DatetimeOrTimestampTypeFlags = { "datetime", "timestamp" };
         public static readonly string[] GeometryTypeFlags = { "geometry", "geography", "point", "line", "circle", "polygon" };
-        public static readonly string[] SpecialDataTypeFlags = { "sqlhierarchyid","geography","geometry","byte[]"};
+        public static readonly string[] SpecialDataTypeFlags = { "sqlhierarchyid", "geography", "geometry", "byte[]" };
 
-        public static bool IsCharType(string dataType)
+        public static bool IsCharType(string dataType, bool isTextAsChar = false)
         {
-            return IsContainsFlag(dataType, CharTypeFlags);
+            bool isCharType = IsContainsFlag(dataType, CharTypeFlags);
+
+            if (!isTextAsChar)
+            {
+                return isCharType;
+            }
+            else
+            {
+                return isCharType || IsTextType(dataType);
+            }
+        }
+
+        public static bool IsCharType(string dataType, DatabaseType databaseType)
+        {
+            return IsCharType(dataType, IsTextAsChar(databaseType));
         }
 
         public static bool IsBinaryType(string dataType)
@@ -43,7 +57,7 @@ namespace DatabaseInterpreter.Utility
 
         public static bool IsDateOrTimeType(string dataType)
         {
-            return IsContainsFlag(dataType, DateOrTimeTypeFlags); 
+            return IsContainsFlag(dataType, DateOrTimeTypeFlags);
         }
 
         public static bool IsDatetimeOrTimestampType(string dataType)
@@ -66,17 +80,17 @@ namespace DatabaseInterpreter.Utility
             string dataType = column.DataType;
 
             //although for its owned database, these are udt, but as a whole, they are not.
-            if (dataType == "geography" || dataType == "geometry" || dataType == "st_geometry") 
+            if (dataType == "geography" || dataType == "geometry" || dataType == "st_geometry")
             {
                 return false;
             }
 
             return column.IsUserDefined;
-        }       
+        }
 
         public static DataTypeInfo GetDataTypeInfo(string dataType)
         {
-            DataTypeInfo dataTypeInfo = new DataTypeInfo();           
+            DataTypeInfo dataTypeInfo = new DataTypeInfo();
 
             int index = dataType.IndexOf("(");
 
@@ -131,7 +145,7 @@ namespace DatabaseInterpreter.Utility
 
         public static DataTypeInfo GetDataTypeInfoByTableColumn(TableColumn column)
         {
-            return  new DataTypeInfo()
+            return new DataTypeInfo()
             {
                 DataType = column.DataType,
                 MaxLength = column.MaxLength,
@@ -139,14 +153,19 @@ namespace DatabaseInterpreter.Utility
                 Scale = column.Scale,
                 IsIdentity = column.IsIdentity
             };
-        }  
-        
+        }
+
         public static void SetDataTypeInfoToTableColumn(DataTypeInfo dataTypeInfo, TableColumn column)
         {
             column.DataType = dataTypeInfo.DataType;
             column.MaxLength = dataTypeInfo.MaxLength;
             column.Precision = dataTypeInfo.Precision;
             column.Scale = dataTypeInfo.Scale;
+        }
+
+        public static bool IsTextAsChar(DatabaseType databaseType)
+        {
+            return databaseType == DatabaseType.Sqlite;
         }
     }
 }

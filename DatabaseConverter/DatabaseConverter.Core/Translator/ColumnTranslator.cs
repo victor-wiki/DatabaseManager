@@ -599,7 +599,7 @@ namespace DatabaseConverter.Core
             {
                 string[] items = column.ComputeExp.Split(this.sourceDbInterpreter.STR_CONCAT_CHARS);
 
-                var charColumns = this.columns.Where(c => items.Any(item => this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType)))
+                var charColumns = this.columns.Where(c => items.Any(item => this.GetTrimedName(c.Name) == this.GetTrimedName(item.Trim('(', ')')) && DataTypeHelper.IsCharType(c.DataType, this.targetDbType)))
                                   .Select(c => c.Name);
 
                 //if(this.Option.ConvertConcatChar)
@@ -630,7 +630,7 @@ namespace DatabaseConverter.Core
 
                 var col = this.columns.FirstOrDefault(c => this.GetTrimedName(c.Name) == this.GetTrimedName(trimedItem));
 
-                if (col != null && !DataTypeHelper.IsCharType(col.DataType))
+                if (col != null && !DataTypeHelper.IsCharType(col.DataType, targetDbType))
                 {
                     changed = true;
 

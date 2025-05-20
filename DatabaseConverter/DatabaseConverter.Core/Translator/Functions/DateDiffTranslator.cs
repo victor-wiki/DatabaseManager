@@ -3,6 +3,7 @@ using DatabaseConverter.Model;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System;
+using System.Collections.Generic;
 
 namespace DatabaseConverter.Core.Functions
 {
@@ -18,7 +19,7 @@ namespace DatabaseConverter.Core.Functions
             string targetFunctionName = this.TargetSpecification?.Name;
             string expression = formula.Expression;
             string delimiter = this.SourceSpecification.Delimiter ?? ",";
-            var args = formula.GetArgs(delimiter);
+            List<string> args = formula.GetArgs(delimiter);           
 
             bool argsReversed = false;
 
@@ -28,6 +29,11 @@ namespace DatabaseConverter.Core.Functions
 
             if (this.SourceDbType == DatabaseType.SqlServer)
             {
+                if (args.Count < 3)
+                {
+                    throw new Exception("Function parameter is invalid!");
+                }
+
                 dateDiff = new DateDiff() { Unit = args[0], Date1 = args[2], Date2 = args[1] };
 
                 argsReversed = true;
@@ -36,10 +42,20 @@ namespace DatabaseConverter.Core.Functions
             {
                 if (functionName == "DATEDIFF")
                 {
+                    if (args.Count < 2)
+                    {
+                        throw new Exception("Function parameter is invalid!");
+                    }
+
                     dateDiff = new DateDiff() { Unit = "DAY", Date1 = args[0], Date2 = args[1] };
                 }
                 else if (functionName == "TIMESTAMPDIFF")
                 {
+                    if (args.Count < 3)
+                    {
+                        throw new Exception("Function parameter is invalid!");
+                    }
+
                     dateDiff = new DateDiff() { Unit = args[0], Date1 = args[2], Date2 = args[1] };
 
                     argsReversed = true;
@@ -99,15 +115,23 @@ namespace DatabaseConverter.Core.Functions
                     switch (unit)
                     {
                         case "YEAR":
+                        case "YY":
+                        case "YYYY":
                             newExpression = $"DATE_PART('YEAR', {strDate1}) - DATE_PART('YEAR', {strDate2})";
                             break;
                         case "MONTH":
+                        case "M":
+                        case "MM":
                             newExpression = $"(DATE_PART('YEAR', {strDate1}) - DATE_PART('YEAR', {strDate2})) * 12 +(DATE_PART('MONTH', {strDate1}) - DATE_PART('MONTH', {strDate2}))";
                             break;
                         case "WEEK":
+                        case "WK":
+                        case "WW":
                             newExpression = $"TRUNC(DATE_PART('DAY', {strDate1MinusData2})/7)";
                             break;
                         case "DAY":
+                        case "D":
+                        case "DD":
                             newExpression = $"DATE_PART('{unit}',{strDate1MinusData2})";
                             break;
                         case "HOUR":
@@ -208,16 +232,16 @@ namespace DatabaseConverter.Core.Functions
                 {
                     Func<string, string> getDiffValue = (multiplier) =>
                     {
-                        string value = $"(JULIANDAY({date1})-JULIANDAY({date2}))"; 
+                        string value = $"(JULIANDAY({date1})-JULIANDAY({date2}))";
 
-                        if(unit== "YEAR")
+                        if (unit == "YEAR")
                         {
                             return $"FLOOR(ROUND({value}{multiplier},2))";
                         }
                         else
                         {
                             return $"ROUND({value}{multiplier})";
-                        }                        
+                        }
                     };
 
                     switch (unit)
@@ -237,10 +261,10 @@ namespace DatabaseConverter.Core.Functions
                         case "HOUR":
                             newExpression = getDiffValue("*24");
                             break;
-                        case "MINUTE":                           
+                        case "MINUTE":
                             newExpression = getDiffValue("24*60");
                             break;
-                        case "SECOND":                            
+                        case "SECOND":
                             newExpression = getDiffValue("24*60*60");
                             break;
                     }

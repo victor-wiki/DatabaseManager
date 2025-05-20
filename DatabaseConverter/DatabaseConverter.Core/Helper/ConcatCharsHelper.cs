@@ -543,7 +543,7 @@ namespace DatabaseConverter.Core
                     dataType = items.LastOrDefault()?.Trim();
                 }
 
-                if (dataType != null && DataTypeHelper.IsCharType(dataType))
+                if (dataType != null && DataTypeHelper.IsCharType(dataType, databaseType))
                 {
                     return true;
                 }

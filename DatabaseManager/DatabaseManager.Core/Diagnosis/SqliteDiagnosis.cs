@@ -15,7 +15,7 @@ namespace DatabaseManager.Core
 
         public override string GetStringNullFunction()
         {
-            return "ISNULL";
+            return "IFNULL";
         }
     }
 }

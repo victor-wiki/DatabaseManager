@@ -1191,7 +1191,7 @@ namespace DatabaseInterpreter.Core
 
         public virtual string GetColumnDefaultValue(TableColumn column)
         {
-            bool isChar = DataTypeHelper.IsCharType(column.DataType);
+            bool isChar = DataTypeHelper.IsCharType(column.DataType, this.DatabaseType);
 
             if (isChar && column.DefaultValue != null)
             {
