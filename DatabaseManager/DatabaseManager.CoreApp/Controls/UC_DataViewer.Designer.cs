@@ -30,7 +30,6 @@
         {
             components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DataViewer));
             dgvData = new System.Windows.Forms.DataGridView();
             btnFilter = new System.Windows.Forms.Button();
             pagination = new UC_Pagination();
@@ -66,7 +65,7 @@
             dgvData.CellFormatting += dgvData_CellFormatting;
             dgvData.CellMouseClick += dgvData_CellMouseClick;
             dgvData.DataBindingComplete += dgvData_DataBindingComplete;
-            dgvData.DataError += dgvData_DataError;        
+            dgvData.DataError += dgvData_DataError;
             dgvData.Sorted += dgvData_Sorted;
             // 
             // btnFilter
@@ -74,8 +73,7 @@
             btnFilter.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btnFilter.FlatAppearance.BorderSize = 0;
             btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnFilter.Image = (System.Drawing.Image)resources.GetObject("btnFilter.Image");
-            btnFilter.Location = new System.Drawing.Point(4, 446);
+            btnFilter.Location = new System.Drawing.Point(4, 445);
             btnFilter.Margin = new System.Windows.Forms.Padding(4);
             btnFilter.Name = "btnFilter";
             btnFilter.Size = new System.Drawing.Size(36, 25);

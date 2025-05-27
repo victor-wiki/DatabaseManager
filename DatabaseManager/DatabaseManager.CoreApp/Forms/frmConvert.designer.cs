@@ -43,10 +43,10 @@ namespace DatabaseManager
             chkGenerateCheckConstraint = new System.Windows.Forms.CheckBox();
             cboMode = new System.Windows.Forms.ComboBox();
             chkNcharToDoubleChar = new System.Windows.Forms.CheckBox();
-            pictureBox1 = new System.Windows.Forms.PictureBox();
+            picTip2 = new System.Windows.Forms.PictureBox();
             chkCreateSchemaIfNotExists = new System.Windows.Forms.CheckBox();
             chkExcludeGeometryForData = new System.Windows.Forms.CheckBox();
-            pictureBox2 = new System.Windows.Forms.PictureBox();
+            picTip1 = new System.Windows.Forms.PictureBox();
             btnSetSchemaMappings = new System.Windows.Forms.Button();
             chkGenerateComment = new System.Windows.Forms.CheckBox();
             chkTreatBytesAsNull = new System.Windows.Forms.CheckBox();
@@ -82,15 +82,14 @@ namespace DatabaseManager
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
             gbConfiguration.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picTip2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picTip1).BeginInit();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // btnSaveMessage
             // 
             btnSaveMessage.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnSaveMessage.Image = (System.Drawing.Image)resources.GetObject("btnSaveMessage.Image");
             btnSaveMessage.Location = new System.Drawing.Point(863, 40);
             btnSaveMessage.Margin = new System.Windows.Forms.Padding(4);
             btnSaveMessage.Name = "btnSaveMessage";
@@ -103,7 +102,6 @@ namespace DatabaseManager
             // btnCopyMessage
             // 
             btnCopyMessage.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnCopyMessage.Image = (System.Drawing.Image)resources.GetObject("btnCopyMessage.Image");
             btnCopyMessage.Location = new System.Drawing.Point(862, 10);
             btnCopyMessage.Margin = new System.Windows.Forms.Padding(4);
             btnCopyMessage.Name = "btnCopyMessage";
@@ -184,10 +182,10 @@ namespace DatabaseManager
             gbConfiguration.Controls.Add(chkGenerateCheckConstraint);
             gbConfiguration.Controls.Add(cboMode);
             gbConfiguration.Controls.Add(chkNcharToDoubleChar);
-            gbConfiguration.Controls.Add(pictureBox1);
+            gbConfiguration.Controls.Add(picTip2);
             gbConfiguration.Controls.Add(chkCreateSchemaIfNotExists);
             gbConfiguration.Controls.Add(chkExcludeGeometryForData);
-            gbConfiguration.Controls.Add(pictureBox2);
+            gbConfiguration.Controls.Add(picTip1);
             gbConfiguration.Controls.Add(btnSetSchemaMappings);
             gbConfiguration.Controls.Add(chkGenerateComment);
             gbConfiguration.Controls.Add(chkTreatBytesAsNull);
@@ -254,16 +252,15 @@ namespace DatabaseManager
             chkNcharToDoubleChar.Text = "One nchar to two chars for data type";
             chkNcharToDoubleChar.UseVisualStyleBackColor = true;
             // 
-            // pictureBox1
+            // picTip2
             // 
-            pictureBox1.Image = Resources.Info16;
-            pictureBox1.Location = new System.Drawing.Point(448, 286);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new System.Drawing.Size(17, 19);
-            pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            pictureBox1.TabIndex = 62;
-            pictureBox1.TabStop = false;
-            toolTip1.SetToolTip(pictureBox1, "It works without transaction");
+            picTip2.Location = new System.Drawing.Point(448, 286);
+            picTip2.Name = "picTip2";
+            picTip2.Size = new System.Drawing.Size(17, 19);
+            picTip2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            picTip2.TabIndex = 62;
+            picTip2.TabStop = false;
+            toolTip1.SetToolTip(picTip2, "It works without transaction");
             // 
             // chkCreateSchemaIfNotExists
             // 
@@ -291,16 +288,15 @@ namespace DatabaseManager
             chkExcludeGeometryForData.Text = "Ignore geometry data";
             chkExcludeGeometryForData.UseVisualStyleBackColor = true;
             // 
-            // pictureBox2
+            // picTip1
             // 
-            pictureBox2.Image = Resources.Info16;
-            pictureBox2.Location = new System.Drawing.Point(214, 61);
-            pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new System.Drawing.Size(17, 19);
-            pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            pictureBox2.TabIndex = 59;
-            pictureBox2.TabStop = false;
-            toolTip1.SetToolTip(pictureBox2, "If the target database is Oracle or MySql, no need to set.");
+            picTip1.Location = new System.Drawing.Point(214, 61);
+            picTip1.Name = "picTip1";
+            picTip1.Size = new System.Drawing.Size(17, 19);
+            picTip1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            picTip1.TabIndex = 59;
+            picTip1.TabStop = false;
+            toolTip1.SetToolTip(picTip1, "If the target database is Oracle or MySql, no need to set.");
             // 
             // btnSetSchemaMappings
             // 
@@ -607,8 +603,8 @@ namespace DatabaseManager
             splitContainer2.ResumeLayout(false);
             gbConfiguration.ResumeLayout(false);
             gbConfiguration.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picTip2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picTip1).EndInit();
             contextMenuStrip1.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -631,7 +627,7 @@ namespace DatabaseManager
         private System.Windows.Forms.ToolStripMenuItem tsmiCopySelection;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.GroupBox gbConfiguration;
-        private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.PictureBox picTip1;
         private System.Windows.Forms.Button btnSetSchemaMappings;
         private System.Windows.Forms.CheckBox chkGenerateComment;
         private System.Windows.Forms.CheckBox chkTreatBytesAsNull;
@@ -651,7 +647,7 @@ namespace DatabaseManager
         private System.Windows.Forms.CheckBox chkOutputScripts;
         private System.Windows.Forms.CheckBox chkExcludeGeometryForData;
         private System.Windows.Forms.CheckBox chkCreateSchemaIfNotExists;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox picTip2;
         private System.Windows.Forms.CheckBox chkNcharToDoubleChar;
         private System.Windows.Forms.ComboBox cboMode;
         private System.Windows.Forms.CheckBox chkGenerateCheckConstraint;

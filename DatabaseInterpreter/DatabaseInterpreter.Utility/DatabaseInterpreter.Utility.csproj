@@ -7,11 +7,11 @@
     <PackageLicenseUrl />
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Utility for DatabaseManager projects.</Description>
-    <Version>2.2.0</Version>
+    <Version>2.2.1</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.0</AssemblyVersion>
-    <FileVersion>2.2.0</FileVersion>
-    <PackageReleaseNotes>The "text" type of sqlite is also a type of char.</PackageReleaseNotes>
+    <AssemblyVersion>2.2.1</AssemblyVersion>
+    <FileVersion>2.2.1</FileVersion>
+    <PackageReleaseNotes>FeedbackInfo: add "IsReportProgress" and "ObjectName"</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

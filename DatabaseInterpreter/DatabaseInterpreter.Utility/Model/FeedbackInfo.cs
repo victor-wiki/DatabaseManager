@@ -1,8 +1,6 @@
-﻿using System.Threading.Tasks;
-
-namespace DatabaseInterpreter.Utility
+﻿namespace DatabaseInterpreter.Utility
 {
-    public delegate void FeedbackHandler(FeedbackInfo feedbackInfo);   
+    public delegate void FeedbackHandler(FeedbackInfo feedbackInfo);
 
     public class FeedbackInfo
     {
@@ -10,11 +8,13 @@ namespace DatabaseInterpreter.Utility
         public FeedbackInfoType InfoType { get; set; }
         public string Message { get; set; }
         public bool IgnoreError { get; set; }
+        public bool IsReportProgress { get; set; }
+        public string ObjectName { get; set; }
     }
 
     public enum FeedbackInfoType
     {
-        Info=0,
-        Error=1
+        Info = 0,
+        Error = 1
     }
 }

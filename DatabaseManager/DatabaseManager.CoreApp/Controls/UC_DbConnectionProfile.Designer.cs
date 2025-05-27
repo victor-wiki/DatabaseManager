@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DbConnectionProfile));
             btnDeleteDbProfile = new System.Windows.Forms.Button();
             btnConfigDbProfile = new System.Windows.Forms.Button();
             btnAddDbProfile = new System.Windows.Forms.Button();
@@ -44,7 +43,6 @@
             btnDeleteDbProfile.FlatAppearance.BorderSize = 0;
             btnDeleteDbProfile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btnDeleteDbProfile.ForeColor = System.Drawing.SystemColors.ControlText;
-            btnDeleteDbProfile.Image = Resources.Remove;
             btnDeleteDbProfile.Location = new System.Drawing.Point(580, 5);
             btnDeleteDbProfile.Margin = new System.Windows.Forms.Padding(4);
             btnDeleteDbProfile.Name = "btnDeleteDbProfile";
@@ -60,7 +58,6 @@
             btnConfigDbProfile.BackColor = System.Drawing.Color.White;
             btnConfigDbProfile.FlatAppearance.BorderSize = 0;
             btnConfigDbProfile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnConfigDbProfile.Image = (System.Drawing.Image)resources.GetObject("btnConfigDbProfile.Image");
             btnConfigDbProfile.Location = new System.Drawing.Point(554, 5);
             btnConfigDbProfile.Margin = new System.Windows.Forms.Padding(4);
             btnConfigDbProfile.Name = "btnConfigDbProfile";
@@ -73,7 +70,6 @@
             // btnAddDbProfile
             // 
             btnAddDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnAddDbProfile.Image = Resources.Add;
             btnAddDbProfile.Location = new System.Drawing.Point(621, 1);
             btnAddDbProfile.Margin = new System.Windows.Forms.Padding(4);
             btnAddDbProfile.Name = "btnAddDbProfile";

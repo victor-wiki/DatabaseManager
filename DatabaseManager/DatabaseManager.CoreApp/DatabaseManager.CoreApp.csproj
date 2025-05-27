@@ -8,17 +8,19 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.10</Version>
+    <Version>2.2.11</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>add: diagosis empty value rather than null</PackageReleaseNotes>
+    <PackageReleaseNotes>1. show the message of data sync just in one line for a table;
+2. replace some images with fontawesome icons.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.10</AssemblyVersion>
-    <FileVersion>2.2.10</FileVersion>
+    <AssemblyVersion>2.2.11</AssemblyVersion>
+    <FileVersion>2.2.11</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="DockPanelSuite.ThemeVS2015" Version="3.1.1" />
+    <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
     <PackageReference Include="SqlCodeEditor" Version="1.0.4" />

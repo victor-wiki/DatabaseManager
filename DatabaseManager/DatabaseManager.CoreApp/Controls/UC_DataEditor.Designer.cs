@@ -76,7 +76,7 @@
             dgvData.CellValidating += dgvData_CellValidating;
             dgvData.CellValueChanged += dgvData_CellValueChanged;
             dgvData.DataError += dgvData_DataError;
-            dgvData.Sorted += dgvData_Sorted;          
+            dgvData.Sorted += dgvData_Sorted;
             dgvData.KeyUp += dgvData_KeyUp;
             // 
             // btnFilter
@@ -156,7 +156,6 @@
             // 
             // btnAdd
             // 
-            btnAdd.Image = Resources.Add;
             btnAdd.Location = new System.Drawing.Point(4, 1);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new System.Drawing.Size(38, 27);
@@ -166,7 +165,6 @@
             // 
             // btnRemove
             // 
-            btnRemove.Image = Resources.Remove;
             btnRemove.Location = new System.Drawing.Point(61, 1);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new System.Drawing.Size(34, 26);
@@ -178,7 +176,6 @@
             // btnRevert
             // 
             btnRevert.Enabled = false;
-            btnRevert.Image = Resources.Revert;
             btnRevert.Location = new System.Drawing.Point(101, 1);
             btnRevert.Name = "btnRevert";
             btnRevert.Size = new System.Drawing.Size(37, 26);
@@ -190,7 +187,6 @@
             // btnCommit
             // 
             btnCommit.Enabled = false;
-            btnCommit.Image = Resources.Check;
             btnCommit.Location = new System.Drawing.Point(144, 1);
             btnCommit.Name = "btnCommit";
             btnCommit.Size = new System.Drawing.Size(37, 26);

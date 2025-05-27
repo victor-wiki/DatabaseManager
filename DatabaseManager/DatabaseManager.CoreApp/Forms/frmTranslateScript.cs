@@ -4,11 +4,13 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
+using FontAwesome.Sharp;
 using SqlAnalyser.Model;
 using SqlCodeEditor;
 using SqlCodeEditor.Document;
 using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -36,6 +38,8 @@ namespace DatabaseManager
 
         private void InitControls()
         {
+            this.btnExchange.Image = IconImageHelper.GetImageByFontType(IconChar.Exchange, IconFont.Solid, Color.DodgerBlue);
+
             (this.txtSource.Document.TextBufferStrategy as GapTextBufferStrategy).CheckTread = false;
             (this.txtTarget.Document.TextBufferStrategy as GapTextBufferStrategy).CheckTread = false;           
 

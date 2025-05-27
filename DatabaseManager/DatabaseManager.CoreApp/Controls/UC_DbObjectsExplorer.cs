@@ -16,6 +16,7 @@ using DatabaseManager.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Data;
 using DatabaseManager.Forms;
+using FontAwesome.Sharp;
 
 namespace DatabaseManager.Controls
 {
@@ -35,6 +36,8 @@ namespace DatabaseManager.Controls
         public UC_DbObjectsExplorer()
         {
             InitializeComponent();
+
+            this.btnAddAccount.Image = IconImageHelper.GetImageByFontType(IconChar.Add, IconFont.Solid);
         }
 
         private void UC_DbObjectsNavigator_Load(object sender, EventArgs e)

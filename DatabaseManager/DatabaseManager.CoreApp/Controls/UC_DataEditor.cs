@@ -5,12 +5,14 @@ using DatabaseManager.Core;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using FontAwesome.Sharp;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -43,6 +45,16 @@ namespace DatabaseManager.Controls
         public UC_DataEditor()
         {
             InitializeComponent();
+
+            this.Init();
+        }
+
+        private void Init()
+        {
+            this.btnAdd.Image = IconImageHelper.GetImageByFontType(IconChar.Add, IconFont.Solid);
+            this.btnRemove.Image = IconImageHelper.GetImageByFontType(IconChar.Times, IconFont.Solid, Color.Red);
+            this.btnRevert.Image = IconImageHelper.GetImageByFontType(IconChar.Undo, IconFont.Solid, Color.Red);
+            this.btnCommit.Image = IconImageHelper.GetImageByFontType(IconChar.Check, IconFont.Solid);
 
             this.cboAddMode.SelectedIndex = 2;
 

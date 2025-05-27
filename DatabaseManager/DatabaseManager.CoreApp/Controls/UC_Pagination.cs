@@ -6,6 +6,8 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using DatabaseManager.Helper;
+using FontAwesome.Sharp;
 
 namespace DatabaseManager.Controls
 {
@@ -18,6 +20,7 @@ namespace DatabaseManager.Controls
         private long totalCount = 0;
         private long pageNum = 1;
         private bool isSetting = false;
+        private Color imageColor = IconImageHelper.DataViewerToolbarColor;
 
         public delegate void PageNumberChangeHandler(long pageNum);
 
@@ -26,7 +29,19 @@ namespace DatabaseManager.Controls
         public UC_Pagination()
         {
             InitializeComponent();
+
+            this.Init();
+        }
+
+        private void Init()
+        {
             this.PageNum = 1;
+
+            this.btnFirst.Image = IconImageHelper.GetImage(IconChar.BackwardStep, this.imageColor);
+            this.btnPrevious.Image = IconImageHelper.GetImage(IconChar.ChevronLeft, this.imageColor);
+            this.btnNext.Image = IconImageHelper.GetImage(IconChar.ChevronRight, this.imageColor);
+            this.btnLast.Image = IconImageHelper.GetImage(IconChar.ForwardStep, this.imageColor);
+            this.btnRefresh.Image = IconImageHelper.GetImage(IconChar.ArrowsRotate, this.imageColor);
         }
 
         public int PageSize

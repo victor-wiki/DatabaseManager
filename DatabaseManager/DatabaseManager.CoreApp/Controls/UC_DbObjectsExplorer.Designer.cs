@@ -85,7 +85,6 @@
             btnAddAccount.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btnAddAccount.FlatAppearance.BorderSize = 0;
             btnAddAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnAddAccount.Image = Resources.Add;
             btnAddAccount.Location = new System.Drawing.Point(222, 4);
             btnAddAccount.Margin = new System.Windows.Forms.Padding(4);
             btnAddAccount.Name = "btnAddAccount";

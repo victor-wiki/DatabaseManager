@@ -4,6 +4,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -33,6 +34,8 @@ namespace DatabaseManager.Controls
         public UC_DataViewer()
         {
             InitializeComponent();
+
+            this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter, IconImageHelper.DataViewerToolbarColor);
 
             this.pagination.PageSize = 50;
 

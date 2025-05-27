@@ -6,6 +6,7 @@ using DatabaseManager.Core;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -41,6 +42,11 @@ namespace DatabaseManager
         {
             TreeView.CheckForIllegalCrossThreadCalls = false;
             TextBox.CheckForIllegalCrossThreadCalls = false;
+
+            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear);         
+            this.tsmiLock.Image = IconImageHelper.GetImage(IconChar.Lock, Color.Orange);
+            this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon);
+            this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid);
 
             FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
             LogHelper.LogType = SettingManager.Setting.LogType;

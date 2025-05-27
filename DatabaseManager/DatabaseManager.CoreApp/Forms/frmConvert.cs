@@ -6,6 +6,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
+using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -29,6 +30,8 @@ namespace DatabaseManager
         private CancellationTokenSource cancellationTokenSource;
         private IEnumerable<CheckBox> configCheckboxes;
         private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
+        private Color tipImageColor = Color.SkyBlue;       
+
         public frmConvert()
         {
             InitializeComponent();
@@ -52,6 +55,13 @@ namespace DatabaseManager
         {
             TextBox.CheckForIllegalCrossThreadCalls = false;
             CheckBox.CheckForIllegalCrossThreadCalls = false;
+
+            Image tipImage = IconImageHelper.GetImage(IconChar.InfoCircle, this.tipImageColor);
+            this.picTip1.Image = tipImage;
+            this.picTip2.Image = tipImage;
+
+            this.btnCopyMessage.Image = IconImageHelper.GetImageByFontType(IconChar.Copy, IconFont.Regular);
+            this.btnSaveMessage.Image = IconImageHelper.GetImageByFontType(IconChar.Save, IconFont.Solid);
 
             if (!this.useSourceConnector)
             {
@@ -260,7 +270,7 @@ namespace DatabaseManager
                 targetScriptOption.TreatBytesAsNullForExecuting = true;
             }
 
-            targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;            
+            targetScriptOption.TableScriptsGenerateOption.GenerateIdentity = this.chkGenerateIdentity.Checked;
             targetScriptOption.TableScriptsGenerateOption.GenerateConstraint = this.chkGenerateCheckConstraint.Checked;
             targetScriptOption.TableScriptsGenerateOption.GenerateComment = this.chkGenerateComment.Checked;
 
@@ -320,7 +330,7 @@ namespace DatabaseManager
 
                     if (result.InfoType == DbConvertResultInfoType.Information)
                     {
-                        if(this.dbConverter != null)
+                        if (this.dbConverter != null)
                         {
                             if (!this.dbConverter.CancelRequested)
                             {
@@ -339,7 +349,7 @@ namespace DatabaseManager
                     }
                     else if (result.InfoType == DbConvertResultInfoType.Error)
                     {
-                        if(result.ExceptionType != typeof(OperationCanceledException))
+                        if (result.ExceptionType != typeof(OperationCanceledException))
                         {
                             MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
@@ -350,12 +360,12 @@ namespace DatabaseManager
                     }
                 }
             }
-            catch(TaskCanceledException tce)
+            catch (TaskCanceledException tce)
             {
                 iscancelled = true;
             }
             catch (Exception ex)
-            {               
+            {
                 this.HandleException(ex);
             }
             finally
@@ -365,11 +375,11 @@ namespace DatabaseManager
                 GC.Collect();
             }
 
-            if(iscancelled)
+            if (iscancelled)
             {
                 MessageBox.Show("Operation has been cancelled.");
             }
-        }       
+        }
 
         private void SetExecuteButtonEnabled(bool enable)
         {
@@ -417,9 +427,49 @@ namespace DatabaseManager
                 }
                 else
                 {
-                    this.AppendMessage(info.Message, false);
+                    this.AppendMessage(info, false);
                 }
             }));
+        }
+
+        private void AppendMessage(FeedbackInfo info, bool isError = false)
+        {
+            if (this.dbConverter!=null && info.InfoType == FeedbackInfoType.Info && info.IsReportProgress)
+            {
+                string prefix = string.Format(this.dbConverter.TableDataSyncProgressMessagePrefixFormat, info.ObjectName);
+
+                var lines = this.txtMessage.Lines;
+
+                int lineIndex = -1;
+
+                for (int i = lines.Length - 1; i >= 0; i--)
+                {
+                    string line = lines[i];
+
+                    if (line.StartsWith(prefix) && line.Contains("%"))
+                    {
+                        lineIndex = i;
+                        break;
+                    }
+                }
+
+                if (lineIndex >= 0)
+                {
+                    int length = lines[lineIndex].Length;
+                    int start = this.txtMessage.GetFirstCharIndexFromLine(lineIndex);
+
+                    this.txtMessage.Select(start, length);
+                    this.txtMessage.SelectedText = info.Message;
+                }
+                else
+                {
+                    this.AppendMessage(info.Message, isError);
+                }
+            }
+            else
+            {
+                this.AppendMessage(info.Message, isError);
+            }
         }
 
         private void AppendMessage(string message, bool isError = false)
@@ -682,7 +732,7 @@ namespace DatabaseManager
 
         private void SetControlStateByMode()
         {
-            if(this.configCheckboxes == null)
+            if (this.configCheckboxes == null)
             {
                 return;
             }
@@ -695,7 +745,7 @@ namespace DatabaseManager
             var schemaOnlyCheckboxes = this.configCheckboxes.Where(item => item.Tag?.ToString() == "Schema");
             var dataOnlyCheckboxes = this.configCheckboxes.Where(item => item.Tag?.ToString() == "Data");
 
-            foreach(var checkbox in schemaOnlyCheckboxes)
+            foreach (var checkbox in schemaOnlyCheckboxes)
             {
                 checkbox.Enabled = !dataOnly;
             }
@@ -705,7 +755,7 @@ namespace DatabaseManager
                 checkbox.Enabled = !schemaOnly;
             }
 
-            if(schemaOnly || dataOnly)
+            if (schemaOnly || dataOnly)
             {
                 this.UncheckIfNotEnable();
             }
@@ -716,18 +766,18 @@ namespace DatabaseManager
                 this.chkGenerateIdentity.Checked = true;
                 this.chkGenerateComment.Checked = true;
                 this.chkComputeColumn.Checked = true;
-            }           
+            }
 
             bool supportBulkCopy = true;
 
-            if(this.targetDbProfile.DatabaseType!=DatabaseType.Unknown)
+            if (this.targetDbProfile.DatabaseType != DatabaseType.Unknown)
             {
                 DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo, new DbInterpreterOption());
 
-                if(targetInterpreter != null)
+                if (targetInterpreter != null)
                 {
                     supportBulkCopy = targetInterpreter.SupportBulkCopy;
-                }                
+                }
             }
 
             this.chkBulkCopy.Enabled = !schemaOnly && supportBulkCopy;
@@ -739,7 +789,7 @@ namespace DatabaseManager
 
         private void UncheckIfNotEnable()
         {
-            foreach(var checkbox in this.configCheckboxes)
+            foreach (var checkbox in this.configCheckboxes)
             {
                 if (!checkbox.Enabled)
                 {

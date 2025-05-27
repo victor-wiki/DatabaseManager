@@ -28,6 +28,7 @@ namespace DatabaseConverter.Core
         public bool HasError => this.hasError;
         public bool IsBusy => this.isBusy;
         public bool CancelRequested => this.cancelRequested;
+        public readonly string TableDataSyncProgressMessagePrefixFormat = "Table \"{0}\":";
 
         public DbConveterInfo Source { get; set; }
         public DbConveterInfo Target { get; set; }
@@ -737,7 +738,7 @@ namespace DatabaseConverter.Core
 
                                     string strPercent = (percent == (int)percent) ? (percent + "%") : (percent / 100).ToString("P2");
 
-                                    targetInterpreter.FeedbackInfo($"Table \"{table.Name}\":{dataTable.Rows.Count} records transferred.({transferredCount}/{tableDataReadInfo.TotalCount},{strPercent})");
+                                    targetInterpreter.FeedbackProgress($"{(string.Format(this.TableDataSyncProgressMessagePrefixFormat, table.Name))}Transferred {transferredCount}/{tableDataReadInfo.TotalCount},{strPercent}", table.Name);
                                 }
                                 else
                                 {

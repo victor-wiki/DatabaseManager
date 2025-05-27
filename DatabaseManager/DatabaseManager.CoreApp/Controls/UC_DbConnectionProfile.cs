@@ -16,6 +16,7 @@ using DatabaseManager.Core;
 using DatabaseManager.Forms;
 using System.Collections.Immutable;
 using DatabaseInterpreter.Utility;
+using FontAwesome.Sharp;
 
 namespace DatabaseManager.Controls
 {
@@ -59,6 +60,15 @@ namespace DatabaseManager.Controls
         public UC_DbConnectionProfile()
         {
             InitializeComponent();
+
+            this.Init();
+        }
+
+        private void Init()
+        {
+            this.btnAddDbProfile.Image = IconImageHelper.GetImageByFontType(IconChar.Plus, IconFont.Solid);
+            this.btnConfigDbProfile.Image = IconImageHelper.GetImage(IconChar.Gear);
+            this.btnDeleteDbProfile.Image = IconImageHelper.GetImageByFontType(IconChar.Times, IconFont.Solid, Color.Red);
         }
 
         private void UC_DbConnectionProfile_Load(object sender, EventArgs e)

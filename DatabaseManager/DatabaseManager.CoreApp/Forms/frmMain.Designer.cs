@@ -36,6 +36,9 @@
             tsmiDbConnection = new System.Windows.Forms.ToolStripMenuItem();
             tsmiBackupSetting = new System.Windows.Forms.ToolStripMenuItem();
             tsmiLock = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiViews = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiObjectsExplorer = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiMessage = new System.Windows.Forms.ToolStripMenuItem();
             tsmiTools = new System.Windows.Forms.ToolStripMenuItem();
             tsmiWktView = new System.Windows.Forms.ToolStripMenuItem();
             tsmiImageViewer = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,9 +54,6 @@
             dlgOpenFile = new System.Windows.Forms.OpenFileDialog();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             dockPanelMain = new WeifenLuo.WinFormsUI.Docking.DockPanel();
-            tsmiViews = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiObjectsExplorer = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiMessage = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -80,35 +80,58 @@
             // 
             // tsmiSetting
             // 
-            tsmiSetting.Image = Resources.Config;
+            tsmiSetting.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiSetting.Name = "tsmiSetting";
-            tsmiSetting.Size = new System.Drawing.Size(180, 22);
+            tsmiSetting.Size = new System.Drawing.Size(163, 22);
             tsmiSetting.Text = "Setting";
             tsmiSetting.Click += tsmiSetting_Click;
             // 
             // tsmiDbConnection
             // 
-            tsmiDbConnection.Image = (System.Drawing.Image)resources.GetObject("tsmiDbConnection.Image");
+            tsmiDbConnection.Image = Resources.DbConnect16;
+            tsmiDbConnection.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiDbConnection.Name = "tsmiDbConnection";
-            tsmiDbConnection.Size = new System.Drawing.Size(180, 22);
+            tsmiDbConnection.Size = new System.Drawing.Size(163, 22);
             tsmiDbConnection.Text = "Connection";
             tsmiDbConnection.Click += tsmiDbConnection_Click;
             // 
             // tsmiBackupSetting
             // 
-            tsmiBackupSetting.Image = (System.Drawing.Image)resources.GetObject("tsmiBackupSetting.Image");
+            tsmiBackupSetting.Image = Resources.DbBackup;
+            tsmiBackupSetting.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiBackupSetting.Name = "tsmiBackupSetting";
-            tsmiBackupSetting.Size = new System.Drawing.Size(180, 22);
+            tsmiBackupSetting.Size = new System.Drawing.Size(163, 22);
             tsmiBackupSetting.Text = "Backup Setting";
             tsmiBackupSetting.Click += tsmiBackupSetting_Click;
             // 
             // tsmiLock
             // 
-            tsmiLock.Image = Resources.Lock;
+            tsmiLock.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiLock.Name = "tsmiLock";
-            tsmiLock.Size = new System.Drawing.Size(180, 22);
+            tsmiLock.Size = new System.Drawing.Size(163, 22);
             tsmiLock.Text = "Lock";
             tsmiLock.Click += tsmiLock_Click;
+            // 
+            // tsmiViews
+            // 
+            tsmiViews.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiObjectsExplorer, tsmiMessage });
+            tsmiViews.Name = "tsmiViews";
+            tsmiViews.Size = new System.Drawing.Size(53, 21);
+            tsmiViews.Text = "Views";
+            // 
+            // tsmiObjectsExplorer
+            // 
+            tsmiObjectsExplorer.Name = "tsmiObjectsExplorer";
+            tsmiObjectsExplorer.Size = new System.Drawing.Size(173, 22);
+            tsmiObjectsExplorer.Text = "Objects Explorer";
+            tsmiObjectsExplorer.Click += tsmiObjectsExplorer_Click;
+            // 
+            // tsmiMessage
+            // 
+            tsmiMessage.Name = "tsmiMessage";
+            tsmiMessage.Size = new System.Drawing.Size(173, 22);
+            tsmiMessage.Text = "Message";
+            tsmiMessage.Click += tsmiMessage_Click;
             // 
             // tsmiTools
             // 
@@ -119,7 +142,7 @@
             // 
             // tsmiWktView
             // 
-            tsmiWktView.Image = Resources.Polygon;
+            tsmiWktView.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiWktView.Name = "tsmiWktView";
             tsmiWktView.Size = new System.Drawing.Size(180, 22);
             tsmiWktView.Text = "WKT Viewer";
@@ -127,7 +150,7 @@
             // 
             // tsmiImageViewer
             // 
-            tsmiImageViewer.Image = Resources.Image;
+            tsmiImageViewer.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiImageViewer.Name = "tsmiImageViewer";
             tsmiImageViewer.Size = new System.Drawing.Size(180, 22);
             tsmiImageViewer.Text = "Image Viewer";
@@ -257,27 +280,6 @@
             dockPanelMain.Name = "dockPanelMain";
             dockPanelMain.Size = new System.Drawing.Size(917, 514);
             dockPanelMain.TabIndex = 12;
-            // 
-            // tsmiViews
-            // 
-            tsmiViews.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiObjectsExplorer, tsmiMessage });
-            tsmiViews.Name = "tsmiViews";
-            tsmiViews.Size = new System.Drawing.Size(53, 21);
-            tsmiViews.Text = "Views";
-            // 
-            // tsmiObjectsExplorer
-            // 
-            tsmiObjectsExplorer.Name = "tsmiObjectsExplorer";
-            tsmiObjectsExplorer.Size = new System.Drawing.Size(180, 22);
-            tsmiObjectsExplorer.Text = "Objects Explorer";
-            tsmiObjectsExplorer.Click += tsmiObjectsExplorer_Click;
-            // 
-            // tsmiMessage
-            // 
-            tsmiMessage.Name = "tsmiMessage";
-            tsmiMessage.Size = new System.Drawing.Size(180, 22);
-            tsmiMessage.Text = "Message";
-            tsmiMessage.Click += tsmiMessage_Click;
             // 
             // frmMain
             // 

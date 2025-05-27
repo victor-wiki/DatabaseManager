@@ -119,11 +119,12 @@
             txtSource.Font = new System.Drawing.Font("Courier New", 10F);
             txtSource.Location = new System.Drawing.Point(0, 0);
             txtSource.Name = "txtSource";
+            txtSource.ShowVRuler = false;
             txtSource.Size = new System.Drawing.Size(400, 396);
             txtSource.SyntaxHighlighting = "\"\"";
             txtSource.TabIndex = 0;
             txtSource.KeyDown += txtSource_KeyDown;
-            txtSource.KeyUp += txtSource_KeyUp;           
+            txtSource.KeyUp += txtSource_KeyUp;
             // 
             // txtTarget
             // 
@@ -135,9 +136,10 @@
             txtTarget.Font = new System.Drawing.Font("Courier New", 10F);
             txtTarget.Location = new System.Drawing.Point(0, 0);
             txtTarget.Name = "txtTarget";
+            txtTarget.ShowVRuler = false;
             txtTarget.Size = new System.Drawing.Size(441, 396);
             txtTarget.SyntaxHighlighting = "\"\"";
-            txtTarget.TabIndex = 0;           
+            txtTarget.TabIndex = 0;
             // 
             // btnTranlate
             // 
@@ -175,7 +177,6 @@
             // btnExchange
             // 
             btnExchange.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            btnExchange.Image = Resources.Exchange;
             btnExchange.Location = new System.Drawing.Point(219, 8);
             btnExchange.Name = "btnExchange";
             btnExchange.Size = new System.Drawing.Size(49, 25);

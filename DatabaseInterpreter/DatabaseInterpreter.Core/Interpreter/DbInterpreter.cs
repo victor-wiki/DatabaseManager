@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,7 +9,6 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -44,7 +42,7 @@ namespace DatabaseInterpreter.Core
         public abstract bool SupportBulkCopy { get; }
         public abstract bool SupportNchar { get; }
         public abstract bool SupportTruncateTable { get; }
-        public abstract bool CanInsertIdentityByDefault { get; }
+        public abstract bool CanInsertIdentityByDefault { get; }  
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public static DbInterpreterSetting Setting = new DbInterpreterSetting();
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
@@ -511,8 +509,8 @@ namespace DatabaseInterpreter.Core
                     hasThrownException = true;
                     throw new DbCommandException(ex) { HasRollbackedTransaction = transactionRollbacked };
                 }
-                
-                if(!hasThrownException)
+
+                if (!hasThrownException)
                 {
                     this.FeedbackError(message, commandInfo.ContinueWhenErrorOccurs);
                 }
@@ -591,7 +589,7 @@ namespace DatabaseInterpreter.Core
         {
             string where = string.IsNullOrEmpty(whereClause) ? "" : $" {whereClause}";
 
-            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(dbObject)}{where}";           
+            string sql = $"SELECT COUNT(1) FROM {this.GetQuotedDbObjectNameWithSchema(dbObject)}{where}";
 
             return this.GetTableRecordCountAsync(connection, sql);
         }
@@ -646,6 +644,9 @@ namespace DatabaseInterpreter.Core
             DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
 
             DataTable table = new DataTable();
+
+            table.CaseSensitive = true;
+
             table.Load(reader);
 
             return table;
@@ -1151,10 +1152,10 @@ namespace DatabaseInterpreter.Core
         {
             if (!(this.DatabaseType == DatabaseType.Postgres && dataType == "\"char\""))
             {
-                if(this.QuotationLeftChar.HasValue)
+                if (this.QuotationLeftChar.HasValue)
                 {
                     dataType = dataType.Trim(this.QuotationLeftChar.Value, this.QuotationRightChar.Value).Trim();
-                }                
+                }
             }
 
             return DataTypeHelper.GetDataTypeInfo(dataType);
@@ -1274,9 +1275,17 @@ namespace DatabaseInterpreter.Core
             this.observer = observer;
         }
 
-        public void Feedback(FeedbackInfoType infoType, string message, bool skipError = false)
+        public void Feedback(FeedbackInfoType infoType, string message, bool skipError = false, bool isReportProgress = false, string objectName = null)
         {
-            FeedbackInfo info = new FeedbackInfo() { Owner = this, InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(message), IgnoreError = skipError };
+            FeedbackInfo info = new FeedbackInfo()
+            {
+                Owner = this,
+                InfoType = infoType,
+                Message = StringHelper.ToSingleEmptyLine(message),
+                IgnoreError = skipError,
+                IsReportProgress = isReportProgress,
+                ObjectName = objectName
+            };
 
             if (this.observer != null)
             {
@@ -1289,12 +1298,17 @@ namespace DatabaseInterpreter.Core
             this.Feedback(FeedbackInfoType.Info, message);
         }
 
+        public void FeedbackProgress(string message, string objectName)
+        {
+            this.Feedback(FeedbackInfoType.Info, message, false, true, objectName);
+        }
+
         public void FeedbackError(string message, bool skipError = false)
         {
             if (!skipError)
             {
                 this.Feedback(FeedbackInfoType.Error, message, skipError);
-            }           
+            }
         }
 
         public void FeedbackInfo(OperationState state, DatabaseObject dbObject)
