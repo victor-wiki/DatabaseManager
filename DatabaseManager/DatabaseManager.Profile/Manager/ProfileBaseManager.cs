@@ -1,13 +1,16 @@
-﻿using DatabaseInterpreter.Core;
+﻿using Dapper;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseManager.Profile.Model;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class ProfileBaseManager
     {
@@ -17,10 +20,10 @@ namespace DatabaseManager.Profile
 
         static ProfileBaseManager()
         {
-            Init();
+           
         }
 
-        private static void Init()
+        public static async void Init()
         {
             var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
@@ -58,7 +61,14 @@ namespace DatabaseManager.Profile
 
                 if (!string.IsNullOrEmpty(templateVersion) && !string.IsNullOrEmpty(dataVersion) && templateVersion != dataVersion)
                 {
+                    string backupFileName = $"{Path.GetFileNameWithoutExtension(dataFilePath)}_{(DateTime.Now.ToString("yyyyMMddHH"))}{Path.GetExtension(dataFilePath)}";
+                    string backupFilePath = Path.Combine(Path.GetDirectoryName(dataFilePath), backupFileName);
+
+                    File.Copy(dataFilePath, backupFilePath, true);
+
                     File.Copy(templateFilePath, dataFilePath, true);
+
+                    await ProfileDataManager.KeepUserData(backupFilePath, dataFilePath);
                 }
 
                 ProfileDataFile = dataFilePath;
@@ -91,7 +101,7 @@ namespace DatabaseManager.Profile
             return GetConnectionInfo(ProfileDataFile);
         }
 
-        protected static DbInterpreter GetDbInterpreter(string dataFilePath = null)
+        internal static DbInterpreter GetDbInterpreter(string dataFilePath = null)
         {
             if (dataFilePath == null)
             {
@@ -103,7 +113,7 @@ namespace DatabaseManager.Profile
             return dbInterpreter;
         }
 
-        protected static SqliteConnection CreateDbConnection(string dataFilePath = null)
+        internal static SqliteConnection CreateDbConnection(string dataFilePath = null)
         {
             if (dataFilePath == null)
             {
@@ -141,6 +151,42 @@ namespace DatabaseManager.Profile
             }
 
             return true;
+        }
+
+        public static async Task<int> UpdatePriorities(ProfileType profileType, Dictionary<string, int> dictPriorites)
+        {
+            if (dictPriorites == null)
+            {
+                return 0;
+            }
+
+            if (ExistsProfileDataFile())
+            {
+                using (var connection = CreateDbConnection())
+                {
+                    await connection.OpenAsync();
+
+                    var trans = await connection.BeginTransactionAsync();
+
+                    int affectedRows = 0;
+
+                    foreach (var kvp in dictPriorites)
+                    {
+                        string sql = $"UPDATE {profileType.ToString()} SET Priority={kvp.Value} WHERE Id=@Id";
+
+                        Dictionary<string, object> para = new Dictionary<string, object>();
+                        para.Add("@Id", kvp.Key);
+
+                        affectedRows += await connection.ExecuteAsync(sql, para);
+                    }
+
+                    await trans.CommitAsync();
+
+                    return affectedRows;
+                }
+            }
+
+            return 0;
         }
     }
 }

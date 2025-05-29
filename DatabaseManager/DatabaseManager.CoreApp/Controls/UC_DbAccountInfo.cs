@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DatabaseManager.Data;
+using DatabaseManager.Profile.Manager;
 
 namespace DatabaseManager.Controls
 {

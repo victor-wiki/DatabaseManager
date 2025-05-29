@@ -1,12 +1,12 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Core;
-using DatabaseManager.Model;
+using DatabaseManager.Profile.Model;
 using Microsoft.Data.Sqlite;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class DatabaseVisibilityManager : ProfileBaseManager
     {

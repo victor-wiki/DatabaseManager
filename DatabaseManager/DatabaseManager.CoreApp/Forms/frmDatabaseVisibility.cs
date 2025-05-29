@@ -1,18 +1,16 @@
-﻿using BrightIdeasSoftware;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Data;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
-using DatabaseManager.Profile;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
+using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -23,21 +21,28 @@ namespace DatabaseManager.Forms
         private string accountId;
         public DatabaseType DatabaseType { get; set; }
         public AccountProfileInfo AccountProfileInfo { get; set; }
-        public frmDatabaseVisibility()
-        {
-            InitializeComponent();
-        }
 
         public frmDatabaseVisibility(string accountId)
         {
             InitializeComponent();
 
             this.accountId = accountId;
+
+            this.Init();
         }
 
         private void frmDatabaseVisibility_Load(object sender, EventArgs e)
         {
             this.InitControls();
+        }
+
+        private void Init()
+        {
+            this.tsbInvisible.Image = IconImageHelper.GetImageByFontType(IconChar.EyeSlash, IconFont.Solid, null, this.tsbInvisible.Width);
+            this.tsbVisible.Image = IconImageHelper.GetImageByFontType(IconChar.Eye, IconFont.Solid, null, this.tsbVisible.Width);
+            this.tsbDelete.Image = IconImageHelper.GetImage(IconChar.Times, null, this.tsbDelete.Width);
+            this.tsbClear.Image = IconImageHelper.GetImage(IconChar.Trash, null, this.tsbClear.Width);
+            this.tsbRefresh.Image = IconImageHelper.GetImage(IconChar.Refresh, null, this.tsbRefresh.Width);
         }
 
         private void InitControls()
@@ -87,7 +92,7 @@ namespace DatabaseManager.Forms
 
         private async void LoadRecords(IEnumerable<Database> databases)
         {
-            var databaseNames = databases.Select(item => item.Name);
+            var databaseNames = databases.Select(item => item.Name).OrderBy(item=>item.ToLower());
 
             var visibilities = await DatabaseVisibilityManager.GetVisibilities(this.accountId);
 
@@ -156,6 +161,11 @@ namespace DatabaseManager.Forms
 
         private async void btnDelete_Click(object sender, EventArgs e)
         {
+           
+        }
+
+        private async void Delete()
+        {
             int count = this.dgvDatabases.SelectedRows.Count;
 
             if (count == 0)
@@ -180,10 +190,10 @@ namespace DatabaseManager.Forms
 
                 bool success = await this.DeleteRecords(ids);
 
-                if(success)
+                if (success)
                 {
                     rowIndexes.ForEach(item => { this.dgvDatabases.Rows.RemoveAt(item); });
-                }                
+                }
             }
         }
 
@@ -193,6 +203,11 @@ namespace DatabaseManager.Forms
         }
 
         private async void btnClear_Click(object sender, EventArgs e)
+        {
+           
+        }
+
+        private async void Clear()
         {
             int count = this.dgvDatabases.Rows.Count;
 
@@ -213,10 +228,10 @@ namespace DatabaseManager.Forms
 
                 bool success = await this.DeleteRecords(ids);
 
-                if(success)
+                if (success)
                 {
                     this.dgvDatabases.Rows.Clear();
-                }                
+                }
             }
         }
 
@@ -265,6 +280,31 @@ namespace DatabaseManager.Forms
         private void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private async void tsbInvisible_Click(object sender, EventArgs e)
+        {
+            await this.SetVisible(false);
+        }
+
+        private async void tsbVisible_Click(object sender, EventArgs e)
+        {
+            await this.SetVisible(true);
+        }
+
+        private void tsbDelete_Click(object sender, EventArgs e)
+        {
+            this.Delete();
+        }
+
+        private void tsbClear_Click(object sender, EventArgs e)
+        {
+            this.Clear();
+        }
+
+        private void tsbRefresh_Click(object sender, EventArgs e)
+        {
+            this.LoadData();
         }
     }
 }

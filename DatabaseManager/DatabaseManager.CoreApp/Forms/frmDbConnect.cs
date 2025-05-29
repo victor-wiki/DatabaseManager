@@ -1,15 +1,13 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Profile;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Data;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
 using System.Windows.Forms;
-using DatabaseManager.Data;
-using System.Threading.Tasks;
 
 namespace DatabaseManager
 {
@@ -20,26 +18,37 @@ namespace DatabaseManager
         private bool isPopulating = false;
 
         public DatabaseType DatabaseType { get; set; }
-        public string ProflieName { get; set; }
-        public bool NotUseProfile { get; set; }
+        public string ProfileId { get; set; }     
+        public bool IsOnlyForSelectDatabase { get; set; }
 
         public ConnectionInfo ConnectionInfo { get; set; }
 
         public frmDbConnect(DatabaseType dbType)
         {
             InitializeComponent();
+
             this.isAdd = true;
             this.DatabaseType = dbType;
         }
 
-        public frmDbConnect(DatabaseType dbType, string profileName, bool requriePassword = false)
+        public frmDbConnect(DatabaseType dbType, string profileId, bool requriePassword = false, bool cannotEditAccountInfo = false)
         {
             InitializeComponent();
 
             this.isAdd = false;
             this.requriePassword = requriePassword;
             this.DatabaseType = dbType;
-            this.ProflieName = profileName;
+            this.ProfileId = profileId;
+
+            if(cannotEditAccountInfo)
+            {
+                this.panelMode.Visible = false;
+                this.ucDbAccountInfo.Enabled = false;
+                this.panelContent.Top = this.panelMode.Top;
+                this.panelButton.Top -= this.panelMode.Height;
+
+                this.Height -= this.panelMode.Height;
+            }
         }
 
         private void frmDbConnect_Load(object sender, EventArgs e)
@@ -53,17 +62,12 @@ namespace DatabaseManager
             this.ucDbAccountInfo.DatabaseType = this.DatabaseType;
             this.ucDbAccountInfo.InitControls();
 
-            if (!this.NotUseProfile)
+            if (!this.IsOnlyForSelectDatabase)
             {
-                if (string.IsNullOrEmpty(this.ProflieName))
+                if (!string.IsNullOrEmpty(this.ProfileId))
                 {
-                    this.txtProfileName.Text = "";
-                }
-                else
-                {
-                    this.txtProfileName.Text = this.ProflieName.ToString();
                     this.LoadProfile();
-                }
+                }                
             }
             else
             {
@@ -74,11 +78,14 @@ namespace DatabaseManager
 
         private async void LoadProfile()
         {
-            ConnectionInfo connectionInfo = await ConnectionProfileManager.GetConnectionInfo(this.DatabaseType.ToString(), this.ProflieName);
+            var profile = await ConnectionProfileManager.GetProfileById(this.ProfileId);
+
+            ConnectionInfo connectionInfo = ConnectionProfileManager.GetConnectionInfoByProfileInfo(profile);
 
             this.ucDbAccountInfo.LoadData(connectionInfo, this.ConnectionInfo?.Password);
 
             this.cboDatabase.Text = connectionInfo.Database;
+            this.txtProfileName.Text = profile.Name;
         }
 
         private void TestConnect()
@@ -138,87 +145,101 @@ namespace DatabaseManager
                 return;
             }
 
-            string profileName = this.txtProfileName.Text.Trim();
             string database = this.cboDatabase.Text;
 
             this.ConnectionInfo = this.GetConnectionInfo();
 
-            if (!this.NotUseProfile)
+            if (!this.IsOnlyForSelectDatabase)
             {
-                IEnumerable<ConnectionProfileInfo> profiles = await ConnectionProfileManager.GetProfiles(this.DatabaseType.ToString());
+                string profileName = this.txtProfileName.Text.Trim();
 
-                string oldAccountProfileId = null;
-
-                if (!string.IsNullOrEmpty(profileName) && profiles.Any(item => item.Name == profileName))
+                if (string.IsNullOrEmpty(database))
                 {
-                    string msg = $"The profile name \"{profileName}\" has been existed";
-
-                    if (this.isAdd)
-                    {
-                        DialogResult dialogResult = MessageBox.Show(msg + ", are you sure to override it.", "Confirm", MessageBoxButtons.YesNo);
-
-                        if (dialogResult != DialogResult.Yes)
-                        {
-                            this.DialogResult = DialogResult.None;
-                            return;
-                        }
-                    }
-                    else if (!this.isAdd && this.ProflieName != profileName)
-                    {
-                        MessageBox.Show(msg + ", please edit that.");
-                        return;
-                    }
-                    else //edit
-                    {
-                        oldAccountProfileId = profiles.FirstOrDefault(item => item.Name == profileName).AccountId;
-                    }
+                    MessageBox.Show("Database can not be empty.");
+                    return;
                 }
-                else
+
+                if (string.IsNullOrEmpty(profileName))
+                {
+                    MessageBox.Show("Profile name can not be empty.");
+                    return;
+                }
+
+                string accountProfileId = null;
+
+                if (this.isAdd)
                 {
                     AccountProfileInfo accountProfile = await AccountProfileManager.GetProfile(this.DatabaseType.ToString(), this.ConnectionInfo.Server, this.ConnectionInfo.Port, this.ConnectionInfo.IntegratedSecurity, this.ConnectionInfo.UserId);
 
                     if (accountProfile != null)
                     {
-                        oldAccountProfileId = accountProfile.Id;
+                        accountProfileId = accountProfile.Id;
                     }
+                }
+                else
+                {
+                    ConnectionProfileInfo connectionProfileInfo = await ConnectionProfileManager.GetProfileById(this.ProfileId);
+
+                    if (connectionProfileInfo != null)
+                    {
+                        accountProfileId = connectionProfileInfo.AccountId;
+                    }
+                }
+
+                bool isNameExisted = await ConnectionProfileManager.IsNameExisted(this.isAdd, accountProfileId, profileName, this.ProfileId);
+
+                if (isNameExisted)
+                {
+                    string msg = $"The profile name \"{profileName}\" has been existed";
+
+                    MessageBox.Show(msg);
+
+                    return;
                 }
 
                 ConnectionProfileInfo profile = new ConnectionProfileInfo()
                 {
-                    AccountId = oldAccountProfileId,
+                    Id = this.ProfileId,
+                    AccountId = accountProfileId,
                     DatabaseType = this.DatabaseType.ToString(),
                     Server = this.ConnectionInfo.Server,
                     Port = this.ConnectionInfo.Port,
+                    ServerVersion = this.ConnectionInfo.ServerVersion,
                     Database = this.ConnectionInfo.Database,
-                    IntegratedSecurity = this.InvokeRequired,
+                    IntegratedSecurity = this.ConnectionInfo.IntegratedSecurity,
                     UserId = this.ConnectionInfo.UserId,
-                    Password =this.ConnectionInfo.Password,
+                    Password = this.ConnectionInfo.Password,
                     IsDba = this.ConnectionInfo.IsDba,
                     UseSsl = this.ConnectionInfo.UseSsl
                 };
 
-                if (!string.IsNullOrEmpty(oldAccountProfileId))
+                if (!string.IsNullOrEmpty(accountProfileId))
                 {
-                    profile.AccountId = oldAccountProfileId;
+                    profile.AccountId = accountProfileId;
                 }
 
                 profile.Name = profileName;
                 profile.DatabaseType = this.DatabaseType.ToString();
 
-                this.ProflieName = await ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
+                string profileId = await ConnectionProfileManager.Save(profile, this.ucDbAccountInfo.RememberPassword);
 
-                if (SettingManager.Setting.RememberPasswordDuringSession)
+                if(!string.IsNullOrEmpty(profileId))
                 {
-                    if (!this.ConnectionInfo.IntegratedSecurity && !this.ucDbAccountInfo.RememberPassword && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                    if (SettingManager.Setting.RememberPasswordDuringSession)
                     {
-                        AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { Id = profile.AccountId };
+                        if (!this.ConnectionInfo.IntegratedSecurity && !this.ucDbAccountInfo.RememberPassword && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                        {
+                            AccountProfileInfo accountProfileInfo = new AccountProfileInfo() { Id = profile.AccountId };
 
-                        ObjectHelper.CopyProperties(this.ConnectionInfo, accountProfileInfo);
-                        accountProfileInfo.Password = this.ConnectionInfo.Password;
+                            ObjectHelper.CopyProperties(this.ConnectionInfo, accountProfileInfo);
+                            accountProfileInfo.Password = this.ConnectionInfo.Password;
 
-                        DataStore.SetAccountProfileInfo(accountProfileInfo);
+                            DataStore.SetAccountProfileInfo(accountProfileInfo);
+                        }
                     }
-                }
+
+                    this.ProfileId = profileId;                  
+                }                
             }
 
             this.DialogResult = DialogResult.OK;

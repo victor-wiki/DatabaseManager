@@ -28,168 +28,187 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.dgvDatabases = new System.Windows.Forms.DataGridView();
-            this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colVisible = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.btnDelete = new System.Windows.Forms.Button();
-            this.btnClear = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.btnRefresh = new System.Windows.Forms.Button();
-            this.btnVisible = new System.Windows.Forms.Button();
-            this.btnInVisible = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvDatabases)).BeginInit();
-            this.SuspendLayout();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDatabaseVisibility));
+            dgvDatabases = new System.Windows.Forms.DataGridView();
+            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colVisible = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            tsbInvisible = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            tsbVisible = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            tsbDelete = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            tsbClear = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            tsbRefresh = new System.Windows.Forms.ToolStripButton();
+            ((System.ComponentModel.ISupportInitialize)dgvDatabases).BeginInit();
+            toolStrip1.SuspendLayout();
+            SuspendLayout();
             // 
             // dgvDatabases
             // 
-            this.dgvDatabases.AllowUserToAddRows = false;
-            this.dgvDatabases.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvDatabases.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvDatabases.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colId,
-            this.colDatabase,
-            this.colVisible});
-            this.dgvDatabases.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgvDatabases.Location = new System.Drawing.Point(1, 2);
-            this.dgvDatabases.Margin = new System.Windows.Forms.Padding(4);
-            this.dgvDatabases.Name = "dgvDatabases";
-            this.dgvDatabases.ReadOnly = true;
-            this.dgvDatabases.RowHeadersVisible = false;
-            this.dgvDatabases.RowHeadersWidth = 20;
-            this.dgvDatabases.RowTemplate.Height = 23;
-            this.dgvDatabases.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvDatabases.Size = new System.Drawing.Size(616, 413);
-            this.dgvDatabases.TabIndex = 21;
+            dgvDatabases.AllowUserToAddRows = false;
+            dgvDatabases.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dgvDatabases.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvDatabases.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { colId, colDatabase, colVisible });
+            dgvDatabases.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
+            dgvDatabases.Location = new System.Drawing.Point(2, 33);
+            dgvDatabases.Margin = new System.Windows.Forms.Padding(4);
+            dgvDatabases.Name = "dgvDatabases";
+            dgvDatabases.ReadOnly = true;
+            dgvDatabases.RowHeadersVisible = false;
+            dgvDatabases.RowHeadersWidth = 20;
+            dgvDatabases.RowTemplate.Height = 23;
+            dgvDatabases.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dgvDatabases.Size = new System.Drawing.Size(618, 428);
+            dgvDatabases.TabIndex = 21;
             // 
             // colId
             // 
-            this.colId.DataPropertyName = "Id";
-            this.colId.HeaderText = "Id";
-            this.colId.Name = "colId";
-            this.colId.ReadOnly = true;
-            this.colId.Visible = false;
+            colId.DataPropertyName = "Id";
+            colId.HeaderText = "Id";
+            colId.Name = "colId";
+            colId.ReadOnly = true;
+            colId.Visible = false;
             // 
             // colDatabase
             // 
-            this.colDatabase.HeaderText = "Database";
-            this.colDatabase.Name = "colDatabase";
-            this.colDatabase.ReadOnly = true;
-            this.colDatabase.Width = 250;
+            colDatabase.HeaderText = "Database";
+            colDatabase.Name = "colDatabase";
+            colDatabase.ReadOnly = true;
+            colDatabase.Width = 250;
             // 
             // colVisible
             // 
-            this.colVisible.HeaderText = "Visible";
-            this.colVisible.Name = "colVisible";
-            this.colVisible.ReadOnly = true;
-            this.colVisible.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            colVisible.HeaderText = "Visible";
+            colVisible.Name = "colVisible";
+            colVisible.ReadOnly = true;
+            colVisible.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             // 
-            // btnDelete
+            // toolStrip1
             // 
-            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnDelete.Location = new System.Drawing.Point(316, 423);
-            this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(88, 33);
-            this.btnDelete.TabIndex = 24;
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsbInvisible, toolStripSeparator1, tsbVisible, toolStripSeparator2, tsbDelete, toolStripSeparator3, tsbClear, toolStripSeparator4, tsbRefresh });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Size = new System.Drawing.Size(623, 28);
+            toolStrip1.TabIndex = 43;
+            toolStrip1.Text = "toolStrip1";
             // 
-            // btnClear
+            // tsbInvisible
             // 
-            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClear.Location = new System.Drawing.Point(420, 423);
-            this.btnClear.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(88, 33);
-            this.btnClear.TabIndex = 25;
-            this.btnClear.Text = "Clear";
-            this.btnClear.UseVisualStyleBackColor = true;
-            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            tsbInvisible.AutoSize = false;
+            tsbInvisible.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbInvisible.Image = (System.Drawing.Image)resources.GetObject("tsbInvisible.Image");
+            tsbInvisible.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbInvisible.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbInvisible.Name = "tsbInvisible";
+            tsbInvisible.Size = new System.Drawing.Size(25, 25);
+            tsbInvisible.Text = "Add";
+            tsbInvisible.Click += tsbInvisible_Click;
             // 
-            // btnClose
+            // toolStripSeparator1
             // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClose.Location = new System.Drawing.Point(524, 423);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(88, 33);
-            this.btnClose.TabIndex = 26;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 28);
             // 
-            // btnRefresh
+            // tsbVisible
             // 
-            this.btnRefresh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnRefresh.Location = new System.Drawing.Point(4, 423);
-            this.btnRefresh.Margin = new System.Windows.Forms.Padding(4);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(88, 33);
-            this.btnRefresh.TabIndex = 27;
-            this.btnRefresh.Text = "Refresh";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            tsbVisible.AutoSize = false;
+            tsbVisible.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbVisible.Image = (System.Drawing.Image)resources.GetObject("tsbVisible.Image");
+            tsbVisible.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbVisible.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbVisible.Name = "tsbVisible";
+            tsbVisible.Size = new System.Drawing.Size(25, 25);
+            tsbVisible.Text = "Edit";
+            tsbVisible.Click += tsbVisible_Click;
             // 
-            // btnVisible
+            // toolStripSeparator2
             // 
-            this.btnVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnVisible.Location = new System.Drawing.Point(212, 423);
-            this.btnVisible.Margin = new System.Windows.Forms.Padding(4);
-            this.btnVisible.Name = "btnVisible";
-            this.btnVisible.Size = new System.Drawing.Size(88, 33);
-            this.btnVisible.TabIndex = 28;
-            this.btnVisible.Text = "Visibile";
-            this.btnVisible.UseVisualStyleBackColor = true;
-            this.btnVisible.Click += new System.EventHandler(this.btnVisible_Click);
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 28);
             // 
-            // btnInVisible
+            // tsbDelete
             // 
-            this.btnInVisible.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnInVisible.Location = new System.Drawing.Point(108, 423);
-            this.btnInVisible.Margin = new System.Windows.Forms.Padding(4);
-            this.btnInVisible.Name = "btnInVisible";
-            this.btnInVisible.Size = new System.Drawing.Size(88, 33);
-            this.btnInVisible.TabIndex = 29;
-            this.btnInVisible.Text = "Invisible";
-            this.btnInVisible.UseVisualStyleBackColor = true;
-            this.btnInVisible.Click += new System.EventHandler(this.btnInVisible_Click);
+            tsbDelete.AutoSize = false;
+            tsbDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbDelete.Image = (System.Drawing.Image)resources.GetObject("tsbDelete.Image");
+            tsbDelete.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbDelete.Name = "tsbDelete";
+            tsbDelete.Size = new System.Drawing.Size(23, 25);
+            tsbDelete.Text = "Delete";
+            tsbDelete.Click += tsbDelete_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 28);
+            // 
+            // tsbClear
+            // 
+            tsbClear.AutoSize = false;
+            tsbClear.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbClear.Image = (System.Drawing.Image)resources.GetObject("tsbClear.Image");
+            tsbClear.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbClear.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbClear.Name = "tsbClear";
+            tsbClear.Size = new System.Drawing.Size(23, 25);
+            tsbClear.Text = "Clear";
+            tsbClear.Click += tsbClear_Click;
+            // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new System.Drawing.Size(6, 28);
+            // 
+            // tsbRefresh
+            // 
+            tsbRefresh.AutoSize = false;
+            tsbRefresh.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbRefresh.Image = (System.Drawing.Image)resources.GetObject("tsbRefresh.Image");
+            tsbRefresh.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbRefresh.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbRefresh.Name = "tsbRefresh";
+            tsbRefresh.Size = new System.Drawing.Size(25, 25);
+            tsbRefresh.Text = "Manage Prifiles";
+            tsbRefresh.Click += tsbRefresh_Click;
             // 
             // frmDatabaseVisibility
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(619, 465);
-            this.Controls.Add(this.btnInVisible);
-            this.Controls.Add(this.btnVisible);
-            this.Controls.Add(this.btnRefresh);
-            this.Controls.Add(this.btnClose);
-            this.Controls.Add(this.btnDelete);
-            this.Controls.Add(this.btnClear);
-            this.Controls.Add(this.dgvDatabases);
-            this.Name = "frmDatabaseVisibility";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database Visibility";
-            this.Load += new System.EventHandler(this.frmDatabaseVisibility_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvDatabases)).EndInit();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(623, 465);
+            Controls.Add(toolStrip1);
+            Controls.Add(dgvDatabases);
+            Name = "frmDatabaseVisibility";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Database Visibility";
+            Load += frmDatabaseVisibility_Load;
+            ((System.ComponentModel.ISupportInitialize)dgvDatabases).EndInit();
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private System.Windows.Forms.DataGridView dgvDatabases;
-        private System.Windows.Forms.Button btnDelete;
-        private System.Windows.Forms.Button btnClear;
-        private System.Windows.Forms.Button btnClose;
-        private System.Windows.Forms.Button btnRefresh;
-        private System.Windows.Forms.Button btnVisible;
-        private System.Windows.Forms.Button btnInVisible;
         private System.Windows.Forms.DataGridViewTextBoxColumn colId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDatabase;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colVisible;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripButton tsbInvisible;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripButton tsbVisible;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripButton tsbDelete;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton tsbClear;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
+        private System.Windows.Forms.ToolStripButton tsbRefresh;
     }
 }

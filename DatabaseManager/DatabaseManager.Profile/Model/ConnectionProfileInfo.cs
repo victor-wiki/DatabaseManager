@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Model
 {
     public class ConnectionProfileInfo : ConnectionInfo
     {
@@ -9,6 +9,7 @@ namespace DatabaseManager.Profile
         public string Name { get; set; }
         public string DatabaseType { get; set; }
         public bool Visible { get; set; } = true;
+        public int Priority { get; set; }
 
         public string ConnectionDescription => $"server={this.Server}{(string.IsNullOrEmpty(this.Port) ? "" : (":" + this.Port))};database={this.Database}";
 

@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using DatabaseManager.Helper;
-using DatabaseManager.Profile;
-using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
-using DatabaseInterpreter.Core;
-using DatabaseManager.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
 using DatabaseManager.Data;
 using DatabaseManager.Forms;
+using DatabaseManager.Helper;
+using DatabaseManager.Model;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
 using FontAwesome.Sharp;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -72,6 +69,7 @@ namespace DatabaseManager.Controls
         public void LoadDbTypes()
         {
             var databaseTypes = DbInterpreterHelper.GetDisplayDatabaseTypes();
+
             foreach (var value in databaseTypes)
             {
                 this.cboDbType.Items.Add(value.ToString());
@@ -85,6 +83,10 @@ namespace DatabaseManager.Controls
                 {
                     this.cboDbType.SelectedIndex = 0;
                 }
+                else if(this.cboAccount.Items.Count ==0)
+                {
+                    this.LoadConnectionsByDbType(this.cboDbType.Text);
+                }
             }
 
             this.btnConnect.Focus();
@@ -97,16 +99,21 @@ namespace DatabaseManager.Controls
 
             if (hasValue)
             {
-                DatabaseType databaseType = ManagerUtil.GetDatabaseType(this.cboDbType.Text);
+                this.LoadConnectionsByDbType(this.cboDbType.Text);         
+            }
+        }
 
-                if(!ManagerUtil.IsFileConnection(databaseType))
-                {
-                    this.LoadAccounts();
-                }
-                else
-                {
-                    this.LoadFileConnections();
-                }                
+        private void LoadConnectionsByDbType(string dbType)
+        {
+            DatabaseType databaseType = ManagerUtil.GetDatabaseType(dbType);
+
+            if (!ManagerUtil.IsFileConnection(databaseType))
+            {
+                this.LoadAccounts();
+            }
+            else
+            {
+                this.LoadFileConnections();
             }
         }
 
@@ -144,7 +151,7 @@ namespace DatabaseManager.Controls
         {
             string type = this.cboDbType.Text;
 
-            var profiles = (await FileConnectionProfileManager.GetProfiles(type)).OrderBy(item => item.Description);
+            var profiles = (await FileConnectionProfileManager.GetProfiles(type));
 
             this.cboAccount.DataSource = profiles.ToList();
             this.cboAccount.DisplayMember = nameof(FileConnectionProfileInfo.Description);

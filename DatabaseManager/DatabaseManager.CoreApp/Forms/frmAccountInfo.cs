@@ -2,7 +2,8 @@
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Data;
-using DatabaseManager.Profile;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Data;
 using System.Linq;

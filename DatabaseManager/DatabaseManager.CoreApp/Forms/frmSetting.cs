@@ -1,14 +1,12 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
-using DatabaseManager.Controls;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
-using DatabaseManager.Profile;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;

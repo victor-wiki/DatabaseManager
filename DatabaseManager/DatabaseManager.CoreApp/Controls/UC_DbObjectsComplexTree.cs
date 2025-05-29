@@ -8,6 +8,8 @@ using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DatabaseManager.Profile;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;

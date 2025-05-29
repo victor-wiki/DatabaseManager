@@ -1,13 +1,14 @@
 ﻿using DatabaseInterpreter.Model;
 using System;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Model
 {
     public class AccountProfileInfo : DatabaseAccountInfo
     {
         public string Id { get; set; }
 
         public string DatabaseType { get; set; }
+        public int Priority { get; set; }
       
         public string Description
         {

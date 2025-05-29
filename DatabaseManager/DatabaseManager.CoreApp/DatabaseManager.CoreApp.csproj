@@ -8,13 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.11</Version>
+    <Version>2.2.12</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. show the message of data sync just in one line for a table;
-2. replace some images with fontawesome icons.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. move the "Edit" and "Delete" of connection profile to setting form;
+2. add order for connection profiles.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.11</AssemblyVersion>
-    <FileVersion>2.2.11</FileVersion>
+    <AssemblyVersion>2.2.12</AssemblyVersion>
+    <FileVersion>2.2.12</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

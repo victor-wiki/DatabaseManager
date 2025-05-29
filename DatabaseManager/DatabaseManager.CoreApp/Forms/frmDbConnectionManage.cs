@@ -1,24 +1,25 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseManager.Profile;
-using DatabaseManager.Helper;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Forms;
-using DatabaseManager.Model;
+using DatabaseManager.Helper;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
+using FontAwesome.Sharp;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DatabaseManager
 {
     public partial class frmDbConnectionManage : Form
     {
         private string actionButtonText = "Manage";
+        private Rectangle dragBox;
+        private int rowIndexFromMouseDown;
+
         public bool IsForSelecting { get; set; }
         public DatabaseType DatabaseType { get; set; }
 
@@ -33,7 +34,7 @@ namespace DatabaseManager
         public frmDbConnectionManage(DatabaseType databaseType)
         {
             InitializeComponent();
-            this.DatabaseType = databaseType;            
+            this.DatabaseType = databaseType;
         }
 
         private void frmDbConnectionManage_Load(object sender, EventArgs e)
@@ -43,29 +44,36 @@ namespace DatabaseManager
 
         private void InitControls()
         {
+            this.tsbAdd.Image = IconImageHelper.GetImageByFontType(IconChar.Plus, IconFont.Solid, null, this.tsbAdd.Width);
+            this.tsbEdit.Image = IconImageHelper.GetImage(IconChar.PenToSquare, null, this.tsbEdit.Width);
+            this.tsbDelete.Image = IconImageHelper.GetImage(IconChar.Times, null, this.tsbDelete.Width);
+            this.tsbClear.Image = IconImageHelper.GetImage(IconChar.Trash, null, this.tsbClear.Width);
+            this.tsbSave.Image = IconImageHelper.GetImage(IconChar.Save, null, this.tsbSave.Width);
+            this.tsbManageProfile.Image = IconImageHelper.GetImage(IconChar.List, null, this.tsbManageProfile.Width);
+            this.tsbManageVisibility.Image = IconImageHelper.GetImageByFontType(IconChar.EyeSlash, IconFont.Solid, null, this.tsbManageVisibility.Width);
+            this.picInfo.Image = IconImageHelper.GetImage(IconChar.InfoCircle, IconImageHelper.TipColor);
+
             this.dgvDbConnection.AutoGenerateColumns = false;
 
             DataGridViewContentAlignment middleCenter = DataGridViewContentAlignment.MiddleCenter;
 
-            this.colIntegratedSecurity.HeaderCell.Style.Alignment = middleCenter;
-            this.colProfiles.HeaderCell.Style.Alignment = middleCenter;
-            this.colDatabaseVisibility.HeaderCell.Style.Alignment = middleCenter;
+            this.colIntegratedSecurity.HeaderCell.Style.Alignment = middleCenter;    
+            this.colPriority.HeaderCell.Style.Alignment = middleCenter;
 
             this.btnSelect.Visible = this.IsForSelecting;
             this.panelDbType.Visible = !this.IsForSelecting;
-            this.panelOperation.Visible = !this.IsForSelecting;
+            this.toolStrip1.Visible = !this.IsForSelecting;
 
             if (this.IsForSelecting)
             {
                 this.Text = "Select Connection";
                 this.dgvDbConnection.MultiSelect = false;
-                this.dgvDbConnection.Top = this.panelDbType.Top;
-                this.dgvDbConnection.Height += this.panelDbType.Height;
+                this.dgvDbConnection.Top = this.toolStrip1.Top;
+                this.dgvDbConnection.Height += this.panelDbType.Height + this.toolStrip1.Height;          
+                this.dgvDbConnection.AutoResizeColumnHeadersHeight();              
 
-                this.colProfiles.Visible = false;
-                this.colDatabaseVisibility.Visible = false;
-                this.dgvDbConnection.AutoResizeColumnHeadersHeight();
-                this.Width -= (this.colProfiles.Width + this.colDatabaseVisibility.Width -10);
+                this.panelInfo.Visible = false;
+                this.colCheck.Visible = false;
             }
 
             this.LoadDbTypes();
@@ -93,48 +101,30 @@ namespace DatabaseManager
             }
         }
 
-        private void btnAdd_Click(object sender, EventArgs e)
+        private List<DataGridViewRow> GetCheckedRows()
         {
-            string databaseType = this.cboDbType.Text;
+            List<DataGridViewRow> checkedRows = new List<DataGridViewRow>();
 
-            if (string.IsNullOrEmpty(databaseType))
+            var rows = this.dgvDbConnection.Rows;
+
+            foreach (DataGridViewRow row in rows)
             {
-                MessageBox.Show("Please select a database type first.");
-            }
-            else
-            {
-                DatabaseType dbType = ManagerUtil.GetDatabaseType(databaseType);
+                bool isChecked = Convert.ToBoolean(row.Cells[this.colCheck.Name].Value.ToString());
 
-                bool isFileConnection = this.IsFileConnection();
-
-                if (!isFileConnection)
+                if (isChecked)
                 {
-                    frmAccountInfo form = new frmAccountInfo(dbType);
-                    DialogResult result = form.ShowDialog();
-
-                    if (result == DialogResult.OK)
-                    {
-                        this.LoadAccounts();
-                    }
-                }
-                else
-                {
-                    frmFileConnection form = new frmFileConnection(dbType);
-                    DialogResult result = form.ShowDialog();
-
-                    if (result == DialogResult.OK)
-                    {
-                        this.LoadFileConnections();
-                    }
+                    checkedRows.Add(row);
                 }
             }
+
+            return checkedRows;
         }
 
-        private async void btnDelete_Click(object sender, EventArgs e)
+        private async void Delete()
         {
-            int count = this.dgvDbConnection.SelectedRows.Count;
+            List<DataGridViewRow> checkedRows = this.GetCheckedRows();
 
-            if (count == 0)
+            if (checkedRows.Count == 0)
             {
                 MessageBox.Show("No any row selected.");
                 return;
@@ -145,9 +135,9 @@ namespace DatabaseManager
                 List<string> ids = new List<string>();
                 List<int> rowIndexes = new List<int>();
 
-                for (int i = count - 1; i >= 0; i--)
+                foreach (DataGridViewRow row in checkedRows)
                 {
-                    int rowIndex = this.dgvDbConnection.SelectedRows[i].Index;
+                    int rowIndex = row.Index;
 
                     ids.Add(this.dgvDbConnection.Rows[rowIndex].Cells[this.colId.Name].Value.ToString());
 
@@ -156,14 +146,17 @@ namespace DatabaseManager
 
                 bool success = await this.DeleteConnections(ids);
 
-                if(success)
+                if (success)
                 {
+                    rowIndexes.Sort();
+                    rowIndexes.Reverse();
+
                     rowIndexes.ForEach(item => { this.dgvDbConnection.Rows.RemoveAt(item); });
-                }                
+                }
             }
         }
 
-        private async void btnClear_Click(object sender, EventArgs e)
+        private async void Clear()
         {
             int count = this.dgvDbConnection.Rows.Count;
 
@@ -184,10 +177,10 @@ namespace DatabaseManager
 
                 bool success = await this.DeleteConnections(ids);
 
-                if(success)
+                if (success)
                 {
                     this.dgvDbConnection.Rows.Clear();
-                }               
+                }
             }
         }
 
@@ -214,7 +207,7 @@ namespace DatabaseManager
             {
                 bool isFileConnection = this.IsFileConnection();
 
-                this.SetColumnsVisible(isFileConnection);
+                this.SetControlStatus(isFileConnection);
 
                 if (!isFileConnection)
                 {
@@ -229,7 +222,7 @@ namespace DatabaseManager
             }
         }
 
-        private void SetColumnsVisible(bool isFileConnection)
+        private void SetControlStatus(bool isFileConnection)
         {
             this.colServer.Visible = !isFileConnection;
             this.colPort.Visible = !isFileConnection;
@@ -237,11 +230,11 @@ namespace DatabaseManager
             this.colUserName.Visible = !isFileConnection;
             this.colName.Visible = isFileConnection;
             this.colDatabase.Visible = isFileConnection;
-            this.colProfiles.Visible =!this.IsForSelecting && !isFileConnection;
+            this.tsbManageProfile.Enabled = !this.IsForSelecting && !isFileConnection;
 
             DatabaseType dbType = ManagerUtil.GetDatabaseType(this.cboDbType.Text);
 
-            this.colDatabaseVisibility.Visible = !this.IsForSelecting && !(dbType == DatabaseType.Oracle || dbType == DatabaseType.Sqlite);
+            this.tsbManageVisibility.Enabled = !this.IsForSelecting && !(dbType == DatabaseType.Oracle || dbType == DatabaseType.Sqlite);
         }
 
         private bool IsFileConnection()
@@ -266,7 +259,7 @@ namespace DatabaseManager
 
             foreach (AccountProfileInfo profile in profiles)
             {
-                this.dgvDbConnection.Rows.Add(profile.Id, profile.Server, profile.Port, profile.IntegratedSecurity, profile.UserId,  null, null, this.actionButtonText, this.actionButtonText);
+                this.dgvDbConnection.Rows.Add(false, profile.Id, profile.Server, profile.Port, profile.IntegratedSecurity, profile.UserId, this.actionButtonText, this.actionButtonText, profile.Priority);
             }
 
             this.dgvDbConnection.Tag = profiles;
@@ -282,14 +275,34 @@ namespace DatabaseManager
 
             foreach (var profile in profiles)
             {
-                this.dgvDbConnection.Rows.Add(profile.Id, null, null, null, null, profile.Name, profile.Database, this.actionButtonText, this.actionButtonText);
+                this.dgvDbConnection.Rows.Add(false, profile.Id, null, null, profile.Name, profile.Database, this.actionButtonText, this.actionButtonText, profile.Priority);
             }
 
             this.dgvDbConnection.Tag = profiles;
         }
 
+        private DataGridViewRow GetSelecteRow()
+        {
+            var rows = this.dgvDbConnection.SelectedRows;
+
+            if(rows.Count ==0)
+            {
+                return null;
+            }
+
+            return rows[0];
+        }
+
         private void btnEdit_Click(object sender, EventArgs e)
         {
+            var row = this.GetSelecteRow();
+
+            if(row == null)
+            {
+                MessageBox.Show("Please select one row first.");
+                return;
+            }
+
             this.Edit();
         }
 
@@ -329,14 +342,6 @@ namespace DatabaseManager
 
         private string GetSelectedId()
         {
-            int count = this.dgvDbConnection.SelectedRows.Count;
-
-            if (count == 0)
-            {
-                MessageBox.Show("Please select row by clicking row header.");
-                return null;
-            }
-
             string id = this.dgvDbConnection.SelectedRows[0].Cells[this.colId.Name].Value.ToString();
 
             return id;
@@ -431,41 +436,262 @@ namespace DatabaseManager
         private void dgvDbConnection_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             this.dgvDbConnection.ClearSelection();
+        }       
+
+        private void Add()
+        {
+            string databaseType = this.cboDbType.Text;
+
+            if (string.IsNullOrEmpty(databaseType))
+            {
+                MessageBox.Show("Please select a database type first.");
+            }
+            else
+            {
+                DatabaseType dbType = ManagerUtil.GetDatabaseType(databaseType);
+
+                bool isFileConnection = this.IsFileConnection();
+
+                if (!isFileConnection)
+                {
+                    frmAccountInfo form = new frmAccountInfo(dbType);
+                    DialogResult result = form.ShowDialog();
+
+                    if (result == DialogResult.OK)
+                    {
+                        this.LoadAccounts();
+                    }
+                }
+                else
+                {
+                    frmFileConnection form = new frmFileConnection(dbType);
+                    DialogResult result = form.ShowDialog();
+
+                    if (result == DialogResult.OK)
+                    {
+                        this.LoadFileConnections();
+                    }
+                }
+            }
         }
 
-        private void dgvDbConnection_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void tsbAdd_Click(object sender, EventArgs e)
         {
-            if (e.RowIndex < 0)
+            this.Add();
+        }
+
+        private void tsbEdit_Click(object sender, EventArgs e)
+        {
+            this.Edit();
+        }
+
+        private void tsbDelete_Click(object sender, EventArgs e)
+        {
+            this.dgvDbConnection.EndEdit();
+
+            this.Delete();
+        }
+
+        private void tsbClear_Click(object sender, EventArgs e)
+        {
+            this.Clear();
+        }
+
+        private void dgvDbConnection_MouseDown(object sender, MouseEventArgs e)
+        {
+            this.rowIndexFromMouseDown = this.dgvDbConnection.HitTest(e.X, e.Y).RowIndex;
+
+            if (rowIndexFromMouseDown != -1)
             {
+                Size dragSize = SystemInformation.DragSize;
+
+                this.dragBox = new Rectangle(new Point(e.X - (dragSize.Width / 2), e.Y - (dragSize.Height / 2)), dragSize);
+            }
+            else
+            {
+                this.dragBox = Rectangle.Empty;
+            }
+        }
+
+        private void dgvDbConnection_MouseMove(object sender, MouseEventArgs e)
+        {
+            if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
+            {
+                if (this.dragBox != Rectangle.Empty && !dragBox.Contains(e.X, e.Y))
+                {
+                    DragDropEffects dropEffect = this.dgvDbConnection.DoDragDrop(
+                          this.dgvDbConnection.Rows[rowIndexFromMouseDown],
+                          DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void dgvDbConnection_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Move;
+        }
+
+        private void dgvDbConnection_DragDrop(object sender, DragEventArgs e)
+        {
+            Point clientPoint = this.dgvDbConnection.PointToClient(new Point(e.X, e.Y));
+
+            int index = this.dgvDbConnection.HitTest(clientPoint.X, clientPoint.Y).RowIndex;
+
+            if (index < 0)
+            {
+                index = this.dgvDbConnection.RowCount - 1;
+            }
+
+            if (this.rowIndexFromMouseDown != index)
+            {
+                if (e.Effect == DragDropEffects.Move)
+                {
+                    DataGridViewRow rowToMove = e.Data.GetData(typeof(DataGridViewRow)) as DataGridViewRow;
+
+                    this.dgvDbConnection.Rows.RemoveAt(this.rowIndexFromMouseDown);
+                    this.dgvDbConnection.Rows.Insert(index, rowToMove);
+
+                    this.UpdatePriorities();
+                }
+            }
+        }
+
+        private async void UpdatePriorities()
+        {
+            bool hasChanged = false;
+
+            for (int i = 0; i < this.dgvDbConnection.RowCount; i++)
+            {
+                int rowNumber = i + 1;
+
+                int oldPriority = Convert.ToInt32(this.dgvDbConnection.Rows[i].Cells[this.colPriority.Name].Value);
+
+                this.dgvDbConnection.Rows[i].Cells[this.colPriority.Name].Value = rowNumber;
+
+                if (oldPriority != rowNumber)
+                {
+                    hasChanged = true;
+                }
+            }
+
+            if (hasChanged)
+            {
+                this.tsbSave.Enabled = true;
+            }
+        }
+
+        private void tsbSave_Click(object sender, EventArgs e)
+        {
+            this.Save();
+        }
+
+        private async void Save()
+        {
+            bool isFileConnection = this.IsFileConnection();
+
+            IEnumerable<AccountProfileInfo> accountProfiles = null;
+            IEnumerable<FileConnectionProfileInfo> fileConnectionProfiles = null;
+
+            if (!isFileConnection)
+            {
+                accountProfiles = this.dgvDbConnection.Tag as IEnumerable<AccountProfileInfo>;
+            }
+            else
+            {
+                fileConnectionProfiles = this.dgvDbConnection.Tag as IEnumerable<FileConnectionProfileInfo>;
+            }
+
+            Dictionary<string, int> dictPriorities = new Dictionary<string, int>();
+
+            for (int i = 0; i < this.dgvDbConnection.RowCount; i++)
+            {
+                string id = this.dgvDbConnection.Rows[i].Cells[this.colId.Name].Value.ToString();
+
+                int priority = Convert.ToInt32(this.dgvDbConnection.Rows[i].Cells[this.colPriority.Name].Value);
+
+                int oldPriority = isFileConnection ? fileConnectionProfiles.FirstOrDefault(item => item.Id == id).Priority :
+                    accountProfiles.FirstOrDefault(item => item.Id == id).Priority;
+
+                if (priority != oldPriority)
+                {
+                    dictPriorities.Add(id, priority);
+                }
+            }
+
+            int affectedRows = await ProfileBaseManager.UpdatePriorities(isFileConnection ? ProfileType.FileConnection : ProfileType.Account, dictPriorities);
+
+            if (affectedRows > 0)
+            {
+                if (isFileConnection)
+                {
+                    foreach (var profile in fileConnectionProfiles)
+                    {
+                        string id = profile.Id;
+
+                        if (dictPriorities.ContainsKey(id))
+                        {
+                            profile.Priority = dictPriorities[id];
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var profile in accountProfiles)
+                    {
+                        string id = profile.Id;
+
+                        if (dictPriorities.ContainsKey(id))
+                        {
+                            profile.Priority = dictPriorities[id];
+                        }
+                    }
+                }
+
+                this.tsbSave.Enabled = false;
+
+                MessageBox.Show("Saved.");
+            }
+            else
+            {
+                MessageBox.Show("No rows affected.");
+            }
+        }
+
+        private void tsbManageProfile_Click(object sender, EventArgs e)
+        {
+            var row = this.GetSelecteRow();
+
+            if (row == null)
+            {
+                MessageBox.Show("Please select one row first.");
                 return;
             }
 
-            var row = DataGridViewHelper.GetCurrentRow(this.dgvDbConnection);
+            frmDbConnectionProfileManage form = new frmDbConnectionProfileManage(this.GetSelectedId()) { DatabaseType = ManagerUtil.GetDatabaseType(this.cboDbType.Text) };
 
-            if(row == null)
+            form.ShowDialog();
+        }
+
+        private void tsbManageVisibility_Click(object sender, EventArgs e)
+        {
+            var row = this.GetSelecteRow();
+
+            if (row == null)
             {
+                MessageBox.Show("Please select one row first.");
                 return;
             }
 
-            string id = row.Cells[this.colId.Name].Value.ToString();
+            string id = this.GetSelectedId();
 
-            if (e.ColumnIndex == this.colProfiles.Index)
-            {
-                frmDbConnectionProfileManage form = new frmDbConnectionProfileManage(id);
+            frmDatabaseVisibility form = new frmDatabaseVisibility(id);
 
-                form.ShowDialog();
-            }
-            else if(e.ColumnIndex == this.colDatabaseVisibility.Index)
-            {
-                frmDatabaseVisibility form = new frmDatabaseVisibility(id);
+            var profile = (this.dgvDbConnection.Tag as IEnumerable<AccountProfileInfo>).FirstOrDefault(item => item.Id == id);
 
-                var profile = (this.dgvDbConnection.Tag as IEnumerable<AccountProfileInfo>).FirstOrDefault(item=>item.Id == id);
+            form.AccountProfileInfo = profile;
+            form.DatabaseType = ManagerUtil.GetDatabaseType(this.cboDbType.Text);
 
-                form.AccountProfileInfo = profile;
-                form.DatabaseType = ManagerUtil.GetDatabaseType(this.cboDbType.Text);
-
-                form.ShowDialog();
-            }
+            form.ShowDialog();
         }
     }
 }

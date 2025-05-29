@@ -1,5 +1,5 @@
-﻿namespace DatabaseManager.Profile
-{
+﻿namespace DatabaseManager.Profile.Model
+{ 
     public class PersonalSetting
     {
         public int Id { get; set; }

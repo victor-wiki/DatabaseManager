@@ -15,7 +15,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace DatabaseManager
 {
@@ -29,8 +28,7 @@ namespace DatabaseManager
         private bool useSourceConnector = true;
         private CancellationTokenSource cancellationTokenSource;
         private IEnumerable<CheckBox> configCheckboxes;
-        private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
-        private Color tipImageColor = Color.SkyBlue;       
+        private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();       
 
         public frmConvert()
         {
@@ -56,7 +54,7 @@ namespace DatabaseManager
             TextBox.CheckForIllegalCrossThreadCalls = false;
             CheckBox.CheckForIllegalCrossThreadCalls = false;
 
-            Image tipImage = IconImageHelper.GetImage(IconChar.InfoCircle, this.tipImageColor);
+            Image tipImage = IconImageHelper.GetImage(IconChar.InfoCircle, IconImageHelper.TipColor);
             this.picTip1.Image = tipImage;
             this.picTip2.Image = tipImage;
 
@@ -178,6 +176,7 @@ namespace DatabaseManager
             if (options != null)
             {
                 string outputFolder = this.txtOutputFolder.Text.Trim();
+
                 foreach (DbInterpreterOption option in options)
                 {
                     if (Directory.Exists(outputFolder))
@@ -256,12 +255,12 @@ namespace DatabaseManager
 
             if (this.chkGenerateSourceScripts.Checked)
             {
-                sourceScriptOption.ScriptOutputMode = sourceScriptOption.ScriptOutputMode | GenerateScriptOutputMode.WriteToFile;
+                sourceScriptOption.ScriptOutputMode |= GenerateScriptOutputMode.WriteToFile;
             }
 
             if (this.chkOutputScripts.Checked)
             {
-                targetScriptOption.ScriptOutputMode = targetScriptOption.ScriptOutputMode | GenerateScriptOutputMode.WriteToFile;
+                targetScriptOption.ScriptOutputMode |= GenerateScriptOutputMode.WriteToFile;
             }
 
             if (this.chkTreatBytesAsNull.Checked)
@@ -274,9 +273,7 @@ namespace DatabaseManager
             targetScriptOption.TableScriptsGenerateOption.GenerateConstraint = this.chkGenerateCheckConstraint.Checked;
             targetScriptOption.TableScriptsGenerateOption.GenerateComment = this.chkGenerateComment.Checked;
 
-            GenerateScriptMode scriptMode = this.GetGenerateScriptMode();
-
-            targetScriptOption.ScriptMode = scriptMode;
+            GenerateScriptMode scriptMode = this.GetGenerateScriptMode();           
 
             if (scriptMode == GenerateScriptMode.None)
             {
@@ -288,6 +285,7 @@ namespace DatabaseManager
             DbConveterInfo target = new DbConveterInfo() { DbInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, targetScriptOption) };
 
             bool iscancelled = false;
+
             try
             {
                 using (this.dbConverter = new DbConverter(source, target))

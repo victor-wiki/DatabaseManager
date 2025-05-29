@@ -14,8 +14,7 @@ namespace DatabaseInterpreter.Model
         public bool ExcludeGeometryForData { get; set; }
         public bool ExcludeIdentityForData { get; set; }
         public bool ShowTextForGeometry { get; set; }
-        public DatabaseObjectFetchMode ObjectFetchMode = DatabaseObjectFetchMode.Details;
-        public GenerateScriptMode ScriptMode { get; set; }
+        public DatabaseObjectFetchMode ObjectFetchMode = DatabaseObjectFetchMode.Details;       
         public GenerateScriptOutputMode ScriptOutputMode { get; set; }
         public string ScriptOutputFolder { get; set; } = "output";
         public bool GetTableAllObjects { get; set; }
@@ -23,8 +22,7 @@ namespace DatabaseInterpreter.Model
         public TableScriptsGenerateOption TableScriptsGenerateOption = new TableScriptsGenerateOption();
         public bool ThrowExceptionWhenErrorOccurs { get; set; } = true;
         public bool RequireInfoMessage { get; set; }
-        public bool BulkCopy { get; set; }
-        public bool DetectDateTimeTypeByValues { get; set; }
+        public bool BulkCopy { get; set; }       
         public bool IncludePrimaryKeyWhenGetTableIndex { get; set; }
     }
 

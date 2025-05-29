@@ -1,13 +1,13 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class FileConnectionProfileManager : ProfileBaseManager
     {
@@ -38,7 +38,7 @@ namespace DatabaseManager.Profile
 
                     SqlBuilder sb = new SqlBuilder();
 
-                    sb.Append(@"SELECT Id,DatabaseType,SubType,Database,DatabaseVersion,EncryptionType,HasPassword,Password,Name 
+                    sb.Append(@"SELECT Id,DatabaseType,SubType,Database,DatabaseVersion,EncryptionType,HasPassword,Password,Name,Priority 
                                 FROM FileConnection
                                 WHERE 1=1"
                     );
@@ -68,6 +68,8 @@ namespace DatabaseManager.Profile
 
                         para.Add("@Database", database);
                     }
+
+                    sb.Append(Environment.NewLine + "ORDER BY Priority");
 
                     profiles = await connection.QueryAsync<FileConnectionProfileInfo>(sb.Content, para);
 
@@ -122,10 +124,24 @@ namespace DatabaseManager.Profile
 
                     if (oldProfile == null)
                     {
+                        string sql = $"SELECT IFNULL(MAX(Priority),0) as MaxId FROM FileConnection WHERE DatabaseType=@DatabaseType";
+
+                        Dictionary<string, object> para = new Dictionary<string, object>();
+                        para.Add("@DatabaseType", info.DatabaseType);
+
+                        int? maxId = (await connection.QueryAsync<int>(sql, para))?.FirstOrDefault();
+
+                        if (maxId.HasValue == false)
+                        {
+                            maxId = 0;
+                        }
+
+                        int priority = maxId.Value + 1;
+
                         id = Guid.NewGuid().ToString();
 
-                        string sql = $@"INSERT INTO FileConnection(Id,DatabaseType,SubType,Database,DatabaseVersion,EncryptionType,HasPassword,Password,Name)
-                                       VALUES('{id}',@DbType,@SubType,@Database,@DatabaseVersion,@EncryptionType,{ValueHelper.BooleanToInteger(info.HasPassword)},@Password,@Name)";
+                        sql = $@"INSERT INTO FileConnection(Id,DatabaseType,SubType,Database,DatabaseVersion,EncryptionType,HasPassword,Password,Name,Priority)
+                                       VALUES('{id}',@DbType,@SubType,@Database,@DatabaseVersion,@EncryptionType,{ValueHelper.BooleanToInteger(info.HasPassword)},@Password,@Name,{priority})";
 
                         var cmd = connection.CreateCommand();
                         cmd.CommandText = sql;

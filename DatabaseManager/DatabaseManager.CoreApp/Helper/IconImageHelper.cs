@@ -7,6 +7,7 @@ namespace DatabaseManager.Helper
     {
         public static readonly Color DefaultIconColor = ColorTranslator.FromHtml("#6495ED");
         public static readonly Color DataViewerToolbarColor = ColorTranslator.FromHtml("#1E90FF");
+        public static readonly Color TipColor = Color.DodgerBlue;
 
         public static int DefaultIconSize = 20;
 

@@ -1,4 +1,4 @@
-﻿namespace DatabaseManager.Profile
+﻿namespace DatabaseManager.Profile.Model
 {
     public class FileConnectionProfileInfo
     {
@@ -15,6 +15,7 @@
         public string Password { get; set; }
 
         public string Name { get; set; }
+        public int Priority { get; set; }
 
         public string Description
         {

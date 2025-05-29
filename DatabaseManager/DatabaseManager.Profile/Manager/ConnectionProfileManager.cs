@@ -2,14 +2,16 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
+using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Channels;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class ConnectionProfileManager : ProfileBaseManager
     {
@@ -26,6 +28,11 @@ namespace DatabaseManager.Profile
 
         public static async Task<ConnectionProfileInfo> GetProfileById(string id)
         {
+            if(string.IsNullOrEmpty(id))
+            {
+                return null;
+            }
+
             return (await GetProfiles(new ProfileFilter() { Id = id }))?.FirstOrDefault();
         }
 
@@ -42,9 +49,9 @@ namespace DatabaseManager.Profile
                     SqlBuilder sb = new SqlBuilder();
 
                     sb.Append($@"SELECT c.Id,c.AccountId, DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,UseSsl,
-                                c.Name,c.Database,c.Visible
+                                c.Name,c.Database,c.Visible,c.Priority
                                 FROM Connection c 
-                                JOIN Account a ON A.Id=c.AccountId
+                                JOIN Account a ON a.Id=c.AccountId
                                 WHERE 1=1");
 
 
@@ -83,6 +90,8 @@ namespace DatabaseManager.Profile
                         para.Add("@Name", name);
                     }
 
+                    sb.Append(Environment.NewLine + "ORDER BY a.Priority,c.Priority");
+
                     profiles = await connection.QueryAsync<ConnectionProfileInfo>(sb.Content, para);
 
                     if (profiles != null)
@@ -99,12 +108,10 @@ namespace DatabaseManager.Profile
             }
 
             return profiles;
-        }
+        }     
 
-        public static async Task<ConnectionInfo> GetConnectionInfo(string dbType, string name)
+        public static ConnectionInfo GetConnectionInfoByProfileInfo(ConnectionProfileInfo profile)
         {
-            ConnectionProfileInfo profile = (await GetProfiles(new ProfileFilter() { DatabaseType = dbType, Name = name }))?.FirstOrDefault();
-
             if (profile != null)
             {
                 ConnectionInfo connectionInfo = new ConnectionInfo()
@@ -126,105 +133,110 @@ namespace DatabaseManager.Profile
             return null;
         }
 
-        public static async Task<string> Save(ConnectionProfileInfo info, bool rememberPassword)
+        public static async Task<bool> IsNameExisted(bool isAdd, string accountId,  string name, string id)
         {
-            string password = info.Password;
-
-            if (info.IntegratedSecurity || !rememberPassword)
-            {
-                password = null;
-            }
-
-            string profileName = info.Name;
-
-            if (string.IsNullOrEmpty(profileName))
-            {
-                profileName = info.ConnectionDescription;
-            }
-
-            AccountProfileInfo accountProfile = null;
-
-            if (!string.IsNullOrEmpty(info.AccountId))
-            {
-                accountProfile = await AccountProfileManager.GetProfile(info.AccountId);
-            }
-
-            bool changed = false;
-
-            if (accountProfile != null)
-            {
-                if ((!accountProfile.IntegratedSecurity && accountProfile.Password != password)
-                    || (accountProfile.ServerVersion != info.ServerVersion))
-                {
-                    changed = true;
-
-                    accountProfile.Password = password;
-
-                    if (!string.IsNullOrEmpty(info.ServerVersion))
-                    {
-                        accountProfile.ServerVersion = info.ServerVersion;
-                    }
-                }
-            }
-            else
-            {
-                changed = true;
-
-                accountProfile = new AccountProfileInfo()
-                {
-                    DatabaseType = info.DatabaseType,
-                    Server = info.Server,
-                    Port = info.Port,
-                    IntegratedSecurity = info.IntegratedSecurity,
-                    ServerVersion = info.ServerVersion,
-                    UserId = info.UserId,
-                    Password = password,
-                    IsDba = info.IsDba,
-                    UseSsl = info.UseSsl
-                };
-            }
-
-            IEnumerable<ConnectionProfileInfo> profiles = Enumerable.Empty<ConnectionProfileInfo>();
-
             if (ExistsProfileDataFile())
             {
-                profiles = await GetProfiles(info.DatabaseType);
+                using (var connection = CreateDbConnection())
+                {
+                    string sql = "SELECT 1 FROM Connection WHERE LOWER(Name)=LOWER(@Name) AND AccountId=@AccountId";
+
+                    if(!isAdd)
+                    {
+                        sql += " AND Id<>@Id";
+                    }
+
+                    Dictionary<string, object> para = new Dictionary<string, object>();
+
+                    para.Add("@AccountId", accountId);
+                    para.Add("@Id", id);
+                    para.Add("@Name", name);
+
+                    int? result = (await connection.QueryAsync<int>(sql, para))?.FirstOrDefault();
+
+                    return result > 0;
+                }
             }
 
-            ConnectionProfileInfo oldProfile = profiles.FirstOrDefault(item => item.Name == info.Name && item.DatabaseType == info.DatabaseType);
+            return false;
+        }
+
+        public static async Task<string> Save(ConnectionProfileInfo info, bool rememberPassword)
+        {
+            string profileId = null;              
+
+            ConnectionProfileInfo oldProfile = null;
+
+            if(!string.IsNullOrEmpty(info.Id))
+            {
+                oldProfile = await GetProfileById(info.Id);
+            }
 
             using (var connection = CreateDbConnection())
             {
                 await connection.OpenAsync();
 
                 var trans = await connection.BeginTransactionAsync();
-
-                if (changed)
-                {
-                    SaveResultInfo resultInfo = await AccountProfileManager.Save(accountProfile, rememberPassword, connection);
-
-                    if (accountProfile.Id == null && resultInfo.Id != null)
-                    {
-                        info.AccountId = accountProfile.Id = resultInfo.Id;
-                    }
-                }
+               
+                int affectedRows = 0;
 
                 if (oldProfile == null)
                 {
+                    string accountProfileId = info.AccountId;
+
+                    if (string.IsNullOrEmpty(accountProfileId))
+                    {
+                        AccountProfileInfo accountProfile = new AccountProfileInfo()
+                        {
+                            DatabaseType = info.DatabaseType,
+                            Server = info.Server,
+                            Port = info.Port,
+                            IntegratedSecurity = info.IntegratedSecurity,
+                            ServerVersion = info.ServerVersion,
+                            UserId = info.UserId,
+                            Password = info.Password,
+                            IsDba = info.IsDba,
+                            UseSsl = info.UseSsl
+                        };
+
+                        SaveResultInfo resultInfo = await AccountProfileManager.Save(accountProfile, rememberPassword, connection);
+
+                        accountProfileId = resultInfo.Id;
+                    }       
+                    
+                    string sql = $"SELECT IFNULL(MAX(Priority),0) as MaxId FROM Connection where AccountId=@AccountId";
+
+                    Dictionary<string, object> para = new Dictionary<string, object>();
+                    para.Add("@AccountId", accountProfileId);
+
+                    int? maxId = (await connection.QueryAsync<int>(sql, para))?.FirstOrDefault();
+
+                    if (maxId.HasValue == false)
+                    {
+                        maxId = 0;
+                    }
+
+                    int priority = maxId.Value + 1;
+
                     string id = Guid.NewGuid().ToString();
 
-                    string sql = $@"INSERT INTO Connection(Id,AccountId,Name,Database)
-                                    VALUES(@Id,@AccountId,@Name,@Database)";
+                    sql = $@"INSERT INTO Connection(Id,AccountId,Name,Database,Priority)
+                                    VALUES(@Id,@AccountId,@Name,@Database,{priority})";
 
                     var cmd = connection.CreateCommand();
                     cmd.CommandText = sql;
 
                     cmd.Parameters.AddWithValue("@Id", id);
-                    cmd.Parameters.AddWithValue("@AccountId", accountProfile.Id);
+                    cmd.Parameters.AddWithValue("@AccountId", accountProfileId);
                     cmd.Parameters.AddWithValue("@Name", info.Name);
                     cmd.Parameters.AddWithValue("@Database", info.Database);
 
-                    await cmd.ExecuteNonQueryAsync();
+                    affectedRows = await cmd.ExecuteNonQueryAsync();        
+                    
+                    if(affectedRows>0)
+                    {
+                        profileId = id;
+                    }
                 }
                 else
                 {
@@ -239,14 +251,19 @@ namespace DatabaseManager.Profile
                     cmd.Parameters.AddWithValue("@Name", info.Name);
                     cmd.Parameters.AddWithValue("@Database", info.Database);
 
-                    await cmd.ExecuteNonQueryAsync();
+                    affectedRows = await cmd.ExecuteNonQueryAsync();
+
+                    if(affectedRows>0)
+                    {
+                        profileId = oldProfile.Id;
+                    }
                 }
 
                 await trans.CommitAsync();
-            }
 
-            return profileName;
-        }
+                return profileId;
+            }          
+        }       
 
         public static async Task<bool> Delete(IEnumerable<string> ids)
         {

@@ -1,22 +1,20 @@
-﻿using System;
+﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
+using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
+using DatabaseManager.Data;
+using DatabaseManager.Forms;
+using DatabaseManager.Helper;
+using DatabaseManager.Profile.Manager;
+using DatabaseManager.Profile.Model;
+using FontAwesome.Sharp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Data;
+using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseManager.Profile;
-using DatabaseManager.Helper;
-using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
-using DatabaseManager.Data;
-using DatabaseManager.Core;
-using DatabaseManager.Forms;
-using System.Collections.Immutable;
-using DatabaseInterpreter.Utility;
-using FontAwesome.Sharp;
 
 namespace DatabaseManager.Controls
 {
@@ -67,8 +65,6 @@ namespace DatabaseManager.Controls
         private void Init()
         {
             this.btnAddDbProfile.Image = IconImageHelper.GetImageByFontType(IconChar.Plus, IconFont.Solid);
-            this.btnConfigDbProfile.Image = IconImageHelper.GetImage(IconChar.Gear);
-            this.btnDeleteDbProfile.Image = IconImageHelper.GetImageByFontType(IconChar.Times, IconFont.Solid, Color.Red);
         }
 
         private void UC_DbConnectionProfile_Load(object sender, EventArgs e)
@@ -111,13 +107,20 @@ namespace DatabaseManager.Controls
 
         private async void GetConnectionInfoByProfile()
         {
+            var selectedItem = this.cboDbProfile.SelectedItem;
+
+            if (selectedItem == null)
+            {
+                return;
+            }
+
             DatabaseType dbType = this.DatabaseType;
 
             if (!ManagerUtil.IsFileConnection(dbType))
             {
-                string profileName = (this.cboDbProfile.SelectedItem as ConnectionProfileInfo)?.Name;
+                string profileId = (selectedItem as ConnectionProfileInfo).Id;
 
-                ConnectionInfo connectionInfo = await ConnectionProfileManager.GetConnectionInfo(dbType.ToString(), profileName);
+                ConnectionInfo connectionInfo = await ConnectionProfileManager.GetProfileById(profileId);
 
                 if (connectionInfo != null)
                 {
@@ -131,7 +134,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                string id = (this.cboDbProfile.SelectedItem as FileConnectionProfileInfo)?.Id;
+                string id = (selectedItem as FileConnectionProfileInfo)?.Id;
 
                 FileConnectionProfileInfo profile = await FileConnectionProfileManager.GetProfileById(id);
 
@@ -181,13 +184,13 @@ namespace DatabaseManager.Controls
                 }
 
                 this.cboDbProfile.Items.Clear();
-                
+
                 this.isDataBinding = true;
 
                 this.cboDbProfile.DisplayMember = displayMember;
                 this.cboDbProfile.ValueMember = valueMember;
 
-                foreach(dynamic profile in profiles)
+                foreach (dynamic profile in profiles)
                 {
                     this.cboDbProfile.Items.Add(profile);
                 }
@@ -198,7 +201,7 @@ namespace DatabaseManager.Controls
                 {
                     if (profiles.Count() > 0)
                     {
-                        this.cboDbProfile.SelectedIndex = 0;
+                        // this.cboDbProfile.SelectedIndex = 0;
                     }
                 }
                 else
@@ -210,8 +213,6 @@ namespace DatabaseManager.Controls
                 }
 
                 bool selected = this.cboDbProfile.Text.Length > 0;
-
-                this.btnConfigDbProfile.Visible = this.btnDeleteDbProfile.Visible = selected;
 
                 this.GetConnectionInfoByProfile();
             }
@@ -260,7 +261,7 @@ namespace DatabaseManager.Controls
             this.AddConnection(true, this.cboDbType.Text);
         }
 
-        private void AddConnection(bool isSource, string type)
+        private async void AddConnection(bool isSource, string type)
         {
             if (string.IsNullOrEmpty(type))
             {
@@ -276,7 +277,14 @@ namespace DatabaseManager.Controls
 
                 if (this.SetConnectionInfo(form))
                 {
-                    this.LoadProfileNames(form.ProflieName);
+                    string profileId = form.ProfileId;
+
+                    ConnectionProfileInfo profile = await ConnectionProfileManager.GetProfileById(profileId);
+
+                    if (profile != null)
+                    {
+                        this.LoadProfileNames(profile.Name);
+                    }
                 }
             }
             else
@@ -412,12 +420,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        private void btnConfigDbProfile_Click(object sender, EventArgs e)
-        {
-            this.ConfigConnection();
-        }
-
-        public void ConfigConnection(bool requriePassword = false)
+        public async void ConfigConnection(bool requriePassword = false)
         {
             string type = this.cboDbType.Text;
             object selectedItem = this.cboDbProfile.SelectedItem;
@@ -441,14 +444,16 @@ namespace DatabaseManager.Controls
                 ConnectionProfileInfo profile = selectedItem as ConnectionProfileInfo;
                 string profileName = profile.Name;
 
-                frmDbConnect frm = new frmDbConnect(dbType, profileName, requriePassword);
+                frmDbConnect frm = new frmDbConnect(dbType, profile.Id, requriePassword);
                 frm.ConnectionInfo = this.GetConnectionInfo(profile);
+
+                var result = await ConnectionProfileManager.GetProfileById(profile.Id);
 
                 this.SetConnectionInfo(frm);
 
-                if (profileName != frm.ProflieName)
+                if (profileName != result.Name)
                 {
-                    this.LoadProfileNames(frm.ProflieName);
+                    this.LoadProfileNames(result.Name);
                 }
 
                 if (this.cboDbProfile.SelectedItem != null)
@@ -492,7 +497,6 @@ namespace DatabaseManager.Controls
             return null;
         }
 
-
         private void SetProfileConnectionInfo(ConnectionProfileInfo profile, ConnectionInfo connectionInfo)
         {
             if (connectionInfo != null)
@@ -514,37 +518,6 @@ namespace DatabaseManager.Controls
             {
                 profile.Database = connectionInfo.Database;
                 profile.Password = connectionInfo.Password;
-            }
-        }
-
-        private void btnDeleteDbProfile_Click(object sender, EventArgs e)
-        {
-            this.DeleteProfile();
-        }
-
-        private async void DeleteProfile()
-        {
-            DialogResult dialogResult = MessageBox.Show("Are you sure to delete the profile?", "Confirm", MessageBoxButtons.YesNo);
-
-            if (dialogResult == DialogResult.Yes)
-            {
-                bool success = false;
-
-                if (!ManagerUtil.IsFileConnection(this.DatabaseType))
-                {
-                    string id = (this.cboDbProfile.SelectedItem as ConnectionProfileInfo).Id;
-                    success = await ConnectionProfileManager.Delete(new string[] { id });
-                }
-                else
-                {
-                    string id = (this.cboDbProfile.SelectedItem as FileConnectionProfileInfo).Id;
-                    success = await FileConnectionProfileManager.Delete(new string[] { id });
-                }
-
-                if (success)
-                {
-                    this.LoadProfileNames();
-                }
             }
         }
 

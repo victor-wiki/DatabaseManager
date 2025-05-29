@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Profile.Model;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class AccountProfileManager : ProfileBaseManager
     {
@@ -22,9 +23,10 @@ namespace DatabaseManager.Profile
                 {
                     await connection.OpenAsync();
 
-                    string sql = $@"SELECT Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,Usessl 
+                    string sql = $@"SELECT Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,Usessl,Priority 
                                     FROM Account
-                                    WHERE DatabaseType=@DbType";
+                                    WHERE DatabaseType=@DbType
+                                    ORDER BY Priority";
 
                     Dictionary<string, object> para = new Dictionary<string, object>() { { "@DbType", dbType } };
 
@@ -182,9 +184,23 @@ namespace DatabaseManager.Profile
                     password = AesHelper.Encrypt(info.Password);
                 }
 
+                string sql = $"SELECT IFNULL(MAX(Priority),0) as MaxId FROM Account WHERE DatabaseType=@DatabaseType";
+
+                Dictionary<string, object> para = new Dictionary<string, object>();
+                para.Add("@DatabaseType", info.DatabaseType);
+
+                int? maxId = (await connection.QueryAsync<int>(sql, para))?.FirstOrDefault();
+
+                if (maxId.HasValue == false)
+                {
+                    maxId = 0;
+                }
+
+                int priority = maxId.Value + 1;
+
                 id = Guid.NewGuid().ToString();
 
-                string sql = $@"INSERT INTO Account(Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,UseSsl)
+                sql = $@"INSERT INTO Account(Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,UseSsl)
                                         VALUES('{id}',@DbType,@Server,@ServerVersion,@Port,{ValueHelper.BooleanToInteger(info.IntegratedSecurity)},@UserId,@Password,{ValueHelper.BooleanToInteger(info.IsDba)},{ValueHelper.BooleanToInteger(info.UseSsl)})";
 
                 var cmd = connection.CreateCommand();
@@ -279,7 +295,7 @@ namespace DatabaseManager.Profile
             }
 
             return false;
-        }        
+        }       
     }
 
     internal class SaveResultInfo

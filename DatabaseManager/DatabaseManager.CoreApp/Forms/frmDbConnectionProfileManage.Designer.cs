@@ -28,157 +28,236 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.dgvDbConnectionProfile = new System.Windows.Forms.DataGridView();
-            this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colServer = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.panelOperation = new System.Windows.Forms.Panel();
-            this.btnDelete = new System.Windows.Forms.Button();
-            this.btnClear = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvDbConnectionProfile)).BeginInit();
-            this.panelOperation.SuspendLayout();
-            this.SuspendLayout();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDbConnectionProfileManage));
+            dgvDbConnectionProfile = new System.Windows.Forms.DataGridView();
+            colCheck = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colServer = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colPriority = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            tsbSave = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            tsbDelete = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            tsbEdit = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            tsbClear = new System.Windows.Forms.ToolStripButton();
+            picInfo = new System.Windows.Forms.PictureBox();
+            label1 = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)dgvDbConnectionProfile).BeginInit();
+            toolStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picInfo).BeginInit();
+            SuspendLayout();
             // 
             // dgvDbConnectionProfile
             // 
-            this.dgvDbConnectionProfile.AllowUserToAddRows = false;
-            this.dgvDbConnectionProfile.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvDbConnectionProfile.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvDbConnectionProfile.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colId,
-            this.colName,
-            this.colServer,
-            this.colPort,
-            this.colDatabase});
-            this.dgvDbConnectionProfile.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgvDbConnectionProfile.Location = new System.Drawing.Point(5, 3);
-            this.dgvDbConnectionProfile.Margin = new System.Windows.Forms.Padding(4);
-            this.dgvDbConnectionProfile.Name = "dgvDbConnectionProfile";
-            this.dgvDbConnectionProfile.ReadOnly = true;
-            this.dgvDbConnectionProfile.RowHeadersVisible = false;
-            this.dgvDbConnectionProfile.RowHeadersWidth = 20;
-            this.dgvDbConnectionProfile.RowTemplate.Height = 23;
-            this.dgvDbConnectionProfile.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvDbConnectionProfile.Size = new System.Drawing.Size(762, 335);
-            this.dgvDbConnectionProfile.TabIndex = 21;
+            dgvDbConnectionProfile.AllowDrop = true;
+            dgvDbConnectionProfile.AllowUserToAddRows = false;
+            dgvDbConnectionProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            dgvDbConnectionProfile.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvDbConnectionProfile.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { colCheck, colId, colName, colServer, colPort, colDatabase, colPriority });
+            dgvDbConnectionProfile.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
+            dgvDbConnectionProfile.Location = new System.Drawing.Point(5, 42);
+            dgvDbConnectionProfile.Margin = new System.Windows.Forms.Padding(4);
+            dgvDbConnectionProfile.MultiSelect = false;
+            dgvDbConnectionProfile.Name = "dgvDbConnectionProfile";
+            dgvDbConnectionProfile.RowHeadersVisible = false;
+            dgvDbConnectionProfile.RowHeadersWidth = 20;
+            dgvDbConnectionProfile.RowTemplate.Height = 23;
+            dgvDbConnectionProfile.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dgvDbConnectionProfile.Size = new System.Drawing.Size(896, 337);
+            dgvDbConnectionProfile.TabIndex = 21;
+            dgvDbConnectionProfile.DragDrop += dgvDbConnectionProfile_DragDrop;
+            dgvDbConnectionProfile.DragOver += dgvDbConnectionProfile_DragOver;
+            dgvDbConnectionProfile.MouseDown += dgvDbConnectionProfile_MouseDown;
+            dgvDbConnectionProfile.MouseMove += dgvDbConnectionProfile_MouseMove;
+            // 
+            // colCheck
+            // 
+            colCheck.HeaderText = "";
+            colCheck.Name = "colCheck";
+            colCheck.Width = 40;
             // 
             // colId
             // 
-            this.colId.DataPropertyName = "Id";
-            this.colId.HeaderText = "Id";
-            this.colId.Name = "colId";
-            this.colId.ReadOnly = true;
-            this.colId.Visible = false;
+            colId.DataPropertyName = "Id";
+            colId.HeaderText = "Id";
+            colId.Name = "colId";
+            colId.ReadOnly = true;
+            colId.Visible = false;
             // 
             // colName
             // 
-            this.colName.HeaderText = "Profile Name";
-            this.colName.Name = "colName";
-            this.colName.ReadOnly = true;
-            this.colName.Width = 250;
+            colName.HeaderText = "Profile Name";
+            colName.Name = "colName";
+            colName.ReadOnly = true;
+            colName.Width = 250;
             // 
             // colServer
             // 
-            this.colServer.DataPropertyName = "Server";
-            this.colServer.HeaderText = "Server";
-            this.colServer.Name = "colServer";
-            this.colServer.ReadOnly = true;
-            this.colServer.Width = 250;
+            colServer.DataPropertyName = "Server";
+            colServer.HeaderText = "Server";
+            colServer.Name = "colServer";
+            colServer.ReadOnly = true;
+            colServer.Width = 250;
             // 
             // colPort
             // 
-            this.colPort.HeaderText = "Port";
-            this.colPort.Name = "colPort";
-            this.colPort.ReadOnly = true;
+            colPort.HeaderText = "Port";
+            colPort.Name = "colPort";
+            colPort.ReadOnly = true;
             // 
             // colDatabase
             // 
-            this.colDatabase.HeaderText = "Database";
-            this.colDatabase.Name = "colDatabase";
-            this.colDatabase.ReadOnly = true;
-            this.colDatabase.Width = 150;
+            colDatabase.HeaderText = "Database";
+            colDatabase.Name = "colDatabase";
+            colDatabase.ReadOnly = true;
+            colDatabase.Width = 150;
             // 
-            // panelOperation
+            // colPriority
             // 
-            this.panelOperation.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.panelOperation.Controls.Add(this.btnDelete);
-            this.panelOperation.Controls.Add(this.btnClear);
-            this.panelOperation.Location = new System.Drawing.Point(5, 346);
-            this.panelOperation.Margin = new System.Windows.Forms.Padding(4);
-            this.panelOperation.Name = "panelOperation";
-            this.panelOperation.Size = new System.Drawing.Size(225, 44);
-            this.panelOperation.TabIndex = 42;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            colPriority.DefaultCellStyle = dataGridViewCellStyle1;
+            colPriority.HeaderText = "Priority";
+            colPriority.Name = "colPriority";
+            colPriority.ReadOnly = true;
             // 
-            // btnDelete
+            // toolStrip1
             // 
-            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnDelete.Location = new System.Drawing.Point(8, 4);
-            this.btnDelete.Margin = new System.Windows.Forms.Padding(4);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(88, 33);
-            this.btnDelete.TabIndex = 22;
-            this.btnDelete.Text = "Delete";
-            this.btnDelete.UseVisualStyleBackColor = true;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsbSave, toolStripSeparator2, tsbDelete, toolStripSeparator1, tsbEdit, toolStripSeparator3, tsbClear });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Size = new System.Drawing.Size(907, 28);
+            toolStrip1.TabIndex = 43;
+            toolStrip1.Text = "toolStrip1";
             // 
-            // btnClear
+            // tsbSave
             // 
-            this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnClear.Location = new System.Drawing.Point(123, 4);
-            this.btnClear.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(88, 33);
-            this.btnClear.TabIndex = 23;
-            this.btnClear.Text = "Clear";
-            this.btnClear.UseVisualStyleBackColor = true;
-            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            tsbSave.AutoSize = false;
+            tsbSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbSave.Enabled = false;
+            tsbSave.Image = (System.Drawing.Image)resources.GetObject("tsbSave.Image");
+            tsbSave.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbSave.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbSave.Name = "tsbSave";
+            tsbSave.Size = new System.Drawing.Size(25, 25);
+            tsbSave.Text = "Save";
+            tsbSave.Click += tsbSave_Click;
             // 
-            // btnClose
+            // toolStripSeparator2
             // 
-            this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClose.Location = new System.Drawing.Point(679, 350);
-            this.btnClose.Margin = new System.Windows.Forms.Padding(4);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(88, 33);
-            this.btnClose.TabIndex = 41;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 28);
+            // 
+            // tsbDelete
+            // 
+            tsbDelete.AutoSize = false;
+            tsbDelete.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbDelete.Image = (System.Drawing.Image)resources.GetObject("tsbDelete.Image");
+            tsbDelete.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbDelete.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbDelete.Name = "tsbDelete";
+            tsbDelete.Size = new System.Drawing.Size(25, 25);
+            tsbDelete.Text = "Delete";
+            tsbDelete.Click += tsbDelete_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 28);
+            // 
+            // tsbEdit
+            // 
+            tsbEdit.AutoSize = false;
+            tsbEdit.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbEdit.Image = (System.Drawing.Image)resources.GetObject("tsbEdit.Image");
+            tsbEdit.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbEdit.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbEdit.Name = "tsbEdit";
+            tsbEdit.Size = new System.Drawing.Size(25, 25);
+            tsbEdit.Text = "Edit";
+            tsbEdit.Click += tsbEdit_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 28);
+            // 
+            // tsbClear
+            // 
+            tsbClear.AutoSize = false;
+            tsbClear.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbClear.Image = (System.Drawing.Image)resources.GetObject("tsbClear.Image");
+            tsbClear.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsbClear.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbClear.Name = "tsbClear";
+            tsbClear.Size = new System.Drawing.Size(25, 25);
+            tsbClear.Text = "Clear";
+            tsbClear.Click += tsbClear_Click;
+            // 
+            // picInfo
+            // 
+            picInfo.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            picInfo.Location = new System.Drawing.Point(6, 383);
+            picInfo.Name = "picInfo";
+            picInfo.Size = new System.Drawing.Size(20, 20);
+            picInfo.TabIndex = 44;
+            picInfo.TabStop = false;
+            // 
+            // label1
+            // 
+            label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(28, 383);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(326, 17);
+            label1.TabIndex = 45;
+            label1.Text = "You can drag and drop the row to reorder the record.";
             // 
             // frmDbConnectionProfileManage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(773, 403);
-            this.Controls.Add(this.panelOperation);
-            this.Controls.Add(this.btnClose);
-            this.Controls.Add(this.dgvDbConnectionProfile);
-            this.Name = "frmDbConnectionProfileManage";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Database Connection Profile Manage";
-            this.Load += new System.EventHandler(this.frmDbConnectionProfile_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvDbConnectionProfile)).EndInit();
-            this.panelOperation.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(907, 403);
+            Controls.Add(label1);
+            Controls.Add(picInfo);
+            Controls.Add(toolStrip1);
+            Controls.Add(dgvDbConnectionProfile);
+            Name = "frmDbConnectionProfileManage";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Database Connection Profile Manage";
+            Load += frmDbConnectionProfile_Load;
+            ((System.ComponentModel.ISupportInitialize)dgvDbConnectionProfile).EndInit();
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)picInfo).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private System.Windows.Forms.DataGridView dgvDbConnectionProfile;
-        private System.Windows.Forms.Panel panelOperation;
-        private System.Windows.Forms.Button btnDelete;
-        private System.Windows.Forms.Button btnClear;
-        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripButton tsbDelete;
+        private System.Windows.Forms.ToolStripButton tsbClear;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colCheck;
         private System.Windows.Forms.DataGridViewTextBoxColumn colId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colName;
         private System.Windows.Forms.DataGridViewTextBoxColumn colServer;
         private System.Windows.Forms.DataGridViewTextBoxColumn colPort;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDatabase;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPriority;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripButton tsbSave;
+        private System.Windows.Forms.PictureBox picInfo;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolStripButton tsbEdit;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
     }
 }

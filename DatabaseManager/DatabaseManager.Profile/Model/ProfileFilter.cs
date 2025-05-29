@@ -1,4 +1,4 @@
-﻿namespace DatabaseManager.Model
+﻿namespace DatabaseManager.Profile.Model
 {
     public class ProfileFilter
     {

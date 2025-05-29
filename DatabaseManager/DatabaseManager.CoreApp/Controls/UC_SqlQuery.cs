@@ -259,7 +259,7 @@ namespace DatabaseManager.Controls
         {
             if (this.displayInfo.ConnectionInfo == null)
             {
-                frmDbConnect dbConnect = new frmDbConnect(this.displayInfo.DatabaseType) { NotUseProfile = true };
+                frmDbConnect dbConnect = new frmDbConnect(this.displayInfo.DatabaseType) { IsOnlyForSelectDatabase = true };
 
                 if (dbConnect.ShowDialog() == DialogResult.OK)
                 {

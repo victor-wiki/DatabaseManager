@@ -1,9 +1,10 @@
 ﻿using Dapper;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Profile.Model;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DatabaseManager.Profile
+namespace DatabaseManager.Profile.Manager
 {
     public class PersonalSettingManager : ProfileBaseManager
     {

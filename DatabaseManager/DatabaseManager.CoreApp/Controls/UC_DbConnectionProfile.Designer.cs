@@ -28,44 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            btnDeleteDbProfile = new System.Windows.Forms.Button();
-            btnConfigDbProfile = new System.Windows.Forms.Button();
             btnAddDbProfile = new System.Windows.Forms.Button();
             cboDbProfile = new System.Windows.Forms.ComboBox();
             lblTitle = new System.Windows.Forms.Label();
             cboDbType = new System.Windows.Forms.ComboBox();
             SuspendLayout();
-            // 
-            // btnDeleteDbProfile
-            // 
-            btnDeleteDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnDeleteDbProfile.BackColor = System.Drawing.Color.White;
-            btnDeleteDbProfile.FlatAppearance.BorderSize = 0;
-            btnDeleteDbProfile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnDeleteDbProfile.ForeColor = System.Drawing.SystemColors.ControlText;
-            btnDeleteDbProfile.Location = new System.Drawing.Point(580, 5);
-            btnDeleteDbProfile.Margin = new System.Windows.Forms.Padding(4);
-            btnDeleteDbProfile.Name = "btnDeleteDbProfile";
-            btnDeleteDbProfile.Size = new System.Drawing.Size(19, 17);
-            btnDeleteDbProfile.TabIndex = 40;
-            btnDeleteDbProfile.UseVisualStyleBackColor = false;
-            btnDeleteDbProfile.Visible = false;
-            btnDeleteDbProfile.Click += btnDeleteDbProfile_Click;
-            // 
-            // btnConfigDbProfile
-            // 
-            btnConfigDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnConfigDbProfile.BackColor = System.Drawing.Color.White;
-            btnConfigDbProfile.FlatAppearance.BorderSize = 0;
-            btnConfigDbProfile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnConfigDbProfile.Location = new System.Drawing.Point(554, 5);
-            btnConfigDbProfile.Margin = new System.Windows.Forms.Padding(4);
-            btnConfigDbProfile.Name = "btnConfigDbProfile";
-            btnConfigDbProfile.Size = new System.Drawing.Size(20, 17);
-            btnConfigDbProfile.TabIndex = 39;
-            btnConfigDbProfile.UseVisualStyleBackColor = false;
-            btnConfigDbProfile.Visible = false;
-            btnConfigDbProfile.Click += btnConfigDbProfile_Click;
             // 
             // btnAddDbProfile
             // 
@@ -81,9 +48,10 @@
             // cboDbProfile
             // 
             cboDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            cboDbProfile.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            cboDbProfile.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             cboDbProfile.BackColor = System.Drawing.SystemColors.Window;
             cboDbProfile.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            cboDbProfile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cboDbProfile.FormattingEnabled = true;
             cboDbProfile.Location = new System.Drawing.Point(197, 2);
             cboDbProfile.Margin = new System.Windows.Forms.Padding(4);
@@ -119,8 +87,6 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            Controls.Add(btnDeleteDbProfile);
-            Controls.Add(btnConfigDbProfile);
             Controls.Add(btnAddDbProfile);
             Controls.Add(cboDbProfile);
             Controls.Add(lblTitle);
@@ -134,9 +100,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Button btnDeleteDbProfile;
-        private System.Windows.Forms.Button btnConfigDbProfile;
         private System.Windows.Forms.Button btnAddDbProfile;
         private System.Windows.Forms.ComboBox cboDbProfile;
         private System.Windows.Forms.Label lblTitle;
