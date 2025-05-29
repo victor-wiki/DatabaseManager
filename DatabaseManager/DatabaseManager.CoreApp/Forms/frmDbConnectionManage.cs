@@ -16,7 +16,6 @@ namespace DatabaseManager
 {
     public partial class frmDbConnectionManage : Form
     {
-        private string actionButtonText = "Manage";
         private Rectangle dragBox;
         private int rowIndexFromMouseDown;
 
@@ -259,7 +258,7 @@ namespace DatabaseManager
 
             foreach (AccountProfileInfo profile in profiles)
             {
-                this.dgvDbConnection.Rows.Add(false, profile.Id, profile.Server, profile.Port, profile.IntegratedSecurity, profile.UserId, this.actionButtonText, this.actionButtonText, profile.Priority);
+                this.dgvDbConnection.Rows.Add(false, profile.Id, profile.Server, profile.Port, profile.IntegratedSecurity, profile.UserId, null, null, profile.Priority);
             }
 
             this.dgvDbConnection.Tag = profiles;
@@ -275,7 +274,7 @@ namespace DatabaseManager
 
             foreach (var profile in profiles)
             {
-                this.dgvDbConnection.Rows.Add(false, profile.Id, null, null, profile.Name, profile.Database, this.actionButtonText, this.actionButtonText, profile.Priority);
+                this.dgvDbConnection.Rows.Add(false, profile.Id, null, null, null, null, profile.Name, profile.Database, profile.Priority);
             }
 
             this.dgvDbConnection.Tag = profiles;

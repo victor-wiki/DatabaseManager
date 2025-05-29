@@ -200,8 +200,8 @@ namespace DatabaseManager.Profile.Manager
 
                 id = Guid.NewGuid().ToString();
 
-                sql = $@"INSERT INTO Account(Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,UseSsl)
-                                        VALUES('{id}',@DbType,@Server,@ServerVersion,@Port,{ValueHelper.BooleanToInteger(info.IntegratedSecurity)},@UserId,@Password,{ValueHelper.BooleanToInteger(info.IsDba)},{ValueHelper.BooleanToInteger(info.UseSsl)})";
+                sql = $@"INSERT INTO Account(Id,DatabaseType,Server,ServerVersion,Port,IntegratedSecurity,UserId,Password,IsDba,UseSsl,Priority)
+                                        VALUES('{id}',@DbType,@Server,@ServerVersion,@Port,{ValueHelper.BooleanToInteger(info.IntegratedSecurity)},@UserId,@Password,{ValueHelper.BooleanToInteger(info.IsDba)},{ValueHelper.BooleanToInteger(info.UseSsl)},{priority})";
 
                 var cmd = connection.CreateCommand();
                 cmd.CommandText = sql;
