@@ -738,7 +738,7 @@ namespace DatabaseConverter.Core
 
                                     string strPercent = (percent == (int)percent) ? (percent + "%") : (percent / 100).ToString("P2");
 
-                                    targetInterpreter.FeedbackProgress($"{(string.Format(this.TableDataSyncProgressMessagePrefixFormat, table.Name))}Transferred {transferredCount}/{tableDataReadInfo.TotalCount},{strPercent}", table.Name);
+                                    targetInterpreter.FeedbackProgress($"{(string.Format(this.TableDataSyncProgressMessagePrefixFormat, table.Name))}Transferred {transferredCount}/{tableDataReadInfo.TotalCount}, {strPercent}.", table.Name);
                                 }
                                 else
                                 {

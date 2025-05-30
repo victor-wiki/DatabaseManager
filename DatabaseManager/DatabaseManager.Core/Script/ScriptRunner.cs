@@ -213,16 +213,21 @@ namespace DatabaseManager.Core
                                 }
                             }
 
+                            if(dbType == DatabaseType.Sqlite) //if the table data is large, performance may be an issue.
+                            {
+                                this.Feedback(this, "executing...", FeedbackInfoType.Info);
+                            }                            
+
                             ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
                             affectedRows += (res.NumberOfRowsAffected == -1 ? 0 : res.NumberOfRowsAffected);
-                        }
+                        }                       
 
                         result.Result = affectedRows;
 
                         if (!this.cancelRequested)
                         {
-                            this.transaction.Commit();
+                            this.transaction.Commit();                           
                         }
                     }
 

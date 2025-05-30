@@ -12,6 +12,7 @@ using DatabaseManager.Data;
 using System.Drawing;
 using System.Linq;
 using SqlCodeEditor;
+using System.Threading.Tasks;
 
 namespace DatabaseManager.Controls
 {
@@ -22,6 +23,7 @@ namespace DatabaseManager.Controls
         private bool readOnly;
         private bool showEditorMessage = true;
         private string originalText = "";
+        private bool isResultReturned = false;
 
         public UC_QueryEditor QueryEditor => this.queryEditor;
 
@@ -100,7 +102,7 @@ namespace DatabaseManager.Controls
 
             if (!string.IsNullOrEmpty(displayInfo.Content))
             {
-                this.Editor.Text = displayInfo.Content;                
+                this.Editor.Text = displayInfo.Content;
             }
             else if (File.Exists(displayInfo.FilePath))
             {
@@ -120,10 +122,10 @@ namespace DatabaseManager.Controls
                     return;
                 }
 
-                if(SettingManager.Setting.EnableEditorIntellisence)
+                if (SettingManager.Setting.EnableEditorIntellisence)
                 {
                     this.SetupIntellisence();
-                }               
+                }
             }
 
             this.originalText = this.Editor.Text;
@@ -140,7 +142,7 @@ namespace DatabaseManager.Controls
         {
             if (this.CheckConnection())
             {
-                DbInterpreter dbInterpreter = this.GetDbInterpreter();               
+                DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
                 this.queryEditor.DbInterpreter = dbInterpreter;
 
@@ -231,8 +233,14 @@ namespace DatabaseManager.Controls
             this.SetResultPanelVisible(true);
         }
 
-        public async void RunScripts(DatabaseObjectDisplayInfo data)
+        public void RunScripts(DatabaseObjectDisplayInfo data)
         {
+            Task.Run(() => this.Execute(data));
+        }
+
+        private async void Execute(DatabaseObjectDisplayInfo data)
+        {
+            this.isResultReturned = false;
             this.displayInfo = data;
 
             string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
@@ -250,6 +258,8 @@ namespace DatabaseManager.Controls
             if (this.CheckConnection())
             {
                 QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, data.ScriptAction, data.ScriptParameters);
+
+                this.isResultReturned = true;
 
                 this.ShowResult(result);
             }
@@ -312,9 +322,16 @@ namespace DatabaseManager.Controls
                     }
 
                     this.AppendMessage(info.Message, true);
+
+                    this.tabResult.SelectedIndex = 1;
                 }
                 else
                 {
+                    if (this.isResultReturned == false)
+                    {
+                        this.tabResult.SelectedIndex = 1;
+                    }
+
                     this.AppendMessage(info.Message, false);
                 }
             }));
@@ -351,7 +368,7 @@ namespace DatabaseManager.Controls
 
         internal void DisposeResources()
         {
-            if(this.queryEditor!=null)
+            if (this.queryEditor != null)
             {
                 this.queryEditor.DisposeResources();
             }

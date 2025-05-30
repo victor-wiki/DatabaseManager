@@ -42,7 +42,7 @@ namespace DatabaseManager
 
         private async void btnExecute_Click(object sender, EventArgs e)
         {
-            await this.CopyTable();
+            Task.Run(()=> this.CopyTable());
         }
 
         private async Task<bool> TestTargetConnection()
@@ -66,7 +66,7 @@ namespace DatabaseManager
             }            
         }
 
-        private async Task CopyTable()
+        private async void CopyTable()
         {
             string name = this.txtName.Text.Trim();
 

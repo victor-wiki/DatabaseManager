@@ -445,11 +445,15 @@ namespace DatabaseManager
             {
                 if (this.messageForm.DockHandler.DockState.ToString().Contains("AutoHide"))
                 {
-                    this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
+                    this.dockPanelMain.Invoke(() =>
+                    {
+                        this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
+                    });
+                  
                     this.messageForm.DockHandler.Activate();
                 }
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
             }
         }

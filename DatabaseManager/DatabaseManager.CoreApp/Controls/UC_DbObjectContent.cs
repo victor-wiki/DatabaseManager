@@ -368,8 +368,6 @@ namespace DatabaseManager.Controls
             sqlQuery.RunScripts(data);
         }
 
-
-
         private void Feedback(FeedbackInfo info)
         {
             if (this.OnFeedback != null)
