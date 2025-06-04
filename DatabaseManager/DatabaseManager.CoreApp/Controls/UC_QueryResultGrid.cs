@@ -41,6 +41,7 @@ namespace DatabaseManager.Controls
             this.dlgSave.FileName = "";
 
             DialogResult result = this.dlgSave.ShowDialog();
+
             if (result == DialogResult.OK)
             {
                 DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, this.dlgSave.FileName);
@@ -92,9 +93,10 @@ namespace DatabaseManager.Controls
         private void SetContextMenuItemVisible()
         {
             int selectedCount = this.dgvData.GetCellCount(DataGridViewElementStates.Selected);
+
             this.tsmiCopy.Visible = selectedCount > 1;
             this.tsmiCopyWithHeader.Visible = selectedCount > 1;
-            this.tsmiViewGeometry.Visible = selectedCount ==1 && DataGridViewHelper.IsGeometryValue(this.dgvData);
+            this.tsmiViewGeometry.Visible = selectedCount == 1 && DataGridViewHelper.IsGeometryValue(this.dgvData);
             this.tsmiCopyContent.Visible = selectedCount == 1;
             this.tsmiShowContent.Visible = selectedCount == 1;
         }
@@ -117,6 +119,11 @@ namespace DatabaseManager.Controls
         private void tsmiShowContent_Click(object sender, EventArgs e)
         {
             DataGridViewHelper.ShowCellContent(this.dgvData);
+        }
+
+        private void tsmiAutoColumnWidth_Click(object sender, EventArgs e)
+        {
+            this.dgvData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
         }
     }
 }

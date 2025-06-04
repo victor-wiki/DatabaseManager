@@ -22,7 +22,7 @@ namespace DatabaseManager.Controls
         private ScriptRunner scriptRunner;
         private bool readOnly;
         private bool showEditorMessage = true;
-        private string originalText = "";
+        private string originalText = string.Empty;
         private bool isResultReturned = false;
 
         public UC_QueryEditor QueryEditor => this.queryEditor;
@@ -168,7 +168,11 @@ namespace DatabaseManager.Controls
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
-            File.WriteAllText(info.FilePath, this.Editor.Text);
+            string text = this.Editor.Text;
+
+            File.WriteAllText(info.FilePath, text);
+
+            this.originalText = text;
 
             return new ContentSaveResult() { IsOK = true };
         }
@@ -246,6 +250,8 @@ namespace DatabaseManager.Controls
 
         private async void Execute(DatabaseObjectDisplayInfo data)
         {
+            this.tsslStatus.Text = "Querying...";
+
             this.isResultReturned = false;
             this.displayInfo = data;
 
@@ -269,6 +275,8 @@ namespace DatabaseManager.Controls
 
                 this.ShowResult(result);
             }
+
+            this.tsslStatus.Text = "";
         }
 
         private bool CheckConnection()

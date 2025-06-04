@@ -318,7 +318,7 @@ namespace DatabaseManager
             info.FilePath = filePath;
             info.Name = Path.GetFileName(info.FilePath);
 
-            this.GetCurrentContentForm()?.ContentControl?.ShowContent(info);
+            this.ShowDbObjectContent(info);
         }
 
         private frmContent GetCurrentContentForm()

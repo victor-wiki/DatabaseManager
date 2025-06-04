@@ -38,6 +38,7 @@ namespace DatabaseManager.Controls
             tabPageMessage = new System.Windows.Forms.TabPage();
             resultTextBox = new System.Windows.Forms.RichTextBox();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
+            tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -64,8 +65,8 @@ namespace DatabaseManager.Controls
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(tabResult);
-            splitContainer1.Size = new System.Drawing.Size(504, 577);
-            splitContainer1.SplitterDistance = 354;
+            splitContainer1.Size = new System.Drawing.Size(504, 585);
+            splitContainer1.SplitterDistance = 358;
             splitContainer1.SplitterWidth = 3;
             splitContainer1.TabIndex = 1;
             // 
@@ -77,7 +78,7 @@ namespace DatabaseManager.Controls
             queryEditor.Location = new System.Drawing.Point(0, 0);
             queryEditor.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             queryEditor.Name = "queryEditor";
-            queryEditor.Size = new System.Drawing.Size(504, 354);
+            queryEditor.Size = new System.Drawing.Size(504, 358);
             queryEditor.TabIndex = 0;
             queryEditor.Load += queryEditor_Load;
             // 
@@ -90,7 +91,7 @@ namespace DatabaseManager.Controls
             tabResult.Margin = new System.Windows.Forms.Padding(4);
             tabResult.Name = "tabResult";
             tabResult.SelectedIndex = 0;
-            tabResult.Size = new System.Drawing.Size(504, 220);
+            tabResult.Size = new System.Drawing.Size(504, 224);
             tabResult.TabIndex = 0;
             // 
             // tabPageData
@@ -99,7 +100,7 @@ namespace DatabaseManager.Controls
             tabPageData.Location = new System.Drawing.Point(4, 26);
             tabPageData.Margin = new System.Windows.Forms.Padding(0);
             tabPageData.Name = "tabPageData";
-            tabPageData.Size = new System.Drawing.Size(496, 190);
+            tabPageData.Size = new System.Drawing.Size(496, 194);
             tabPageData.TabIndex = 1;
             tabPageData.Text = "Data";
             tabPageData.UseVisualStyleBackColor = true;
@@ -110,7 +111,7 @@ namespace DatabaseManager.Controls
             resultGridView.Location = new System.Drawing.Point(0, 0);
             resultGridView.Margin = new System.Windows.Forms.Padding(0);
             resultGridView.Name = "resultGridView";
-            resultGridView.Size = new System.Drawing.Size(496, 190);
+            resultGridView.Size = new System.Drawing.Size(496, 194);
             resultGridView.TabIndex = 0;
             // 
             // tabPageMessage
@@ -139,7 +140,7 @@ namespace DatabaseManager.Controls
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsslMessage });
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsslStatus, tsslMessage });
             statusStrip1.Location = new System.Drawing.Point(0, 589);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
@@ -147,12 +148,17 @@ namespace DatabaseManager.Controls
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
+            // tsslStatus
+            // 
+            tsslStatus.Name = "tsslStatus";
+            tsslStatus.Size = new System.Drawing.Size(0, 17);
+            // 
             // tsslMessage
             // 
             tsslMessage.AutoSize = false;
             tsslMessage.BackColor = System.Drawing.Color.Transparent;
             tsslMessage.Name = "tsslMessage";
-            tsslMessage.Size = new System.Drawing.Size(250, 17);
+            tsslMessage.Size = new System.Drawing.Size(200, 17);
             tsslMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // UC_SqlQuery
@@ -187,5 +193,6 @@ namespace DatabaseManager.Controls
         private System.Windows.Forms.RichTextBox resultTextBox;
         private UC_QueryResultGrid resultGridView;
         private UC_QueryEditor queryEditor;
+        private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
     }
 }
