@@ -30,155 +30,151 @@ namespace DatabaseManager.Controls
         /// </summary>
         private void InitializeComponent()
         {
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.queryEditor = new DatabaseManager.Controls.UC_QueryEditor();
-            this.tabResult = new System.Windows.Forms.TabControl();
-            this.tabPageData = new System.Windows.Forms.TabPage();
-            this.resultGridView = new DatabaseManager.Controls.UC_QueryResultGrid();
-            this.tabPageMessage = new System.Windows.Forms.TabPage();
-            this.resultTextBox = new System.Windows.Forms.RichTextBox();
-            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
-            this.tabResult.SuspendLayout();
-            this.tabPageData.SuspendLayout();
-            this.tabPageMessage.SuspendLayout();
-            this.statusStrip1.SuspendLayout();
-            this.SuspendLayout();
+            splitContainer1 = new System.Windows.Forms.SplitContainer();
+            queryEditor = new UC_QueryEditor();
+            tabResult = new System.Windows.Forms.TabControl();
+            tabPageData = new System.Windows.Forms.TabPage();
+            resultGridView = new UC_QueryResultGrid();
+            tabPageMessage = new System.Windows.Forms.TabPage();
+            resultTextBox = new System.Windows.Forms.RichTextBox();
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            tabResult.SuspendLayout();
+            tabPageData.SuspendLayout();
+            tabPageMessage.SuspendLayout();
+            statusStrip1.SuspendLayout();
+            SuspendLayout();
             // 
             // splitContainer1
             // 
-            this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
-            this.splitContainer1.Name = "splitContainer1";
-            this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            splitContainer1.Location = new System.Drawing.Point(0, 0);
+            splitContainer1.Margin = new System.Windows.Forms.Padding(4);
+            splitContainer1.Name = "splitContainer1";
+            splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.queryEditor);
+            splitContainer1.Panel1.Controls.Add(queryEditor);
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.tabResult);
-            this.splitContainer1.Size = new System.Drawing.Size(504, 577);
-            this.splitContainer1.SplitterDistance = 354;
-            this.splitContainer1.SplitterWidth = 3;
-            this.splitContainer1.TabIndex = 1;
+            splitContainer1.Panel2.Controls.Add(tabResult);
+            splitContainer1.Size = new System.Drawing.Size(504, 577);
+            splitContainer1.SplitterDistance = 354;
+            splitContainer1.SplitterWidth = 3;
+            splitContainer1.TabIndex = 1;
             // 
             // queryEditor
             // 
-            this.queryEditor.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
-            this.queryEditor.DbInterpreter = null;
-            this.queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.queryEditor.Location = new System.Drawing.Point(0, 0);
-            this.queryEditor.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.queryEditor.Name = "queryEditor";
-            this.queryEditor.Size = new System.Drawing.Size(504, 354);
-            this.queryEditor.TabIndex = 0;
-            this.queryEditor.Load += new System.EventHandler(this.queryEditor_Load);
+            queryEditor.DatabaseType = DatabaseType.Unknown;
+            queryEditor.DbInterpreter = null;
+            queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+            queryEditor.Location = new System.Drawing.Point(0, 0);
+            queryEditor.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            queryEditor.Name = "queryEditor";
+            queryEditor.Size = new System.Drawing.Size(504, 354);
+            queryEditor.TabIndex = 0;
+            queryEditor.Load += queryEditor_Load;
             // 
             // tabResult
             // 
-            this.tabResult.Controls.Add(this.tabPageData);
-            this.tabResult.Controls.Add(this.tabPageMessage);
-            this.tabResult.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabResult.Location = new System.Drawing.Point(0, 0);
-            this.tabResult.Margin = new System.Windows.Forms.Padding(4);
-            this.tabResult.Name = "tabResult";
-            this.tabResult.SelectedIndex = 0;
-            this.tabResult.Size = new System.Drawing.Size(504, 220);
-            this.tabResult.TabIndex = 0;
+            tabResult.Controls.Add(tabPageData);
+            tabResult.Controls.Add(tabPageMessage);
+            tabResult.Dock = System.Windows.Forms.DockStyle.Fill;
+            tabResult.Location = new System.Drawing.Point(0, 0);
+            tabResult.Margin = new System.Windows.Forms.Padding(4);
+            tabResult.Name = "tabResult";
+            tabResult.SelectedIndex = 0;
+            tabResult.Size = new System.Drawing.Size(504, 220);
+            tabResult.TabIndex = 0;
             // 
             // tabPageData
             // 
-            this.tabPageData.Controls.Add(this.resultGridView);
-            this.tabPageData.Location = new System.Drawing.Point(4, 26);
-            this.tabPageData.Margin = new System.Windows.Forms.Padding(0);
-            this.tabPageData.Name = "tabPageData";
-            this.tabPageData.Size = new System.Drawing.Size(496, 190);
-            this.tabPageData.TabIndex = 1;
-            this.tabPageData.Text = "Data";
-            this.tabPageData.UseVisualStyleBackColor = true;
+            tabPageData.Controls.Add(resultGridView);
+            tabPageData.Location = new System.Drawing.Point(4, 26);
+            tabPageData.Margin = new System.Windows.Forms.Padding(0);
+            tabPageData.Name = "tabPageData";
+            tabPageData.Size = new System.Drawing.Size(496, 190);
+            tabPageData.TabIndex = 1;
+            tabPageData.Text = "Data";
+            tabPageData.UseVisualStyleBackColor = true;
             // 
             // resultGridView
             // 
-            this.resultGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.resultGridView.Location = new System.Drawing.Point(0, 0);
-            this.resultGridView.Margin = new System.Windows.Forms.Padding(0);
-            this.resultGridView.Name = "resultGridView";
-            this.resultGridView.Size = new System.Drawing.Size(496, 190);
-            this.resultGridView.TabIndex = 0;
+            resultGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            resultGridView.Location = new System.Drawing.Point(0, 0);
+            resultGridView.Margin = new System.Windows.Forms.Padding(0);
+            resultGridView.Name = "resultGridView";
+            resultGridView.Size = new System.Drawing.Size(496, 190);
+            resultGridView.TabIndex = 0;
             // 
             // tabPageMessage
             // 
-            this.tabPageMessage.Controls.Add(this.resultTextBox);
-            this.tabPageMessage.Location = new System.Drawing.Point(4, 26);
-            this.tabPageMessage.Margin = new System.Windows.Forms.Padding(0);
-            this.tabPageMessage.Name = "tabPageMessage";
-            this.tabPageMessage.Size = new System.Drawing.Size(496, 190);
-            this.tabPageMessage.TabIndex = 0;
-            this.tabPageMessage.Text = "Message";
-            this.tabPageMessage.UseVisualStyleBackColor = true;
+            tabPageMessage.Controls.Add(resultTextBox);
+            tabPageMessage.Location = new System.Drawing.Point(4, 26);
+            tabPageMessage.Margin = new System.Windows.Forms.Padding(0);
+            tabPageMessage.Name = "tabPageMessage";
+            tabPageMessage.Size = new System.Drawing.Size(496, 190);
+            tabPageMessage.TabIndex = 0;
+            tabPageMessage.Text = "Message";
+            tabPageMessage.UseVisualStyleBackColor = true;
             // 
             // resultTextBox
             // 
-            this.resultTextBox.BackColor = System.Drawing.Color.White;
-            this.resultTextBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.resultTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.resultTextBox.Location = new System.Drawing.Point(0, 0);
-            this.resultTextBox.Margin = new System.Windows.Forms.Padding(0);
-            this.resultTextBox.Name = "resultTextBox";
-            this.resultTextBox.ReadOnly = true;
-            this.resultTextBox.Size = new System.Drawing.Size(496, 190);
-            this.resultTextBox.TabIndex = 0;
-            this.resultTextBox.Text = "";
+            resultTextBox.BackColor = System.Drawing.Color.White;
+            resultTextBox.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            resultTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            resultTextBox.Location = new System.Drawing.Point(0, 0);
+            resultTextBox.Margin = new System.Windows.Forms.Padding(0);
+            resultTextBox.Name = "resultTextBox";
+            resultTextBox.ReadOnly = true;
+            resultTextBox.Size = new System.Drawing.Size(496, 190);
+            resultTextBox.TabIndex = 0;
+            resultTextBox.Text = "";
             // 
             // statusStrip1
             // 
-            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsslMessage});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 589);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(504, 22);
-            this.statusStrip1.TabIndex = 2;
-            this.statusStrip1.Text = "statusStrip1";
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsslMessage });
+            statusStrip1.Location = new System.Drawing.Point(0, 589);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
+            statusStrip1.Size = new System.Drawing.Size(504, 22);
+            statusStrip1.TabIndex = 2;
+            statusStrip1.Text = "statusStrip1";
             // 
             // tsslMessage
             // 
-            this.tsslMessage.AutoSize = false;
-            this.tsslMessage.BackColor = System.Drawing.Color.Transparent;
-            this.tsslMessage.Name = "tsslMessage";
-            this.tsslMessage.Size = new System.Drawing.Size(250, 17);
-            this.tsslMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            tsslMessage.AutoSize = false;
+            tsslMessage.BackColor = System.Drawing.Color.Transparent;
+            tsslMessage.Name = "tsslMessage";
+            tsslMessage.Size = new System.Drawing.Size(250, 17);
+            tsslMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // UC_SqlQuery
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.splitContainer1);
-            this.Margin = new System.Windows.Forms.Padding(0);
-            this.Name = "UC_SqlQuery";
-            this.Size = new System.Drawing.Size(504, 611);
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
-            this.tabResult.ResumeLayout(false);
-            this.tabPageData.ResumeLayout(false);
-            this.tabPageMessage.ResumeLayout(false);
-            this.statusStrip1.ResumeLayout(false);
-            this.statusStrip1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(statusStrip1);
+            Controls.Add(splitContainer1);
+            Margin = new System.Windows.Forms.Padding(0);
+            Name = "UC_SqlQuery";
+            Size = new System.Drawing.Size(504, 611);
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            tabResult.ResumeLayout(false);
+            tabPageData.ResumeLayout(false);
+            tabPageMessage.ResumeLayout(false);
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

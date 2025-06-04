@@ -304,20 +304,23 @@ namespace DatabaseConverter.Core
 
             #region Translate
 
-            TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, targetInterpreter, this.Option);
+            if(!dataModeOnly)
+            {
+                TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, targetInterpreter, this.Option);
 
-            translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!executeScriptOnTargetServer && !onlyForTranslate);
+                translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!executeScriptOnTargetServer && !onlyForTranslate);
 
-            DatabaseObjectType translateDbObjectType = TranslateEngine.SupportDatabaseObjectType;
+                DatabaseObjectType translateDbObjectType = TranslateEngine.SupportDatabaseObjectType;
 
-            translateEngine.UserDefinedTypes = utypes;
-            translateEngine.ExistedTableColumns = existedTableColumns;
+                translateEngine.UserDefinedTypes = utypes;
+                translateEngine.ExistedTableColumns = existedTableColumns;
 
-            translateEngine.Subscribe(this.observer);
+                translateEngine.Subscribe(this.observer);
 
-            await Task.Run(() => translateEngine.Translate(translateDbObjectType));
+                await Task.Run(() => translateEngine.Translate(translateDbObjectType));
 
-            result.TranslateResults = translateEngine.TranslateResults;
+                result.TranslateResults = translateEngine.TranslateResults;
+            }            
 
             #endregion
 

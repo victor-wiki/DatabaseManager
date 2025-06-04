@@ -59,6 +59,10 @@ namespace DatabaseManager.Controls
         {
             InitializeComponent();
 
+            RichTextBox.CheckForIllegalCrossThreadCalls = false;
+            TabControl.CheckForIllegalCrossThreadCalls = false;
+            TabPage.CheckForIllegalCrossThreadCalls = false;
+
             this.SetResultPanelVisible(false);
         }
 
@@ -221,7 +225,7 @@ namespace DatabaseManager.Controls
                         }
                     }
 
-                    this.AppendMessage("command executed.");
+                    this.AppendMessage("command executed.");                   
                 }
 
                 if (selectedTabIndex >= 0)
@@ -231,6 +235,8 @@ namespace DatabaseManager.Controls
             }
 
             this.SetResultPanelVisible(true);
+
+            this.Invalidate();
         }
 
         public void RunScripts(DatabaseObjectDisplayInfo data)
@@ -309,32 +315,29 @@ namespace DatabaseManager.Controls
 
         private void Feedback(FeedbackInfo info)
         {
-            this.Invoke(new Action(() =>
+            if (info.InfoType == FeedbackInfoType.Error)
             {
-                if (info.InfoType == FeedbackInfoType.Error)
+                if (!info.IgnoreError)
                 {
-                    if (!info.IgnoreError)
+                    if (this.scriptRunner != null && this.scriptRunner.IsBusy)
                     {
-                        if (this.scriptRunner != null && this.scriptRunner.IsBusy)
-                        {
-                            this.scriptRunner.Cancle();
-                        }
+                        this.scriptRunner.Cancle();
                     }
+                }
 
-                    this.AppendMessage(info.Message, true);
+                this.AppendMessage(info.Message, true);
 
+                this.tabResult.SelectedIndex = 1;
+            }
+            else
+            {
+                if (this.isResultReturned == false)
+                {
                     this.tabResult.SelectedIndex = 1;
                 }
-                else
-                {
-                    if (this.isResultReturned == false)
-                    {
-                        this.tabResult.SelectedIndex = 1;
-                    }
 
-                    this.AppendMessage(info.Message, false);
-                }
-            }));
+                this.AppendMessage(info.Message, false);
+            }
         }
 
         private void ClearResults()
@@ -345,15 +348,39 @@ namespace DatabaseManager.Controls
 
         private void AppendMessage(string message, bool isError = false)
         {
-            RichTextBoxHelper.AppendMessage(this.resultTextBox, message, isError, false);
+            Action action = () =>
+            {
+                RichTextBoxHelper.AppendMessage(this.resultTextBox, message, isError, false);
+            };
+
+            if (this.resultTextBox.InvokeRequired)
+            {
+                this.resultTextBox.BeginInvoke(action);
+            }
+            else
+            {
+                action();
+            }
 
             this.SetResultPanelVisible(true);
         }
 
         private void SetResultPanelVisible(bool visible)
         {
-            this.splitContainer1.Panel2Collapsed = !visible;
-            this.splitContainer1.SplitterWidth = visible ? 3 : 1;
+            Action action = () =>
+            {
+                this.splitContainer1.Panel2Collapsed = !visible;
+                this.splitContainer1.SplitterWidth = visible ? 3 : 1;
+            };
+
+            if(this.splitContainer1.InvokeRequired)
+            {
+                this.splitContainer1.BeginInvoke(action);
+            }
+            else
+            {
+                action();
+            }
         }
 
         internal bool IsTextChanged()

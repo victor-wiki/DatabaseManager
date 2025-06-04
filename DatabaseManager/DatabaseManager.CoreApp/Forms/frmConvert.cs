@@ -404,7 +404,7 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            this.Invoke(new Action(() =>
+            Action action = () =>
             {
                 if (info.InfoType == FeedbackInfoType.Error)
                 {
@@ -427,7 +427,23 @@ namespace DatabaseManager
                 {
                     this.AppendMessage(info, false);
                 }
-            }));
+            };
+
+            try
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(action);
+                }
+                else
+                {
+                    action();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.LogError(ExceptionHelper.GetExceptionDetails(ex));
+            }      
         }
 
         private void AppendMessage(FeedbackInfo info, bool isError = false)

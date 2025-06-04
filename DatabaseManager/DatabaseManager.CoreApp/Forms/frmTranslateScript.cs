@@ -131,9 +131,19 @@ namespace DatabaseManager
 
                 string resultData = result.Data?.ToString();
 
-                this.txtTarget.Invoke(() => {
-                    this.txtTarget.Text = resultData;
-                });               
+                Action setTargetText = () =>
+                {
+                     this.txtTarget.Text = resultData;
+                };
+
+                if(this.txtTarget.InvokeRequired)
+                {
+                    this.txtTarget.Invoke(setTargetText);
+                }
+                else
+                {
+                    setTargetText();
+                }                 
 
                 if (result.HasError)
                 {

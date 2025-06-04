@@ -326,23 +326,25 @@ namespace DatabaseManager
                 return;
             }
 
-            try
+            Action action = () =>
             {
-                this.Invoke(new Action(() =>
-                    {
-                        if (info.InfoType == FeedbackInfoType.Error)
-                        {
-                            this.AppendMessage(info.Message, true);
-                        }
-                        else
-                        {
-                            this.AppendMessage(info.Message, false);
-                        }
-                    }));
+                if (info.InfoType == FeedbackInfoType.Error)
+                {
+                    this.AppendMessage(info.Message, true);
+                }
+                else
+                {
+                    this.AppendMessage(info.Message, false);
+                }
+            };
+
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(action);
             }
-            catch (Exception ex)
+            else
             {
-               
+                action();
             }
         }
 
