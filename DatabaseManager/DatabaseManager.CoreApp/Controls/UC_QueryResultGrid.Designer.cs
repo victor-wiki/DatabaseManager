@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             dgvData = new System.Windows.Forms.DataGridView();
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
             tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
@@ -40,6 +40,7 @@
             tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             tsmiAutoColumnWidth = new System.Windows.Forms.ToolStripMenuItem();
             dlgSave = new System.Windows.Forms.SaveFileDialog();
+            tsmiSetColumnWidthByDefault = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
@@ -50,13 +51,13 @@
             dgvData.AllowUserToDeleteRows = false;
             dgvData.BackgroundColor = System.Drawing.Color.White;
             dgvData.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvData.Dock = System.Windows.Forms.DockStyle.Fill;
             dgvData.Location = new System.Drawing.Point(0, 0);
@@ -74,14 +75,14 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault });
             contextMenuStrip1.Name = "contextMenuStrip2";
-            contextMenuStrip1.Size = new System.Drawing.Size(250, 180);
+            contextMenuStrip1.Size = new System.Drawing.Size(250, 202);
             // 
             // tsmiCopy
             // 
             tsmiCopy.Name = "tsmiCopy";
-            tsmiCopy.Size = new System.Drawing.Size(256, 22);
+            tsmiCopy.Size = new System.Drawing.Size(249, 22);
             tsmiCopy.Text = "Copy";
             tsmiCopy.Click += tsmiCopy_Click;
             // 
@@ -116,7 +117,7 @@
             // tsmiSave
             // 
             tsmiSave.Name = "tsmiSave";
-            tsmiSave.Size = new System.Drawing.Size(256, 22);
+            tsmiSave.Size = new System.Drawing.Size(249, 22);
             tsmiSave.Text = "Save";
             tsmiSave.Click += tsmiSave_Click;
             // 
@@ -130,6 +131,13 @@
             // dlgSave
             // 
             dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
+            // 
+            // tsmiSetColumnWidthByDefault
+            // 
+            tsmiSetColumnWidthByDefault.Name = "tsmiSetColumnWidthByDefault";
+            tsmiSetColumnWidthByDefault.Size = new System.Drawing.Size(249, 22);
+            tsmiSetColumnWidthByDefault.Text = "Set column width by default";
+            tsmiSetColumnWidthByDefault.Click += tsmiSetColumnWidthByDefault_Click;
             // 
             // UC_QueryResultGrid
             // 
@@ -156,5 +164,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCopyContent;
         private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
         private System.Windows.Forms.ToolStripMenuItem tsmiAutoColumnWidth;
+        private System.Windows.Forms.ToolStripMenuItem tsmiSetColumnWidthByDefault;
     }
 }

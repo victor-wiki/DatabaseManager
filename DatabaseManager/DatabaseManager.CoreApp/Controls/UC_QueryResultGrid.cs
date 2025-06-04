@@ -99,6 +99,8 @@ namespace DatabaseManager.Controls
             this.tsmiViewGeometry.Visible = selectedCount == 1 && DataGridViewHelper.IsGeometryValue(this.dgvData);
             this.tsmiCopyContent.Visible = selectedCount == 1;
             this.tsmiShowContent.Visible = selectedCount == 1;
+            this.tsmiSetColumnWidthByDefault.Visible = this.dgvData.AutoSizeColumnsMode!=DataGridViewAutoSizeColumnsMode.None;
+            this.tsmiAutoColumnWidth.Visible = this.dgvData.AutoSizeColumnsMode != DataGridViewAutoSizeColumnsMode.AllCells;
         }
 
         private void tsmiViewGeometry_Click(object sender, EventArgs e)
@@ -124,6 +126,11 @@ namespace DatabaseManager.Controls
         private void tsmiAutoColumnWidth_Click(object sender, EventArgs e)
         {
             this.dgvData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        }
+
+        private void tsmiSetColumnWidthByDefault_Click(object sender, EventArgs e)
+        {
+            this.dgvData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         }
     }
 }

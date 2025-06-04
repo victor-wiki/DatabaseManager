@@ -64,21 +64,23 @@ namespace DatabaseManager.Controls
             // 
             // splitContainer1.Panel2
             // 
+            splitContainer1.Panel2.BackColor = System.Drawing.Color.WhiteSmoke;
             splitContainer1.Panel2.Controls.Add(tabResult);
-            splitContainer1.Size = new System.Drawing.Size(504, 585);
-            splitContainer1.SplitterDistance = 358;
+            splitContainer1.Size = new System.Drawing.Size(504, 592);
+            splitContainer1.SplitterDistance = 362;
             splitContainer1.SplitterWidth = 3;
             splitContainer1.TabIndex = 1;
             // 
             // queryEditor
             // 
+            queryEditor.BackColor = System.Drawing.SystemColors.Control;
             queryEditor.DatabaseType = DatabaseType.Unknown;
             queryEditor.DbInterpreter = null;
             queryEditor.Dock = System.Windows.Forms.DockStyle.Fill;
             queryEditor.Location = new System.Drawing.Point(0, 0);
             queryEditor.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             queryEditor.Name = "queryEditor";
-            queryEditor.Size = new System.Drawing.Size(504, 358);
+            queryEditor.Size = new System.Drawing.Size(504, 362);
             queryEditor.TabIndex = 0;
             queryEditor.Load += queryEditor_Load;
             // 
@@ -91,19 +93,19 @@ namespace DatabaseManager.Controls
             tabResult.Margin = new System.Windows.Forms.Padding(4);
             tabResult.Name = "tabResult";
             tabResult.SelectedIndex = 0;
-            tabResult.Size = new System.Drawing.Size(504, 224);
+            tabResult.Size = new System.Drawing.Size(504, 227);
             tabResult.TabIndex = 0;
             // 
             // tabPageData
             // 
+            tabPageData.BackColor = System.Drawing.SystemColors.Control;
             tabPageData.Controls.Add(resultGridView);
             tabPageData.Location = new System.Drawing.Point(4, 26);
             tabPageData.Margin = new System.Windows.Forms.Padding(0);
             tabPageData.Name = "tabPageData";
-            tabPageData.Size = new System.Drawing.Size(496, 194);
+            tabPageData.Size = new System.Drawing.Size(496, 197);
             tabPageData.TabIndex = 1;
             tabPageData.Text = "Data";
-            tabPageData.UseVisualStyleBackColor = true;
             // 
             // resultGridView
             // 
@@ -111,19 +113,19 @@ namespace DatabaseManager.Controls
             resultGridView.Location = new System.Drawing.Point(0, 0);
             resultGridView.Margin = new System.Windows.Forms.Padding(0);
             resultGridView.Name = "resultGridView";
-            resultGridView.Size = new System.Drawing.Size(496, 194);
+            resultGridView.Size = new System.Drawing.Size(496, 197);
             resultGridView.TabIndex = 0;
             // 
             // tabPageMessage
             // 
+            tabPageMessage.BackColor = System.Drawing.SystemColors.Control;
             tabPageMessage.Controls.Add(resultTextBox);
             tabPageMessage.Location = new System.Drawing.Point(4, 26);
             tabPageMessage.Margin = new System.Windows.Forms.Padding(0);
             tabPageMessage.Name = "tabPageMessage";
-            tabPageMessage.Size = new System.Drawing.Size(496, 190);
+            tabPageMessage.Size = new System.Drawing.Size(496, 197);
             tabPageMessage.TabIndex = 0;
             tabPageMessage.Text = "Message";
-            tabPageMessage.UseVisualStyleBackColor = true;
             // 
             // resultTextBox
             // 
@@ -134,7 +136,7 @@ namespace DatabaseManager.Controls
             resultTextBox.Margin = new System.Windows.Forms.Padding(0);
             resultTextBox.Name = "resultTextBox";
             resultTextBox.ReadOnly = true;
-            resultTextBox.Size = new System.Drawing.Size(496, 190);
+            resultTextBox.Size = new System.Drawing.Size(496, 197);
             resultTextBox.TabIndex = 0;
             resultTextBox.Text = "";
             // 
