@@ -8,13 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.12</Version>
+    <Version>2.2.13</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. move the "Edit" and "Delete" of connection profile to setting form;
-2. add order for connection profiles.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. fix issue: UI block;
+2. minor UI changes.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.12</AssemblyVersion>
-    <FileVersion>2.2.12</FileVersion>
+    <AssemblyVersion>2.2.13</AssemblyVersion>
+    <FileVersion>2.2.13</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

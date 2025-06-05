@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.2.3</Version>
+    <Version>2.2.4</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.3</AssemblyVersion>
-    <FileVersion>2.2.3</FileVersion>
-    <PackageReleaseNotes>adjust to identify the progress of data sync</PackageReleaseNotes>
+    <AssemblyVersion>2.2.4</AssemblyVersion>
+    <FileVersion>2.2.4</FileVersion>
+    <PackageReleaseNotes>upgrade nuget package "System.Text.RegularExpressions"</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
