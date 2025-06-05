@@ -121,7 +121,7 @@ namespace DatabaseManager.Controls
         {
             string type = this.cboDbType.Text;
 
-            var profiles = (await AccountProfileManager.GetProfiles(type)).OrderBy(item => item.Description);
+            var profiles = await AccountProfileManager.GetProfiles(type);
 
             this.cboAccount.DataSource = profiles.ToList();
             this.cboAccount.DisplayMember = nameof(AccountProfileInfo.Description);
