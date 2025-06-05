@@ -30,7 +30,7 @@
         {
             components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            dgvData = new System.Windows.Forms.DataGridView();
+            dgvData = new CustomDataGridView();
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
             tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             tsmiCopyWithHeader = new System.Windows.Forms.ToolStripMenuItem();
@@ -154,7 +154,7 @@
 
         #endregion
 
-        private System.Windows.Forms.DataGridView dgvData;
+        private CustomDataGridView dgvData;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem tsmiSave;
         private System.Windows.Forms.SaveFileDialog dlgSave;

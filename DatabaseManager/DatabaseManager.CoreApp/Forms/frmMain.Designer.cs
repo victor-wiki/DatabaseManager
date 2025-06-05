@@ -144,7 +144,7 @@
             // 
             tsmiWktView.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiWktView.Name = "tsmiWktView";
-            tsmiWktView.Size = new System.Drawing.Size(180, 22);
+            tsmiWktView.Size = new System.Drawing.Size(156, 22);
             tsmiWktView.Text = "WKT Viewer";
             tsmiWktView.Click += tsmiWktView_Click;
             // 
@@ -152,17 +152,18 @@
             // 
             tsmiImageViewer.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiImageViewer.Name = "tsmiImageViewer";
-            tsmiImageViewer.Size = new System.Drawing.Size(180, 22);
+            tsmiImageViewer.Size = new System.Drawing.Size(156, 22);
             tsmiImageViewer.Text = "Image Viewer";
             tsmiImageViewer.Click += tsmiImageViewer_Click;
             // 
             // toolStrip1
             // 
+            toolStrip1.AutoSize = false;
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsBtnAddQuery, tsBtnOpenFile, tsBtnSave, tsBtnGenerateScripts, tsBtnCompare, tsBtnConvert, tsBtnTranslateScript, tsBtnRun });
             toolStrip1.Location = new System.Drawing.Point(0, 27);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-            toolStrip1.Size = new System.Drawing.Size(917, 43);
+            toolStrip1.Size = new System.Drawing.Size(917, 40);
             toolStrip1.TabIndex = 10;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -174,7 +175,7 @@
             tsBtnAddQuery.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnAddQuery.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnAddQuery.Name = "tsBtnAddQuery";
-            tsBtnAddQuery.Size = new System.Drawing.Size(40, 40);
+            tsBtnAddQuery.Size = new System.Drawing.Size(35, 35);
             tsBtnAddQuery.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnAddQuery.ToolTipText = "New Query";
             tsBtnAddQuery.Click += tsBtnAddQuery_Click;
@@ -187,7 +188,7 @@
             tsBtnOpenFile.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnOpenFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnOpenFile.Name = "tsBtnOpenFile";
-            tsBtnOpenFile.Size = new System.Drawing.Size(40, 40);
+            tsBtnOpenFile.Size = new System.Drawing.Size(35, 35);
             tsBtnOpenFile.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnOpenFile.ToolTipText = "Open File";
             tsBtnOpenFile.Click += tsBtnOpenFile_Click;
@@ -200,7 +201,7 @@
             tsBtnSave.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnSave.Name = "tsBtnSave";
-            tsBtnSave.Size = new System.Drawing.Size(40, 40);
+            tsBtnSave.Size = new System.Drawing.Size(35, 35);
             tsBtnSave.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnSave.ToolTipText = "Save(Ctrl+S)";
             tsBtnSave.Click += tsBtnSave_Click;
@@ -213,7 +214,7 @@
             tsBtnGenerateScripts.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnGenerateScripts.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnGenerateScripts.Name = "tsBtnGenerateScripts";
-            tsBtnGenerateScripts.Size = new System.Drawing.Size(40, 40);
+            tsBtnGenerateScripts.Size = new System.Drawing.Size(35, 35);
             tsBtnGenerateScripts.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnGenerateScripts.ToolTipText = "Generate Scripts";
             tsBtnGenerateScripts.Click += tsBtnGenerateScripts_Click;
@@ -226,7 +227,7 @@
             tsBtnCompare.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnCompare.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnCompare.Name = "tsBtnCompare";
-            tsBtnCompare.Size = new System.Drawing.Size(40, 40);
+            tsBtnCompare.Size = new System.Drawing.Size(35, 35);
             tsBtnCompare.ToolTipText = "Compare Database";
             tsBtnCompare.Click += tsBtnCompare_Click;
             // 
@@ -238,7 +239,7 @@
             tsBtnConvert.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnConvert.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnConvert.Name = "tsBtnConvert";
-            tsBtnConvert.Size = new System.Drawing.Size(40, 40);
+            tsBtnConvert.Size = new System.Drawing.Size(35, 35);
             tsBtnConvert.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnConvert.ToolTipText = "Convert Database";
             tsBtnConvert.Click += tsBtnConvert_Click;
@@ -251,7 +252,7 @@
             tsBtnTranslateScript.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnTranslateScript.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnTranslateScript.Name = "tsBtnTranslateScript";
-            tsBtnTranslateScript.Size = new System.Drawing.Size(40, 40);
+            tsBtnTranslateScript.Size = new System.Drawing.Size(35, 35);
             tsBtnTranslateScript.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnTranslateScript.ToolTipText = "Translate Script";
             tsBtnTranslateScript.Click += tsBtnTranslateScript_Click;
@@ -264,7 +265,7 @@
             tsBtnRun.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsBtnRun.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnRun.Name = "tsBtnRun";
-            tsBtnRun.Size = new System.Drawing.Size(40, 40);
+            tsBtnRun.Size = new System.Drawing.Size(35, 35);
             tsBtnRun.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             tsBtnRun.ToolTipText = "Run(F5)";
             tsBtnRun.Click += tsBtnRun_Click;
@@ -276,9 +277,9 @@
             // dockPanelMain
             // 
             dockPanelMain.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            dockPanelMain.Location = new System.Drawing.Point(0, 64);
+            dockPanelMain.Location = new System.Drawing.Point(0, 65);
             dockPanelMain.Name = "dockPanelMain";
-            dockPanelMain.Size = new System.Drawing.Size(917, 514);
+            dockPanelMain.Size = new System.Drawing.Size(917, 511);
             dockPanelMain.TabIndex = 12;
             // 
             // frmMain

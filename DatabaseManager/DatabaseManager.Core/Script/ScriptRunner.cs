@@ -347,7 +347,7 @@ namespace DatabaseManager.Core
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true, true);
         }
 
-        public void Cancle()
+        public async void Cancle()
         {
             this.cancelRequested = true;
 
@@ -355,11 +355,11 @@ namespace DatabaseManager.Core
 
             if (this.CancellationTokenSource != null)
             {
-                this.CancellationTokenSource.Cancel();
+                await this.CancellationTokenSource.CancelAsync();
             }
         }
 
-        private void Rollback(Exception ex = null)
+        private async void Rollback(Exception ex = null)
         {
             if (this.transaction != null && this.transaction.Connection != null && this.transaction.Connection.State == ConnectionState.Open)
             {
@@ -376,7 +376,7 @@ namespace DatabaseManager.Core
 
                     if (!hasRollbacked)
                     {
-                        this.transaction.Rollback();
+                        await this.transaction.RollbackAsync();
                     }
                 }
                 catch (Exception e)
