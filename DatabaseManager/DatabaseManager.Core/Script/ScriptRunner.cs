@@ -119,9 +119,9 @@ namespace DatabaseManager.Core
 
                             var lines = script.Split(Environment.NewLine);
 
-                            foreach( var line in lines )
+                            foreach (var line in lines)
                             {
-                                if(line.Trim() == delimiter.Trim())
+                                if (line.Trim() == delimiter.Trim())
                                 {
                                     continue;
                                 }
@@ -129,9 +129,9 @@ namespace DatabaseManager.Core
                                 {
                                     sb.AppendLine(line);
                                 }
-                            }            
-                            
-                            string str= sb.ToString();
+                            }
+
+                            string str = sb.ToString();
 
                             string defaultDelimiter = ";";
 
@@ -143,7 +143,7 @@ namespace DatabaseManager.Core
 
                             Action<string> appendToLastItem = (item) =>
                             {
-                                if(cmds.Any())
+                                if (cmds.Any())
                                 {
                                     cmds[cmds.Count - 1] += defaultDelimiter + item;
                                 }
@@ -157,7 +157,7 @@ namespace DatabaseManager.Core
                             {
                                 if (!item.Contains("'"))
                                 {
-                                    if(totalSingleQuotationCount % 2 == 0)
+                                    if (totalSingleQuotationCount % 2 == 0)
                                     {
                                         cmds.Add(item);
                                     }
@@ -213,21 +213,21 @@ namespace DatabaseManager.Core
                                 }
                             }
 
-                            if(dbType == DatabaseType.Sqlite) //if the table data is large, performance may be an issue.
+                            if (dbType == DatabaseType.Sqlite) //if the table data is large, performance may be an issue.
                             {
                                 this.Feedback(this, "executing...", FeedbackInfoType.Info);
-                            }                            
+                            }
 
                             ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
                             affectedRows += (res.NumberOfRowsAffected == -1 ? 0 : res.NumberOfRowsAffected);
-                        }                       
+                        }
 
                         result.Result = affectedRows;
 
                         if (!this.cancelRequested)
                         {
-                            this.transaction.Commit();                           
+                            this.transaction.Commit();
                         }
                     }
 
@@ -407,6 +407,14 @@ namespace DatabaseManager.Core
 
                 if (selectStatement != null)
                 {
+                    ScriptTokenExtracter tokenExtracter = new ScriptTokenExtracter(selectStatement);
+                    List<TokenInfo> tokens = tokenExtracter.Extract().ToList();
+
+                    foreach (var token in tokens)
+                    {
+                        TranslateHelper.RestoreTokenValue(script, token);
+                    }
+
                     TableName tableName = selectStatement.TableName;
 
                     if (tableName == null)
