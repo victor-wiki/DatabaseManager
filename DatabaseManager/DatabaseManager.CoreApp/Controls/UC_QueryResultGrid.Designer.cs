@@ -39,8 +39,10 @@
             tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
             tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             tsmiAutoColumnWidth = new System.Windows.Forms.ToolStripMenuItem();
-            dlgSave = new System.Windows.Forms.SaveFileDialog();
             tsmiSetColumnWidthByDefault = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiClearHighlighting = new System.Windows.Forms.ToolStripMenuItem();
+            dlgSave = new System.Windows.Forms.SaveFileDialog();
+            tsmiFindText = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
@@ -69,15 +71,17 @@
             dgvData.Size = new System.Drawing.Size(658, 329);
             dgvData.TabIndex = 6;
             dgvData.CellFormatting += dgvData_CellFormatting;
+            dgvData.CellPainting += dgvData_CellPainting;
             dgvData.DataBindingComplete += dgvData_DataBindingComplete;
             dgvData.DataError += dgvData_DataError;
+            dgvData.KeyDown += dgvData_KeyDown;
             dgvData.MouseUp += dgvData_MouseUp;
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault, tsmiFindText, tsmiClearHighlighting });
             contextMenuStrip1.Name = "contextMenuStrip2";
-            contextMenuStrip1.Size = new System.Drawing.Size(250, 202);
+            contextMenuStrip1.Size = new System.Drawing.Size(250, 246);
             // 
             // tsmiCopy
             // 
@@ -128,16 +132,30 @@
             tsmiAutoColumnWidth.Text = "Auto column width by content";
             tsmiAutoColumnWidth.Click += tsmiAutoColumnWidth_Click;
             // 
-            // dlgSave
-            // 
-            dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
-            // 
             // tsmiSetColumnWidthByDefault
             // 
             tsmiSetColumnWidthByDefault.Name = "tsmiSetColumnWidthByDefault";
             tsmiSetColumnWidthByDefault.Size = new System.Drawing.Size(249, 22);
             tsmiSetColumnWidthByDefault.Text = "Set column width by default";
             tsmiSetColumnWidthByDefault.Click += tsmiSetColumnWidthByDefault_Click;
+            // 
+            // tsmiClearHighlighting
+            // 
+            tsmiClearHighlighting.Name = "tsmiClearHighlighting";
+            tsmiClearHighlighting.Size = new System.Drawing.Size(249, 22);
+            tsmiClearHighlighting.Text = "Clear highlighting";
+            tsmiClearHighlighting.Click += tsmiClearHighlighting_Click;
+            // 
+            // dlgSave
+            // 
+            dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
+            // 
+            // tsmiFindText
+            // 
+            tsmiFindText.Name = "tsmiFindText";
+            tsmiFindText.Size = new System.Drawing.Size(249, 22);
+            tsmiFindText.Text = "Find text";
+            tsmiFindText.Click += tsmiFindText_Click;
             // 
             // UC_QueryResultGrid
             // 
@@ -165,5 +183,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
         private System.Windows.Forms.ToolStripMenuItem tsmiAutoColumnWidth;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetColumnWidthByDefault;
+        private System.Windows.Forms.ToolStripMenuItem tsmiClearHighlighting;
+        private System.Windows.Forms.ToolStripMenuItem tsmiFindText;
     }
 }

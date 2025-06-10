@@ -26,11 +26,13 @@ namespace DatabaseManager.Forms
             InitializeComponent();
 
             this.showOptions = showOptions;
+
+            this.InitControls();
         }
 
         private void frmFindBox_Load(object sender, EventArgs e)
         {
-            this.InitControls();
+           
         }
 
         private void InitControls()
@@ -95,6 +97,20 @@ namespace DatabaseManager.Forms
             {
                 this.OnEndFind();
             }
+        }
+
+        private void frmFindBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.Escape)
+            {
+                this.Close();
+            }
+        }
+
+        public void ResetWord()
+        {
+            this.txtWord.Text = string.Empty;
+            this.txtWord.Focus();
         }
     }
 }

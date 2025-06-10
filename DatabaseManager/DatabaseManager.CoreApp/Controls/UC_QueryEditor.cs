@@ -99,34 +99,18 @@ namespace DatabaseManager.Controls
 
         private void FindForm_Shown(object sender, EventArgs e)
         {
-            Control topControl = this.GetTopConrol();
+            Control topLevelControl = this.TopLevelControl;
 
-            if (topControl != null)
+            if (topLevelControl != null)
             {
-                this.txtEditor.FindForm.Location = new Point(topControl.Left + topControl.Width - this.txtEditor.FindForm.Width - 10, topControl.Top + 120);
+                this.txtEditor.FindForm.Location = new Point(topLevelControl.Left + topLevelControl.Width - this.txtEditor.FindForm.Width - 10, topLevelControl.Top + 120);
             }
             else
             {
                 this.txtEditor.FindForm.Location = new Point(950, 112);
             }
         }
-
-        private Control GetTopConrol()
-        {
-            Control parent = this.Parent;
-
-            while (parent != null)
-            {
-                if (parent.Parent == null)
-                {
-                    return parent;
-                }
-
-                parent = parent.Parent;
-            }
-
-            return null;
-        }
+      
 
         public void SetupIntellisence()
         {

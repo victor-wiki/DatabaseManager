@@ -29,83 +29,84 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmFindBox));
-            this.txtWord = new System.Windows.Forms.TextBox();
-            this.btnFind = new System.Windows.Forms.Button();
-            this.chkMatchCase = new System.Windows.Forms.CheckBox();
-            this.chkMatchWholeWord = new System.Windows.Forms.CheckBox();
-            this.optionsPanel = new System.Windows.Forms.Panel();
-            this.optionsPanel.SuspendLayout();
-            this.SuspendLayout();
+            txtWord = new System.Windows.Forms.TextBox();
+            btnFind = new System.Windows.Forms.Button();
+            chkMatchCase = new System.Windows.Forms.CheckBox();
+            chkMatchWholeWord = new System.Windows.Forms.CheckBox();
+            optionsPanel = new System.Windows.Forms.Panel();
+            optionsPanel.SuspendLayout();
+            SuspendLayout();
             // 
             // txtWord
             // 
-            this.txtWord.Location = new System.Drawing.Point(12, 10);
-            this.txtWord.Name = "txtWord";
-            this.txtWord.Size = new System.Drawing.Size(191, 23);
-            this.txtWord.TabIndex = 0;
-            this.txtWord.KeyUp += new System.Windows.Forms.KeyEventHandler(this.txtWord_KeyUp);
+            txtWord.Location = new System.Drawing.Point(12, 10);
+            txtWord.Name = "txtWord";
+            txtWord.Size = new System.Drawing.Size(191, 23);
+            txtWord.TabIndex = 0;
+            txtWord.KeyUp += txtWord_KeyUp;
             // 
             // btnFind
             // 
-            this.btnFind.Location = new System.Drawing.Point(210, 9);
-            this.btnFind.Name = "btnFind";
-            this.btnFind.Size = new System.Drawing.Size(75, 25);
-            this.btnFind.TabIndex = 1;
-            this.btnFind.Text = "Find";
-            this.btnFind.UseVisualStyleBackColor = true;
-            this.btnFind.Click += new System.EventHandler(this.btnFind_Click);
+            btnFind.Location = new System.Drawing.Point(210, 9);
+            btnFind.Name = "btnFind";
+            btnFind.Size = new System.Drawing.Size(75, 25);
+            btnFind.TabIndex = 1;
+            btnFind.Text = "Find";
+            btnFind.UseVisualStyleBackColor = true;
+            btnFind.Click += btnFind_Click;
             // 
             // chkMatchCase
             // 
-            this.chkMatchCase.AutoSize = true;
-            this.chkMatchCase.Location = new System.Drawing.Point(4, 3);
-            this.chkMatchCase.Name = "chkMatchCase";
-            this.chkMatchCase.Size = new System.Drawing.Size(93, 21);
-            this.chkMatchCase.TabIndex = 2;
-            this.chkMatchCase.Text = "Match case";
-            this.chkMatchCase.UseVisualStyleBackColor = true;
+            chkMatchCase.AutoSize = true;
+            chkMatchCase.Location = new System.Drawing.Point(4, 3);
+            chkMatchCase.Name = "chkMatchCase";
+            chkMatchCase.Size = new System.Drawing.Size(93, 21);
+            chkMatchCase.TabIndex = 2;
+            chkMatchCase.Text = "Match case";
+            chkMatchCase.UseVisualStyleBackColor = true;
             // 
             // chkMatchWholeWord
             // 
-            this.chkMatchWholeWord.AutoSize = true;
-            this.chkMatchWholeWord.Location = new System.Drawing.Point(125, 3);
-            this.chkMatchWholeWord.Name = "chkMatchWholeWord";
-            this.chkMatchWholeWord.Size = new System.Drawing.Size(135, 21);
-            this.chkMatchWholeWord.TabIndex = 3;
-            this.chkMatchWholeWord.Text = "Match whole word";
-            this.chkMatchWholeWord.UseVisualStyleBackColor = true;
+            chkMatchWholeWord.AutoSize = true;
+            chkMatchWholeWord.Location = new System.Drawing.Point(125, 3);
+            chkMatchWholeWord.Name = "chkMatchWholeWord";
+            chkMatchWholeWord.Size = new System.Drawing.Size(135, 21);
+            chkMatchWholeWord.TabIndex = 3;
+            chkMatchWholeWord.Text = "Match whole word";
+            chkMatchWholeWord.UseVisualStyleBackColor = true;
             // 
             // optionsPanel
             // 
-            this.optionsPanel.Controls.Add(this.chkMatchWholeWord);
-            this.optionsPanel.Controls.Add(this.chkMatchCase);
-            this.optionsPanel.Location = new System.Drawing.Point(12, 38);
-            this.optionsPanel.Name = "optionsPanel";
-            this.optionsPanel.Size = new System.Drawing.Size(273, 23);
-            this.optionsPanel.TabIndex = 4;
+            optionsPanel.Controls.Add(chkMatchWholeWord);
+            optionsPanel.Controls.Add(chkMatchCase);
+            optionsPanel.Location = new System.Drawing.Point(12, 38);
+            optionsPanel.Name = "optionsPanel";
+            optionsPanel.Size = new System.Drawing.Size(273, 23);
+            optionsPanel.TabIndex = 4;
             // 
             // frmFindBox
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(297, 62);
-            this.Controls.Add(this.optionsPanel);
-            this.Controls.Add(this.btnFind);
-            this.Controls.Add(this.txtWord);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "frmFindBox";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Find Text";
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.frmFindBox_FormClosed);
-            this.Load += new System.EventHandler(this.frmFindBox_Load);
-            this.optionsPanel.ResumeLayout(false);
-            this.optionsPanel.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(297, 62);
+            Controls.Add(optionsPanel);
+            Controls.Add(btnFind);
+            Controls.Add(txtWord);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            KeyPreview = true;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "frmFindBox";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            Text = "Find Text";
+            FormClosed += frmFindBox_FormClosed;
+            Load += frmFindBox_Load;
+            KeyDown += frmFindBox_KeyDown;
+            optionsPanel.ResumeLayout(false);
+            optionsPanel.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
