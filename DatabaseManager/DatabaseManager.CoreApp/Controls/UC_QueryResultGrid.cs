@@ -274,9 +274,14 @@ namespace DatabaseManager.Controls
 
                                         if (matches != null && matches.Count > 0)
                                         {
-                                            found = true;
-
                                             this.dgvData.InvalidateCell(cell);
+                                            
+                                            if(!found)
+                                            {
+                                                this.dgvData.FirstDisplayedScrollingRowIndex = cell.RowIndex;
+                                            }
+
+                                            found = true;
                                         }
                                     }
                                 }
@@ -337,18 +342,20 @@ namespace DatabaseManager.Controls
                                     Size s1 = TextRenderer.MeasureText(e.Graphics, beforeSearchword, e.CellStyle.Font, e.CellBounds.Size);
                                     Size s2 = TextRenderer.MeasureText(e.Graphics, searchWord, e.CellStyle.Font, e.CellBounds.Size);
 
+                                    int cellPosX = e.CellBounds.X;
+
                                     if (s1.Width > 5)
                                     {
-                                        rect.X = e.CellBounds.X + s1.Width - 5;
+                                        rect.X = cellPosX + s1.Width - 5;
                                         rect.Width = s2.Width - 6;
                                     }
                                     else
                                     {
-                                        rect.X = e.CellBounds.X + 2;
+                                        rect.X = cellPosX + 2;
                                         rect.Width = s2.Width - 6;
                                     }
 
-                                    if(rect.X + rect.Width> column.Width)
+                                    if(rect.X + rect.Width> (cellPosX + column.Width))
                                     {
                                         continue;
                                     }
