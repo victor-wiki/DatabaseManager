@@ -161,12 +161,17 @@ namespace DatabaseManager.Controls
 
         private void tsmiAutoColumnWidth_Click(object sender, EventArgs e)
         {
-            this.dgvData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            this.SetAutoCoumnWidthMode(DataGridViewAutoSizeColumnsMode.AllCells);
         }
 
         private void tsmiSetColumnWidthByDefault_Click(object sender, EventArgs e)
         {
-            this.dgvData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            this.SetAutoCoumnWidthMode(DataGridViewAutoSizeColumnsMode.None);
+        }
+
+        private void SetAutoCoumnWidthMode(DataGridViewAutoSizeColumnsMode mode)
+        {
+            this.dgvData.AutoSizeColumnsMode = mode;                      
         }
 
         private void dgvData_KeyDown(object sender, KeyEventArgs e)
@@ -341,6 +346,11 @@ namespace DatabaseManager.Controls
                                     {
                                         rect.X = e.CellBounds.X + 2;
                                         rect.Width = s2.Width - 6;
+                                    }
+
+                                    if(rect.X + rect.Width> column.Width)
+                                    {
+                                        continue;
                                     }
 
                                     SolidBrush brush = new SolidBrush(Color.LightPink);
