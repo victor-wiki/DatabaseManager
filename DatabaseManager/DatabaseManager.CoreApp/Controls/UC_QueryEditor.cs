@@ -342,6 +342,11 @@ namespace DatabaseManager.Controls
                 return;
             }
 
+            if(token.Type == SqlWordTokenType.Number || token.Type == SqlWordTokenType.Comment)
+            {
+                return;
+            }
+
             SqlWordTokenType type = this.DetectTypeByWord(token.Text);
 
             var words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type);

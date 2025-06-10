@@ -1,18 +1,18 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Data;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using SqlCodeEditor;
 using System;
 using System.Data;
-using System.IO;
-using System.Windows.Forms;
-using DatabaseInterpreter.Model;
-using DatabaseManager.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
-using SqlCodeEditor;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -59,9 +59,11 @@ namespace DatabaseManager.Controls
         {
             InitializeComponent();
 
-            RichTextBox.CheckForIllegalCrossThreadCalls = false;
+            UC_QueryEditor.CheckForIllegalCrossThreadCalls = false;
+            TextEditorControlEx.CheckForIllegalCrossThreadCalls = false;
             TabControl.CheckForIllegalCrossThreadCalls = false;
-            TabPage.CheckForIllegalCrossThreadCalls = false;
+            TabPage.CheckForIllegalCrossThreadCalls = false;            
+            StatusStrip.CheckForIllegalCrossThreadCalls = false;                   
 
             this.SetResultPanelVisible(false);
         }
@@ -164,17 +166,47 @@ namespace DatabaseManager.Controls
 
                 this.queryEditor.SetupIntellisence();
             }
+        }      
+
+        public async void RunScripts(DatabaseObjectDisplayInfo data)
+        {
+            await Task.Run(() => 
+            {
+                this.BeginInvoke(() =>{
+                    this.Execute(data);
+                });              
+            });
         }
 
-        public ContentSaveResult Save(ContentSaveInfo info)
+        private async void Execute(DatabaseObjectDisplayInfo data)
         {
-            string text = this.Editor.Text;
+            this.tsslStatus.Text = "Querying...";
 
-            File.WriteAllText(info.FilePath, text);
+            this.isResultReturned = false;
+            this.displayInfo = data;
 
-            this.originalText = text;
+            string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
 
-            return new ContentSaveResult() { IsOK = true };
+            if (script.Trim().Length == 0)
+            {
+                return;
+            }
+
+            this.ClearResults();
+
+            this.scriptRunner = new ScriptRunner();
+            this.scriptRunner.Subscribe(this);
+
+            if (this.CheckConnection())
+            {
+                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, data.ScriptAction, data.ScriptParameters);
+
+                this.isResultReturned = true;
+
+                this.ShowResult(result);
+            }
+
+            this.tsslStatus.Text = "";
         }
 
         public void ShowResult(QueryResult result)
@@ -241,43 +273,7 @@ namespace DatabaseManager.Controls
             this.SetResultPanelVisible(true);
 
             this.Invalidate();
-        }
-
-        public void RunScripts(DatabaseObjectDisplayInfo data)
-        {
-            Task.Run(() => this.Execute(data));
-        }
-
-        private async void Execute(DatabaseObjectDisplayInfo data)
-        {
-            this.tsslStatus.Text = "Querying...";
-
-            this.isResultReturned = false;
-            this.displayInfo = data;
-
-            string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
-
-            if (script.Trim().Length == 0)
-            {
-                return;
-            }
-
-            this.ClearResults();
-
-            this.scriptRunner = new ScriptRunner();
-            this.scriptRunner.Subscribe(this);
-
-            if (this.CheckConnection())
-            {
-                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, data.ScriptAction, data.ScriptParameters);
-
-                this.isResultReturned = true;
-
-                this.ShowResult(result);
-            }
-
-            this.tsslStatus.Text = "";
-        }
+        }       
 
         private bool CheckConnection()
         {
@@ -304,6 +300,17 @@ namespace DatabaseManager.Controls
             {
                 return false;
             }
+        }
+
+        public ContentSaveResult Save(ContentSaveInfo info)
+        {
+            string text = this.Editor.Text;
+
+            File.WriteAllText(info.FilePath, text);
+
+            this.originalText = text;
+
+            return new ContentSaveResult() { IsOK = true };
         }
 
         #region IObserver<FeedbackInfo>
@@ -356,39 +363,15 @@ namespace DatabaseManager.Controls
 
         private void AppendMessage(string message, bool isError = false)
         {
-            Action action = () =>
-            {
-                RichTextBoxHelper.AppendMessage(this.resultTextBox, message, isError, false);
-            };
-
-            if (this.resultTextBox.InvokeRequired)
-            {
-                this.resultTextBox.BeginInvoke(action);
-            }
-            else
-            {
-                action();
-            }
+            RichTextBoxHelper.AppendMessage(this.resultTextBox, message, isError, false);
 
             this.SetResultPanelVisible(true);
         }
 
         private void SetResultPanelVisible(bool visible)
         {
-            Action action = () =>
-            {
-                this.splitContainer1.Panel2Collapsed = !visible;
-                this.splitContainer1.SplitterWidth = visible ? 3 : 1;
-            };
-
-            if(this.splitContainer1.InvokeRequired)
-            {
-                this.splitContainer1.BeginInvoke(action);
-            }
-            else
-            {
-                action();
-            }
+              this.splitContainer1.Panel2Collapsed = !visible;
+              this.splitContainer1.SplitterWidth = visible ? 3 : 1;
         }
 
         internal bool IsTextChanged()

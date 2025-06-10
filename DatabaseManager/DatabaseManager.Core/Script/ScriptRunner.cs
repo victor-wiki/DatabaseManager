@@ -211,12 +211,7 @@ namespace DatabaseManager.Core
                                 {
                                     this.ParseOracleProcedureCall(commandInfo, parameters);
                                 }
-                            }
-
-                            if (dbType == DatabaseType.Sqlite) //if the table data is large, performance may be an issue.
-                            {
-                                this.Feedback(this, "executing...", FeedbackInfoType.Info);
-                            }
+                            }                           
 
                             ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
@@ -440,7 +435,7 @@ namespace DatabaseManager.Core
                         {
                             selectStatement.TopInfo = new SelectTopInfo() { TopCount = new TokenInfo(this.LimitCount.ToString()) };
                         }
-                        else if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres)
+                        else if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres || databaseType == DatabaseType.Sqlite)
                         {
                             selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo("0"), RowCount = new TokenInfo(this.LimitCount.ToString()) };
                         }

@@ -33,6 +33,7 @@
             // 
             // txtMessage
             // 
+            txtMessage.BackColor = System.Drawing.Color.White;
             txtMessage.Dock = System.Windows.Forms.DockStyle.Fill;
             txtMessage.Location = new System.Drawing.Point(0, 0);
             txtMessage.Name = "txtMessage";

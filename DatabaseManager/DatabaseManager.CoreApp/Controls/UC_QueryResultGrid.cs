@@ -52,9 +52,23 @@ namespace DatabaseManager.Controls
         {
             if (e.Button == MouseButtons.Right)
             {
-                this.SetContextMenuItemVisible();
+                Action action = () =>
+                {
+                    this.SetContextMenuItemVisible();
 
-                this.contextMenuStrip1.Show(this.dgvData, e.Location);
+                    this.contextMenuStrip1.Show(this.dgvData, e.Location);
+                };
+                
+                if(this.InvokeRequired)
+                {
+                    this.Invoke(action);
+                }
+                else
+                {
+                    action();
+                }
+
+                this.Invalidate();
             }
         }
 
@@ -94,6 +108,7 @@ namespace DatabaseManager.Controls
         {
             int selectedCount = this.dgvData.GetCellCount(DataGridViewElementStates.Selected);
 
+            this.tsmiSave.Visible = this.dgvData.Rows.Count > 0;
             this.tsmiCopy.Visible = selectedCount > 1;
             this.tsmiCopyWithHeader.Visible = selectedCount > 1;
             this.tsmiViewGeometry.Visible = selectedCount == 1 && DataGridViewHelper.IsGeometryValue(this.dgvData);
