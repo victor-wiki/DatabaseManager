@@ -1274,6 +1274,18 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
+            foreach(var child in node.children)
+            {
+                if(child is TerminalNodeImpl)
+                {
+                    if (child.GetText()?.ToUpper() == "DISTINCT")
+                    {
+                        statement.IsDistinct = true;
+                        break;
+                    }
+                }                
+            }
+
             List<ColumnName> columnNames = new List<ColumnName>();
 
             Selected_listContext selectColumns = node.selected_list();

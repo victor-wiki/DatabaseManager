@@ -492,7 +492,20 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
-            var columns = node.opt_target_list().target_list();
+            var distinct = node.distinct_clause();
+
+            dynamic columns = null;
+
+            if (distinct != null)
+            {
+                statement.IsDistinct = true;
+                columns = node.target_list();
+            }
+            else
+            {
+                columns = node.opt_target_list().target_list();
+            }
+           
             var from = node.from_clause();
             var where = node.where_clause();
             var groupBy = node.group_clause();

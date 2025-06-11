@@ -4,6 +4,7 @@ namespace SqlAnalyser.Model
 {
     public class SelectStatement : Statement
     {
+        public bool IsDistinct { get; set; }
         public List<ColumnName> Columns { get; set; } = new List<ColumnName>();    
         public List<TokenInfo> Intos { get; set; }
         public TableName TableName { get; set; }

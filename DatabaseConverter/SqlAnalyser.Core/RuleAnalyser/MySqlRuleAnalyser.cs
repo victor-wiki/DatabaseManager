@@ -926,6 +926,20 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
+            var options = node.selectOption();
+
+            if (options != null)
+            {
+                foreach(var option in options)
+                {
+                    if(option.GetText()?.ToUpper() == "DISTINCT")
+                    {
+                        statement.IsDistinct = true;
+                        break;
+                    }
+                }
+            }
+
             var columns = node.selectItemList().selectItem();
 
             if (columns.Length == 0)
@@ -1126,7 +1140,7 @@ namespace SqlAnalyser.Core
             }
 
             return fromItems;
-        }       
+        }
 
         private List<SetStatement> ParseSetStatement(SetStatementContext node)
         {
@@ -1199,9 +1213,9 @@ namespace SqlAnalyser.Core
         {
             SelectStatement statement = new SelectStatement();
 
-            foreach(var child in node.children)
+            foreach (var child in node.children)
             {
-                if(child is SubqueryContext subquery)
+                if (child is SubqueryContext subquery)
                 {
                     statement = this.ParseSubquery(subquery);
                 }
@@ -1748,7 +1762,7 @@ namespace SqlAnalyser.Core
 
                             constraintInfo.Name = new NameToken(cn.identifier());
                         }
-                        else if(child is CheckConstraintContext check)
+                        else if (child is CheckConstraintContext check)
                         {
                             checkConstraintInfo();
 

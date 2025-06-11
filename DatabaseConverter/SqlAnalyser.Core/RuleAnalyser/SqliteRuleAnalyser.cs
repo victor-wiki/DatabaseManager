@@ -441,6 +441,18 @@ namespace SqlAnalyser.Core
             var tableNames = node.table_or_subquery();
             var join = node.join_clause();
 
+            foreach(var child in node.children)
+            {
+                if(child is TerminalNodeImpl)
+                {
+                    if(child.GetText()?.ToUpper()== "DISTINCT")
+                    {
+                        statement.IsDistinct = true;
+                        break;
+                    }
+                }
+            }
+
             if (columns != null && columns.Length > 0)
             {
                 statement.Columns.AddRange(columns.Select(item => this.ParseColumnName(item)));

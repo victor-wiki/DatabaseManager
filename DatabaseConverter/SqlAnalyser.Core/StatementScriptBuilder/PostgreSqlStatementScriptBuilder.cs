@@ -662,7 +662,9 @@ namespace SqlAnalyser.Core
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
-            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
+            string distinct = select.IsDistinct ? "DISTINCT " : "";
+
+            string selectColumns = $"SELECT {distinct}{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
             if (select.NoTableName && select.Columns.Any(item => AnalyserHelper.IsAssignNameColumn(item)))
             {

@@ -354,10 +354,12 @@ namespace DatabaseManager.Controls
                                         rect.X = cellPosX + 2;
                                         rect.Width = s2.Width - 6;
                                     }
+                          
+                                    int maxX = cellPosX + column.Width;
 
-                                    if(rect.X + rect.Width> (cellPosX + column.Width))
+                                    if(rect.X + rect.Width > maxX)
                                     {
-                                        continue;
+                                        rect.Width = rect.Width - (rect.X + rect.Width - maxX);
                                     }
 
                                     SolidBrush brush = new SolidBrush(Color.LightPink);

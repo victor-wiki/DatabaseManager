@@ -554,7 +554,9 @@ namespace SqlAnalyser.Core
 
             string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : " ")}";
 
-            string selectColumns = $"SELECT {top}";
+            string distinct = select.IsDistinct ? " DISTINCT " : "";
+
+            string selectColumns = $"SELECT {top}{distinct}";
 
             if (!isAssignVariable)
             {

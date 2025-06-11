@@ -1459,7 +1459,11 @@ namespace SqlAnalyser.Core
                 {
                     terminalNodeType = terminalNode.Symbol.Type;
 
-                    if (terminalNodeType == TSqlParser.INTO)
+                    if(terminalNodeType == TSqlParser.DISTINCT)
+                    {
+                        statement.IsDistinct = true;
+                    }
+                    else if (terminalNodeType == TSqlParser.INTO)
                     {
                         statement.Intos = new List<TokenInfo>() { new TableName(node.table_name()) };
                     }

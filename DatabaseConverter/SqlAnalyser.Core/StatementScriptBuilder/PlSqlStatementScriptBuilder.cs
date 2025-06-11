@@ -692,7 +692,8 @@ namespace SqlAnalyser.Core
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
             bool hasAssignVariableColumn = this.HasAssignVariableColumn(select);
-            string selectColumns = $"SELECT {string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
+            string distinct = select.IsDistinct ? "DISTINCT " : "";
+            string selectColumns = $"SELECT {distinct}{string.Join(",", select.Columns.Select(item => this.GetNameWithAlias(item)))}";
 
             bool handled = false;
 

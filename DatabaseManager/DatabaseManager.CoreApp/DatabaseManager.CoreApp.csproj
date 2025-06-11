@@ -8,12 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.14</Version>
+    <Version>2.2.15</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>intelligence for sql query editor: ignore number and string</PackageReleaseNotes>
+    <PackageReleaseNotes>add: highlighting query result text.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.14</AssemblyVersion>
-    <FileVersion>2.2.14</FileVersion>
+    <AssemblyVersion>2.2.15</AssemblyVersion>
+    <FileVersion>2.2.15</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
