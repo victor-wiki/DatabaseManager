@@ -29,8 +29,7 @@ namespace DatabaseManager.Forms
                     MessageBox.Show(info.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
-                this.txtMessage.Text = info.Message;
-                this.txtMessage.BackColor = this.BackColor;
+                this.txtMessage.Text = info.Message;               
                 this.txtMessage.ForeColor = Color.Red;
             }
             else

@@ -1370,7 +1370,7 @@ namespace DatabaseManager.Controls
 
             form.OnFeedback += this.Feedback;
 
-            form.ShowDialog();
+            form.Show();
         }
 
         private void tsmiCompare_Click(object sender, EventArgs e)

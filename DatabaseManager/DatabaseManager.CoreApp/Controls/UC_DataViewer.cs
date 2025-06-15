@@ -112,6 +112,10 @@ namespace DatabaseManager.Controls
                 {
                     column.SortMode = DataGridViewColumnSortMode.NotSortable;
                 }
+                else
+                {
+                    column.SortMode = DataGridViewColumnSortMode.Automatic;
+                }
             }
 
             if (this.sortedColumnIndex != -1)
