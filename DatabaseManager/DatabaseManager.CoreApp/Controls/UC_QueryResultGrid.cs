@@ -137,6 +137,8 @@ namespace DatabaseManager.Controls
             this.tsmiAutoColumnWidth.Visible = this.dgvData.AutoSizeColumnsMode != DataGridViewAutoSizeColumnsMode.AllCells;
             this.tsmiFindText.Visible = this.dgvData.Rows.Count > 0;
             this.tsmiClearHighlighting.Visible = this.isHighlighting;
+            this.tsmiHideRowHeader.Visible = this.dgvData.RowHeadersVisible;
+            this.tsmiShowRowHeader.Visible = !this.dgvData.RowHeadersVisible;
         }
 
         private void tsmiViewGeometry_Click(object sender, EventArgs e)
@@ -171,7 +173,7 @@ namespace DatabaseManager.Controls
 
         private void SetAutoCoumnWidthMode(DataGridViewAutoSizeColumnsMode mode)
         {
-            this.dgvData.AutoSizeColumnsMode = mode;                      
+            this.dgvData.AutoSizeColumnsMode = mode;
         }
 
         private void dgvData_KeyDown(object sender, KeyEventArgs e)
@@ -203,14 +205,14 @@ namespace DatabaseManager.Controls
         {
             if (this.findBox == null || this.findBox.IsDisposed)
             {
-                this.findBox = new frmFindBox(true);              
+                this.findBox = new frmFindBox(true);
                 this.findBox.MinimizeBox = true;
-                this.findBox.OnFind += this.FindBox_OnFind;               
+                this.findBox.OnFind += this.FindBox_OnFind;
             }
             else
             {
                 this.findBox.WindowState = FormWindowState.Normal;
-            }            
+            }
 
             Control topLevelControl = this.TopLevelControl;
             Control parent = this.FindParentByType(this.Parent, typeof(SplitterPanel));
@@ -221,7 +223,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.findBox.Owner =(Form) topLevelControl;
+                this.findBox.Owner = (Form)topLevelControl;
             }
 
             if (parent == null)
@@ -275,8 +277,8 @@ namespace DatabaseManager.Controls
                                         if (matches != null && matches.Count > 0)
                                         {
                                             this.dgvData.InvalidateCell(cell);
-                                            
-                                            if(!found)
+
+                                            if (!found)
                                             {
                                                 this.dgvData.FirstDisplayedScrollingRowIndex = cell.RowIndex;
                                             }
@@ -354,10 +356,10 @@ namespace DatabaseManager.Controls
                                         rect.X = cellPosX + 2;
                                         rect.Width = s2.Width - 6;
                                     }
-                          
+
                                     int maxX = cellPosX + column.Width;
 
-                                    if(rect.X + rect.Width > maxX)
+                                    if (rect.X + rect.Width > maxX)
                                     {
                                         rect.Width = rect.Width - (rect.X + rect.Width - maxX);
                                     }
@@ -421,6 +423,40 @@ namespace DatabaseManager.Controls
         private void tsmiFindText_Click(object sender, EventArgs e)
         {
             this.FindText();
+        }
+
+        private void dgvData_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
+        {
+            if(this.dgvData.RowHeadersVisible)
+            {
+                var grid = sender as DataGridView;
+                var rowNumber = (e.RowIndex + 1).ToString();
+
+                StringFormat format = new StringFormat()
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                };
+
+                var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+
+                e.Graphics.DrawString(rowNumber, this.Font, SystemBrushes.ControlText, headerBounds, format);
+            }          
+        }
+
+        private void tsmiHideRowHeader_Click(object sender, EventArgs e)
+        {
+            this.SetGridRowHeaderVisible(false);
+        }
+
+        private void tsmiShowRowHeader_Click(object sender, EventArgs e)
+        {
+            this.SetGridRowHeaderVisible(true);
+        }
+
+        private void SetGridRowHeaderVisible(bool visible)
+        {
+            this.dgvData.RowHeadersVisible = visible;           
         }
     }
 }

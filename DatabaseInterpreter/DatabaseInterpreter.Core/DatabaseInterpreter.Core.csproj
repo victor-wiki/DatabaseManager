@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.4</AssemblyVersion>
-    <FileVersion>2.2.4</FileVersion>
-    <Version>2.2.4</Version>
-    <PackageReleaseNotes>fix issue: set CaseSensitive=true for datatable</PackageReleaseNotes>
+    <AssemblyVersion>2.2.5</AssemblyVersion>
+    <FileVersion>2.2.5</FileVersion>
+    <Version>2.2.5</Version>
+    <PackageReleaseNotes>Remove the package reference to "CsvHelper" which version is confict with the version of the one referenced by "DatabaseInterpreter.Utility".</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>
@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.4" />

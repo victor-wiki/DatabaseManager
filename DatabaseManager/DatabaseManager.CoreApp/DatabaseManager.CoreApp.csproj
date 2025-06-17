@@ -8,12 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.16</Version>
+    <Version>2.2.17</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>search result grid: specify sort mode if the data type of a column is not byte array.</PackageReleaseNotes>
+    <PackageReleaseNotes>query result grid: show row number in row header cell.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.16</AssemblyVersion>
-    <FileVersion>2.2.16</FileVersion>
+    <AssemblyVersion>2.2.17</AssemblyVersion>
+    <FileVersion>2.2.17</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

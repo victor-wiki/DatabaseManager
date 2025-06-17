@@ -17,56 +17,31 @@ namespace DatabaseManager.Core
         private readonly string createAlterScriptPattern = @"\b(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)\b";
         private readonly string routinePattern = @"\b(BEGIN|DECLARE|SET|GOTO)\b";
         private DbInterpreter dbInterpreter;
-        private string originalScript;
-        private string cleanScript;
+        private string script;     
 
         public const string AsPattern = @"\b(AS|IS)\b";
 
-        public string Script => this.originalScript;
-        public string CleanScript => this.cleanScript;
+        public string Script => this.script;
 
         public ScriptParser(DbInterpreter dbInterpreter, string script)
         {
             this.dbInterpreter = dbInterpreter;
-            this.originalScript = script;
-
-            this.Parse();
-        }
-
-        private string Parse()
-        {
-            StringBuilder sb = new StringBuilder();
-
-            string[] lines = this.originalScript.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string line in lines)
-            {
-                if (line.Trim().StartsWith(this.dbInterpreter.CommentString))
-                {
-                    continue;
-                }
-
-                sb.AppendLine(line);
-            }
-
-            this.cleanScript = sb.ToString();
-
-            return this.cleanScript;
-        }
+            this.script = script;         
+        }       
 
         public bool IsSelect()
         {
             RegexOptions options = RegexOptions.IgnoreCase | RegexOptions.Multiline;
 
-            var selectMatches = Regex.Matches(this.originalScript, selectPattern, options);
+            var selectMatches = Regex.Matches(this.script, selectPattern, options);
 
-            if (selectMatches.Any(item=> !this.IsWordInSingleQuotation(this.cleanScript, item.Index)))
+            if (selectMatches.Any(item=> !this.IsWordInSingleQuotation(this.script, item.Index)))
             {
-                var dmlMatches = Regex.Matches(this.originalScript, dmlPattern, options);
-                var routineMathes = Regex.Matches(this.originalScript, routinePattern, RegexOptions.IgnoreCase);
+                var dmlMatches = Regex.Matches(this.script, dmlPattern, options);
+                var routineMathes = Regex.Matches(this.script, routinePattern, RegexOptions.IgnoreCase);
 
-                if (!(dmlMatches.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index))
-                   || routineMathes.Any(item => !this.IsWordInSingleQuotation(this.originalScript, item.Index))))
+                if (!(dmlMatches.Any(item => !this.IsWordInSingleQuotation(this.script, item.Index))
+                   || routineMathes.Any(item => !this.IsWordInSingleQuotation(this.script, item.Index))))
                 {
                     return true;
                 }                
@@ -82,9 +57,9 @@ namespace DatabaseManager.Core
 
         public bool IsCreateOrAlterScript()
         {
-            var mathes = Regex.Matches(this.originalScript, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            var mathes = Regex.Matches(this.script, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
-            return mathes.Any(item=> !this.IsWordInSingleQuotation(this.originalScript, item.Index));
+            return mathes.Any(item=> !this.IsWordInSingleQuotation(this.script, item.Index));
         }
 
         public static ScriptType DetectScriptType(string script, DbInterpreter dbInterpreter)

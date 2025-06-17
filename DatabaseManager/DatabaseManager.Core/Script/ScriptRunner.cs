@@ -58,15 +58,7 @@ namespace DatabaseManager.Core
 
             try
             {
-                ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);
-
-                string cleanScript = scriptParser.CleanScript;
-
-                if (string.IsNullOrEmpty(cleanScript))
-                {
-                    result.DoNothing = true;
-                    return result;
-                }
+                ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);               
 
                 using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
@@ -79,10 +71,10 @@ namespace DatabaseManager.Core
 
                         if (!scriptParser.IsCreateOrAlterScript() && dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
-                            cleanScript = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                            script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
                         }
 
-                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, cleanScript);
+                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script);
 
                         result.Result = dataTable;
                     }

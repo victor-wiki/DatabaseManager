@@ -29,7 +29,8 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             dgvData = new CustomDataGridView();
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
             tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
@@ -40,9 +41,11 @@
             tsmiSave = new System.Windows.Forms.ToolStripMenuItem();
             tsmiAutoColumnWidth = new System.Windows.Forms.ToolStripMenuItem();
             tsmiSetColumnWidthByDefault = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiClearHighlighting = new System.Windows.Forms.ToolStripMenuItem();
-            dlgSave = new System.Windows.Forms.SaveFileDialog();
             tsmiFindText = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiClearHighlighting = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiHideRowHeader = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiShowRowHeader = new System.Windows.Forms.ToolStripMenuItem();
+            dlgSave = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
@@ -53,20 +56,27 @@
             dgvData.AllowUserToDeleteRows = false;
             dgvData.BackgroundColor = System.Drawing.Color.White;
             dgvData.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvData.Dock = System.Windows.Forms.DockStyle.Fill;
             dgvData.Location = new System.Drawing.Point(0, 0);
             dgvData.Margin = new System.Windows.Forms.Padding(4);
             dgvData.Name = "dgvData";
             dgvData.ReadOnly = true;
-            dgvData.RowHeadersVisible = false;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft YaHei UI", 9F);
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            dgvData.RowHeadersDefaultCellStyle = dataGridViewCellStyle4;
             dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             dgvData.Size = new System.Drawing.Size(658, 329);
             dgvData.TabIndex = 6;
@@ -74,14 +84,15 @@
             dgvData.CellPainting += dgvData_CellPainting;
             dgvData.DataBindingComplete += dgvData_DataBindingComplete;
             dgvData.DataError += dgvData_DataError;
+            dgvData.RowPostPaint += dgvData_RowPostPaint;
             dgvData.KeyDown += dgvData_KeyDown;
             dgvData.MouseUp += dgvData_MouseUp;
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault, tsmiFindText, tsmiClearHighlighting });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault, tsmiFindText, tsmiClearHighlighting, tsmiHideRowHeader, tsmiShowRowHeader });
             contextMenuStrip1.Name = "contextMenuStrip2";
-            contextMenuStrip1.Size = new System.Drawing.Size(250, 246);
+            contextMenuStrip1.Size = new System.Drawing.Size(250, 290);
             // 
             // tsmiCopy
             // 
@@ -139,6 +150,13 @@
             tsmiSetColumnWidthByDefault.Text = "Set column width by default";
             tsmiSetColumnWidthByDefault.Click += tsmiSetColumnWidthByDefault_Click;
             // 
+            // tsmiFindText
+            // 
+            tsmiFindText.Name = "tsmiFindText";
+            tsmiFindText.Size = new System.Drawing.Size(249, 22);
+            tsmiFindText.Text = "Find text";
+            tsmiFindText.Click += tsmiFindText_Click;
+            // 
             // tsmiClearHighlighting
             // 
             tsmiClearHighlighting.Name = "tsmiClearHighlighting";
@@ -146,16 +164,24 @@
             tsmiClearHighlighting.Text = "Clear highlighting";
             tsmiClearHighlighting.Click += tsmiClearHighlighting_Click;
             // 
+            // tsmiHideRowHeader
+            // 
+            tsmiHideRowHeader.Name = "tsmiHideRowHeader";
+            tsmiHideRowHeader.Size = new System.Drawing.Size(249, 22);
+            tsmiHideRowHeader.Text = "Hide row header";
+            tsmiHideRowHeader.Click += tsmiHideRowHeader_Click;
+            // 
+            // tsmiShowRowHeader
+            // 
+            tsmiShowRowHeader.Name = "tsmiShowRowHeader";
+            tsmiShowRowHeader.Size = new System.Drawing.Size(249, 22);
+            tsmiShowRowHeader.Text = "Show row header";
+            tsmiShowRowHeader.Visible = false;
+            tsmiShowRowHeader.Click += tsmiShowRowHeader_Click;
+            // 
             // dlgSave
             // 
             dlgSave.Filter = "\"csv file|*.csv|txt file|*.txt\"";
-            // 
-            // tsmiFindText
-            // 
-            tsmiFindText.Name = "tsmiFindText";
-            tsmiFindText.Size = new System.Drawing.Size(249, 22);
-            tsmiFindText.Text = "Find text";
-            tsmiFindText.Click += tsmiFindText_Click;
             // 
             // UC_QueryResultGrid
             // 
@@ -185,5 +211,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiSetColumnWidthByDefault;
         private System.Windows.Forms.ToolStripMenuItem tsmiClearHighlighting;
         private System.Windows.Forms.ToolStripMenuItem tsmiFindText;
+        private System.Windows.Forms.ToolStripMenuItem tsmiHideRowHeader;
+        private System.Windows.Forms.ToolStripMenuItem tsmiShowRowHeader;
     }
 }
