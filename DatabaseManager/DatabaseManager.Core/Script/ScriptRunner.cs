@@ -420,7 +420,17 @@ namespace DatabaseManager.Core
 
                         if (selectStatement.OrderBy == null && !string.IsNullOrEmpty(defaultOrder))
                         {
-                            selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
+                            bool canUseOrderby = true;
+
+                            if (dbInterpreter.DatabaseType == DatabaseType.SqlServer && selectStatement.IsDistinct)
+                            {
+                                canUseOrderby = false;
+                            }
+
+                            if (canUseOrderby)
+                            {
+                                selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
+                            }                            
                         }
 
                         if (databaseType == DatabaseType.SqlServer)
