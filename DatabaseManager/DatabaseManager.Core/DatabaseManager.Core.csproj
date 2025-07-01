@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.2.7</Version>
-    <PackageReleaseNotes>fix issue: for sqlserver, do not use default order if use "distinct".</PackageReleaseNotes>
+    <Version>2.2.8</Version>
+    <PackageReleaseNotes>fix issue: can't detect select statement correctly if comment or string contains keyword such as "Delete", "INSERT" and so on.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.7</AssemblyVersion>
-    <FileVersion>2.2.7</FileVersion>
+    <AssemblyVersion>2.2.8</AssemblyVersion>
+    <FileVersion>2.2.8</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
