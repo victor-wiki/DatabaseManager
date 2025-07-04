@@ -403,18 +403,22 @@ namespace DatabaseManager.Core
                     }
 
                     TableName tableName = selectStatement.TableName;
+                    TokenInfo alias = null;
 
                     if (tableName == null)
                     {
                         if (selectStatement.HasFromItems)
                         {
                             tableName = selectStatement.FromItems[0].TableName;
+                            alias = selectStatement.FromItems[0].Alias;
                         }
                     }
 
-                    bool hasTableName = tableName != null && tableName.Symbol?.ToUpper() != "DUAL";
+                    bool hasTableName = tableName != null;
+                    bool hasAlias = alias != null;
+                    bool isFromDUAL =  tableName?.Symbol?.ToUpper() == "DUAL";
 
-                    if (hasTableName && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
+                    if (!isFromDUAL && (hasTableName || hasAlias) && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
                     {
                         string defaultOrder = dbInterpreter.GetDefaultOrder();
 
