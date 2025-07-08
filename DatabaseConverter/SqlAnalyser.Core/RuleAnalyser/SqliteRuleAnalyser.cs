@@ -441,11 +441,11 @@ namespace SqlAnalyser.Core
             var tableNames = node.table_or_subquery();
             var join = node.join_clause();
 
-            foreach(var child in node.children)
+            foreach (var child in node.children)
             {
-                if(child is TerminalNodeImpl)
+                if (child is TerminalNodeImpl)
                 {
-                    if(child.GetText()?.ToUpper()== "DISTINCT")
+                    if (child.GetText()?.ToUpper() == "DISTINCT")
                     {
                         statement.IsDistinct = true;
                         break;
@@ -892,7 +892,7 @@ namespace SqlAnalyser.Core
                             if (constraintInfo.Type == ConstraintType.Check)
                             {
                                 constraintInfo.Definition = new TokenInfo(expr);
-                            }                           
+                            }
                         }
                         else if (child is Foreign_key_clauseContext fk)
                         {
@@ -1092,15 +1092,14 @@ namespace SqlAnalyser.Core
 
                     if (expr != null)
                     {
-                        var name = expr.column_name();
+                        //var name = expr.column_name();
+                        var tableName = expr.table_name();
 
-                        if (name != null)
+                        columnName = new ColumnName(expr);
+
+                        if (tableName != null)
                         {
-                            columnName = new ColumnName(name);
-                        }
-                        else
-                        {
-                            columnName = new ColumnName(expr);
+                            columnName.TableName = new TokenInfo(tableName);
                         }
                     }
 

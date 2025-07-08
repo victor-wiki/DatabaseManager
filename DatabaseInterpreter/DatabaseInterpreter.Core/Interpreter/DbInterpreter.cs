@@ -42,7 +42,7 @@ namespace DatabaseInterpreter.Core
         public abstract bool SupportBulkCopy { get; }
         public abstract bool SupportNchar { get; }
         public abstract bool SupportTruncateTable { get; }
-        public abstract bool CanInsertIdentityByDefault { get; }  
+        public abstract bool CanInsertIdentityByDefault { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public static DbInterpreterSetting Setting = new DbInterpreterSetting();
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();
@@ -641,11 +641,25 @@ namespace DatabaseInterpreter.Core
                 GeometryUtility.Hook();
             }
 
-            DbDataReader reader = await dbConnection.ExecuteReaderAsync(sql);
+            if (dbConnection.State != ConnectionState.Open)
+            {
+                await dbConnection.OpenAsync();
+            }
+
+            var cmd = dbConnection.CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = Setting.CommandTimeout;
+
+            DbDataReader reader = await cmd.ExecuteReaderAsync();
 
             DataTable table = new DataTable();
-
             table.CaseSensitive = true;
+
+            DataSet dataSet = new DataSet();
+            dataSet.EnforceConstraints = false;            
+
+            dataSet.Tables.Add(table);
 
             table.Load(reader);
 
