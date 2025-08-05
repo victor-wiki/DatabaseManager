@@ -6,10 +6,10 @@
     <Authors>victor-wiki</Authors>
     <Description>Parse and generate scripts for TSql, MySql, PlSql, PostgreSql and SqliteSql using antlr.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.3</Version>
+    <Version>2.2.4</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.3</AssemblyVersion>
-    <FileVersion>2.2.3</FileVersion>
+    <AssemblyVersion>2.2.4</AssemblyVersion>
+    <FileVersion>2.2.4</FileVersion>
     <PackageReleaseNotes>SqliteRuleAnalyser: column name should be full name.
 </PackageReleaseNotes>
   </PropertyGroup>

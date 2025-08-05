@@ -492,9 +492,11 @@ namespace SqlAnalyser.Core
                             break;
                         case "GROUP":
                             isGroupBy = true;
+                            isWhere = false;
                             break;
                         case "HAVING":
                             isHaving = true;
+                            isGroupBy = false;                          
                             break;
                     }
                 }
@@ -503,14 +505,21 @@ namespace SqlAnalyser.Core
                     if (isWhere)
                     {
                         statement.Where = this.ParseCondition(expr);
+                        isWhere = false;
                     }
                     else if (isGroupBy)
                     {
-                        statement.GroupBy.Add(this.CreateToken(expr, TokenType.GroupBy));
+                        if(statement.GroupBy == null)
+                        {
+                            statement.GroupBy = new List<TokenInfo>();
+                        }
+                       
+                        statement.GroupBy.Add(this.CreateToken(expr, TokenType.GroupBy));                      
                     }
                     else if (isHaving)
                     {
                         statement.Having = this.ParseCondition(expr);
+                        isHaving = false;
                     }
                 }
             }
