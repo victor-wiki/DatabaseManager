@@ -10,8 +10,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <AssemblyVersion>2.2.4</AssemblyVersion>
     <FileVersion>2.2.4</FileVersion>
-    <PackageReleaseNotes>SqliteRuleAnalyser: column name should be full name.
-</PackageReleaseNotes>
+    <PackageReleaseNotes>fix issue: sqlite parser not parse select clause correctly if has "group by".</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
