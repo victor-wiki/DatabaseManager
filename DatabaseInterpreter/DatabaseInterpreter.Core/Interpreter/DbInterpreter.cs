@@ -634,7 +634,7 @@ namespace DatabaseInterpreter.Core
             return dbConnection.ExecuteReader(sql);
         }
 
-        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql)
+        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, bool ignoreSchema = false)
         {
             if (this.DatabaseType == DatabaseType.Oracle)
             {
@@ -657,11 +657,19 @@ namespace DatabaseInterpreter.Core
             table.CaseSensitive = true;
 
             DataSet dataSet = new DataSet();
-            dataSet.EnforceConstraints = false;            
+            dataSet.EnforceConstraints = false;
 
             dataSet.Tables.Add(table);
 
-            table.Load(reader);
+            if(!ignoreSchema)
+            {
+                table.Load(reader);
+            }
+            else
+            {
+                //when it's only for querying, use this to avoid rows are merged if unique index exists.
+                table.Load(reader, 0);
+            }           
 
             return table;
         }

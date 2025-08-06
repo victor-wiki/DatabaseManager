@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.6</AssemblyVersion>
-    <FileVersion>2.2.6</FileVersion>
-    <Version>2.2.6</Version>
-    <PackageReleaseNotes>Ignore DataTable constraints for querying.</PackageReleaseNotes>
+    <AssemblyVersion>2.2.7</AssemblyVersion>
+    <FileVersion>2.2.7</FileVersion>
+    <Version>2.2.7</Version>
+    <PackageReleaseNotes>fix issue: rows are merged when load DataReader to DataTable if unique index exists. </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
   </PropertyGroup>
@@ -22,7 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
     <PackageReference Include="Npgsql" Version="9.0.3" />

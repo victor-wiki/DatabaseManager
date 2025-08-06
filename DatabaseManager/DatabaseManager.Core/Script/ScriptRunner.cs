@@ -74,7 +74,7 @@ namespace DatabaseManager.Core
                             script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
                         }
 
-                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script);
+                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, true);
 
                         result.Result = dataTable;
                     }
