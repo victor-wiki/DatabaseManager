@@ -30,6 +30,18 @@ namespace DatabaseManager.Controls
             this.ResetSearch();
 
             this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(dataTable);
+
+            var columns = this.dgvData.Columns;
+
+            foreach(DataGridViewColumn column in columns)
+            {
+                string columnName = column.Name;
+
+                if(!Regex.IsMatch(columnName, RegexHelper.NameRegexPattern))
+                {
+                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+            }
         }
 
         public void ClearData()
@@ -427,7 +439,7 @@ namespace DatabaseManager.Controls
 
         private void dgvData_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
         {
-            if(this.dgvData.RowHeadersVisible)
+            if (this.dgvData.RowHeadersVisible)
             {
                 var grid = sender as DataGridView;
                 var rowNumber = (e.RowIndex + 1).ToString();
@@ -441,7 +453,7 @@ namespace DatabaseManager.Controls
                 var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
 
                 e.Graphics.DrawString(rowNumber, this.Font, SystemBrushes.ControlText, headerBounds, format);
-            }          
+            }
         }
 
         private void tsmiHideRowHeader_Click(object sender, EventArgs e)
@@ -456,7 +468,7 @@ namespace DatabaseManager.Controls
 
         private void SetGridRowHeaderVisible(bool visible)
         {
-            this.dgvData.RowHeadersVisible = visible;           
-        }
+            this.dgvData.RowHeadersVisible = visible;
+        }       
     }
 }
