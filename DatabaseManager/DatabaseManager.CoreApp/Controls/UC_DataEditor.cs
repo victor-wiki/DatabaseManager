@@ -904,11 +904,63 @@ namespace DatabaseManager.Controls
                 for (int j = 0; j < this.dgvData.ColumnCount; j++)
                 {
                     string columnName = this.dgvData.Columns[j].Name;
+
+                    if(columnName == GUID_ROW_NAME)
+                    {
+                        continue;
+                    }                             
+                   
                     var value = row.Cells[j].Value;
+                    dynamic newValue = null;
+
+                    TableColumn column = this.GetTableColumn(columnName);
+
+                    if(column == null)
+                    {
+                        newValue = value;
+                    }
+                    else
+                    {
+                        string dataType = column.DataType;
+
+                        switch (dataType)
+                        {
+                            case "boolean":
+                            case "tinyint":
+                            case "smallint":
+                            case "mediumint":
+                            case "int":
+                            case "integer":
+                            case "year":
+                            case "oid":
+                                newValue = Convert.ToInt32(value);
+                                break;
+                            case "bigint":
+                                newValue = Convert.ToInt64(value);
+                                break;
+                            case "real":
+                            case "float":
+                            case "binary_float":
+                                newValue = Convert.ToSingle(value);
+                                break;
+                            case "decimal":
+                            case "double":
+                            case "binary_double":
+                            case "numeric":
+                            case "number":
+                            case "smallmoney":
+                            case "money":
+                                newValue = Convert.ToDecimal(value);
+                                break;                          
+                            default:
+                                newValue = value;
+                                break;
+                        }
+                    }                
 
                     if (isNewRow)
                     {
-                        dictRow.Add(columnName, value);
+                        dictRow.Add(columnName, newValue);
                     }
                     else
                     {
@@ -921,7 +973,7 @@ namespace DatabaseManager.Controls
 
                         if (value?.ToString() != oldValue?.ToString()) //updated
                         {
-                            updateDataItemInfos.Add(new UpdateDataItemInfo() { ColumnName = columnName, OldValue = oldValue, NewValue = value });
+                            updateDataItemInfos.Add(new UpdateDataItemInfo() { ColumnName = columnName, OldValue = oldValue, NewValue = newValue });
                         }
                     }
                 }
