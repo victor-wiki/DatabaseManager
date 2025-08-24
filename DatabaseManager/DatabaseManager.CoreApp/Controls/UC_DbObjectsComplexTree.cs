@@ -1,23 +1,24 @@
-﻿using DatabaseConverter.Core;
-using DatabaseConverter.Model;
+﻿using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Export;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
-using DatabaseManager.Profile;
 using DatabaseManager.Profile.Manager;
 using DatabaseManager.Profile.Model;
+using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO.Packaging;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using View = DatabaseInterpreter.Model.View;
+using Function = DatabaseInterpreter.Model.Function;
+using DatabaseManager.FileUtility;
 
 namespace DatabaseManager.Controls
 {
@@ -160,6 +161,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable || isView;
+            this.tsmiExportData.Visible = isTable;
             this.tsmiEditData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
@@ -1492,6 +1494,44 @@ namespace DatabaseManager.Controls
             form.LoadData(records);
 
             form.ShowDialog();
+        }
+
+        private void tsmiExportData_Click(object sender, EventArgs e)
+        {
+            this.ExportData();
+        }
+
+        private async void ExportData()
+        {
+            frmExportDataOption frm = new frmExportDataOption();
+
+            DialogResult result = frm.ShowDialog();
+
+            if(result == DialogResult.OK)
+            {
+                ExportDataOption option = frm.Option;
+
+                TreeNode node = this.GetSelectedNode();
+
+                Table table = node.Tag as Table;
+
+                var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
+
+                DataExporter exporter = new DataExporter();
+
+                exporter.Subscribe(this);
+
+                bool success = await exporter.Export(dbInterpreter, table.Name, option);
+
+                if(success)
+                {
+                    MessageBox.Show("Export successfully.");
+                }
+                else
+                {
+                    MessageBox.Show("Export failed.");
+                }
+            }
         }
     }
 }

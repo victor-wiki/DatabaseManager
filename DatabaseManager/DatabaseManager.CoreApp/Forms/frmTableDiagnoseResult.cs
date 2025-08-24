@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using DatabaseManager.Model;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Export;
 
 namespace DatabaseManager
 {
@@ -163,7 +164,7 @@ namespace DatabaseManager
                     }
                 }
 
-                DataTableHelper.WriteToFile(table, this.dlgSave.FileName);
+                DataExporter.WriteToCsv(table, this.dlgSave.FileName);
             }
         }
 

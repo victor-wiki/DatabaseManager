@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Export;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using FontAwesome.Sharp;
@@ -144,7 +145,7 @@ namespace DatabaseManager.Controls
 
         public ContentSaveResult Save(ContentSaveInfo info)
         {
-            DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, info.FilePath);
+            DataExporter.WriteToCsv(this.dgvData.DataSource as DataTable, info.FilePath);
 
             return new ContentSaveResult() { IsOK = true };
         }

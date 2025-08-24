@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Utility;
+using DatabaseManager.Export;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using System;
@@ -75,7 +76,7 @@ namespace DatabaseManager.Controls
 
             if (result == DialogResult.OK)
             {
-                DataTableHelper.WriteToFile(this.dgvData.DataSource as DataTable, this.dlgSave.FileName);
+                DataExporter.WriteToCsv(this.dgvData.DataSource as DataTable, this.dlgSave.FileName);
             }
         }
 

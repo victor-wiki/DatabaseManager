@@ -6,6 +6,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using System.Collections.Generic;
 using System.Linq;
+using DatabaseManager.Export;
 
 namespace DatabaseManager
 {
@@ -117,7 +118,7 @@ namespace DatabaseManager
                     }
                 }
 
-                DataTableHelper.WriteToFile(table, this.dlgSave.FileName);
+                DataExporter.WriteToCsv(table, this.dlgSave.FileName);
             }
         }
 

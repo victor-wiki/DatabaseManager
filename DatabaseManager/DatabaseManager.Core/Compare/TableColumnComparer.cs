@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
-using Utility = DatabaseInterpreter.Utility;
+using StringHelper = DatabaseInterpreter.Utility.StringHelper;
 
 namespace DatabaseManager.Core
 {
@@ -54,7 +54,7 @@ namespace DatabaseManager.Core
 
         private bool IsEqualsWithParenthesis(string value1, string value2)
         {
-            return Utility.StringHelper.GetBalanceParenthesisTrimedValue(value1) == Utility.StringHelper.GetBalanceParenthesisTrimedValue(value2);
+            return StringHelper.GetBalanceParenthesisTrimedValue(value1) == StringHelper.GetBalanceParenthesisTrimedValue(value2);
         }
 
         public override bool IsTypeMatch(Type type1, Type type2)
