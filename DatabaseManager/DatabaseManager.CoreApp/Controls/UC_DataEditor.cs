@@ -6,6 +6,7 @@ using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using FontAwesome.Sharp;
+using NPOI.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,6 +31,7 @@ namespace DatabaseManager.Controls
         private SortOrder sortOrder = SortOrder.None;
         private bool isSorting = false;
         private QueryConditionBuilder conditionBuilder;
+        private QuickQueryConditionBuilder quickQueryConditionBuilder;
         private DataTable originalTable;
         private DataTable table;
         private List<TableColumn> columns;
@@ -36,7 +39,6 @@ namespace DatabaseManager.Controls
         private List<IndexColumn> pkColumns;
         private List<IndexColumn> uniqueIndexes;
         private const string GUID_ROW_NAME = "__row__guid__";
-
 
         public IEnumerable<DataGridViewColumn> Columns => this.dgvData.Columns.Cast<DataGridViewColumn>();
         public QueryConditionBuilder ConditionBuilder => this.conditionBuilder;
@@ -63,6 +65,8 @@ namespace DatabaseManager.Controls
             this.dgvData.AutoGenerateColumns = true;
 
             typeof(DataGridView).InvokeMember("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty, null, this.dgvData, new object[] { true });
+
+            this.uc_QuickFilter.Query += UC_QuickFilter_Query;
         }
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
@@ -114,6 +118,22 @@ namespace DatabaseManager.Controls
                 this.conditionBuilder.QuotationRightChar = this.dbInterpreter.QuotationRightChar;
 
                 conditionClause = "WHERE " + this.conditionBuilder.ToString();
+            }
+            else if (this.quickQueryConditionBuilder != null)
+            {
+                string content = this.uc_QuickFilter.FilterContent;
+
+                if(!string.IsNullOrEmpty(content))
+                {
+                    var quickFilterInfo = new QuickFilterInfo() { Content = content, FilterMode = this.uc_QuickFilter.FilterMode };
+
+                    string condition = await this.quickQueryConditionBuilder.Build(quickFilterInfo);
+
+                    if (!string.IsNullOrEmpty(condition))
+                    {
+                        conditionClause = "WHERE " + condition;
+                    }
+                }                          
             }
 
             try
@@ -303,6 +323,9 @@ namespace DatabaseManager.Controls
         public void FilterData(QueryConditionBuilder conditionBuilder)
         {
             this.conditionBuilder = conditionBuilder;
+            this.quickQueryConditionBuilder = null;
+
+            this.uc_QuickFilter.ClearContent();
 
             this.LoadData(this.displayInfo, 1, false);
         }
@@ -326,34 +349,47 @@ namespace DatabaseManager.Controls
 
             var value = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
 
-            if (value != null)
+            bool hasValue = value != null && value.GetType() != typeof(DBNull) && !string.IsNullOrEmpty(value.ToString());
+
+            if (e.Button == MouseButtons.Right)
             {
-                if (value.GetType() != typeof(DBNull))
+                DataGridViewCell cell = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                var selectedCells = this.dgvData.SelectedCells;
+
+                if (selectedCells == null || selectedCells.Count == 0 || !selectedCells.Contains(cell))
                 {
-                    if (e.Button == MouseButtons.Right)
-                    {
-                        this.dgvData.CurrentCell = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex];
-
-                        this.SetContextMenuItemVisible();
-
-                        this.cellContextMenu.Show(Cursor.Position);
-                    }
+                    this.dgvData.CurrentCell = cell;
                 }
+
+                this.SetContextMenuItemVisible();
+
+                this.cellContextMenu.Show(Cursor.Position);
             }
         }
 
         private void SetContextMenuItemVisible()
         {
             this.tsmiViewGeometry.Visible = DataGridViewHelper.IsGeometryValue(this.dgvData);
+
+            var selectedCells = this.dgvData.SelectedCells;
+
+            int selectedCellCount = selectedCells == null ? 0 : selectedCells.Count;
+            this.tsmiShowContent.Visible = selectedCellCount == 1;
+            this.tsmiCopy.Visible = selectedCellCount > 0;
         }
 
         private void tsmiCopy_Click(object sender, EventArgs e)
         {
-            var value = DataGridViewHelper.GetCurrentCellValue(this.dgvData);
+            var selectedCells = this.dgvData.SelectedCells;
 
-            if (!string.IsNullOrEmpty(value))
+            if (selectedCells != null && selectedCells.Count > 0)
             {
-                Clipboard.SetDataObject(value);
+                this.dgvData.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+
+                DataObject content = this.dgvData.GetClipboardContent();
+
+                Clipboard.SetDataObject(content);
             }
         }
 
@@ -429,6 +465,12 @@ namespace DatabaseManager.Controls
                 else if (mode == 1) //below
                 {
                     this.dgvData.Rows.Insert(++currentRowIndex, row);
+                }
+
+                if (cells.Length > 0)
+                {
+                    this.dgvData.CurrentCell = cells[0];
+                    this.dgvData.Focus();
                 }
             }
 
@@ -794,7 +836,9 @@ namespace DatabaseManager.Controls
 
             DataGridViewCell startCell = selectedCells.OfType<DataGridViewCell>().OrderBy(item => item.RowIndex).ThenBy(item => item.ColumnIndex).FirstOrDefault();
 
-            Dictionary<int, Dictionary<int, string>> values = this.GetClipBoardValues(Clipboard.GetText());
+            string content = Clipboard.GetText().Replace(Environment.NewLine, "\n");
+
+            Dictionary<int, Dictionary<int, string>> values = this.GetClipBoardValues(content);
 
             int rowIndex = startCell.RowIndex;
 
@@ -905,17 +949,17 @@ namespace DatabaseManager.Controls
                 {
                     string columnName = this.dgvData.Columns[j].Name;
 
-                    if(columnName == GUID_ROW_NAME)
+                    if (columnName == GUID_ROW_NAME)
                     {
                         continue;
-                    }                             
-                   
+                    }
+
                     var value = row.Cells[j].Value;
                     dynamic newValue = null;
 
                     TableColumn column = this.GetTableColumn(columnName);
 
-                    if(column == null)
+                    if (column == null)
                     {
                         newValue = value;
                     }
@@ -951,12 +995,12 @@ namespace DatabaseManager.Controls
                             case "smallmoney":
                             case "money":
                                 newValue = Convert.ToDecimal(value);
-                                break;                          
+                                break;
                             default:
                                 newValue = value;
                                 break;
                         }
-                    }                
+                    }
 
                     if (isNewRow)
                     {
@@ -1382,6 +1426,18 @@ namespace DatabaseManager.Controls
                     this.dgvData.EndEdit();
                 }
             }
+        }
+
+        private void UC_QuickFilter_Query(string content, FilterMode mode)
+        {
+            if (this.conditionBuilder != null)
+            {
+                this.conditionBuilder.ClearConditions();
+            }
+
+            this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
+
+            this.LoadData(this.displayInfo, 1, false);
         }
     }
 }

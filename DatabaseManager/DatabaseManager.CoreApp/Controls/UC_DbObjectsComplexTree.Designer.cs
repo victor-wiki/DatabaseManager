@@ -45,6 +45,7 @@
             tsmiViewData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiEditData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiExportData = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiImportData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
             tsmiCompare = new System.Windows.Forms.ToolStripMenuItem();
             tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
@@ -113,7 +114,7 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiImportData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new System.Drawing.Size(204, 488);
             // 
@@ -200,6 +201,13 @@
             tsmiExportData.Size = new System.Drawing.Size(203, 22);
             tsmiExportData.Text = "Export Data";
             tsmiExportData.Click += tsmiExportData_Click;
+            // 
+            // tsmiImportData
+            // 
+            tsmiImportData.Name = "tsmiImportData";
+            tsmiImportData.Size = new System.Drawing.Size(203, 22);
+            tsmiImportData.Text = "Import Data";
+            tsmiImportData.Click += tsmiImportData_Click;
             // 
             // tsmiConvert
             // 
@@ -390,5 +398,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiStatistic;
         private System.Windows.Forms.ToolStripMenuItem tsmiEditData;
         private System.Windows.Forms.ToolStripMenuItem tsmiExportData;
+        private System.Windows.Forms.ToolStripMenuItem tsmiImportData;
     }
 }

@@ -8,12 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.18</Version>
+    <Version>2.2.19</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>add: export table data to file</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add:  import data from CSV or Excel; quich search.
+2. enhance data editor: copy and paste.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.18</AssemblyVersion>
-    <FileVersion>2.2.18</FileVersion>
+    <AssemblyVersion>2.2.19</AssemblyVersion>
+    <FileVersion>2.2.19</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

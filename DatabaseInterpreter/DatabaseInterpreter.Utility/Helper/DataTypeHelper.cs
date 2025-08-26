@@ -10,7 +10,7 @@ namespace DatabaseInterpreter.Utility
     {
         public static readonly string[] CharTypeFlags = { "char" };
         public static readonly string[] TextTypeFlags = { "text" };
-        public static readonly string[] BinaryTypeFlags = { "binary", "bytea", "raw", "blob" };
+        public static readonly string[] BinaryTypeFlags = { "binary", "bytea", "raw", "blob", "image" };
         public static readonly string[] DateOrTimeTypeFlags = { "date", "time" };
         public static readonly string[] DatetimeOrTimestampTypeFlags = { "datetime", "timestamp" };
         public static readonly string[] GeometryTypeFlags = { "geometry", "geography", "point", "line", "circle", "polygon" };

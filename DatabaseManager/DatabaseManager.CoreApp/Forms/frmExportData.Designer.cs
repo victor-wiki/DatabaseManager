@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager.Forms
 {
-    partial class frmExportDataOption
+    partial class frmExportData
     {
         /// <summary>
         /// Required designer variable.
@@ -32,7 +32,7 @@
             cboFileType = new System.Windows.Forms.ComboBox();
             chkShowColumnName = new System.Windows.Forms.CheckBox();
             btnOK = new System.Windows.Forms.Button();
-            btnCancel = new System.Windows.Forms.Button();
+            btnClose = new System.Windows.Forms.Button();
             saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             label2 = new System.Windows.Forms.Label();
             txtFilePath = new System.Windows.Forms.TextBox();
@@ -63,9 +63,9 @@
             chkShowColumnName.AutoSize = true;
             chkShowColumnName.Location = new System.Drawing.Point(12, 47);
             chkShowColumnName.Name = "chkShowColumnName";
-            chkShowColumnName.Size = new System.Drawing.Size(145, 21);
+            chkShowColumnName.Size = new System.Drawing.Size(140, 21);
             chkShowColumnName.TabIndex = 5;
-            chkShowColumnName.Text = "Show Column Name";
+            chkShowColumnName.Text = "Show column name";
             chkShowColumnName.UseVisualStyleBackColor = true;
             // 
             // btnOK
@@ -78,15 +78,15 @@
             btnOK.UseVisualStyleBackColor = true;
             btnOK.Click += btnOK_Click;
             // 
-            // btnCancel
+            // btnClose
             // 
-            btnCancel.Location = new System.Drawing.Point(182, 144);
-            btnCancel.Name = "btnCancel";
-            btnCancel.Size = new System.Drawing.Size(75, 23);
-            btnCancel.TabIndex = 7;
-            btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = true;
-            btnCancel.Click += btnCancel_Click;
+            btnClose.Location = new System.Drawing.Point(182, 144);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new System.Drawing.Size(75, 23);
+            btnClose.TabIndex = 7;
+            btnClose.Text = "Close";
+            btnClose.UseVisualStyleBackColor = true;
+            btnClose.Click += btnClose_Click;
             // 
             // label2
             // 
@@ -122,7 +122,7 @@
             Controls.Add(btnSelectPath);
             Controls.Add(txtFilePath);
             Controls.Add(label2);
-            Controls.Add(btnCancel);
+            Controls.Add(btnClose);
             Controls.Add(btnOK);
             Controls.Add(chkShowColumnName);
             Controls.Add(cboFileType);
@@ -144,7 +144,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox chkShowColumnName;
         private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtFilePath;

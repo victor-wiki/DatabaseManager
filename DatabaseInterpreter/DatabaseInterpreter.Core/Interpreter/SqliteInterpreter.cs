@@ -37,7 +37,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Schema Information
-        
+
         #region Database & Schema
         public override async Task<List<Database>> GetDatabasesAsync()
         {
@@ -195,12 +195,12 @@ namespace DatabaseInterpreter.Core
         {
             if (filter?.TableNames == null)
             {
-                if(filter == null)
+                if (filter == null)
                 {
                     filter = new SchemaInfoFilter();
-                }               
+                }
 
-                filter.TableNames= (await this.GetTableNamesAsync());
+                filter.TableNames = (await this.GetTableNamesAsync());
             }
 
             var columns = await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
@@ -242,7 +242,7 @@ namespace DatabaseInterpreter.Core
                         }
                     }
                 }
-            } 
+            }
             #endregion
 
             return columns;
@@ -254,7 +254,7 @@ namespace DatabaseInterpreter.Core
 
             string[] tableNames = filter?.TableNames;
 
-            if(tableNames!=null)
+            if (tableNames != null)
             {
                 for (int i = 0; i < tableNames.Length; i++)
                 {
@@ -274,8 +274,8 @@ namespace DatabaseInterpreter.Core
                                 dflt_value AS DefaultValue, pk AS IsPrimaryKey, cid AS ""Order""
                                 FROM PRAGMA_TABLE_XINFO('{tableName}')");
                 }
-            }        
-            
+            }
+
             return sb.Content;
         }
         #endregion
@@ -477,7 +477,7 @@ namespace DatabaseInterpreter.Core
                     filter = new SchemaInfoFilter();
                 }
 
-                filter = new SchemaInfoFilter() { TableNames =  await GetTableNamesAsync() };
+                filter = new SchemaInfoFilter() { TableNames = await GetTableNamesAsync() };
             }
 
             List<TableForeignKeyItem> foreignKeyItems = await base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForForeignKeys(filter, isFilterForReferenced));
@@ -538,9 +538,9 @@ namespace DatabaseInterpreter.Core
 
             indexes.ForEach(item =>
             {
-                if(item.Type == null)
+                if (item.Type == null)
                 {
-                    if(item.IsUnique)
+                    if (item.IsUnique)
                     {
                         item.Type = "Unique";
                     }
@@ -555,13 +555,15 @@ namespace DatabaseInterpreter.Core
 
             var indexColumns = await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(indexes));
 
-            foreach(var ic in indexColumns)
+            foreach (var ic in indexColumns)
             {
                 var index = indexes.FirstOrDefault(item => item.Name == ic.Name);
 
-                if(index!=null)
+                if (index != null)
                 {
                     ic.TableName = index.TableName;
+                    ic.IsUnique = index.IsUnique;
+                    ic.IsPrimary = index.IsPrimary;
                 }
             }
 
@@ -900,7 +902,7 @@ namespace DatabaseInterpreter.Core
                 bool matched = false;
                 int index = -1;
 
-                if (dbObjectType == DatabaseObjectType.PrimaryKey && (index= this.FindIndexInList(columnItems, "PRIMARY")) > 0)
+                if (dbObjectType == DatabaseObjectType.PrimaryKey && (index = this.FindIndexInList(columnItems, "PRIMARY")) > 0)
                 {
                     matched = true;
                 }
@@ -1014,9 +1016,9 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"PRIMARY KEY AUTOINCREMENT" : "");               
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity ? $"PRIMARY KEY AUTOINCREMENT" : "");
                 string defaultValueClause = this.Option.TableScriptsGenerateOption.GenerateDefaultValue && !string.IsNullOrEmpty(column.DefaultValue) && !ValueHelper.IsSequenceNextVal(column.DefaultValue) ? (" DEFAULT " + StringHelper.GetParenthesisedString(this.GetColumnDefaultValue(column))) : "";
-                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";                             
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
 
                 return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requiredClause} {defaultValueClause} {scriptComment}";
             }
@@ -1038,7 +1040,7 @@ namespace DatabaseInterpreter.Core
 
         public override string GetColumnDataLength(TableColumn column)
         {
-            string dataType = column.DataType;          
+            string dataType = column.DataType;
 
             DataTypeInfo dataTypeInfo = this.GetDataTypeInfo(dataType);
 

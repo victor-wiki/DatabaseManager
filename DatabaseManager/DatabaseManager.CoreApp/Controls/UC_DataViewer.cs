@@ -26,8 +26,9 @@ namespace DatabaseManager.Controls
         private int sortedColumnIndex = -1;
         private SortOrder sortOrder = SortOrder.None;
         private bool isSorting = false;
+        private DbInterpreter dbInterpreter;
         private QueryConditionBuilder conditionBuilder;
-
+        private QuickQueryConditionBuilder quickQueryConditionBuilder;
         public IEnumerable<DataGridViewColumn> Columns => this.dgvData.Columns.Cast<DataGridViewColumn>();
         public QueryConditionBuilder ConditionBuilder => this.conditionBuilder;
         public DataFilterHandler OnDataFilter;
@@ -48,6 +49,18 @@ namespace DatabaseManager.Controls
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
             this.LoadData(displayInfo);
+
+            if(displayInfo.DatabaseObject is Table)
+            {
+                this.uc_QuickFilter.Query += UC_QuickFilter_Query;
+                this.uc_QuickFilter.Visible = true;
+            }
+            else
+            {
+                this.uc_QuickFilter.Visible = false;
+                this.dgvData.Top -= this.uc_QuickFilter.Height;
+                this.dgvData.Height += this.uc_QuickFilter.Height;
+            }           
         }
 
         private async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
@@ -62,25 +75,41 @@ namespace DatabaseManager.Controls
 
             var option = new DbInterpreterOption() { ShowTextForGeometry = true };
 
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, option);
+            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, option);
 
             string orderColumns = "";
 
             if (this.dgvData.SortedColumn != null)
             {
                 string sortOrder = (this.sortOrder == SortOrder.Descending ? "DESC" : "ASC");
-                orderColumns = $"{dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
+                orderColumns = $"{this.dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
             }
 
             string conditionClause = "";
 
             if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
             {
-                this.conditionBuilder.DatabaseType = dbInterpreter.DatabaseType;
-                this.conditionBuilder.QuotationLeftChar = dbInterpreter.QuotationLeftChar;
-                this.conditionBuilder.QuotationRightChar = dbInterpreter.QuotationRightChar;
+                this.conditionBuilder.DatabaseType = this.dbInterpreter.DatabaseType;
+                this.conditionBuilder.QuotationLeftChar = this.dbInterpreter.QuotationLeftChar;
+                this.conditionBuilder.QuotationRightChar = this.dbInterpreter.QuotationRightChar;
 
                 conditionClause = "WHERE " + this.conditionBuilder.ToString();
+            }
+            else if (this.quickQueryConditionBuilder != null)
+            {
+                string content = this.uc_QuickFilter.FilterContent;
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    var quickFilterInfo = new QuickFilterInfo() { Content = content, FilterMode = this.uc_QuickFilter.FilterMode };
+
+                    string condition = await this.quickQueryConditionBuilder.Build(quickFilterInfo);
+
+                    if (!string.IsNullOrEmpty(condition))
+                    {
+                        conditionClause = "WHERE " + condition;
+                    }
+                }
             }
 
             try
@@ -175,6 +204,10 @@ namespace DatabaseManager.Controls
         {
             this.conditionBuilder = conditionBuilder;
 
+            this.quickQueryConditionBuilder = null;
+
+            this.uc_QuickFilter.ClearContent();
+
             this.LoadData(this.displayInfo, 1, false);
         }
 
@@ -240,6 +273,18 @@ namespace DatabaseManager.Controls
         private void dgvData_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             this.dgvData.ClearSelection();
+        }
+
+        private void UC_QuickFilter_Query(string content, FilterMode mode)
+        {
+            if (this.conditionBuilder != null)
+            {
+                this.conditionBuilder.ClearConditions();
+            }
+
+            this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
+
+            this.LoadData(this.displayInfo, 1, false);
         }
     }
 }

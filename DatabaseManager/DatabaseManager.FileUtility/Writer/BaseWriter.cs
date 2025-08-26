@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
+using System.Reflection;
 
 namespace DatabaseManager.FileUtility
 {
     public class BaseWriter
     {
+        public readonly string AssemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         public readonly string DefaultSaveFolder = "export";
+        public readonly string TemporaryFolder = "temp";
 
-        protected void CheckDefaultSaveFolder()
+        protected void CheckFolder(string folder)
         {
-            if (!Directory.Exists(this.DefaultSaveFolder))
+            if (!Directory.Exists(folder))
             {
-                Directory.CreateDirectory(this.DefaultSaveFolder);
+                Directory.CreateDirectory(folder);
             }
-        }
+        }       
     }
 }

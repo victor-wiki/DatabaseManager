@@ -48,6 +48,7 @@
             cboAddMode = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            uc_QuickFilter = new UC_QuickFilter();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
             SuspendLayout();
@@ -206,7 +207,7 @@
             cboAddMode.DropDownWidth = 220;
             cboAddMode.FormattingEnabled = true;
             cboAddMode.Items.AddRange(new object[] { "Place new rows above selected row", "Place new rows below selected row", "Place new rows at the bottom" });
-            cboAddMode.Location = new System.Drawing.Point(399, 1);
+            cboAddMode.Location = new System.Drawing.Point(338, 1);
             cboAddMode.Name = "cboAddMode";
             cboAddMode.Size = new System.Drawing.Size(217, 25);
             cboAddMode.TabIndex = 14;
@@ -214,17 +215,25 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(296, 5);
+            label1.Location = new System.Drawing.Point(235, 5);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(99, 17);
             label1.TabIndex = 15;
             label1.Text = "Add row mode:";
+            // 
+            // uc_QuickFilter
+            // 
+            uc_QuickFilter.Location = new System.Drawing.Point(561, -1);
+            uc_QuickFilter.Name = "uc_QuickFilter";
+            uc_QuickFilter.Size = new System.Drawing.Size(250, 30);
+            uc_QuickFilter.TabIndex = 16;
             // 
             // UC_DataEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(uc_QuickFilter);
             Controls.Add(label1);
             Controls.Add(cboAddMode);
             Controls.Add(btnCommit);
@@ -264,5 +273,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolStripMenuItem tsmiSetCellValueToNull;
         private System.Windows.Forms.ToolTip toolTip1;
+        private UC_QuickFilter uc_QuickFilter;
     }
 }

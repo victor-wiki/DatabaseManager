@@ -1,5 +1,4 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.FileUtility;
 using System;
@@ -18,7 +17,7 @@ namespace DatabaseManager.Export
             this.observer = observer;
         }
 
-        public async Task<bool> Export(DbInterpreter dbInterpreter, string tableName, ExportDataOption option)
+        public async Task<(bool Success, string FilePath)> Export(DbInterpreter dbInterpreter, string tableName, ExportDataOption option)
         {
             try
             {
@@ -28,23 +27,25 @@ namespace DatabaseManager.Export
 
                     DataTable dataTable = await dbInterpreter.GetDataTableAsync(connection, sql, true);
 
+                    string filePath = null;
+
                     if (option.FileType == ExportFileType.CSV)
                     {
-                        this.WriteToCsv(dataTable, option, tableName);
+                        filePath = this.WriteToCsv(dataTable, option, tableName);
                     }
                     else
                     {
-                        this.WriteToExcel(dataTable, option, tableName);
+                        filePath = this.WriteToExcel(dataTable, option, tableName);
                     }
 
-                    return true;
+                    return (true, filePath);
                 }
             }
             catch (Exception ex)
             {
                 this.HandleError(ex);
 
-                return false;
+                return (false, null);
             }
         }
 
@@ -55,17 +56,18 @@ namespace DatabaseManager.Export
             writer.Write(dataTable);
         }
 
-        public void WriteToCsv(DataTable dataTable, ExportDataOption option = null, string tableName = null)
+        public string WriteToCsv(DataTable dataTable, ExportDataOption option = null, string tableName = null)
         {
             CsvWriter writer = new CsvWriter(option);
-            writer.Write(dataTable, tableName);
+
+            return writer.Write(dataTable, tableName);
         }
 
-        public void WriteToExcel(DataTable dataTable, ExportDataOption option = null, string tableName = null)
+        public string WriteToExcel(DataTable dataTable, ExportDataOption option = null, string tableName = null)
         {
             ExcelWriter writer = new ExcelWriter(option);
 
-            writer.Write(dataTable, tableName);
+            return writer.Write(dataTable, tableName);
         }
 
         private void HandleError(Exception ex)

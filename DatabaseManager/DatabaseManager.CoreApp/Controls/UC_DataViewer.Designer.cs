@@ -37,6 +37,7 @@
             tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
             tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
+            uc_QuickFilter = new UC_QuickFilter();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
             SuspendLayout();
@@ -54,13 +55,13 @@
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvData.Location = new System.Drawing.Point(0, 0);
+            dgvData.Location = new System.Drawing.Point(0, 29);
             dgvData.Margin = new System.Windows.Forms.Padding(4);
             dgvData.Name = "dgvData";
             dgvData.ReadOnly = true;
             dgvData.RowHeadersVisible = false;
             dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            dgvData.Size = new System.Drawing.Size(818, 428);
+            dgvData.Size = new System.Drawing.Size(818, 399);
             dgvData.TabIndex = 5;
             dgvData.CellFormatting += dgvData_CellFormatting;
             dgvData.CellMouseClick += dgvData_CellMouseClick;
@@ -123,11 +124,19 @@
             tsmiViewGeometry.Text = "View Geometry";
             tsmiViewGeometry.Click += tsmiViewGeometry_Click;
             // 
+            // uc_QuickFilter
+            // 
+            uc_QuickFilter.Location = new System.Drawing.Point(-3, -1);
+            uc_QuickFilter.Name = "uc_QuickFilter";
+            uc_QuickFilter.Size = new System.Drawing.Size(250, 30);
+            uc_QuickFilter.TabIndex = 17;
+            // 
             // UC_DataViewer
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(uc_QuickFilter);
             Controls.Add(btnFilter);
             Controls.Add(pagination);
             Controls.Add(dgvData);
@@ -148,5 +157,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewGeometry;
         private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
+        private UC_QuickFilter uc_QuickFilter;
     }
 }

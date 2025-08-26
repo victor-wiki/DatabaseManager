@@ -804,15 +804,15 @@ namespace DatabaseConverter.Core
             return script.ObjectType == nameof(Function) || script.ObjectType == nameof(Procedure) || script.ObjectType == nameof(TableTrigger);
         }
 
-        private (Dictionary<string, object> Paramters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)
+        private (Dictionary<string, object> Parameters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)
         {
             StringBuilder sb = new StringBuilder();
 
-            Dictionary<string, object> paramters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
+            Dictionary<string, object> parameters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
 
             string script = sb.ToString().Trim().Trim(';');
 
-            return (paramters, script);
+            return (parameters, script);
         }
 
         #region Not use it currently, because bulkcopy doesn't care identity and insert script has excluded the identity columns.

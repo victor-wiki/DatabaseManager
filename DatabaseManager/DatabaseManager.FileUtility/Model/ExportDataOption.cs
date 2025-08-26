@@ -5,6 +5,7 @@
         public ExportFileType FileType { get; set; }
         public bool ShowColumnNames { get; set; } = true;
         public string FilePath { get; set; }
+        public bool IsTemporary { get; set; }
     }
 
     public enum ExportFileType

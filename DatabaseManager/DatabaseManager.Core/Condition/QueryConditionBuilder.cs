@@ -20,6 +20,11 @@ namespace DatabaseManager.Core
             this.conditions.Add(condition);
         }
 
+        public void ClearConditions()
+        {
+            this.conditions.Clear();
+        }
+
         public override string ToString()
         {
             return string.Join(" AND ", this.conditions.Select(item=> $"({this.GetConditionItemValue(item)})" ));

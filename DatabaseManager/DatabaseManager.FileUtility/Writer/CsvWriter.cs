@@ -20,15 +20,17 @@ namespace DatabaseManager.FileUtility
             this.option = option;
         }
 
-        public void Write(DataTable dataTable, string tableName = null)
+        public string Write(DataTable dataTable, string tableName = null)
         {
             string filePath = this.option.FilePath;
 
             if (string.IsNullOrEmpty(filePath))
             {
-                base.CheckDefaultSaveFolder();
+                string folder = this.option.IsTemporary ? base.TemporaryFolder : base.DefaultSaveFolder;
 
-                filePath = $"{this.DefaultSaveFolder}/{(tableName==null? "": $"{tableName}_")}{DateTime.Now.ToString("yyyyMMdd")}.csv";
+                base.CheckFolder(folder);
+
+                filePath = Path.Combine(base.AssemblyFolder, folder, $"{(tableName == null ? "" : $"{tableName}_")}{DateTime.Now.ToString("yyyyMMdd")}.csv");
             }
 
             using (StreamWriter sw = new StreamWriter(filePath, false, Encoding.UTF8))
@@ -57,6 +59,8 @@ namespace DatabaseManager.FileUtility
                     writer.NextRecord();
                 }
             }
+
+            return filePath;
         }
     }
 }

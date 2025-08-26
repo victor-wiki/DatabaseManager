@@ -4,21 +4,22 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Export;
+using DatabaseManager.FileUtility;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DatabaseManager.Profile.Manager;
 using DatabaseManager.Profile.Model;
-using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using View = DatabaseInterpreter.Model.View;
 using Function = DatabaseInterpreter.Model.Function;
-using DatabaseManager.FileUtility;
+using View = DatabaseInterpreter.Model.View;
 
 namespace DatabaseManager.Controls
 {
@@ -161,7 +162,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable || isView;
-            this.tsmiExportData.Visible = isTable;
+            this.tsmiImportData.Visible = this.tsmiExportData.Visible = isTable;
             this.tsmiEditData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
@@ -1503,35 +1504,37 @@ namespace DatabaseManager.Controls
 
         private async void ExportData()
         {
-            frmExportDataOption frm = new frmExportDataOption();
+            TreeNode node = this.GetSelectedNode();
+
+            Table table = node.Tag as Table;
+
+            var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
+
+            frmExportData frm = new frmExportData(dbInterpreter, table);
+
+            frm.OnFeedback += this.Feedback;
+
+            frm.ShowDialog();            
+        }
+
+        private void tsmiImportData_Click(object sender, EventArgs e)
+        {
+            this.ImportData();
+        }
+
+        private async void ImportData()
+        {
+            TreeNode node = this.GetSelectedNode();
+
+            Table table = node.Tag as Table;
+
+            var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
+
+            frmImportData frm = new frmImportData(dbInterpreter, table);
+
+            frm.OnFeedback += this.Feedback;
 
             DialogResult result = frm.ShowDialog();
-
-            if(result == DialogResult.OK)
-            {
-                ExportDataOption option = frm.Option;
-
-                TreeNode node = this.GetSelectedNode();
-
-                Table table = node.Tag as Table;
-
-                var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
-
-                DataExporter exporter = new DataExporter();
-
-                exporter.Subscribe(this);
-
-                bool success = await exporter.Export(dbInterpreter, table.Name, option);
-
-                if(success)
-                {
-                    MessageBox.Show("Export successfully.");
-                }
-                else
-                {
-                    MessageBox.Show("Export failed.");
-                }
-            }
         }
     }
 }
