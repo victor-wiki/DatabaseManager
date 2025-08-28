@@ -235,7 +235,14 @@ namespace DatabaseManager.Controls
                 {
                     if (e.Button == MouseButtons.Right)
                     {
-                        this.dgvData.CurrentCell = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex];
+                        DataGridViewCell cell = this.dgvData.Rows[e.RowIndex].Cells[e.ColumnIndex];
+
+                        var selectedCells = this.dgvData.SelectedCells;
+
+                        if (selectedCells == null || selectedCells.Count == 0 || !selectedCells.Contains(cell))
+                        {
+                            this.dgvData.CurrentCell = cell;
+                        }
 
                         this.SetContextMenuItemVisible();
 
@@ -252,11 +259,15 @@ namespace DatabaseManager.Controls
 
         private void tsmiCopy_Click(object sender, EventArgs e)
         {
-            var value = DataGridViewHelper.GetCurrentCellValue(this.dgvData);
+            var selectedCells = this.dgvData.SelectedCells;
 
-            if (!string.IsNullOrEmpty(value))
+            if (selectedCells != null && selectedCells.Count > 0)
             {
-                Clipboard.SetDataObject(value);
+                this.dgvData.ClipboardCopyMode = DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+
+                DataObject content = this.dgvData.GetClipboardContent();
+
+                Clipboard.SetDataObject(content);
             }
         }
 

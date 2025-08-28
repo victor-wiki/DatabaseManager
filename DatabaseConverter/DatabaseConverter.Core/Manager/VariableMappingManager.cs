@@ -1,5 +1,4 @@
 ﻿using DatabaseConverter.Model;
-using DatabaseInterpreter.Core;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,7 +6,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class VariableMappingManager : ConfigManager
+    public class VariableMappingManager : ConvertConfigManager
     {
         public static string VariableMappingFilePath { get { return Path.Combine(ConfigRootFolder, "VariableMapping.xml"); } }
 

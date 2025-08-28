@@ -116,7 +116,7 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiImportData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(204, 488);
+            contextMenuStrip1.Size = new System.Drawing.Size(204, 510);
             // 
             // tsmiNewQuery
             // 

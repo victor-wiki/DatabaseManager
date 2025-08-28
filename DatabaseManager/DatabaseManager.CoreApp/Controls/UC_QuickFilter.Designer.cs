@@ -31,6 +31,8 @@
             btnFilter = new System.Windows.Forms.Button();
             cboFilterMode = new System.Windows.Forms.ComboBox();
             txtFilter = new System.Windows.Forms.TextBox();
+            pbClearContent = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)pbClearContent).BeginInit();
             SuspendLayout();
             // 
             // btnFilter
@@ -59,17 +61,32 @@
             txtFilter.PlaceholderText = "Filter data";
             txtFilter.Size = new System.Drawing.Size(189, 23);
             txtFilter.TabIndex = 19;
+            txtFilter.TextChanged += txtFilter_TextChanged;
             txtFilter.KeyUp += txtFilter_KeyUp;
+            // 
+            // pbClearContent
+            // 
+            pbClearContent.BackColor = System.Drawing.Color.White;
+            pbClearContent.Location = new System.Drawing.Point(172, 8);
+            pbClearContent.Name = "pbClearContent";
+            pbClearContent.Size = new System.Drawing.Size(16, 16);
+            pbClearContent.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            pbClearContent.TabIndex = 22;
+            pbClearContent.TabStop = false;
+            pbClearContent.Visible = false;
+            pbClearContent.Click += pbClearContent_Click;
             // 
             // UC_QuickFilter
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(pbClearContent);
             Controls.Add(btnFilter);
             Controls.Add(cboFilterMode);
             Controls.Add(txtFilter);
             Name = "UC_QuickFilter";
             Size = new System.Drawing.Size(250, 30);
+            ((System.ComponentModel.ISupportInitialize)pbClearContent).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -79,5 +96,6 @@
         private System.Windows.Forms.Button btnFilter;
         private System.Windows.Forms.ComboBox cboFilterMode;
         private System.Windows.Forms.TextBox txtFilter;
+        private System.Windows.Forms.PictureBox pbClearContent;
     }
 }

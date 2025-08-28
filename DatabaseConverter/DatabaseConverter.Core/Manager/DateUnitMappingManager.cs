@@ -11,7 +11,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class DateUnitMappingManager : ConfigManager
+    public class DateUnitMappingManager : ConvertConfigManager
     {
         public static string DateUnitMappingFilePath { get { return Path.Combine(ConfigRootFolder, "DateUnitMapping.xml"); } }
 

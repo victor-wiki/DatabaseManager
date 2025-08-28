@@ -106,11 +106,7 @@
 	<mapping>
 		<source type="sql_variant" />
 		<target type="text" />
-	</mapping>
-	<mapping>
-		<source type="sysname" />
-		<target type="text"/>
-	</mapping>
+	</mapping>	
 	<mapping>
 		<source type="text" />
 		<target type="text"/>

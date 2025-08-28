@@ -47,6 +47,9 @@
             chkIndex = new System.Windows.Forms.CheckBox();
             chkCheckConstraint = new System.Windows.Forms.CheckBox();
             chkTrigger = new System.Windows.Forms.CheckBox();
+            lblDataTypeMappingFileType = new System.Windows.Forms.LinkLabel();
+            cboDataTypeMappingFile = new System.Windows.Forms.ComboBox();
+            label2 = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
             // rbSameDatabase
@@ -79,7 +82,7 @@
             chkScriptData.AutoSize = true;
             chkScriptData.Checked = true;
             chkScriptData.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkScriptData.Location = new System.Drawing.Point(177, 137);
+            chkScriptData.Location = new System.Drawing.Point(176, 180);
             chkScriptData.Margin = new System.Windows.Forms.Padding(4);
             chkScriptData.Name = "chkScriptData";
             chkScriptData.Size = new System.Drawing.Size(53, 21);
@@ -92,7 +95,7 @@
             chkScriptSchema.AutoSize = true;
             chkScriptSchema.Checked = true;
             chkScriptSchema.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkScriptSchema.Location = new System.Drawing.Point(84, 137);
+            chkScriptSchema.Location = new System.Drawing.Point(83, 180);
             chkScriptSchema.Margin = new System.Windows.Forms.Padding(4);
             chkScriptSchema.Name = "chkScriptSchema";
             chkScriptSchema.Size = new System.Drawing.Size(71, 21);
@@ -103,7 +106,7 @@
             // lblScriptsMode
             // 
             lblScriptsMode.AutoSize = true;
-            lblScriptsMode.Location = new System.Drawing.Point(16, 138);
+            lblScriptsMode.Location = new System.Drawing.Point(15, 181);
             lblScriptsMode.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblScriptsMode.Name = "lblScriptsMode";
             lblScriptsMode.Size = new System.Drawing.Size(46, 17);
@@ -113,7 +116,7 @@
             // btnClose
             // 
             btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnClose.Location = new System.Drawing.Point(371, 230);
+            btnClose.Location = new System.Drawing.Point(371, 269);
             btnClose.Margin = new System.Windows.Forms.Padding(4);
             btnClose.Name = "btnClose";
             btnClose.Size = new System.Drawing.Size(88, 33);
@@ -125,7 +128,7 @@
             // btnExecute
             // 
             btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnExecute.Location = new System.Drawing.Point(258, 230);
+            btnExecute.Location = new System.Drawing.Point(258, 269);
             btnExecute.Margin = new System.Windows.Forms.Padding(4);
             btnExecute.Name = "btnExecute";
             btnExecute.Size = new System.Drawing.Size(88, 33);
@@ -164,14 +167,15 @@
             ucConnection.Size = new System.Drawing.Size(666, 33);
             ucConnection.TabIndex = 0;
             ucConnection.Title = "Target:";
-            ucConnection.OnSelectedChanged += ucConnection_OnSelectedChanged;
+            ucConnection.ProfileSelectedChanged += ucConnection_ProfileSelectedChanged;
+            ucConnection.DatabaseTypeSelectedChanged += ucConnection_DatabaseTypeSelectedChanged;
             // 
             // chkGenerateIdentity
             // 
             chkGenerateIdentity.AutoSize = true;
             chkGenerateIdentity.Checked = true;
             chkGenerateIdentity.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkGenerateIdentity.Location = new System.Drawing.Point(20, 197);
+            chkGenerateIdentity.Location = new System.Drawing.Point(19, 240);
             chkGenerateIdentity.Margin = new System.Windows.Forms.Padding(4);
             chkGenerateIdentity.Name = "chkGenerateIdentity";
             chkGenerateIdentity.Size = new System.Drawing.Size(126, 21);
@@ -202,7 +206,7 @@
             // chkPrimaryKey
             // 
             chkPrimaryKey.AutoSize = true;
-            chkPrimaryKey.Location = new System.Drawing.Point(20, 168);
+            chkPrimaryKey.Location = new System.Drawing.Point(19, 211);
             chkPrimaryKey.Margin = new System.Windows.Forms.Padding(4);
             chkPrimaryKey.Name = "chkPrimaryKey";
             chkPrimaryKey.Size = new System.Drawing.Size(96, 21);
@@ -213,7 +217,7 @@
             // chkForeignKey
             // 
             chkForeignKey.AutoSize = true;
-            chkForeignKey.Location = new System.Drawing.Point(144, 168);
+            chkForeignKey.Location = new System.Drawing.Point(143, 211);
             chkForeignKey.Margin = new System.Windows.Forms.Padding(4);
             chkForeignKey.Name = "chkForeignKey";
             chkForeignKey.Size = new System.Drawing.Size(96, 21);
@@ -224,7 +228,7 @@
             // chkIndex
             // 
             chkIndex.AutoSize = true;
-            chkIndex.Location = new System.Drawing.Point(268, 168);
+            chkIndex.Location = new System.Drawing.Point(267, 211);
             chkIndex.Margin = new System.Windows.Forms.Padding(4);
             chkIndex.Name = "chkIndex";
             chkIndex.Size = new System.Drawing.Size(59, 21);
@@ -235,7 +239,7 @@
             // chkCheckConstraint
             // 
             chkCheckConstraint.AutoSize = true;
-            chkCheckConstraint.Location = new System.Drawing.Point(353, 168);
+            chkCheckConstraint.Location = new System.Drawing.Point(352, 211);
             chkCheckConstraint.Margin = new System.Windows.Forms.Padding(4);
             chkCheckConstraint.Name = "chkCheckConstraint";
             chkCheckConstraint.Size = new System.Drawing.Size(125, 21);
@@ -246,7 +250,7 @@
             // chkTrigger
             // 
             chkTrigger.AutoSize = true;
-            chkTrigger.Location = new System.Drawing.Point(513, 168);
+            chkTrigger.Location = new System.Drawing.Point(512, 211);
             chkTrigger.Margin = new System.Windows.Forms.Padding(4);
             chkTrigger.Name = "chkTrigger";
             chkTrigger.Size = new System.Drawing.Size(70, 21);
@@ -254,11 +258,44 @@
             chkTrigger.Text = "Trigger";
             chkTrigger.UseVisualStyleBackColor = true;
             // 
+            // lblDataTypeMappingFileType
+            // 
+            lblDataTypeMappingFileType.AutoSize = true;
+            lblDataTypeMappingFileType.Location = new System.Drawing.Point(331, 142);
+            lblDataTypeMappingFileType.Name = "lblDataTypeMappingFileType";
+            lblDataTypeMappingFileType.Size = new System.Drawing.Size(0, 17);
+            lblDataTypeMappingFileType.TabIndex = 71;
+            lblDataTypeMappingFileType.Click += lblDataTypeMappingFileType_Click;
+            // 
+            // cboDataTypeMappingFile
+            // 
+            cboDataTypeMappingFile.DisplayMember = "Name";
+            cboDataTypeMappingFile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboDataTypeMappingFile.FormattingEnabled = true;
+            cboDataTypeMappingFile.Location = new System.Drawing.Point(163, 137);
+            cboDataTypeMappingFile.Name = "cboDataTypeMappingFile";
+            cboDataTypeMappingFile.Size = new System.Drawing.Size(162, 25);
+            cboDataTypeMappingFile.TabIndex = 70;
+            cboDataTypeMappingFile.SelectedIndexChanged += cboDataTypeMappingFile_SelectedIndexChanged;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(15, 140);
+            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(144, 17);
+            label2.TabIndex = 69;
+            label2.Text = "Data type mapping file:";
+            // 
             // frmTableCopy
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(686, 280);
+            ClientSize = new System.Drawing.Size(686, 319);
+            Controls.Add(lblDataTypeMappingFileType);
+            Controls.Add(cboDataTypeMappingFile);
+            Controls.Add(label2);
             Controls.Add(chkTrigger);
             Controls.Add(chkCheckConstraint);
             Controls.Add(chkIndex);
@@ -308,5 +345,8 @@
         private System.Windows.Forms.CheckBox chkIndex;
         private System.Windows.Forms.CheckBox chkCheckConstraint;
         private System.Windows.Forms.CheckBox chkTrigger;
+        private System.Windows.Forms.LinkLabel lblDataTypeMappingFileType;
+        private System.Windows.Forms.ComboBox cboDataTypeMappingFile;
+        private System.Windows.Forms.Label label2;
     }
 }

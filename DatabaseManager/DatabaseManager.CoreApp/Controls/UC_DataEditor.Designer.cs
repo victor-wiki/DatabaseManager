@@ -76,8 +76,9 @@
             dgvData.CellMouseClick += dgvData_CellMouseClick;
             dgvData.CellValidating += dgvData_CellValidating;
             dgvData.CellValueChanged += dgvData_CellValueChanged;
-            dgvData.DataError += dgvData_DataError;
-            dgvData.Sorted += dgvData_Sorted;
+            dgvData.ColumnHeaderMouseClick += dgvData_ColumnHeaderMouseClick;
+            dgvData.ColumnHeaderMouseDoubleClick += dgvData_ColumnHeaderMouseDoubleClick;
+            dgvData.DataError += dgvData_DataError;         
             dgvData.KeyUp += dgvData_KeyUp;
             // 
             // btnFilter

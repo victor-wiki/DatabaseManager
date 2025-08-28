@@ -15,6 +15,7 @@ namespace DatabaseManager.Model
         public List<string> ConvertConcatCharTargetDatabases { get; set; } = new List<string>();
         public TextEditorOption TextEditorOption { get; set; } = new TextEditorOption();
         public ThemeOption ThemeOption { get; set; } = new ThemeOption();
+        public string CustomMappingFolder { get; set; }
     }
 
     public class TextEditorOption

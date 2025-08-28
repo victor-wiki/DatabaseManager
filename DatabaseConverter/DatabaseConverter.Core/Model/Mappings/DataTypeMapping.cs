@@ -63,7 +63,7 @@ namespace DatabaseConverter.Model
         public string TargetMaxLength { get; set; }
         public string Substitute { get; set; }       
         public bool NoLength { get; set; }
-        public string Precison { get; set; }
+        public string Precision { get; set; }
         public string Scale { get; set; }
 
         public DataTypeMappingSpecial() { }
@@ -75,7 +75,7 @@ namespace DatabaseConverter.Model
             this.TargetMaxLength = element.Attribute("targetMaxLength")?.Value;
             this.Substitute = element.Attribute("substitute")?.Value;
             this.NoLength = ValueHelper.IsTrueValue(element.Attribute("noLength")?.Value);
-            this.Precison = element.Attribute("precision")?.Value;
+            this.Precision = element.Attribute("precision")?.Value;
             this.Scale = element.Attribute("scale")?.Value;
         }
     }

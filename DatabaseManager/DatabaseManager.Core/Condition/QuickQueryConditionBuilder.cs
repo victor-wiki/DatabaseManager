@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Model;
-using NetTopologySuite.Index.HPRtree;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;

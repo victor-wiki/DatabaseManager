@@ -106,11 +106,7 @@
 	<mapping>
 		<source type="sql_variant" />
 		<target type="clob" />
-	</mapping>
-	<mapping>
-		<source type="sysname" />
-		<target type="nvarchar2" length="128" />
-	</mapping>
+	</mapping>	
 	<mapping>
 		<source type="text" />
 		<target type="clob" />

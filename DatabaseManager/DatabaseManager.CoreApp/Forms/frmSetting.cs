@@ -1,6 +1,8 @@
-﻿using DatabaseInterpreter.Core;
+﻿using DatabaseConverter.Core;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DatabaseManager.Profile.Manager;
@@ -21,14 +23,16 @@ namespace DatabaseManager
         public frmSetting()
         {
             InitializeComponent();
+
+            this.Init();
         }
 
         private void frmSetting_Load(object sender, EventArgs e)
         {
-            this.InitControls();
+            this.splitContainer1.Panel2.AutoScrollMinSize = new Size(400, 100);
         }
 
-        private async void InitControls()
+        private async void Init()
         {
             this.tabControl1.SelectedIndex = 0;
 
@@ -55,13 +59,22 @@ namespace DatabaseManager
             this.chkShowTextEditorLineNumber.Checked = setting.TextEditorOption.ShowLineNumber;
             this.AddFonts(this.cboTextEditorFontName);
             this.cboTextEditorFontName.Text = setting.TextEditorOption.FontName;
-            this.numTextEditorFontSize.Value =(decimal) setting.TextEditorOption.FontSize;
+            this.numTextEditorFontSize.Value = (decimal)setting.TextEditorOption.FontSize;
 
             var dbTypes = Enum.GetNames(typeof(DatabaseType));
             this.cboPreferredDatabase.Items.AddRange(dbTypes);
             this.chkRememberPasswordDuringSession.Checked = setting.RememberPasswordDuringSession;
             this.cboPreferredDatabase.Text = setting.PreferredDatabase.ToString();
-            this.txtOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
+            this.txtScriptOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
+
+            if(string.IsNullOrEmpty(setting.CustomMappingFolder))
+            {
+                this.txtCustomMappingFolder.Text = DataTypeMappingManager.CustomConfigRootFolder;
+            }
+            else
+            {
+                this.txtCustomMappingFolder.Text = setting.CustomMappingFolder;
+            }           
 
             var themeTypes = Enum.GetNames(typeof(ThemeType));
             this.cboThemeType.Items.AddRange(themeTypes);
@@ -75,6 +88,8 @@ namespace DatabaseManager
             }
 
             this.convertConcatCharTargetDatabases = setting.ConvertConcatCharTargetDatabases;
+
+            this.lvOption.Items[0].Selected = true;
         }
 
         private void AddFonts(ComboBox comboBox)
@@ -103,8 +118,9 @@ namespace DatabaseManager
             setting.EnableEditorHighlighting = this.chkEnableEditorHighlighting.Checked;
             setting.EnableEditorIntellisence = this.chkEditorEnableIntellisence.Checked;
             setting.ExcludePostgresExtensionObjects = this.chkExcludePostgresExtensionObjects.Checked;
-            setting.ScriptsDefaultOutputFolder = this.txtOutputFolder.Text;
+            setting.ScriptsDefaultOutputFolder = this.txtScriptOutputFolder.Text;
             setting.ValidateScriptsAfterTranslated = this.chkValidateScriptsAfterTranslated.Checked;
+            setting.CustomMappingFolder = this.txtCustomMappingFolder.Text;
 
             string password = this.txtLockPassword.Text.Trim();
 
@@ -137,12 +153,12 @@ namespace DatabaseManager
             {
                 ShowLineNumber = this.chkShowTextEditorLineNumber.Checked,
                 FontName = this.cboTextEditorFontName.Text,
-                FontSize =(float) this.numTextEditorFontSize.Value
+                FontSize = (float)this.numTextEditorFontSize.Value
             };
 
             setting.TextEditorOption = textEditorOption;
 
-            ThemeOption themeOption = new ThemeOption() { ThemeType =(ThemeType) Enum.Parse(typeof(ThemeType), this.cboThemeType.Text) };
+            ThemeOption themeOption = new ThemeOption() { ThemeType = (ThemeType)Enum.Parse(typeof(ThemeType), this.cboThemeType.Text) };
 
             setting.ThemeOption = themeOption;
 
@@ -151,7 +167,7 @@ namespace DatabaseManager
             DbInterpreter.Setting = SettingManager.GetInterpreterSetting();
         }
 
-        private void btnOutputFolder_Click(object sender, EventArgs e)
+        private void btnScriptOutputFolder_Click(object sender, EventArgs e)
         {
             if (this.dlgOutputFolder == null)
             {
@@ -162,7 +178,7 @@ namespace DatabaseManager
 
             if (result == DialogResult.OK)
             {
-                this.txtOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
+                this.txtScriptOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
             }
         }
 
@@ -173,6 +189,61 @@ namespace DatabaseManager
             if (selector.ShowDialog() == DialogResult.OK)
             {
                 this.convertConcatCharTargetDatabases = selector.CheckedItem.Select(item => item.Name).ToList();
+            }
+        }
+
+        private void lvOption_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (this.lvOption.SelectedItems.Count > 0)
+            {
+                string option = this.lvOption.SelectedItems[0].Text;
+
+                this.SetPanelVisible(option);
+            }
+        }
+
+        private void SetPanelVisible(string option)
+        {
+            var controls = this.splitContainer1.Panel2.Controls;
+
+            foreach (var control in controls)
+            {
+                if (control is Panel panel)
+                {
+                    string name = panel.Name;
+
+                    if (name.EndsWith($"_{option}"))
+                    {
+                        panel.Visible = true;
+                        panel.Top = 0;
+                    }
+                    else
+                    {
+                        panel.Visible = false;
+                    }
+                }
+            }
+        }
+
+        private void btnSetDataTypeMapping_Click(object sender, EventArgs e)
+        {
+            frmDataTypeMappingSetting form = new frmDataTypeMappingSetting();
+
+            form.ShowDialog();
+        }
+
+        private void btnCustomFolderMapping_Click(object sender, EventArgs e)
+        {
+            if (this.dlgOutputFolder == null)
+            {
+                this.dlgOutputFolder = new FolderBrowserDialog();
+            }
+
+            DialogResult result = this.dlgOutputFolder.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                this.txtCustomMappingFolder.Text = this.dlgOutputFolder.SelectedPath;
             }
         }
     }

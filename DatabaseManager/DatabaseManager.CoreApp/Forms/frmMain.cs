@@ -139,15 +139,18 @@ namespace DatabaseManager
 
                 if (data.Name == info.Name && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
                 {
-                    if(info.DisplayType == DatabaseObjectDisplayType.Script)
+                    if(data.ConnectionInfo == info.ConnectionInfo)
                     {
-                        if(info.ScriptAction != data.ScriptAction)
+                        if (info.DisplayType == DatabaseObjectDisplayType.Script)
                         {
-                            return null;
+                            if (info.ScriptAction != data.ScriptAction)
+                            {
+                                return null;
+                            }
                         }
-                    }
 
-                    return content;
+                        return content;
+                    }                    
                 }
             }
 

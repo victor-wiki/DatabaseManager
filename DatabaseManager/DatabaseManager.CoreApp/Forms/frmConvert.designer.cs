@@ -40,6 +40,9 @@ namespace DatabaseManager
             splitContainer2 = new System.Windows.Forms.SplitContainer();
             tvDbObjects = new Controls.UC_DbObjectsSimpleTree();
             gbConfiguration = new System.Windows.Forms.GroupBox();
+            lblDataTypeMappingFileType = new System.Windows.Forms.LinkLabel();
+            cboDataTypeMappingFile = new System.Windows.Forms.ComboBox();
+            label1 = new System.Windows.Forms.Label();
             chkGenerateCheckConstraint = new System.Windows.Forms.CheckBox();
             cboMode = new System.Windows.Forms.ComboBox();
             chkNcharToDoubleChar = new System.Windows.Forms.CheckBox();
@@ -90,7 +93,7 @@ namespace DatabaseManager
             // btnSaveMessage
             // 
             btnSaveMessage.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnSaveMessage.Location = new System.Drawing.Point(863, 40);
+            btnSaveMessage.Location = new System.Drawing.Point(973, 40);
             btnSaveMessage.Margin = new System.Windows.Forms.Padding(4);
             btnSaveMessage.Name = "btnSaveMessage";
             btnSaveMessage.Size = new System.Drawing.Size(31, 28);
@@ -102,7 +105,7 @@ namespace DatabaseManager
             // btnCopyMessage
             // 
             btnCopyMessage.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnCopyMessage.Location = new System.Drawing.Point(862, 10);
+            btnCopyMessage.Location = new System.Drawing.Point(972, 10);
             btnCopyMessage.Margin = new System.Windows.Forms.Padding(4);
             btnCopyMessage.Name = "btnCopyMessage";
             btnCopyMessage.Size = new System.Drawing.Size(31, 28);
@@ -120,7 +123,7 @@ namespace DatabaseManager
             txtMessage.Name = "txtMessage";
             txtMessage.ReadOnly = true;
             txtMessage.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            txtMessage.Size = new System.Drawing.Size(852, 69);
+            txtMessage.Size = new System.Drawing.Size(962, 69);
             txtMessage.TabIndex = 0;
             txtMessage.Text = "";
             txtMessage.MouseUp += txtMessage_MouseUp;
@@ -147,7 +150,7 @@ namespace DatabaseManager
             splitContainer1.Panel2.Controls.Add(btnSaveMessage);
             splitContainer1.Panel2.Controls.Add(txtMessage);
             splitContainer1.Panel2.Controls.Add(btnCopyMessage);
-            splitContainer1.Size = new System.Drawing.Size(898, 700);
+            splitContainer1.Size = new System.Drawing.Size(1008, 700);
             splitContainer1.SplitterDistance = 526;
             splitContainer1.TabIndex = 21;
             // 
@@ -164,8 +167,8 @@ namespace DatabaseManager
             // splitContainer2.Panel2
             // 
             splitContainer2.Panel2.Controls.Add(gbConfiguration);
-            splitContainer2.Size = new System.Drawing.Size(882, 411);
-            splitContainer2.SplitterDistance = 294;
+            splitContainer2.Size = new System.Drawing.Size(992, 411);
+            splitContainer2.SplitterDistance = 280;
             splitContainer2.TabIndex = 39;
             // 
             // tvDbObjects
@@ -174,11 +177,14 @@ namespace DatabaseManager
             tvDbObjects.Location = new System.Drawing.Point(0, 0);
             tvDbObjects.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             tvDbObjects.Name = "tvDbObjects";
-            tvDbObjects.Size = new System.Drawing.Size(294, 411);
+            tvDbObjects.Size = new System.Drawing.Size(280, 411);
             tvDbObjects.TabIndex = 38;
             // 
             // gbConfiguration
             // 
+            gbConfiguration.Controls.Add(lblDataTypeMappingFileType);
+            gbConfiguration.Controls.Add(cboDataTypeMappingFile);
+            gbConfiguration.Controls.Add(label1);
             gbConfiguration.Controls.Add(chkGenerateCheckConstraint);
             gbConfiguration.Controls.Add(cboMode);
             gbConfiguration.Controls.Add(chkNcharToDoubleChar);
@@ -208,10 +214,40 @@ namespace DatabaseManager
             gbConfiguration.Margin = new System.Windows.Forms.Padding(4);
             gbConfiguration.Name = "gbConfiguration";
             gbConfiguration.Padding = new System.Windows.Forms.Padding(4);
-            gbConfiguration.Size = new System.Drawing.Size(584, 411);
+            gbConfiguration.Size = new System.Drawing.Size(708, 411);
             gbConfiguration.TabIndex = 21;
             gbConfiguration.TabStop = false;
             gbConfiguration.Text = "Configuration";
+            // 
+            // lblDataTypeMappingFileType
+            // 
+            lblDataTypeMappingFileType.AutoSize = true;
+            lblDataTypeMappingFileType.Location = new System.Drawing.Point(606, 64);
+            lblDataTypeMappingFileType.Name = "lblDataTypeMappingFileType";
+            lblDataTypeMappingFileType.Size = new System.Drawing.Size(0, 17);
+            lblDataTypeMappingFileType.TabIndex = 68;
+            lblDataTypeMappingFileType.LinkClicked += lblDataTypeMappingFileType_LinkClicked;
+            // 
+            // cboDataTypeMappingFile
+            // 
+            cboDataTypeMappingFile.DisplayMember = "Name";
+            cboDataTypeMappingFile.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboDataTypeMappingFile.FormattingEnabled = true;
+            cboDataTypeMappingFile.Location = new System.Drawing.Point(438, 59);
+            cboDataTypeMappingFile.Name = "cboDataTypeMappingFile";
+            cboDataTypeMappingFile.Size = new System.Drawing.Size(162, 25);
+            cboDataTypeMappingFile.TabIndex = 67;
+            cboDataTypeMappingFile.SelectedIndexChanged += cboDataTypeMappingFile_SelectedIndexChanged;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(290, 62);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(144, 17);
+            label1.TabIndex = 66;
+            label1.Text = "Data type mapping file:";
             // 
             // chkGenerateCheckConstraint
             // 
@@ -510,10 +546,11 @@ namespace DatabaseManager
             targetDbProfile.Location = new System.Drawing.Point(13, 31);
             targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
             targetDbProfile.Name = "targetDbProfile";
-            targetDbProfile.Size = new System.Drawing.Size(792, 29);
+            targetDbProfile.Size = new System.Drawing.Size(902, 29);
             targetDbProfile.TabIndex = 37;
             targetDbProfile.Title = "Target:";
-            targetDbProfile.OnSelectedChanged += targetDbProfile_OnSelectedChanged;
+            targetDbProfile.ProfileSelectedChanged += targetDbProfile_ProfileSelectedChanged;
+            targetDbProfile.DatabaseTypeSelectedChanged += targetDbProfile_DatabaseTypeSelectedChanged;
             // 
             // sourceDbProfile
             // 
@@ -523,16 +560,17 @@ namespace DatabaseManager
             sourceDbProfile.Location = new System.Drawing.Point(13, 1);
             sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
             sourceDbProfile.Name = "sourceDbProfile";
-            sourceDbProfile.Size = new System.Drawing.Size(792, 28);
+            sourceDbProfile.Size = new System.Drawing.Size(902, 28);
             sourceDbProfile.TabIndex = 36;
             sourceDbProfile.Title = "Source:";
-            sourceDbProfile.OnSelectedChanged += sourceDbProfile_OnSelectedChanged;
+            sourceDbProfile.ProfileSelectedChanged += sourceDbProfile_ProfileSelectedChanged;
+            sourceDbProfile.DatabaseTypeSelectedChanged += sourceDbProfile_DatabaseTypeSelectedChanged;
             // 
             // btnFetch
             // 
             btnFetch.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btnFetch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F);
-            btnFetch.Location = new System.Drawing.Point(806, 3);
+            btnFetch.Location = new System.Drawing.Point(916, 3);
             btnFetch.Margin = new System.Windows.Forms.Padding(4);
             btnFetch.Name = "btnFetch";
             btnFetch.Size = new System.Drawing.Size(83, 54);
@@ -545,7 +583,7 @@ namespace DatabaseManager
             // 
             btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btnCancel.Enabled = false;
-            btnCancel.Location = new System.Drawing.Point(479, 484);
+            btnCancel.Location = new System.Drawing.Point(534, 484);
             btnCancel.Margin = new System.Windows.Forms.Padding(4);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new System.Drawing.Size(88, 33);
@@ -558,7 +596,7 @@ namespace DatabaseManager
             // 
             btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btnExecute.Enabled = false;
-            btnExecute.Location = new System.Drawing.Point(366, 484);
+            btnExecute.Location = new System.Drawing.Point(421, 484);
             btnExecute.Margin = new System.Windows.Forms.Padding(4);
             btnExecute.Name = "btnExecute";
             btnExecute.Size = new System.Drawing.Size(88, 33);
@@ -584,7 +622,7 @@ namespace DatabaseManager
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(899, 611);
+            ClientSize = new System.Drawing.Size(1009, 611);
             Controls.Add(splitContainer1);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4);
@@ -651,6 +689,9 @@ namespace DatabaseManager
         private System.Windows.Forms.CheckBox chkNcharToDoubleChar;
         private System.Windows.Forms.ComboBox cboMode;
         private System.Windows.Forms.CheckBox chkGenerateCheckConstraint;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.LinkLabel lblDataTypeMappingFileType;
+        private System.Windows.Forms.ComboBox cboDataTypeMappingFile;
     }
 }
 

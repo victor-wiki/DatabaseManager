@@ -18,7 +18,8 @@ using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
-    public delegate void SelectedChangeHandler(object sender, ConnectionInfo connectionInfo);
+    public delegate void ProfileSelectedChangeHandler(object sender, ConnectionInfo connectionInfo);
+    public delegate void DatabaseTypeSelectedChangeHandler(object sender, EventArgs e);
 
     public partial class UC_DbConnectionProfile : UserControl
     {
@@ -26,7 +27,8 @@ namespace DatabaseManager.Controls
         private bool isDataBinding = false;
         public ConnectionInfo ConnectionInfo => this.connectionInfo;
 
-        public event SelectedChangeHandler OnSelectedChanged;
+        public event ProfileSelectedChangeHandler ProfileSelectedChanged;
+        public event DatabaseTypeSelectedChangeHandler DatabaseTypeSelectedChanged;
 
         [Category("Title")]
         public string Title
@@ -126,9 +128,9 @@ namespace DatabaseManager.Controls
                 {
                     this.SetConnectionPasswordFromDataStore(connectionInfo);
 
-                    if (this.OnSelectedChanged != null)
+                    if (this.ProfileSelectedChanged != null)
                     {
-                        this.OnSelectedChanged(this, connectionInfo);
+                        this.ProfileSelectedChanged(this, connectionInfo);
                     }
                 }
             }
@@ -146,9 +148,9 @@ namespace DatabaseManager.Controls
 
                     this.SetFileConnectionPasswordFromDataStore(connectionInfo);
 
-                    if (this.OnSelectedChanged != null)
+                    if (this.ProfileSelectedChanged != null)
                     {
-                        this.OnSelectedChanged(this, connectionInfo);
+                        this.ProfileSelectedChanged(this, connectionInfo);
                     }
                 }
             }
@@ -320,9 +322,9 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if (this.OnSelectedChanged != null)
+                if (this.ProfileSelectedChanged != null)
                 {
-                    this.OnSelectedChanged(this, connectionInfo);
+                    this.ProfileSelectedChanged(this, connectionInfo);
                 }
 
                 return true;
@@ -353,9 +355,9 @@ namespace DatabaseManager.Controls
                     }
                 }
 
-                if (this.OnSelectedChanged != null)
+                if (this.ProfileSelectedChanged != null)
                 {
-                    this.OnSelectedChanged(this, connectionInfo);
+                    this.ProfileSelectedChanged(this, connectionInfo);
                 }
 
                 return true;
@@ -524,6 +526,11 @@ namespace DatabaseManager.Controls
         private void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
         {
             this.LoadProfileNames();
+
+            if (this.DatabaseTypeSelectedChanged != null)
+            {
+                this.DatabaseTypeSelectedChanged(sender, e);
+            }
         }
 
         public bool ValidateProfile()

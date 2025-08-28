@@ -315,7 +315,7 @@
             tsbManageProfile.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsbManageProfile.Name = "tsbManageProfile";
             tsbManageProfile.Size = new System.Drawing.Size(25, 25);
-            tsbManageProfile.Text = "Manage Prifiles";
+            tsbManageProfile.Text = "Manage Profiles";
             tsbManageProfile.Click += tsbManageProfile_Click;
             // 
             // toolStripSeparator5

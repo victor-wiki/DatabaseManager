@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class TriggerVariableMappingManager : ConfigManager
+    public class TriggerVariableMappingManager : ConvertConfigManager
     {
         public static string TriggerVariableMappingFilePath { get { return Path.Combine(ConfigRootFolder, "TriggerVariableMapping.xml"); } }
 

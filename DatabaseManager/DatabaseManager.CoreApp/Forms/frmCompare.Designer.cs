@@ -331,7 +331,7 @@ namespace DatabaseManager
             targetDbProfile.Size = new System.Drawing.Size(717, 26);
             targetDbProfile.TabIndex = 40;
             targetDbProfile.Title = "Target:";
-            targetDbProfile.OnSelectedChanged += targetDbProfile_OnSelectedChanged;
+            targetDbProfile.ProfileSelectedChanged += targetDbProfile_OnSelectedChanged;
             // 
             // sourceDbProfile
             // 
@@ -344,7 +344,7 @@ namespace DatabaseManager
             sourceDbProfile.Size = new System.Drawing.Size(717, 29);
             sourceDbProfile.TabIndex = 39;
             sourceDbProfile.Title = "Source:";
-            sourceDbProfile.OnSelectedChanged += sourceDbProfile_OnSelectedChanged;
+            sourceDbProfile.ProfileSelectedChanged += sourceDbProfile_OnSelectedChanged;
             // 
             // frmCompare
             // 

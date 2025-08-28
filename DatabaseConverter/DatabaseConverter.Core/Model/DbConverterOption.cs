@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
 using System.Collections.Generic;
 
-namespace DatabaseConverter.Core.Model
+namespace DatabaseConverter.Model
 {
     public class DbConverterOption
     {
@@ -31,5 +31,7 @@ namespace DatabaseConverter.Core.Model
         public bool OutputRemindInformation { get; set; } = true;
 
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
+
+        public string DataTypeMappingFilePath { get; set; }
     }
 }

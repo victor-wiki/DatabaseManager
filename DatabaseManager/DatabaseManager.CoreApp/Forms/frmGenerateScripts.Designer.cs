@@ -127,7 +127,7 @@ namespace DatabaseManager
             this.dbConnectionProfile.Size = new System.Drawing.Size(655, 31);
             this.dbConnectionProfile.TabIndex = 42;
             this.dbConnectionProfile.Title = "Database:";
-            this.dbConnectionProfile.OnSelectedChanged += new DatabaseManager.Controls.SelectedChangeHandler(this.dbConnectionProfile_OnSelectedChanged);
+            this.dbConnectionProfile.ProfileSelectedChanged += new DatabaseManager.Controls.ProfileSelectedChangeHandler(this.dbConnectionProfile_OnSelectedChanged);
             // 
             // btnConnect
             // 

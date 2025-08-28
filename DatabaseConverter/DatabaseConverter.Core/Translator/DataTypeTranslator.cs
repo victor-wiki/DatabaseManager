@@ -20,13 +20,13 @@ namespace DatabaseConverter.Core
         public DataTypeTranslator(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter) : base(sourceInterpreter, targetInterpreter)
         {
             this.sourceDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.sourceDbType);
-            this.targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbType);
-
-            this.LoadMappings();
+            this.targetDataTypeSpecs = DataTypeManager.GetDataTypeSpecifications(this.targetDbType);            
         }
 
         public void Translate(DataTypeInfo dataTypeInfo)
         {
+            this.LoadMappings();
+
             string originalDataType = dataTypeInfo.DataType;
 
             DataTypeInfo dti = this.sourceDbInterpreter.GetDataTypeInfo(originalDataType);
@@ -435,7 +435,7 @@ namespace DatabaseConverter.Core
 
         private bool IsSpecialPrecisionAndScaleMatched(DataTypeMappingSpecial special, DataTypeInfo dataTypeInfo)
         {
-            string precision = special.Precison;
+            string precision = special.Precision;
             string scale = special.Scale;
 
             

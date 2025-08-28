@@ -110,10 +110,6 @@
 		<target type="varchar" />
 	</mapping>
 	<mapping>
-		<source type="sysname" />
-		<target type="varchar" length="128" />
-	</mapping>
-	<mapping>
 		<source type="text" />
 		<target type="longtext"/>
 	</mapping>

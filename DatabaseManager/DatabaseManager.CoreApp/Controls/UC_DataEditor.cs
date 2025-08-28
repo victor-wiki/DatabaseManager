@@ -6,7 +6,6 @@ using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using FontAwesome.Sharp;
-using NPOI.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,7 +15,6 @@ using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,7 +27,6 @@ namespace DatabaseManager.Controls
         private DbInterpreter dbInterpreter;
         private int sortedColumnIndex = -1;
         private SortOrder sortOrder = SortOrder.None;
-        private bool isSorting = false;
         private QueryConditionBuilder conditionBuilder;
         private QuickQueryConditionBuilder quickQueryConditionBuilder;
         private DataTable originalTable;
@@ -103,10 +100,13 @@ namespace DatabaseManager.Controls
 
             string orderColumns = "";
 
-            if (this.dgvData.SortedColumn != null)
+            if (this.sortedColumnIndex != -1)
             {
                 string sortOrder = (this.sortOrder == SortOrder.Descending ? "DESC" : "ASC");
-                orderColumns = $"{this.dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
+
+                string sortedColumnName = this.dgvData.Columns[this.sortedColumnIndex].Name;
+
+                orderColumns = $"{this.dbInterpreter.GetQuotedString(sortedColumnName)} {sortOrder}";
             }
 
             string conditionClause = "";
@@ -123,7 +123,7 @@ namespace DatabaseManager.Controls
             {
                 string content = this.uc_QuickFilter.FilterContent;
 
-                if(!string.IsNullOrEmpty(content))
+                if (!string.IsNullOrEmpty(content))
                 {
                     var quickFilterInfo = new QuickFilterInfo() { Content = content, FilterMode = this.uc_QuickFilter.FilterMode };
 
@@ -133,7 +133,7 @@ namespace DatabaseManager.Controls
                     {
                         conditionClause = "WHERE " + condition;
                     }
-                }                          
+                }
             }
 
             try
@@ -158,20 +158,7 @@ namespace DatabaseManager.Controls
             catch (Exception ex)
             {
                 MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            if (this.sortedColumnIndex != -1)
-            {
-                DataGridViewColumn column = this.dgvData.Columns[this.sortedColumnIndex];
-
-                this.isSorting = true;
-
-                ListSortDirection sortDirection = this.GetSortDirection(this.sortOrder);
-
-                this.dgvData.Sort(column, sortDirection);
-
-                this.isSorting = false;
-            }
+            }            
         }
 
         private void AddIndentifierToDataTable(DataTable table)
@@ -198,10 +185,7 @@ namespace DatabaseManager.Controls
                     ReadOnly = tc.ColumnName == GUID_ROW_NAME ? true : (this.IsReadOnlyColumnByDataType(tc) || this.IsReadOnlyColumn(tc))
                 };
 
-                if (!this.CanSort(column))
-                {
-                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                }
+                column.SortMode = DataGridViewColumnSortMode.Programmatic;
 
                 this.dgvData.Columns.Add(column);
             }
@@ -297,19 +281,6 @@ namespace DatabaseManager.Controls
         private void pagination_OnPageNumberChanged(long pageNum)
         {
             this.LoadData(this.displayInfo, pageNum);
-        }
-
-        private void dgvData_Sorted(object sender, EventArgs e)
-        {
-            if (this.isSorting)
-            {
-                return;
-            }
-
-            this.sortedColumnIndex = this.dgvData.SortedColumn.DisplayIndex;
-            this.sortOrder = this.dgvData.SortOrder;
-
-            this.LoadData(this.displayInfo, 1, true);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -775,29 +746,6 @@ namespace DatabaseManager.Controls
             this.btnCommit.Enabled = changed;
             this.pagination.Enabled = !changed;
             this.btnFilter.Enabled = !changed;
-
-            if (changed)
-            {
-                foreach (DataGridViewColumn column in this.dgvData.Columns)
-                {
-                    var oldMode = column.SortMode;
-                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                }
-            }
-            else
-            {
-                foreach (DataGridViewColumn column in this.dgvData.Columns)
-                {
-                    if (!this.CanSort(column))
-                    {
-                        column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    }
-                    else
-                    {
-                        column.SortMode = DataGridViewColumnSortMode.Automatic;
-                    }
-                }
-            }
         }
 
         private bool IsDataGridViewValid()
@@ -834,31 +782,41 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            DataGridViewCell startCell = selectedCells.OfType<DataGridViewCell>().OrderBy(item => item.RowIndex).ThenBy(item => item.ColumnIndex).FirstOrDefault();
-
             string content = Clipboard.GetText().Replace(Environment.NewLine, "\n");
 
-            Dictionary<int, Dictionary<int, string>> values = this.GetClipBoardValues(content);
-
-            int rowIndex = startCell.RowIndex;
-
-            foreach (int rowKey in values.Keys)
+            if (!content.Contains("\n") && !content.Contains("\t"))
             {
-                int columnIndex = startCell.ColumnIndex;
-
-                foreach (int cellKey in values[rowKey].Keys)
+                foreach (DataGridViewCell cell in selectedCells)
                 {
-                    if (columnIndex <= this.dgvData.Columns.Count - 1 && rowIndex <= this.dgvData.Rows.Count - 1)
-                    {
-                        DataGridViewCell cell = this.dgvData[columnIndex, rowIndex];
+                    cell.Value = content;
+                }
+            }
+            else
+            {
+                DataGridViewCell startCell = selectedCells.OfType<DataGridViewCell>().OrderBy(item => item.RowIndex).ThenBy(item => item.ColumnIndex).FirstOrDefault();
 
-                        cell.Value = values[rowKey][cellKey];
+                Dictionary<int, Dictionary<int, string>> values = this.GetClipBoardValues(content);
+
+                int rowIndex = startCell.RowIndex;
+
+                foreach (int rowKey in values.Keys)
+                {
+                    int columnIndex = startCell.ColumnIndex;
+
+                    foreach (int cellKey in values[rowKey].Keys)
+                    {
+                        if (columnIndex <= this.dgvData.Columns.Count - 1 && rowIndex <= this.dgvData.Rows.Count - 1)
+                        {
+                            DataGridViewCell cell = this.dgvData[columnIndex, rowIndex];
+
+                            cell.Value = values[rowKey][cellKey];
+                        }
+
+                        columnIndex++;
                     }
 
-                    columnIndex++;
+                    rowIndex++;
                 }
-
-                rowIndex++;
             }
 
             this.SetControlState();
@@ -1438,6 +1396,80 @@ namespace DatabaseManager.Controls
             this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
 
             this.LoadData(this.displayInfo, 1, false);
+        }
+
+        private void dgvData_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && e.RowIndex == -1)
+            {
+                var selectedCells = this.dgvData.SelectedCells;
+
+                if (selectedCells != null)
+                {
+                    foreach (DataGridViewCell cell in selectedCells)
+                    {
+                        cell.Selected = false;
+                    }
+                }
+
+                int columnIndex = e.ColumnIndex;
+
+                foreach (DataGridViewRow row in this.dgvData.Rows)
+                {
+                    var cell = row.Cells[columnIndex];
+
+                    cell.Selected = true;
+                }
+            }
+        }
+
+        private void dgvData_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            bool changed = this.IsDataChanged();
+
+            if (changed)
+            {
+                return;
+            }
+
+            int columnIndex = e.ColumnIndex;
+
+            DataGridViewColumn column = this.dgvData.Columns[columnIndex];
+
+            bool canSort = this.CanSort(column);
+
+            if (canSort)
+            {
+                if (this.sortedColumnIndex != columnIndex)
+                {
+                    this.sortedColumnIndex = columnIndex;
+                    this.sortOrder = SortOrder.Ascending;
+                }
+                else if (this.sortedColumnIndex == columnIndex)
+                {
+                    if(this.sortOrder == SortOrder.Ascending)
+                    {
+                        this.sortOrder = SortOrder.Descending;
+                    }
+                    else if(this.sortOrder == SortOrder.Descending)
+                    {
+                        this.sortOrder = SortOrder.None;
+                        this.sortedColumnIndex = -1;
+                    }                    
+                }
+
+                foreach (DataGridViewColumn col in this.dgvData.Columns)
+                {
+                    if (col.Index != columnIndex)
+                    {
+                        col.HeaderCell.SortGlyphDirection = SortOrder.None;
+                    }
+                }                
+
+                column.HeaderCell.SortGlyphDirection = this.sortOrder;
+
+                this.LoadData(this.displayInfo, 1, true);
+            }
         }
     }
 }

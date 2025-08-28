@@ -9,7 +9,7 @@ using System.Xml.Linq;
 
 namespace DatabaseConverter.Core
 {
-    public class FunctionMappingManager : ConfigManager
+    public class FunctionMappingManager : ConvertConfigManager
     {
         public static string FunctionMappingFilePath { get { return Path.Combine(ConfigRootFolder, "FunctionMapping.xml"); } }
 

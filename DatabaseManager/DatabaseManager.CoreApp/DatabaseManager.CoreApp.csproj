@@ -193,6 +193,9 @@
     <Compile Update="Forms\frmDbConnectionManage.Designer.cs">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </Compile>
+    <Compile Update="Forms\frmInput.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Forms\frmItemsSelector.cs">
       <SubType>Form</SubType>
     </Compile>

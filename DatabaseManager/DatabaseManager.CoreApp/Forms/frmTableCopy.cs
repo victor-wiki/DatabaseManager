@@ -1,11 +1,15 @@
 ﻿using DatabaseConverter.Core;
+using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -42,7 +46,7 @@ namespace DatabaseManager
 
         private async void btnExecute_Click(object sender, EventArgs e)
         {
-            Task.Run(()=> this.CopyTable());
+            Task.Run(() => this.CopyTable());
         }
 
         private async Task<bool> TestTargetConnection()
@@ -63,7 +67,7 @@ namespace DatabaseManager
                 MessageBox.Show(ex.Message);
 
                 return false;
-            }            
+            }
         }
 
         private async void CopyTable()
@@ -75,7 +79,7 @@ namespace DatabaseManager
                 return;
             }
 
-            if(await this.TestTargetConnection() == false)
+            if (await this.TestTargetConnection() == false)
             {
                 return;
             }
@@ -169,6 +173,13 @@ namespace DatabaseManager
                     //option.IgnoreNotSelfForeignKey = true;
                     option.UseOriginalDataTypeIfUdtHasOnlyOneAttr = SettingManager.Setting.UseOriginalDataTypeIfUdtHasOnlyOneAttr;
                     option.OnlyForTableCopy = true;
+
+                    if (this.cboDataTypeMappingFile.SelectedIndex >= 0)
+                    {
+                        ConvertConfigFileInfo configFileInfo = this.cboDataTypeMappingFile.SelectedItem as ConvertConfigFileInfo;
+
+                        option.DataTypeMappingFilePath = configFileInfo.FilePath;
+                    }
 
                     if (this.cboSchema.Visible)
                     {
@@ -264,7 +275,7 @@ namespace DatabaseManager
             this.SetSchemaControlStates();
         }
 
-        private void ucConnection_OnSelectedChanged(object sender, ConnectionInfo connectionInfo)
+        private void ucConnection_ProfileSelectedChanged(object sender, ConnectionInfo connectionInfo)
         {
             this.targetDbConnectionInfo = connectionInfo;
 
@@ -400,6 +411,84 @@ namespace DatabaseManager
             if (this.OnFeedback != null)
             {
                 this.OnFeedback(info);
+            }
+        }
+
+        private void ucConnection_DatabaseTypeSelectedChanged(object sender, EventArgs e)
+        {
+            this.ShowDataTypeMappingConfigFiles();
+        }
+
+        private void ShowDataTypeMappingConfigFiles()
+        {
+            this.cboDataTypeMappingFile.Items.Clear();
+            this.lblDataTypeMappingFileType.Text = "";
+
+            if (this.ucConnection.IsDbTypeSelected())
+            {
+                DatabaseType sourceDatabaseType = this.DatabaseType;
+                DatabaseType targetDatabaseType = this.ucConnection.DatabaseType;
+
+                List<ConvertConfigFileInfo> files = new List<ConvertConfigFileInfo>();
+
+                if(sourceDatabaseType!= targetDatabaseType)
+                {
+                    string defaultDataTypeMappingFilePath = DataTypeMappingManager.GetDataTypeMappingFilePath(sourceDatabaseType, targetDatabaseType);
+
+                    if(File.Exists(defaultDataTypeMappingFilePath))
+                    {
+                        files.Add(new ConvertConfigFileInfo() { Name = Path.GetFileNameWithoutExtension(defaultDataTypeMappingFilePath), FilePath = defaultDataTypeMappingFilePath, IsDefault = true });
+                    }                    
+                }                
+
+                string customMappingFolder = SettingManager.Setting.CustomMappingFolder;
+
+                string customMappingSubFolder = DataTypeMappingManager.GetDataTypeMappingCustomSubFolder(sourceDatabaseType, targetDatabaseType, customMappingFolder);
+
+                DirectoryInfo di = new DirectoryInfo(customMappingSubFolder);
+
+                if (di.Exists)
+                {
+                    files.AddRange(di.GetFiles().OrderBy(item => item.Name).Select(item => new ConvertConfigFileInfo() { Name = Path.GetFileNameWithoutExtension(item.Name), FilePath = item.FullName }));
+                }
+
+                this.cboDataTypeMappingFile.Items.AddRange(files.ToArray());
+
+                if (this.cboDataTypeMappingFile.Items.Count > 0)
+                {
+                    this.cboDataTypeMappingFile.SelectedIndex = 0;
+                }
+            }
+        }
+
+        private void cboDataTypeMappingFile_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ConvertConfigFileInfo selectedItem = this.cboDataTypeMappingFile.SelectedItem as ConvertConfigFileInfo;
+
+            if (selectedItem != null)
+            {
+                this.lblDataTypeMappingFileType.Text = $"({(selectedItem.IsDefault ? "Default" : "Custom")})";
+            }
+            else
+            {
+                this.lblDataTypeMappingFileType.Text = "";
+            }
+        }
+
+        private void lblDataTypeMappingFileType_Click(object sender, EventArgs e)
+        {
+            var selectedItem = this.cboDataTypeMappingFile.SelectedItem;
+
+            if (selectedItem != null)
+            {
+                ConvertConfigFileInfo configFileInfo = selectedItem as ConvertConfigFileInfo;
+
+                DatabaseType sourceDatabaseType = this.DatabaseType;
+                DatabaseType targetDatabaseType = this.ucConnection.DatabaseType;
+
+                frmDataTypeMappingSetting form = new frmDataTypeMappingSetting(true, sourceDatabaseType, targetDatabaseType, configFileInfo.IsDefault, configFileInfo.Name);
+
+                form.ShowDialog();
             }
         }
     }

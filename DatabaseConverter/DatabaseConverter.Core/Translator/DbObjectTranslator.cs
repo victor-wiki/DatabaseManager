@@ -49,7 +49,7 @@ namespace DatabaseConverter.Core
             {
                 this.functionMappings = FunctionMappingManager.FunctionMappings;
                 this.variableMappings = VariableMappingManager.VariableMappings;
-                this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType);
+                this.dataTypeMappings = DataTypeMappingManager.GetDataTypeMappings(this.sourceDbInterpreter.DatabaseType, this.targetDbInterpreter.DatabaseType, this.Option?.DataTypeMappingFilePath);
             }
         }
 
