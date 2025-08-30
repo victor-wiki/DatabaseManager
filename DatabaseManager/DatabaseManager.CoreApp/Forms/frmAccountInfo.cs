@@ -9,7 +9,7 @@ using System.Data;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     public partial class frmAccountInfo : Form
     {

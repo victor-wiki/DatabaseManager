@@ -168,8 +168,9 @@ namespace DatabaseInterpreter.Core
         {
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => this.GetQuotedString(item.ColumnName)));
             string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString(this.GetRestrictedLengthName(this.GetTableObjectDefaultName(foreignKey))) : this.GetQuotedString(foreignKey.Name);
 
-            string sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.TableName)} ADD CONSTRAINT {this.GetQuotedString(this.GetRestrictedLengthName(foreignKey.Name))} FOREIGN KEY ({columnNames}) REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})";
+            string sql = $"ALTER TABLE {this.GetQuotedString(foreignKey.TableName)} ADD CONSTRAINT {fkName} FOREIGN KEY ({columnNames}) REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})";
 
             if (foreignKey.UpdateCascade)
             {

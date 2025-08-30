@@ -26,6 +26,8 @@ namespace DatabaseManager.Core
         private bool isBusy = false;
         private bool hasError = false;
 
+        public bool IgnoreForeignKeyConstraint { get; set; }
+
         public CancellationTokenSource CancellationTokenSource { get; private set; }
         public bool CancelRequested => this.cancelRequested;
         public bool IsBusy => this.isBusy;
@@ -277,6 +279,14 @@ namespace DatabaseManager.Core
         {
             using (DbConnection dbConnection = dbInterpreter.CreateConnection())
             {
+                if(this.IgnoreForeignKeyConstraint)
+                {
+                    if(dbInterpreter.DatabaseType == DatabaseType.Sqlite)
+                    {
+                        dbConnection.ConnectionString = dbConnection.ConnectionString + ";Foreign Keys=False";
+                    }                    
+                }               
+
                 await dbConnection.OpenAsync();
 
                 DbTransaction transaction = await dbConnection.BeginTransactionAsync();

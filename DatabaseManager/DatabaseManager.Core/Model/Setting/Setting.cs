@@ -16,6 +16,8 @@ namespace DatabaseManager.Model
         public TextEditorOption TextEditorOption { get; set; } = new TextEditorOption();
         public ThemeOption ThemeOption { get; set; } = new ThemeOption();
         public string CustomMappingFolder { get; set; }
+        public bool NeedPreviewBeforeConvert { get; set; } = true;
+        public bool ShowCurrentColumnContentMaxLength { get; set; } = true;
     }
 
     public class TextEditorOption

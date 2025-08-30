@@ -1156,65 +1156,7 @@ namespace DatabaseInterpreter.Core
 
         protected virtual string GetTableObjectDefaultName(DatabaseObject dbObject)
         {
-            DatabaseObjectType type = DbObjectHelper.GetDatabaseObjectType(dbObject);
-
-            string prefix = "";
-
-            string tableName = null;
-            IEnumerable<string> columnNames = null;
-
-            switch (type)
-            {
-                case DatabaseObjectType.PrimaryKey:
-                    prefix = "PK";
-
-                    TablePrimaryKey primaryKey = dbObject as TablePrimaryKey;
-
-                    tableName = primaryKey.TableName;
-                    columnNames = primaryKey.Columns.Select(item => item.ColumnName);
-                    break;
-                case DatabaseObjectType.ForeignKey:
-                    prefix = "FK";
-
-                    TableForeignKey foreignKey = dbObject as TableForeignKey;
-
-                    tableName = foreignKey.TableName;
-                    columnNames = foreignKey.Columns.Select(item => item.ColumnName);                   
-                    break;
-                case DatabaseObjectType.Constraint:
-                    prefix = "CK";
-
-                    TableConstraint constraint = dbObject as TableConstraint;
-
-                    tableName = constraint.TableName;
-                    columnNames = new string[] { constraint.ColumnName };
-                  
-                    break;
-                case DatabaseObjectType.Index:
-                    TableIndex tableIndex = dbObject as TableIndex;
-
-                    if (tableIndex.Type == IndexType.Unique.ToString() || tableIndex.IsUnique)
-                    {
-                        prefix = "UX";
-                    }
-                    else
-                    {
-                        prefix = "IX";
-                    }
-
-                    tableName = tableIndex.TableName;
-                    columnNames = tableIndex.Columns.Select(item => item.ColumnName);
-                    break;
-            }
-
-            if(tableName!=null && columnNames!=null)
-            {
-                string name = $"{(prefix.Length > 0 ? prefix + "_" : "")}{tableName}_{string.Join('_', columnNames)}";
-
-                return name;
-            }
-
-            return string.Empty;
+            return SchemaInfoHelper.GetTableObjectDefaultName(dbObject);
         }
         #endregion
 

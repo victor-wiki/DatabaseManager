@@ -11,7 +11,7 @@ using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
 using DatabaseManager.Helper;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     public partial class frmScriptsViewer : Form
     {

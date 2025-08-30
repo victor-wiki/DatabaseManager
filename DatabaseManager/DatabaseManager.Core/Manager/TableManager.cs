@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -54,7 +55,79 @@ namespace DatabaseManager.Core
                     return this.GetFaultSaveResult("No changes need to save.");
                 }
 
-                ScriptRunner scriptRunner = new ScriptRunner();
+                bool ignoreForeignKeyConstraint = false;
+
+                #region handle sqlite
+                if (!isNew && this.dbInterpreter.DatabaseType == DatabaseType.Sqlite)
+                {
+                    bool needCreateNew = false;
+
+                    foreach (var script in scripts)
+                    {
+                        if (string.IsNullOrEmpty(script.Content))
+                        {
+                            Type type = script.GetType();
+                            string typeName = type.Name;
+
+                            if (typeName.StartsWith("CreateDbObjectScript") || typeName.StartsWith("AlterDbObjectScript") || typeName.StartsWith("DropDbObjectScript"))
+                            {
+                                needCreateNew = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (needCreateNew)
+                    {
+                        scripts.Clear();
+
+                        ignoreForeignKeyConstraint = true;
+
+                        scripts.Add(new Script("PRAGMA foreign_keys = 0;"));
+
+                        string tableName = schemaDesignerInfo.TableDesignerInfo.Name;
+                        string tempTableName = $"{tableName}___temp";
+
+                        schemaDesignerInfo.TableDesignerInfo.Name = tempTableName;
+
+                        foreach (var column in schemaDesignerInfo.TableColumnDesingerInfos)
+                        {
+                            column.TableName = tempTableName;
+                        }
+
+                        foreach (var index in schemaDesignerInfo.TableIndexDesingerInfos)
+                        {
+                            index.TableName = tempTableName;
+                        }
+
+                        foreach (var constraint in schemaDesignerInfo.TableConstraintDesignerInfos)
+                        {
+                            constraint.TableName = tempTableName;
+                        }
+
+                        foreach (var fk in schemaDesignerInfo.TableForeignKeyDesignerInfos)
+                        {
+                            fk.TableName = tempTableName;
+                        }
+
+                        result = await this.GenerateChangeScripts(schemaDesignerInfo, true, tableName);
+
+                        scripts.AddRange((result.ResultData as TableDesignerGenerateScriptsData).Scripts);
+
+                        scripts.Add(new Script($"INSERT INTO {tempTableName} SELECT * FROM {tableName};"));
+
+                        var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
+
+                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tableName }));
+
+                        scripts.Add(scriptGenerator.RenameTable(new Table() { Name = tempTableName }, tableName));
+                        
+                        scripts.Add(new Script("PRAGMA foreign_keys = 1;"));                               
+                    }
+                }
+                #endregion
+
+                ScriptRunner scriptRunner = new ScriptRunner() { IgnoreForeignKeyConstraint = ignoreForeignKeyConstraint };
 
                 await scriptRunner.Run(this.dbInterpreter, scripts);
             }
@@ -70,7 +143,7 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { IsOK = true, ResultData = table };
         }
 
-        public async Task<ContentSaveResult> GenerateChangeScripts(SchemaDesignerInfo schemaDesignerInfo, bool isNew)
+        public async Task<ContentSaveResult> GenerateChangeScripts(SchemaDesignerInfo schemaDesignerInfo, bool isNew, string trueTableName = null)
         {
             string validateMsg;
 
@@ -87,7 +160,7 @@ namespace DatabaseManager.Core
 
                 TableDesignerGenerateScriptsData scriptsData = new TableDesignerGenerateScriptsData();
 
-                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo);
+                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo, trueTableName);
 
                 table = schemaInfo.Tables.First();
 
@@ -108,6 +181,7 @@ namespace DatabaseManager.Core
                     TableDesignerInfo tableDesignerInfo = schemaDesignerInfo.TableDesignerInfo;
 
                     SchemaInfoFilter filter = new SchemaInfoFilter() { Strict = true };
+
                     filter.Schema = tableDesignerInfo.Schema;
                     filter.TableNames = new string[] { tableDesignerInfo.OldName };
                     filter.DatabaseObjectType = DatabaseObjectType.Table
@@ -236,8 +310,8 @@ namespace DatabaseManager.Core
                             TableForeignKey oldForeignKey = oldForeignKeys.FirstOrDefault(item => item.Name == foreignKeyDesignerInfo.OldName);
 
                             if (this.IsValueEqualsIgnoreCase(foreignKeyDesignerInfo.OldName, foreignKeyDesignerInfo.Name) &&
-                                foreignKeyDesignerInfo.UpdateCascade == oldForeignKey.UpdateCascade &&
-                                foreignKeyDesignerInfo.DeleteCascade == oldForeignKey.DeleteCascade)
+                                foreignKeyDesignerInfo.UpdateCascade == oldForeignKey?.UpdateCascade &&
+                                foreignKeyDesignerInfo.DeleteCascade == oldForeignKey?.DeleteCascade)
                             {
                                 if (oldForeignKey != null && this.IsStringEquals(oldForeignKey.Comment, newForeignKey.Comment)
                                     && oldForeignKey.ReferencedSchema == newForeignKey.ReferencedSchema && oldForeignKey.ReferencedTableName == newForeignKey.ReferencedTableName
@@ -547,7 +621,7 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { ResultData = message };
         }
 
-        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo)
+        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, string trueTableName = null)
         {
             SchemaInfo schemaInfo = new SchemaInfo();
 
@@ -573,7 +647,9 @@ namespace DatabaseManager.Core
                 {
                     if (primaryKey == null)
                     {
-                        primaryKey = new TablePrimaryKey() { Schema = table.Schema, TableName = table.Name, Name = IndexManager.GetPrimaryKeyDefaultName(table) };
+                        string primaryKeyName = IndexManager.GetPrimaryKeyDefaultName(trueTableName != null ? new Table() { Name = trueTableName } : table);
+
+                        primaryKey = new TablePrimaryKey() { Schema = table.Schema, TableName = table.Name, Name = primaryKeyName };
                     }
 
                     IndexColumn indexColumn = new IndexColumn() { ColumnName = column.Name, IsDesc = false, Order = primaryKey.Columns.Count + 1 };
@@ -760,10 +836,10 @@ namespace DatabaseManager.Core
                     return false;
                 }
 
-                if(!string.IsNullOrEmpty(column.Name) && !columnNames.Contains(column.Name))
+                if (!string.IsNullOrEmpty(column.Name) && !columnNames.Contains(column.Name))
                 {
                     columnNames.Add(column.Name);
-                }               
+                }
             }
             #endregion
 
@@ -802,7 +878,7 @@ namespace DatabaseManager.Core
                         }
                     }
 
-                    if(!string.IsNullOrEmpty(index.Name) && !indexNames.Contains(index.Name))
+                    if (!string.IsNullOrEmpty(index.Name) && !indexNames.Contains(index.Name))
                     {
                         indexNames.Add(index.Name);
                     }

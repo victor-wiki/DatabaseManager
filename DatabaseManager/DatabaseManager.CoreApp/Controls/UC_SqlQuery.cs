@@ -3,6 +3,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Data;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using SqlCodeEditor;
@@ -148,23 +149,34 @@ namespace DatabaseManager.Controls
         {
             if (this.CheckConnection())
             {
-                DbInterpreter dbInterpreter = this.GetDbInterpreter();
-
-                this.queryEditor.DbInterpreter = dbInterpreter;
-
-                SchemaInfoFilter filter = new SchemaInfoFilter()
+                try
                 {
-                    DatabaseObjectType = DatabaseObjectType.Table
-                    | DatabaseObjectType.Function
-                    | DatabaseObjectType.View
-                    | DatabaseObjectType.Column
-                };
+                    DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
-                SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
+                    this.queryEditor.DbInterpreter = dbInterpreter;
 
-                DataStore.SetSchemaInfo(this.displayInfo.DatabaseType, schemaInfo);
+                    SchemaInfoFilter filter = new SchemaInfoFilter()
+                    {
+                        DatabaseObjectType = DatabaseObjectType.Table
+                        | DatabaseObjectType.Function
+                        | DatabaseObjectType.View
+                        | DatabaseObjectType.Column
+                    };
 
-                this.queryEditor.SetupIntellisence();
+                    SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
+
+                    var viewColumns = await dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { ColumnType = ColumnType.ViewColumn });
+
+                    schemaInfo.TableColumns.AddRange(viewColumns);
+
+                    DataStore.SetSchemaInfo(this.displayInfo.DatabaseType, schemaInfo);
+
+                    this.queryEditor.SetupIntellisence();
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.LogError(ExceptionHelper.GetExceptionDetails(ex));                    
+                }
             }
         }      
 

@@ -46,11 +46,11 @@ namespace DatabaseManager.Forms
 
             if (this.cboFileType.SelectedIndex == 0)
             {
-                this.saveFileDialog1.Filter = "(*.csv)|*.csv";
+                this.saveFileDialog1.Filter = "csv file|*.csv";
             }
             else
             {
-                this.saveFileDialog1.Filter = "(*.xlsx)|*.xlsx";
+                this.saveFileDialog1.Filter = "excel file|*.xlsx";
             }
 
             DialogResult result = this.saveFileDialog1.ShowDialog();

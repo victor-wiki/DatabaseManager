@@ -76,7 +76,7 @@
             // openFileDialog1
             // 
             openFileDialog1.FileName = "openFileDialog1";
-            openFileDialog1.Filter = "(*.csv)|*.csv|(*.xlsx)|*.xlsx|(*.xls)|*.xls";
+            openFileDialog1.Filter = "csv file|*.csv|excel file|*.xlsx|excel file|*.xls";
             // 
             // btnClose
             // 

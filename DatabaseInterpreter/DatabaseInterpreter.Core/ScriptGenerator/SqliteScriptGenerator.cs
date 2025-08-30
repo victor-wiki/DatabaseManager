@@ -57,12 +57,12 @@ namespace DatabaseInterpreter.Core
         #region Alter Table
         public override Script DropCheckConstraint(TableConstraint constraint)
         {
-            return new Script("");
+            return new DropDbObjectScript<TableConstraint>("");
         }
 
         public override Script DropForeignKey(TableForeignKey foreignKey)
         {
-            return new Script("");
+            return new DropDbObjectScript<TableForeignKey>("");
         }
 
         public override Script DropIndex(TableIndex index)
@@ -72,7 +72,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script DropPrimaryKey(TablePrimaryKey primaryKey)
         {
-            return new Script("");
+            return new DropDbObjectScript<TablePrimaryKey>("");
         }
 
         public override Script DropTableColumn(TableColumn column)
@@ -122,12 +122,12 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddCheckConstraint(TableConstraint constraint)
         {
-            return new Script("");
+            return new CreateDbObjectScript<TableConstraint>("");
         }
 
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
-            return new Script("");
+            return new CreateDbObjectScript<TableForeignKey>("");
         }
 
         public override Script AddIndex(TableIndex index)
@@ -157,7 +157,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
         {
-            return new Script("");
+            return new CreateDbObjectScript<TablePrimaryKey>("");
         }
 
         public override Script AddTableColumn(Table table, TableColumn column)
@@ -167,7 +167,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
-            return new Script("");
+            return new AlterDbObjectScript<TableColumn>("");
         }
         #endregion
 

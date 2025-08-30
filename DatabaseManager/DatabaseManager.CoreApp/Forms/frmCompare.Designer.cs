@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     partial class frmCompare
     {

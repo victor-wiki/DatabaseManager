@@ -187,7 +187,7 @@ $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
             string quotedTableName = this.GetQuotedFullTableName(foreignKey);
-            string fkName = string.IsNullOrEmpty(foreignKey.Name)? this.GetQuotedString($"FK_{foreignKey.TableName}_{foreignKey.ReferencedTableName}"): this.GetQuotedString(foreignKey.Name);
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString(this.GetTableObjectDefaultName(foreignKey)): this.GetQuotedString(foreignKey.Name);
 
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
             string referencedColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
@@ -280,6 +280,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             }
 
             string sql = $"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.TransferSingleQuotationString(tableChild.Comment)}',N'SCHEMA',N'{tableChild.Schema}',N'table',N'{tableChild.TableName}',N'{type}',N'{tableChild.Name}'";
+            
             return new ExecuteProcedureScript(sql);
         }
 

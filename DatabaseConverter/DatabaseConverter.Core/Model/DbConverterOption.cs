@@ -33,5 +33,6 @@ namespace DatabaseConverter.Model
         public List<SchemaMappingInfo> SchemaMappings = new List<SchemaMappingInfo>();
 
         public string DataTypeMappingFilePath { get; set; }
+        public bool NeedPreview { get; set; }
     }
 }

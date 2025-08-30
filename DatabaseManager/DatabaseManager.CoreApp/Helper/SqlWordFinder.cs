@@ -30,7 +30,7 @@ namespace DatabaseManager.Helper
                 {
                     var owners = schemaInfo.Tables.Where(item => ContainsWithNull(item.Schema, search)).Select(item => item.Schema).Distinct();
 
-                    words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Schema, Text = item, Source = item }));
+                    words.AddRange(owners.Select(item => new SqlWord() { Type = SqlWordTokenType.Schema, Text = item, DatabaseObject = item }));
                 }
 
                 FilterDbObjects(words, schemaInfo.Tables, SqlWordTokenType.Table, tokenType, search, parentName);
@@ -51,7 +51,7 @@ namespace DatabaseManager.Helper
                         columns = columns.Where(item => ContainsWithNull(item.Name, search));
                     }
 
-                    words.AddRange(columns.Select(item => new SqlWord() { Type = SqlWordTokenType.TableColumn, Text = item.Name, Source = item }));
+                    words.AddRange(columns.Select(item => new SqlWord() { Type = SqlWordTokenType.TableColumn, Text = item.Name, DatabaseObject = item }));
                 }
 
                 FilterDbObjects(words, schemaInfo.Functions, SqlWordTokenType.Function, tokenType, search, parentName);
@@ -61,7 +61,7 @@ namespace DatabaseManager.Helper
             {
                 var builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => ContainsWithNull(item.Name, search));
 
-                words.AddRange(builtinFunctions.Select(item => new SqlWord() { Type = SqlWordTokenType.BuiltinFunction, Text = item.Name, Source = item }));
+                words.AddRange(builtinFunctions.Select(item => new SqlWord() { Type = SqlWordTokenType.BuiltinFunction, Text = item.Name, DatabaseObject = item }));
             }
 
             return words;
@@ -81,7 +81,7 @@ namespace DatabaseManager.Helper
 
                 objs = objs.Where(item => ContainsWithNull(item.Name, search));
 
-                words.AddRange(objs.Select(item => new SqlWord() { Type = currentTokenType, Text = item.Name, Source = item }));
+                words.AddRange(objs.Select(item => new SqlWord() { Type = currentTokenType, Text = item.Name, DatabaseObject = item }));
             }
         }
 

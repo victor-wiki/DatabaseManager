@@ -43,6 +43,8 @@ namespace DatabaseInterpreter.Core
         public abstract bool SupportNchar { get; }
         public abstract bool SupportTruncateTable { get; }
         public abstract bool CanInsertIdentityByDefault { get; }
+        public abstract string StringLengthFunctionName { get; }
+        public abstract string StringCheckNullFunctionName { get; }
         public virtual List<string> BuiltinDatabases { get; } = new List<string>();
         public static DbInterpreterSetting Setting = new DbInterpreterSetting();
         public DbInterpreterOption Option { get; set; } = new DbInterpreterOption();

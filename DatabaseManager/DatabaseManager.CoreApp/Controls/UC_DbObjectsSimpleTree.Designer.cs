@@ -28,51 +28,50 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.tvDbObjects = new System.Windows.Forms.TreeView();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmiShowSortedNames = new System.Windows.Forms.ToolStripMenuItem();
-            this.contextMenuStrip1.SuspendLayout();
-            this.SuspendLayout();
+            components = new System.ComponentModel.Container();
+            tvDbObjects = new System.Windows.Forms.TreeView();
+            contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
+            tsmiShowSortedNames = new System.Windows.Forms.ToolStripMenuItem();
+            contextMenuStrip1.SuspendLayout();
+            SuspendLayout();
             // 
             // tvDbObjects
             // 
-            this.tvDbObjects.CheckBoxes = true;
-            this.tvDbObjects.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tvDbObjects.Location = new System.Drawing.Point(0, 0);
-            this.tvDbObjects.Margin = new System.Windows.Forms.Padding(4);
-            this.tvDbObjects.Name = "tvDbObjects";
-            this.tvDbObjects.Size = new System.Drawing.Size(290, 449);
-            this.tvDbObjects.TabIndex = 20;
-            this.tvDbObjects.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.tvDbObjects_AfterCheck);
-            this.tvDbObjects.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvDbObjects_NodeMouseClick);
-            this.tvDbObjects.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tvDbObjects_KeyDown);
+            tvDbObjects.CheckBoxes = true;
+            tvDbObjects.Dock = System.Windows.Forms.DockStyle.Fill;
+            tvDbObjects.Location = new System.Drawing.Point(0, 0);
+            tvDbObjects.Margin = new System.Windows.Forms.Padding(4);
+            tvDbObjects.Name = "tvDbObjects";
+            tvDbObjects.Size = new System.Drawing.Size(290, 449);
+            tvDbObjects.TabIndex = 20;
+            tvDbObjects.AfterCheck += tvDbObjects_AfterCheck;
+            tvDbObjects.AfterSelect += tvDbObjects_AfterSelect;
+            tvDbObjects.NodeMouseClick += tvDbObjects_NodeMouseClick;
+            tvDbObjects.KeyDown += tvDbObjects_KeyDown;
             // 
             // contextMenuStrip1
             // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiShowSortedNames});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(196, 26);
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiShowSortedNames });
+            contextMenuStrip1.Name = "contextMenuStrip1";
+            contextMenuStrip1.Size = new System.Drawing.Size(196, 26);
             // 
             // tsmiShowSortedNames
             // 
-            this.tsmiShowSortedNames.Name = "tsmiShowSortedNames";
-            this.tsmiShowSortedNames.Size = new System.Drawing.Size(195, 22);
-            this.tsmiShowSortedNames.Text = "Show Sorted Names";
-            this.tsmiShowSortedNames.Click += new System.EventHandler(this.tsmiShowSortedNames_Click);
+            tsmiShowSortedNames.Name = "tsmiShowSortedNames";
+            tsmiShowSortedNames.Size = new System.Drawing.Size(195, 22);
+            tsmiShowSortedNames.Text = "Show Sorted Names";
+            tsmiShowSortedNames.Click += tsmiShowSortedNames_Click;
             // 
             // UC_DbObjectsSimpleTree
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.tvDbObjects);
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "UC_DbObjectsSimpleTree";
-            this.Size = new System.Drawing.Size(290, 449);
-            this.contextMenuStrip1.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(tvDbObjects);
+            Margin = new System.Windows.Forms.Padding(4);
+            Name = "UC_DbObjectsSimpleTree";
+            Size = new System.Drawing.Size(290, 449);
+            contextMenuStrip1.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion

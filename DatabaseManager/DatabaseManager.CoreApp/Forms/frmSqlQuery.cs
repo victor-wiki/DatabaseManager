@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     public partial class frmSqlQuery : Form
     {

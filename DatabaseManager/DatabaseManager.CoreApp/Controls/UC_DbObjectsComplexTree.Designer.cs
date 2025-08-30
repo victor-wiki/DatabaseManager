@@ -233,42 +233,42 @@
             // tsmiCreateScript
             // 
             tsmiCreateScript.Name = "tsmiCreateScript";
-            tsmiCreateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiCreateScript.Size = new System.Drawing.Size(180, 22);
             tsmiCreateScript.Text = "Create Script";
             tsmiCreateScript.Click += tsmiCreateScript_Click;
             // 
             // tsmiSelectScript
             // 
             tsmiSelectScript.Name = "tsmiSelectScript";
-            tsmiSelectScript.Size = new System.Drawing.Size(157, 22);
+            tsmiSelectScript.Size = new System.Drawing.Size(180, 22);
             tsmiSelectScript.Text = "Select Script";
             tsmiSelectScript.Click += tsmiSelectScript_Click;
             // 
             // tsmiInsertScript
             // 
             tsmiInsertScript.Name = "tsmiInsertScript";
-            tsmiInsertScript.Size = new System.Drawing.Size(157, 22);
+            tsmiInsertScript.Size = new System.Drawing.Size(180, 22);
             tsmiInsertScript.Text = "Insert Script";
             tsmiInsertScript.Click += tsmiInsertScript_Click;
             // 
             // tsmiUpdateScript
             // 
             tsmiUpdateScript.Name = "tsmiUpdateScript";
-            tsmiUpdateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiUpdateScript.Size = new System.Drawing.Size(180, 22);
             tsmiUpdateScript.Text = "Update Script";
             tsmiUpdateScript.Click += tsmiUpdateScript_Click;
             // 
             // tsmiDeleteScript
             // 
             tsmiDeleteScript.Name = "tsmiDeleteScript";
-            tsmiDeleteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiDeleteScript.Size = new System.Drawing.Size(180, 22);
             tsmiDeleteScript.Text = "Delete Script";
             tsmiDeleteScript.Click += tsmiDeleteScript_Click;
             // 
             // tsmiExecuteScript
             // 
             tsmiExecuteScript.Name = "tsmiExecuteScript";
-            tsmiExecuteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiExecuteScript.Size = new System.Drawing.Size(180, 22);
             tsmiExecuteScript.Text = "Execute Script";
             tsmiExecuteScript.Click += tsmiExecuteScript_Click;
             // 
@@ -317,35 +317,35 @@
             // tsmiBackup
             // 
             tsmiBackup.Name = "tsmiBackup";
-            tsmiBackup.Size = new System.Drawing.Size(137, 22);
+            tsmiBackup.Size = new System.Drawing.Size(180, 22);
             tsmiBackup.Text = "Backup";
             tsmiBackup.Click += tsmiBackup_Click;
             // 
             // tsmiDiagnose
             // 
             tsmiDiagnose.Name = "tsmiDiagnose";
-            tsmiDiagnose.Size = new System.Drawing.Size(137, 22);
+            tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
             tsmiDiagnose.Text = "Diagnose";
             tsmiDiagnose.Click += tsmiDiagnose_Click;
             // 
             // tsmiStatistic
             // 
             tsmiStatistic.Name = "tsmiStatistic";
-            tsmiStatistic.Size = new System.Drawing.Size(137, 22);
+            tsmiStatistic.Size = new System.Drawing.Size(180, 22);
             tsmiStatistic.Text = "Statistic";
             tsmiStatistic.Click += tsmiStatistic_Click;
             // 
             // tsmiClearData
             // 
             tsmiClearData.Name = "tsmiClearData";
-            tsmiClearData.Size = new System.Drawing.Size(137, 22);
+            tsmiClearData.Size = new System.Drawing.Size(180, 22);
             tsmiClearData.Text = "Clear Data";
             tsmiClearData.Click += tsmiClearData_Click;
             // 
             // tsmiEmptyDatabase
             // 
             tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
+            tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
             tsmiEmptyDatabase.Text = "Empty";
             tsmiEmptyDatabase.Click += tsmiEmptyDatabase_Click;
             // 

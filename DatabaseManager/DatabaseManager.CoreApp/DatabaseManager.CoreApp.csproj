@@ -8,13 +8,17 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.19</Version>
+    <Version>2.2.20</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add:  import data from CSV or Excel; quich search.
-2. enhance data editor: copy and paste.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add: 
+(1) statistic: table column content max length;
+(2) diagnosis: primary key column is nullable;
+(3) preview schema info before converting;
+(4) custom config data type mappings.
+2. enhance: sql query editor intellisence.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.19</AssemblyVersion>
-    <FileVersion>2.2.19</FileVersion>
+    <AssemblyVersion>2.2.20</AssemblyVersion>
+    <FileVersion>2.2.20</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
@@ -23,7 +27,7 @@
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
-    <PackageReference Include="SqlCodeEditor" Version="1.0.4" />
+    <PackageReference Include="SqlCodeEditor" Version="1.0.5" />
   </ItemGroup>
 
   <ItemGroup>
@@ -139,16 +143,16 @@
     <Compile Update="Forms\frmAccountInfo.Designer.cs">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmBackupSetting.cs">
+    <Compile Update="Forms\Setting\frmBackupSetting.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmBackupSetting.Designer.cs">
+    <Compile Update="Forms\Setting\frmBackupSetting.Designer.cs">
       <DependentUpon>frmBackupSetting.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmBackupSettingRedefine.cs">
+    <Compile Update="Forms\Setting\frmBackupSettingRedefine.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmBackupSettingRedefine.Designer.cs">
+    <Compile Update="Forms\Setting\frmBackupSettingRedefine.Designer.cs">
       <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmColumnMapping.cs">
@@ -163,10 +167,10 @@
     <Compile Update="Forms\frmColumnSelect.Designer.cs">
       <DependentUpon>frmColumnSelect.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmConvert.cs">
+    <Compile Update="Forms\Convert\frmConvert.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmConvert.designer.cs">
+    <Compile Update="Forms\Convert\frmConvert.designer.cs">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmDataFilter.cs">
@@ -187,31 +191,31 @@
     <Compile Update="Forms\frmDbConnect.designer.cs">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmDbConnectionManage.cs">
+    <Compile Update="Forms\Setting\frmDbConnectionManage.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmDbConnectionManage.Designer.cs">
+    <Compile Update="Forms\Setting\frmDbConnectionManage.Designer.cs">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmInput.cs">
+    <Compile Update="Forms\Common\frmInput.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmItemsSelector.cs">
+    <Compile Update="Forms\Selector\frmItemsSelector.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmItemsSelector.Designer.cs">
+    <Compile Update="Forms\Selector\frmItemsSelector.Designer.cs">
       <DependentUpon>frmItemsSelector.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmDiagnose.cs">
+    <Compile Update="Forms\Diagnose\frmDiagnose.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmDiagnose.Designer.cs">
+    <Compile Update="Forms\Diagnose\frmDiagnose.Designer.cs">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmTableDiagnoseResult.cs">
+    <Compile Update="Forms\Diagnose\frmTableDiagnoseResult.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmTableDiagnoseResult.Designer.cs">
+    <Compile Update="Forms\Diagnose\frmTableDiagnoseResult.Designer.cs">
       <DependentUpon>frmTableDiagnoseResult.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmGenerateScripts.cs">
@@ -232,10 +236,10 @@
     <Compile Update="Forms\frmScriptsViewer.Designer.cs">
       <DependentUpon>frmScriptsViewer.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmSetting.cs">
+    <Compile Update="Forms\Setting\frmSetting.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmSetting.designer.cs">
+    <Compile Update="Forms\Setting\frmSetting.designer.cs">
       <DependentUpon>frmSetting.cs</DependentUpon>
     </Compile>
     <Compile Update="Forms\frmSqlQuery.cs">
@@ -244,11 +248,14 @@
     <Compile Update="Forms\frmSqlQuery.Designer.cs">
       <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </Compile>
-    <Compile Update="Forms\frmTableCopy.cs">
+    <Compile Update="Forms\Convert\frmTableCopy.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Forms\frmTableCopy.Designer.cs">
+    <Compile Update="Forms\Convert\frmTableCopy.Designer.cs">
       <DependentUpon>frmTableCopy.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Forms\Statistic\frmTableColumnContentMaxLength.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Update="Resources.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -306,10 +313,10 @@
     <EmbeddedResource Update="Forms\frmAccountInfo.resx">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmBackupSetting.resx">
+    <EmbeddedResource Update="Forms\Setting\frmBackupSetting.resx">
       <DependentUpon>frmBackupSetting.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmBackupSettingRedefine.resx">
+    <EmbeddedResource Update="Forms\Setting\frmBackupSettingRedefine.resx">
       <DependentUpon>frmBackupSettingRedefine.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmColumnMapping.resx">
@@ -318,7 +325,7 @@
     <EmbeddedResource Update="Forms\frmColumnSelect.resx">
       <DependentUpon>frmColumnSelect.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmConvert.resx">
+    <EmbeddedResource Update="Forms\Convert\frmConvert.resx">
       <DependentUpon>frmConvert.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmDataFilter.resx">
@@ -330,16 +337,16 @@
     <EmbeddedResource Update="Forms\frmDbConnect.resx">
       <DependentUpon>frmDbConnect.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmDbConnectionManage.resx">
+    <EmbeddedResource Update="Forms\Setting\frmDbConnectionManage.resx">
       <DependentUpon>frmDbConnectionManage.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmItemsSelector.resx">
+    <EmbeddedResource Update="Forms\Selector\frmItemsSelector.resx">
       <DependentUpon>frmItemsSelector.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmDiagnose.resx">
+    <EmbeddedResource Update="Forms\Diagnose\frmDiagnose.resx">
       <DependentUpon>frmDiagnose.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmTableDiagnoseResult.resx">
+    <EmbeddedResource Update="Forms\Diagnose\frmTableDiagnoseResult.resx">
       <DependentUpon>frmTableDiagnoseResult.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmGenerateScripts.resx">
@@ -351,13 +358,13 @@
     <EmbeddedResource Update="Forms\frmScriptsViewer.resx">
       <DependentUpon>frmScriptsViewer.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmSetting.resx">
+    <EmbeddedResource Update="Forms\Setting\frmSetting.resx">
       <DependentUpon>frmSetting.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Forms\frmSqlQuery.resx">
       <DependentUpon>frmSqlQuery.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Update="Forms\frmTableCopy.resx">
+    <EmbeddedResource Update="Forms\Convert\frmTableCopy.resx">
       <DependentUpon>frmTableCopy.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources.resx">

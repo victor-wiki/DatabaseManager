@@ -7,6 +7,6 @@ namespace DatabaseManager.Model
     {
         public SqlWordTokenType Type { get; set; }
         public string Text { get; set; }
-        public object Source { get; set; }
+        public object DatabaseObject { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DatabaseInterpreter.Model;
+using System;
 using System.Collections.Generic;
 
 namespace DatabaseConverter.Model
@@ -9,6 +10,7 @@ namespace DatabaseConverter.Model
         public string Message { get; internal set; }
         public Type ExceptionType { get; set; }
         public List<TranslateResult> TranslateResults { get; set; } = new List<TranslateResult>();
+        public SchemaInfo TranslatedSchemaInfo { get; set; }
     }
 
     public enum DbConvertResultInfoType

@@ -16,8 +16,25 @@ using System.IO.Packaging;
 
 namespace DatabaseManager.Controls
 {
+    public delegate void TreeNodeSelectedHandler(object sender, TreeViewEventArgs e);
+
     public partial class UC_DbObjectsSimpleTree : UserControl
     {
+        public bool ShowCheckBox
+        {
+            get
+            {
+                return this.tvDbObjects.CheckBoxes;
+            }
+
+            set
+            {
+                this.tvDbObjects.CheckBoxes = value;
+            }
+        }
+
+        public TreeNodeSelectedHandler TreeNodeSelected;
+
         public UC_DbObjectsSimpleTree()
         {
             InitializeComponent();
@@ -37,17 +54,35 @@ namespace DatabaseManager.Controls
 
             SchemaInfo schemaInfo = await dbInterpreter.GetSchemaInfoAsync(filter);
 
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Sequence), "Sequences", schemaInfo.Sequences);
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
+            this.LoadTree(schemaInfo);
+        }
+
+        public void LoadTree(SchemaInfo schemaInfo, bool onlyShowTables = false)
+        {
+            if (!onlyShowTables)
+            {
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes);
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Sequence), "Sequences", schemaInfo.Sequences);
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions);
+            }
+
             this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables);
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures);
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(TableTrigger), "Triggers", schemaInfo.TableTriggers);
+
+            if (!onlyShowTables)
+            {
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views);
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures);
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(TableTrigger), "Triggers", schemaInfo.TableTriggers);
+            }
 
             if (this.tvDbObjects.Nodes.Count == 1)
             {
                 this.tvDbObjects.ExpandAll();
+
+                if (onlyShowTables && this.tvDbObjects.Nodes[0].Nodes.Count > 0)
+                {
+                    this.tvDbObjects.SelectedNode = this.tvDbObjects.Nodes[0].Nodes[0];
+                }
             }
         }
 
@@ -220,6 +255,14 @@ namespace DatabaseManager.Controls
             }
 
             return null;
+        }
+
+        private void tvDbObjects_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (this.TreeNodeSelected != null)
+            {
+                this.TreeNodeSelected(sender, e);
+            }
         }
     }
 }

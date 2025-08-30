@@ -42,6 +42,8 @@ namespace DatabaseInterpreter.Core
         /// not for: GENERATED ALWAYS AS IDENTITY
         /// </summary>
         public override bool CanInsertIdentityByDefault => true;
+        public override string StringLengthFunctionName => "LENGTH";
+        public override string StringCheckNullFunctionName => "COALESCE";
         public override List<string> BuiltinDatabases => new List<string> { "postgres" };
         public List<string> SystemSchemas => new List<string> { "pg_catalog", "pg_toast", "information_schema" };
         #endregion

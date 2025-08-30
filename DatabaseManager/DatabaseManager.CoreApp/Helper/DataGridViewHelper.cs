@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Forms;
 using Microsoft.SqlServer.Types;
 using System;
 using System.Collections;

@@ -466,7 +466,9 @@ namespace DatabaseManager.Controls
 
                         if (string.IsNullOrEmpty(node.Text))
                         {
-                            node.Text = $"PK_{key.TableName}(unnamed)";
+                            string defaultName = SchemaInfoHelper.GetTableObjectDefaultName(key);
+
+                            node.Text = $"{defaultName}(unnamed)";
                         }
 
                         treeNode.Nodes.Add(node);
@@ -478,7 +480,9 @@ namespace DatabaseManager.Controls
 
                         if (string.IsNullOrEmpty(node.Text))
                         {
-                            node.Text = $"FK_{key.TableName}(unnamed)";
+                            string defaultName = SchemaInfoHelper.GetTableObjectDefaultName(key);
+
+                            node.Text = $"{defaultName}(unnamed)";
                         }
 
                         treeNode.Nodes.Add(node);
@@ -1349,16 +1353,16 @@ namespace DatabaseManager.Controls
         {
             ConnectionInfo connectionInfo = this.GetCurrentConnectionInfo();
 
-            frmDiagnose form = new frmDiagnose();
-            form.DatabaseType = this.databaseType;
-            form.ConnectionInfo = connectionInfo;
+            string schema = null;
 
             if (this.databaseType == DatabaseType.Oracle)
             {
-                form.Schema = this.GetDatabaseNode(this.GetSelectedNode()).Name;
-            }
+                schema = this.GetDatabaseNode(this.GetSelectedNode()).Name;
+            }            
 
-            form.Init(this);
+            frmDiagnose form = new frmDiagnose(databaseType, connectionInfo, schema);            
+
+            form.Subscribe(this);
             form.ShowDialog();
         }
 
@@ -1480,21 +1484,22 @@ namespace DatabaseManager.Controls
             this.GenerateScripts(ScriptAction.EXECUTE);
         }
 
-        private async void tsmiStatistic_Click(object sender, EventArgs e)
+        private void tsmiStatistic_Click(object sender, EventArgs e)
         {
             ConnectionInfo connectionInfo = this.GetCurrentConnectionInfo();
 
-            DbStatistic statistic = new DbStatistic(this.databaseType, connectionInfo);
+            string schema = null;
 
-            statistic.OnFeedback += this.OnFeedback;
+            if (this.databaseType == DatabaseType.Oracle)
+            {
+                schema = this.GetDatabaseNode(this.GetSelectedNode()).Name;
+            }
 
-            IEnumerable<TableRecordCount> records = await statistic.CountTableRecords();
+            frmStatistic form = new frmStatistic(this.databaseType, connectionInfo, schema);
 
-            frmTableRecordCount form = new frmTableRecordCount();
+            form.Subscribe(this);
 
-            form.LoadData(records);
-
-            form.ShowDialog();
+            form.ShowDialog();        
         }
 
         private void tsmiExportData_Click(object sender, EventArgs e)

@@ -35,6 +35,8 @@ namespace DatabaseInterpreter.Core
         public override bool SupportNchar => true;
         public override bool SupportTruncateTable => true;
         public override bool CanInsertIdentityByDefault => false;
+        public override string StringLengthFunctionName => "LEN";
+        public override string StringCheckNullFunctionName => "ISNULL";
         public override string ScriptsDelimiter => "GO" + Environment.NewLine;
         public override string CommentString => "--";
         public override List<string> BuiltinDatabases => new List<string> { "master", "model", "msdb", "tempdb" };

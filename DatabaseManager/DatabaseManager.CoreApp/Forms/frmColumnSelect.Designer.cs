@@ -1,4 +1,4 @@
-﻿namespace DatabaseManager
+﻿namespace DatabaseManager.Forms
 {
     partial class frmColumnSelect
     {

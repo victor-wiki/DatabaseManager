@@ -1,5 +1,4 @@
-﻿using Antlr4.Runtime.Dfa;
-using DatabaseConverter.Core;
+﻿using DatabaseConverter.Core;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
@@ -8,13 +7,12 @@ using SqlAnalyser.Core;
 using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
-
+using Function = DatabaseInterpreter.Model.Function;
+using Match = System.Text.RegularExpressions.Match;
 
 namespace DatabaseManager.Core
 {
@@ -29,6 +27,32 @@ namespace DatabaseManager.Core
         public DbDiagnosis(ConnectionInfo connectionInfo)
         {
             this.connectionInfo = connectionInfo;
+        }
+
+        public static DbDiagnosis GetInstance(DatabaseType databaseType, ConnectionInfo connectionInfo)
+        {
+            if (databaseType == DatabaseType.SqlServer)
+            {
+                return new SqlServerDiagnosis(connectionInfo);
+            }
+            else if (databaseType == DatabaseType.MySql)
+            {
+                return new MySqlDiagnosis(connectionInfo);
+            }
+            else if (databaseType == DatabaseType.Oracle)
+            {
+                return new OracleDiagnosis(connectionInfo);
+            }
+            else if (databaseType == DatabaseType.Postgres)
+            {
+                return new PostgresDiagnosis(connectionInfo);
+            }
+            else if (databaseType == DatabaseType.Sqlite)
+            {
+                return new SqliteDiagnosis(connectionInfo);
+            }
+
+            throw new NotImplementedException($"Not implemente diagnosis for {databaseType}.");
         }
 
         #region Diagnose Table
@@ -49,6 +73,10 @@ namespace DatabaseManager.Core
             else if(diagnoseType == TableDiagnoseType.EmptyValueRatherThanNull)
             {
                 return this.DiagnoseEmptyValueRatherThanNullForTable();
+            }
+            else if(diagnoseType == TableDiagnoseType.PrimaryKeyColumnIsNullable)
+            {
+                return this.DiagnosePrimaryKeyColumnIsNullable();
             }
 
             throw new NotSupportedException($"Not support diagnose for {diagnoseType}");
@@ -215,33 +243,45 @@ namespace DatabaseManager.Core
             return result;
         }
 
-        public abstract string GetStringLengthFunction();
-        public abstract string GetStringNullFunction();
-
-        public static DbDiagnosis GetInstance(DatabaseType databaseType, ConnectionInfo connectionInfo)
+        public virtual async Task<TableDiagnoseResult> DiagnosePrimaryKeyColumnIsNullable()
         {
-            if (databaseType == DatabaseType.SqlServer)
-            {
-                return new SqlServerDiagnosis(connectionInfo);
-            }
-            else if (databaseType == DatabaseType.MySql)
-            {
-                return new MySqlDiagnosis(connectionInfo);
-            }
-            else if (databaseType == DatabaseType.Oracle)
-            {
-                return new OracleDiagnosis(connectionInfo);
-            }
-            else if (databaseType == DatabaseType.Postgres)
-            {
-                return new PostgresDiagnosis(connectionInfo);
-            }
-            else if(databaseType == DatabaseType.Sqlite)
-            {
-                return new SqliteDiagnosis(connectionInfo);
-            }
+            this.Feedback("Begin to diagnose primary key column is nullable...");
 
-            throw new NotImplementedException($"Not implemente diagnosis for {databaseType}.");
+            TableDiagnoseResult result = new TableDiagnoseResult() { ShowRecordCount = false};
+
+            DbInterpreterOption option = new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Details };
+
+            DbInterpreter interpreter = DbInterpreterHelper.GetDbInterpreter(this.DatabaseType, this.connectionInfo, option);
+
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = this.Schema };
+
+            using (DbConnection dbConnection = interpreter.CreateConnection())
+            {
+                var nullableColumns = (await interpreter.GetTableColumnsAsync(dbConnection, filter)).Where(item => item.IsNullable);
+                var primaryKeys = await interpreter.GetTablePrimaryKeysAsync(dbConnection, filter);
+
+                foreach (var column in nullableColumns)
+                {
+
+                    TablePrimaryKey pk = primaryKeys.FirstOrDefault(item => item.Schema == column.Schema
+                    && item.TableName == column.TableName
+                    && item.Columns.Any(t => t.ColumnName == column.Name));
+
+                    if (pk != null)
+                    {
+                        result.Details.Add(new TableDiagnoseResultDetail()
+                        {
+                            DatabaseObject = column,
+                            RecordCount = 1,
+                            Sql = null
+                        });
+                    }
+                }
+            }          
+
+            this.Feedback("End diagnose primary key column is nullable.");
+
+            return result;
         }
 
         protected virtual string GetTableColumnWithEmptyValueSql(DbInterpreter interpreter, TableColumn column, bool isCount)
@@ -249,9 +289,9 @@ namespace DatabaseManager.Core
             string schema = string.IsNullOrEmpty(column.Schema) ? "" : $"{column.Schema}.";
 
             string tableName = $"{schema}{interpreter.GetQuotedString(column.TableName)}";
-            string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
+            string selectColumn = isCount ? $"{interpreter.StringCheckNullFunctionName}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
 
-            string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {this.GetStringLengthFunction()}({interpreter.GetQuotedString(column.Name)})=0";
+            string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {interpreter.StringLengthFunctionName}({interpreter.GetQuotedString(column.Name)})=0";
 
             return sql;
         }
@@ -261,9 +301,9 @@ namespace DatabaseManager.Core
             string schema = string.IsNullOrEmpty(column.Schema) ? "" : $"{column.Schema}.";
 
             string tableName = $"{schema}{interpreter.GetQuotedString(column.TableName)}";
-            string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
+            string selectColumn = isCount ? $"{interpreter.StringCheckNullFunctionName}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
             string columnName = interpreter.GetQuotedString(column.Name);
-            string lengthFunName = this.GetStringLengthFunction();
+            string lengthFunName = interpreter.StringLengthFunctionName;
 
             string sql = $"SELECT {selectColumn} FROM {tableName} WHERE {lengthFunName}(TRIM({columnName}))<{lengthFunName}({columnName})";
 
@@ -283,7 +323,7 @@ namespace DatabaseManager.Core
             string schema = string.IsNullOrEmpty(foreignKey.Schema) ? "" : $"{foreignKey.Schema}.";
 
             string tableName = $"{schema}{interpreter.GetQuotedString(foreignKey.TableName)}";
-            string selectColumn = isCount ? $"{this.GetStringNullFunction()}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
+            string selectColumn = isCount ? $"{interpreter.StringCheckNullFunctionName}(COUNT(1),0) AS {interpreter.GetQuotedString("Count")}" : "*";
             string whereClause = string.Join(" AND ", foreignKey.Columns.Select(item => $"{interpreter.GetQuotedString(item.ColumnName)}={interpreter.GetQuotedString(item.ReferencedColumnName)}"));
 
             string sql = $"SELECT {selectColumn} FROM {tableName} WHERE ({whereClause})";

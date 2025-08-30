@@ -1,5 +1,6 @@
 using DatabaseInterpreter.Core;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Profile.Manager;
 using System;
 using System.Windows.Forms;

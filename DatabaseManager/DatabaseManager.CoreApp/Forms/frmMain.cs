@@ -1,9 +1,7 @@
-﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
 using DatabaseManager.Core;
-using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using FontAwesome.Sharp;
@@ -12,13 +10,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     public partial class frmMain : Form, IObserver<FeedbackInfo>
     {

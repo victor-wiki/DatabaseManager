@@ -79,14 +79,16 @@ namespace DatabaseConverter.Core
             return this.InternalConvert(schemaInfo, dbObject.Schema);
         }
 
-        public Task<DbConvertResult> Convert(SchemaInfo schemaInfo = null, string schema = null)
+        public Task<DbConvertResult> Convert(SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
         {
-            return this.InternalConvert(schemaInfo, schema);
+            return this.InternalConvert(schemaInfo, schema, targetSchemaInfo);
         }
 
-        private async Task<DbConvertResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null)
+        private async Task<DbConvertResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
         {
             DbConvertResult result = new DbConvertResult();
+
+            bool hasTargetSchemaInfo = targetSchemaInfo != null;
 
             bool continuedWhenErrorOccured = false;
 
@@ -223,29 +225,32 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            SchemaInfo targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
-
-            #region Table copy handle
-
-            if (onlyForTableCopy)
+            if(!hasTargetSchemaInfo)
             {
-                if (this.Source.TableNameMappings != null && this.Source.TableNameMappings.Count > 0)
+                targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
+
+                #region Table copy handle
+
+                if (onlyForTableCopy)
                 {
-                    SchemaInfoHelper.MapTableNames(targetSchemaInfo, this.Source.TableNameMappings);
+                    if (this.Source.TableNameMappings != null && this.Source.TableNameMappings.Count > 0)
+                    {
+                        SchemaInfoHelper.MapTableNames(targetSchemaInfo, this.Source.TableNameMappings);
+                    }
+
+                    if (this.Option.RenameTableChildren)
+                    {
+                        SchemaInfoHelper.RenameTableChildren(targetSchemaInfo);
+                    }
+
+                    if (this.Option.IgnoreNotSelfForeignKey)
+                    {
+                        targetSchemaInfo.TableForeignKeys = targetSchemaInfo.TableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).ToList();
+                    }
                 }
 
-                if (this.Option.RenameTableChildren)
-                {
-                    SchemaInfoHelper.RenameTableChildren(targetSchemaInfo);
-                }
-
-                if (this.Option.IgnoreNotSelfForeignKey)
-                {
-                    targetSchemaInfo.TableForeignKeys = targetSchemaInfo.TableForeignKeys.Where(item => item.TableName == item.ReferencedTableName).ToList();
-                }
+                #endregion
             }
-
-            #endregion
 
             DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
 
@@ -300,29 +305,38 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            this.ConvertSchema(sourceInterpreter, targetInterpreter, targetSchemaInfo);
-
-            #region Translate
-
-            if(!dataModeOnly)
+            if(!hasTargetSchemaInfo)
             {
-                TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, targetInterpreter, this.Option);
+                this.ConvertSchema(sourceInterpreter, targetInterpreter, targetSchemaInfo);
 
-                translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!executeScriptOnTargetServer && !onlyForTranslate);
+                #region Translate
 
-                DatabaseObjectType translateDbObjectType = TranslateEngine.SupportDatabaseObjectType;
+                if (!dataModeOnly)
+                {
+                    TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, targetInterpreter, this.Option);
 
-                translateEngine.UserDefinedTypes = utypes;
-                translateEngine.ExistedTableColumns = existedTableColumns;
+                    translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!executeScriptOnTargetServer && !onlyForTranslate);
 
-                translateEngine.Subscribe(this.observer);
+                    DatabaseObjectType translateDbObjectType = TranslateEngine.SupportDatabaseObjectType;
 
-                await Task.Run(() => translateEngine.Translate(translateDbObjectType));
+                    translateEngine.UserDefinedTypes = utypes;
+                    translateEngine.ExistedTableColumns = existedTableColumns;
 
-                result.TranslateResults = translateEngine.TranslateResults;
-            }            
+                    translateEngine.Subscribe(this.observer);
 
-            #endregion
+                    await Task.Run(() => translateEngine.Translate(translateDbObjectType));
+
+                    result.TranslateResults = translateEngine.TranslateResults;
+                    result.TranslatedSchemaInfo = targetSchemaInfo;
+
+                    if (this.Option.NeedPreview)
+                    {
+                        return result;
+                    }
+                }
+
+                #endregion
+            }
 
             #region Handle names of primary key and index
 
@@ -591,7 +605,17 @@ namespace DatabaseConverter.Core
             else
             {
                 result.InfoType = DbConvertResultInfoType.Information;
-                result.Message = "Convert has finished.";
+
+                if (this.Option.ExecuteScriptOnTargetServer 
+                    || this.Target.DbInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile)
+                   )
+                {
+                    result.Message = "Convert has finished.";
+                }
+                else
+                {
+                    result.Message = "No action was taken.";
+                }                
             }
 
             return result;

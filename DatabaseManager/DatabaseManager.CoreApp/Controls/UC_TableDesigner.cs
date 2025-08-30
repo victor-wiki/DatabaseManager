@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using System;
@@ -55,12 +56,12 @@ namespace DatabaseManager.Controls
 
             if (!ManagerUtil.SupportComment(this.displayInfo.DatabaseType))
             {
-                if(this.lblComment.Visible)
+                if (this.lblComment.Visible)
                 {
                     this.lblComment.Visible = this.txtTableComment.Visible = false;
                     this.tabControl1.Top -= (this.txtTableComment.Height + 10);
                     this.tabControl1.Height += this.txtTableComment.Height + 10;
-                }                
+                }
             }
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
@@ -285,6 +286,21 @@ namespace DatabaseManager.Controls
 
         private async Task<ContentSaveResult> SaveTable()
         {
+            if(!this.displayInfo.IsNew && this.displayInfo.DatabaseType == DatabaseType.Sqlite)
+            {
+                TabPage currentPage = this.tabControl1.SelectedTab;
+
+                foreach (TabPage page in this.tabControl1.TabPages)
+                {
+                    if (page.Tag == null)
+                    {
+                        await this.SelectTabPage(page);
+                    }
+                }
+
+                this.tabControl1.SelectedTab = currentPage;
+            }            
+
             SchemaDesignerInfo schemaDesignerInfo = this.GetSchemaDesingerInfo();
 
             TableManager tableManager = this.GetTableManager();
@@ -359,16 +375,21 @@ namespace DatabaseManager.Controls
 
         private async void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            TabPage tabPage = this.tabControl1.SelectedTab;
+            await this.SelectTabPage(this.tabControl1.SelectedTab);
+        }
 
+        private async Task<bool> SelectTabPage(TabPage tabPage)
+        {
             if (tabPage == null)
             {
-                return;
+                return false;
             }
 
             Table table = new Table() { Schema = this.cboSchema.Text, Name = this.txtTableName.Text.Trim() };
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
+
+            bool isNew = this.displayInfo.IsNew;
 
             if (tabPage.Name == this.tabIndexes.Name)
             {
@@ -381,14 +402,14 @@ namespace DatabaseManager.Controls
                     this.ucIndexes.InitControls(dbInterpreter);
                 }
 
-                if (!this.displayInfo.IsNew)
+                SchemaInfoFilter filter = new SchemaInfoFilter();
+                filter.Schema = this.displayInfo.Schema;
+                filter.TableNames = new string[] { this.displayInfo.Name };
+
+                if (!isNew)
                 {
                     if (!this.ucIndexes.LoadedData)
                     {
-                        SchemaInfoFilter filter = new SchemaInfoFilter();
-                        filter.Schema = this.displayInfo.Schema;
-                        filter.TableNames = new string[] { this.displayInfo.Name };
-
                         List<TableIndex> tableIndexes = await dbInterpreter.GetTableIndexesAsync(filter, true);
 
                         this.ucIndexes.LoadIndexes(IndexManager.GetIndexDesignerInfos(this.displayInfo.DatabaseType, tableIndexes));
@@ -397,7 +418,9 @@ namespace DatabaseManager.Controls
 
                 IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name) && item.IsPrimary);
 
-                this.ucIndexes.LoadPrimaryKeys(columns);
+                var primaryKey = isNew ? null : (await dbInterpreter.GetTablePrimaryKeysAsync(filter))?.FirstOrDefault();
+
+                this.ucIndexes.LoadPrimaryKeys(columns, primaryKey);
             }
             else if (tabPage.Name == this.tabForeignKeys.Name)
             {
@@ -460,6 +483,8 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
+
+            return true;
         }
 
         private void ShowColumnSelector(DatabaseObjectType databaseObjectType, IEnumerable<SimpleColumn> values, bool columnIsReadonly, bool isSingleSelect)

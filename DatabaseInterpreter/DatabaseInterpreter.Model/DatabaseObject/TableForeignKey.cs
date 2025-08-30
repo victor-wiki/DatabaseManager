@@ -25,7 +25,7 @@ namespace DatabaseInterpreter.Model
         public bool UpdateCascade { get; set; }
         public bool DeleteCascade { get; set; }
 
-        public string TableFullName => this.Schema + "." + this.TableName;
-        public string ReferencedTableFullName=> this.Schema + "." + this.ReferencedTableName;
+        public string TableFullName => string.IsNullOrEmpty(this.Schema)? this.TableName:  this.Schema + "." + this.TableName;
+        public string ReferencedTableFullName => string.IsNullOrEmpty(this.Schema) ? this.ReferencedTableName :  this.Schema + "." + this.ReferencedTableName;
     }
 }

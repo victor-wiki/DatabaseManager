@@ -3,13 +3,11 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
-using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using SqlCodeEditor;
-using SqlCodeEditor.Document;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -22,7 +20,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static BrightIdeasSoftware.TreeListView;
 
-namespace DatabaseManager
+namespace DatabaseManager.Forms
 {
     public partial class frmCompare : Form, IObserver<FeedbackInfo>
     {

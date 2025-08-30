@@ -70,7 +70,7 @@ namespace DatabaseManager.Controls
 
         public void LoadIndexes(IEnumerable<TableIndexDesignerInfo> indexDesignerInfos)
         {
-            this.dgvIndexes.Rows.Clear();
+            this.dgvIndexes.Rows.Clear();        
 
             foreach (TableIndexDesignerInfo index in indexDesignerInfos)
             {
@@ -107,7 +107,7 @@ namespace DatabaseManager.Controls
             return type;
         }
 
-        public void LoadPrimaryKeys(IEnumerable<TableColumnDesingerInfo> columnDesingerInfos)
+        public void LoadPrimaryKeys(IEnumerable<TableColumnDesingerInfo> columnDesingerInfos, TablePrimaryKey primaryKey)
         {
             int primaryRowIndex = -1;
 
@@ -143,10 +143,17 @@ namespace DatabaseManager.Controls
             {
                 int rowIndex = this.dgvIndexes.Rows.Add();
 
+                string primaryKeyName = IndexManager.GetPrimaryKeyDefaultName(this.Table);
+                
+                if(primaryKey!=null && primaryKey.Columns.Any(item=> columnDesingerInfos.Any(t=>t.Name == item.ColumnName)))
+                {
+                    primaryKeyName = primaryKey.Name;
+                }
+
                 TableIndexDesignerInfo tableIndexDesignerInfo = new TableIndexDesignerInfo()
                 {
                     Type = this.DatabaseType == DatabaseType.Oracle ? IndexType.Unique.ToString() : IndexType.Primary.ToString(),
-                    Name = IndexManager.GetPrimaryKeyDefaultName(this.Table),
+                    Name = primaryKeyName,
                     IsPrimary = true
                 };
 

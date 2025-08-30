@@ -1,9 +1,13 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Helper;
 using DatabaseManager.Data;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using NPOI.SS.Formula.Functions;
+using RTools_NTS.Util;
 using SqlAnalyser.Model;
 using SqlCodeEditor;
 using SqlCodeEditor.Document;
@@ -14,9 +18,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using View = DatabaseInterpreter.Model.View;
+using Function = DatabaseInterpreter.Model.Function;
 
 namespace DatabaseManager.Controls
 {
@@ -27,12 +34,13 @@ namespace DatabaseManager.Controls
     {
         private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]*)\b";
         private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]*)\b";
+        private readonly char[] separators = [' ', '\n', '\r', '=', '+', '-', '*', '/', '(', ')', '&', '^', ','];
         private SchemaInfo schemaInfo;
         private IEnumerable<string> keywords;
         private IEnumerable<FunctionSpecification> builtinFunctions;
         private List<SqlWord> allWords;
         private bool intellisenseSetuped;
-        private bool enableIntellisense;       
+        private bool enableIntellisense;
         private List<string> dbSchemas;
         private CodeCompletionWindow codeCompletionWindow;
         private string commentString => this.DbInterpreter?.CommentString;
@@ -48,6 +56,8 @@ namespace DatabaseManager.Controls
         public SelectionManager SelectionManager => this.TextArea.SelectionManager;
         public string SelectedText => this.SelectionManager.SelectedText;
         public ContextMenuStrip ContextMenu => this.txtEditor.ActiveTextAreaControl.ContextMenuStrip;
+
+        Dictionary<DatabaseObject, string> dictTableAndView = new Dictionary<DatabaseObject, string>();
 
         private int CurrentCharIndex
         {
@@ -92,9 +102,9 @@ namespace DatabaseManager.Controls
             tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
             this.ContextMenu.Items.Add(tsmiValidateScripts);
 
-            this.ContextMenu.Opening += this.editorContexMenu_Opening;            
+            this.ContextMenu.Opening += this.editorContexMenu_Opening;
 
-            this.txtEditor.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(this.DatabaseType);           
+            this.txtEditor.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(this.DatabaseType);
         }
 
         private void FindForm_Shown(object sender, EventArgs e)
@@ -110,7 +120,6 @@ namespace DatabaseManager.Controls
                 this.txtEditor.FindForm.Location = new Point(950, 112);
             }
         }
-      
 
         public void SetupIntellisence()
         {
@@ -129,7 +138,7 @@ namespace DatabaseManager.Controls
                 {
                     this.OnRunScripts();
                 }
-            }            
+            }
         }
 
         private void txtEditor_KeyUp(object sender, KeyEventArgs e)
@@ -153,6 +162,13 @@ namespace DatabaseManager.Controls
                 return;
             }
 
+            string editorText = this.txtEditor.Text.ToUpper();
+
+            if (!editorText.Contains("SELECT") && !editorText.Contains("INSERT") && !editorText.Contains("UPDATE") && !editorText.Contains("DELETE"))
+            {
+                return;
+            }
+
             if (e.KeyData == Keys.Up || e.KeyData == Keys.Down)
             {
                 if (this.IsCodeCompletionWindowVisible())
@@ -172,59 +188,25 @@ namespace DatabaseManager.Controls
             {
                 bool needHandle = true;
 
-                if(token.Type == SqlWordTokenType.Keyword)
+                if (token.Type == SqlWordTokenType.Keyword)
                 {
                     needHandle = false;
                 }
-                else
-                {
-                    string text = token.Text;
-
-                    bool isKeywordStart = this.keywords.Any(item => item.ToUpper().StartsWith(text.ToUpper()));
-                    bool isAllWordsStart = this.allWords.Any(item => item.Text.ToUpper().StartsWith(text.ToUpper()));
-
-                    if (isKeywordStart && !isAllWordsStart)
-                    {
-                        needHandle = false;
-                    }
-                }              
 
                 if (!needHandle)
                 {
-                    if(this.IsCodeCompletionWindowVisible())
+                    if (this.IsCodeCompletionWindowVisible())
                     {
                         this.CloseCodeCompletionWindow();
                     }
-                   
+
                     return;
                 }
             }
 
-            if (this.enableIntellisense && this.IsCodeCompletionWindowVisible())
+            if (this.enableIntellisense)
             {
-                if (this.codeCompletionWindow.Tag is SqlWord word)
-                {
-                    if (word.Type == SqlWordTokenType.Table)
-                    {
-                        string columnName = null;
-
-                        int index = this.SelectionStart;
-                        char c = this.txtEditor.Text[index - 1];
-
-                        if (c != '.')
-                        {
-                            columnName = token.Text;
-                        }
-
-                        this.ShowTableColumns(word.Text, columnName);
-                    }
-                    else if (word.Type == SqlWordTokenType.Schema)
-                    {
-                        this.ShowDbObjects(token.Text);
-                    }
-
-                    return;
-                }
+                this.ExtractTableAndViews();
             }
 
             if (e.KeyData == Keys.OemPeriod)
@@ -238,15 +220,18 @@ namespace DatabaseManager.Controls
 
                     SqlWord word = this.FindWord(token.Text);
 
-                    if (word.Type == SqlWordTokenType.Table)
+                    if (word == null)
+                    {
+                        return;
+                    }
+
+                    if (word.Type == SqlWordTokenType.Table || word.Type == SqlWordTokenType.View)
                     {
                         this.ShowTableColumns(word.Text);
-                        this.SetCodeCompletionWindowTag(word);
                     }
                     else if (word.Type == SqlWordTokenType.Schema)
                     {
                         this.ShowDbObjects(null, word.Text);
-                        this.SetCodeCompletionWindowTag(word);
                     }
                 }
             }
@@ -264,7 +249,7 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
-            else if ((e.KeyValue < 48 && e.KeyValue!=16) || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122 )
+            else if ((e.KeyValue < 48 && e.KeyValue != 16) || (e.KeyValue >= 58 && e.KeyValue <= 64) || (e.KeyValue >= 91 && e.KeyValue <= 96) || e.KeyValue > 122)
             {
                 this.CloseCodeCompletionWindow();
             }
@@ -272,21 +257,13 @@ namespace DatabaseManager.Controls
             {
                 if (this.enableIntellisense)
                 {
-                    if (!this.IsWordInQuotationChar(token))
+                    if (!this.IsWordInQuotationChar(token) && token.Text?.Length > 0)
                     {
                         this.ShowWordListByToken(token);
                     }
                 }
             }
-        }
-
-        private void SetCodeCompletionWindowTag(SqlWord word)
-        {
-            if (this.codeCompletionWindow != null)
-            {
-                this.codeCompletionWindow.Tag = word;
-            }
-        }
+        }     
 
         private bool IsMatchWord(string word)
         {
@@ -326,16 +303,162 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            if(token.Type == SqlWordTokenType.Number || token.Type == SqlWordTokenType.Comment)
+            if (token.Type == SqlWordTokenType.Number || token.Type == SqlWordTokenType.Comment)
             {
                 return;
             }
 
-            SqlWordTokenType type = this.DetectTypeByWord(token.Text);
+            SqlWordTokenType type = SqlWordTokenType.None;
 
-            var words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type);
+            bool isDotLeading = false;
 
-            this.ShowWordList(words);
+            string leftSideWord = this.TrimQuotationChars(this.GetLeftSideWord(token, out isDotLeading)).ToUpper();
+
+            string parentName = null;
+
+            if (leftSideWord == "WHERE" || leftSideWord == "AND" || leftSideWord == "OR" || leftSideWord == "BY" || leftSideWord == "SET"
+                || leftSideWord.EndsWith("(") || leftSideWord.EndsWith(","))
+            {
+                type = SqlWordTokenType.TableColumn;
+
+                DatabaseObject dbObj = null;
+
+                if (this.dictTableAndView.Count == 1)
+                {
+                    dbObj = this.dictTableAndView.Keys.First();
+
+
+                }
+                else if (this.dictTableAndView.Count > 1)
+                {
+                    if (leftSideWord.EndsWith("("))
+                    {
+                        string name = this.TrimQuotationChars(leftSideWord.Trim('(', ' '));
+
+                        dbObj = this.dictTableAndView.Keys.FirstOrDefault(item => item.Name.ToUpper() == name);
+                    }
+                }
+
+                if (dbObj != null)
+                {
+                    parentName = dbObj.Name;
+                }
+            }
+            else
+            {
+                if (!isDotLeading)
+                {
+                    if (leftSideWord == "IS" || leftSideWord == "NOT" || leftSideWord == "ON" || leftSideWord == "SELECT *" || leftSideWord.EndsWith(")"))
+                    {
+                        return;
+                    }
+
+                    if (schemaInfo.Tables.Any(item => item.Name.ToUpper() == leftSideWord))
+                    {
+                        return;
+                    }
+                    else if (schemaInfo.Views.Any(item => item.Name.ToUpper() == leftSideWord))
+                    {
+                        return;
+                    }
+
+                    if (leftSideWord == "INSERT" || leftSideWord == "UPDATE" || leftSideWord == "DELETE" || leftSideWord == "INTO" || leftSideWord == "FROM")
+                    {
+                        type = SqlWordTokenType.Table | SqlWordTokenType.View;
+                    }
+                }
+
+                SqlWord word = this.FindWord(leftSideWord);
+
+                if (word != null)
+                {
+                    if (word.Type == SqlWordTokenType.Table || word.Type == SqlWordTokenType.View)
+                    {
+                        type = SqlWordTokenType.TableColumn;
+
+                        parentName = word.Text;
+                    }
+                }
+            }
+
+            var words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type, parentName);
+
+            if (type == SqlWordTokenType.TableColumn && words.Count == 0)
+            {
+                type = SqlWordTokenType.BuiltinFunction;
+
+                words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type, null);
+            }
+
+            if (type == SqlWordTokenType.BuiltinFunction && words.Count == 0)
+            {
+                type = SqlWordTokenType.Function;
+
+                words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type, null);
+            }
+
+            this.ShowWordList(words);            
+        }
+
+        private string GetLeftSideWord(SqlWordToken token, out bool isDotLeading)
+        {
+            isDotLeading = false;
+
+            string content = this.txtEditor.Text;
+
+            int count = 0;
+            int dotIndex = -1;
+
+            for (int i = token.StartIndex - 1; i >= 0; i--)
+            {
+                if (this.separators.Contains(content[i]))
+                {
+                    bool ignore = false;
+
+                    if (i + 1 <= token.StartIndex - 1)
+                    {
+                        if (this.separators.Contains(content[i + 1]))
+                        {
+                            ignore = true;
+                        }
+                    }
+
+                    if (!ignore)
+                    {
+                        count++;
+                    }
+                }
+                else if (content[i] == '.')
+                {
+                    if (count == 0)
+                    {
+                        isDotLeading = true;
+                    }
+
+                    dotIndex = i;
+                }
+
+                if (dotIndex > 0)
+                {
+                    if (count == 1)
+                    {
+                        return content.Substring(i + 1, dotIndex - 1 - i).Trim();
+                    }
+                }
+                else
+                {
+                    if (count == 2)
+                    {
+                        return content.Substring(i + 1, token.StartIndex - 1 - i).Trim();
+                    }
+                    else if (i == 0)
+                    {
+                        return content.Substring(0, token.StartIndex).Trim();
+                    }
+                }
+            }
+
+            return string.Empty;
         }
 
         private void ShowTableColumns(string tableName, string columnName = null)
@@ -371,9 +494,17 @@ namespace DatabaseManager.Controls
                 SqlCompletionDataProvider provider = new SqlCompletionDataProvider();
                 provider.InsertSelected += this.InsertSelectedWord;
 
-                SqlWordToken[] tokens = words.Select(item => new SqlWordToken() { Type = item.Type, Text = item.Text }).ToArray();
+                List<SqlWordToken> tokens = new List<SqlWordToken>();
 
-                this.codeCompletionWindow = CodeCompletionWindow.ShowCompletionWindow(this.ParentForm, this.txtEditor, tokens, provider, ' ', false, false);
+                foreach (var word in words)
+                {
+                    if (!tokens.Any(item => item.Text == word.Text && item.Type == word.Type))
+                    {
+                        tokens.Add(new SqlWordToken() { Type = word.Type, Text = word.Text, DatabaseObject = word.DatabaseObject });
+                    }
+                }
+
+                this.codeCompletionWindow = CodeCompletionWindow.ShowCompletionWindow(this.ParentForm, this.txtEditor, tokens.ToArray(), provider, ' ', false, false);
             }
         }
 
@@ -386,22 +517,18 @@ namespace DatabaseManager.Controls
         {
             if (this.codeCompletionWindow != null)
             {
-                this.codeCompletionWindow.Close();
-                this.codeCompletionWindow.Dispose();
-                this.codeCompletionWindow = null;
+                try
+                {
+                    this.codeCompletionWindow.Close();
+                    this.codeCompletionWindow.Dispose();
+                    this.codeCompletionWindow = null;
+                }
+                catch (Exception ex)
+                {
+
+                }
             }
         }
-
-        private SqlWordTokenType DetectTypeByWord(string word)
-        {
-            switch (word.ToUpper())
-            {
-                case "FROM":
-                    return SqlWordTokenType.Table | SqlWordTokenType.View;
-            }
-
-            return SqlWordTokenType.None;
-        }       
 
         private SqlWordToken GetLastWordToken(bool noAction = false, bool isInsert = false)
         {
@@ -496,7 +623,7 @@ namespace DatabaseManager.Controls
 
                 token.Text = word;
 
-                token.StartIndex = i + (existed ? 1 : 0);                
+                token.StartIndex = i + (existed ? 1 : 0);
 
                 if (word.Contains("'"))
                 {
@@ -557,7 +684,7 @@ namespace DatabaseManager.Controls
 
             if (!noAction)
             {
-                if (this.enableIntellisense && this.dbSchemas.Any(item => item.ToUpper() == trimedWord.ToUpper()))
+                if (this.dbSchemas.Any(item => item.ToUpper() == trimedWord.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.Schema;
                 }
@@ -568,6 +695,10 @@ namespace DatabaseManager.Controls
                 else if (this.builtinFunctions.Any(item => item.Name.ToUpper() == trimedWord.ToUpper()))
                 {
                     token.Type = SqlWordTokenType.BuiltinFunction;
+                }
+                else if (this.schemaInfo.Functions.Any(item => item.Name.ToUpper() == trimedWord.ToUpper()))
+                {
+                    token.Type = SqlWordTokenType.Function;
                 }
                 else if (isComment)
                 {
@@ -586,72 +717,137 @@ namespace DatabaseManager.Controls
         {
             text = this.TrimQuotationChars(text);
 
-            SqlWord word = null;
-
-            if (this.dbSchemas.Count > 0 && this.dbSchemas.Any(item => text.ToUpper() == item.ToUpper()))
+            foreach (var kp in this.dictTableAndView)
             {
-                word = new SqlWord() { Type = SqlWordTokenType.Schema, Text = text };
+                string alias = kp.Value;
 
-                return word;
-            }
-
-            word = this.allWords.FirstOrDefault(item => item.Text.ToUpper() == text.ToUpper()
-                                && (item.Type == SqlWordTokenType.Table || item.Type == SqlWordTokenType.View));
-
-            if (word != null)
-            {
-                return word;
-            }
-            else
-            {
-                word = new SqlWord() { Text = text };
-            }
-
-            char? quotationLeftChar = this.DbInterpreter.QuotationLeftChar;
-            char? quotationRightChar = this.DbInterpreter.QuotationRightChar;
-
-            string quotationNamePattern = $@"([{quotationLeftChar}]{nameWithSpacePattern}[{quotationRightChar}])";
-
-            Regex regex = new Regex($@"({namePattern}|{quotationNamePattern})[\s\n\r]+(AS[\s\n\r]+)?\b({text})\b", RegexOptions.IgnoreCase);
-
-            var matches = regex.Matches(this.txtEditor.Text);
-
-            string name = "";
-            foreach (Match match in matches)
-            {
-                if (match.Value.Trim().ToUpper() != text.ToUpper())
+                if (string.IsNullOrEmpty(alias))
                 {
-                    int lastIndexOfSpace = match.Value.LastIndexOf(' ');
+                    continue;
+                }
 
-                    string value = Regex.Replace(match.Value.Substring(0, lastIndexOfSpace), @" AS[\s\n\r]?", "", RegexOptions.IgnoreCase).Trim();
+                DatabaseObject dbObj = kp.Key;
+                bool isTable = dbObj is Table;
 
-                    if (!this.keywords.Any(item => item.ToUpper() == value.ToUpper()))
-                    {
-                        name = this.TrimQuotationChars(value);
-                        break;
-                    }
+                if (alias != null && alias.ToUpper() == text.ToUpper())
+                {
+                    return new SqlWord() { Type = isTable ? SqlWordTokenType.Table : SqlWordTokenType.View, Text = dbObj.Name };
                 }
             }
 
-            if (string.IsNullOrEmpty(name))
+            foreach (var kp in this.dictTableAndView)
             {
-                name = text;
+                DatabaseObject dbObj = kp.Key;
+                bool isTable = dbObj is Table;
+
+                if (dbObj.Name.ToUpper() == text.ToUpper())
+                {
+                    return new SqlWord() { Type = isTable ? SqlWordTokenType.Table : SqlWordTokenType.View, Text = dbObj.Name };
+                }
             }
 
-            if (this.schemaInfo.Tables.Any(item => item.Name.ToUpper() == name.ToUpper()))
+            if (this.dbSchemas != null)
             {
-                word.Text = name;
-                word.Type = SqlWordTokenType.Table;
+                string schema = this.dbSchemas.FirstOrDefault(item => item.ToUpper() == text.ToUpper());
+
+                if (schema != null)
+                {
+                    return new SqlWord() { Type = SqlWordTokenType.Schema, Text = text };
+                }
             }
 
-            return word;
+            return null;
+        }
+
+        private string GetTextWithoutComments()
+        {
+            string content = this.txtEditor.Text;
+
+            string commentChars = this.DbInterpreter.CommentString;
+
+            if (commentChars != "--")
+            {
+                content = content.Replace(commentChars, "--");
+            }
+
+            return ScriptHelper.RemoveComments(content, true);
+        }
+
+        private void ExtractTableAndViews()
+        {
+            this.dictTableAndView.Clear();
+
+            string content = this.GetTextWithoutComments();
+
+            List<string> items = content.Split(' ', '\r', '\n', '(').Where(item => item.Trim().Length > 0).ToList();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                string item = items[i].Trim();
+
+                if (item.Length == 0 || this.keywords.Contains(item.ToUpper()))
+                {
+                    continue;
+                }
+
+                string alias = null;
+                string nextItem = i < items.Count - 1 ? items[i + 1] : null;
+
+                if (nextItem != null && !this.keywords.Contains(nextItem.ToUpper()))
+                {
+                    alias = nextItem;
+                }
+
+                string name = item;
+
+                if (item.Contains("."))
+                {
+                    var subItems = item.Split('.');
+
+                    if (subItems.Length == 2)
+                    {
+                        name = subItems[1].Trim();
+                    }
+                }
+
+                string trimedName = this.TrimQuotationChars(name);
+
+                Table table = this.schemaInfo.Tables.FirstOrDefault(t => t.Name.ToUpper() == trimedName.ToUpper());
+
+                bool found = false;
+
+                if (table != null)
+                {
+                    found = true;
+
+                    if (!this.dictTableAndView.ContainsKey(table))
+                    {
+                        this.dictTableAndView.Add(table, alias);
+                    }
+                }
+
+                if (!found)
+                {
+                    View view = this.schemaInfo.Views.FirstOrDefault(t => t.Name.ToUpper() == trimedName.ToUpper());
+
+                    if (view != null)
+                    {
+                        found = true;
+
+                        if (!this.dictTableAndView.ContainsKey(view))
+                        {
+                            this.dictTableAndView.Add(view, alias);
+                        }
+                    }
+                }
+            }
         }
 
         private string TrimQuotationChars(string value)
         {
             if (this.DbInterpreter != null)
             {
-                if(this.DbInterpreter.QuotationLeftChar.HasValue)
+                if (this.DbInterpreter.QuotationLeftChar.HasValue)
                 {
                     return value.Trim(this.DbInterpreter.QuotationLeftChar.Value, this.DbInterpreter.QuotationRightChar.Value, '"');
                 }
@@ -670,17 +866,49 @@ namespace DatabaseManager.Controls
             {
                 SqlWordToken token = this.GetLastWordToken(true, true);
 
+                bool isFunction = false;
+
+                isFunction = data.TokenType == SqlWordTokenType.Function;
+
                 string selectedWord = data.Text;
 
                 int length = token.StopIndex - token.StartIndex + 1;
 
-                string quotationValue = selectedWord;               
+                string quotationValue = selectedWord;
 
-                if (!this.builtinFunctions.Any(item=>item.Name.ToUpper() == data.Text.ToUpper()))
+                if (!this.builtinFunctions.Any(item => item.Name.ToUpper() == data.Text.ToUpper()))
                 {
-                    quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
+                    bool insertSchema = false;
+
+                    if (isFunction)
+                    {
+                        Function function = data.DatabaseObject as Function;
+
+                        string schema = function.Schema;
+
+                        if (schema != null)
+                        {
+                            string content = this.txtEditor.Text;
+
+                            if (token.StartIndex-1 - schema.Length >= 0)
+                            {
+                                string leftSideWord = content.Substring(token.StartIndex -1 - schema.Length, schema.Length);
+
+                                if (leftSideWord != schema)
+                                {
+                                    insertSchema = true;
+                                    quotationValue = this.DbInterpreter.GetQuotedDbObjectNameWithSchema(function);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!insertSchema)
+                    {
+                        quotationValue = this.DbInterpreter.GetQuotedString(selectedWord);
+                    }
                 }
-              
+
                 if (length > 0 && token.Text != ".")
                 {
                     this.txtEditor.SelectText(token.StartIndex, length);
@@ -791,7 +1019,7 @@ namespace DatabaseManager.Controls
                     MessageBox.Show("The scripts is valid.");
                 }
             }
-        }       
+        }
 
         private void ClearSelection()
         {

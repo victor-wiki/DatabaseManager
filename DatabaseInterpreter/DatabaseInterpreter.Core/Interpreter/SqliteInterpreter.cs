@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -26,6 +27,8 @@ namespace DatabaseInterpreter.Core
         public override bool SupportNchar => false;
         public override bool SupportTruncateTable => false;
         public override bool CanInsertIdentityByDefault => true;
+        public override string StringLengthFunctionName => "LENGTH";
+        public override string StringCheckNullFunctionName => "IFNULL";
         public override string STR_CONCAT_CHARS => "||";
         #endregion
 
@@ -193,6 +196,8 @@ namespace DatabaseInterpreter.Core
 
         public override async Task<List<TableColumn>> GetTableColumnsAsync(DbConnection dbConnection, SchemaInfoFilter filter = null)
         {
+            bool isForView = this.IsForViewColumnFilter(filter);
+
             if (filter?.TableNames == null)
             {
                 if (filter == null)
@@ -200,7 +205,14 @@ namespace DatabaseInterpreter.Core
                     filter = new SchemaInfoFilter();
                 }
 
-                filter.TableNames = (await this.GetTableNamesAsync());
+                if(!isForView)
+                {
+                    filter.TableNames = await this.GetTableNamesAsync();
+                }
+                else
+                {
+                    filter.TableNames = await this.GetViewNamesAsync();
+                }                
             }
 
             var columns = await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
@@ -347,17 +359,63 @@ namespace DatabaseInterpreter.Core
                 string tableName = table.Name;
                 string definition = table.Definition;
 
-                List<List<string>> columnDetails = null;
+                List<List<string>> columnDetails = this.GetTableColumnDetails(definition);
 
-                string name = this.ExtractNameFromTableDefinition(definition, DbObjectHelper.GetDatabaseObjectType(columnChildren.FirstOrDefault()), out columnDetails);
-
-                if (!string.IsNullOrEmpty(name))
+                foreach (TableColumnChild cc in columnChildren)
                 {
-                    var children = columnChildren.Where(item => item.TableName == tableName);
-
-                    foreach (var child in children)
+                    if(cc.TableName != tableName)
                     {
-                        child.Name = name;
+                        continue;
+                    }
+
+                    string columnName = cc.ColumnName;
+
+                    foreach (List<string> items in columnDetails)
+                    {
+                        DatabaseObjectType dbObjectType = DbObjectHelper.GetDatabaseObjectType(cc);
+
+                        string name = this.ExtractNameFromColumnDefintion(items, dbObjectType);
+
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            string flag = null;
+                            int refIndex = items.IndexOf("REFERENCES");
+                            bool isForeginKey = false;
+
+                            if (dbObjectType == DatabaseObjectType.ForeignKey)
+                            {
+                                flag = "FOREIGN";
+                                isForeginKey = true;
+                            }
+                            else if (dbObjectType == DatabaseObjectType.PrimaryKey)
+                            {
+                                flag = "PRIMARY";
+                            }
+
+                            if (flag != null && items.Any(item => item.ToUpper() == flag))
+                            {
+                                for (int i = 0; i < items.Count; i++)
+                                {
+                                    if(isForeginKey && i>=refIndex)
+                                    {
+                                        continue;
+                                    }
+
+                                    string item = items[i];
+
+                                    if (item.StartsWith("(") && item.EndsWith(")"))
+                                    {
+                                        var columnNames = item.Trim('(', ')').Split(',').Select(item => item.Trim());
+
+                                        if(columnNames.Any(item=>item.ToLower() == columnName.ToLower()))
+                                        {
+                                            cc.Name = name;
+                                            break;
+                                        }
+                                    }
+                                }                                
+                            }
+                        }
                     }
                 }
             }
@@ -490,6 +548,13 @@ namespace DatabaseInterpreter.Core
         private async Task<string[]> GetTableNamesAsync()
         {
             var tables = await this.GetTablesAsync();
+
+            return tables.Select(item => item.Name).ToArray();
+        }
+
+        private async Task<string[]> GetViewNamesAsync()
+        {
+            var tables = await this.GetViewsAsync();
 
             return tables.Select(item => item.Name).ToArray();
         }
@@ -874,23 +939,6 @@ namespace DatabaseInterpreter.Core
             sb.Clear();
 
             return columnDetails;
-        }
-
-        private string ExtractNameFromTableDefinition(string definition, DatabaseObjectType dbObjectType, out List<List<string>> columnDetails)
-        {
-            columnDetails = this.GetTableColumnDetails(definition);
-
-            foreach (List<string> item in columnDetails)
-            {
-                string name = this.ExtractNameFromColumnDefintion(item, dbObjectType);
-
-                if (!string.IsNullOrEmpty(name))
-                {
-                    return name;
-                }
-            }
-
-            return string.Empty;
         }
 
         private string ExtractNameFromColumnDefintion(List<string> columnItems, DatabaseObjectType dbObjectType)

@@ -239,7 +239,7 @@ USING INDEX
         {
             string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
             string referenceColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
-            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString($"FK_{foreignKey.TableName}_{foreignKey.ReferencedTableName}") : this.GetQuotedString(foreignKey.Name);
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString(this.GetTableObjectDefaultName(foreignKey)) : this.GetQuotedString(foreignKey.Name);
 
             StringBuilder sb = new StringBuilder();
 

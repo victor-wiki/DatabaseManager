@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using NetTopologySuite.Index.HPRtree;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,7 +42,7 @@ namespace DatabaseInterpreter.Core
 
         public static string Rename(string name)
         {
-            return !string.IsNullOrEmpty(name) ?  name + "1": name;
+            return !string.IsNullOrEmpty(name) ? name + "1" : name;
         }
 
         public static string GetMappedTableName(string tableName, Dictionary<string, string> tableNameMappings)
@@ -390,9 +391,32 @@ namespace DatabaseInterpreter.Core
                     Comment = group.Key.Comment
                 };
 
-                foreignKey.Columns.AddRange(group.Select(item => new ForeignKeyColumn() { ColumnName = item.ColumnName, ReferencedColumnName = item.ReferencedColumnName, Order = item.Order }));
+                var referencedColumnNames = group.Select(item => item.ReferencedColumnName);
 
-                foreignKeys.Add(foreignKey);
+                int referencedColumnNamesCount = referencedColumnNames.Count();
+                int referencedColumnNamesDistinctCount = referencedColumnNames.Distinct().Count();
+
+                if (referencedColumnNamesCount != referencedColumnNamesDistinctCount && referencedColumnNamesDistinctCount == 1) //different columns refer a same table
+                {
+                    var keyItems = group.Select(item => item).ToArray();
+
+                    for (int i = 1; i <= referencedColumnNamesCount; i++)
+                    {
+                        var cloneForeignKey = ObjectHelper.CloneObject<TableForeignKey>(foreignKey);
+
+                        var item = keyItems[i - 1];
+
+                        cloneForeignKey.Columns.Add(new ForeignKeyColumn() { ColumnName = item.ColumnName, ReferencedColumnName = item.ReferencedColumnName, Order = item.Order });
+
+                        foreignKeys.Add(cloneForeignKey);
+                    }
+                }
+                else
+                {
+                    foreignKey.Columns.AddRange(group.Select(item => new ForeignKeyColumn() { ColumnName = item.ColumnName, ReferencedColumnName = item.ReferencedColumnName, Order = item.Order }));
+
+                    foreignKeys.Add(foreignKey);
+                }
             }
 
             return foreignKeys;
@@ -627,6 +651,69 @@ namespace DatabaseInterpreter.Core
         public static bool IsSameTableColumnIgnoreCase(TableColumn column1, TableColumn column2)
         {
             return column1.TableName.ToLower() == column2.TableName.ToLower() && column1.Name.ToLower() == column2.Name.ToLower();
+        }
+
+        public static string GetTableObjectDefaultName(DatabaseObject dbObject)
+        {
+            DatabaseObjectType type = DbObjectHelper.GetDatabaseObjectType(dbObject);
+
+            string prefix = "";
+
+            string tableName = null;
+            IEnumerable<string> columnNames = null;
+
+            switch (type)
+            {
+                case DatabaseObjectType.PrimaryKey:
+                    prefix = "PK";
+
+                    TablePrimaryKey primaryKey = dbObject as TablePrimaryKey;
+
+                    tableName = primaryKey.TableName;
+                    columnNames = primaryKey.Columns.Select(item => item.ColumnName);
+                    break;
+                case DatabaseObjectType.ForeignKey:
+                    prefix = "FK";
+
+                    TableForeignKey foreignKey = dbObject as TableForeignKey;
+
+                    tableName = foreignKey.TableName;
+                    columnNames = foreignKey.Columns.Select(item => item.ColumnName);
+                    break;
+                case DatabaseObjectType.Constraint:
+                    prefix = "CK";
+
+                    TableConstraint constraint = dbObject as TableConstraint;
+
+                    tableName = constraint.TableName;
+                    columnNames = new string[] { constraint.ColumnName };
+
+                    break;
+                case DatabaseObjectType.Index:
+                    TableIndex tableIndex = dbObject as TableIndex;
+
+                    if (tableIndex.Type == IndexType.Unique.ToString() || tableIndex.IsUnique)
+                    {
+                        prefix = "UX";
+                    }
+                    else
+                    {
+                        prefix = "IX";
+                    }
+
+                    tableName = tableIndex.TableName;
+                    columnNames = tableIndex.Columns.Select(item => item.ColumnName);
+                    break;
+            }
+
+            if (tableName != null && columnNames != null)
+            {
+                string name = $"{(prefix.Length > 0 ? prefix + "_" : "")}{tableName}_{string.Join('_', columnNames)}";
+
+                return name;
+            }
+
+            return string.Empty;
         }
     }
 }

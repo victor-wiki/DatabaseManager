@@ -6,7 +6,8 @@ using DatabaseInterpreter.Model;
 namespace DatabaseManager.Model
 {
     public class TableDiagnoseResult
-    {        
+    {
+        public bool ShowRecordCount { get; set; } = true;
         public List<TableDiagnoseResultDetail> Details { get; set; } = new List<TableDiagnoseResultDetail>();      
     }
 
@@ -14,7 +15,7 @@ namespace DatabaseManager.Model
     {
         public DatabaseObject DatabaseObject { get; set; }
         public int RecordCount { get; set; }
-        public string Sql { get; set; }
+        public string Sql { get; set; }       
     }
 
     public enum TableDiagnoseType
@@ -23,6 +24,7 @@ namespace DatabaseManager.Model
         NotNullWithEmpty = 1,
         SelfReferenceSame = 2,
         WithLeadingOrTrailingWhitespace = 3,
-        EmptyValueRatherThanNull=4
+        EmptyValueRatherThanNull=4,
+        PrimaryKeyColumnIsNullable = 5
     }
 }
