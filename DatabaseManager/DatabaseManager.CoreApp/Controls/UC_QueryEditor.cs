@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using View = DatabaseInterpreter.Model.View;
 using Function = DatabaseInterpreter.Model.Function;
+using NetTopologySuite.Algorithm;
 
 namespace DatabaseManager.Controls
 {
@@ -35,6 +36,7 @@ namespace DatabaseManager.Controls
         private string namePattern = @"\b([_a-zA-Z][_0-9a-zA-Z]*)\b";
         private string nameWithSpacePattern = @"\b([_a-zA-Z][ _0-9a-zA-Z]*)\b";
         private readonly char[] separators = [' ', '\n', '\r', '=', '+', '-', '*', '/', '(', ')', '&', '^', ','];
+        private readonly string[] tableActions = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "DROP", "ALTER"];
         private SchemaInfo schemaInfo;
         private IEnumerable<string> keywords;
         private IEnumerable<FunctionSpecification> builtinFunctions;
@@ -162,9 +164,9 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            string editorText = this.txtEditor.Text.ToUpper();
+            var items = this.GetEditorItems();
 
-            if (!editorText.Contains("SELECT") && !editorText.Contains("INSERT") && !editorText.Contains("UPDATE") && !editorText.Contains("DELETE"))
+            if (!items.Any(item => this.tableActions.Contains(item.ToUpper())))
             {
                 return;
             }
@@ -263,7 +265,7 @@ namespace DatabaseManager.Controls
                     }
                 }
             }
-        }     
+        }
 
         private bool IsMatchWord(string word)
         {
@@ -326,8 +328,6 @@ namespace DatabaseManager.Controls
                 if (this.dictTableAndView.Count == 1)
                 {
                     dbObj = this.dictTableAndView.Keys.First();
-
-
                 }
                 else if (this.dictTableAndView.Count > 1)
                 {
@@ -336,6 +336,33 @@ namespace DatabaseManager.Controls
                         string name = this.TrimQuotationChars(leftSideWord.Trim('(', ' '));
 
                         dbObj = this.dictTableAndView.Keys.FirstOrDefault(item => item.Name.ToUpper() == name);
+                    }
+                    else
+                    {
+                        string leftSideContent = this.GetLineLeftSideContent();
+
+                        var leftSideItems = this.GetContentItems(leftSideContent);
+
+                        List<string> tvNames = new List<string>();
+
+                        foreach (var item in leftSideItems)
+                        {
+                            foreach(var kp in this.dictTableAndView)
+                            {
+                                if(kp.Key.Name.ToUpper() == item.ToUpper())
+                                {
+                                    if(!tvNames.Contains(kp.Key.Name))
+                                    {
+                                        tvNames.Add(kp.Key.Name);
+                                    }
+                                }
+                            }                            
+                        }
+
+                        if(tvNames.Count == 1)
+                        {
+                            parentName = tvNames.First();
+                        }
                     }
                 }
 
@@ -397,7 +424,7 @@ namespace DatabaseManager.Controls
                 words = SqlWordFinder.FindWords(this.DatabaseType, token.Text, type, null);
             }
 
-            this.ShowWordList(words);            
+            this.ShowWordList(words);
         }
 
         private string GetLeftSideWord(SqlWordToken token, out bool isDotLeading)
@@ -582,6 +609,7 @@ namespace DatabaseManager.Controls
                 int i = -1;
 
                 bool existed = false;
+
                 for (i = index; i >= 0; i--)
                 {
                     char c = this.txtEditor.Text[i];
@@ -713,6 +741,15 @@ namespace DatabaseManager.Controls
             return token;
         }
 
+        private string GetLineLeftSideContent()
+        {
+            int currentIndex = this.CurrentCharIndex;
+            int lineIndex = this.TextArea.Caret.Line;
+            int lineFirstCharIndex = TextEditorHelper.GetFirstCharIndexOfLine(this.Editor, lineIndex);
+
+            return this.txtEditor.Text.Substring(lineFirstCharIndex, currentIndex - lineFirstCharIndex);
+        }
+
         private SqlWord FindWord(string text)
         {
             text = this.TrimQuotationChars(text);
@@ -773,13 +810,23 @@ namespace DatabaseManager.Controls
             return ScriptHelper.RemoveComments(content, true);
         }
 
+        private List<string> GetEditorItems()
+        {
+            return this.GetContentItems(this.txtEditor.Text);
+        }
+
+        private List<string> GetContentItems(string content)
+        {
+            List<string> items = content.Split(' ', '\r', '\n', '(', ')', ',').Where(item => item.Trim().Length > 0).ToList();
+
+            return items;
+        }
+
         private void ExtractTableAndViews()
         {
             this.dictTableAndView.Clear();
 
-            string content = this.GetTextWithoutComments();
-
-            List<string> items = content.Split(' ', '\r', '\n', '(').Where(item => item.Trim().Length > 0).ToList();
+            var items = this.GetEditorItems();
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -890,9 +937,9 @@ namespace DatabaseManager.Controls
                         {
                             string content = this.txtEditor.Text;
 
-                            if (token.StartIndex-1 - schema.Length >= 0)
+                            if (token.StartIndex - 1 - schema.Length >= 0)
                             {
-                                string leftSideWord = content.Substring(token.StartIndex -1 - schema.Length, schema.Length);
+                                string leftSideWord = content.Substring(token.StartIndex - 1 - schema.Length, schema.Length);
 
                                 if (leftSideWord != schema)
                                 {
