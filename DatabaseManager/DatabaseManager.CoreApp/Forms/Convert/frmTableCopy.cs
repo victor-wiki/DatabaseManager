@@ -44,10 +44,12 @@ namespace DatabaseManager
         private void InitControls()
         {
             Image tipImage = IconImageHelper.GetImage(IconChar.InfoCircle, IconImageHelper.TipColor);
-          
+
             this.picNeedPreviewTip.Image = tipImage;
 
             this.txtName.Text = this.Table.Name + "_copy";
+
+            this.chkNeedPreview.Checked = SettingManager.Setting.NeedPreviewBeforeConvert && this.rbAnotherDatabase.Checked;
 
             this.SetSchemaControlStates();
         }
@@ -219,7 +221,7 @@ namespace DatabaseManager
 
                             statistic.Subscribe(this);
 
-                            tableColumnContentMaxLengths = await statistic.GetTableColumnContentLengths(new SchemaInfoFilter() { Schema= this.Table.Schema, TableNames = [this.Table.Name]  });
+                            tableColumnContentMaxLengths = await statistic.GetTableColumnContentLengths(new SchemaInfoFilter() { Schema = this.Table.Schema, TableNames = [this.Table.Name] });
                         }
 
                         if (translatedSchemaInfo != null)
@@ -232,7 +234,7 @@ namespace DatabaseManager
 
                                 translatedSchemaInfo = form.SchemaInfo;
 
-                                option.NeedPreview = false;                                
+                                option.NeedPreview = false;
 
                             });
 
@@ -306,6 +308,8 @@ namespace DatabaseManager
         private void rbSameDatabase_CheckedChanged(object sender, EventArgs e)
         {
             this.SetControlState();
+
+            this.SetNeedPreviewControlStatus();
         }
 
         private void SetControlState()
@@ -338,8 +342,6 @@ namespace DatabaseManager
 
                 this.ShowSchemas();
             }
-
-            this.chkNeedPreview.Checked = SettingManager.Setting.NeedPreviewBeforeConvert;
         }
 
         private async void ShowSchemas()
@@ -474,15 +476,15 @@ namespace DatabaseManager
 
                 List<ConvertConfigFileInfo> files = new List<ConvertConfigFileInfo>();
 
-                if(sourceDatabaseType!= targetDatabaseType)
+                if (sourceDatabaseType != targetDatabaseType)
                 {
                     string defaultDataTypeMappingFilePath = DataTypeMappingManager.GetDataTypeMappingFilePath(sourceDatabaseType, targetDatabaseType);
 
-                    if(File.Exists(defaultDataTypeMappingFilePath))
+                    if (File.Exists(defaultDataTypeMappingFilePath))
                     {
                         files.Add(new ConvertConfigFileInfo() { Name = Path.GetFileNameWithoutExtension(defaultDataTypeMappingFilePath), FilePath = defaultDataTypeMappingFilePath, IsDefault = true });
-                    }                    
-                }                
+                    }
+                }
 
                 string customMappingFolder = SettingManager.Setting.CustomMappingFolder;
 
@@ -534,5 +536,29 @@ namespace DatabaseManager
                 form.ShowDialog();
             }
         }
+
+        private void chkScriptSchema_CheckedChanged(object sender, EventArgs e)
+        {
+            this.SetNeedPreviewControlStatus();
+        }
+
+        private void chkScriptData_CheckedChanged(object sender, EventArgs e)
+        {
+            this.SetNeedPreviewControlStatus();
+        }
+
+        private void SetNeedPreviewControlStatus()
+        {
+            var mode = this.GetGenerateScriptMode();
+
+            bool enabled = this.rbAnotherDatabase.Checked && mode.HasFlag(GenerateScriptMode.Schema);
+
+            this.chkNeedPreview.Enabled = enabled;
+
+            if (!enabled)
+            {
+                this.chkNeedPreview.Checked = false;
+            }
+        }        
     }
 }

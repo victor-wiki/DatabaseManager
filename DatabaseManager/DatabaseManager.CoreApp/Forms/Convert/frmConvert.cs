@@ -782,6 +782,8 @@ namespace DatabaseManager.Forms
         private void cboMode_SelectedIndexChanged(object sender, EventArgs e)
         {
             this.SetControlStateByMode();
+
+            this.SetNeedPreviewControlStatus();
         }
 
         private void SetControlStateByMode()
@@ -826,7 +828,7 @@ namespace DatabaseManager.Forms
 
             if (this.targetDbProfile.DatabaseType != DatabaseType.Unknown)
             {
-                DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo, new DbInterpreterOption());
+                DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo??new ConnectionInfo(), new DbInterpreterOption());
 
                 if (targetInterpreter != null)
                 {
@@ -836,7 +838,7 @@ namespace DatabaseManager.Forms
 
             this.chkBulkCopy.Enabled = !schemaOnly && supportBulkCopy;
             this.chkBulkCopy.Checked = !schemaOnly && supportBulkCopy;
-            this.chkUseTransaction.Checked = true;
+            this.chkUseTransaction.Checked = true;            
 
             this.SetControlsStatus();
         }
@@ -866,13 +868,29 @@ namespace DatabaseManager.Forms
             }
         }
 
+        private void SetNeedPreviewControlStatus()
+        {
+            bool enabled = (this.targetDbProfile.DatabaseType != this.sourceDbProfile.DatabaseType) && (this.GetGenerateScriptMode() != GenerateScriptMode.Data);
+
+            this.chkNeedPreview.Enabled = enabled;
+
+            if(!enabled)
+            {
+                this.chkNeedPreview.Checked = false;
+            }
+        }
+
         private void sourceDbProfile_DatabaseTypeSelectedChanged(object sender, EventArgs e)
         {
-            this.ShowDataTypeMappingConfigFiles();
+            this.SetNeedPreviewControlStatus();
+
+            this.ShowDataTypeMappingConfigFiles();            
         }
 
         private void targetDbProfile_DatabaseTypeSelectedChanged(object sender, EventArgs e)
         {
+            this.SetNeedPreviewControlStatus();
+
             this.ShowDataTypeMappingConfigFiles();
         }
 

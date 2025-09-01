@@ -94,6 +94,7 @@
             chkScriptData.TabIndex = 15;
             chkScriptData.Text = "data";
             chkScriptData.UseVisualStyleBackColor = true;
+            chkScriptData.CheckedChanged += chkScriptData_CheckedChanged;
             // 
             // chkScriptSchema
             // 
@@ -107,6 +108,7 @@
             chkScriptSchema.TabIndex = 14;
             chkScriptSchema.Text = "schema";
             chkScriptSchema.UseVisualStyleBackColor = true;
+            chkScriptSchema.CheckedChanged += chkScriptSchema_CheckedChanged;
             // 
             // lblScriptsMode
             // 
@@ -121,7 +123,7 @@
             // btnClose
             // 
             btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnClose.Location = new System.Drawing.Point(371, 269);
+            btnClose.Location = new System.Drawing.Point(371, 328);
             btnClose.Margin = new System.Windows.Forms.Padding(4);
             btnClose.Name = "btnClose";
             btnClose.Size = new System.Drawing.Size(88, 33);
@@ -133,7 +135,7 @@
             // btnExecute
             // 
             btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnExecute.Location = new System.Drawing.Point(258, 269);
+            btnExecute.Location = new System.Drawing.Point(258, 328);
             btnExecute.Margin = new System.Windows.Forms.Padding(4);
             btnExecute.Name = "btnExecute";
             btnExecute.Size = new System.Drawing.Size(88, 33);
@@ -296,9 +298,8 @@
             // chkNeedPreview
             // 
             chkNeedPreview.AutoSize = true;
-            chkNeedPreview.Checked = true;
-            chkNeedPreview.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkNeedPreview.Location = new System.Drawing.Point(451, 142);
+            chkNeedPreview.Enabled = false;
+            chkNeedPreview.Location = new System.Drawing.Point(19, 269);
             chkNeedPreview.Margin = new System.Windows.Forms.Padding(4);
             chkNeedPreview.Name = "chkNeedPreview";
             chkNeedPreview.Size = new System.Drawing.Size(108, 21);
@@ -309,7 +310,7 @@
             // 
             // picNeedPreviewTip
             // 
-            picNeedPreviewTip.Location = new System.Drawing.Point(565, 142);
+            picNeedPreviewTip.Location = new System.Drawing.Point(133, 269);
             picNeedPreviewTip.Name = "picNeedPreviewTip";
             picNeedPreviewTip.Size = new System.Drawing.Size(17, 19);
             picNeedPreviewTip.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -321,7 +322,7 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(686, 319);
+            ClientSize = new System.Drawing.Size(686, 378);
             Controls.Add(picNeedPreviewTip);
             Controls.Add(chkNeedPreview);
             Controls.Add(lblDataTypeMappingFileType);
