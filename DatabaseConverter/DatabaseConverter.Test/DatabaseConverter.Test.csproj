@@ -2,12 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
-    <ProjectReference Include="..\DatabaseConverter.Demo\DatabaseConverter.Demo.csproj" />
   </ItemGroup>
 
 </Project>
