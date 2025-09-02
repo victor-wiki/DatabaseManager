@@ -8,17 +8,13 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.20</Version>
+    <Version>2.2.21</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. add: 
-(1) statistic: table column content max length;
-(2) diagnosis: primary key column is nullable;
-(3) preview schema info before converting;
-(4) custom config data type mappings.
-2. enhance: sql query editor intellisence.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. enhance: query editor intellisence;
+2. if convert objects to same database, no need to preview.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.20</AssemblyVersion>
-    <FileVersion>2.2.20</FileVersion>
+    <AssemblyVersion>2.2.21</AssemblyVersion>
+    <FileVersion>2.2.21</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
