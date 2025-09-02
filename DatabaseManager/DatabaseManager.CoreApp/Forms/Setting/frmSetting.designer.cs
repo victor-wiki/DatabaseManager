@@ -427,7 +427,7 @@
             chkEditorEnableIntellisence.Name = "chkEditorEnableIntellisence";
             chkEditorEnableIntellisence.Size = new System.Drawing.Size(214, 21);
             chkEditorEnableIntellisence.TabIndex = 31;
-            chkEditorEnableIntellisence.Text = "Enable intellisence for sql editor";
+            chkEditorEnableIntellisence.Text = "Enable intellisense for sql editor";
             chkEditorEnableIntellisence.UseVisualStyleBackColor = true;
             // 
             // chkEnableLog
