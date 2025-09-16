@@ -5,14 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.2.13</Version>
-    <PackageReleaseNotes>1. add: 
-(1) statistic: table column content max length;
-(2) diagnosis: primary key column is nullable.
-2. modify: TableManager (for sqlite)</PackageReleaseNotes>
+    <Version>2.2.14</Version>
+    <PackageReleaseNotes>handle: IsGeneratedAlways.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.13</AssemblyVersion>
-    <FileVersion>2.2.13</FileVersion>
+    <AssemblyVersion>2.2.14</AssemblyVersion>
+    <FileVersion>2.2.14</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -216,7 +216,14 @@ namespace DatabaseManager.Controls
                 }
                 else
                 {
-                    this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
+                    if(result.InfoType == ContentSaveResultInfoType.Error)
+                    {
+                        this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
+                    }     
+                    else
+                    {
+                        this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Info, Message = result.Message });
+                    }
 
                     return false;
                 }

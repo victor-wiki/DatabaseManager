@@ -43,13 +43,13 @@ namespace DatabaseManager.Controls
         {
             if (!ManagerUtil.SupportComment(this.DatabaseType))
             {
-                if(this.colComment.Visible)
+                if (this.colComment.Visible)
                 {
                     this.colComment.Visible = false;
                     this.colColumnName.Width += 50;
                     this.colDataType.Width += 50;
                     this.colDefaultValue.Width += 50;
-                }                
+                }
             }
 
             this.LoadDataTypes();
@@ -104,6 +104,7 @@ namespace DatabaseManager.Controls
                 if (column.IsComputed)
                 {
                     extraPropertyInfo.Expression = column.ComputeExp;
+                    extraPropertyInfo.IsGeneratedAlways = column.IsGeneratedAlways;
                 }
 
                 if (column.IsIdentity && table.IdentitySeed.HasValue)
@@ -111,6 +112,8 @@ namespace DatabaseManager.Controls
                     extraPropertyInfo.Seed = table.IdentitySeed.Value;
                     extraPropertyInfo.Increment = table.IdentityIncrement.Value;
                 }
+
+                column.ExtraPropertyInfo = extraPropertyInfo;
 
                 this.SetColumnCellsReadonly(row);
             }
@@ -384,14 +387,19 @@ namespace DatabaseManager.Controls
 
                 DataGridViewCell identityCell = row.Cells[this.colIdentity.Name];
 
+                List<string> hiddenProperties = new List<string>();
+
                 if (!DataGridViewHelper.IsTrueValue(identityCell.Value))
                 {
-                    this.columnPropertites.HiddenProperties = new string[] { nameof(extralProperty.Seed), nameof(extralProperty.Increment) };
+                    hiddenProperties.AddRange(new string[] { nameof(extralProperty.Seed), nameof(extralProperty.Increment) });
                 }
-                else
+
+                if (this.DatabaseType != DatabaseType.Sqlite)
                 {
-                    this.columnPropertites.HiddenProperties = null;
+                    hiddenProperties.Add(nameof(extralProperty.IsGeneratedAlways));
                 }
+
+                this.columnPropertites.HiddenProperties = hiddenProperties.ToArray();
 
                 this.columnPropertites.SelectedObject = extralProperty;
                 this.columnPropertites.Refresh();
@@ -602,7 +610,7 @@ namespace DatabaseManager.Controls
 
                 if (cell != null && cell.IsInEditMode && cell.EditedFormattedValue != cell.Value)
                 {
-                    cell.Value = cell.EditedFormattedValue;                    
+                    cell.Value = cell.EditedFormattedValue;
                 }
             }
         }

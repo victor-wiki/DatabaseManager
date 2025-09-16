@@ -22,5 +22,8 @@ namespace DatabaseManager.Model
 
         [Category("Compute"), Description("Expression"), ReadOnly(false)]
         public string Expression { get; set; }
+
+        [Category("Compute"), Description("Is generated always"), ReadOnly(false)]
+        public bool IsGeneratedAlways { get; set; }
     }
 }

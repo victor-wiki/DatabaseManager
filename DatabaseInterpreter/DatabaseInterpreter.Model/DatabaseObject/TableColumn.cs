@@ -13,7 +13,8 @@
         public string DefaultValue { get; set; }      
         public bool IsUserDefined { get; set; }       
         public bool IsComputed => !string.IsNullOrEmpty(this.ComputeExp);
-        public string ComputeExp { get; set; }
+        public string ComputeExp { get; set; }     
+        public bool IsGeneratedAlways { get; set; }
         public string ScriptComment { get; set; }
     }
 }

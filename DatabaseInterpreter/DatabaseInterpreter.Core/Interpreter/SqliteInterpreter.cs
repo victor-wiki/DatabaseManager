@@ -245,8 +245,13 @@ namespace DatabaseInterpreter.Core
 
                                 if (item.ToUpper() == "GENERATED")
                                 {
+                                    tableColumn.IsGeneratedAlways = true;
                                     tableColumn.ComputeExp = cd.Skip(i + 1).Where(item => item.ToUpper() != "ALWAYS" && item.ToUpper() != "AS").FirstOrDefault();
                                     break;
+                                }
+                                else if(item.ToUpper() == "AS")
+                                {
+                                    tableColumn.ComputeExp = cd.Skip(i + 1).FirstOrDefault();
                                 }
                             }
 
@@ -1060,7 +1065,9 @@ namespace DatabaseInterpreter.Core
 
             if (column.IsComputed)
             {
-                return $"{this.GetQuotedString(column.Name)} {dataType} GENERATED ALWAYS AS ({column.ComputeExp}) STORED {requiredClause}";
+                string generatedAlways = column.IsGeneratedAlways ? "GENERATED ALWAYS " : "";
+
+                return $"{this.GetQuotedString(column.Name)} {dataType} {generatedAlways}AS ({column.ComputeExp}) STORED {requiredClause}";
             }
             else
             {

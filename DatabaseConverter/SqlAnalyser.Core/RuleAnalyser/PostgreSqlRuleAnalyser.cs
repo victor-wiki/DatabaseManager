@@ -1044,55 +1044,33 @@ namespace SqlAnalyser.Core
 
             if (joinEq != null && joinEq.Length > 0)
             {
-                var joinType = node.join_type();
+                JoinItem joinItem = null;
 
-                JoinItem joinItem = new JoinItem();
-                joinItem.Type = this.GetJoinType(joinType.LastOrDefault());
-                joinItem.Condition = this.ParseCondition(joinEq.LastOrDefault()?.a_expr());
-
-                if (tableRefs.Length == 1)
+                foreach (var child in node.children)
                 {
-                    var childTableRefs = tableRefs[0].table_ref();
+                    if (child is Join_typeContext joinType)
+                    {
+                        joinItem = new JoinItem();
+                        joinItem.Type = this.GetJoinType(joinType);
+                       
+                    }
+                    else if (child is Table_refContext tableRef)
+                    {
+                        if (joinItem != null)
+                        {
+                            joinItem.TableName = this.ParseTableName(tableRef);
+                        }
+                    }
+                    else if (child is Join_qualContext equal)
+                    {
+                        if (joinItem != null)
+                        {
+                            joinItem.Condition = this.ParseCondition(equal.a_expr());
 
-                    if (relationExp != null)
-                    {
-                        fromItem.TableName = this.ParseTableName(node);
+                            fromItem.JoinItems.Add(joinItem);
+                        }
                     }
-
-                    if (childTableRefs.Length == 0)
-                    {
-                        joinItem.TableName = this.ParseTableName(tableRefs[0]);
-                    }
-                    else
-                    {
-                        this.ParseTableRef(fromItem, tableRefs[0]);
-                    }
-                }
-                else if (tableRefs.Length == 2)
-                {
-                    var firstTableRef = tableRefs[0];
-                    var lastTableRef = tableRefs[1];
-
-                    if (firstTableRef.table_ref().Length == 0)
-                    {
-                        //never appear
-                    }
-                    else
-                    {
-                        this.ParseTableRef(fromItem, firstTableRef);
-                    }
-
-                    if (lastTableRef.table_ref().Length == 0)
-                    {
-                        joinItem.TableName = this.ParseTableName(lastTableRef);
-                    }
-                    else
-                    {
-                        this.ParseTableRef(fromItem, lastTableRef);
-                    }
-                }
-
-                fromItem.JoinItems.Add(joinItem);
+                }          
             }
             else
             {

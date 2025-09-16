@@ -73,7 +73,7 @@ namespace DatabaseManager.Forms
                 string schema = table.Schema;
                 string tableName = table.Name;
 
-                var columns = this.schemaInfo.TableColumns.Where(item => item.Schema == schema && item.TableName == tableName);
+                var columns = this.schemaInfo.TableColumns.Where(item => item.Schema == schema && item.TableName == tableName && item.IsComputed == false);
 
                 foreach (TableColumn column in columns)
                 {
@@ -84,7 +84,7 @@ namespace DatabaseManager.Forms
                     if (this.tableColumnContentMaxLengths != null)
                     {
                         string sourceSchema = this.schemaMappings != null ? (this.schemaMappings.FirstOrDefault(item => item.TargetSchema == schema)?.SourceSchema) : schema;
-                        string sourceTableName = null;                   
+                        string sourceTableName = null;
 
                         if (this.tableNameMappings != null)
                         {
@@ -102,9 +102,9 @@ namespace DatabaseManager.Forms
                             sourceTableName = tableName;
                         }
 
-                        tableColumnContentMaxLength = this.tableColumnContentMaxLengths.FirstOrDefault(item => 
+                        tableColumnContentMaxLength = this.tableColumnContentMaxLengths.FirstOrDefault(item =>
                         (item.Schema == sourceSchema || string.IsNullOrEmpty(item.Schema) && string.IsNullOrEmpty(sourceSchema))
-                        && item.TableName == sourceTableName 
+                        && item.TableName == sourceTableName
                         && item.ColumnName == column.Name);
                     }
 
@@ -169,7 +169,7 @@ namespace DatabaseManager.Forms
                 }
                 else
                 {
-                    this.CheckCellChange(cell);                    
+                    this.CheckCellChange(cell);
 
                     cell.ErrorText = null;
                 }

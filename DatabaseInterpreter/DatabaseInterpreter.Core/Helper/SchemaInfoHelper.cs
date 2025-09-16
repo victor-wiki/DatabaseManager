@@ -429,7 +429,8 @@ namespace DatabaseInterpreter.Core
                && column1.IsIdentity == column2.IsIdentity
                && ValueHelper.IsStringEquals(StringHelper.GetBalanceParenthesisTrimedValue(column1.DefaultValue), StringHelper.GetBalanceParenthesisTrimedValue(column2.DefaultValue))
                && (excludeComment || (!excludeComment && ValueHelper.IsStringEquals(column1.Comment, column2.Comment)))
-               && ValueHelper.IsStringEquals(column1.ComputeExp, column2.ComputeExp))
+               && ValueHelper.IsStringEquals(column1.ComputeExp, column2.ComputeExp)
+               && column1.IsGeneratedAlways == column2.IsGeneratedAlways)
             {
                 return true;
             }
@@ -476,6 +477,11 @@ namespace DatabaseInterpreter.Core
 
             DataTypeSpecification dataTypeSpec1 = dataTypeSpecs1.FirstOrDefault(item => item.Name == dataType1);
             DataTypeSpecification dataTypeSpec2 = dataTypeSpecs2.FirstOrDefault(item => item.Name == dataType2);
+
+            if(dataTypeSpec1 == null || dataTypeSpec2 == null)
+            {
+                return true;
+            }
 
             if (dataTypeInfo1.DataType == dataTypeInfo2.DataType && string.IsNullOrEmpty(dataTypeSpec1.Args) && string.IsNullOrEmpty(dataTypeSpec2.Args))
             {

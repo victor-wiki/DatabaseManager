@@ -52,7 +52,7 @@ namespace DatabaseManager.Core
 
                 if (scripts == null || scripts.Count == 0)
                 {
-                    return this.GetFaultSaveResult("No changes need to save.");
+                    return this.GetSaveResult("No changes need to save.", ContentSaveResultInfoType.Info);
                 }
 
                 bool ignoreForeignKeyConstraint = false;
@@ -137,7 +137,7 @@ namespace DatabaseManager.Core
 
                 this.FeedbackError(errMsg);
 
-                return this.GetFaultSaveResult(errMsg);
+                return this.GetSaveResult(errMsg, ContentSaveResultInfoType.Error);
             }
 
             return new ContentSaveResult() { IsOK = true, ResultData = table };
@@ -155,7 +155,7 @@ namespace DatabaseManager.Core
 
                 if (!isValid)
                 {
-                    return this.GetFaultSaveResult(validateMsg);
+                    return this.GetSaveResult(validateMsg, ContentSaveResultInfoType.Warning);
                 }
 
                 TableDesignerGenerateScriptsData scriptsData = new TableDesignerGenerateScriptsData();
@@ -198,7 +198,7 @@ namespace DatabaseManager.Core
 
                     if (oldTable == null)
                     {
-                        return this.GetFaultSaveResult($"Table \"{tableDesignerInfo.OldName}\" is not existed");
+                        return this.GetSaveResult($"Table \"{tableDesignerInfo.OldName}\" is not existed", ContentSaveResultInfoType.Warning);
                     }
 
                     if (tableDesignerInfo.OldName != tableDesignerInfo.Name)
@@ -378,7 +378,7 @@ namespace DatabaseManager.Core
             }
             catch (Exception ex)
             {
-                return this.GetFaultSaveResult(ExceptionHelper.GetExceptionDetails(ex));
+                return this.GetSaveResult(ExceptionHelper.GetExceptionDetails(ex), ContentSaveResultInfoType.Error);
             }
         }
 
@@ -616,9 +616,9 @@ namespace DatabaseManager.Core
             return ValueHelper.IsStringEquals(str1, str2);
         }
 
-        private ContentSaveResult GetFaultSaveResult(string message)
+        private ContentSaveResult GetSaveResult(string message, ContentSaveResultInfoType infoType = ContentSaveResultInfoType.Info)
         {
-            return new ContentSaveResult() { ResultData = message };
+            return new ContentSaveResult() { ResultData = message, InfoType = infoType };
         }
 
         public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, string trueTableName = null)
@@ -700,6 +700,11 @@ namespace DatabaseManager.Core
                 if (extralProperty?.Expression != null)
                 {
                     tableColumn.ComputeExp = extralProperty.Expression;
+                }
+
+                if(!string.IsNullOrEmpty(tableColumn.ComputeExp) && extralProperty?.IsGeneratedAlways == true)
+                {
+                    tableColumn.IsGeneratedAlways = extralProperty.IsGeneratedAlways;
                 }
 
                 schemaInfo.TableColumns.Add(tableColumn);

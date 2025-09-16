@@ -323,7 +323,7 @@ namespace DatabaseInterpreter.Core
 
             string kind = !isForView ? "r" : "v";
 
-            string detailColumns = (isForView || isSimpleMode) ? "" : @",c.column_default AS ""DefaultValue"",c.generation_expression AS ""ComputeExp"",
+            string detailColumns = (isForView || isSimpleMode) ? "" : @",c.column_default AS ""DefaultValue"",c.generation_expression AS ""ComputeExp"",case when c.generation_expression is not null then 1 else 0 end as IsGeneratedAlways,
                         d.description AS ""Comment""";
 
             string descriptionJoin = (isForView || isSimpleMode) ? "" : "LEFT JOIN pg_description d ON pc.oid = d.objoid AND c.ordinal_position = d.objsubid";

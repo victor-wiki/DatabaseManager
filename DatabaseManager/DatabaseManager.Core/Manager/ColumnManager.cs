@@ -172,6 +172,12 @@ namespace DatabaseManager.Core
         public static void SetColumnLength(DatabaseType databaseType, TableColumn column, string length)
         {
             string dataType = column.DataType;
+
+            if(string.IsNullOrEmpty(dataType))
+            {
+                return;
+            }
+
             DataTypeSpecification dataTypeSpec = DataTypeManager.GetDataTypeSpecification(databaseType, dataType);
 
             if (!string.IsNullOrEmpty(dataTypeSpec.MapTo))
