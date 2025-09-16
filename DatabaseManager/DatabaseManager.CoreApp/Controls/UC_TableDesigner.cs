@@ -245,7 +245,10 @@ namespace DatabaseManager.Controls
 
             if (!result.IsOK)
             {
-                MessageBox.Show(result.Message);
+                if(result.InfoType!= ContentSaveResultInfoType.Error)
+                {
+                    MessageBox.Show(result.Message);
+                }               
             }
             else
             {

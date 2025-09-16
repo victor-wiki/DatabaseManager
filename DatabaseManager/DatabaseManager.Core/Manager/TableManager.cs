@@ -121,8 +121,8 @@ namespace DatabaseManager.Core
                         scripts.Add(scriptGenerator.DropTable(new Table() { Name = tableName }));
 
                         scripts.Add(scriptGenerator.RenameTable(new Table() { Name = tempTableName }, tableName));
-                        
-                        scripts.Add(new Script("PRAGMA foreign_keys = 1;"));                               
+
+                        scripts.Add(new Script("PRAGMA foreign_keys = 1;"));
                     }
                 }
                 #endregion
@@ -160,7 +160,7 @@ namespace DatabaseManager.Core
 
                 TableDesignerGenerateScriptsData scriptsData = new TableDesignerGenerateScriptsData();
 
-                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo, trueTableName);
+                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo, isNew, trueTableName);
 
                 table = schemaInfo.Tables.First();
 
@@ -621,7 +621,7 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { ResultData = message, InfoType = infoType };
         }
 
-        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, string trueTableName = null)
+        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, bool isNew, string trueTableName = null)
         {
             SchemaInfo schemaInfo = new SchemaInfo();
 
@@ -647,7 +647,7 @@ namespace DatabaseManager.Core
                 {
                     if (primaryKey == null)
                     {
-                        string primaryKeyName = IndexManager.GetPrimaryKeyDefaultName(trueTableName != null ? new Table() { Name = trueTableName } : table);
+                        string primaryKeyName = isNew ? IndexManager.GetPrimaryKeyDefaultName(trueTableName != null ? new Table() { Name = trueTableName } : table) : null;
 
                         primaryKey = new TablePrimaryKey() { Schema = table.Schema, TableName = table.Name, Name = primaryKeyName };
                     }
@@ -702,7 +702,7 @@ namespace DatabaseManager.Core
                     tableColumn.ComputeExp = extralProperty.Expression;
                 }
 
-                if(!string.IsNullOrEmpty(tableColumn.ComputeExp) && extralProperty?.IsGeneratedAlways == true)
+                if (!string.IsNullOrEmpty(tableColumn.ComputeExp) && extralProperty?.IsGeneratedAlways == true)
                 {
                     tableColumn.IsGeneratedAlways = extralProperty.IsGeneratedAlways;
                 }
