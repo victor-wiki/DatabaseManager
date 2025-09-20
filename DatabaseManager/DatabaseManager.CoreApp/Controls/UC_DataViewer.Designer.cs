@@ -38,6 +38,7 @@
             tsmiShowContent = new System.Windows.Forms.ToolStripMenuItem();
             tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
             uc_QuickFilter = new UC_QuickFilter();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
             SuspendLayout();
@@ -79,6 +80,7 @@
             btnFilter.Name = "btnFilter";
             btnFilter.Size = new System.Drawing.Size(36, 25);
             btnFilter.TabIndex = 7;
+            toolTip1.SetToolTip(btnFilter, "Filter");
             btnFilter.UseVisualStyleBackColor = true;
             btnFilter.Click += btnFilter_Click;
             // 
@@ -158,5 +160,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiViewGeometry;
         private System.Windows.Forms.ToolStripMenuItem tsmiShowContent;
         private UC_QuickFilter uc_QuickFilter;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

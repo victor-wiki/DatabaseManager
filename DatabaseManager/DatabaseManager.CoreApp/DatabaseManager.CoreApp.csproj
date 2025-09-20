@@ -8,13 +8,12 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.22</Version>
+    <Version>2.2.23</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>1. handle: IsGeneratedAlways;
-2. exclude computed columns for schema convert previewer.</PackageReleaseNotes>
+    <PackageReleaseNotes>ui: minor change.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.22</AssemblyVersion>
-    <FileVersion>2.2.22</FileVersion>
+    <AssemblyVersion>2.2.23</AssemblyVersion>
+    <FileVersion>2.2.23</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>

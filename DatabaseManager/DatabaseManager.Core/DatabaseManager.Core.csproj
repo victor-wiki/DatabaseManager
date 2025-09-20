@@ -5,11 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.2.14</Version>
-    <PackageReleaseNotes>handle: IsGeneratedAlways.</PackageReleaseNotes>
+    <Version>2.2.15</Version>
+    <PackageReleaseNotes>fix issue: not convert data type if use quick search.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.14</AssemblyVersion>
-    <FileVersion>2.2.14</FileVersion>
+    <AssemblyVersion>2.2.15</AssemblyVersion>
+    <FileVersion>2.2.15</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -259,7 +259,7 @@ namespace DatabaseManager.Controls
             {
                 if (this.enableIntellisense)
                 {
-                    if (!this.IsWordInQuotationChar(token) && token.Text?.Length > 0)
+                    if (token != null && !this.IsWordInQuotationChar(token) && token.Text?.Length > 0)
                     {
                         this.ShowWordListByToken(token);
                     }
@@ -347,19 +347,19 @@ namespace DatabaseManager.Controls
 
                         foreach (var item in leftSideItems)
                         {
-                            foreach(var kp in this.dictTableAndView)
+                            foreach (var kp in this.dictTableAndView)
                             {
-                                if(kp.Key.Name.ToUpper() == item.ToUpper())
+                                if (kp.Key.Name.ToUpper() == item.ToUpper())
                                 {
-                                    if(!tvNames.Contains(kp.Key.Name))
+                                    if (!tvNames.Contains(kp.Key.Name))
                                     {
                                         tvNames.Add(kp.Key.Name);
                                     }
                                 }
-                            }                            
+                            }
                         }
 
-                        if(tvNames.Count == 1)
+                        if (tvNames.Count == 1)
                         {
                             parentName = tvNames.First();
                         }

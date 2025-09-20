@@ -54,6 +54,7 @@ namespace DatabaseManager.Controls
             this.btnRemove.Image = IconImageHelper.GetImageByFontType(IconChar.Times, IconFont.Solid, Color.Red);
             this.btnRevert.Image = IconImageHelper.GetImageByFontType(IconChar.Undo, IconFont.Solid, Color.Red);
             this.btnCommit.Image = IconImageHelper.GetImageByFontType(IconChar.Check, IconFont.Solid);
+            this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter, IconImageHelper.DataViewerToolbarColor);
 
             this.cboAddMode.SelectedIndex = 2;
 

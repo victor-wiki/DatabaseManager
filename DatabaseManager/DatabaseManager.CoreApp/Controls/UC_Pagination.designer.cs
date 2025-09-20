@@ -65,7 +65,7 @@
             lblPageCount.Size = new System.Drawing.Size(38, 20);
             lblPageCount.TabIndex = 4;
             lblPageCount.Text = "0";
-            toolTip1.SetToolTip(lblPageCount, "Total Pages");
+            toolTip1.SetToolTip(lblPageCount, "Total pages");
             // 
             // btnRefresh
             // 
@@ -84,7 +84,7 @@
             // 
             btnNext.FlatAppearance.BorderSize = 0;
             btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnNext.Location = new System.Drawing.Point(205, 3);
+            btnNext.Location = new System.Drawing.Point(215, 4);
             btnNext.Margin = new System.Windows.Forms.Padding(4);
             btnNext.Name = "btnNext";
             btnNext.Size = new System.Drawing.Size(25, 25);
@@ -110,7 +110,7 @@
             // 
             btnLast.FlatAppearance.BorderSize = 0;
             btnLast.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnLast.Location = new System.Drawing.Point(242, 4);
+            btnLast.Location = new System.Drawing.Point(252, 4);
             btnLast.Margin = new System.Windows.Forms.Padding(4);
             btnLast.Name = "btnLast";
             btnLast.Size = new System.Drawing.Size(25, 25);

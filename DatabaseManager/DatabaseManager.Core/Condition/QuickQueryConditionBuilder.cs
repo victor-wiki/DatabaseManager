@@ -44,6 +44,7 @@ namespace DatabaseManager.Core
 
                         bool isCharType = DataTypeHelper.IsCharType(dataType);
                         bool isBinaryType = DataTypeHelper.IsBinaryType(dataType);
+                        bool isDateOrTimeType = DataTypeHelper.IsDateOrTimeType(dataType);
                         bool isGeometryType = DataTypeHelper.IsGeometryType(dataType);
                         bool isSpecialDataType = DataTypeHelper.IsSpecialDataType(dataType);
 
@@ -56,6 +57,24 @@ namespace DatabaseManager.Core
                                 if(dataType == "xml" || dataType == "text")
                                 {
                                     fieldName = $"CONVERT(NVARCHAR(MAX),{fieldName})";
+                                }
+                                else if(!isCharType)
+                                {
+                                    fieldName = $"CONVERT(VARCHAR(MAX),{fieldName})";
+                                }
+                            }
+                            else if(this.databaseType == DatabaseType.MySql)
+                            {
+                                if(isDateOrTimeType)
+                                {
+                                    fieldName = $"CAST({fieldName} AS CHAR)";
+                                }
+                            }
+                            else if (this.databaseType == DatabaseType.Oracle)
+                            {
+                                if (!isCharType)
+                                {
+                                    fieldName = $"CAST({fieldName} AS VARCHAR2(4000))";
                                 }
                             }
                             else if(this.databaseType == DatabaseType.Postgres)
