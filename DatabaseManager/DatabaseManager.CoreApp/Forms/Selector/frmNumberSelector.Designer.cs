@@ -52,6 +52,7 @@
             nudValue.Size = new System.Drawing.Size(191, 23);
             nudValue.TabIndex = 1;
             nudValue.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            nudValue.KeyUp += nudValue_KeyUp;
             // 
             // btnOK
             // 

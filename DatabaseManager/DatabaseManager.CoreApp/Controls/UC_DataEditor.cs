@@ -159,7 +159,7 @@ namespace DatabaseManager.Controls
             catch (Exception ex)
             {
                 MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }            
+            }
         }
 
         private void AddIndentifierToDataTable(DataTable table)
@@ -493,7 +493,7 @@ namespace DatabaseManager.Controls
                         var value = row.Cells[j].Value;
                         var oldValue = oldRow[j];
 
-                        if (value?.ToString() != oldValue?.ToString()) //updated
+                        if (!(value == null && oldValue == DBNull.Value) && value?.ToString() != oldValue?.ToString()) //updated
                         {
                             return true;
                         }
@@ -642,7 +642,7 @@ namespace DatabaseManager.Controls
 
                 if (!this.IsCellValid(cell))
                 {
-                    cell.ErrorText = "value can't be null";
+                    cell.ErrorText = "value is required!";
                     return;
                 }
                 else
@@ -674,6 +674,7 @@ namespace DatabaseManager.Controls
 
             if (!this.IsCellAllowNull(cell.ColumnIndex) && this.IsNullValue(cell.Value) && string.IsNullOrEmpty(tableColumn.DefaultValue))
             {
+                cell.ErrorText = "value is required!";
                 return false;
             }
 
@@ -888,128 +889,135 @@ namespace DatabaseManager.Controls
             bool success = true;
             string errorMsg = null;
 
-            for (int i = 0; i < this.dgvData.Rows.Count; i++)
+            try
             {
-                var row = this.dgvData.Rows[i];
-                var rowid = row.Cells[GUID_ROW_NAME].Value.ToString();
-
-                var oldRow = this.GetOldRow(rowid);
-
-                bool isNewRow = false;
-                Dictionary<string, object> dictRow = new Dictionary<string, object>();
-                List<UpdateDataItemInfo> updateDataItemInfos = new List<UpdateDataItemInfo>();
-
-                if (oldRow == null) //added
+                for (int i = 0; i < this.dgvData.Rows.Count; i++)
                 {
-                    isNewRow = true;
-                }
+                    var row = this.dgvData.Rows[i];
+                    var rowid = row.Cells[GUID_ROW_NAME].Value.ToString();
 
-                for (int j = 0; j < this.dgvData.ColumnCount; j++)
-                {
-                    string columnName = this.dgvData.Columns[j].Name;
+                    var oldRow = this.GetOldRow(rowid);
 
-                    if (columnName == GUID_ROW_NAME)
+                    bool isNewRow = false;
+                    Dictionary<string, object> dictRow = new Dictionary<string, object>();
+                    List<UpdateDataItemInfo> updateDataItemInfos = new List<UpdateDataItemInfo>();
+
+                    if (oldRow == null) //added
                     {
-                        continue;
+                        isNewRow = true;
                     }
 
-                    var value = row.Cells[j].Value;
-                    dynamic newValue = null;
-
-                    TableColumn column = this.GetTableColumn(columnName);
-
-                    if (column == null)
+                    for (int j = 0; j < this.dgvData.ColumnCount; j++)
                     {
-                        newValue = value;
-                    }
-                    else
-                    {
-                        string dataType = column.DataType;
+                        string columnName = this.dgvData.Columns[j].Name;
 
-                        switch (dataType)
+                        if (columnName == GUID_ROW_NAME)
                         {
-                            case "boolean":
-                            case "tinyint":
-                            case "smallint":
-                            case "mediumint":
-                            case "int":
-                            case "integer":
-                            case "year":
-                            case "oid":
-                                newValue = Convert.ToInt32(value);
-                                break;
-                            case "bigint":
-                                newValue = Convert.ToInt64(value);
-                                break;
-                            case "real":
-                            case "float":
-                            case "binary_float":
-                                newValue = Convert.ToSingle(value);
-                                break;
-                            case "decimal":
-                            case "double":
-                            case "binary_double":
-                            case "numeric":
-                            case "number":
-                            case "smallmoney":
-                            case "money":
-                                newValue = Convert.ToDecimal(value);
-                                break;
-                            default:
-                                newValue = value;
-                                break;
+                            continue;
+                        }
+
+                        var value = row.Cells[j].Value;
+                        dynamic newValue = null;
+
+                        TableColumn column = this.GetTableColumn(columnName);
+
+                        if (column == null)
+                        {
+                            newValue = value;
+                        }
+                        else
+                        {
+                            if (this.IsNullValue(value))
+                            {
+                                newValue = null;
+                            }
+                            else if (value.ToString().Length > 0)
+                            {
+                                string dataType = column.DataType.ToLower();
+
+                                switch (dataType)
+                                {
+                                    case "boolean":
+                                    case "tinyint":
+                                    case "smallint":
+                                    case "mediumint":
+                                    case "int":
+                                    case "integer":
+                                    case "year":
+                                    case "oid":
+                                        newValue = Convert.ToInt32(value);
+                                        break;
+                                    case "bigint":
+                                        newValue = Convert.ToInt64(value);
+                                        break;
+                                    case "real":
+                                    case "float":
+                                    case "binary_float":
+                                        newValue = Convert.ToSingle(value);
+                                        break;
+                                    case "decimal":
+                                    case "double":
+                                    case "binary_double":
+                                    case "numeric":
+                                    case "number":
+                                    case "smallmoney":
+                                    case "money":
+                                        newValue = Convert.ToDecimal(value);
+                                        break;
+                                    default:
+                                        newValue = value;
+                                        break;
+                                }
+                            }
+                        }
+
+                        if (isNewRow)
+                        {
+                            dictRow.Add(columnName, newValue);
+                        }
+                        else
+                        {
+                            if (this.IsReadOnlyColumn(this.GetDataColumn(columnName)))
+                            {
+                                continue;
+                            }
+
+                            var oldValue = oldRow[j];
+
+                            if (!(value == null && oldValue == DBNull.Value) && value?.ToString() != oldValue?.ToString()) //updated
+                            {
+                                updateDataItemInfos.Add(new UpdateDataItemInfo() { ColumnName = columnName, OldValue = oldValue, NewValue = newValue });
+                            }
                         }
                     }
 
                     if (isNewRow)
                     {
-                        dictRow.Add(columnName, newValue);
+                        insertData.Add(dictRow);
                     }
                     else
                     {
-                        if (this.IsReadOnlyColumn(this.GetDataColumn(columnName)))
+                        if (updateDataItemInfos.Count > 0)
                         {
-                            continue;
-                        }
-
-                        var oldValue = oldRow[j];
-
-                        if (value?.ToString() != oldValue?.ToString()) //updated
-                        {
-                            updateDataItemInfos.Add(new UpdateDataItemInfo() { ColumnName = columnName, OldValue = oldValue, NewValue = newValue });
+                            updateData.Add(rowid, updateDataItemInfos);
                         }
                     }
                 }
 
-                if (isNewRow)
+                foreach (DataRow row in this.table.Rows)
                 {
-                    insertData.Add(dictRow);
-                }
-                else
-                {
-                    if (updateDataItemInfos.Count > 0)
+                    string rowid = row[GUID_ROW_NAME].ToString();
+
+                    var gridRow = this.GetGridViewRow(rowid);
+
+                    if (gridRow == null) // deleted
                     {
-                        updateData.Add(rowid, updateDataItemInfos);
+                        deleteData.Add(rowid);
                     }
                 }
-            }
 
-            foreach (DataRow row in this.table.Rows)
-            {
-                string rowid = row[GUID_ROW_NAME].ToString();
+                this.dbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
 
-                var gridRow = this.GetGridViewRow(rowid);
-
-                if (gridRow == null) // deleted
-                {
-                    deleteData.Add(rowid);
-                }
-            }
-
-            this.dbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
-
-            try
-            {
                 var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
 
                 (Table Table, List<TableColumn> Columns) tableAndColumns = (new Table() { Schema = this.displayInfo.Schema, Name = this.displayInfo.Name }, this.columns);
@@ -1039,12 +1047,12 @@ namespace DatabaseManager.Controls
 
                     MessageBox.Show("Data saved.");
 
-                    this.ResetTableData();
-
                     this.SetButtonEnabled(false);
                     this.SetPaginationAndFilterEnabled(true);
 
                     success = true;
+
+                    this.ResetTableData();
                 }
             }
             catch (Exception ex)
@@ -1071,7 +1079,23 @@ namespace DatabaseManager.Controls
                     string columnName = this.dgvData.Columns[j].Name;
                     object value = this.dgvData.Rows[i].Cells[j].Value;
 
-                    dr[columnName] = value;
+                    Type valueType = this.dgvData.Columns[j].ValueType;
+
+                    if (value != null)
+                    {
+                        if (value.GetType() == typeof(string) && valueType != typeof(string) && value.ToString()== string.Empty)
+                        {
+                            dr[columnName] = DBNull.Value;
+                        }
+                        else
+                        {
+                            dr[columnName] = value;
+                        }                        
+                    }
+                    else
+                    {
+                        dr[columnName] = DBNull.Value;
+                    }
                 }
 
                 this.table.Rows.Add(dr);
@@ -1448,15 +1472,15 @@ namespace DatabaseManager.Controls
                 }
                 else if (this.sortedColumnIndex == columnIndex)
                 {
-                    if(this.sortOrder == SortOrder.Ascending)
+                    if (this.sortOrder == SortOrder.Ascending)
                     {
                         this.sortOrder = SortOrder.Descending;
                     }
-                    else if(this.sortOrder == SortOrder.Descending)
+                    else if (this.sortOrder == SortOrder.Descending)
                     {
                         this.sortOrder = SortOrder.None;
                         this.sortedColumnIndex = -1;
-                    }                    
+                    }
                 }
 
                 foreach (DataGridViewColumn col in this.dgvData.Columns)
@@ -1465,7 +1489,7 @@ namespace DatabaseManager.Controls
                     {
                         col.HeaderCell.SortGlyphDirection = SortOrder.None;
                     }
-                }                
+                }
 
                 column.HeaderCell.SortGlyphDirection = this.sortOrder;
 

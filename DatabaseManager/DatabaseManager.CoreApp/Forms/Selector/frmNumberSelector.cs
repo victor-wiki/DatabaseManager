@@ -26,8 +26,8 @@ namespace DatabaseManager.Forms
             set { this.nudValue.Maximum = value; }
         }
 
-        public string Title 
-        { 
+        public string Title
+        {
             get { return this.lblTitle.Text; }
             set { this.lblTitle.Text = value; }
         }
@@ -39,19 +39,34 @@ namespace DatabaseManager.Forms
 
         private void frmNumberSelector_Load(object sender, EventArgs e)
         {
+            decimal value = this.nudValue.Value;
 
+            this.nudValue.Select(0, value.ToString().Length);
         }
 
         private void btnOK_Click(object sender, EventArgs e)
+        {
+            this.Confirm();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void Confirm()
         {
             this.InputValue = this.nudValue.Value;
 
             this.DialogResult = DialogResult.OK;
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void nudValue_KeyUp(object sender, KeyEventArgs e)
         {
-            this.Close();
+            if(e.KeyCode == Keys.Enter)
+            {
+                this.Confirm();
+            }           
         }
     }
 }
