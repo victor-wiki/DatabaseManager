@@ -271,7 +271,7 @@ namespace DatabaseManager.Forms
             }
             else
             {
-                MessageBox.Show("Please select a database from left navigator first.");
+                MessageBox.Show("Please select a database from the left navigator first.");
             }
         }
 
@@ -282,7 +282,22 @@ namespace DatabaseManager.Forms
 
         private void RunScripts()
         {
-            this.GetCurrentContentForm()?.ContentControl?.RunScripts();
+            ConnectionInfo connectionInfo = this.explorerForm.Explorer.GetCurrentConnectionInfo();
+
+            if(connectionInfo == null)
+            {
+                MessageBox.Show("Please select a database from the left navigator first.");
+                return;
+            }
+
+            var control = this.GetCurrentContentForm()?.ContentControl;
+
+            if(control!=null)
+            {
+                control.DisplayInfo.ConnectionInfo = connectionInfo;
+
+                control.RunScripts();
+            }           
         }
 
         private void tsBtnSave_Click(object sender, EventArgs e)

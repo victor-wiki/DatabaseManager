@@ -340,9 +340,12 @@ namespace DatabaseManager.Forms
 
         private string GetSelectedId()
         {
-            string id = this.dgvDbConnection.SelectedRows[0].Cells[this.colId.Name].Value.ToString();
+            if(this.dgvDbConnection.SelectedRows.Count>0)
+            {
+                return this.dgvDbConnection.SelectedRows[0].Cells[this.colId.Name].Value.ToString();
+            }            
 
-            return id;
+            return null;
         }
 
         private AccountProfileInfo GetSelectedAccountProfile()
