@@ -7,6 +7,7 @@ using DatabaseInterpreter.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseManager.Core
@@ -35,9 +36,13 @@ namespace DatabaseManager.Core
                 option.RemoveCarriagRreturnChar = removeCarriagRreturnChar;
                 option.ConvertConcatChar = TranslateHelper.NeedConvertConcatChar(SettingManager.Setting.ConvertConcatCharTargetDatabases, targetDbType);
 
-                dbConverter.Subscribe(this.observer);               
+                dbConverter.Subscribe(this.observer);       
+                
+                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-                DbConvertResult result = await dbConverter.Translate(dbObject);
+                var token = cancellationTokenSource.Token;
+
+                DbConvertResult result = await dbConverter.Translate(dbObject, token);
 
                 return result.TranslateResults.FirstOrDefault();
             }

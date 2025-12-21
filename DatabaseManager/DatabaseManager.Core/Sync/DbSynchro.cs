@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Core;
-using DatabaseManager.Model;
-using System.Linq;
-using System.Threading.Tasks;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace DatabaseManager.Core
@@ -33,7 +34,7 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<ContentSaveResult> Sync(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<DbDifference> differences)
+        public async Task<ContentSaveResult> Synchroize(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences)
         {
             List<Script> scripts = await this.GenerateChangedScripts(schemaInfo, targetDbSchema, differences);
 
@@ -44,9 +45,11 @@ namespace DatabaseManager.Core
 
             try
             {
+                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
                 ScriptRunner scriptRunner = new ScriptRunner();
 
-                await scriptRunner.Run(this.targetInterpreter, scripts);
+                await scriptRunner.Run(this.targetInterpreter, scripts, cancellationTokenSource.Token);
 
                 return new ContentSaveResult() { IsOK = true };
             }
@@ -65,16 +68,16 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { ResultData = message };
         }
 
-        public async Task<List<Script>> GenerateChangedScripts(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<DbDifference> differences)
+        public async Task<List<Script>> GenerateChangedScripts(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences)
         {
             List<Script> scripts = new List<Script>();
             List<Script> tableScripts = new List<Script>();
 
-            foreach (DbDifference difference in differences)
+            foreach (SchemaCompareDifference difference in differences)
             {
-                DbDifferenceType diffType = difference.DifferenceType;
+                SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
-                if (diffType == DbDifferenceType.None)
+                if (diffType == SchemaCompareDifferenceType.None)
                 {
                     continue;
                 }
@@ -97,25 +100,25 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        public List<Script> GenereateScriptDbObjectChangedScripts(DbDifference difference, string targetDbSchema)
+        public List<Script> GenereateScriptDbObjectChangedScripts(SchemaCompareDifference difference, string targetDbSchema)
         {
             List<Script> scripts = new List<Script>();
 
-            DbDifferenceType diffType = difference.DifferenceType;
+            SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
             ScriptDbObject sourceScriptDbObject = difference.Source as ScriptDbObject;
             ScriptDbObject targetScriptDbObject = difference.Target as ScriptDbObject;
 
-            if (diffType == DbDifferenceType.Added)
+            if (diffType == SchemaCompareDifferenceType.Added)
             {
                 var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetDbSchema);
                 scripts.Add(new CreateDbObjectScript<ScriptDbObject>(cloneObj.Definition));
             }
-            else if (diffType == DbDifferenceType.Deleted)
+            else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
                 scripts.Add(this.targetScriptGenerator.Drop(sourceScriptDbObject));
             }
-            else if (diffType == DbDifferenceType.Modified)
+            else if (diffType == SchemaCompareDifferenceType.Modified)
             {
                 var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Schema);
                 scripts.Add(this.targetScriptGenerator.Drop(targetScriptDbObject));
@@ -125,25 +128,25 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        public List<Script> GenereateUserDefinedTypeChangedScripts(DbDifference difference, string targetDbSchema)
+        public List<Script> GenereateUserDefinedTypeChangedScripts(SchemaCompareDifference difference, string targetDbSchema)
         {
             List<Script> scripts = new List<Script>();
 
-            DbDifferenceType diffType = difference.DifferenceType;
+            SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
             UserDefinedType source = difference.Source as UserDefinedType;
             UserDefinedType target = difference.Target as UserDefinedType;
 
-            if (diffType == DbDifferenceType.Added)
+            if (diffType == SchemaCompareDifferenceType.Added)
             {
                 var cloneObj = this.CloneDbObject(source, targetDbSchema);
                 scripts.Add(this.targetScriptGenerator.CreateUserDefinedType(cloneObj));
             }
-            else if (diffType == DbDifferenceType.Deleted)
+            else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
                 scripts.Add(this.targetScriptGenerator.DropUserDefinedType(source));
             }
-            else if (diffType == DbDifferenceType.Modified)
+            else if (diffType == SchemaCompareDifferenceType.Modified)
             {
                 var cloneObj = this.CloneDbObject(source, target.Schema);
                 scripts.Add(this.targetScriptGenerator.DropUserDefinedType(target));
@@ -153,16 +156,16 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        public async Task<List<Script>> GenerateTableChangedScripts(SchemaInfo schemaInfo, DbDifference difference, string targetDbSchema)
+        public async Task<List<Script>> GenerateTableChangedScripts(SchemaInfo schemaInfo, SchemaCompareDifference difference, string targetDbSchema)
         {
             List<Script> scripts = new List<Script>();
 
-            DbDifferenceType diffType = difference.DifferenceType;
+            SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
             Table sourceTable = difference.Source as Table;
             Table targetTable = difference.Target as Table;
 
-            if (diffType == DbDifferenceType.Added)
+            if (diffType == SchemaCompareDifferenceType.Added)
             {
                 List<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Schema == sourceTable.Schema && item.TableName == sourceTable.Name).OrderBy(item => item.Order).ToList();
                 TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Schema == sourceTable.Schema && item.TableName == sourceTable.Name);
@@ -178,22 +181,22 @@ namespace DatabaseManager.Core
 
                 scripts.AddRange(this.targetScriptGenerator.CreateTable(sourceTable, columns, primaryKey, foreignKeys, indexes, constraints).Scripts);
             }
-            else if (diffType == DbDifferenceType.Deleted)
+            else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
                 scripts.Add(this.targetScriptGenerator.DropTable(targetTable));
             }
-            else if (diffType == DbDifferenceType.Modified)
+            else if (diffType == SchemaCompareDifferenceType.Modified)
             {
                 if (!ValueHelper.IsStringEquals(sourceTable.Comment, targetTable.Comment))
                 {
                     scripts.Add(targetScriptGenerator.SetTableComment(sourceTable, string.IsNullOrEmpty(targetTable.Comment)));
                 }
 
-                foreach (DbDifference subDiff in difference.SubDifferences)
+                foreach (SchemaCompareDifference subDiff in difference.SubDifferences)
                 {
-                    DbDifferenceType subDiffType = subDiff.DifferenceType;
+                    SchemaCompareDifferenceType subDiffType = subDiff.DifferenceType;
 
-                    if (subDiffType == DbDifferenceType.None)
+                    if (subDiffType == SchemaCompareDifferenceType.None)
                     {
                         continue;
                     }
@@ -220,26 +223,26 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
-        public async Task<List<Script>> GenerateTableChildChangedScripts(DbDifference difference)
+        public async Task<List<Script>> GenerateTableChildChangedScripts(SchemaCompareDifference difference)
         {
             List<Script> scripts = new List<Script>();
 
             Table targetTable = difference.Parent.Target as Table;
 
-            DbDifferenceType diffType = difference.DifferenceType;
+            SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
             TableChild source = difference.Source as TableChild;
             TableChild target = difference.Target as TableChild;
 
-            if (diffType == DbDifferenceType.Added)
+            if (diffType == SchemaCompareDifferenceType.Added)
             {
                 scripts.Add(this.targetScriptGenerator.Create(this.CloneTableChild(source, difference.DatabaseObjectType, targetTable.Schema)));
             }
-            else if (diffType == DbDifferenceType.Deleted)
+            else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
                 scripts.Add(this.targetScriptGenerator.Drop(target));
             }
-            else if (diffType == DbDifferenceType.Modified)
+            else if (diffType == SchemaCompareDifferenceType.Modified)
             {
                 if (difference.DatabaseObjectType == DatabaseObjectType.Column)
                 {

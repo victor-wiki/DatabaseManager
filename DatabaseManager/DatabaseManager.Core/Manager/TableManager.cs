@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -129,7 +130,9 @@ namespace DatabaseManager.Core
 
                 ScriptRunner scriptRunner = new ScriptRunner() { IgnoreForeignKeyConstraint = ignoreForeignKeyConstraint };
 
-                await scriptRunner.Run(this.dbInterpreter, scripts);
+                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+                await scriptRunner.Run(this.dbInterpreter, scripts, cancellationTokenSource.Token);
             }
             catch (Exception ex)
             {

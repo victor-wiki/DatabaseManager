@@ -5,10 +5,10 @@ using DatabaseInterpreter.Model;
 
 namespace DatabaseManager.Model
 {
-    public class DbDifference
+    public class SchemaCompareDifference
     {               
         public string Type { get; set; }
-        public DbDifference Parent { get; set; }
+        public SchemaCompareDifference Parent { get; set; }
         public string ParentType { get; set; }
         public string ParentName { get; set; }
         public DatabaseObjectType DatabaseObjectType { get; set; }
@@ -19,12 +19,12 @@ namespace DatabaseManager.Model
         public string SourceName => this.Source?.Name;
         public string TargetName => this.Target?.Name;
 
-        public DbDifferenceType DifferenceType { get; set; }          
+        public SchemaCompareDifferenceType DifferenceType { get; set; }          
 
-        public List<DbDifference> SubDifferences { get; set; } = new List<DbDifference>();
+        public List<SchemaCompareDifference> SubDifferences { get; set; } = new List<SchemaCompareDifference>();
     }
 
-    public enum DbDifferenceType
+    public enum SchemaCompareDifferenceType
     {
         None = 0,
         Added = 1,

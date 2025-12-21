@@ -312,7 +312,12 @@ namespace DatabaseConverter.Core
         {
             if (!text.StartsWith(this.targetDbInterpreter.QuotationLeftChar.ToString()) && !text.EndsWith(this.targetDbInterpreter.QuotationRightChar.ToString()))
             {
-                text= this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"'));
+                if (this.sourceDbInterpreter.QuotationLeftChar.HasValue)
+                {
+                    text = text.Trim(this.sourceDbInterpreter.QuotationLeftChar.Value, this.sourceDbInterpreter.QuotationRightChar.Value);
+                }
+
+                text = this.targetDbInterpreter.GetQuotedString(text.Trim('\'', '"'));
             
                 if(this.sourceDbInterpreter.QuotationLeftChar.HasValue)
                 {

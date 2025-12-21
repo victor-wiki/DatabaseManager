@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseManager.Core
@@ -74,9 +75,11 @@ namespace DatabaseManager.Core
                 i++;
             }
 
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
             ScriptRunner scriptRunner = new ScriptRunner();
 
-            await scriptRunner.Run(this.dbInterpreter, scripts);
+            await scriptRunner.Run(this.dbInterpreter, scripts, cancellationTokenSource.Token);
 
             i = 0;
 

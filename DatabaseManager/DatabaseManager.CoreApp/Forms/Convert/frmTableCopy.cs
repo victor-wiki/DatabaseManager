@@ -15,6 +15,7 @@ using System.Data.Common;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -24,6 +25,7 @@ namespace DatabaseManager
     {
         private ConnectionInfo targetDbConnectionInfo;
         private DbConverter dbConverter = null;
+        private CancellationTokenSource cancellationTokenSource;
 
         public DatabaseType DatabaseType { get; set; }
         public ConnectionInfo ConnectionInfo { get; set; }
@@ -208,7 +210,13 @@ namespace DatabaseManager
 
                     this.dbConverter.Option.SplitScriptsToExecute = true;
 
-                    DbConvertResult result = await this.dbConverter.Convert(schemaInfo, this.Table.Schema);
+                    this.cancellationTokenSource = new CancellationTokenSource();
+
+                    var token = this.cancellationTokenSource.Token;
+
+                    token.Register(() => { this.Feedback("Task has been canceled."); });
+
+                    DbConvertResult result = await this.dbConverter.Convert(token, schemaInfo, this.Table.Schema);
 
                     if (option.NeedPreview)
                     {
@@ -238,13 +246,13 @@ namespace DatabaseManager
 
                             });
 
-                            result = await this.dbConverter.Convert(schemaInfo, this.Table.Schema, translatedSchemaInfo);
+                            result = await this.dbConverter.Convert(token, schemaInfo, this.Table.Schema, translatedSchemaInfo);
                         }
                     }
 
                     if (result.InfoType == DbConvertResultInfoType.Information)
                     {
-                        if (!this.dbConverter.CancelRequested)
+                        if (!this.cancellationTokenSource.IsCancellationRequested)
                         {
                             string msg = "Table copied." + (isDifferentTableName ? $@"{Environment.NewLine}The target table name is ""{name}""." : "");
 
@@ -457,6 +465,11 @@ namespace DatabaseManager
             {
                 this.OnFeedback(info);
             }
+        }
+
+        private void Feedback(string message)
+        {
+            this.Feedback(new FeedbackInfo() { Message = message });
         }
 
         private void ucConnection_DatabaseTypeSelectedChanged(object sender, EventArgs e)

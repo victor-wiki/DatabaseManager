@@ -525,6 +525,8 @@ namespace DatabaseManager.Controls
 
         private void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
         {
+            this.cboDbProfile.Text = "";
+
             this.LoadProfileNames();
 
             if (this.DatabaseTypeSelectedChanged != null)

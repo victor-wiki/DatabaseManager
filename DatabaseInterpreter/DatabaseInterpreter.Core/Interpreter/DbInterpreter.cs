@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -871,53 +872,7 @@ namespace DatabaseInterpreter.Core
             {
                 DataTable dataTable = await this.GetPagedDataTableAsync(connection, table, columns, primaryKeyColumns, pageSize, pageNumber, whereClause);
 
-                List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
-
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    var dicField = new Dictionary<string, object>();
-
-                    for (var i = 0; i < dataTable.Columns.Count; i++)
-                    {
-                        DataColumn column = dataTable.Columns[i];
-                        string columnName = column.ColumnName;
-
-                        if (columnName == DbInterpreter.RowNumberColumnName)
-                        {
-                            continue;
-                        }
-
-                        TableColumn tableColumn = columns.FirstOrDefault(item => item.Name == columnName);
-
-                        object value = row[i];
-
-                        if (ValueHelper.IsBytes(value))
-                        {
-                            if (this.Option.TreatBytesAsNullForReading)
-                            {
-                                if (!(((Byte[])value).Length == 16) && this.DatabaseType == DatabaseType.Oracle)
-                                {
-                                    value = null;
-
-                                    if (dataTable.Columns[i].ReadOnly)
-                                    {
-                                        dataTable.Columns[i].ReadOnly = false;
-                                    }
-
-                                    row[i] = null;
-                                }
-                            }
-                        }
-                        else if (value is PgGeom.Geometry pg && tableColumn.DataType == "geography")
-                        {
-                            pg.UserData = new PostgresGeometryCustomInfo() { IsGeography = true };
-                        }
-
-                        dicField.Add(columnName, value);
-                    }
-
-                    rows.Add(dicField);
-                }
+                List<Dictionary<string, object>> rows = this.ConvertDataTableToDictionaryList(dataTable, columns);
 
                 dictPagedData.Add(pageNumber, rows);
 
@@ -927,8 +882,7 @@ namespace DatabaseInterpreter.Core
                     {
                         Table = table,
                         Columns = columns,
-                        TotalCount = total,
-                        Data = rows,
+                        TotalCount = total,                        
                         DataTable = dataTable
                     });
                 }
@@ -937,6 +891,58 @@ namespace DatabaseInterpreter.Core
             return dictPagedData;
         }
 
+        public List<Dictionary<string,object>> ConvertDataTableToDictionaryList(DataTable dataTable, List<TableColumn> columns)
+        {
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                var dicField = new Dictionary<string, object>();
+
+                for (var i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    DataColumn column = dataTable.Columns[i];
+                    string columnName = column.ColumnName;
+
+                    if (columnName == DbInterpreter.RowNumberColumnName)
+                    {
+                        continue;
+                    }
+
+                    TableColumn tableColumn = columns.FirstOrDefault(item => item.Name == columnName);
+
+                    object value = row[i];
+
+                    if (ValueHelper.IsBytes(value))
+                    {
+                        if (this.Option.TreatBytesAsNullForReading)
+                        {
+                            if (!(((Byte[])value).Length == 16) && this.DatabaseType == DatabaseType.Oracle)
+                            {
+                                value = null;
+
+                                if (dataTable.Columns[i].ReadOnly)
+                                {
+                                    dataTable.Columns[i].ReadOnly = false;
+                                }
+
+                                row[i] = null;
+                            }
+                        }
+                    }
+                    else if (value is PgGeom.Geometry pg && tableColumn.DataType == "geography")
+                    {
+                        pg.UserData = new PostgresGeometryCustomInfo() { IsGeography = true };
+                    }
+
+                    dicField.Add(columnName, value);
+                }
+
+                rows.Add(dicField);
+            }
+
+            return rows;
+        }
         #endregion
 
         #region Sql Query Clause

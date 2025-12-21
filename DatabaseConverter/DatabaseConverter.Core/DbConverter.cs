@@ -1,10 +1,8 @@
-﻿using DatabaseConverter.Core.Model;
-using DatabaseConverter.Model;
+﻿using DatabaseConverter.Model;
 using DatabaseConverter.Profile;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using Npgsql.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,14 +18,12 @@ namespace DatabaseConverter.Core
     {
         private bool hasError = false;
         private bool isBusy = false;
-        private bool cancelRequested = false;
         private IObserver<FeedbackInfo> observer;
         private DbTransaction transaction = null;
         private DatabaseObject translateDbObject = null;
 
         public bool HasError => this.hasError;
         public bool IsBusy => this.isBusy;
-        public bool CancelRequested => this.cancelRequested;
         public readonly string TableDataSyncProgressMessagePrefixFormat = "Table \"{0}\":";
 
         public DbConveterInfo Source { get; set; }
@@ -37,14 +33,10 @@ namespace DatabaseConverter.Core
 
         public event FeedbackHandler OnFeedback;
 
-        public CancellationTokenSource CancellationTokenSource { get; private set; }
-
         public DbConverter(DbConveterInfo source, DbConveterInfo target)
         {
             this.Source = source;
             this.Target = target;
-
-            this.Init();
         }
 
         public DbConverter(DbConveterInfo source, DbConveterInfo target, DbConverterOption option)
@@ -56,13 +48,6 @@ namespace DatabaseConverter.Core
             {
                 this.Option = option;
             }
-
-            this.Init();
-        }
-
-        private void Init()
-        {
-            this.CancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -70,22 +55,25 @@ namespace DatabaseConverter.Core
             this.observer = observer;
         }
 
-        public Task<DbConvertResult> Translate(DatabaseObject dbObject)
+        public Task<DbConvertResult> Translate(DatabaseObject dbObject, CancellationToken cancellationToken)
         {
             this.translateDbObject = dbObject;
 
             SchemaInfo schemaInfo = SchemaInfoHelper.GetSchemaInfoByDbObject(dbObject);
 
-            return this.InternalConvert(schemaInfo, dbObject.Schema);
+            return this.InternalConvert(cancellationToken, schemaInfo, dbObject.Schema);
         }
 
-        public Task<DbConvertResult> Convert(SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
+        public Task<DbConvertResult> Convert(CancellationToken cancellationToken, SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
         {
-            return this.InternalConvert(schemaInfo, schema, targetSchemaInfo);
+            return this.InternalConvert(cancellationToken, schemaInfo, schema, targetSchemaInfo);
         }
 
-        private async Task<DbConvertResult> InternalConvert(SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
+        private async Task<DbConvertResult> InternalConvert(CancellationToken cancellationToken, SchemaInfo schemaInfo = null, string schema = null, SchemaInfo targetSchemaInfo = null)
         {
+            this.isBusy = false;
+            this.hasError = false;
+
             DbConvertResult result = new DbConvertResult();
 
             bool hasTargetSchemaInfo = targetSchemaInfo != null;
@@ -101,17 +89,17 @@ namespace DatabaseConverter.Core
             bool onlyForTableCopy = this.Option.OnlyForTableCopy;
             bool executeScriptOnTargetServer = this.Option.ExecuteScriptOnTargetServer;
 
-            DbInterpreter sourceInterpreter = this.Source.DbInterpreter;
-            DbInterpreter targetInterpreter = this.Target.DbInterpreter;
+            DbInterpreter sourceDbInterpreter = this.Source.DbInterpreter;
+            DbInterpreter targetDbInterpreter = this.Target.DbInterpreter;
 
-            sourceInterpreter.Subscribe(this.observer);
-            targetInterpreter.Subscribe(this.observer);
+            sourceDbInterpreter.Subscribe(this.observer);
+            targetDbInterpreter.Subscribe(this.observer);
 
-            var sourceDbType = sourceInterpreter.DatabaseType;
-            var targetDbType = targetInterpreter.DatabaseType;
+            var sourceDbType = sourceDbInterpreter.DatabaseType;
+            var targetDbType = targetDbInterpreter.DatabaseType;
 
-            var sourceInterpreterOption = sourceInterpreter.Option;
-            var targetInterpreterOption = targetInterpreter.Option;
+            var sourceInterpreterOption = sourceDbInterpreter.Option;
+            var targetInterpreterOption = targetDbInterpreter.Option;
 
             sourceInterpreterOption.BulkCopy = this.Option.BulkCopy;
             sourceInterpreterOption.GetTableAllObjects = false;
@@ -137,7 +125,7 @@ namespace DatabaseConverter.Core
                 databaseObjectType = databaseObjectType & this.Source.DatabaseObjectType;
             }
 
-            if(this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateConstraint==false)
+            if (this.Target.DbInterpreter.Option.TableScriptsGenerateOption.GenerateConstraint == false)
             {
                 databaseObjectType = databaseObjectType ^ DatabaseObjectType.Constraint;
             }
@@ -153,7 +141,7 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            SchemaInfo sourceSchemaInfo = await sourceInterpreter.GetSchemaInfoAsync(filter);
+            SchemaInfo sourceSchemaInfo = await sourceDbInterpreter.GetSchemaInfoAsync(filter);
 
             if (this.hasError)
             {
@@ -174,7 +162,7 @@ namespace DatabaseConverter.Core
                 {
                     targetInterpreterOption.ObjectFetchMode = DatabaseObjectFetchMode.Simple;
 
-                    SchemaInfo targetSchema = await targetInterpreter.GetSchemaInfoAsync(filter);
+                    SchemaInfo targetSchema = await targetDbInterpreter.GetSchemaInfoAsync(filter);
 
                     existedTableColumns = targetSchema.TableColumns.Where(item => sourceSchemaInfo.TableColumns.Any(t => SchemaInfoHelper.IsSameTableColumnIgnoreCase(t, item))).ToList();
 
@@ -186,7 +174,7 @@ namespace DatabaseConverter.Core
             {
                 SchemaInfoFilter columnFilter = new SchemaInfoFilter() { TableNames = filter.TableNames };
 
-                existedTableColumns = await targetInterpreter.GetTableColumnsAsync(columnFilter);
+                existedTableColumns = await targetDbInterpreter.GetTableColumnsAsync(columnFilter);
             }
             #endregion
 
@@ -197,7 +185,7 @@ namespace DatabaseConverter.Core
             {
                 if (sourceDbType != targetDbType)
                 {
-                    utypes = await sourceInterpreter.GetUserDefinedTypesAsync();
+                    utypes = await sourceDbInterpreter.GetUserDefinedTypesAsync();
 
                     if (this.Option.UseOriginalDataTypeIfUdtHasOnlyOneAttr)
                     {
@@ -225,7 +213,7 @@ namespace DatabaseConverter.Core
 
             #endregion
 
-            if(!hasTargetSchemaInfo)
+            if (!hasTargetSchemaInfo)
             {
                 targetSchemaInfo = SchemaInfoHelper.Clone(sourceSchemaInfo);
 
@@ -252,13 +240,13 @@ namespace DatabaseConverter.Core
                 #endregion
             }
 
-            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetInterpreter);
+            DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(targetDbInterpreter);
 
             #region Create schema if not exists
 
             if (!dataModeOnly && this.Option.CreateSchemaIfNotExists && (targetDbType == DatabaseType.SqlServer || targetDbType == DatabaseType.Postgres))
             {
-                using (DbConnection dbConnection = targetInterpreter.CreateConnection())
+                using (DbConnection dbConnection = targetDbInterpreter.CreateConnection())
                 {
                     if (dbConnection.State != ConnectionState.Open)
                     {
@@ -268,10 +256,10 @@ namespace DatabaseConverter.Core
                     #region Schema handle
                     if (sourceDbType != DatabaseType.Sqlite)
                     {
-                        var sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
-                        var targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
+                        var sourceSchemas = (await sourceDbInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name);
+                        var targetSchemas = (await targetDbInterpreter.GetDatabaseSchemasAsync(dbConnection)).Select(item => item.Name);
 
-                        var notExistsSchemas = sourceSchemas.Where(item => item != sourceInterpreter.DefaultSchema).Select(item => item)
+                        var notExistsSchemas = sourceSchemas.Where(item => item != sourceDbInterpreter.DefaultSchema).Select(item => item)
                              .Union(this.Option.SchemaMappings.Select(item => item.TargetSchema))
                              .Except(targetSchemas.Select(item => item)).Distinct();
 
@@ -279,7 +267,7 @@ namespace DatabaseConverter.Core
                         {
                             string createSchemaScript = targetDbScriptGenerator.CreateSchema(new DatabaseSchema() { Name = schemaName }).Content;
 
-                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(createSchemaScript));
+                            await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(createSchemaScript, cancellationToken));
                         }
 
                         if (this.Option.SchemaMappings.Count == 1 && this.Option.SchemaMappings.First().SourceSchema == "")
@@ -293,27 +281,27 @@ namespace DatabaseConverter.Core
 
                             if (string.IsNullOrEmpty(mappedSchema))
                             {
-                                string targetSchema = ss == sourceInterpreter.DefaultSchema ? targetInterpreter.DefaultSchema : ss;
+                                string targetSchema = ss == sourceDbInterpreter.DefaultSchema ? targetDbInterpreter.DefaultSchema : ss;
 
                                 this.Option.SchemaMappings.Add(new SchemaMappingInfo() { SourceSchema = ss, TargetSchema = targetSchema });
                             }
                         }
-                    } 
+                    }
                     #endregion
                 }
             }
 
             #endregion
 
-            if(!hasTargetSchemaInfo)
+            if (!hasTargetSchemaInfo)
             {
-                this.ConvertSchema(sourceInterpreter, targetInterpreter, targetSchemaInfo);
+                this.ConvertSchema(sourceDbInterpreter, targetDbInterpreter, targetSchemaInfo);
 
                 #region Translate
 
                 if (!dataModeOnly)
                 {
-                    TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceInterpreter, targetInterpreter, this.Option);
+                    TranslateEngine translateEngine = new TranslateEngine(sourceSchemaInfo, targetSchemaInfo, sourceDbInterpreter, targetDbInterpreter, this.Option);
 
                     translateEngine.ContinueWhenErrorOccurs = this.Option.ContinueWhenErrorOccurs || (!executeScriptOnTargetServer && !onlyForTranslate);
 
@@ -324,7 +312,7 @@ namespace DatabaseConverter.Core
 
                     translateEngine.Subscribe(this.observer);
 
-                    await Task.Run(() => translateEngine.Translate(translateDbObjectType));
+                    await Task.Run(() => translateEngine.Translate(translateDbObjectType), cancellationToken);
 
                     result.TranslateResults = translateEngine.TranslateResults;
                     result.TranslatedSchemaInfo = targetSchemaInfo;
@@ -368,7 +356,7 @@ namespace DatabaseConverter.Core
 
             Script currentScript = null;
 
-            using (DbConnection dbConnection = executeScriptOnTargetServer ? targetInterpreter.CreateConnection() : null)
+            using (DbConnection dbConnection = executeScriptOnTargetServer ? targetDbInterpreter.CreateConnection() : null)
             {
                 ScriptBuilder scriptBuilder = null;
 
@@ -381,8 +369,8 @@ namespace DatabaseConverter.Core
                         {
                             if (executeScriptOnTargetServer)
                             {
-                                string serverVersion = targetInterpreter.ConnectionInfo?.ServerVersion;
-                                bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? targetInterpreter.IsLowDbVersion() : targetInterpreter.IsLowDbVersion(dbConnection);
+                                string serverVersion = targetDbInterpreter.ConnectionInfo?.ServerVersion;
+                                bool isLowDbVersion = !string.IsNullOrEmpty(serverVersion) ? targetDbInterpreter.IsLowDbVersion() : targetDbInterpreter.IsLowDbVersion(dbConnection);
 
                                 if (isLowDbVersion)
                                 {
@@ -411,7 +399,7 @@ namespace DatabaseConverter.Core
 
                     return result;
                 }
-               
+
                 bool canCommit = false;
 
                 if (executeScriptOnTargetServer)
@@ -436,7 +424,7 @@ namespace DatabaseConverter.Core
 
                     if (scripts.Count == 0)
                     {
-                        this.Feedback(targetInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
+                        this.Feedback(targetDbInterpreter, $"The script to create schema is empty.", FeedbackInfoType.Info);
 
                         this.isBusy = false;
 
@@ -446,21 +434,21 @@ namespace DatabaseConverter.Core
                         return result;
                     }
 
-                    targetInterpreter.Feedback(FeedbackInfoType.Info, "Begin to sync schema...");
+                    targetDbInterpreter.Feedback(FeedbackInfoType.Info, "Begin to sync schema...");
 
                     try
                     {
                         if (!this.Option.SplitScriptsToExecute)
                         {
-                            targetInterpreter.Feedback(FeedbackInfoType.Info, script);
+                            targetDbInterpreter.Feedback(FeedbackInfoType.Info, script);
 
-                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, null, this.transaction));
+                            await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(script, cancellationToken, null, this.transaction));
                         }
                         else
                         {
                             Func<Script, bool> isValidScript = (s) =>
                             {
-                                return !(s is NewLineScript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetInterpreter.ScriptsDelimiter);
+                                return !(s is NewLineScript || s is SpliterScript || string.IsNullOrEmpty(s.Content) || s.Content == targetDbInterpreter.ScriptsDelimiter);
                             };
 
                             int count = scripts.Where(item => isValidScript(item)).Count();
@@ -468,6 +456,13 @@ namespace DatabaseConverter.Core
 
                             foreach (Script s in scripts)
                             {
+                                if (cancellationToken.IsCancellationRequested)
+                                {
+                                    this.Rollback();
+
+                                    break;
+                                }
+
                                 currentScript = s;
 
                                 bool isView = s.ObjectType == nameof(View);
@@ -481,24 +476,24 @@ namespace DatabaseConverter.Core
 
                                 string sql = s.Content?.Trim();
 
-                                if (!string.IsNullOrEmpty(sql) && sql != targetInterpreter.ScriptsDelimiter)
+                                if (!string.IsNullOrEmpty(sql) && sql != targetDbInterpreter.ScriptsDelimiter)
                                 {
                                     i++;
 
-                                    if (!isRoutineScript && targetInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetInterpreter.ScriptsDelimiter))
+                                    if (!isRoutineScript && targetDbInterpreter.ScriptsDelimiter.Length == 1 && sql.EndsWith(targetDbInterpreter.ScriptsDelimiter))
                                     {
-                                        sql = sql.TrimEnd(targetInterpreter.ScriptsDelimiter.ToArray());
+                                        sql = sql.TrimEnd(targetDbInterpreter.ScriptsDelimiter.ToArray());
                                     }
 
-                                    if (!this.hasError|| (isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs))
+                                    if (!this.hasError || (isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs))
                                     {
-                                        targetInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
+                                        targetDbInterpreter.Feedback(FeedbackInfoType.Info, $"({i}/{count}), executing:{Environment.NewLine} {sql}");
 
-                                        CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
+                                        CommandInfo commandInfo = GetCommandInfo(sql, cancellationToken, null, transaction);
 
                                         commandInfo.ContinueWhenErrorOccurs = isRoutineScriptOrView && this.Option.ContinueWhenErrorOccurs;
 
-                                        ExecuteResult executeResult = await targetInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
+                                        ExecuteResult executeResult = await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
                                         if (executeResult.HasError)
                                         {
@@ -528,12 +523,10 @@ namespace DatabaseConverter.Core
                     }
                     catch (Exception ex)
                     {
-                        this.Cancle();
-
                         this.Rollback(ex);
 
-                        ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
-                        ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
+                        ConnectionInfo sourceConnectionInfo = sourceDbInterpreter.ConnectionInfo;
+                        ConnectionInfo targetConnectionInfo = targetDbInterpreter.ConnectionInfo;
 
                         SchemaTransferException schemaTransferException = new SchemaTransferException(ex)
                         {
@@ -544,11 +537,11 @@ namespace DatabaseConverter.Core
                         };
 
                         var res = this.HandleError(schemaTransferException);
-                       
+
                         result.InfoType = res.InfoType;
                         result.Message = res.Message;
 
-                        if(ex is DbCommandException dce)
+                        if (ex is DbCommandException dce)
                         {
                             result.ExceptionType = dce.BaseException?.GetType();
                         }
@@ -558,7 +551,7 @@ namespace DatabaseConverter.Core
                         }
                     }
 
-                    targetInterpreter.Feedback(FeedbackInfoType.Info, "End sync schema.");
+                    targetDbInterpreter.Feedback(FeedbackInfoType.Info, "End sync schema.");
                 }
 
                 #endregion
@@ -567,20 +560,20 @@ namespace DatabaseConverter.Core
 
                 if (!schemaModeOnly)
                 {
-                    await this.SyncData(sourceInterpreter, targetInterpreter, dbConnection, sourceSchemaInfo, targetSchemaInfo, targetDbScriptGenerator, result);
+                    await this.SyncData(sourceDbInterpreter, targetDbInterpreter, dbConnection, sourceSchemaInfo, targetSchemaInfo, targetDbScriptGenerator, result, cancellationToken);
                 }
 
                 #endregion
 
-                if (this.transaction != null && this.transaction.Connection != null && !this.cancelRequested && canCommit)
+                if (!this.hasError && this.transaction != null && this.transaction.Connection != null && !cancellationToken.IsCancellationRequested && canCommit)
                 {
-                    this.transaction.Commit();
+                    await this.transaction.CommitAsync();
                 }
 
                 this.isBusy = false;
             }
 
-            if (dataErrorProfile != null && !this.hasError && !this.cancelRequested)
+            if (dataErrorProfile != null && !this.hasError && !cancellationToken.IsCancellationRequested)
             {
                 DataTransferErrorProfileManager.Remove(dataErrorProfile);
             }
@@ -606,7 +599,7 @@ namespace DatabaseConverter.Core
             {
                 result.InfoType = DbConvertResultInfoType.Information;
 
-                if (this.Option.ExecuteScriptOnTargetServer 
+                if (this.Option.ExecuteScriptOnTargetServer
                     || this.Target.DbInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile)
                    )
                 {
@@ -615,24 +608,24 @@ namespace DatabaseConverter.Core
                 else
                 {
                     result.Message = "No action was taken.";
-                }                
+                }
             }
 
             return result;
         }
 
-        private async Task SyncData(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, DbConnection dbConnection, SchemaInfo sourceSchemaInfo, SchemaInfo targetSchemaInfo, DbScriptGenerator targetDbScriptGenerator, DbConvertResult result)
+        private async Task SyncData(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DbConnection dbConnection, SchemaInfo sourceSchemaInfo, SchemaInfo targetSchemaInfo, DbScriptGenerator targetDbScriptGenerator, DbConvertResult result, CancellationToken cancellationToken)
         {
-            var sourceDbType = sourceInterpreter.DatabaseType;
-            var targetDbType = targetInterpreter.DatabaseType;
+            var sourceDbType = sourceDbInterpreter.DatabaseType;
+            var targetDbType = targetDbInterpreter.DatabaseType;
 
             GenerateScriptMode mode = this.Option.GenerateScriptMode;
 
             bool schemaModeOnly = mode == GenerateScriptMode.Schema;
             bool dataModeOnly = mode == GenerateScriptMode.Data;
 
-            var sourceInterpreterOption = sourceInterpreter.Option;
-            var targetInterpreterOption = targetInterpreter.Option;
+            var sourceInterpreterOption = sourceDbInterpreter.Option;
+            var targetInterpreterOption = targetDbInterpreter.Option;
 
             bool executeScriptOnTargetServer = this.Option.ExecuteScriptOnTargetServer;
             bool generateIdentity = targetInterpreterOption.TableScriptsGenerateOption.GenerateIdentity;
@@ -641,10 +634,10 @@ namespace DatabaseConverter.Core
             {
                 if (targetDbType == DatabaseType.Oracle && generateIdentity)
                 {
-                    if (!targetInterpreter.IsLowDbVersion())
+                    if (!targetDbInterpreter.IsLowDbVersion())
                     {
-                        sourceInterpreter.Option.ExcludeIdentityForData = true;
-                        targetInterpreter.Option.ExcludeIdentityForData = true;
+                        sourceDbInterpreter.Option.ExcludeIdentityForData = true;
+                        targetDbInterpreter.Option.ExcludeIdentityForData = true;
                     }
                 }
 
@@ -655,16 +648,22 @@ namespace DatabaseConverter.Core
                     identityTableColumns = targetSchemaInfo.TableColumns.Where(item => item.IsIdentity).ToList();
                 }
 
-                //await this.SetIdentityEnabled(identityTableColumns, targetInterpreter, targetDbScriptGenerator, dbConnection, transaction, false);
+                //await this.SetIdentityEnabled(identityTableColumns, targetDbInterpreter, targetDbScriptGenerator, dbConnection, transaction, false);
 
-                if (executeScriptOnTargetServer || targetInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
+                if (executeScriptOnTargetServer || targetDbInterpreter.Option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
                 {
                     Dictionary<Table, long> dictTableDataTransferredCount = new Dictionary<Table, long>();
 
-                    sourceInterpreter.OnDataRead += async (TableDataReadInfo tableDataReadInfo) =>
+                    sourceDbInterpreter.OnDataRead += async (TableDataReadInfo tableDataReadInfo) =>
                     {
                         if (!this.hasError)
                         {
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                this.Rollback();
+                                return;
+                            }
+
                             Table table = tableDataReadInfo.Table;
                             List<TableColumn> columns = tableDataReadInfo.Columns;
 
@@ -674,7 +673,7 @@ namespace DatabaseConverter.Core
 
                                 if (string.IsNullOrEmpty(targetTableSchema))
                                 {
-                                    targetTableSchema = targetInterpreter.DefaultSchema;
+                                    targetTableSchema = targetDbInterpreter.DefaultSchema;
                                 }
 
                                 (Table Table, List<TableColumn> Columns) targetTableAndColumns = this.GetTargetTableColumns(targetSchemaInfo, targetTableSchema, table, columns);
@@ -684,71 +683,12 @@ namespace DatabaseConverter.Core
                                     return;
                                 }
 
-                                List<Dictionary<string, object>> data = tableDataReadInfo.Data;
-
                                 if (executeScriptOnTargetServer)
                                 {
                                     DataTable dataTable = tableDataReadInfo.DataTable;
 
-                                    if (this.Option.BulkCopy && targetInterpreter.SupportBulkCopy)
-                                    {
-                                        BulkCopyInfo bulkCopyInfo = this.GetBulkCopyInfo(table, targetSchemaInfo, this.transaction);
-
-                                        if (targetDbType == DatabaseType.Oracle)
-                                        {
-                                            if (columns.Any(item => item.DataType.ToLower().Contains("datetime2") || item.DataType.ToLower().Contains("timestamp")))
-                                            {
-                                                bulkCopyInfo.DetectDateTimeTypeByValues = true;
-                                            }
-                                        }                                       
-
-                                        await targetInterpreter.BulkCopyAsync(dbConnection, dataTable, bulkCopyInfo);
-                                    }
-                                    else
-                                    {
-                                        (Dictionary<string, object> Parameters, string Script) scriptResult = this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
-
-                                        string script = scriptResult.Script;
-
-                                        string delimiter = ");" + Environment.NewLine;
-
-                                        if (!script.Contains(delimiter))
-                                        {
-                                            await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(script, scriptResult.Parameters, this.transaction));
-                                        }
-                                        else
-                                        {
-                                            var items = script.Split(delimiter);
-
-                                            List<string> insertItems = new List<string>();
-
-                                            foreach(var item in items)
-                                            {
-                                                if(item.Trim().ToUpper().StartsWith("INSERT INTO "))
-                                                {
-                                                    insertItems.Add(item);
-                                                }
-                                                else
-                                                {
-                                                    if(insertItems.Any())
-                                                    {
-                                                        insertItems[insertItems.Count - 1] += (delimiter + item);
-                                                    }
-                                                }
-                                            }
-
-                                            int count = 0;                                         
-
-                                            foreach (var item in insertItems)
-                                            {
-                                                count++;
-
-                                                var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
-
-                                                await targetInterpreter.ExecuteNonQueryAsync(dbConnection, this.GetCommandInfo(cmd, scriptResult.Parameters, this.transaction));
-                                            }
-                                        }
-                                    }
+                                    await CopyData(sourceDbInterpreter, targetDbInterpreter, dbConnection, targetDbScriptGenerator, table, columns, targetTableAndColumns.Table, targetTableAndColumns.Columns,
+                                        dataTable, this.Option.BulkCopy, cancellationToken, this.Option.SchemaMappings, this.Source.TableNameMappings, this.transaction);
 
                                     if (!dictTableDataTransferredCount.ContainsKey(table))
                                     {
@@ -765,23 +705,23 @@ namespace DatabaseConverter.Core
 
                                     string strPercent = (percent == (int)percent) ? (percent + "%") : (percent / 100).ToString("P2");
 
-                                    targetInterpreter.FeedbackProgress($"{(string.Format(this.TableDataSyncProgressMessagePrefixFormat, table.Name))}Transferred {transferredCount}/{tableDataReadInfo.TotalCount}, {strPercent}.", table.Name);
+                                    targetDbInterpreter.FeedbackProgress($"{(string.Format(this.TableDataSyncProgressMessagePrefixFormat, table.Name))}Transferred {transferredCount}/{tableDataReadInfo.TotalCount}, {strPercent}.", table.Name);
                                 }
                                 else
                                 {
-                                    this.GenerateScripts(targetDbScriptGenerator, targetTableAndColumns, data);
+                                    List<Dictionary<string, object>> data = sourceDbInterpreter.ConvertDataTableToDictionaryList(tableDataReadInfo.DataTable, columns);
+
+                                    GenerateScripts(targetDbScriptGenerator, targetTableAndColumns.Table, targetTableAndColumns.Columns, data);
                                 }
                             }
                             catch (Exception ex)
                             {
-                                this.Cancle();
-
                                 this.Rollback(ex);
 
-                                ConnectionInfo sourceConnectionInfo = sourceInterpreter.ConnectionInfo;
-                                ConnectionInfo targetConnectionInfo = targetInterpreter.ConnectionInfo;
+                                ConnectionInfo sourceConnectionInfo = sourceDbInterpreter.ConnectionInfo;
+                                ConnectionInfo targetConnectionInfo = targetDbInterpreter.ConnectionInfo;
 
-                                string mappedTableName = this.GetMappedTableName(table.Name);
+                                string mappedTableName = GetMappedTableName(table.Name, this.Source.TableNameMappings);
 
                                 DataTransferException dataTransferException = new DataTransferException(ex)
                                 {
@@ -815,11 +755,80 @@ namespace DatabaseConverter.Core
                     };
                 }
 
-                DbScriptGenerator sourceDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(sourceInterpreter);
+                DbScriptGenerator sourceDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(sourceDbInterpreter);
 
                 await sourceDbScriptGenerator.GenerateDataScriptsAsync(sourceSchemaInfo);
 
-                //await this.SetIdentityEnabled(identityTableColumns, targetInterpreter, targetDbScriptGenerator, dbConnection, transaction, true);
+                //await this.SetIdentityEnabled(identityTableColumns, targetDbInterpreter, targetDbScriptGenerator, dbConnection, transaction, true);
+            }
+        }
+
+        public static async Task CopyData(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DbConnection dbConnection, DbScriptGenerator dbScriptGenerator, Table sourceTable, List<TableColumn> sourceTableColumns,
+            Table targetTable, List<TableColumn> targetTableColumns, DataTable dataTable, bool useBulkCopy, CancellationToken cancellationToken,
+            List<SchemaMappingInfo> schemaMappings = null, Dictionary<string, string> tableNameMappings = null, DbTransaction transaction = null)
+        {
+            DatabaseType targetDbType = targetDbInterpreter.DatabaseType;
+
+            List<Dictionary<string, object>> data = sourceDbInterpreter.ConvertDataTableToDictionaryList(dataTable, sourceTableColumns);
+
+            if (useBulkCopy && targetDbInterpreter.SupportBulkCopy)
+            {
+                BulkCopyInfo bulkCopyInfo = GetBulkCopyInfo(sourceDbInterpreter, targetDbInterpreter, sourceTable, targetTableColumns, cancellationToken, schemaMappings, tableNameMappings, transaction);
+
+                if (targetDbType == DatabaseType.Oracle)
+                {
+                    if (sourceTableColumns.Any(item => item.DataType.ToLower().Contains("datetime2") || item.DataType.ToLower().Contains("timestamp")))
+                    {
+                        bulkCopyInfo.DetectDateTimeTypeByValues = true;
+                    }
+                }
+
+                await targetDbInterpreter.BulkCopyAsync(dbConnection, dataTable, bulkCopyInfo);
+            }
+            else
+            {
+                (Dictionary<string, object> Parameters, string Script) scriptResult = GenerateScripts(dbScriptGenerator, targetTable, targetTableColumns, data);
+
+                string script = scriptResult.Script;
+
+                string delimiter = ");" + Environment.NewLine;
+
+                if (!script.Contains(delimiter))
+                {
+                    await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(script, cancellationToken, scriptResult.Parameters, transaction));
+                }
+                else
+                {
+                    var items = script.Split(delimiter);
+
+                    List<string> insertItems = new List<string>();
+
+                    foreach (var item in items)
+                    {
+                        if (item.Trim().ToUpper().StartsWith("INSERT INTO "))
+                        {
+                            insertItems.Add(item);
+                        }
+                        else
+                        {
+                            if (insertItems.Any())
+                            {
+                                insertItems[insertItems.Count - 1] += (delimiter + item);
+                            }
+                        }
+                    }
+
+                    int count = 0;
+
+                    foreach (var item in insertItems)
+                    {
+                        count++;
+
+                        var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
+
+                        await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(cmd, cancellationToken, scriptResult.Parameters, transaction));
+                    }
+                }
             }
         }
 
@@ -828,11 +837,11 @@ namespace DatabaseConverter.Core
             return script.ObjectType == nameof(Function) || script.ObjectType == nameof(Procedure) || script.ObjectType == nameof(TableTrigger);
         }
 
-        private (Dictionary<string, object> Parameters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, (Table Table, List<TableColumn> Columns) targetTableAndColumns, List<Dictionary<string, object>> data)
+        public static (Dictionary<string, object> Parameters, string Script) GenerateScripts(DbScriptGenerator targetDbScriptGenerator, Table table, List<TableColumn> columns, List<Dictionary<string, object>> data)
         {
             StringBuilder sb = new StringBuilder();
 
-            Dictionary<string, object> parameters = targetDbScriptGenerator.AppendDataScripts(sb, targetTableAndColumns.Table, targetTableAndColumns.Columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
+            Dictionary<string, object> parameters = targetDbScriptGenerator.AppendDataScripts(sb, table, columns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, data } });
 
             string script = sb.ToString().Trim().Trim(';');
 
@@ -841,7 +850,7 @@ namespace DatabaseConverter.Core
 
         #region Not use it currently, because bulkcopy doesn't care identity and insert script has excluded the identity columns.
         private async Task SetIdentityEnabled(IEnumerable<TableColumn> identityTableColumns, DbInterpreter dbInterpreter, DbScriptGenerator scriptGenerator,
-                                             DbConnection dbConnection, DbTransaction transaction, bool enabled)
+                                             DbConnection dbConnection, DbTransaction transaction, bool enabled, CancellationToken cancellationToken)
         {
             foreach (var item in identityTableColumns)
             {
@@ -849,7 +858,7 @@ namespace DatabaseConverter.Core
 
                 if (!string.IsNullOrEmpty(sql))
                 {
-                    CommandInfo commandInfo = this.GetCommandInfo(sql, null, transaction);
+                    CommandInfo commandInfo = GetCommandInfo(sql, cancellationToken, null, transaction);
                     commandInfo.ContinueWhenErrorOccurs = true;
 
                     await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
@@ -864,8 +873,6 @@ namespace DatabaseConverter.Core
             {
                 try
                 {
-                    this.cancelRequested = true;
-
                     bool hasRollbacked = false;
 
                     if (ex != null && ex is DbCommandException dbe)
@@ -885,7 +892,7 @@ namespace DatabaseConverter.Core
             }
         }
 
-        private CommandInfo GetCommandInfo(string commandText, Dictionary<string, object> parameters = null, DbTransaction transaction = null)
+        private static CommandInfo GetCommandInfo(string commandText, CancellationToken cancellationToken, Dictionary<string, object> parameters = null, DbTransaction transaction = null)
         {
             CommandInfo commandInfo = new CommandInfo()
             {
@@ -893,40 +900,105 @@ namespace DatabaseConverter.Core
                 CommandText = commandText,
                 Parameters = parameters,
                 Transaction = transaction,
-                CancellationToken = this.CancellationTokenSource.Token
+                CancellationToken = cancellationToken
             };
 
             return commandInfo;
         }
 
-        private BulkCopyInfo GetBulkCopyInfo(Table table, SchemaInfo schemaInfo, DbTransaction transaction = null)
+        private static BulkCopyInfo GetBulkCopyInfo(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, Table table, List<TableColumn> tableColumns, CancellationToken cancellationToken, List<SchemaMappingInfo> schemaMappings = null, Dictionary<string, string> tableNameMappings = null, DbTransaction transaction = null)
         {
-            string tableName = this.GetMappedTableName(table.Name);
+            string tableName = table.Name;
+
+            if (tableNameMappings != null)
+            {
+                tableName = GetMappedTableName(table.Name, tableNameMappings);
+            }
 
             BulkCopyInfo bulkCopyInfo = new BulkCopyInfo()
             {
-                SourceDatabaseType = this.Source.DbInterpreter.DatabaseType,               
+                SourceDatabaseType = sourceDbInterpreter.DatabaseType,
                 DestinationTableName = tableName,
                 Transaction = transaction,
-                CancellationToken = this.CancellationTokenSource.Token
+                CancellationToken = cancellationToken
             };
 
-            string mappedSchema = SchemaInfoHelper.GetMappedSchema(table.Schema, this.Option.SchemaMappings);
+            string mappedSchema = null;
+
+            if (schemaMappings != null)
+            {
+                mappedSchema = SchemaInfoHelper.GetMappedSchema(table.Schema, schemaMappings);
+            }
 
             if (mappedSchema == null)
             {
-                mappedSchema = this.Target.DbInterpreter.DefaultSchema;
+                mappedSchema = targetDbInterpreter.DefaultSchema;
             }
 
-            bulkCopyInfo.DestinationTableSchema = mappedSchema;
-            bulkCopyInfo.Columns = schemaInfo.TableColumns.Where(item => item.TableName == tableName && item.Schema == mappedSchema);
+            if (mappedSchema != null)
+            {
+                bulkCopyInfo.DestinationTableSchema = mappedSchema;
+
+                bulkCopyInfo.Columns = tableColumns.Where(item => item.TableName == tableName && item.Schema == mappedSchema);
+            }
+            else
+            {
+                bulkCopyInfo.Columns = tableColumns.Where(item => item.TableName == tableName);
+            }
 
             return bulkCopyInfo;
         }
 
-        private string GetMappedTableName(string tableName)
+        private static string GetMappedTableName(string tableName, Dictionary<string, string> tableNameMappings = null)
         {
-            return SchemaInfoHelper.GetMappedTableName(tableName, this.Source.TableNameMappings);
+            if (tableNameMappings != null)
+            {
+                return SchemaInfoHelper.GetMappedTableName(tableName, tableNameMappings);
+            }
+
+            return null;
+        }
+
+        public static async Task<(List<string> SourceSchemas, List<string> TargetSchemas)> GetSourceAndTargetSchemas(DatabaseType sourceDbType, DatabaseType targetDbType, ConnectionInfo sourceDbConnectionInfo, ConnectionInfo targetDbConnectionInfo)
+        {
+            DbInterpreterOption option = new DbInterpreterOption() { };
+
+            DbInterpreter sourceInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, sourceDbConnectionInfo, option);
+            DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, targetDbConnectionInfo, option);
+
+            List<string> sourceSchemas = new List<string>();
+            List<string> targetSchemas = new List<string>();
+
+            try
+            {
+                sourceSchemas = (await sourceInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name).ToList();
+                targetSchemas = (await targetInterpreter.GetDatabaseSchemasAsync()).Select(item => item.Name).ToList();
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return (sourceSchemas, targetSchemas);
+        }
+
+        public static List<SchemaMappingInfo> GetAutoMappedSchemas(List<string> sourceSchemas, List<string> targetSchemas)
+        {
+            List<SchemaMappingInfo> schemaMappingInfos = new List<SchemaMappingInfo>();
+
+            if (sourceSchemas != null && targetSchemas != null)
+            {
+                foreach (string sourceSchema in sourceSchemas)
+                {
+                    string targetSchema = targetSchemas.FirstOrDefault(item => item.ToUpper() == sourceSchema.ToUpper());
+
+                    if (targetSchema != null)
+                    {
+                        schemaMappingInfos.Add(new SchemaMappingInfo() { SourceSchema = sourceSchema, TargetSchema = targetSchema });
+                    }
+                }
+            }
+
+            return schemaMappingInfos;
         }
 
         private DbConvertResult HandleError(ConvertException ex)
@@ -944,19 +1016,9 @@ namespace DatabaseConverter.Core
             return result;
         }
 
-        public void Cancle()
-        {
-            this.cancelRequested = true;           
-
-            if (this.CancellationTokenSource != null)
-            {
-                this.CancellationTokenSource.Cancel();
-            }
-        }
-
         private (Table Table, List<TableColumn> Columns) GetTargetTableColumns(SchemaInfo targetSchemaInfo, string targetSchema, Table sourceTable, List<TableColumn> sourceColumns)
         {
-            string mappedTableName = this.GetMappedTableName(sourceTable.Name);
+            string mappedTableName = GetMappedTableName(sourceTable.Name, this.Source.TableNameMappings);
 
             Table targetTable = targetSchemaInfo.Tables.FirstOrDefault(item => (item.Schema == targetSchema || string.IsNullOrEmpty(targetSchema)) && item.Name == mappedTableName);
 
@@ -984,21 +1046,21 @@ namespace DatabaseConverter.Core
             return (targetTable, targetTableColumns);
         }
 
-        private void ConvertSchema(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter, SchemaInfo targetSchemaInfo)
+        private void ConvertSchema(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, SchemaInfo targetSchemaInfo)
         {
             List<SchemaMappingInfo> schemaMappings = this.Option.SchemaMappings;
 
             if (schemaMappings.Count == 0)
             {
-                schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = "", TargetSchema = targetInterpreter.DefaultSchema });
+                schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = "", TargetSchema = targetDbInterpreter.DefaultSchema });
             }
             else
             {
-                if (sourceInterpreter.DefaultSchema != null && targetInterpreter.DefaultSchema != null)
+                if (sourceDbInterpreter.DefaultSchema != null && targetDbInterpreter.DefaultSchema != null)
                 {
-                    if (!schemaMappings.Any(item => item.SourceSchema == sourceInterpreter.DefaultSchema))
+                    if (!schemaMappings.Any(item => item.SourceSchema == sourceDbInterpreter.DefaultSchema))
                     {
-                        schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = sourceInterpreter.DefaultSchema, TargetSchema = targetInterpreter.DefaultSchema });
+                        schemaMappings.Add(new SchemaMappingInfo() { SourceSchema = sourceDbInterpreter.DefaultSchema, TargetSchema = targetDbInterpreter.DefaultSchema });
                     }
                 }
             }

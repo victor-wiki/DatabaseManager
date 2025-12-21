@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            cboPageNum = new System.Windows.Forms.ComboBox();
+            cboPageNumber = new System.Windows.Forms.ComboBox();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             lblPageCount = new System.Windows.Forms.Label();
             btnRefresh = new System.Windows.Forms.Button();
@@ -45,16 +45,16 @@
             // 
             // cboPageNum
             // 
-            cboPageNum.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            cboPageNum.FormattingEnabled = true;
-            cboPageNum.Location = new System.Drawing.Point(79, 5);
-            cboPageNum.Margin = new System.Windows.Forms.Padding(4);
-            cboPageNum.Name = "cboPageNum";
-            cboPageNum.Size = new System.Drawing.Size(59, 24);
-            cboPageNum.TabIndex = 6;
-            toolTip1.SetToolTip(cboPageNum, "Current page");
-            cboPageNum.SelectedValueChanged += cboPageNum_SelectedValueChanged;
-            cboPageNum.KeyPress += cboPageNum_KeyPress;
+            cboPageNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            cboPageNumber.FormattingEnabled = true;
+            cboPageNumber.Location = new System.Drawing.Point(79, 5);
+            cboPageNumber.Margin = new System.Windows.Forms.Padding(4);
+            cboPageNumber.Name = "cboPageNum";
+            cboPageNumber.Size = new System.Drawing.Size(59, 24);
+            cboPageNumber.TabIndex = 6;
+            toolTip1.SetToolTip(cboPageNumber, "Current page");
+            cboPageNumber.SelectedValueChanged += cboPageNum_SelectedValueChanged;
+            cboPageNumber.KeyPress += cboPageNum_KeyPress;
             // 
             // lblPageCount
             // 
@@ -187,7 +187,7 @@
             Controls.Add(btnRefresh);
             Controls.Add(cboPageSize);
             Controls.Add(label1);
-            Controls.Add(cboPageNum);
+            Controls.Add(cboPageNumber);
             Controls.Add(lblSepartor);
             Controls.Add(lblPageCount);
             Controls.Add(btnNext);
@@ -207,7 +207,7 @@
         private System.Windows.Forms.Button btnLast;
         private System.Windows.Forms.Button btnPrevious;
         private System.Windows.Forms.Button btnNext;
-        private System.Windows.Forms.ComboBox cboPageNum;
+        private System.Windows.Forms.ComboBox cboPageNumber;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox cboPageSize;

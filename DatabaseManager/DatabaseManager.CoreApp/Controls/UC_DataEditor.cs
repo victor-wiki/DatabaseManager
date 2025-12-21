@@ -76,7 +76,7 @@ namespace DatabaseManager.Controls
         {
             this.displayInfo = displayInfo;
 
-            this.pagination.PageNum = pageNum;
+            this.pagination.PageNumber = pageNum;
 
             DatabaseObject dbObject = displayInfo.DatabaseObject;
 
@@ -279,9 +279,9 @@ namespace DatabaseManager.Controls
             return sortOrder == SortOrder.Descending ? ListSortDirection.Descending : ListSortDirection.Ascending;
         }
 
-        private void pagination_OnPageNumberChanged(long pageNum)
+        private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.LoadData(this.displayInfo, pageNum);
+            this.LoadData(this.displayInfo, pageNumber);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)

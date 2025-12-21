@@ -52,6 +52,5 @@ namespace DatabaseInterpreter.Utility
 
             return dtChanged;
         }
-             
     }
 }

@@ -18,11 +18,11 @@ namespace DatabaseManager.Controls
         private int pageSize = 10;
         private long pageCount = 0;
         private long totalCount = 0;
-        private long pageNum = 1;
+        private long pageNumber = 1;
         private bool isSetting = false;
         private Color imageColor = IconImageHelper.DataViewerToolbarColor;
 
-        public delegate void PageNumberChangeHandler(long pageNum);
+        public delegate void PageNumberChangeHandler(long pageNumber);
 
         public event PageNumberChangeHandler OnPageNumberChanged;
 
@@ -35,7 +35,7 @@ namespace DatabaseManager.Controls
 
         private void Init()
         {
-            this.PageNum = 1;
+            this.PageNumber = 1;
 
             this.btnFirst.Image = IconImageHelper.GetImage(IconChar.BackwardStep, this.imageColor);
             this.btnPrevious.Image = IconImageHelper.GetImage(IconChar.ChevronLeft, this.imageColor);
@@ -77,22 +77,22 @@ namespace DatabaseManager.Controls
             {
                 this.pageCount = value;
 
-                var currentPageNum = this.cboPageNum.Text;
+                var currentPageNum = this.cboPageNumber.Text;
                 isSetting = true;
-                this.cboPageNum.Items.Clear();
+                this.cboPageNumber.Items.Clear();
 
                 for (var i = 1; i <= this.pageCount; i++)
                 {
-                    this.cboPageNum.Items.Add(i.ToString());
+                    this.cboPageNumber.Items.Add(i.ToString());
 
                     if (i.ToString() == currentPageNum)
                     {
-                        this.cboPageNum.SelectedItem = i.ToString();
+                        this.cboPageNumber.SelectedItem = i.ToString();
                     }
                 }
-                if (this.pageNum > this.pageCount)
+                if (this.pageNumber > this.pageCount)
                 {
-                    this.PageNum = this.pageCount;
+                    this.PageNumber = this.pageCount;
                 }
 
                 if (this.pageCount == 0)
@@ -105,30 +105,30 @@ namespace DatabaseManager.Controls
             }
         }
 
-        public long PageNum
+        public long PageNumber
         {
             get
             {
-                if (long.TryParse(this.cboPageNum.Text, out pageNum))
+                if (long.TryParse(this.cboPageNumber.Text, out pageNumber))
                 {
-                    pageNum = long.Parse(this.cboPageNum.Text);
+                    pageNumber = long.Parse(this.cboPageNumber.Text);
                 }
                 else
                 {
-                    pageNum = 1;
+                    pageNumber = 1;
                 }
 
-                return pageNum;
+                return pageNumber;
             }
             set
             {
-                this.pageNum = value;
+                this.pageNumber = value;
 
-                if (this.pageNum < 1)
+                if (this.pageNumber < 1)
                 {
-                    this.pageNum = 1;
+                    this.pageNumber = 1;
                 }
-                this.cboPageNum.Text = this.pageNum.ToString();
+                this.cboPageNumber.Text = this.pageNumber.ToString();
             }
         }
 
@@ -162,55 +162,55 @@ namespace DatabaseManager.Controls
 
                 var pCount = this.totalCount % this.pageSize == 0 ? this.totalCount / this.pageSize : this.totalCount / this.pageSize + 1;
 
-                if (this.pageNum > pCount)
+                if (this.pageNumber > pCount)
                 {
-                    this.PageNum = pCount;
+                    this.PageNumber = pCount;
                 }
                 else
                 {
-                    this.ToPage(this.pageNum);
+                    this.ToPage(this.pageNumber);
                 }
             }
         }
 
         private void btnFirst_Click(object sender, EventArgs e)
         {
-            this.PageNum = 1;
+            this.PageNumber = 1;
         }
 
         private void btnPrevious_Click(object sender, EventArgs e)
         {
-            if (this.pageNum > 1)
+            if (this.pageNumber > 1)
             {
-                this.PageNum--;
+                this.PageNumber--;
             }
         }
 
         private void btnNext_Click(object sender, EventArgs e)
         {
-            if (this.pageNum < this.pageCount)
+            if (this.pageNumber < this.pageCount)
             {
-                this.PageNum++;
+                this.PageNumber++;
             }
         }
 
         private void btnLast_Click(object sender, EventArgs e)
         {
-            this.PageNum = this.pageCount;
+            this.PageNumber = this.pageCount;
         }
 
-        private void ToPage(long pageNum)
+        private void ToPage(long pageNumber)
         {
-            this.btnFirst.Enabled = pageNum != 1;
-            this.btnPrevious.Enabled = pageNum > 1;
-            this.btnNext.Enabled = pageNum < this.pageCount;
-            this.btnLast.Enabled = pageNum != this.pageCount;
+            this.btnFirst.Enabled = this.pageNumber != 1;
+            this.btnPrevious.Enabled = this.pageNumber > 1;
+            this.btnNext.Enabled = this.pageNumber < this.pageCount;
+            this.btnLast.Enabled = this.pageNumber != this.pageCount;
 
             if (this.OnPageNumberChanged != null)
             {
                 if (!isSetting)
                 {
-                    this.OnPageNumberChanged(pageNum);
+                    this.OnPageNumberChanged(pageNumber);
                 }
             }
         }
@@ -219,17 +219,17 @@ namespace DatabaseManager.Controls
         {
             if (this.OnPageNumberChanged != null)
             {
-                this.OnPageNumberChanged(this.pageNum);
+                this.OnPageNumberChanged(this.pageNumber);
             }
         }
 
         private void cboPageNum_SelectedValueChanged(object sender, EventArgs e)
         {
-            if (long.TryParse(this.cboPageNum.Text, out pageNum))
+            if (long.TryParse(this.cboPageNumber.Text, out pageNumber))
             {
-                this.pageNum = long.Parse(this.cboPageNum.Text);
+                this.pageNumber = long.Parse(this.cboPageNumber.Text);
 
-                this.ToPage(this.pageNum);
+                this.ToPage(this.pageNumber);
             }
         }
 
@@ -237,19 +237,19 @@ namespace DatabaseManager.Controls
         {
             if (e.KeyChar == (char)Keys.Enter)
             {
-                if (long.TryParse(this.cboPageNum.Text, out pageNum))
+                if (long.TryParse(this.cboPageNumber.Text, out pageNumber))
                 {
-                    if (pageNum < 1)
+                    if (pageNumber < 1)
                     {
-                        this.PageNum = 0;
+                        this.PageNumber = 0;
                     }
-                    else if (pageNum > this.pageCount)
+                    else if (pageNumber > this.pageCount)
                     {
-                        this.PageNum = this.pageCount;
+                        this.PageNumber = this.pageCount;
                     }
                     else
                     {
-                        this.PageNum = pageNum;
+                        this.PageNumber = pageNumber;
                     }
                 }
             }

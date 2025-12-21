@@ -168,7 +168,8 @@ namespace DatabaseManager.Controls
             this.tsmiMore.Visible = isDatabase;
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
-            this.tsmiCompare.Visible = isDatabase;
+            this.tsmiCompareSchema.Visible = isDatabase;
+            this.tsmiClearData.Visible = isDatabase;
 
             this.tsmiSelectScript.Visible = isTable || isView || (isFunction && !isTriggerFunction);
             this.tsmiInsertScript.Visible = isTable;
@@ -1033,7 +1034,7 @@ namespace DatabaseManager.Controls
             string database = this.GetDatabaseNode(node).Name;
             DatabaseObject dbObject = node.Tag as DatabaseObject;
 
-            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, DatabaseType = this.databaseType, DatabaseObject = dbObject, DisplayType = type, ConnectionInfo = this.GetConnectionInfo(database) });
+            this.ShowContent(new DatabaseObjectDisplayInfo() { Name = dbObject.Name, Schema = dbObject.Schema, DatabaseType = this.databaseType, DatabaseObject = dbObject, DisplayType = type, ConnectionInfo = this.GetConnectionInfo(database) });
         }
 
         public void OnNext(FeedbackInfo value)
@@ -1358,9 +1359,9 @@ namespace DatabaseManager.Controls
             if (this.databaseType == DatabaseType.Oracle)
             {
                 schema = this.GetDatabaseNode(this.GetSelectedNode()).Name;
-            }            
+            }
 
-            frmDiagnose form = new frmDiagnose(databaseType, connectionInfo, schema);            
+            frmDiagnose form = new frmDiagnose(databaseType, connectionInfo, schema);
 
             form.Subscribe(this);
             form.ShowDialog();
@@ -1380,7 +1381,7 @@ namespace DatabaseManager.Controls
             form.Show();
         }
 
-        private void tsmiCompare_Click(object sender, EventArgs e)
+        private void tsmiCompareSchema_Click(object sender, EventArgs e)
         {
             if (!this.IsValidSelectedNode())
             {
@@ -1389,14 +1390,14 @@ namespace DatabaseManager.Controls
 
             TreeNode node = this.GetSelectedNode();
 
-            this.CompareDatabase(node);
+            this.CompareSchema(node);
         }
 
-        private void CompareDatabase(TreeNode node)
+        private void CompareSchema(TreeNode node)
         {
             Database database = node.Tag as Database;
 
-            frmCompare frmCompare = new frmCompare(this.databaseType, this.GetConnectionInfo(database.Name));
+            frmSchemaCompare frmCompare = new frmSchemaCompare(this.databaseType, this.GetConnectionInfo(database.Name));
             frmCompare.ShowDialog();
         }
 
@@ -1499,7 +1500,7 @@ namespace DatabaseManager.Controls
 
             form.Subscribe(this);
 
-            form.ShowDialog();        
+            form.ShowDialog();
         }
 
         private void tsmiExportData_Click(object sender, EventArgs e)
@@ -1519,7 +1520,7 @@ namespace DatabaseManager.Controls
 
             frm.OnFeedback += this.Feedback;
 
-            frm.ShowDialog();            
+            frm.ShowDialog();
         }
 
         private void tsmiImportData_Click(object sender, EventArgs e)
@@ -1540,6 +1541,26 @@ namespace DatabaseManager.Controls
             frm.OnFeedback += this.Feedback;
 
             DialogResult result = frm.ShowDialog();
+        }
+
+        private void tsmiCompareData_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            this.CompareData(node);
+        }
+
+        private void CompareData(TreeNode node)
+        {
+            Database database = node.Tag as Database;
+
+            frmDataCompare frm = new frmDataCompare(this.databaseType, this.GetConnectionInfo(database.Name));
+            frm.ShowDialog();
         }
     }
 }

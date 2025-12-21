@@ -16,7 +16,7 @@ namespace DatabaseInterpreter.Core
                 port = PostgresInterpreter.DEFAULT_PORT.ToString();
             }          
 
-            StringBuilder sb = new StringBuilder($"Host={server};Port={port};Database={connectionInfo.Database};CommandTimeout={timeout};");
+            StringBuilder sb = new StringBuilder($"Host={server};Port={port};Database={connectionInfo.Database};CommandTimeout={timeout};Pooling=true;");
 
             if (connectionInfo.IntegratedSecurity)
             {

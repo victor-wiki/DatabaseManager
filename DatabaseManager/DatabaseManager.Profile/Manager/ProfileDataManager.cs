@@ -6,6 +6,7 @@ using DatabaseInterpreter.Utility;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DatabaseManager.Profile.Manager
@@ -67,7 +68,11 @@ namespace DatabaseManager.Profile.Manager
                         new Table(){ Name = "PersonalSetting" }
                     };
 
-                    DbConvertResult result = await dbConverter.Convert(schemaInfo);              
+                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+                    var token = cancellationTokenSource.Token;
+
+                    DbConvertResult result = await dbConverter.Convert(token, schemaInfo);              
                     
                     if(result.InfoType == DbConvertResultInfoType.Error)
                     {

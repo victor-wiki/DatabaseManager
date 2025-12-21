@@ -5,11 +5,12 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.2.15</Version>
-    <PackageReleaseNotes>fix issue: not convert data type if use quick search.</PackageReleaseNotes>
+    <Version>2.3.0</Version>
+    <PackageReleaseNotes>1. add: data compare;
+2. remove "CancellationTokenSource" from "ScriptRunner".</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.15</AssemblyVersion>
-    <FileVersion>2.2.15</FileVersion>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
+    <FileVersion>2.3.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

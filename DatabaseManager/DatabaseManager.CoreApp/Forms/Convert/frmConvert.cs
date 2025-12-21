@@ -9,6 +9,7 @@ using DatabaseManager.Model;
 using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -152,9 +153,7 @@ namespace DatabaseManager.Forms
             this.txtMessage.ForeColor = Color.Black;
             this.txtMessage.Text = "";
 
-            this.cancellationTokenSource = new CancellationTokenSource();
-
-            await Task.Run(() => this.Convert(), this.cancellationTokenSource.Token);
+            await Task.Run(() => this.Convert());
         }
 
         private bool ValidateSource(SchemaInfo schemaInfo)
@@ -254,7 +253,7 @@ namespace DatabaseManager.Forms
                 ExcludeGeometryForData = this.chkExcludeGeometryForData.Checked
             };
 
-            this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);            
+            this.SetGenerateScriptOption(sourceScriptOption, targetScriptOption);
 
             if (this.chkOutputScripts.Checked)
             {
@@ -286,6 +285,8 @@ namespace DatabaseManager.Forms
 
             try
             {
+                await this.CheckAutoMappings(sourceDbType, targetDbType);
+
                 using (this.dbConverter = new DbConverter(source, target))
                 {
                     var option = this.dbConverter.Option;
@@ -321,13 +322,19 @@ namespace DatabaseManager.Forms
                     if (targetDbType == DatabaseType.MySql)
                     {
                         target.DbInterpreter.Option.RemoveEmoji = true;
-                    }
+                    }                   
 
                     this.dbConverter.Subscribe(this);
 
                     this.SetExecuteButtonEnabled(false);
 
-                    DbConvertResult result = await this.dbConverter.Convert(schemaInfo);
+                    this.cancellationTokenSource = new CancellationTokenSource();
+
+                    var token = this.cancellationTokenSource.Token;
+
+                    token.Register(() => { this.Feedback("Task has been canceled."); });
+
+                    DbConvertResult result = await this.dbConverter.Convert(token, schemaInfo);
 
                     if (option.NeedPreview)
                     {
@@ -340,7 +347,7 @@ namespace DatabaseManager.Forms
 
                             statistic.Subscribe(this);
 
-                            tableColumnContentMaxLengths = await statistic.GetTableColumnContentLengths(new SchemaInfoFilter() { TableNames= schemaInfo.Tables.Select(item=>item.Name).ToArray() });
+                            tableColumnContentMaxLengths = await statistic.GetTableColumnContentLengths(new SchemaInfoFilter() { TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray() });
                         }
 
                         if (translatedSchemaInfo != null)
@@ -354,9 +361,9 @@ namespace DatabaseManager.Forms
                                 translatedSchemaInfo = form.SchemaInfo;
 
                                 option.NeedPreview = false;
-                            });                         
+                            });
 
-                            result = await this.dbConverter.Convert(schemaInfo, null, translatedSchemaInfo);
+                            result = await this.dbConverter.Convert(token, schemaInfo, null, translatedSchemaInfo);
                         }
                     }
 
@@ -366,7 +373,7 @@ namespace DatabaseManager.Forms
                     {
                         if (this.dbConverter != null)
                         {
-                            if (!this.dbConverter.CancelRequested)
+                            if (!this.cancellationTokenSource.IsCancellationRequested)
                             {
                                 this.txtMessage.AppendText(Environment.NewLine + DONE);
 
@@ -416,6 +423,19 @@ namespace DatabaseManager.Forms
             }
         }
 
+        private async Task CheckAutoMappings(DatabaseType sourceDbType, DatabaseType targetDbType)
+        {
+            if (this.schemaMappings.Count == 0 && sourceDbType == targetDbType)
+            {
+                if (SettingManager.Setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType)
+                {
+                    (List<string> SourceSchemas, List<string> TargetSchemas) schemasResult = await DbConverter.GetSourceAndTargetSchemas(this.sourceDatabaseType, this.targetDbProfile.DatabaseType, this.sourceDbConnectionInfo, this.targetDbConnectionInfo); ;
+
+                    this.schemaMappings = DbConverter.GetAutoMappedSchemas(schemasResult.SourceSchemas, schemasResult.TargetSchemas);
+                }
+            }
+        }
+
         private void SetExecuteButtonEnabled(bool enable)
         {
             this.btnExecute.Enabled = enable;
@@ -439,9 +459,14 @@ namespace DatabaseManager.Forms
             MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
+        private void Feedback(string message)
+        {
+            this.Feedback(new FeedbackInfo() { Message = message });
+        }
+
         private void Feedback(FeedbackInfo info)
         {
-            Action action = () =>
+            Action action = async () =>
             {
                 if (info.InfoType == FeedbackInfoType.Error)
                 {
@@ -451,7 +476,7 @@ namespace DatabaseManager.Forms
                         {
                             if (this.dbConverter != null && this.dbConverter.IsBusy)
                             {
-                                this.dbConverter.Cancle();
+                                await this.cancellationTokenSource.CancelAsync();
                             }
 
                             this.SetExecuteButtonEnabled(true);
@@ -545,11 +570,6 @@ namespace DatabaseManager.Forms
                 {
                     await this.cancellationTokenSource.CancelAsync();
 
-                    if (this.dbConverter != null)
-                    {
-                        this.dbConverter.Cancle();
-                    }
-
                     this.SetExecuteButtonEnabled(true);
                 }
             }
@@ -568,13 +588,13 @@ namespace DatabaseManager.Forms
         }
         #endregion    
 
-        private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+        private async void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (this.dbConverter != null && this.dbConverter.IsBusy)
             {
                 if (this.ConfirmCancel())
                 {
-                    this.dbConverter.Cancle();
+                    await this.cancellationTokenSource.CancelAsync();
                     e.Cancel = false;
                 }
                 else
@@ -739,28 +759,15 @@ namespace DatabaseManager.Forms
                 return;
             }
 
-            DbInterpreterOption option = new DbInterpreterOption() { };
+            await this.CheckAutoMappings(sourceDbType, targetDbType);
 
-            DbInterpreter sourceInterpreter = DbInterpreterHelper.GetDbInterpreter(sourceDbType, this.sourceDbConnectionInfo, option);
-            DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(targetDbType, this.targetDbConnectionInfo, option);
-
-            List<DatabaseSchema> sourceSchemas = new List<DatabaseSchema>();
-            List<DatabaseSchema> targetSchemas = new List<DatabaseSchema>();
-
-            try
-            {
-                sourceSchemas = await sourceInterpreter.GetDatabaseSchemasAsync();
-                targetSchemas = await targetInterpreter.GetDatabaseSchemasAsync();
-            }
-            catch (Exception ex)
-            {
-            }
+            (List<string> SourceSchemas, List<string> TargetSchemas) result = await DbConverter.GetSourceAndTargetSchemas(sourceDbType, targetDbType, this.sourceDbConnectionInfo, this.targetDbConnectionInfo); ;
 
             frmSchemaMapping form = new frmSchemaMapping()
             {
                 Mappings = this.schemaMappings,
-                SourceSchemas = sourceSchemas.Select(item => item.Name).ToList(),
-                TargetSchemas = targetSchemas.Select(item => item.Name).ToList()
+                SourceSchemas = result.SourceSchemas,
+                TargetSchemas = result.TargetSchemas
             };
 
             if (form.ShowDialog() == DialogResult.OK)
@@ -768,6 +775,7 @@ namespace DatabaseManager.Forms
                 this.schemaMappings = form.Mappings;
             }
         }
+       
 
         private void chkOutputScripts_CheckedChanged(object sender, EventArgs e)
         {
@@ -821,14 +829,14 @@ namespace DatabaseManager.Forms
                 this.chkGenerateCheckConstraint.Checked = true;
                 this.chkGenerateIdentity.Checked = true;
                 this.chkGenerateComment.Checked = true;
-                this.chkComputeColumn.Checked = true;             
+                this.chkComputeColumn.Checked = true;
             }
 
             bool supportBulkCopy = true;
 
             if (this.targetDbProfile.DatabaseType != DatabaseType.Unknown)
             {
-                DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo??new ConnectionInfo(), new DbInterpreterOption());
+                DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, this.targetDbConnectionInfo ?? new ConnectionInfo(), new DbInterpreterOption());
 
                 if (targetInterpreter != null)
                 {
@@ -838,7 +846,7 @@ namespace DatabaseManager.Forms
 
             this.chkBulkCopy.Enabled = !schemaOnly && supportBulkCopy;
             this.chkBulkCopy.Checked = !schemaOnly && supportBulkCopy;
-            this.chkUseTransaction.Checked = true;            
+            this.chkUseTransaction.Checked = true;
 
             this.SetControlsStatus();
         }
@@ -874,7 +882,7 @@ namespace DatabaseManager.Forms
 
             this.chkNeedPreview.Enabled = enabled;
 
-            if(!enabled)
+            if (!enabled)
             {
                 this.chkNeedPreview.Checked = false;
             }
@@ -884,7 +892,7 @@ namespace DatabaseManager.Forms
         {
             this.SetNeedPreviewControlStatus();
 
-            this.ShowDataTypeMappingConfigFiles();            
+            this.ShowDataTypeMappingConfigFiles();
         }
 
         private void targetDbProfile_DatabaseTypeSelectedChanged(object sender, EventArgs e)

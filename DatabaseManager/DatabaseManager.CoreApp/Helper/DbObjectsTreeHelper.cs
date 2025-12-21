@@ -93,12 +93,12 @@ namespace DatabaseManager.Helper
             return treeNode;
         }
 
-        public static TreeNode AddDbObjectFolderNode<T>(this TreeNode treeNode, IEnumerable<T> dbObjects)
+        public static TreeNode AddDbObjectFolderNode<T>(this TreeNode treeNode, IEnumerable<T> dbObjects, bool showSchema = false)
            where T : DatabaseObject
         {
             string folderName = GetFolderNameByDbObjectType(typeof(T));
 
-            TreeNode node = CreateFolderNode(folderName, folderName, dbObjects);
+            TreeNode node = CreateFolderNode(folderName, folderName, dbObjects, showSchema);
             if (node != null)
             {
                 treeNode.Nodes.Add(node);
@@ -108,10 +108,10 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static TreeNode AddDbObjectFolderNode<T>(this TreeNodeCollection treeNodes, string name, string text, List<T> dbObjects)
+        public static TreeNode AddDbObjectFolderNode<T>(this TreeNodeCollection treeNodes, string name, string text, List<T> dbObjects, bool showSchema = false)
           where T : DatabaseObject
         {
-            TreeNode node = CreateFolderNode(name, text, dbObjects);
+            TreeNode node = CreateFolderNode(name, text, dbObjects, showSchema);
 
             if (node != null)
             {
@@ -123,14 +123,14 @@ namespace DatabaseManager.Helper
             return null;
         }
 
-        public static TreeNode CreateFolderNode<T>(string name, string text, IEnumerable<T> dbObjects)
+        public static TreeNode CreateFolderNode<T>(string name, string text, IEnumerable<T> dbObjects, bool showSchema = false)
            where T : DatabaseObject
         {
             if (dbObjects.Count() > 0)
             {
                 var node = CreateFolderNode(name, text);
 
-                node.Nodes.AddRange(CreateDbObjectNodes(dbObjects).ToArray());
+                node.Nodes.AddRange(CreateDbObjectNodes(dbObjects, showSchema).ToArray());
 
                 return node;
             }
@@ -149,9 +149,9 @@ namespace DatabaseManager.Helper
 
             foreach (var dbObj in dbObjects)
             {
-                string text = showSchema  ? $"{dbObj.Schema}{(string.IsNullOrEmpty(dbObj.Schema)? "":".")}{dbObj.Name}" : dbObj.Name;
+                string text = showSchema ? $"{dbObj.Schema}{(string.IsNullOrEmpty(dbObj.Schema) ? "" : ".")}{dbObj.Name}" : dbObj.Name;
 
-                string imgKeyName = typeof(T).Name;              
+                string imgKeyName = typeof(T).Name;
 
                 if (dbObj is Function func)
                 {
@@ -161,8 +161,8 @@ namespace DatabaseManager.Helper
                     }
                 }
 
-                TreeNode node = CreateTreeNode(dbObj.Name, text, imgKeyName);               
-                node.Tag = dbObj;                
+                TreeNode node = CreateTreeNode(dbObj.Name, text, imgKeyName);
+                node.Tag = dbObj;
 
                 yield return node;
             }
@@ -180,7 +180,7 @@ namespace DatabaseManager.Helper
             else
             {
                 return dbObjects.GroupBy(item => item.Schema).Count() > 1;
-            }            
+            }
         }
-    }   
+    }
 }

@@ -8,19 +8,19 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.2.24</Version>
+    <Version>2.3.0</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
     <PackageReleaseNotes>bug fix: data editor.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.24</AssemblyVersion>
-    <FileVersion>2.2.24</FileVersion>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
+    <FileVersion>2.3.0</FileVersion>
   </PropertyGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="DockPanelSuite.ThemeVS2015" Version="3.1.1" />
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
-    <PackageReference Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
+    <PackageReference Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
     <PackageReference Include="SqlCodeEditor" Version="1.0.5" />
   </ItemGroup>

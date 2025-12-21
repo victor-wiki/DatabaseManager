@@ -20,24 +20,19 @@ namespace DatabaseManager.Core
 {
     public class ScriptRunner
     {
-        private DbTransaction transaction = null;
-        private bool cancelRequested = false;
+        private DbTransaction transaction = null; 
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
         private bool hasError = false;
 
-        public bool IgnoreForeignKeyConstraint { get; set; }
+        public bool IgnoreForeignKeyConstraint { get; set; }     
 
-        public CancellationTokenSource CancellationTokenSource { get; private set; }
-        public bool CancelRequested => this.cancelRequested;
-        public bool IsBusy => this.isBusy;
         public int LimitCount { get; set; } = 1000;
 
         public event FeedbackHandler OnFeedback;
 
         public ScriptRunner()
-        {
-            this.CancellationTokenSource = new CancellationTokenSource();
+        {            
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -45,9 +40,9 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script, ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null)
+        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script, 
+            CancellationToken cancellationToken,ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null)
         {
-            this.cancelRequested = false;
             this.isBusy = false;
 
             QueryResult result = new QueryResult();
@@ -60,7 +55,7 @@ namespace DatabaseManager.Core
 
             try
             {
-                ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);               
+                ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);
 
                 using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
@@ -186,6 +181,12 @@ namespace DatabaseManager.Core
 
                         foreach (string command in commands)
                         {
+                            if(cancellationToken.IsCancellationRequested)
+                            {
+                                await transaction.RollbackAsync();
+                                break;
+                            }
+
                             if (string.IsNullOrEmpty(command.Trim()))
                             {
                                 continue;
@@ -196,7 +197,7 @@ namespace DatabaseManager.Core
                                 CommandType = commandType,
                                 CommandText = command,
                                 Transaction = this.transaction,
-                                CancellationToken = this.CancellationTokenSource.Token
+                                CancellationToken = cancellationToken
                             };
 
                             if (commandType == CommandType.StoredProcedure)
@@ -205,7 +206,7 @@ namespace DatabaseManager.Core
                                 {
                                     this.ParseOracleProcedureCall(commandInfo, parameters);
                                 }
-                            }                           
+                            }
 
                             ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
@@ -214,13 +215,11 @@ namespace DatabaseManager.Core
 
                         result.Result = affectedRows;
 
-                        if (!this.cancelRequested)
+                        if (!cancellationToken.IsCancellationRequested)
                         {
-                            this.transaction.Commit();
+                            await this.transaction.CommitAsync();
                         }
                     }
-
-                    this.isBusy = false;
                 }
             }
             catch (Exception ex)
@@ -275,17 +274,17 @@ namespace DatabaseManager.Core
             }
         }
 
-        public async Task Run(DbInterpreter dbInterpreter, IEnumerable<Script> scripts)
+        public async Task Run(DbInterpreter dbInterpreter, IEnumerable<Script> scripts, CancellationToken cancellationToken)
         {
             using (DbConnection dbConnection = dbInterpreter.CreateConnection())
             {
-                if(this.IgnoreForeignKeyConstraint)
+                if (this.IgnoreForeignKeyConstraint)
                 {
-                    if(dbInterpreter.DatabaseType == DatabaseType.Sqlite)
+                    if (dbInterpreter.DatabaseType == DatabaseType.Sqlite)
                     {
                         dbConnection.ConnectionString = dbConnection.ConnectionString + ";Foreign Keys=False";
-                    }                    
-                }               
+                    }
+                }
 
                 await dbConnection.OpenAsync();
 
@@ -306,6 +305,11 @@ namespace DatabaseManager.Core
                         continue;
                     }
 
+                    if(cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    
                     string sql = s.Content?.Trim();
 
                     if (!string.IsNullOrEmpty(sql) && sql != dbInterpreter.ScriptsDelimiter)
@@ -324,7 +328,7 @@ namespace DatabaseManager.Core
                                 CommandType = CommandType.Text,
                                 CommandText = sql,
                                 Transaction = transaction,
-                                CancellationToken = this.CancellationTokenSource.Token
+                                CancellationToken = cancellationToken
                             };
 
                             await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
@@ -332,7 +336,10 @@ namespace DatabaseManager.Core
                     }
                 }
 
-                transaction.Commit();
+                if(!cancellationToken.IsCancellationRequested)
+                {
+                    await transaction.CommitAsync();
+                }               
             }
         }
 
@@ -342,19 +349,7 @@ namespace DatabaseManager.Core
 
             string errMsg = ExceptionHelper.GetExceptionDetails(ex);
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true, true);
-        }
-
-        public async void Cancle()
-        {
-            this.cancelRequested = true;
-
-            this.Rollback();
-
-            if (this.CancellationTokenSource != null)
-            {
-                await this.CancellationTokenSource.CancelAsync();
-            }
-        }
+        }       
 
         private async void Rollback(Exception ex = null)
         {
@@ -362,8 +357,6 @@ namespace DatabaseManager.Core
             {
                 try
                 {
-                    this.cancelRequested = true;
-
                     bool hasRollbacked = false;
 
                     if (ex != null && ex is DbCommandException dbe)
@@ -426,7 +419,7 @@ namespace DatabaseManager.Core
 
                     bool hasTableName = tableName != null;
                     bool hasAlias = alias != null;
-                    bool isFromDUAL =  tableName?.Symbol?.ToUpper() == "DUAL";
+                    bool isFromDUAL = tableName?.Symbol?.ToUpper() == "DUAL";
 
                     if (!isFromDUAL && (hasTableName || hasAlias) && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
                     {
@@ -444,7 +437,7 @@ namespace DatabaseManager.Core
                             if (canUseOrderby)
                             {
                                 selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
-                            }                            
+                            }
                         }
 
                         if (databaseType == DatabaseType.SqlServer)

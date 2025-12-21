@@ -48,6 +48,7 @@
             tsBtnSave = new System.Windows.Forms.ToolStripButton();
             tsBtnGenerateScripts = new System.Windows.Forms.ToolStripButton();
             tsBtnCompare = new System.Windows.Forms.ToolStripButton();
+            tsBtnDataCompare = new System.Windows.Forms.ToolStripButton();
             tsBtnConvert = new System.Windows.Forms.ToolStripButton();
             tsBtnTranslateScript = new System.Windows.Forms.ToolStripButton();
             tsBtnRun = new System.Windows.Forms.ToolStripButton();
@@ -159,7 +160,7 @@
             // toolStrip1
             // 
             toolStrip1.AutoSize = false;
-            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsBtnAddQuery, tsBtnOpenFile, tsBtnSave, tsBtnGenerateScripts, tsBtnCompare, tsBtnConvert, tsBtnTranslateScript, tsBtnRun });
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsBtnAddQuery, tsBtnOpenFile, tsBtnSave, tsBtnGenerateScripts, tsBtnCompare, tsBtnDataCompare, tsBtnConvert, tsBtnTranslateScript, tsBtnRun });
             toolStrip1.Location = new System.Drawing.Point(0, 27);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
@@ -228,8 +229,20 @@
             tsBtnCompare.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsBtnCompare.Name = "tsBtnCompare";
             tsBtnCompare.Size = new System.Drawing.Size(35, 35);
-            tsBtnCompare.ToolTipText = "Compare Database";
+            tsBtnCompare.ToolTipText = "Schema Compare";
             tsBtnCompare.Click += tsBtnCompare_Click;
+            // 
+            // tsBtnDataCompare
+            // 
+            tsBtnDataCompare.AutoSize = false;
+            tsBtnDataCompare.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsBtnDataCompare.Image = Resources.DataCompare32;
+            tsBtnDataCompare.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsBtnDataCompare.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsBtnDataCompare.Name = "tsBtnDataCompare";
+            tsBtnDataCompare.Size = new System.Drawing.Size(35, 35);
+            tsBtnDataCompare.Text = "Data Compare";
+            tsBtnDataCompare.Click += tsBtnDataCompare_Click;
             // 
             // tsBtnConvert
             // 
@@ -338,6 +351,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiViews;
         private System.Windows.Forms.ToolStripMenuItem tsmiObjectsExplorer;
         private System.Windows.Forms.ToolStripMenuItem tsmiMessage;
+        private System.Windows.Forms.ToolStripButton tsBtnDataCompare;
     }
 }
 

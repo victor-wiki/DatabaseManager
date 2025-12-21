@@ -103,6 +103,16 @@ namespace DatabaseManager {
         /// <summary>
         ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
         /// </summary>
+        internal static System.Drawing.Icon _dataCompare {
+            get {
+                object obj = ResourceManager.GetObject("_dataCompare", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似于 (图标) 的 System.Drawing.Icon 类型的本地化资源。
+        /// </summary>
         internal static System.Drawing.Icon _dbBackup {
             get {
                 object obj = ResourceManager.GetObject("_dbBackup", resourceCulture);
@@ -286,6 +296,16 @@ namespace DatabaseManager {
         internal static System.Drawing.Bitmap Database16 {
             get {
                 object obj = ResourceManager.GetObject("Database16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap DataCompare32 {
+            get {
+                object obj = ResourceManager.GetObject("DataCompare32", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

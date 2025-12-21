@@ -38,7 +38,7 @@ namespace DatabaseManager.Forms
             TreeView.CheckForIllegalCrossThreadCalls = false;
             TextBox.CheckForIllegalCrossThreadCalls = false;
 
-            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear);         
+            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear);
             this.tsmiLock.Image = IconImageHelper.GetImage(IconChar.Lock, Color.Orange);
             this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon);
             this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid);
@@ -134,7 +134,7 @@ namespace DatabaseManager.Forms
 
                 if (data.Name == info.Name && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
                 {
-                    if(data.ConnectionInfo == info.ConnectionInfo)
+                    if (data.ConnectionInfo == info.ConnectionInfo)
                     {
                         if (info.DisplayType == DatabaseObjectDisplayType.Script)
                         {
@@ -145,7 +145,7 @@ namespace DatabaseManager.Forms
                         }
 
                         return content;
-                    }                    
+                    }
                 }
             }
 
@@ -284,7 +284,7 @@ namespace DatabaseManager.Forms
         {
             ConnectionInfo connectionInfo = this.explorerForm.Explorer.GetCurrentConnectionInfo();
 
-            if(connectionInfo == null)
+            if (connectionInfo == null)
             {
                 MessageBox.Show("Please select a database from the left navigator first.");
                 return;
@@ -292,12 +292,12 @@ namespace DatabaseManager.Forms
 
             var control = this.GetCurrentContentForm()?.ContentControl;
 
-            if(control!=null)
+            if (control != null)
             {
                 control.DisplayInfo.ConnectionInfo = connectionInfo;
 
                 control.RunScripts();
-            }           
+            }
         }
 
         private void tsBtnSave_Click(object sender, EventArgs e)
@@ -384,7 +384,7 @@ namespace DatabaseManager.Forms
 
         private void tsBtnCompare_Click(object sender, EventArgs e)
         {
-            frmCompare form = new frmCompare();
+            frmSchemaCompare form = new frmSchemaCompare();
             form.ShowDialog();
         }
 
@@ -463,7 +463,7 @@ namespace DatabaseManager.Forms
                         this.dockPanelMain.ActiveAutoHideContent = this.messageForm;
                     };
 
-                    if(this.dockPanelMain.InvokeRequired)
+                    if (this.dockPanelMain.InvokeRequired)
                     {
                         this.dockPanelMain.Invoke(action);
                     }
@@ -471,13 +471,19 @@ namespace DatabaseManager.Forms
                     {
                         action();
                     }
-                  
+
                     this.messageForm.DockHandler.Activate();
                 }
             }
             catch (Exception ex)
             {
             }
+        }
+
+        private void tsBtnDataCompare_Click(object sender, EventArgs e)
+        {
+            frmDataCompare frm = new frmDataCompare();
+            frm.ShowDialog();
         }
     }
 }

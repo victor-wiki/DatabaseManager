@@ -78,6 +78,7 @@
             label7 = new System.Windows.Forms.Label();
             tabConvert = new System.Windows.Forms.TabPage();
             panel_Convert = new System.Windows.Forms.Panel();
+            chkAutoMapSchema = new System.Windows.Forms.CheckBox();
             chkShowCurrentColumnContentMaxLength = new System.Windows.Forms.CheckBox();
             btnSelectTargetDatabaseTypesForConcatChar = new System.Windows.Forms.Button();
             label6 = new System.Windows.Forms.Label();
@@ -645,6 +646,7 @@
             // 
             // panel_Convert
             // 
+            panel_Convert.Controls.Add(chkAutoMapSchema);
             panel_Convert.Controls.Add(chkShowCurrentColumnContentMaxLength);
             panel_Convert.Controls.Add(btnSelectTargetDatabaseTypesForConcatChar);
             panel_Convert.Controls.Add(label6);
@@ -662,6 +664,19 @@
             panel_Convert.Size = new System.Drawing.Size(695, 402);
             panel_Convert.TabIndex = 48;
             // 
+            // chkAutoMapSchema
+            // 
+            chkAutoMapSchema.AutoSize = true;
+            chkAutoMapSchema.Checked = true;
+            chkAutoMapSchema.CheckState = System.Windows.Forms.CheckState.Checked;
+            chkAutoMapSchema.Location = new System.Drawing.Point(10, 125);
+            chkAutoMapSchema.Margin = new System.Windows.Forms.Padding(4);
+            chkAutoMapSchema.Name = "chkAutoMapSchema";
+            chkAutoMapSchema.Size = new System.Drawing.Size(464, 21);
+            chkAutoMapSchema.TabIndex = 46;
+            chkAutoMapSchema.Text = "Auto map schema if source database type is equal to target database type";
+            chkAutoMapSchema.UseVisualStyleBackColor = true;
+            // 
             // chkShowCurrentColumnContentMaxLength
             // 
             chkShowCurrentColumnContentMaxLength.AutoSize = true;
@@ -676,7 +691,7 @@
             // 
             // btnSelectTargetDatabaseTypesForConcatChar
             // 
-            btnSelectTargetDatabaseTypesForConcatChar.Location = new System.Drawing.Point(265, 210);
+            btnSelectTargetDatabaseTypesForConcatChar.Location = new System.Drawing.Point(265, 235);
             btnSelectTargetDatabaseTypesForConcatChar.Name = "btnSelectTargetDatabaseTypesForConcatChar";
             btnSelectTargetDatabaseTypesForConcatChar.Size = new System.Drawing.Size(75, 26);
             btnSelectTargetDatabaseTypesForConcatChar.TabIndex = 44;
@@ -686,7 +701,7 @@
             // label6
             // 
             label6.AutoSize = true;
-            label6.Location = new System.Drawing.Point(8, 213);
+            label6.Location = new System.Drawing.Point(8, 238);
             label6.Name = "label6";
             label6.Size = new System.Drawing.Size(248, 17);
             label6.TabIndex = 43;
@@ -719,7 +734,7 @@
             // panel_Translate
             // 
             panel_Translate.Controls.Add(chkValidateScriptsAfterTranslated);
-            panel_Translate.Location = new System.Drawing.Point(5, 259);
+            panel_Translate.Location = new System.Drawing.Point(5, 284);
             panel_Translate.Name = "panel_Translate";
             panel_Translate.Size = new System.Drawing.Size(491, 36);
             panel_Translate.TabIndex = 40;
@@ -748,7 +763,7 @@
             // 
             // txtCustomMappingFolder
             // 
-            txtCustomMappingFolder.Location = new System.Drawing.Point(233, 126);
+            txtCustomMappingFolder.Location = new System.Drawing.Point(233, 151);
             txtCustomMappingFolder.Margin = new System.Windows.Forms.Padding(4);
             txtCustomMappingFolder.Name = "txtCustomMappingFolder";
             txtCustomMappingFolder.Size = new System.Drawing.Size(273, 23);
@@ -756,7 +771,7 @@
             // 
             // btnCustomMappingFolder
             // 
-            btnCustomMappingFolder.Location = new System.Drawing.Point(515, 126);
+            btnCustomMappingFolder.Location = new System.Drawing.Point(515, 149);
             btnCustomMappingFolder.Margin = new System.Windows.Forms.Padding(4);
             btnCustomMappingFolder.Name = "btnCustomMappingFolder";
             btnCustomMappingFolder.Size = new System.Drawing.Size(42, 24);
@@ -767,7 +782,7 @@
             // label11
             // 
             label11.AutoSize = true;
-            label11.Location = new System.Drawing.Point(8, 128);
+            label11.Location = new System.Drawing.Point(8, 153);
             label11.Name = "label11";
             label11.Size = new System.Drawing.Size(219, 17);
             label11.TabIndex = 2;
@@ -775,7 +790,7 @@
             // 
             // btnSetDataTypeMapping
             // 
-            btnSetDataTypeMapping.Location = new System.Drawing.Point(162, 163);
+            btnSetDataTypeMapping.Location = new System.Drawing.Point(162, 188);
             btnSetDataTypeMapping.Name = "btnSetDataTypeMapping";
             btnSetDataTypeMapping.Size = new System.Drawing.Size(75, 23);
             btnSetDataTypeMapping.TabIndex = 1;
@@ -785,7 +800,7 @@
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new System.Drawing.Point(8, 165);
+            label10.Location = new System.Drawing.Point(8, 190);
             label10.Name = "label10";
             label10.Size = new System.Drawing.Size(129, 17);
             label10.TabIndex = 0;
@@ -897,5 +912,6 @@
         private System.Windows.Forms.CheckBox chkEnableEditorHighlighting;
         private System.Windows.Forms.CheckBox chkEditorEnableIntellisence;
         private System.Windows.Forms.CheckBox chkShowCurrentColumnContentMaxLength;
+        private System.Windows.Forms.CheckBox chkAutoMapSchema;
     }
 }

@@ -102,7 +102,7 @@
             pagination.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             pagination.Name = "pagination";
             pagination.PageCount = 0L;
-            pagination.PageNum = 1L;
+            pagination.PageNumber = 1L;
             pagination.PageSize = 10;
             pagination.Size = new System.Drawing.Size(769, 37);
             pagination.TabIndex = 6;

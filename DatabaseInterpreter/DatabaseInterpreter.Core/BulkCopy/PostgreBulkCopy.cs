@@ -72,7 +72,7 @@ namespace DatabaseInterpreter.Core
 
             if (_externalTransaction != null && _externalTransaction.Connection != _connection)
             {
-                throw new Exception("Postgres Transaction mismatch with Oracle Database Connection");
+                throw new Exception("Postgres Transaction mismatch with Postgres Database Connection");
             }
         }
         private async Task OpenConnectionAsync()
@@ -82,6 +82,7 @@ namespace DatabaseInterpreter.Core
                 await this._connection.OpenAsync();
             }
         }
+
         public async Task<ulong> WriteToServerAsync(DataTable table)
         {
             if (table == null)
@@ -91,11 +92,13 @@ namespace DatabaseInterpreter.Core
 
             return await this.CopyData(table);
         }
+
         private async Task<ulong> CopyData(DataTable table)
         {
             string columnList = this.GetColumnList(table);
 
             this.ValidateConnection();
+
             await this.OpenConnectionAsync();
 
             string commandText = $"COPY {this.DestinationTableName}({columnList}) FROM STDIN (FORMAT BINARY)";

@@ -6,40 +6,40 @@ using System.Linq;
 
 namespace DatabaseManager.Core
 {
-    public class DbCompare
+    public class SchemaCompare
     {
         private SchemaInfo sourceShemaInfo;
         private SchemaInfo targetSchemaInfo;    
 
-        public DbCompare(SchemaInfo sourceShemaInfo, SchemaInfo targetSchemaInfo)
+        public SchemaCompare(SchemaInfo sourceShemaInfo, SchemaInfo targetSchemaInfo)
         {
             this.sourceShemaInfo = sourceShemaInfo;
             this.targetSchemaInfo = targetSchemaInfo;           
         }
 
-        public List<DbDifference> Compare()
+        public List<SchemaCompareDifference> Compare()
         {
-            List<DbDifference> differences = new List<DbDifference>();
+            List<SchemaCompareDifference> differences = new List<SchemaCompareDifference>();
 
             differences.AddRange(this.CompareDatabaseObjects<UserDefinedType>(nameof(UserDefinedType), DatabaseObjectType.Type, this.sourceShemaInfo.UserDefinedTypes, targetSchemaInfo.UserDefinedTypes));
 
             #region Table
             foreach (Table target in targetSchemaInfo.Tables)
             {
-                DbDifference difference = new DbDifference() { Type = nameof(Table), DatabaseObjectType = DatabaseObjectType.Table };
+                SchemaCompareDifference difference = new SchemaCompareDifference() { Type = nameof(Table), DatabaseObjectType = DatabaseObjectType.Table };
 
                 Table source = this.sourceShemaInfo.Tables.FirstOrDefault(item => this.IsNameEquals(item.Name, target.Name));
 
                 if (source == null)
                 {
-                    difference.DifferenceType = DbDifferenceType.Deleted;
+                    difference.DifferenceType = SchemaCompareDifferenceType.Deleted;
                     difference.Target = target;
 
                     differences.Add(difference);
                 }
                 else
                 {
-                    difference.DifferenceType = DbDifferenceType.None;
+                    difference.DifferenceType = SchemaCompareDifferenceType.None;
                     difference.Source = source;
                     difference.Target = target;
 
@@ -110,9 +110,9 @@ namespace DatabaseManager.Core
 
                         difference.SubDifferences.ForEach(item => item.Parent = difference);
 
-                        if (difference.SubDifferences.Any(item => item.DifferenceType != DbDifferenceType.None))
+                        if (difference.SubDifferences.Any(item => item.DifferenceType != SchemaCompareDifferenceType.None))
                         {
-                            difference.DifferenceType = DbDifferenceType.Modified;
+                            difference.DifferenceType = SchemaCompareDifferenceType.Modified;
                         }
                     }
                 }
@@ -122,8 +122,8 @@ namespace DatabaseManager.Core
             {
                 if (!targetSchemaInfo.Tables.Any(item => this.IsNameEquals(item.Name, source.Name)))
                 {
-                    DbDifference difference = new DbDifference() { Type = nameof(Table), DatabaseObjectType = DatabaseObjectType.Table };
-                    difference.DifferenceType = DbDifferenceType.Added;
+                    SchemaCompareDifference difference = new SchemaCompareDifference() { Type = nameof(Table), DatabaseObjectType = DatabaseObjectType.Table };
+                    difference.DifferenceType = SchemaCompareDifferenceType.Added;
                     difference.Source = source;
 
                     differences.Add(difference);
@@ -138,20 +138,20 @@ namespace DatabaseManager.Core
             return differences;
         }
 
-        private List<DbDifference> CompareTableChildren<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
+        private List<SchemaCompareDifference> CompareTableChildren<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
             where T : TableChild
         {
-            List<DbDifference> differences = new List<DbDifference>();
+            List<SchemaCompareDifference> differences = new List<SchemaCompareDifference>();
 
             foreach (T target in targetObjects)
             {
-                DbDifference difference = new DbDifference() { Type = type, DatabaseObjectType = databaseObjectType, ParentName = target.TableName };
+                SchemaCompareDifference difference = new SchemaCompareDifference() { Type = type, DatabaseObjectType = databaseObjectType, ParentName = target.TableName };
 
                 T source = sourceObjects.FirstOrDefault(item => this.IsNameEquals(item.Name, target.Name));
 
                 if (source == null)
                 {
-                    difference.DifferenceType = DbDifferenceType.Deleted;
+                    difference.DifferenceType = SchemaCompareDifferenceType.Deleted;
                     difference.Target = target;
 
                     differences.Add(difference);
@@ -163,7 +163,7 @@ namespace DatabaseManager.Core
 
                     if (!this.IsDbObjectEquals(source, target))
                     {
-                        difference.DifferenceType = DbDifferenceType.Modified;
+                        difference.DifferenceType = SchemaCompareDifferenceType.Modified;
                     }
 
                     differences.Add(difference);
@@ -174,8 +174,8 @@ namespace DatabaseManager.Core
             {
                 if (!targetObjects.Any(item => this.IsNameEquals(item.Name, source.Name)))
                 {
-                    DbDifference difference = new DbDifference() { Type = type, DatabaseObjectType = databaseObjectType, ParentName = source.TableName };
-                    difference.DifferenceType = DbDifferenceType.Added;
+                    SchemaCompareDifference difference = new SchemaCompareDifference() { Type = type, DatabaseObjectType = databaseObjectType, ParentName = source.TableName };
+                    difference.DifferenceType = SchemaCompareDifferenceType.Added;
                     difference.Source = source;
 
                     differences.Add(difference);
@@ -185,20 +185,20 @@ namespace DatabaseManager.Core
             return differences;
         }
 
-        private List<DbDifference> CompareDatabaseObjects<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
+        private List<SchemaCompareDifference> CompareDatabaseObjects<T>(string type, DatabaseObjectType databaseObjectType, IEnumerable<T> sourceObjects, IEnumerable<T> targetObjects)
             where T : DatabaseObject
         {
-            List<DbDifference> differences = new List<DbDifference>();
+            List<SchemaCompareDifference> differences = new List<SchemaCompareDifference>();
 
             foreach (T target in targetObjects)
             {
-                DbDifference difference = new DbDifference() { Type = type, DatabaseObjectType = databaseObjectType };
+                SchemaCompareDifference difference = new SchemaCompareDifference() { Type = type, DatabaseObjectType = databaseObjectType };
 
                 T source = sourceObjects.FirstOrDefault(item => this.IsNameEquals(item.Name, target.Name));
 
                 if (source == null)
                 {
-                    difference.DifferenceType = DbDifferenceType.Deleted;
+                    difference.DifferenceType = SchemaCompareDifferenceType.Deleted;
                     difference.Target = target;
 
                     differences.Add(difference);
@@ -210,7 +210,7 @@ namespace DatabaseManager.Core
 
                     if (!this.IsDbObjectEquals(source, target))
                     {
-                        difference.DifferenceType = DbDifferenceType.Modified;
+                        difference.DifferenceType = SchemaCompareDifferenceType.Modified;
                     }
 
                     differences.Add(difference);
@@ -221,8 +221,8 @@ namespace DatabaseManager.Core
             {
                 if (!targetObjects.Any(item => this.IsNameEquals(item.Name, source.Name)))
                 {
-                    DbDifference difference = new DbDifference() { Type = type, DatabaseObjectType = databaseObjectType };
-                    difference.DifferenceType = DbDifferenceType.Added;
+                    SchemaCompareDifference difference = new SchemaCompareDifference() { Type = type, DatabaseObjectType = databaseObjectType };
+                    difference.DifferenceType = SchemaCompareDifferenceType.Added;
                     difference.Source = source;
 
                     differences.Add(difference);

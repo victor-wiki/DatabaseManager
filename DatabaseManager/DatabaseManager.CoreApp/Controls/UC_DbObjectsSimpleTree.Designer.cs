@@ -43,7 +43,7 @@
             tvDbObjects.Margin = new System.Windows.Forms.Padding(4);
             tvDbObjects.Name = "tvDbObjects";
             tvDbObjects.Size = new System.Drawing.Size(290, 449);
-            tvDbObjects.TabIndex = 20;
+            tvDbObjects.TabIndex = 20;      
             tvDbObjects.AfterCheck += tvDbObjects_AfterCheck;
             tvDbObjects.AfterSelect += tvDbObjects_AfterSelect;
             tvDbObjects.NodeMouseClick += tvDbObjects_NodeMouseClick;

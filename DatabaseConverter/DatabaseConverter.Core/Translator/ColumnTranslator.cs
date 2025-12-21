@@ -642,6 +642,10 @@ namespace DatabaseConverter.Core
                     {
                         list.Add(item.Replace(trimedItem, $"CAST({trimedItem} AS VARCHAR(MAX))"));
                     }
+                    else
+                    {
+                        list.Add(item);
+                    }
                 }
                 else
                 {

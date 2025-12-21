@@ -68,8 +68,9 @@ namespace DatabaseManager.Forms
             this.txtScriptOutputFolder.Text = setting.ScriptsDefaultOutputFolder;
             this.chkNeedPreviewBeforeConvert.Checked = setting.NeedPreviewBeforeConvert;
             this.chkShowCurrentColumnContentMaxLength.Checked = setting.ShowCurrentColumnContentMaxLength;
+            this.chkAutoMapSchema.Checked = setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType;
 
-            if(string.IsNullOrEmpty(setting.CustomMappingFolder))
+            if (string.IsNullOrEmpty(setting.CustomMappingFolder))
             {
                 this.txtCustomMappingFolder.Text = DataTypeMappingManager.CustomConfigRootFolder;
             }
@@ -123,6 +124,7 @@ namespace DatabaseManager.Forms
             setting.CustomMappingFolder = this.txtCustomMappingFolder.Text;
             setting.NeedPreviewBeforeConvert = this.chkNeedPreviewBeforeConvert.Checked;
             setting.ShowCurrentColumnContentMaxLength = this.chkShowCurrentColumnContentMaxLength.Checked;
+            setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType = this.chkAutoMapSchema.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 

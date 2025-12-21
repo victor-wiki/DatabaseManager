@@ -7,11 +7,12 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.2.5</Version>
+    <Version>2.3.0</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.5</AssemblyVersion>
-    <FileVersion>2.2.5</FileVersion>
-    <PackageReleaseNotes>support preview before converting.</PackageReleaseNotes>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
+    <FileVersion>2.3.0</FileVersion>
+    <PackageReleaseNotes>1. DbConverter: add method "CopyData"; remove property "CancellationTokenSource";
+2. issue fix: expression parse of compute column.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

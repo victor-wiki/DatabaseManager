@@ -57,15 +57,15 @@ namespace DatabaseManager.Helper
 
                             if (valueType == typeof(byte[]))
                             {
-                                newColumnType = typeof(String);                                
-                                newValue = ValueHelper.BytesToHexString(value as byte[]);                              
+                                newColumnType = typeof(String);
+                                newValue = ValueHelper.BytesToHexString(value as byte[]);
                             }
-                            else if(valueType == typeof(BitArray))
+                            else if (valueType == typeof(BitArray))
                             {
                                 newColumnType = typeof(String);
 
                                 BitArray bitArray = value as BitArray;
-                                byte[] bytes =new byte[bitArray.Length];
+                                byte[] bytes = new byte[bitArray.Length];
                                 bitArray.CopyTo(bytes, 0);
 
                                 newValue = ValueHelper.BytesToHexString(bytes);
@@ -88,7 +88,7 @@ namespace DatabaseManager.Helper
                                 newColumnType = typeof(String);
                                 newValue = (value as PgGeom.Geometry)?.AsText();
                             }
-                            else if(valueType == typeof(StGeometry))
+                            else if (valueType == typeof(StGeometry))
                             {
                                 newColumnType = typeof(String);
                                 newValue = (value as StGeometry)?.ToString();
@@ -139,8 +139,10 @@ namespace DatabaseManager.Helper
             return dtChanged;
         }
 
-        public static void FormatCell(DataGridView gridView, DataGridViewCellFormattingEventArgs e)
+        public static void FormatCell(DataGridView gridView, DataGridViewCellFormattingEventArgs e, bool showNullValue = false, bool changeNullValueColor = false)
         {
+            bool isNullValue = false;
+
             if (e.Value != null)
             {
                 Type type = e.Value.GetType();
@@ -165,7 +167,37 @@ namespace DatabaseManager.Helper
                         }
                     }
                 }
+                else
+                {
+                    isNullValue = true;
+                }
             }
+            else
+            {
+                isNullValue = true;
+            }
+
+            if (isNullValue)
+            {
+                if(showNullValue)
+                {
+                    e.Value = "NULL";
+
+                    FontStyle fontStyle = FontStyle.Italic;
+
+                    if(e.CellStyle.Font.Bold)
+                    {
+                        fontStyle |= FontStyle.Bold;
+                    }
+
+                    e.CellStyle.Font = new Font(gridView.Font, fontStyle);
+                }                
+
+                if(changeNullValueColor)
+                {
+                    e.CellStyle.ForeColor = Color.Gray;
+                }
+            }               
         }
 
         public static string GetCurrentCellValue(DataGridView gridView)

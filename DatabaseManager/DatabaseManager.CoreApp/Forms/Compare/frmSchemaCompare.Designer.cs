@@ -2,7 +2,7 @@
 
 namespace DatabaseManager.Forms
 {
-    partial class frmCompare
+    partial class frmSchemaCompare
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,7 @@ namespace DatabaseManager.Forms
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmCompare));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSchemaCompare));
             btnCompare = new System.Windows.Forms.Button();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             tlvDifferences = new BrightIdeasSoftware.TreeListView();
@@ -53,8 +53,8 @@ namespace DatabaseManager.Forms
             tsmiCollapseAll = new System.Windows.Forms.ToolStripMenuItem();
             tsmiGenerateChangedScripts = new System.Windows.Forms.ToolStripMenuItem();
             tsmiFindText = new System.Windows.Forms.ToolStripMenuItem();
-            targetDbProfile = new Controls.UC_DbConnectionProfile();
-            sourceDbProfile = new Controls.UC_DbConnectionProfile();
+            targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
+            sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -123,6 +123,7 @@ namespace DatabaseManager.Forms
             tlvDifferences.SelectedForeColor = System.Drawing.Color.Black;
             tlvDifferences.ShowFilterMenuOnRightClick = false;
             tlvDifferences.ShowGroups = false;
+            tlvDifferences.ShowImagesOnSubItems = true;
             tlvDifferences.Size = new System.Drawing.Size(853, 302);
             tlvDifferences.SmallImageList = imageList1;
             tlvDifferences.TabIndex = 1;
@@ -234,7 +235,7 @@ namespace DatabaseManager.Forms
             btnSync.Name = "btnSync";
             btnSync.Size = new System.Drawing.Size(88, 33);
             btnSync.TabIndex = 42;
-            btnSync.Text = "Sync";
+            btnSync.Text = "Synchroize";
             btnSync.UseVisualStyleBackColor = true;
             btnSync.Click += btnSync_Click;
             // 
@@ -287,7 +288,7 @@ namespace DatabaseManager.Forms
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiExpandAll, tsmiCollapseAll, tsmiGenerateChangedScripts, tsmiFindText });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(229, 92);
+            contextMenuStrip1.Size = new System.Drawing.Size(229, 114);
             // 
             // tsmiExpandAll
             // 
@@ -332,6 +333,7 @@ namespace DatabaseManager.Forms
             targetDbProfile.TabIndex = 40;
             targetDbProfile.Title = "Target:";
             targetDbProfile.ProfileSelectedChanged += targetDbProfile_OnSelectedChanged;
+            targetDbProfile.DatabaseTypeSelectedChanged += targetDbProfile_DatabaseTypeSelectedChanged;
             // 
             // sourceDbProfile
             // 
@@ -345,8 +347,9 @@ namespace DatabaseManager.Forms
             sourceDbProfile.TabIndex = 39;
             sourceDbProfile.Title = "Source:";
             sourceDbProfile.ProfileSelectedChanged += sourceDbProfile_OnSelectedChanged;
+            sourceDbProfile.DatabaseTypeSelectedChanged += targetDbProfile_DatabaseTypeSelectedChanged;
             // 
-            // frmCompare
+            // frmSchemaCompare
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -361,7 +364,7 @@ namespace DatabaseManager.Forms
             Controls.Add(btnCompare);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4);
-            Name = "frmCompare";
+            Name = "frmSchemaCompare";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Database Compare";
             Load += frmCompare_Load;

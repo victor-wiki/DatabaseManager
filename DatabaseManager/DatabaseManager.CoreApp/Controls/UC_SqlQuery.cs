@@ -12,6 +12,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -25,6 +26,7 @@ namespace DatabaseManager.Controls
         private bool showEditorMessage = true;
         private string originalText = string.Empty;
         private bool isResultReturned = false;
+        private CancellationTokenSource cancellationTokenSource;
 
         public UC_QueryEditor QueryEditor => this.queryEditor;
 
@@ -211,7 +213,13 @@ namespace DatabaseManager.Controls
 
             if (this.CheckConnection())
             {
-                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, data.ScriptAction, data.ScriptParameters);
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                var token = this.cancellationTokenSource.Token;
+
+                token.Register(async () => { await this.Feedback( new FeedbackInfo() { Message = "Task has been canceled." }); });
+
+                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters);
 
                 this.isResultReturned = true;
 
@@ -340,15 +348,18 @@ namespace DatabaseManager.Controls
         }
         #endregion
 
-        private void Feedback(FeedbackInfo info)
+        private async Task Feedback(FeedbackInfo info)
         {
             if (info.InfoType == FeedbackInfoType.Error)
             {
                 if (!info.IgnoreError)
                 {
-                    if (this.scriptRunner != null && this.scriptRunner.IsBusy)
+                    if (this.scriptRunner != null)
                     {
-                        this.scriptRunner.Cancle();
+                        if(this.cancellationTokenSource!= null)
+                        {
+                            await this.cancellationTokenSource.CancelAsync();
+                        }                       
                     }
                 }
 

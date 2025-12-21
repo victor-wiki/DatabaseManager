@@ -621,6 +621,7 @@ namespace DatabaseInterpreter.Core
             bulkCopy.DestinationTableName = this.GetQuotedString(bulkCopyInfo.DestinationTableName);
 
             int i = 0;
+
             foreach (DataColumn column in dataTable.Columns)
             {
                 bulkCopy.ColumnMappings.Add(new MySqlBulkCopyColumnMapping(i, column.ColumnName));

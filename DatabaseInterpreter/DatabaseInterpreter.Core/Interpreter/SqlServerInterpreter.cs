@@ -746,15 +746,15 @@ namespace DatabaseInterpreter.Core
         {
             base.ExcludeComputedColumnsForBulkCopy(dataTable, bulkCopyInfo);
 
-            SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo);
-            {               
+            using (SqlBulkCopy bulkCopy = await this.GetBulkCopy(connection, bulkCopyInfo))
+            {
                 foreach (DataColumn column in dataTable.Columns)
                 {
                     bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
                 }
 
                 await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
-            }
+            }               
         }
 
         private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)

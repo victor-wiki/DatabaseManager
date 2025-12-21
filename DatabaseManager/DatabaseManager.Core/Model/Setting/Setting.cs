@@ -18,6 +18,7 @@ namespace DatabaseManager.Model
         public string CustomMappingFolder { get; set; }
         public bool NeedPreviewBeforeConvert { get; set; } = true;
         public bool ShowCurrentColumnContentMaxLength { get; set; } = true;
+        public bool AutoMapSchemaIfSourceAndTargetIsSameDatabaseType { get; set; } = true;
     }
 
     public class TextEditorOption

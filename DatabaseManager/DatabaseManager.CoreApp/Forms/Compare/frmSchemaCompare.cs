@@ -22,14 +22,14 @@ using static BrightIdeasSoftware.TreeListView;
 
 namespace DatabaseManager.Forms
 {
-    public partial class frmCompare : Form, IObserver<FeedbackInfo>
+    public partial class frmSchemaCompare : Form, IObserver<FeedbackInfo>
     {
         private DatabaseType sourceDatabaseType;
         private ConnectionInfo sourceDbConnectionInfo;
         private ConnectionInfo targetDbConnectionInfo;
         private bool useSourceConnector = true;
         private bool isTextEditorScrolling = false;
-        private List<DbDifference> differences;
+        private List<SchemaCompareDifference> differences;
         private DbInterpreter sourceInterpreter;
         private DbInterpreter targetInterpreter;
         private DbScriptGenerator sourceScriptGenerator;
@@ -37,12 +37,12 @@ namespace DatabaseManager.Forms
         private SchemaInfo sourceSchemaInfo;
         private SchemaInfo targetSchemaInfo;
 
-        public frmCompare()
+        public frmSchemaCompare()
         {
             InitializeComponent();
         }
 
-        public frmCompare(DatabaseType sourceDatabaseType, ConnectionInfo sourceConnectionInfo)
+        public frmSchemaCompare(DatabaseType sourceDatabaseType, ConnectionInfo sourceConnectionInfo)
         {
             InitializeComponent();
 
@@ -64,6 +64,8 @@ namespace DatabaseManager.Forms
 
         private void InitControls()
         {
+            this.SetSyntaxHighlighting(this.sourceDatabaseType);
+
             var option = SettingManager.Setting.TextEditorOption;
 
             TextEditorHelper.ApplySetting(this.txtSource, option);
@@ -89,7 +91,7 @@ namespace DatabaseManager.Forms
 
             this.colType.ImageGetter = delegate (object x)
             {
-                DbDifference difference = x as DbDifference;
+                SchemaCompareDifference difference = x as SchemaCompareDifference;
 
                 if (difference.DatabaseObjectType == DatabaseObjectType.None)
                 {
@@ -113,13 +115,13 @@ namespace DatabaseManager.Forms
             FlagRenderer differenceTypeRenderer = new FlagRenderer();
 
             differenceTypeRenderer.ImageList = this.imageList2;
-            differenceTypeRenderer.Add(DbDifferenceType.Added, "Add.png");
-            differenceTypeRenderer.Add(DbDifferenceType.Modified, "Edit.png");
-            differenceTypeRenderer.Add(DbDifferenceType.Deleted, "Remove.png");
+            differenceTypeRenderer.Add(SchemaCompareDifferenceType.Added, "Add.png");
+            differenceTypeRenderer.Add(SchemaCompareDifferenceType.Modified, "Edit.png");
+            differenceTypeRenderer.Add(SchemaCompareDifferenceType.Deleted, "Remove.png");
 
             this.colChangeType.Renderer = differenceTypeRenderer;
 
-            this.colChangeType.ClusteringStrategy = new FlagClusteringStrategy(typeof(DbDifferenceType));
+            this.colChangeType.ClusteringStrategy = new FlagClusteringStrategy(typeof(SchemaCompareDifferenceType));
 
             this.tlvDifferences.Refresh();
         }
@@ -253,7 +255,7 @@ namespace DatabaseManager.Forms
                 this.sourceSchemaInfo = await this.sourceInterpreter.GetSchemaInfoAsync(sourceFilter);
                 this.targetSchemaInfo = await this.targetInterpreter.GetSchemaInfoAsync(targetFilter);
 
-                DbCompare dbCompare = new DbCompare(sourceSchemaInfo, targetSchemaInfo);
+                SchemaCompare dbCompare = new SchemaCompare(sourceSchemaInfo, targetSchemaInfo);
 
                 this.Feedback("Begin to compare...");
 
@@ -284,29 +286,29 @@ namespace DatabaseManager.Forms
 
             this.tlvDifferences.CanExpandGetter = delegate (object obj)
             {
-                DbDifference difference = obj as DbDifference;
+                SchemaCompareDifference difference = obj as SchemaCompareDifference;
                 return this.CanExpand(difference);
             };
 
             this.tlvDifferences.ChildrenGetter = delegate (object obj)
             {
-                DbDifference difference = obj as DbDifference;
+                SchemaCompareDifference difference = obj as SchemaCompareDifference;
                 return this.GetChildren(difference);
             };
 
             var roots = this.differences.Where(item => item.DatabaseObjectType == DatabaseObjectType.None);
 
-            this.tlvDifferences.Roots = roots;
+            this.tlvDifferences.Roots = roots;            
         }
 
-        private IEnumerable<DbDifference> GetChildren(DbDifference difference)
+        private IEnumerable<SchemaCompareDifference> GetChildren(SchemaCompareDifference difference)
         {
             if (this.differences == null)
             {
-                return Enumerable.Empty<DbDifference>();
+                return Enumerable.Empty<SchemaCompareDifference>();
             }
 
-            var children = this.differences.Where(item => item.DifferenceType != DbDifferenceType.None && item.ParentType == difference.Type
+            var children = this.differences.Where(item => item.DifferenceType != SchemaCompareDifferenceType.None && item.ParentType == difference.Type
             && ((item.ParentName == null || (item.ParentName == difference.Source?.Name || item.ParentName == difference.Target?.Name)) ||
                 (item.ParentName == null || (item.ParentName == difference.Parent?.Source?.Name || item.ParentName == difference?.Parent.Target?.Name))
             ));
@@ -345,18 +347,18 @@ namespace DatabaseManager.Forms
             }
         }
 
-        private bool CanExpand(DbDifference difference)
+        private bool CanExpand(SchemaCompareDifference difference)
         {
             DatabaseObjectType databaseObjectType = difference.DatabaseObjectType;
 
             return (databaseObjectType == DatabaseObjectType.None || difference.DatabaseObjectType == DatabaseObjectType.Table);
         }
 
-        private IEnumerable<DbDifference> GetTableChildrenFolders(Table source, Table target, DbDifference difference)
+        private IEnumerable<SchemaCompareDifference> GetTableChildrenFolders(Table source, Table target, SchemaCompareDifference difference)
         {
             string tableName = source == null ? target.Name : source.Name;
 
-            List<DbDifference> differences = new List<DbDifference>();
+            List<SchemaCompareDifference> differences = new List<SchemaCompareDifference>();
 
             Action<DatabaseObjectType, string> addFolder = (databaseObjectType, folderName) =>
             {
@@ -364,9 +366,9 @@ namespace DatabaseManager.Forms
                 {
                     var differenceType = this.GetTableSubFolderDiffType(difference, databaseObjectType);
 
-                    if (differenceType != DbDifferenceType.None)
+                    if (differenceType != SchemaCompareDifferenceType.None)
                     {
-                        differences.Add(new DbDifference() { Type = folderName, ParentType = nameof(Table), ParentName = tableName, Parent = difference, DifferenceType = differenceType });
+                        differences.Add(new SchemaCompareDifference() { Type = folderName, ParentType = nameof(Table), ParentName = tableName, Parent = difference, DifferenceType = differenceType });
                     }
                 }
             };
@@ -386,28 +388,28 @@ namespace DatabaseManager.Forms
             return differences;
         }
 
-        private DbDifferenceType GetTableSubFolderDiffType(DbDifference difference, DatabaseObjectType databaseObjectType)
+        private SchemaCompareDifferenceType GetTableSubFolderDiffType(SchemaCompareDifference difference, DatabaseObjectType databaseObjectType)
         {
-            return difference.SubDifferences.Any(item => item.DatabaseObjectType == databaseObjectType && item.DifferenceType != DbDifferenceType.None) ? DbDifferenceType.Modified : DbDifferenceType.None;
+            return difference.SubDifferences.Any(item => item.DatabaseObjectType == databaseObjectType && item.DifferenceType != SchemaCompareDifferenceType.None) ? SchemaCompareDifferenceType.Modified : SchemaCompareDifferenceType.None;
         }
 
-        private void DecorateData(List<DbDifference> differences)
+        private void DecorateData(List<SchemaCompareDifference> differences)
         {
-            Dictionary<DbObjectTreeFolderType, DbDifferenceType> folderTypes = new Dictionary<DbObjectTreeFolderType, DbDifferenceType>();
+            Dictionary<DbObjectTreeFolderType, SchemaCompareDifferenceType> folderTypes = new Dictionary<DbObjectTreeFolderType, SchemaCompareDifferenceType>();
 
-            Action<DbObjectTreeFolderType, DbDifferenceType> addFolderType = (folderType, diffType) =>
+            Action<DbObjectTreeFolderType, SchemaCompareDifferenceType> addFolderType = (folderType, diffType) =>
             {
                 if (!folderTypes.ContainsKey(folderType))
                 {
                     folderTypes.Add(folderType, diffType);
                 }
-                else if (diffType != DbDifferenceType.None)
+                else if (diffType != SchemaCompareDifferenceType.None)
                 {
-                    folderTypes[folderType] = DbDifferenceType.Modified;
+                    folderTypes[folderType] = SchemaCompareDifferenceType.Modified;
                 }
             };
 
-            foreach (DbDifference difference in differences)
+            foreach (SchemaCompareDifference difference in differences)
             {
                 DatabaseObjectType databaseObjectType = difference.DatabaseObjectType;
 
@@ -437,9 +439,10 @@ namespace DatabaseManager.Forms
             }
 
             int i = 0;
+
             foreach (var kp in folderTypes)
             {
-                differences.Insert(i++, new DbDifference() { Type = kp.Key.ToString(), DifferenceType = kp.Value });
+                differences.Insert(i++, new SchemaCompareDifference() { Type = kp.Key.ToString(), DifferenceType = kp.Value });
             }
         }
 
@@ -453,7 +456,7 @@ namespace DatabaseManager.Forms
             await this.GenerateOrSync(false);
         }
 
-        private async Task GenerateOrSync(bool isSync, DbDifference difference = null)
+        private async Task GenerateOrSync(bool isSync, SchemaCompareDifference difference = null)
         {
             if (this.sourceInterpreter == null || this.targetInterpreter == null || this.differences == null)
             {
@@ -506,7 +509,7 @@ namespace DatabaseManager.Forms
                 {
                     if (MessageBox.Show("Are you sure to sync changes to target database?", "Confirm", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
                     {
-                        ContentSaveResult result = await dbSynchro.Sync(this.sourceSchemaInfo, this.GetTargetDbSchema(), this.differences);
+                        ContentSaveResult result = await dbSynchro.Synchroize(this.sourceSchemaInfo, this.GetTargetDbSchema(), this.differences);
 
                         if (result.IsOK)
                         {
@@ -578,7 +581,7 @@ namespace DatabaseManager.Forms
 
         private void tlvDifferences_SelectedIndexChanged(object sender, EventArgs e)
         {
-            DbDifference difference = this.tlvDifferences.SelectedObject as DbDifference;
+            SchemaCompareDifference difference = this.tlvDifferences.SelectedObject as SchemaCompareDifference;
 
             if (difference != null)
             {
@@ -588,8 +591,15 @@ namespace DatabaseManager.Forms
             }
         }
 
-        private void ShowScripts(DbDifference difference)
+        private void ShowScripts(SchemaCompareDifference difference)
         {
+            if(difference.DifferenceType == SchemaCompareDifferenceType.None)
+            {
+                this.txtTarget.Text = this.txtSource.Text = string.Empty;
+
+                return;
+            }
+
             DatabaseObject source = difference.Source;
             DatabaseObject target = difference.Target;
 
@@ -766,7 +776,7 @@ namespace DatabaseManager.Forms
 
         private void tsmiExpandAll_Click(object sender, EventArgs e)
         {
-            DbDifference difference = this.tlvDifferences.SelectedObject as DbDifference;
+            SchemaCompareDifference difference = this.tlvDifferences.SelectedObject as SchemaCompareDifference;
 
             if (difference != null)
             {
@@ -778,7 +788,7 @@ namespace DatabaseManager.Forms
             }
         }
 
-        private void ExpandCollapseAllChildren(DbDifference difference, bool isExpand)
+        private void ExpandCollapseAllChildren(SchemaCompareDifference difference, bool isExpand)
         {
             if (this.tlvDifferences.CanExpand(difference))
             {
@@ -792,9 +802,9 @@ namespace DatabaseManager.Forms
                 }
             }
 
-            IEnumerable<DbDifference> children = this.tlvDifferences.GetChildren(difference).OfType<DbDifference>();
+            IEnumerable<SchemaCompareDifference> children = this.tlvDifferences.GetChildren(difference).OfType<SchemaCompareDifference>();
 
-            foreach (DbDifference child in children)
+            foreach (SchemaCompareDifference child in children)
             {
                 this.ExpandCollapseAllChildren(child, isExpand);
             }
@@ -802,7 +812,7 @@ namespace DatabaseManager.Forms
 
         private void tsmiCollapseAll_Click(object sender, EventArgs e)
         {
-            DbDifference difference = this.tlvDifferences.SelectedObject as DbDifference;
+            SchemaCompareDifference difference = this.tlvDifferences.SelectedObject as SchemaCompareDifference;
 
             if (difference != null)
             {
@@ -859,13 +869,13 @@ namespace DatabaseManager.Forms
                     return;
                 }
 
-                DbDifference difference = this.tlvDifferences.SelectedObject as DbDifference;
+                SchemaCompareDifference difference = this.tlvDifferences.SelectedObject as SchemaCompareDifference;
 
                 if (difference != null)
                 {
                     this.tsmiCollapseAll.Visible = this.tsmiExpandAll.Visible = this.CanExpand(difference);
 
-                    this.tsmiGenerateChangedScripts.Visible = (difference.DifferenceType != DbDifferenceType.None && difference.DatabaseObjectType != DatabaseObjectType.None);
+                    this.tsmiGenerateChangedScripts.Visible = (difference.DifferenceType != SchemaCompareDifferenceType.None && difference.DatabaseObjectType != DatabaseObjectType.None);
                 }
                 else
                 {
@@ -878,7 +888,7 @@ namespace DatabaseManager.Forms
 
         private async void tsmiGenerateChangedScripts_Click(object sender, EventArgs e)
         {
-            DbDifference difference = this.tlvDifferences.SelectedObject as DbDifference;
+            SchemaCompareDifference difference = this.tlvDifferences.SelectedObject as SchemaCompareDifference;
 
             await this.GenerateOrSync(false, difference);
         }
@@ -887,7 +897,7 @@ namespace DatabaseManager.Forms
         {
             if (this.tlvDifferences.Roots != null)
             {
-                var roots = this.tlvDifferences.Roots.OfType<DbDifference>();
+                var roots = this.tlvDifferences.Roots.OfType<SchemaCompareDifference>();
                 var firstRecord = roots.FirstOrDefault();
 
                 if (roots.Count() == 1 && this.CanExpand(firstRecord) && !this.tlvDifferences.IsExpanded(firstRecord))
@@ -943,7 +953,7 @@ namespace DatabaseManager.Forms
         {
             foreach (var obj in objects)
             {
-                if (obj is DbDifference diff)
+                if (obj is SchemaCompareDifference diff)
                 {
                     if (diff.DatabaseObjectType == DatabaseObjectType.None)
                     {
@@ -1001,6 +1011,28 @@ namespace DatabaseManager.Forms
                     this.FindText();
                 }
             }
+        }
+
+        private void targetDbProfile_DatabaseTypeSelectedChanged(object sender, EventArgs e)
+        {
+            DatabaseType sourceDbType = this.sourceDbProfile.DatabaseType;
+
+            if (sourceDbType != DatabaseType.Unknown)
+            {
+                DatabaseType targetDbType = this.targetDbProfile.DatabaseType;
+
+                if (targetDbType != sourceDbType)
+                {
+                    this.targetDbProfile.DatabaseType = sourceDbType;
+                }
+            }
+
+            this.SetSyntaxHighlighting(sourceDbType);
+        }
+
+        private void SetSyntaxHighlighting(DatabaseType databaseType)
+        {
+            this.txtSource.SyntaxHighlighting = this.txtTarget.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(databaseType);
         }
     }
 }

@@ -47,7 +47,7 @@
             tsmiExportData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiImportData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiConvert = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiCompare = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiCompareSchema = new System.Windows.Forms.ToolStripMenuItem();
             tsmiGenerateScripts = new System.Windows.Forms.ToolStripMenuItem();
             tsmiCreateScript = new System.Windows.Forms.ToolStripMenuItem();
             tsmiSelectScript = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,6 +66,7 @@
             tsmiStatistic = new System.Windows.Forms.ToolStripMenuItem();
             tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiCompareData = new System.Windows.Forms.ToolStripMenuItem();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -114,9 +115,9 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiImportData, tsmiConvert, tsmiCompare, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiImportData, tsmiConvert, tsmiCompareSchema, tsmiCompareData, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(204, 510);
+            contextMenuStrip1.Size = new System.Drawing.Size(204, 532);
             // 
             // tsmiNewQuery
             // 
@@ -216,12 +217,12 @@
             tsmiConvert.Text = "Convert";
             tsmiConvert.Click += tsmiConvert_Click;
             // 
-            // tsmiCompare
+            // tsmiCompareSchema
             // 
-            tsmiCompare.Name = "tsmiCompare";
-            tsmiCompare.Size = new System.Drawing.Size(203, 22);
-            tsmiCompare.Text = "Compare";
-            tsmiCompare.Click += tsmiCompare_Click;
+            tsmiCompareSchema.Name = "tsmiCompareSchema";
+            tsmiCompareSchema.Size = new System.Drawing.Size(203, 22);
+            tsmiCompareSchema.Text = "Compare Schema";
+            tsmiCompareSchema.Click += tsmiCompareSchema_Click;
             // 
             // tsmiGenerateScripts
             // 
@@ -317,37 +318,44 @@
             // tsmiBackup
             // 
             tsmiBackup.Name = "tsmiBackup";
-            tsmiBackup.Size = new System.Drawing.Size(180, 22);
+            tsmiBackup.Size = new System.Drawing.Size(137, 22);
             tsmiBackup.Text = "Backup";
             tsmiBackup.Click += tsmiBackup_Click;
             // 
             // tsmiDiagnose
             // 
             tsmiDiagnose.Name = "tsmiDiagnose";
-            tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
+            tsmiDiagnose.Size = new System.Drawing.Size(137, 22);
             tsmiDiagnose.Text = "Diagnose";
             tsmiDiagnose.Click += tsmiDiagnose_Click;
             // 
             // tsmiStatistic
             // 
             tsmiStatistic.Name = "tsmiStatistic";
-            tsmiStatistic.Size = new System.Drawing.Size(180, 22);
+            tsmiStatistic.Size = new System.Drawing.Size(137, 22);
             tsmiStatistic.Text = "Statistic";
             tsmiStatistic.Click += tsmiStatistic_Click;
             // 
             // tsmiClearData
             // 
             tsmiClearData.Name = "tsmiClearData";
-            tsmiClearData.Size = new System.Drawing.Size(180, 22);
+            tsmiClearData.Size = new System.Drawing.Size(137, 22);
             tsmiClearData.Text = "Clear Data";
             tsmiClearData.Click += tsmiClearData_Click;
             // 
             // tsmiEmptyDatabase
             // 
             tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
+            tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
             tsmiEmptyDatabase.Text = "Empty";
             tsmiEmptyDatabase.Click += tsmiEmptyDatabase_Click;
+            // 
+            // tsmiCompareData
+            // 
+            tsmiCompareData.Name = "tsmiCompareData";
+            tsmiCompareData.Size = new System.Drawing.Size(203, 22);
+            tsmiCompareData.Text = "Compare Data";
+            tsmiCompareData.Click += tsmiCompareData_Click;
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -386,7 +394,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiBackup;
         private System.Windows.Forms.ToolStripMenuItem tsmiDiagnose;
         private System.Windows.Forms.ToolStripMenuItem tsmiCopy;
-        private System.Windows.Forms.ToolStripMenuItem tsmiCompare;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCompareSchema;
         private System.Windows.Forms.ToolStripMenuItem tsmiCreateScript;
         private System.Windows.Forms.ToolStripMenuItem tsmiSelectScript;
         private System.Windows.Forms.ToolStripMenuItem tsmiInsertScript;
@@ -399,5 +407,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiEditData;
         private System.Windows.Forms.ToolStripMenuItem tsmiExportData;
         private System.Windows.Forms.ToolStripMenuItem tsmiImportData;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCompareData;
     }
 }

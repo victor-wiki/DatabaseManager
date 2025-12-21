@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.2.0</Version>
-    <AssemblyVersion>2.2.0</AssemblyVersion>
+    <Version>2.3.0</Version>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
     <FileVersion>2.2.0</FileVersion>
-    <PackageReleaseNotes>add "Priority" to order records.</PackageReleaseNotes>
+    <PackageReleaseNotes>Change method calling by change of DbConverter.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
 
