@@ -39,8 +39,11 @@
 ## UI - Convert Database
 ![Convert Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Convert.png?raw=true&rid=1)
 
-## UI - Compare Database
-![Compare Database](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Compare.png?raw=true&rid=1)
+## UI - Compare Schema
+![Compare Schema](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Compare.png?raw=true&rid=1)
+
+## UI - Compare Data
+![Compare Data](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/DataCompare.png?raw=true&rid=1)
 
 ## UI - Table Designer
 ![Table Designer](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/TableDesigner.png?raw=true&rid=1)
