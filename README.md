@@ -5,7 +5,7 @@
  Convert database schemas and migrate data.
  
 ### Compare Database
-  Compare database objects, generate scripts of differences. 
+  Compare database schema and data, generate scripts of differences or synchronize differences to target database. 
 
 ### Generate Scripts
    Generate scripts of database objects, including schema and data.   
