@@ -72,6 +72,11 @@ namespace DatabaseManager.Forms.Compare
                 this.tabControl1.TabPages.Remove(this.tabPageOnlyInTarget);
             }
 
+            if(!showIdentical)
+            {
+                this.tabControl1.TabPages.Remove(this.tabPageIdentical);
+            }
+
             var details = this.result.Details;
 
             List<DataCompareDifference> differences = new List<DataCompareDifference>();
@@ -276,10 +281,13 @@ namespace DatabaseManager.Forms.Compare
 
             var diffColumnNames = differentRows.SelectMany(item => item.Details.Select(t => t.Key)).Distinct();
 
+            string sourceColumnNameSuffix = "__source";
+            string targetColumnNameSuffix = "__target";
+
             foreach (var name in diffColumnNames)
             {
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + "_source", HeaderText = name + "→", Tag = name });
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + "_target", HeaderText = "→" + name, Tag = name });
+                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + sourceColumnNameSuffix, HeaderText = name + "→", Tag = name });
+                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + targetColumnNameSuffix, HeaderText = "→" + name, Tag = name });
             }
 
             foreach (DataGridViewColumn column in this.dgvDifferent.Columns)
@@ -304,18 +312,25 @@ namespace DatabaseManager.Forms.Compare
 
                 for (int i = detail.KeyColumns.Count; i < this.dgvDifferent.ColumnCount; i++)
                 {
-                    string columnName = this.dgvDifferent.Columns[i].Tag.ToString();
+                    string columnName = this.dgvDifferent.Columns[i].Name;
+                    string originalColumnName = this.dgvDifferent.Columns[i].Tag.ToString();
 
-                    if (row.Details.ContainsKey(columnName))
+                    if (row.Details.ContainsKey(originalColumnName))
                     {
-                        var v = row.Details[columnName];
+                        var v = row.Details[originalColumnName];
 
-                        valueInfos.Add(new ValueInfo() { Value = v.Item1, IsDifferent = true });
-                        valueInfos.Add(new ValueInfo() { Value = v.Item2, IsDifferent = true });
+                        if(columnName.EndsWith(sourceColumnNameSuffix))
+                        {
+                            valueInfos.Add(new ValueInfo() { Value = v.Item1, IsDifferent = true });
+                        }
+                        else if(columnName.EndsWith(targetColumnNameSuffix))
+                        {
+                            valueInfos.Add(new ValueInfo() { Value = v.Item2, IsDifferent = true });
+                        }                            
                     }
                     else
                     {
-                        valueInfos.Add(new ValueInfo() { Value = sourceDataTable.Rows[rowIndex][columnName] });
+                        valueInfos.Add(new ValueInfo() { Value = sourceDataTable.Rows[rowIndex][originalColumnName] });
                     }
                 }
 
