@@ -34,6 +34,7 @@ namespace DatabaseManager.Forms.Compare
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDataCompareResult));
             tlvDifferences = new BrightIdeasSoftware.TreeListView();
             colType = new BrightIdeasSoftware.OLVColumn();
             colSourceRecordCount = new BrightIdeasSoftware.OLVColumn();
@@ -63,6 +64,8 @@ namespace DatabaseManager.Forms.Compare
             tsbGenerateScript = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
             tsbSynchronize = new ToolStripButton();
+            toolStripSeparator2 = new ToolStripSeparator();
+            tsbCancel = new ToolStripButton();
             saveFileDialog1 = new SaveFileDialog();
             txtMessage = new TextBox();
             toolTip1 = new ToolTip(components);
@@ -111,7 +114,7 @@ namespace DatabaseManager.Forms.Compare
             tlvDifferences.ShowFilterMenuOnRightClick = false;
             tlvDifferences.ShowGroups = false;
             tlvDifferences.ShowImagesOnSubItems = true;
-            tlvDifferences.Size = new System.Drawing.Size(973, 190);
+            tlvDifferences.Size = new System.Drawing.Size(1018, 215);
             tlvDifferences.TabIndex = 2;
             tlvDifferences.UseCompatibleStateImageBehavior = false;
             tlvDifferences.View = View.Details;
@@ -126,13 +129,14 @@ namespace DatabaseManager.Forms.Compare
             colType.AspectName = "Type";
             colType.Sortable = false;
             colType.Text = "Type";
-            colType.Width = 180;
+            colType.Width = 250;
             // 
             // colSourceRecordCount
             // 
             colSourceRecordCount.AspectName = "SourceRecordCount";
             colSourceRecordCount.Sortable = false;
             colSourceRecordCount.Text = "Source Record Count";
+            colSourceRecordCount.TextAlign = HorizontalAlignment.Center;
             colSourceRecordCount.Width = 140;
             // 
             // colTargetRecordCount
@@ -140,6 +144,7 @@ namespace DatabaseManager.Forms.Compare
             colTargetRecordCount.AspectName = "TargetRecordCount";
             colTargetRecordCount.Sortable = false;
             colTargetRecordCount.Text = "Target Record Count";
+            colTargetRecordCount.TextAlign = HorizontalAlignment.Center;
             colTargetRecordCount.Width = 140;
             // 
             // colDifferentCount
@@ -154,18 +159,21 @@ namespace DatabaseManager.Forms.Compare
             // 
             colOnlyInSourceCount.AspectName = "OnlyInSourceCount";
             colOnlyInSourceCount.Text = "Only in Source Count";
+            colOnlyInSourceCount.TextAlign = HorizontalAlignment.Center;
             colOnlyInSourceCount.Width = 140;
             // 
             // colOnlyInTargetCount
             // 
             colOnlyInTargetCount.AspectName = "OnlyInTargetCount";
             colOnlyInTargetCount.Text = "Only in Target Count";
+            colOnlyInTargetCount.TextAlign = HorizontalAlignment.Center;
             colOnlyInTargetCount.Width = 140;
             // 
             // colIdenticalCount
             // 
             colIdenticalCount.AspectName = "IdenticalCount";
             colIdenticalCount.Text = "Identical Count";
+            colIdenticalCount.TextAlign = HorizontalAlignment.Center;
             colIdenticalCount.Width = 100;
             // 
             // splitContainer1
@@ -182,8 +190,8 @@ namespace DatabaseManager.Forms.Compare
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(tabControl1);
-            splitContainer1.Size = new System.Drawing.Size(973, 480);
-            splitContainer1.SplitterDistance = 190;
+            splitContainer1.Size = new System.Drawing.Size(1018, 545);
+            splitContainer1.SplitterDistance = 215;
             splitContainer1.TabIndex = 1;
             // 
             // tabControl1
@@ -196,7 +204,7 @@ namespace DatabaseManager.Forms.Compare
             tabControl1.Location = new System.Drawing.Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(973, 286);
+            tabControl1.Size = new System.Drawing.Size(1018, 326);
             tabControl1.TabIndex = 0;
             // 
             // tabPageDifferent
@@ -206,7 +214,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageDifferent.Location = new System.Drawing.Point(4, 26);
             tabPageDifferent.Name = "tabPageDifferent";
             tabPageDifferent.Padding = new Padding(3);
-            tabPageDifferent.Size = new System.Drawing.Size(965, 256);
+            tabPageDifferent.Size = new System.Drawing.Size(1010, 277);
             tabPageDifferent.TabIndex = 0;
             tabPageDifferent.Text = "Different Records";
             tabPageDifferent.UseVisualStyleBackColor = true;
@@ -215,13 +223,13 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationDifferent.BackColor = System.Drawing.Color.Transparent;
             paginationDifferent.Dock = DockStyle.Bottom;
-            paginationDifferent.Location = new System.Drawing.Point(3, 222);
+            paginationDifferent.Location = new System.Drawing.Point(3, 243);
             paginationDifferent.Margin = new Padding(4);
             paginationDifferent.Name = "paginationDifferent";
             paginationDifferent.PageCount = 0L;
             paginationDifferent.PageNumber = 1L;
             paginationDifferent.PageSize = 100;
-            paginationDifferent.Size = new System.Drawing.Size(959, 31);
+            paginationDifferent.Size = new System.Drawing.Size(1004, 31);
             paginationDifferent.TabIndex = 1;
             paginationDifferent.TotalCount = 0L;
             paginationDifferent.OnPageNumberChanged += paginationDifferent_OnPageNumberChanged;
@@ -235,7 +243,7 @@ namespace DatabaseManager.Forms.Compare
             dgvDifferent.Location = new System.Drawing.Point(3, 3);
             dgvDifferent.Name = "dgvDifferent";
             dgvDifferent.ReadOnly = true;
-            dgvDifferent.Size = new System.Drawing.Size(959, 218);
+            dgvDifferent.Size = new System.Drawing.Size(1004, 239);
             dgvDifferent.TabIndex = 0;
             dgvDifferent.CellFormatting += dgvDifferent_CellFormatting;
             dgvDifferent.DataError += dgvDifferent_DataError;
@@ -247,7 +255,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageOnlyInsource.Location = new System.Drawing.Point(4, 26);
             tabPageOnlyInsource.Name = "tabPageOnlyInsource";
             tabPageOnlyInsource.Padding = new Padding(3);
-            tabPageOnlyInsource.Size = new System.Drawing.Size(965, 256);
+            tabPageOnlyInsource.Size = new System.Drawing.Size(1010, 296);
             tabPageOnlyInsource.TabIndex = 1;
             tabPageOnlyInsource.Text = "Only in Source";
             tabPageOnlyInsource.UseVisualStyleBackColor = true;
@@ -256,13 +264,13 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationOnlyInSource.BackColor = System.Drawing.Color.Transparent;
             paginationOnlyInSource.Dock = DockStyle.Bottom;
-            paginationOnlyInSource.Location = new System.Drawing.Point(3, 222);
+            paginationOnlyInSource.Location = new System.Drawing.Point(3, 262);
             paginationOnlyInSource.Margin = new Padding(4);
             paginationOnlyInSource.Name = "paginationOnlyInSource";
             paginationOnlyInSource.PageCount = 0L;
             paginationOnlyInSource.PageNumber = 1L;
             paginationOnlyInSource.PageSize = 100;
-            paginationOnlyInSource.Size = new System.Drawing.Size(959, 31);
+            paginationOnlyInSource.Size = new System.Drawing.Size(1004, 31);
             paginationOnlyInSource.TabIndex = 7;
             paginationOnlyInSource.TotalCount = 0L;
             paginationOnlyInSource.OnPageNumberChanged += paginationOnlyInSource_OnPageNumberChanged;
@@ -284,7 +292,7 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInSource.Margin = new Padding(4);
             dgvOnlyInSource.Name = "dgvOnlyInSource";
             dgvOnlyInSource.ReadOnly = true;
-            dgvOnlyInSource.Size = new System.Drawing.Size(953, 231);
+            dgvOnlyInSource.Size = new System.Drawing.Size(1004, 258);
             dgvOnlyInSource.TabIndex = 6;
             dgvOnlyInSource.CellFormatting += dgvOnlyInSource_CellFormatting;
             dgvOnlyInSource.DataBindingComplete += dgvOnlyInSource_DataBindingComplete;
@@ -297,7 +305,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageOnlyInTarget.Location = new System.Drawing.Point(4, 26);
             tabPageOnlyInTarget.Name = "tabPageOnlyInTarget";
             tabPageOnlyInTarget.Padding = new Padding(3);
-            tabPageOnlyInTarget.Size = new System.Drawing.Size(965, 256);
+            tabPageOnlyInTarget.Size = new System.Drawing.Size(1010, 356);
             tabPageOnlyInTarget.TabIndex = 2;
             tabPageOnlyInTarget.Text = "Only in Target";
             tabPageOnlyInTarget.UseVisualStyleBackColor = true;
@@ -306,13 +314,13 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationOnlyInTarget.BackColor = System.Drawing.Color.Transparent;
             paginationOnlyInTarget.Dock = DockStyle.Bottom;
-            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 222);
+            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 322);
             paginationOnlyInTarget.Margin = new Padding(4);
             paginationOnlyInTarget.Name = "paginationOnlyInTarget";
             paginationOnlyInTarget.PageCount = 0L;
             paginationOnlyInTarget.PageNumber = 1L;
             paginationOnlyInTarget.PageSize = 100;
-            paginationOnlyInTarget.Size = new System.Drawing.Size(959, 31);
+            paginationOnlyInTarget.Size = new System.Drawing.Size(1004, 31);
             paginationOnlyInTarget.TabIndex = 9;
             paginationOnlyInTarget.TotalCount = 0L;
             paginationOnlyInTarget.OnPageNumberChanged += paginationOnlyInTarget_OnPageNumberChanged;
@@ -334,7 +342,7 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInTarget.Margin = new Padding(4);
             dgvOnlyInTarget.Name = "dgvOnlyInTarget";
             dgvOnlyInTarget.ReadOnly = true;
-            dgvOnlyInTarget.Size = new System.Drawing.Size(953, 231);
+            dgvOnlyInTarget.Size = new System.Drawing.Size(1004, 318);
             dgvOnlyInTarget.TabIndex = 8;
             dgvOnlyInTarget.CellFormatting += dgvOnlyInTarget_CellFormatting;
             dgvOnlyInTarget.DataBindingComplete += dgvOnlyInTarget_DataBindingComplete;
@@ -347,7 +355,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageIdentical.Location = new System.Drawing.Point(4, 26);
             tabPageIdentical.Name = "tabPageIdentical";
             tabPageIdentical.Padding = new Padding(3);
-            tabPageIdentical.Size = new System.Drawing.Size(965, 256);
+            tabPageIdentical.Size = new System.Drawing.Size(1010, 356);
             tabPageIdentical.TabIndex = 3;
             tabPageIdentical.Text = "Identical Records";
             tabPageIdentical.UseVisualStyleBackColor = true;
@@ -356,13 +364,13 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationIdentical.BackColor = System.Drawing.Color.Transparent;
             paginationIdentical.Dock = DockStyle.Bottom;
-            paginationIdentical.Location = new System.Drawing.Point(3, 222);
+            paginationIdentical.Location = new System.Drawing.Point(3, 322);
             paginationIdentical.Margin = new Padding(4);
             paginationIdentical.Name = "paginationIdentical";
             paginationIdentical.PageCount = 0L;
             paginationIdentical.PageNumber = 1L;
             paginationIdentical.PageSize = 100;
-            paginationIdentical.Size = new System.Drawing.Size(959, 31);
+            paginationIdentical.Size = new System.Drawing.Size(1004, 31);
             paginationIdentical.TabIndex = 11;
             paginationIdentical.TotalCount = 0L;
             paginationIdentical.OnPageNumberChanged += paginationIdentical_OnPageNumberChanged;
@@ -384,7 +392,7 @@ namespace DatabaseManager.Forms.Compare
             dgvIdentical.Margin = new Padding(4);
             dgvIdentical.Name = "dgvIdentical";
             dgvIdentical.ReadOnly = true;
-            dgvIdentical.Size = new System.Drawing.Size(953, 231);
+            dgvIdentical.Size = new System.Drawing.Size(1004, 318);
             dgvIdentical.TabIndex = 10;
             dgvIdentical.CellFormatting += dgvIdentical_CellFormatting;
             dgvIdentical.DataBindingComplete += dgvIdentical_DataBindingComplete;
@@ -394,29 +402,29 @@ namespace DatabaseManager.Forms.Compare
             // 
             contextMenuStrip1.Items.AddRange(new ToolStripItem[] { tbsiSelectAll, tsmiUnselectAll });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(181, 70);
+            contextMenuStrip1.Size = new System.Drawing.Size(143, 48);
             contextMenuStrip1.Opening += contextMenuStrip1_Opening;
             // 
             // tbsiSelectAll
             // 
             tbsiSelectAll.Name = "tbsiSelectAll";
-            tbsiSelectAll.Size = new System.Drawing.Size(180, 22);
+            tbsiSelectAll.Size = new System.Drawing.Size(142, 22);
             tbsiSelectAll.Text = "Check all";
             tbsiSelectAll.Click += tbsiSelectAll_Click;
             // 
             // tsmiUnselectAll
             // 
             tsmiUnselectAll.Name = "tsmiUnselectAll";
-            tsmiUnselectAll.Size = new System.Drawing.Size(180, 22);
+            tsmiUnselectAll.Size = new System.Drawing.Size(142, 22);
             tsmiUnselectAll.Text = "Uncheck all";
             tsmiUnselectAll.Click += tsmiUnselectAll_Click;
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { tsbGenerateScript, toolStripSeparator1, tsbSynchronize });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { tsbGenerateScript, toolStripSeparator1, tsbSynchronize, toolStripSeparator2, tsbCancel });
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new System.Drawing.Size(973, 33);
+            toolStrip1.Size = new System.Drawing.Size(1018, 33);
             toolStrip1.TabIndex = 2;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -447,6 +455,23 @@ namespace DatabaseManager.Forms.Compare
             tsbSynchronize.Text = "Synchronize";
             tsbSynchronize.Click += tsbSynchronize_Click;
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 33);
+            // 
+            // tsbCancel
+            // 
+            tsbCancel.AutoSize = false;
+            tsbCancel.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            tsbCancel.Enabled = false;
+            tsbCancel.Image = (System.Drawing.Image)resources.GetObject("tsbCancel.Image");
+            tsbCancel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbCancel.Name = "tsbCancel";
+            tsbCancel.Size = new System.Drawing.Size(30, 30);
+            tsbCancel.Text = "Cancel";
+            tsbCancel.Click += tsbCancel_Click;
+            // 
             // saveFileDialog1
             // 
             saveFileDialog1.Filter = "SQL file(*.sql)|All file(*.*)";
@@ -455,16 +480,16 @@ namespace DatabaseManager.Forms.Compare
             // 
             txtMessage.BackColor = System.Drawing.SystemColors.Control;
             txtMessage.Dock = DockStyle.Bottom;
-            txtMessage.Location = new System.Drawing.Point(0, 508);
+            txtMessage.Location = new System.Drawing.Point(0, 573);
             txtMessage.Name = "txtMessage";
-            txtMessage.Size = new System.Drawing.Size(973, 23);
+            txtMessage.Size = new System.Drawing.Size(1018, 23);
             txtMessage.TabIndex = 3;
             // 
             // frmDataCompareResult
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(973, 531);
+            ClientSize = new System.Drawing.Size(1018, 596);
             Controls.Add(txtMessage);
             Controls.Add(toolStrip1);
             Controls.Add(splitContainer1);
@@ -526,5 +551,7 @@ namespace DatabaseManager.Forms.Compare
         private BrightIdeasSoftware.OLVColumn colOnlyInSourceCount;
         private BrightIdeasSoftware.OLVColumn colOnlyInTargetCount;
         private BrightIdeasSoftware.OLVColumn colIdenticalCount;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripButton tsbCancel;
     }
 }

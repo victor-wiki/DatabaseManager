@@ -6,8 +6,7 @@ using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
 using DatabaseManager.Core.Model.Compare;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
-using KellermanSoftware.CompareNetObjects;
+using FontAwesome.Sharp;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,6 +26,7 @@ namespace DatabaseManager.Forms.Compare
         private DbInterpreter targetDbInterpreter;
         private DataCompareResult result;
         private DataCompareOption option;
+        private CancellationTokenSource cancellationTokenSource;
         private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
 
         public frmDataCompareResult(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DataCompareResult result, DataCompareOption option)
@@ -34,6 +34,8 @@ namespace DatabaseManager.Forms.Compare
             InitializeComponent();
 
             DataGridView.CheckForIllegalCrossThreadCalls = false;
+
+            this.tsbCancel.Image = IconImageHelper.GetImageByFontType(IconChar.Cancel, IconFont.Solid, Color.Red);
 
             this.sourceDbInterpreter = sourceDbInterpreter;
             this.targetDbInterpreter = targetDbInterpreter;
@@ -56,12 +58,6 @@ namespace DatabaseManager.Forms.Compare
             {
                 this.tlvDifferences.Columns.Remove(this.colDifferentCount);
                 this.tabControl1.TabPages.Remove(this.tabPageDifferent);
-            }
-
-            if (!showIdentical)
-            {
-                this.tlvDifferences.Columns.Remove(this.colIdenticalCount);
-                this.tabControl1.TabPages.Remove(this.tabPageIdentical);
             }
 
             if (!showOnlyInSource)
@@ -603,7 +599,7 @@ namespace DatabaseManager.Forms.Compare
 
             if (result == DialogResult.OK)
             {
-                this.GenerateScripts(this.saveFileDialog1.FileName);
+                Task.Run(() => { this.GenerateScripts(this.saveFileDialog1.FileName); });
             }
         }
 
@@ -617,11 +613,26 @@ namespace DatabaseManager.Forms.Compare
 
             dataCompare.Subscribe(this);
 
-            string script = await dataCompare.GenerateScripts(details);
+            this.cancellationTokenSource = new CancellationTokenSource();
 
-            File.WriteAllText(filePath, script);
+            var token = this.cancellationTokenSource.Token;
 
-            MessageBox.Show("Generation is finished.");
+            this.tsbCancel.Enabled = true;
+
+            string script = await dataCompare.GenerateScripts(details, token);
+
+            if(!token.IsCancellationRequested)
+            {
+                File.WriteAllText(filePath, script);
+
+                MessageBox.Show("Generation is finished.");
+            }
+            else
+            {
+                this.Feedback("Task has been canceled.");
+            }
+
+            this.tsbCancel.Enabled = false;
         }
 
         private void tsbSynchronize_Click(object sender, EventArgs e)
@@ -643,7 +654,7 @@ namespace DatabaseManager.Forms.Compare
 
         private async void Synchronize()
         {
-            this.Feedback("");
+            this.Feedback("");            
 
             DbInterpreter sourceInterpreter = DbInterpreterHelper.GetDbInterpreter(this.sourceDbInterpreter.DatabaseType, this.sourceDbInterpreter.ConnectionInfo);
             DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbInterpreter.DatabaseType, this.targetDbInterpreter.ConnectionInfo);
@@ -687,20 +698,31 @@ namespace DatabaseManager.Forms.Compare
 
             dataCompare.Subscribe(this);
 
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationTokenSource = new CancellationTokenSource();
 
-            var token = cancellationTokenSource.Token;
+            var token = this.cancellationTokenSource.Token;
+
+            this.tsbCancel.Enabled = true;
 
             DataSynchronizeResult result = await dataCompare.Synchronize(details, token, schemaMappings);
 
-            if (result.IsOK)
+            if(!token.IsCancellationRequested)
             {
-                MessageBox.Show("Synchronization is finished.");
+                if (result.IsOK)
+                {
+                    MessageBox.Show("Synchronization is finished.");
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Synchronization is failed!");
+                }
             }
             else
             {
-                MessageBox.Show(result.Message, "Synchronization is failed!");
+                this.Feedback("Task has been canceled.");
             }
+
+            this.tsbCancel.Enabled = false;
         }
 
         private void Feedback(string message)
@@ -762,6 +784,14 @@ namespace DatabaseManager.Forms.Compare
             {
                 e.Item.ForeColor = Color.Blue;
                 e.Item.Font = new Font(this.tlvDifferences.Font, FontStyle.Bold);
+            }
+        }
+
+        private async void tsbCancel_Click(object sender, EventArgs e)
+        {
+            if(this.cancellationTokenSource!=null)
+            {
+                await this.cancellationTokenSource.CancelAsync();
             }
         }
 

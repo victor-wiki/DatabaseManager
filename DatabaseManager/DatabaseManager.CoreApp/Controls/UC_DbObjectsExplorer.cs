@@ -12,7 +12,9 @@ using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -66,7 +68,7 @@ namespace DatabaseManager.Controls
             }
         }
 
-        public void LoadDbTypes()
+        public async Task LoadDbTypes()
         {
             var databaseTypes = DbInterpreterHelper.GetDisplayDatabaseTypes();
 
@@ -85,39 +87,67 @@ namespace DatabaseManager.Controls
                 }
                 else if(this.cboAccount.Items.Count ==0)
                 {
-                    this.LoadConnectionsByDbType(this.cboDbType.Text);
+                    await this.LoadConnectionsByDbType(this.cboDbType.Text);
                 }
             }
 
             this.btnConnect.Focus();
         }
 
-        private void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboDbType_SelectedIndexChanged(object sender, EventArgs e)
         {
             bool hasValue = this.cboDbType.SelectedIndex >= 0;
             this.btnAddAccount.Enabled = hasValue;
 
             if (hasValue)
             {
-                this.LoadConnectionsByDbType(this.cboDbType.Text);         
+                await this.LoadConnectionsByDbType(this.cboDbType.Text);         
             }
         }
 
-        private void LoadConnectionsByDbType(string dbType)
+        private async Task LoadConnectionsByDbType(string dbType)
         {
             DatabaseType databaseType = ManagerUtil.GetDatabaseType(dbType);
 
             if (!ManagerUtil.IsFileConnection(databaseType))
             {
-                this.LoadAccounts();
+               await this.LoadAccounts();
             }
             else
             {
-                this.LoadFileConnections();
+                await this.LoadFileConnections();
+            }
+
+            if(databaseType == DatabaseType.Sqlite)
+            {
+                this.SetComboxDropdownWidth(this.cboAccount);
+            }          
+        }
+
+        private void SetComboxDropdownWidth(ComboBox comboBox)
+        {
+            using (Graphics g = comboBox.CreateGraphics())
+            {
+                int maxWidth = comboBox.DropDownWidth;
+                Font font = comboBox.Font; 
+
+                foreach (var item in comboBox.Items)
+                {
+                    SizeF size = g.MeasureString(item.ToString(), font);
+
+                    if (size.Width > maxWidth)
+                    {
+                        maxWidth = (int)size.Width;
+                    }
+                }
+
+                maxWidth += 50; 
+
+                comboBox.DropDownWidth = maxWidth;
             }
         }
 
-        private async void LoadAccounts(string defaultValue = null)
+        private async Task LoadAccounts(string defaultValue = null)
         {
             string type = this.cboDbType.Text;
 
@@ -147,7 +177,7 @@ namespace DatabaseManager.Controls
             btnConnect.Enabled = this.cboAccount.Items.Count > 0;
         }
 
-        private async void LoadFileConnections(string defaultValue = null)
+        private async Task LoadFileConnections(string defaultValue = null)
         {
             string type = this.cboDbType.Text;
 
@@ -177,7 +207,7 @@ namespace DatabaseManager.Controls
             btnConnect.Enabled = this.cboAccount.Items.Count > 0;
         }
 
-        private void btnAddAccount_Click(object sender, EventArgs e)
+        private async void btnAddAccount_Click(object sender, EventArgs e)
         {
             string databaseType = this.cboDbType.Text;
 
@@ -196,7 +226,7 @@ namespace DatabaseManager.Controls
 
                     if (result == DialogResult.OK)
                     {
-                        this.LoadAccounts(form.AccountProfileId);
+                        await this.LoadAccounts(form.AccountProfileId);
 
                         if (this.cboAccount.SelectedItem != null)
                         {
@@ -212,7 +242,7 @@ namespace DatabaseManager.Controls
 
                     if (result == DialogResult.OK)
                     {
-                        this.LoadFileConnections(form.FileConnectionProfileId);
+                        await this.LoadFileConnections(form.FileConnectionProfileId);
 
                         if (this.cboAccount.SelectedItem != null)
                         {

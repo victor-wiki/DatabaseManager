@@ -28,12 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UC_DbObjectsExplorer));
             cboDbType = new System.Windows.Forms.ComboBox();
             cboAccount = new System.Windows.Forms.ComboBox();
             btnConnect = new System.Windows.Forms.Button();
             btnAddAccount = new System.Windows.Forms.Button();
             tvDbObjects = new UC_DbObjectsComplexTree();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             SuspendLayout();
             // 
             // cboDbType
@@ -55,6 +57,7 @@
             cboAccount.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             cboAccount.BackColor = System.Drawing.Color.White;
             cboAccount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cboAccount.DropDownWidth = 300;
             cboAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             cboAccount.FormattingEnabled = true;
             cboAccount.Location = new System.Drawing.Point(4, 35);
@@ -126,5 +129,6 @@
         private System.Windows.Forms.ComboBox cboAccount;
         private System.Windows.Forms.Button btnConnect;
         private UC_DbObjectsComplexTree tvDbObjects;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

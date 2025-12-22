@@ -5,12 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.3.0</Version>
-    <PackageReleaseNotes>1. add: data compare;
-2. remove "CancellationTokenSource" from "ScriptRunner".</PackageReleaseNotes>
+    <Version>2.3.1</Version>
+    <PackageReleaseNotes>issue fix for data comparison.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.0</AssemblyVersion>
-    <FileVersion>2.3.0</FileVersion>
+    <AssemblyVersion>2.3.1</AssemblyVersion>
+    <FileVersion>2.3.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -111,6 +111,10 @@ namespace DatabaseManager.Core
 
                                 resultDetail.KeyColumns = keyColumns;
 
+                                var sameTableColumns = targetTableColumns.Where(item => sourceTableColumns.Any(s => s.Name == item.Name)).ToList();
+
+                                resultDetail.SameTableColumns = sameTableColumns;
+
                                 string strColumnNames = string.Join(",", this.sourceDbInterpreter.GetQuotedColumnNames(keyColumns));
                                 string orderColumns = strColumnNames;
 
@@ -168,10 +172,6 @@ namespace DatabaseManager.Core
                                         List<DataRow> keyRows = sameKeyDataRows.Skip((int)(starRowNumber - 1)).Take((int)(endRowNumber - starRowNumber + 1)).ToList();
 
                                         string whereCondition = GetKeyColumnWhereCondition(this.sourceDbInterpreter, keyRows, keyColumns);
-
-                                        var sameTableColumns = targetTableColumns.Where(item => sourceTableColumns.Any(s => s.Name == item.Name)).ToList();
-
-                                        resultDetail.SameTableColumns = sameTableColumns;
 
                                         DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, sourceTable, sameTableColumns, null, pageSize, 1, whereCondition);
 
@@ -412,25 +412,41 @@ namespace DatabaseManager.Core
             return pagedKeyRows;
         }
 
-        public async Task<string> GenerateScripts(List<DataCompareResultDetail> details)
+        public async Task<string> GenerateScripts(List<DataCompareResultDetail> details, CancellationToken cancellationToken)
         {
             StringBuilder sb = new StringBuilder();
 
             int pageSize = 100;
 
+            int tableCount = 0;
+            int tablesTotalCount = details.Count;
+
             foreach (var detail in details)
             {
+                tableCount++;
+
+                if(cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 if (detail.OnlyInTargetCount > 0)
                 {
-                    sb.Append(this.GetOnlyInTargetDeleteSql(detail, pageSize));
+                    sb.AppendLine(this.GetOnlyInTargetDeleteSql(detail, pageSize));
+                }
+
+                if (detail.DifferentCount > 0)
+                {
+                    sb.AppendLine();
+
+                    sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize));
                 }
 
                 if (detail.OnlyInSourceCount > 0)
                 {
-                    sb.AppendLine();
-                    sb.AppendLine();
+                    sb.AppendLine();              
 
-                    this.FeedbackInfo($@"Begin to generate INSERT sql for table ""{detail.SourceTable.Name}""...");
+                    this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Begin to generate INSERT sql for table ""{detail.SourceTable.Name}""...");
 
                     int total = detail.OnlyInSourceCount;
                     long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -441,8 +457,19 @@ namespace DatabaseManager.Core
 
                     using (var sourceConnection = this.sourceDbInterpreter.CreateConnection())
                     {
+                        int recordCount = 0;
+
                         for (int i = 1; i <= pageCount; i++)
                         {
+                            if(cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
+
+                            recordCount += (int) (i < pageCount ? pageSize: (total-(pageCount-1)*pageSize));
+
+                            this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Generating INSERT sql for table ""{detail.SourceTable.Name}"" ({recordCount}/{total})...");
+
                             var pagedKeyRows = GetPagedKeyRows(detail.OnlyInSourceKeyRows, pageSize, i);
 
                             string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
@@ -452,21 +479,16 @@ namespace DatabaseManager.Core
                             var rows = this.sourceDbInterpreter.ConvertDataTableToDictionaryList(sourceDataTable, detail.TargetTableColumns);
 
                             dbScriptGenerator.AppendDataScripts(sb, detail.TargetTable, detail.TargetTableColumns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows } });
+
+                            sb.AppendLine();
                         }
                     }
 
                     this.FeedbackInfo($@"End generate INSERT sql for table ""{detail.SourceTable.Name}"".");
-                }
-
-                if (detail.DifferentCount > 0)
-                {
-                    sb.AppendLine();
-
-                    sb.Append(await this.GetDifferentUpdateSql(detail, pageSize));
-                }
+                }               
             }
 
-            return sb.ToString();
+            return sb.ToString().Trim();
         }
 
         private string GetOnlyInTargetDeleteSql(DataCompareResultDetail detail, int pageSize)
@@ -616,6 +638,13 @@ namespace DatabaseManager.Core
                                 sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize));
                             }
 
+                            string sql = sb.ToString().Trim();
+
+                            if (sql.Length > 0)
+                            {
+                                await this.RunCommand(this.targetDbInterpreter, targetConnection, sql, cancellationToken, transaction);
+                            }
+
                             if (detail.OnlyInSourceCount > 0)
                             {
                                 this.FeedbackInfo($@"Begin to copy data to table ""{detail.TargetTable.Name}""...");
@@ -630,6 +659,11 @@ namespace DatabaseManager.Core
 
                                 for (int i = 1; i <= pageCount; i++)
                                 {
+                                    if(cancellationToken.IsCancellationRequested)
+                                    {
+                                        break;
+                                    }
+
                                     var pagedKeyRows = GetPagedKeyRows(detail.OnlyInSourceKeyRows, pageSize, i);
 
                                     string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
@@ -643,18 +677,10 @@ namespace DatabaseManager.Core
                                     await DbConverter.CopyData(this.sourceDbInterpreter, this.targetDbInterpreter, targetConnection, dbScriptGenerator, detail.SourceTable, detail.SourceTableColumns,
                                         detail.TargetTable, detail.SameTableColumns, sourceDataTable, true, cancellationToken, schemaMappings, null, transaction);
 
-                                    sb.AppendLine();
                                 }
 
                                 this.FeedbackInfo($@"End copy data to table ""{detail.TargetTable.Name}"".");
                             }                            
-
-                            string sql = sb.ToString().Trim();
-
-                            if (sql.Length > 0)
-                            {
-                                await this.RunCommand(this.targetDbInterpreter, targetConnection, sql, cancellationToken, transaction);
-                            }
                         }
 
                         if (!cancellationToken.IsCancellationRequested)
