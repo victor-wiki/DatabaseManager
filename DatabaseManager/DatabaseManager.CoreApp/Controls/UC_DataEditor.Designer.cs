@@ -48,6 +48,7 @@
             label1 = new System.Windows.Forms.Label();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             uc_QuickFilter = new UC_QuickFilter();
+            loadingPanel = new UC_LoadingPanel();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
             SuspendLayout();
@@ -68,7 +69,7 @@
             dgvData.Margin = new System.Windows.Forms.Padding(4);
             dgvData.Name = "dgvData";
             dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            dgvData.Size = new System.Drawing.Size(818, 395);
+            dgvData.Size = new System.Drawing.Size(818, 405);
             dgvData.TabIndex = 5;
             dgvData.CellFormatting += dgvData_CellFormatting;
             dgvData.CellLeave += dgvData_CellLeave;
@@ -78,6 +79,7 @@
             dgvData.ColumnHeaderMouseClick += dgvData_ColumnHeaderMouseClick;
             dgvData.ColumnHeaderMouseDoubleClick += dgvData_ColumnHeaderMouseDoubleClick;
             dgvData.DataError += dgvData_DataError;
+            dgvData.SizeChanged += dgvData_SizeChanged;
             dgvData.KeyUp += dgvData_KeyUp;
             // 
             // btnFilter
@@ -228,11 +230,23 @@
             uc_QuickFilter.Size = new System.Drawing.Size(250, 30);
             uc_QuickFilter.TabIndex = 16;
             // 
+            // loadingPanel
+            // 
+            loadingPanel.BackColor = System.Drawing.SystemColors.Control;
+            loadingPanel.BackgroundColor = System.Drawing.SystemColors.ControlDark;
+            loadingPanel.CancellationTokenSource = null;
+            loadingPanel.InterruptButtonVisible = false;
+            loadingPanel.Location = new System.Drawing.Point(0, 35);
+            loadingPanel.Name = "loadingPanel";
+            loadingPanel.Size = new System.Drawing.Size(818, 403);
+            loadingPanel.TabIndex = 17;
+            // 
             // UC_DataEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(loadingPanel);
             Controls.Add(uc_QuickFilter);
             Controls.Add(label1);
             Controls.Add(cboAddMode);
@@ -274,5 +288,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiSetCellValueToNull;
         private System.Windows.Forms.ToolTip toolTip1;
         private UC_QuickFilter uc_QuickFilter;
+        private UC_LoadingPanel loadingPanel;
     }
 }

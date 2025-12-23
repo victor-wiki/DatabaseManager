@@ -69,7 +69,15 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.LoadData(displayInfo);
+            this.ShowData(displayInfo);
+        }
+
+        public void ShowData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        {
+            Task.Run(() =>
+            {
+                this.LoadData(displayInfo, pageNum, isSort);
+            });
         }
 
         private async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
@@ -139,26 +147,36 @@ namespace DatabaseManager.Controls
 
             try
             {
+                this.loadingPanel.ShowLoading(this.dgvData);
+
                 (long Total, DataTable Data) result = await this.dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, false);
 
-                this.pagination.TotalCount = result.Total;
-
-                this.originalTable = result.Data;
-
-                this.table = DataGridViewHelper.ConvertDataTable(result.Data);
-
-                this.AddIndentifierToDataTable(this.table);
-
-                if (this.dgvData.Columns.Count == 0)
+                this.Invoke(() =>
                 {
-                    this.AddColumns(this.table);
-                }
+                    this.pagination.TotalCount = result.Total;
 
-                this.InsertData(this.table);
+                    this.originalTable = result.Data;
+
+                    this.table = DataGridViewHelper.ConvertDataTable(result.Data);
+
+                    this.AddIndentifierToDataTable(this.table);
+
+                    if (this.dgvData.Columns.Count == 0)
+                    {
+                        this.AddColumns(this.table);
+                    }
+
+                    this.InsertData(this.table);
+
+                });
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.loadingPanel.HideLoading();
             }
         }
 
@@ -281,7 +299,7 @@ namespace DatabaseManager.Controls
 
         private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.LoadData(this.displayInfo, pageNumber);
+            this.ShowData(this.displayInfo, pageNumber);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -299,12 +317,12 @@ namespace DatabaseManager.Controls
 
             this.uc_QuickFilter.ClearContent();
 
-            this.LoadData(this.displayInfo, 1, false);
+            this.ShowData(this.displayInfo, 1, false);
         }
 
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-
+            this.loadingPanel.HideLoading();
         }
 
         private void dgvData_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -1083,14 +1101,14 @@ namespace DatabaseManager.Controls
 
                     if (value != null)
                     {
-                        if (value.GetType() == typeof(string) && valueType != typeof(string) && value.ToString()== string.Empty)
+                        if (value.GetType() == typeof(string) && valueType != typeof(string) && value.ToString() == string.Empty)
                         {
                             dr[columnName] = DBNull.Value;
                         }
                         else
                         {
                             dr[columnName] = value;
-                        }                        
+                        }
                     }
                     else
                     {
@@ -1420,7 +1438,7 @@ namespace DatabaseManager.Controls
 
             this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
 
-            this.LoadData(this.displayInfo, 1, false);
+            this.ShowData(this.displayInfo, 1, false);
         }
 
         private void dgvData_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -1493,9 +1511,14 @@ namespace DatabaseManager.Controls
 
                 column.HeaderCell.SortGlyphDirection = this.sortOrder;
 
-                this.LoadData(this.displayInfo, 1, true);
+                this.ShowData(this.displayInfo, 1, true);
             }
-        }
+        }     
+
+        private void dgvData_SizeChanged(object sender, EventArgs e)
+        {
+            this.loadingPanel.RefreshStatus();
+        }       
     }
 }
 

@@ -132,9 +132,9 @@ namespace DatabaseManager.Forms
 
                 DatabaseObjectDisplayInfo data = form.Tag as DatabaseObjectDisplayInfo;
 
-                if (data.Name == info.Name && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
+                if (data.Name == info.Name && data.Schema == info.Schema && info.DatabaseType == data.DatabaseType && info.DisplayType == data.DisplayType)
                 {
-                    if (data.ConnectionInfo == info.ConnectionInfo)
+                    if (ObjectHelper.AreObjectsEqual(data.ConnectionInfo, info.ConnectionInfo))
                     {
                         if (info.DisplayType == DatabaseObjectDisplayType.Script)
                         {

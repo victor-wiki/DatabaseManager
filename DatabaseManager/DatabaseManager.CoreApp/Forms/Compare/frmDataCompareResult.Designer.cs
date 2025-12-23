@@ -98,7 +98,6 @@ namespace DatabaseManager.Forms.Compare
             tlvDifferences.AllColumns.Add(colIdenticalCount);
             tlvDifferences.BackColor = System.Drawing.SystemColors.Window;
             tlvDifferences.CellEditUseWholeCell = false;
-            tlvDifferences.CheckBoxes = true;
             tlvDifferences.Columns.AddRange(new ColumnHeader[] { colType, colSourceRecordCount, colTargetRecordCount, colDifferentCount, colOnlyInSourceCount, colOnlyInTargetCount, colIdenticalCount });
             tlvDifferences.Dock = DockStyle.Fill;
             tlvDifferences.FullRowSelect = true;
@@ -214,7 +213,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageDifferent.Location = new System.Drawing.Point(4, 26);
             tabPageDifferent.Name = "tabPageDifferent";
             tabPageDifferent.Padding = new Padding(3);
-            tabPageDifferent.Size = new System.Drawing.Size(1010, 277);
+            tabPageDifferent.Size = new System.Drawing.Size(1010, 296);
             tabPageDifferent.TabIndex = 0;
             tabPageDifferent.Text = "Different Records";
             tabPageDifferent.UseVisualStyleBackColor = true;
@@ -223,7 +222,7 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationDifferent.BackColor = System.Drawing.Color.Transparent;
             paginationDifferent.Dock = DockStyle.Bottom;
-            paginationDifferent.Location = new System.Drawing.Point(3, 243);
+            paginationDifferent.Location = new System.Drawing.Point(3, 262);
             paginationDifferent.Margin = new Padding(4);
             paginationDifferent.Name = "paginationDifferent";
             paginationDifferent.PageCount = 0L;
@@ -243,7 +242,7 @@ namespace DatabaseManager.Forms.Compare
             dgvDifferent.Location = new System.Drawing.Point(3, 3);
             dgvDifferent.Name = "dgvDifferent";
             dgvDifferent.ReadOnly = true;
-            dgvDifferent.Size = new System.Drawing.Size(1004, 239);
+            dgvDifferent.Size = new System.Drawing.Size(1004, 258);
             dgvDifferent.TabIndex = 0;
             dgvDifferent.CellFormatting += dgvDifferent_CellFormatting;
             dgvDifferent.DataError += dgvDifferent_DataError;
@@ -296,7 +295,7 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInSource.TabIndex = 6;
             dgvOnlyInSource.CellFormatting += dgvOnlyInSource_CellFormatting;
             dgvOnlyInSource.DataBindingComplete += dgvOnlyInSource_DataBindingComplete;
-            dgvOnlyInSource.DataError += dgvOnlyInSource_DataError;
+            dgvOnlyInSource.DataError += dgvOnlyInSource_DataError;         
             // 
             // tabPageOnlyInTarget
             // 
@@ -305,7 +304,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageOnlyInTarget.Location = new System.Drawing.Point(4, 26);
             tabPageOnlyInTarget.Name = "tabPageOnlyInTarget";
             tabPageOnlyInTarget.Padding = new Padding(3);
-            tabPageOnlyInTarget.Size = new System.Drawing.Size(1010, 356);
+            tabPageOnlyInTarget.Size = new System.Drawing.Size(1010, 296);
             tabPageOnlyInTarget.TabIndex = 2;
             tabPageOnlyInTarget.Text = "Only in Target";
             tabPageOnlyInTarget.UseVisualStyleBackColor = true;
@@ -314,7 +313,7 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationOnlyInTarget.BackColor = System.Drawing.Color.Transparent;
             paginationOnlyInTarget.Dock = DockStyle.Bottom;
-            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 322);
+            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 262);
             paginationOnlyInTarget.Margin = new Padding(4);
             paginationOnlyInTarget.Name = "paginationOnlyInTarget";
             paginationOnlyInTarget.PageCount = 0L;
@@ -342,11 +341,11 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInTarget.Margin = new Padding(4);
             dgvOnlyInTarget.Name = "dgvOnlyInTarget";
             dgvOnlyInTarget.ReadOnly = true;
-            dgvOnlyInTarget.Size = new System.Drawing.Size(1004, 318);
+            dgvOnlyInTarget.Size = new System.Drawing.Size(1004, 258);
             dgvOnlyInTarget.TabIndex = 8;
             dgvOnlyInTarget.CellFormatting += dgvOnlyInTarget_CellFormatting;
             dgvOnlyInTarget.DataBindingComplete += dgvOnlyInTarget_DataBindingComplete;
-            dgvOnlyInTarget.DataError += dgvOnlyInTarget_DataError;
+            dgvOnlyInTarget.DataError += dgvOnlyInTarget_DataError;          
             // 
             // tabPageIdentical
             // 
@@ -355,7 +354,7 @@ namespace DatabaseManager.Forms.Compare
             tabPageIdentical.Location = new System.Drawing.Point(4, 26);
             tabPageIdentical.Name = "tabPageIdentical";
             tabPageIdentical.Padding = new Padding(3);
-            tabPageIdentical.Size = new System.Drawing.Size(1010, 356);
+            tabPageIdentical.Size = new System.Drawing.Size(1010, 296);
             tabPageIdentical.TabIndex = 3;
             tabPageIdentical.Text = "Identical Records";
             tabPageIdentical.UseVisualStyleBackColor = true;
@@ -364,7 +363,7 @@ namespace DatabaseManager.Forms.Compare
             // 
             paginationIdentical.BackColor = System.Drawing.Color.Transparent;
             paginationIdentical.Dock = DockStyle.Bottom;
-            paginationIdentical.Location = new System.Drawing.Point(3, 322);
+            paginationIdentical.Location = new System.Drawing.Point(3, 262);
             paginationIdentical.Margin = new Padding(4);
             paginationIdentical.Name = "paginationIdentical";
             paginationIdentical.PageCount = 0L;
@@ -392,11 +391,11 @@ namespace DatabaseManager.Forms.Compare
             dgvIdentical.Margin = new Padding(4);
             dgvIdentical.Name = "dgvIdentical";
             dgvIdentical.ReadOnly = true;
-            dgvIdentical.Size = new System.Drawing.Size(1004, 318);
+            dgvIdentical.Size = new System.Drawing.Size(1004, 258);
             dgvIdentical.TabIndex = 10;
             dgvIdentical.CellFormatting += dgvIdentical_CellFormatting;
             dgvIdentical.DataBindingComplete += dgvIdentical_DataBindingComplete;
-            dgvIdentical.DataError += dgvIdentical_DataError;
+            dgvIdentical.DataError += dgvIdentical_DataError;          
             // 
             // contextMenuStrip1
             // 

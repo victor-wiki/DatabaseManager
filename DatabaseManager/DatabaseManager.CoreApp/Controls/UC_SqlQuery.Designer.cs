@@ -34,11 +34,11 @@ namespace DatabaseManager.Controls
             queryEditor = new UC_QueryEditor();
             tabResult = new System.Windows.Forms.TabControl();
             tabPageData = new System.Windows.Forms.TabPage();
+            loadingPanel = new UC_LoadingPanel();
             resultGridView = new UC_QueryResultGrid();
             tabPageMessage = new System.Windows.Forms.TabPage();
             resultTextBox = new System.Windows.Forms.RichTextBox();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
-            tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             tsslMessage = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -99,6 +99,7 @@ namespace DatabaseManager.Controls
             // tabPageData
             // 
             tabPageData.BackColor = System.Drawing.SystemColors.Control;
+            tabPageData.Controls.Add(loadingPanel);
             tabPageData.Controls.Add(resultGridView);
             tabPageData.Location = new System.Drawing.Point(4, 26);
             tabPageData.Margin = new System.Windows.Forms.Padding(0);
@@ -106,6 +107,16 @@ namespace DatabaseManager.Controls
             tabPageData.Size = new System.Drawing.Size(496, 197);
             tabPageData.TabIndex = 1;
             tabPageData.Text = "Data";
+            // 
+            // loadingPanel
+            // 
+            loadingPanel.BackColor = System.Drawing.Color.Transparent;
+            loadingPanel.CancellationTokenSource = null;
+            loadingPanel.InterruptButtonVisible = true;
+            loadingPanel.Location = new System.Drawing.Point(309, 110);
+            loadingPanel.Name = "loadingPanel";
+            loadingPanel.Size = new System.Drawing.Size(166, 84);
+            loadingPanel.TabIndex = 3;   
             // 
             // resultGridView
             // 
@@ -115,6 +126,7 @@ namespace DatabaseManager.Controls
             resultGridView.Name = "resultGridView";
             resultGridView.Size = new System.Drawing.Size(496, 197);
             resultGridView.TabIndex = 0;
+            resultGridView.SizeChanged += resultGridView_SizeChanged;
             // 
             // tabPageMessage
             // 
@@ -142,18 +154,13 @@ namespace DatabaseManager.Controls
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsslStatus, tsslMessage });
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsslMessage });
             statusStrip1.Location = new System.Drawing.Point(0, 589);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
             statusStrip1.Size = new System.Drawing.Size(504, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
-            // 
-            // tsslStatus
-            // 
-            tsslStatus.Name = "tsslStatus";
-            tsslStatus.Size = new System.Drawing.Size(0, 17);
             // 
             // tsslMessage
             // 
@@ -195,6 +202,6 @@ namespace DatabaseManager.Controls
         private System.Windows.Forms.RichTextBox resultTextBox;
         private UC_QueryResultGrid resultGridView;
         private UC_QueryEditor queryEditor;
-        private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
+        private UC_LoadingPanel loadingPanel;
     }
 }

@@ -65,8 +65,8 @@ namespace DatabaseManager.Controls
             UC_QueryEditor.CheckForIllegalCrossThreadCalls = false;
             TextEditorControlEx.CheckForIllegalCrossThreadCalls = false;
             TabControl.CheckForIllegalCrossThreadCalls = false;
-            TabPage.CheckForIllegalCrossThreadCalls = false;            
-            StatusStrip.CheckForIllegalCrossThreadCalls = false;                   
+            TabPage.CheckForIllegalCrossThreadCalls = false;
+            StatusStrip.CheckForIllegalCrossThreadCalls = false;
 
             this.SetResultPanelVisible(false);
         }
@@ -177,25 +177,21 @@ namespace DatabaseManager.Controls
                 }
                 catch (Exception ex)
                 {
-                    LogHelper.LogError(ExceptionHelper.GetExceptionDetails(ex));                    
+                    LogHelper.LogError(ExceptionHelper.GetExceptionDetails(ex));
                 }
             }
-        }      
+        }
 
-        public async void RunScripts(DatabaseObjectDisplayInfo data)
+        public void RunScripts(DatabaseObjectDisplayInfo data)
         {
-            await Task.Run(() => 
+            Task.Run(() =>
             {
-                this.BeginInvoke(() =>{
-                    this.Execute(data);
-                });              
+                this.Execute(data);
             });
         }
 
         private async void Execute(DatabaseObjectDisplayInfo data)
         {
-            this.tsslStatus.Text = "Querying...";
-
             this.isResultReturned = false;
             this.displayInfo = data;
 
@@ -217,16 +213,29 @@ namespace DatabaseManager.Controls
 
                 var token = this.cancellationTokenSource.Token;
 
-                token.Register(async () => { await this.Feedback( new FeedbackInfo() { Message = "Task has been canceled." }); });
+                token.Register(async () => { await this.Feedback(new FeedbackInfo() { Message = "Task has been canceled." }); });
+
+                this.Invoke(() =>
+                {
+                    this.SetResultPanelVisible(true);
+                    this.tabResult.SelectedIndex = 0;
+                });
+
+                this.loadingPanel.CancellationTokenSource = this.cancellationTokenSource;
+
+                this.loadingPanel.ShowLoading(this.resultGridView);
 
                 QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters);
 
                 this.isResultReturned = true;
 
-                this.ShowResult(result);
-            }
+                this.Invoke(() =>
+                {
+                    this.ShowResult(result);
+                });
 
-            this.tsslStatus.Text = "";
+                this.loadingPanel.HideLoading();
+            }
         }
 
         public void ShowResult(QueryResult result)
@@ -281,7 +290,7 @@ namespace DatabaseManager.Controls
                         }
                     }
 
-                    this.AppendMessage("command executed.");                   
+                    this.AppendMessage("command executed.");
                 }
 
                 if (selectedTabIndex >= 0)
@@ -293,7 +302,7 @@ namespace DatabaseManager.Controls
             this.SetResultPanelVisible(true);
 
             this.Invalidate();
-        }       
+        }
 
         private bool CheckConnection()
         {
@@ -356,10 +365,10 @@ namespace DatabaseManager.Controls
                 {
                     if (this.scriptRunner != null)
                     {
-                        if(this.cancellationTokenSource!= null)
+                        if (this.cancellationTokenSource != null)
                         {
                             await this.cancellationTokenSource.CancelAsync();
-                        }                       
+                        }
                     }
                 }
 
@@ -393,8 +402,8 @@ namespace DatabaseManager.Controls
 
         private void SetResultPanelVisible(bool visible)
         {
-              this.splitContainer1.Panel2Collapsed = !visible;
-              this.splitContainer1.SplitterWidth = visible ? 3 : 1;
+            this.splitContainer1.Panel2Collapsed = !visible;
+            this.splitContainer1.SplitterWidth = visible ? 3 : 1;
         }
 
         internal bool IsTextChanged()
@@ -413,6 +422,11 @@ namespace DatabaseManager.Controls
             {
                 this.queryEditor.DisposeResources();
             }
+        }   
+
+        private void resultGridView_SizeChanged(object sender, EventArgs e)
+        {
+            this.loadingPanel.RefreshStatus();
         }
     }
 }

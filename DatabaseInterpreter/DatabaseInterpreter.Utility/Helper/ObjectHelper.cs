@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Linq;
+using System.Reflection;
 
 namespace DatabaseInterpreter.Utility
 {
@@ -26,6 +28,35 @@ namespace DatabaseInterpreter.Utility
                     }
                 }
             }
+        }
+
+        public static bool AreObjectsEqual(object object1, object object2)
+        {
+            if (object1 == null || object2 == null)
+            {
+                return object1 == object2;
+            }
+
+            Type type1 = object1.GetType();
+            Type type2 = object2.GetType();
+
+            PropertyInfo[] properties1 = type1.GetProperties();
+            PropertyInfo[] properties2 = type1.GetProperties();
+
+            if (properties1.Length != properties2.Length)
+            {
+                return false;
+            }
+
+            foreach (PropertyInfo property in properties1)
+            {
+                if (!Equals(property.GetValue(object1), property.GetValue(object2)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

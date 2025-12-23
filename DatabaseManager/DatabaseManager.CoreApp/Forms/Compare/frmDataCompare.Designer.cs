@@ -43,7 +43,12 @@
             toolTip1 = new System.Windows.Forms.ToolTip(components);
             tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
             btnFetch = new System.Windows.Forms.Button();
+            splitContainer1 = new System.Windows.Forms.SplitContainer();
             groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // targetDbProfile
@@ -75,14 +80,14 @@
             // 
             // groupBox1
             // 
-            groupBox1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             groupBox1.Controls.Add(chkIdenticalRecords);
             groupBox1.Controls.Add(chkOnlyInTargetRecords);
             groupBox1.Controls.Add(chkOnlyInSourceRecords);
             groupBox1.Controls.Add(chkDifferentRecords);
-            groupBox1.Location = new System.Drawing.Point(12, 301);
+            groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            groupBox1.Location = new System.Drawing.Point(0, 0);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(839, 191);
+            groupBox1.Size = new System.Drawing.Size(842, 177);
             groupBox1.TabIndex = 43;
             groupBox1.TabStop = false;
             groupBox1.Text = "Data to display";
@@ -171,12 +176,12 @@
             // 
             // tvDbObjects
             // 
-            tvDbObjects.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            tvDbObjects.Location = new System.Drawing.Point(13, 70);
+            tvDbObjects.Dock = System.Windows.Forms.DockStyle.Fill;
+            tvDbObjects.Location = new System.Drawing.Point(0, 0);
             tvDbObjects.Margin = new System.Windows.Forms.Padding(4);
             tvDbObjects.Name = "tvDbObjects";
             tvDbObjects.ShowCheckBox = true;
-            tvDbObjects.Size = new System.Drawing.Size(838, 224);
+            tvDbObjects.Size = new System.Drawing.Size(842, 250);
             tvDbObjects.TabIndex = 47;
             // 
             // btnFetch
@@ -192,17 +197,34 @@
             btnFetch.UseVisualStyleBackColor = true;
             btnFetch.Click += btnFetch_Click;
             // 
+            // splitContainer1
+            // 
+            splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            splitContainer1.Location = new System.Drawing.Point(9, 69);
+            splitContainer1.Name = "splitContainer1";
+            splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(tvDbObjects);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(groupBox1);
+            splitContainer1.Size = new System.Drawing.Size(842, 431);
+            splitContainer1.SplitterDistance = 250;
+            splitContainer1.TabIndex = 49;
+            // 
             // frmDataCompare
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(858, 596);
+            Controls.Add(splitContainer1);
             Controls.Add(btnFetch);
-            Controls.Add(tvDbObjects);
             Controls.Add(txtMessage);
             Controls.Add(btnCancel);
             Controls.Add(btnCompare);
-            Controls.Add(groupBox1);
             Controls.Add(targetDbProfile);
             Controls.Add(sourceDbProfile);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -213,6 +235,10 @@
             Load += frmDataCompare_Load;
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -232,5 +258,6 @@
         private System.Windows.Forms.ToolTip toolTip1;
         private Controls.UC_DbObjectsSimpleTree tvDbObjects;
         private System.Windows.Forms.Button btnFetch;
+        private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }

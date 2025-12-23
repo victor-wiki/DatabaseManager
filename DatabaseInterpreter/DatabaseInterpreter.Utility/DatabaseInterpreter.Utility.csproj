@@ -7,11 +7,11 @@
     <PackageLicenseUrl />
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Utility for DatabaseManager projects.</Description>
-    <Version>2.2.3</Version>
+    <Version>2.3.0</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.2.3</AssemblyVersion>
-    <FileVersion>2.2.3</FileVersion>
-    <PackageReleaseNotes>data type "image" is binary data type.</PackageReleaseNotes>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
+    <FileVersion>2.3.0</FileVersion>
+    <PackageReleaseNotes>ObjectHelper: add method "AreObjectsEqual".</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

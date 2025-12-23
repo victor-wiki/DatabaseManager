@@ -13,6 +13,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using View = DatabaseInterpreter.Model.View;
 
@@ -48,9 +49,9 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.LoadData(displayInfo);
+            this.ShowData(displayInfo);
 
-            if(displayInfo.DatabaseObject is Table)
+            if (displayInfo.DatabaseObject is Table)
             {
                 this.uc_QuickFilter.Query += UC_QuickFilter_Query;
                 this.uc_QuickFilter.Visible = true;
@@ -60,10 +61,18 @@ namespace DatabaseManager.Controls
                 this.uc_QuickFilter.Visible = false;
                 this.dgvData.Top -= this.uc_QuickFilter.Height;
                 this.dgvData.Height += this.uc_QuickFilter.Height;
-            }           
+            }
         }
 
-        private async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        public void ShowData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        {
+            Task.Run(() =>
+            {
+                this.LoadData(displayInfo, pageNum, isSort);
+            });
+        }
+
+        public async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
         {
             this.displayInfo = displayInfo;
 
@@ -123,15 +132,25 @@ namespace DatabaseManager.Controls
                     isForView = true;
                 }
 
+                this.loadingPanel.ShowLoading(this.dgvData);
+
                 (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, isForView);
 
-                this.pagination.TotalCount = result.Total;
+                this.Invoke(() =>
+                {
+                    this.pagination.TotalCount = result.Total;
 
-                this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
+                    this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
+
+                });
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.loadingPanel.HideLoading();
             }
 
             foreach (DataGridViewColumn column in this.dgvData.Columns)
@@ -169,7 +188,7 @@ namespace DatabaseManager.Controls
 
         private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.LoadData(this.displayInfo, pageNumber);
+            this.ShowData(this.displayInfo, pageNumber);
         }
 
         public ContentSaveResult Save(ContentSaveInfo info)
@@ -189,7 +208,7 @@ namespace DatabaseManager.Controls
             this.sortedColumnIndex = this.dgvData.SortedColumn.DisplayIndex;
             this.sortOrder = this.dgvData.SortOrder;
 
-            this.LoadData(this.displayInfo, 1, true);
+            this.ShowData(this.displayInfo, 1, true);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -208,12 +227,12 @@ namespace DatabaseManager.Controls
 
             this.uc_QuickFilter.ClearContent();
 
-            this.LoadData(this.displayInfo, 1, false);
+            this.ShowData(this.displayInfo, 1, false);
         }
 
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-
+            this.loadingPanel.HideLoading();
         }
         private void dgvData_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
@@ -279,7 +298,7 @@ namespace DatabaseManager.Controls
         private void tsmiShowContent_Click(object sender, EventArgs e)
         {
             DataGridViewHelper.ShowCellContent(this.dgvData);
-        }      
+        }
 
         private void dgvData_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
@@ -295,7 +314,12 @@ namespace DatabaseManager.Controls
 
             this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
 
-            this.LoadData(this.displayInfo, 1, false);
+            this.ShowData(this.displayInfo, 1, false);
+        }       
+
+        private void dgvData_SizeChanged(object sender, EventArgs e)
+        {
+            this.loadingPanel.RefreshStatus();
         }
     }
 }

@@ -40,7 +40,7 @@ namespace DatabaseManager.Forms.Compare
             this.sourceDbInterpreter = sourceDbInterpreter;
             this.targetDbInterpreter = targetDbInterpreter;
             this.result = result;
-            this.option = option;
+            this.option = option;                  
 
             this.LoadData();
         }
@@ -72,7 +72,7 @@ namespace DatabaseManager.Forms.Compare
                 this.tabControl1.TabPages.Remove(this.tabPageOnlyInTarget);
             }
 
-            if(!showIdentical)
+            if (!showIdentical)
             {
                 this.tabControl1.TabPages.Remove(this.tabPageIdentical);
             }
@@ -286,8 +286,8 @@ namespace DatabaseManager.Forms.Compare
 
             foreach (var name in diffColumnNames)
             {
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + sourceColumnNameSuffix, HeaderText = name + "→", Tag = name });
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + targetColumnNameSuffix, HeaderText = "→" + name, Tag = name });
+                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + sourceColumnNameSuffix, HeaderText = name + "→", Tag = name, SortMode = DataGridViewColumnSortMode.NotSortable });
+                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + targetColumnNameSuffix, HeaderText = "→" + name, Tag = name, SortMode = DataGridViewColumnSortMode.NotSortable });
             }
 
             foreach (DataGridViewColumn column in this.dgvDifferent.Columns)
@@ -319,14 +319,14 @@ namespace DatabaseManager.Forms.Compare
                     {
                         var v = row.Details[originalColumnName];
 
-                        if(columnName.EndsWith(sourceColumnNameSuffix))
+                        if (columnName.EndsWith(sourceColumnNameSuffix))
                         {
                             valueInfos.Add(new ValueInfo() { Value = v.Item1, IsDifferent = true });
                         }
-                        else if(columnName.EndsWith(targetColumnNameSuffix))
+                        else if (columnName.EndsWith(targetColumnNameSuffix))
                         {
                             valueInfos.Add(new ValueInfo() { Value = v.Item2, IsDifferent = true });
-                        }                            
+                        }
                     }
                     else
                     {
@@ -353,9 +353,9 @@ namespace DatabaseManager.Forms.Compare
                 gridRow.Cells.AddRange(cells);
 
                 this.dgvDifferent.Rows.Add(gridRow);
-
-                this.dgvDifferent.ClearSelection();
             }
+
+            this.dgvDifferent.ClearSelection();           
         }
 
         private DataCompareResultDetail GetSelectedDataCompareResultDetail()
@@ -366,22 +366,7 @@ namespace DatabaseManager.Forms.Compare
             }
 
             return null;
-        }
-
-        private void paginationDifferent_OnPageNumberChanged(long pageNumber)
-        {
-            var detail = this.GetSelectedDataCompareResultDetail();
-
-            if (detail != null)
-            {
-                this.ShowDifferentData(detail, pageNumber);
-            }
-        }
-
-        private void dgvDifferent_DataError(object sender, DataGridViewDataErrorEventArgs e)
-        {
-
-        }
+        }        
 
         private List<DataRow> GetPagedKeyRows(List<DataRow> rows, int pageSize, long pageNumber)
         {
@@ -448,6 +433,21 @@ namespace DatabaseManager.Forms.Compare
             this.dgvIdentical.DataSource = DataGridViewHelper.ConvertDataTable(sourceDataTable);
         }
 
+        private void paginationDifferent_OnPageNumberChanged(long pageNumber)
+        {
+            var detail = this.GetSelectedDataCompareResultDetail();
+
+            if (detail != null)
+            {
+                this.ShowDifferentData(detail, pageNumber);
+            }
+        }
+
+        private void dgvDifferent_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+
+        }
+
         private void dgvOnlyInSource_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
             this.dgvOnlyInSource.ClearSelection();
@@ -455,7 +455,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvOnlyInSource_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-
+            
         }
 
         private void paginationOnlyInSource_OnPageNumberChanged(long pageNumber)
@@ -490,7 +490,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvOnlyInTarget_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-
+           
         }
 
         private void dgvIdentical_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -505,7 +505,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvIdentical_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-
+           
         }
 
         private void paginationOnlyInTarget_OnPageNumberChanged(long pageNumber)
@@ -636,7 +636,7 @@ namespace DatabaseManager.Forms.Compare
 
             string script = await dataCompare.GenerateScripts(details, token);
 
-            if(!token.IsCancellationRequested)
+            if (!token.IsCancellationRequested)
             {
                 File.WriteAllText(filePath, script);
 
@@ -669,7 +669,7 @@ namespace DatabaseManager.Forms.Compare
 
         private async void Synchronize()
         {
-            this.Feedback("");            
+            this.Feedback("");
 
             DbInterpreter sourceInterpreter = DbInterpreterHelper.GetDbInterpreter(this.sourceDbInterpreter.DatabaseType, this.sourceDbInterpreter.ConnectionInfo);
             DbInterpreter targetInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbInterpreter.DatabaseType, this.targetDbInterpreter.ConnectionInfo);
@@ -721,7 +721,7 @@ namespace DatabaseManager.Forms.Compare
 
             DataSynchronizeResult result = await dataCompare.Synchronize(details, token, schemaMappings);
 
-            if(!token.IsCancellationRequested)
+            if (!token.IsCancellationRequested)
             {
                 if (result.IsOK)
                 {
@@ -804,12 +804,12 @@ namespace DatabaseManager.Forms.Compare
 
         private async void tsbCancel_Click(object sender, EventArgs e)
         {
-            if(this.cancellationTokenSource!=null)
+            if (this.cancellationTokenSource != null)
             {
                 await this.cancellationTokenSource.CancelAsync();
             }
-        }
-
+        }      
+        
         #region IObserver<FeedbackInfo>
         void IObserver<FeedbackInfo>.OnCompleted()
         {
