@@ -15,6 +15,9 @@
 
 ### Edit Data
   Edit single table data.
+
+### Import & Export Data
+  Import data from CSV/EXCEL file using custom column mappings; Export data to CSV/EXCEL file. 
   
 ### Table Copy
   Clone table schema and copy data to another database.
