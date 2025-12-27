@@ -1,5 +1,4 @@
-﻿using DatabaseInterpreter.Model;
-using DatabaseManager.FileUtility.Model;
+﻿using DatabaseManager.FileUtility.Model;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
@@ -146,7 +145,7 @@ namespace DatabaseManager.FileUtility
 
                     var columnIndex = 0;
 
-                    foreach (TableColumn col in columns)
+                    foreach (GridColumn col in columns)
                     {
                         var headerCell = headerRow.CreateCell(columnIndex);
 
@@ -264,8 +263,8 @@ namespace DatabaseManager.FileUtility
 
             anchor.Row1 = cell.RowIndex;
             anchor.Col1 = cell.ColumnIndex;
-            anchor.Row2 = cell.RowIndex + 2;
-            anchor.Col2 = cell.ColumnIndex + 2;
+            anchor.Row2 = cell.RowIndex + 3;
+            anchor.Col2 = cell.ColumnIndex + 3;
 
             var comment = drawing.CreateCellComment(anchor);
             comment.String = workbook.GetCreationHelper().CreateRichTextString(text);

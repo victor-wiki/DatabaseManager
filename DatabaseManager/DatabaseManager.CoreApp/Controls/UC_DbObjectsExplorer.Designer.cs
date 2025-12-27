@@ -57,7 +57,7 @@
             cboAccount.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             cboAccount.BackColor = System.Drawing.Color.White;
             cboAccount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cboAccount.DropDownWidth = 300;
+            cboAccount.DropDownWidth = 215;
             cboAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             cboAccount.FormattingEnabled = true;
             cboAccount.Location = new System.Drawing.Point(4, 35);

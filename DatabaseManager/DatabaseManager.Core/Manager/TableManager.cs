@@ -89,39 +89,21 @@ namespace DatabaseManager.Core
                         string tableName = schemaDesignerInfo.TableDesignerInfo.Name;
                         string tempTableName = $"{tableName}___temp";
 
-                        schemaDesignerInfo.TableDesignerInfo.Name = tempTableName;
+                        string createTempTableScript = $"CREATE TABLE {tempTableName} AS SELECT * FROM {tableName};";
 
-                        foreach (var column in schemaDesignerInfo.TableColumnDesingerInfos)
-                        {
-                            column.TableName = tempTableName;
-                        }
-
-                        foreach (var index in schemaDesignerInfo.TableIndexDesingerInfos)
-                        {
-                            index.TableName = tempTableName;
-                        }
-
-                        foreach (var constraint in schemaDesignerInfo.TableConstraintDesignerInfos)
-                        {
-                            constraint.TableName = tempTableName;
-                        }
-
-                        foreach (var fk in schemaDesignerInfo.TableForeignKeyDesignerInfos)
-                        {
-                            fk.TableName = tempTableName;
-                        }
-
-                        result = await this.GenerateChangeScripts(schemaDesignerInfo, true, tableName);
-
-                        scripts.AddRange((result.ResultData as TableDesignerGenerateScriptsData).Scripts);
-
-                        scripts.Add(new Script($"INSERT INTO {tempTableName} SELECT * FROM {tableName};"));
+                        scripts.Add(new Script(createTempTableScript));
 
                         var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
 
-                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tableName }));
+                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tableName }));                        
 
-                        scripts.Add(scriptGenerator.RenameTable(new Table() { Name = tempTableName }, tableName));
+                        result = await this.GenerateChangeScripts(schemaDesignerInfo, true);
+
+                        scripts.AddRange((result.ResultData as TableDesignerGenerateScriptsData).Scripts);
+
+                        scripts.Add(new Script($"INSERT INTO {tableName} SELECT * FROM {tempTableName};"));
+
+                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tempTableName }));
 
                         scripts.Add(new Script("PRAGMA foreign_keys = 1;"));
                     }

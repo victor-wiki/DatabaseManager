@@ -787,47 +787,54 @@ namespace DatabaseConverter.Core
             }
             else
             {
-                (Dictionary<string, object> Parameters, string Script) scriptResult = GenerateScripts(dbScriptGenerator, targetTable, targetTableColumns, data);
+                await InsertData(targetDbInterpreter, dbConnection, dbScriptGenerator, targetTable, targetTableColumns, data, cancellationToken, transaction);
+            }
+        }
 
-                string script = scriptResult.Script;
+        public static async Task InsertData(DbInterpreter targetDbInterpreter, DbConnection dbConnection, DbScriptGenerator dbScriptGenerator,
+                                            Table targetTable, List<TableColumn> targetTableColumns, List<Dictionary<string, object>> data, 
+                                            CancellationToken cancellationToken, DbTransaction transaction = null)
+        {
+            (Dictionary<string, object> Parameters, string Script) scriptResult = GenerateScripts(dbScriptGenerator, targetTable, targetTableColumns, data);
 
-                string delimiter = ");" + Environment.NewLine;
+            string script = scriptResult.Script;
 
-                if (!script.Contains(delimiter))
+            string delimiter = ");" + Environment.NewLine;
+
+            if (!script.Contains(delimiter))
+            {
+                await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(script, cancellationToken, scriptResult.Parameters, transaction));
+            }
+            else
+            {
+                var items = script.Split(delimiter);
+
+                List<string> insertItems = new List<string>();
+
+                foreach (var item in items)
                 {
-                    await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(script, cancellationToken, scriptResult.Parameters, transaction));
+                    if (item.Trim().ToUpper().StartsWith("INSERT INTO "))
+                    {
+                        insertItems.Add(item);
+                    }
+                    else
+                    {
+                        if (insertItems.Any())
+                        {
+                            insertItems[insertItems.Count - 1] += (delimiter + item);
+                        }
+                    }
                 }
-                else
+
+                int count = 0;
+
+                foreach (var item in insertItems)
                 {
-                    var items = script.Split(delimiter);
+                    count++;
 
-                    List<string> insertItems = new List<string>();
+                    var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
 
-                    foreach (var item in items)
-                    {
-                        if (item.Trim().ToUpper().StartsWith("INSERT INTO "))
-                        {
-                            insertItems.Add(item);
-                        }
-                        else
-                        {
-                            if (insertItems.Any())
-                            {
-                                insertItems[insertItems.Count - 1] += (delimiter + item);
-                            }
-                        }
-                    }
-
-                    int count = 0;
-
-                    foreach (var item in insertItems)
-                    {
-                        count++;
-
-                        var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
-
-                        await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(cmd, cancellationToken, scriptResult.Parameters, transaction));
-                    }
+                    await targetDbInterpreter.ExecuteNonQueryAsync(dbConnection, GetCommandInfo(cmd, cancellationToken, scriptResult.Parameters, transaction));
                 }
             }
         }

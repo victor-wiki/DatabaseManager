@@ -7,14 +7,12 @@ namespace DatabaseManager.FileUtility
     public class CsvReader : BaseReader
     {
 
-        public CsvReader(ImportDataInfo info) : base(info) { }
+        public CsvReader(SourceFileInfo info) : base(info) { }
 
 
-        public override DataReadResult Read()
+        public override DataReadResult Read(bool onlyReadHeader = false)
         {
-            DataReadResult result = new DataReadResult();
-
-            Dictionary<int, Dictionary<int, object>> dict = new Dictionary<int, Dictionary<int, object>>();
+            DataReadResult result = new DataReadResult();           
 
             string filePath = this.info.FilePath;
             bool firstRowIsColumnName = this.info.FirstRowIsColumnName;
@@ -28,37 +26,39 @@ namespace DatabaseManager.FileUtility
 
                 CsvHelper.CsvReader reader = new CsvHelper.CsvReader(textReader, configuration);
 
-                reader.Read();
-
                 if (firstRowIsColumnName)
                 {
+                    reader.Read();
                     reader.ReadHeader();
                 }
 
-                int columnCount = reader.ColumnCount;
+                result.HeaderColumns = reader.HeaderRecord;
 
-                int index = 0;
-
-                while (reader.Read())
+                if(!onlyReadHeader)
                 {
-                    Dictionary<int, object> dictRow = new Dictionary<int, object>();
+                    int index = 0;
 
-                    for (int i = 0; i < columnCount; i++)
+                    Dictionary<int, Dictionary<int, object>> dict = new Dictionary<int, Dictionary<int, object>>();
+
+                    while (reader.Read())
                     {
-                        string value = reader.GetField(i);
+                        Dictionary<int, object> dictRow = new Dictionary<int, object>();
 
-                        dictRow.Add(i, value);
+                        for (int i = 0; i < reader.ColumnCount; i++)
+                        {
+                            string value = reader.GetField(i);
+
+                            dictRow.Add(i, value);
+                        }
+
+                        dict.Add(index, dictRow);
+
+                        index++;
                     }
 
-                    dict.Add(index, dictRow);
-
-                    index++;
-                }
-
-                result.HeaderColumns = reader.HeaderRecord;
-            }
-
-            result.Data = dict;
+                    result.Data = dict;
+                }               
+            }           
 
             return result;
         }

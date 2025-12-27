@@ -1520,7 +1520,7 @@ namespace DatabaseManager.Controls
 
             frm.OnFeedback += this.Feedback;
 
-            frm.ShowDialog();
+            frm.Show();
         }
 
         private void tsmiImportData_Click(object sender, EventArgs e)
@@ -1528,7 +1528,7 @@ namespace DatabaseManager.Controls
             this.ImportData();
         }
 
-        private async void ImportData()
+        private void ImportData()
         {
             TreeNode node = this.GetSelectedNode();
 
@@ -1538,7 +1538,7 @@ namespace DatabaseManager.Controls
 
             frmImportData frm = new frmImportData(dbInterpreter, table);
 
-            frm.OnFeedback += this.Feedback;
+            //frm.OnFeedback += this.Feedback;
 
             DialogResult result = frm.ShowDialog();
         }

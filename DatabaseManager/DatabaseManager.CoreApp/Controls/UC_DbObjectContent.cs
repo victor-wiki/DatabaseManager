@@ -121,7 +121,9 @@ namespace DatabaseManager.Controls
 
             string title = string.IsNullOrEmpty(filePath) ? $" - {this.GetInfoName(info)}" : "";
 
-            return $@"{filePath}{info.DatabaseType}{database}{title}";
+            string tooltip = $@"{filePath}{(info.DatabaseType == DatabaseType.Unknown ? "" : info.DatabaseType.ToString())}{database}{title}";
+
+            return tooltip.TrimEnd('-',' ');
         }
 
         private void DataFilter(object sender)
@@ -132,11 +134,13 @@ namespace DatabaseManager.Controls
             }
         }
 
-        internal bool Save()
+        internal ContentSaveResult Save()
         {
+            ContentSaveResult saveResult = new ContentSaveResult() { IsOK = false };
+
             if (this.info == null)
             {
-                return false;
+                return saveResult;
             }
 
             DatabaseObjectDisplayType displayType = this.info.DisplayType;
@@ -146,7 +150,11 @@ namespace DatabaseManager.Controls
                 if (File.Exists(info.FilePath))
                 {
                     this.SaveToFile(info.FilePath);
-                    return true;
+
+                    saveResult.IsOK = true;
+                    saveResult.ResultData = info.FilePath;
+
+                    return saveResult;
                 }
 
                 if (this.dlgSave == null)
@@ -181,10 +189,12 @@ namespace DatabaseManager.Controls
                     this.info.Name = name;
 
                     this.AfterSaved();
+
+                    saveResult.IsOK = true;
                 }
                 else
                 {
-                    return false;
+                    return saveResult;
                 }
             }
             else if (displayType == DatabaseObjectDisplayType.EditData)
@@ -198,7 +208,10 @@ namespace DatabaseManager.Controls
                     this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
                 }
 
-                return result.IsOK;
+                saveResult.IsOK = result.IsOK;
+                saveResult.ResultData = result.ResultData;
+
+                return saveResult;
             }
             else if (displayType == DatabaseObjectDisplayType.TableDesigner)
             {
@@ -213,23 +226,25 @@ namespace DatabaseManager.Controls
                     this.info.Name = table.Name;
 
                     this.AfterSaved();
+
+                    saveResult.IsOK = true;
                 }
                 else
                 {
-                    if(result.InfoType == ContentSaveResultInfoType.Error)
+                    if (result.InfoType == ContentSaveResultInfoType.Error)
                     {
                         this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Error, Message = result.Message });
-                    }     
+                    }
                     else
                     {
                         this.Feedback(new FeedbackInfo() { InfoType = FeedbackInfoType.Info, Message = result.Message });
                     }
 
-                    return false;
+                    return saveResult;
                 }
             }
 
-            return true;
+            return saveResult;
         }
 
         private void AfterSaved()

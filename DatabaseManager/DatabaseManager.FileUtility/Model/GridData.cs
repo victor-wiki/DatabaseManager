@@ -1,12 +1,11 @@
-﻿using DatabaseInterpreter.Model;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace DatabaseManager.FileUtility.Model
 {
     public class GridData
     {
-        public List<TableColumn> Columns { get; set; }
+        public List<GridColumn> Columns { get; set; }
         public List<GridRow> Rows { get; set; }
     }
 

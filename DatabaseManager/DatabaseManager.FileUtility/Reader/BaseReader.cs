@@ -1,14 +1,15 @@
 ﻿namespace DatabaseManager.FileUtility
 {
-    public abstract class BaseReader    {
-      
-        protected ImportDataInfo info;
+    public abstract class BaseReader
+    {
 
-        public BaseReader(ImportDataInfo info)
+        protected SourceFileInfo info;
+
+        public BaseReader(SourceFileInfo info)
         {
             this.info = info;
         }
 
-        public abstract DataReadResult Read();
+        public abstract DataReadResult Read(bool onlyReadHeader = false);
     }
 }

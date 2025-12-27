@@ -492,7 +492,7 @@ namespace DatabaseManager.Controls
 
         private void ShowColumnSelector(DatabaseObjectType databaseObjectType, IEnumerable<SimpleColumn> values, bool columnIsReadonly, bool isSingleSelect)
         {
-            frmColumnSelect columnSelect = new frmColumnSelect() { ColumnIsReadOnly = columnIsReadonly, IsSingleSelect = isSingleSelect };
+            frmColumnSelect columnSelect = new frmColumnSelect() { ColumnIsReadOnly = columnIsReadonly, IsSingleSelect = isSingleSelect, ShowSortColumn = this.displayInfo.DatabaseType == DatabaseType.SqlServer };
 
             IEnumerable<TableColumnDesingerInfo> columns = this.ucColumns.GetColumns().Where(item => !string.IsNullOrEmpty(item.Name));
 
@@ -518,7 +518,7 @@ namespace DatabaseManager.Controls
                 }
             }
 
-            columnSelect.InitControls(columnInfos, this.displayInfo.DatabaseType == DatabaseType.SqlServer);
+            columnSelect.InitControls(columnInfos);
 
             if (databaseObjectType == DatabaseObjectType.Index)
             {

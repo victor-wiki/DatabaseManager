@@ -69,6 +69,7 @@ namespace DatabaseManager.Forms
             this.chkNeedPreviewBeforeConvert.Checked = setting.NeedPreviewBeforeConvert;
             this.chkShowCurrentColumnContentMaxLength.Checked = setting.ShowCurrentColumnContentMaxLength;
             this.chkAutoMapSchema.Checked = setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType;
+            this.chkRememberLayout.Checked = setting.RememberApplicationLayoutInformation;
 
             if (string.IsNullOrEmpty(setting.CustomMappingFolder))
             {
@@ -125,6 +126,7 @@ namespace DatabaseManager.Forms
             setting.NeedPreviewBeforeConvert = this.chkNeedPreviewBeforeConvert.Checked;
             setting.ShowCurrentColumnContentMaxLength = this.chkShowCurrentColumnContentMaxLength.Checked;
             setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType = this.chkAutoMapSchema.Checked;
+            setting.RememberApplicationLayoutInformation = this.chkRememberLayout.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 

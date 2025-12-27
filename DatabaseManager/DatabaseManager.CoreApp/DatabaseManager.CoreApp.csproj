@@ -8,13 +8,22 @@
     <Authors>victor-wiki</Authors>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <Version>2.3.0</Version>
+    <Version>2.3.1</Version>
     <ApplicationIcon>Resources\_dbManager.ico</ApplicationIcon>
-    <PackageReleaseNotes>bug fix: data editor.</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add: remember layout;
+2. optimize: data import can use column mapping.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.0</AssemblyVersion>
-    <FileVersion>2.3.0</FileVersion>
+    <AssemblyVersion>2.3.1</AssemblyVersion>
+    <FileVersion>2.3.1</FileVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Forms\Selector\frmItemItemSelector.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Forms\Selector\frmColumnSelector.resx" />
+  </ItemGroup>
 	
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />

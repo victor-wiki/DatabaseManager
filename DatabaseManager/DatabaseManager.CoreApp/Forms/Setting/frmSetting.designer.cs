@@ -49,6 +49,7 @@
             label4 = new System.Windows.Forms.Label();
             cboDbObjectNameMode = new System.Windows.Forms.ComboBox();
             tabGeneral = new System.Windows.Forms.TabPage();
+            chkRememberLayout = new System.Windows.Forms.CheckBox();
             lblOutputFolder = new System.Windows.Forms.Label();
             txtLockPassword = new System.Windows.Forms.TextBox();
             txtScriptOutputFolder = new System.Windows.Forms.TextBox();
@@ -324,6 +325,7 @@
             // tabGeneral
             // 
             tabGeneral.BackColor = System.Drawing.SystemColors.Control;
+            tabGeneral.Controls.Add(chkRememberLayout);
             tabGeneral.Controls.Add(lblOutputFolder);
             tabGeneral.Controls.Add(txtLockPassword);
             tabGeneral.Controls.Add(txtScriptOutputFolder);
@@ -346,10 +348,23 @@
             tabGeneral.TabIndex = 0;
             tabGeneral.Text = "General";
             // 
+            // chkRememberLayout
+            // 
+            chkRememberLayout.AutoSize = true;
+            chkRememberLayout.Checked = true;
+            chkRememberLayout.CheckState = System.Windows.Forms.CheckState.Checked;
+            chkRememberLayout.Location = new System.Drawing.Point(12, 191);
+            chkRememberLayout.Margin = new System.Windows.Forms.Padding(4);
+            chkRememberLayout.Name = "chkRememberLayout";
+            chkRememberLayout.Size = new System.Drawing.Size(269, 21);
+            chkRememberLayout.TabIndex = 50;
+            chkRememberLayout.Text = "Remember application layout information";
+            chkRememberLayout.UseVisualStyleBackColor = true;
+            // 
             // lblOutputFolder
             // 
             lblOutputFolder.AutoSize = true;
-            lblOutputFolder.Location = new System.Drawing.Point(10, 232);
+            lblOutputFolder.Location = new System.Drawing.Point(10, 262);
             lblOutputFolder.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblOutputFolder.Name = "lblOutputFolder";
             lblOutputFolder.Size = new System.Drawing.Size(131, 17);
@@ -358,7 +373,7 @@
             // 
             // txtLockPassword
             // 
-            txtLockPassword.Location = new System.Drawing.Point(114, 196);
+            txtLockPassword.Location = new System.Drawing.Point(114, 226);
             txtLockPassword.Margin = new System.Windows.Forms.Padding(4);
             txtLockPassword.Name = "txtLockPassword";
             txtLockPassword.PasswordChar = '*';
@@ -367,7 +382,7 @@
             // 
             // txtScriptOutputFolder
             // 
-            txtScriptOutputFolder.Location = new System.Drawing.Point(146, 229);
+            txtScriptOutputFolder.Location = new System.Drawing.Point(146, 259);
             txtScriptOutputFolder.Margin = new System.Windows.Forms.Padding(4);
             txtScriptOutputFolder.Name = "txtScriptOutputFolder";
             txtScriptOutputFolder.Size = new System.Drawing.Size(277, 23);
@@ -375,7 +390,7 @@
             // 
             // btnScriptOutputFolder
             // 
-            btnScriptOutputFolder.Location = new System.Drawing.Point(430, 228);
+            btnScriptOutputFolder.Location = new System.Drawing.Point(430, 258);
             btnScriptOutputFolder.Margin = new System.Windows.Forms.Padding(4);
             btnScriptOutputFolder.Name = "btnScriptOutputFolder";
             btnScriptOutputFolder.Size = new System.Drawing.Size(42, 24);
@@ -399,7 +414,7 @@
             // lblPassword
             // 
             lblPassword.AutoSize = true;
-            lblPassword.Location = new System.Drawing.Point(10, 198);
+            lblPassword.Location = new System.Drawing.Point(10, 228);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new System.Drawing.Size(99, 17);
             lblPassword.TabIndex = 27;
@@ -913,5 +928,6 @@
         private System.Windows.Forms.CheckBox chkEditorEnableIntellisence;
         private System.Windows.Forms.CheckBox chkShowCurrentColumnContentMaxLength;
         private System.Windows.Forms.CheckBox chkAutoMapSchema;
+        private System.Windows.Forms.CheckBox chkRememberLayout;
     }
 }

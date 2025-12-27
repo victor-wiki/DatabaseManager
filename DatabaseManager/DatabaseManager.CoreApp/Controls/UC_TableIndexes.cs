@@ -320,7 +320,7 @@ namespace DatabaseManager.Controls
                 string indexName = DataGridViewHelper.GetCellStringValue(row, this.colIndexName.Name);
                 string type = DataGridViewHelper.GetCellStringValue(row, this.colType.Name);
 
-                if (!string.IsNullOrEmpty(indexName))
+                //if (!string.IsNullOrEmpty(indexName))
                 {
                     TableIndexDesignerInfo indexDesignerInfo = row.Tag as TableIndexDesignerInfo;
 

@@ -28,7 +28,9 @@ namespace DatabaseManager.Controls
         private bool isResultReturned = false;
         private CancellationTokenSource cancellationTokenSource;
 
-        public UC_QueryEditor QueryEditor => this.queryEditor;
+        internal DatabaseObjectDisplayInfo DisplayInfo => this.displayInfo;
+
+        internal UC_QueryEditor QueryEditor => this.queryEditor;
 
 
         public bool ReadOnly

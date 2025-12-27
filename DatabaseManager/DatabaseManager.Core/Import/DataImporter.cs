@@ -1,6 +1,9 @@
-﻿using DatabaseInterpreter.Core;
+﻿using Dapper;
+using DatabaseConverter.Core;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using DatabaseManager.FileUtility.Model;
 using DatabaseManager.Model;
@@ -13,6 +16,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Table = DatabaseInterpreter.Model.Table;
 
@@ -27,9 +31,10 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<(bool Success, DataValidateResult ValidateResult)> Import(DbInterpreter dbInterpreter, Table table, ImportDataInfo info)
+        public async Task<(bool Success, DataValidateResult ValidateResult)> Import(DbInterpreter dbInterpreter, Table table, SourceFileInfo info, List<DataImportColumnMapping> columnMappings, CancellationToken cancellationToken)
         {
             dbInterpreter.Option.ScriptOutputMode = GenerateScriptOutputMode.WriteToString;
+            dbInterpreter.Option.ThrowExceptionWhenErrorOccurs = true;
 
             string tableName = table.Name;
 
@@ -37,15 +42,13 @@ namespace DatabaseManager.Core
             {
                 using (DbConnection connection = dbInterpreter.CreateConnection())
                 {
-                    string sql = $"select * from {dbInterpreter.GetQuotedString(tableName)}";
-
-                    DataTable dataTable = await dbInterpreter.GetDataTableAsync(connection, sql, true);
-
                     string filePath = info.FilePath;
 
                     string fileExtension = Path.GetExtension(filePath).ToLower();
 
                     DataReadResult result = null;
+
+                    this.Feedback("Begin to read file data...");
 
                     if (fileExtension == ".csv")
                     {
@@ -56,22 +59,41 @@ namespace DatabaseManager.Core
                         result = this.ReadFromExcel(info, tableName);
                     }
 
-                    string[]? columnNames = result.HeaderColumns;
+                    this.Feedback("End read file data.");
+
+                    string[] headerNames = result.HeaderColumns;
 
                     SchemaInfoFilter filter = new SchemaInfoFilter() { TableNames = [tableName] };
 
                     var columns = await dbInterpreter.GetTableColumnsAsync(connection, filter);
 
                     List<TableColumn> sortedColumns = new List<TableColumn>();
-                    List<string> headerColumnNameList = result.HeaderColumns == null ? new List<string>() : result.HeaderColumns.Select(item => item.ToLower()).ToList();
 
-                    if (columnNames != null && columnNames.Length > 0)
+                    if (headerNames != null && headerNames.Length > 0)
                     {
                         int order = 1;
 
-                        foreach (var columnName in columnNames)
+                        foreach (var headerName in headerNames)
                         {
-                            TableColumn column = columns.FirstOrDefault(item => item.Name.ToLower() == columnName.ToLower());
+                            TableColumn column = null;
+
+                            if (!info.FirstRowIsColumnName)
+                            {
+                                column = columns.FirstOrDefault(item => item.Name.ToLower() == headerName.ToLower());
+                            }
+                            else
+                            {
+                                var mapping = columnMappings == null ? null : columnMappings.FirstOrDefault(item => item.FileColumnName == headerName);
+
+                                if (mapping != null)
+                                {
+                                    column = columns.FirstOrDefault(item => item.Name.ToLower() == mapping.TableColumName.ToLower());
+                                }
+                                else
+                                {
+                                    column = columns.FirstOrDefault(item => item.Name.ToLower() == headerName.ToLower());
+                                }
+                            }
 
                             if (column != null)
                             {
@@ -90,7 +112,11 @@ namespace DatabaseManager.Core
 
                     Dictionary<int, Dictionary<int, Dictionary<string, object>>> pagedData = this.GetPagedData(result, sortedColumns);
 
-                    DataValidateResult validateResult = await this.ValidateData(dbInterpreter, connection, table, sortedColumns, filter, pagedData);
+                    this.Feedback("Begin to validate data...");
+
+                    DataValidateResult validateResult = await this.ValidateData(dbInterpreter, connection, table, sortedColumns, filter, pagedData, columnMappings);
+
+                    this.Feedback("End validate data.");
 
                     validateResult.Columns = sortedColumns;
 
@@ -105,58 +131,34 @@ namespace DatabaseManager.Core
 
                     DbScriptGenerator targetDbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
 
+                    this.Feedback("Begin to insert data...");
+
+                    int total = result.Data.Count;
+                    int count = 0;
+
                     foreach (var data in pagedData)
                     {
-                        int pageNumber = data.Key;
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            trans.Rollback();
+                            break;
+                        }
+
+                        count += data.Value.Count;
+
+                        this.Feedback($"Inserted data: {count}/{total}.");
+
                         Dictionary<int, Dictionary<string, object>> rows = data.Value;
 
-                        StringBuilder sb = new StringBuilder();
-
-                        Dictionary<string, object> parameters = targetDbScriptGenerator.AppendDataScripts(sb, table, sortedColumns, new Dictionary<long, List<Dictionary<string, object>>>() { { 1, rows.Values.ToList() } });
-
-                        string script = sb.ToString().Trim().Trim(';');
-
-                        string delimiter = ");" + Environment.NewLine;
-
-                        if (!script.Contains(delimiter))
-                        {
-                            await dbInterpreter.ExecuteNonQueryAsync(connection, this.GetCommandInfo(script, parameters, trans));
-                        }
-                        else
-                        {
-                            var items = script.Split(delimiter);
-
-                            List<string> insertItems = new List<string>();
-
-                            foreach (var item in items)
-                            {
-                                if (item.Trim().ToUpper().StartsWith("INSERT INTO "))
-                                {
-                                    insertItems.Add(item);
-                                }
-                                else
-                                {
-                                    if (insertItems.Any())
-                                    {
-                                        insertItems[insertItems.Count - 1] += (delimiter + item);
-                                    }
-                                }
-                            }
-
-                            int count = 0;
-
-                            foreach (var item in insertItems)
-                            {
-                                count++;
-
-                                var cmd = count < insertItems.Count ? (item + delimiter).Trim().Trim(';') : item;
-
-                                await dbInterpreter.ExecuteNonQueryAsync(connection, this.GetCommandInfo(cmd, parameters, trans));
-                            }
-                        }
+                        await DbConverter.InsertData(dbInterpreter, connection, targetDbScriptGenerator, table, sortedColumns, rows.Values.ToList(), cancellationToken, trans);
                     }
 
-                    await trans.CommitAsync();
+                    this.Feedback("End insert data.");
+
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        await trans.CommitAsync();
+                    }
 
                     return (true, null);
                 }
@@ -179,13 +181,14 @@ namespace DatabaseManager.Core
 
             for (int i = 1; i <= pageNumber; i++)
             {
-                var pagedData = data.Skip(i - 1).Take(batchCount);
+                var pagedData = data.Skip((i - 1) * batchCount).Take(batchCount);
 
                 Dictionary<int, Dictionary<string, object>> dataList = new Dictionary<int, Dictionary<string, object>>();
 
                 foreach (var row in pagedData)
                 {
                     int rowIndex = row.Key;
+
                     Dictionary<int, object> rowData = row.Value;
 
                     Dictionary<string, object> dictRow = new Dictionary<string, object>();
@@ -222,7 +225,7 @@ namespace DatabaseManager.Core
             return commandInfo;
         }
 
-        private async Task<DataValidateResult> ValidateData(DbInterpreter dbInterpreter, DbConnection connection, Table table, List<TableColumn> columns, SchemaInfoFilter filter, Dictionary<int, Dictionary<int, Dictionary<string, object>>> pagedData)
+        private async Task<DataValidateResult> ValidateData(DbInterpreter dbInterpreter, DbConnection connection, Table table, List<TableColumn> columns, SchemaInfoFilter filter, Dictionary<int, Dictionary<int, Dictionary<string, object>>> pagedData, List<DataImportColumnMapping> columnMappings = null)
         {
             DataValidateResult validateResult = new DataValidateResult();
 
@@ -242,6 +245,8 @@ namespace DatabaseManager.Core
             Dictionary<int, Dictionary<string, object>> rows = pagedData.SelectMany(item => item.Value).ToDictionary();
 
             Dictionary<string, List<string>> dictUnique = new Dictionary<string, List<string>>();
+            Dictionary<string, TablePrimaryKey> dictReferenceTablePrimaryKey = new Dictionary<string, TablePrimaryKey>();
+            Dictionary<string, IEnumerable<TableIndex>> dictReferenceTableUniqueIndexes = new Dictionary<string, IEnumerable<TableIndex>>();
 
             foreach (var row in rows)
             {
@@ -271,6 +276,80 @@ namespace DatabaseManager.Core
                             {
                                 isValid = false;
                                 invalidMessage = $"{columnName} is required.";
+                            }
+                        }
+                        else
+                        {
+                            var mapping = columnMappings == null ? null : columnMappings.FirstOrDefault(item => item.TableColumName == columnName);
+
+                            if (mapping != null)
+                            {
+                                string referencedTableName = mapping.ReferencedTableName;
+                                string referencedTableColumnName = mapping.ReferencedTableColumnName;
+
+                                var referencedTableFilter = new SchemaInfoFilter() { TableNames = [referencedTableName] };
+
+                                TablePrimaryKey referencedTablePrimaryKey = null;
+
+                                if (dictReferenceTablePrimaryKey.ContainsKey(referencedTableName))
+                                {
+                                    referencedTablePrimaryKey = dictReferenceTablePrimaryKey[referencedTableName];
+                                }
+                                else
+                                {
+                                    referencedTablePrimaryKey = (await dbInterpreter.GetTablePrimaryKeysAsync(connection, referencedTableFilter)).FirstOrDefault();
+
+                                    dictReferenceTablePrimaryKey.Add(referencedTableName, referencedTablePrimaryKey);
+                                }
+
+                                if (referencedTablePrimaryKey == null)
+                                {
+                                    isValid = false;
+                                    invalidMessage = $@"Referenced table ""{referencedTableName}"" has no primary key.";
+                                }
+                                else
+                                {
+                                    IEnumerable<TableIndex> referencedTableUniqueIndexes = null;
+
+                                    if (dictReferenceTableUniqueIndexes.ContainsKey(referencedTableName))
+                                    {
+                                        referencedTableUniqueIndexes = dictReferenceTableUniqueIndexes[referencedTableName];
+                                    }
+                                    else
+                                    {
+                                        referencedTableUniqueIndexes = (await dbInterpreter.GetTableIndexesAsync(connection, referencedTableFilter)).Where(item => item.IsUnique);
+
+                                        dictReferenceTableUniqueIndexes.Add(referencedTableName, referencedTableUniqueIndexes);
+                                    }
+
+                                    if (!referencedTableUniqueIndexes.Any(item => item.Columns.Any(t => t.ColumnName == referencedTableColumnName)))
+                                    {
+                                        isValid = false;
+                                        invalidMessage = $@"Referenced table ""{referencedTableName}""'s unique columns doesn't contains column ""{referencedTableColumnName}"".";
+                                    }
+                                    else
+                                    {
+                                        string dataType = mapping.ReferencedTableColumnDataType;
+
+                                        bool isCharType = DataTypeHelper.IsCharType(dataType, dbInterpreter.DatabaseType == DatabaseType.Sqlite);
+
+                                        string strValue = $"{(isCharType ? "'" : "")}{value.ToString()?.Replace("'", "''")}{(isCharType ? "'" : "")}";
+
+                                        string sql = $"SELECT {dbInterpreter.GetQuotedString(referencedTablePrimaryKey.Columns.First().ColumnName)} FROM {dbInterpreter.GetQuotedString(referencedTableName)} where {dbInterpreter.GetQuotedString(referencedTableColumnName)}={strValue}";
+
+                                        object referencedKeyValue = await dbInterpreter.GetScalarAsync(connection, sql);
+
+                                        if (referencedKeyValue == null || referencedKeyValue?.ToString() == string.Empty)
+                                        {
+                                            isValid = false;
+                                            invalidMessage = $@"{value} doesn't exists in table ""{referencedTableName}"".";
+                                        }
+                                        else
+                                        {
+                                            rowData[columnName] = referencedKeyValue;
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -328,7 +407,7 @@ namespace DatabaseManager.Core
                         {
                             resultRow.IsValid = false;
 
-                            if(resultRow.InvalidMessages == null)
+                            if (resultRow.InvalidMessages == null)
                             {
                                 resultRow.InvalidMessages = new List<DataValidateResultRowInvalidMessage>();
                             }
@@ -337,7 +416,7 @@ namespace DatabaseManager.Core
                             invalidMessage.Message = $"{indexColumnNames} is duplicate.";
                             invalidMessage.ColumnIndexes = this.FindColumnIndexes(columns, indexColumns);
 
-                            resultRow.InvalidMessages.Add(invalidMessage);                          
+                            resultRow.InvalidMessages.Add(invalidMessage);
                         }
                         else
                         {
@@ -378,22 +457,44 @@ namespace DatabaseManager.Core
             return columnIndexes;
         }
 
-        public string WriteValidateResultToExcel(DataValidateResult result, Table table, bool firstRowIsColumnName)
+        public string WriteValidateResultToExcel(DataValidateResult result, Table table, bool firstRowIsColumnName, List<DataImportColumnMapping> columnMappings = null)
         {
             GridData gridData = new GridData();
 
-            gridData.Columns = result.Columns;
+            gridData.Columns = new List<GridColumn>();
+
+            foreach (var column in result.Columns)
+            {
+                string columnName = null;
+
+                if (columnMappings != null && columnMappings.Count > 0)
+                {
+                    var mapping = columnMappings.FirstOrDefault(item => item.TableColumName == column.Name);
+
+                    if (mapping != null)
+                    {
+                        columnName = mapping.FileColumnName;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(columnName))
+                {
+                    columnName = column.Name;
+                }
+
+                gridData.Columns.Add(new GridColumn() { Name = columnName });
+            }          
 
             foreach (DataValidateResultRow resultRow in result.Rows)
             {
                 GridRow row = new GridRow();
                 row.RowIndex = resultRow.RowIndex;
 
-                if(resultRow.InvalidMessages!=null)
+                if (resultRow.InvalidMessages != null)
                 {
                     row.Comments = new List<GridRowComment>();
 
-                    foreach(var invalidMessage in resultRow.InvalidMessages)
+                    foreach (var invalidMessage in resultRow.InvalidMessages)
                     {
                         GridRowComment comment = new GridRowComment();
                         comment.Comment = invalidMessage.Message;
@@ -402,7 +503,7 @@ namespace DatabaseManager.Core
                         row.Comments.Add(comment);
                     }
                 }
-              
+
                 if (gridData.Rows == null)
                 {
                     gridData.Rows = new List<GridRow>();
@@ -425,7 +526,7 @@ namespace DatabaseManager.Core
                         {
                             cell.NeedHighlight = true;
                         }
-                        else if(row.Comments!=null && row.Comments.Any(item=>item.ColumnIndexes.Contains(cellIndex)))
+                        else if (row.Comments != null && row.Comments.Any(item => item.ColumnIndexes.Contains(cellIndex)))
                         {
                             cell.NeedHighlight = true;
                         }
@@ -458,14 +559,14 @@ namespace DatabaseManager.Core
             }
         }
 
-        public DataReadResult ReadFromCsv(ImportDataInfo info, string tableName)
+        public DataReadResult ReadFromCsv(SourceFileInfo info, string tableName)
         {
             CsvReader reader = new CsvReader(info);
 
             return reader.Read();
         }
 
-        public DataReadResult ReadFromExcel(ImportDataInfo info, string tableName)
+        public DataReadResult ReadFromExcel(SourceFileInfo info, string tableName)
         {
             ExcelReader reader = new ExcelReader(info);
 
@@ -475,10 +576,16 @@ namespace DatabaseManager.Core
         private void HandleError(Exception ex)
         {
             string errMsg = ExceptionHelper.GetExceptionDetails(ex);
+
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true);
         }
 
-        public void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)
+        private void Feedback(string content)
+        {
+            this.Feedback(this, content);
+        }
+
+        private void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)
         {
             FeedbackInfo info = new FeedbackInfo() { InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(content), Owner = owner };
 

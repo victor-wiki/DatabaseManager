@@ -13,7 +13,9 @@ namespace DatabaseManager.Forms
         private bool isIndexColumn;
         public bool ColumnIsReadOnly { get; set; }
         public bool IsSingleSelect { get; set; }
+        public bool ShowSortColumn { get; set; }
         public List<SimpleColumn> SelectedColumns { get; private set; }
+
         public frmColumnSelect()
         {
             InitializeComponent();
@@ -21,7 +23,7 @@ namespace DatabaseManager.Forms
 
         private void frmColumSelect_Load(object sender, EventArgs e)
         {
-            this.InitGrid();
+            this.InitGrid();            
         }
 
         private void InitGrid()
@@ -30,6 +32,15 @@ namespace DatabaseManager.Forms
             {
                 this.colColumName.ReadOnly = true;
                 this.dgvColumns.AllowUserToAddRows = false;
+                this.colColumName.DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing;
+            }
+
+            if (!this.ShowSortColumn)
+            {
+                this.dgvColumns.ColumnHeadersVisible = false;
+                this.dgvColumns.RowHeadersVisible = false;
+                this.colSort.Visible = false;
+                this.colColumName.Width = this.dgvColumns.Width - this.dgvColumns.RowHeadersWidth;
             }
 
             foreach (DataGridViewRow row in this.dgvColumns.Rows)
@@ -41,25 +52,24 @@ namespace DatabaseManager.Forms
             }
         }
 
-        public void InitControls(IEnumerable<SimpleColumn> columns, bool showSortColumn = true)
+        public void InitControls(IEnumerable<SimpleColumn> columns)
         {
             this.isIndexColumn = columns?.FirstOrDefault()?.GetType() == typeof(IndexColumn);
 
             this.colSort.DataSource = Enum.GetValues(typeof(SortType));
             this.colColumName.DataSource = columns.ToList();
             this.colColumName.DisplayMember = nameof(SimpleColumn.ColumnName);
-            this.colColumName.ValueMember = nameof(SimpleColumn.ColumnName);
-
-            if (!showSortColumn)
-            {
-                this.colSort.Visible = false;
-                this.colColumName.Width = this.dgvColumns.Width - this.dgvColumns.RowHeadersWidth;
-            }
+            this.colColumName.ValueMember = nameof(SimpleColumn.ColumnName);           
         }
 
         public void LoadColumns(IEnumerable<SimpleColumn> columns)
         {
             this.dgvColumns.Rows.Clear();
+
+            if(this.colColumName.DataSource == null)
+            {
+                this.InitControls(columns);
+            }
 
             foreach (var column in columns)
             {
@@ -81,6 +91,7 @@ namespace DatabaseManager.Forms
             List<SimpleColumn> columns = new List<SimpleColumn>();
 
             int order = 1;
+
             foreach (DataGridViewRow row in this.dgvColumns.Rows)
             {
                 if (!row.IsNewRow)

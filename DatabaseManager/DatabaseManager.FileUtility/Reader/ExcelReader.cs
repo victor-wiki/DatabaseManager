@@ -9,13 +9,11 @@ namespace DatabaseManager.FileUtility
     public class ExcelReader : BaseReader
     {
         private readonly Regex numericReg = new Regex("^[0]+[.][0]+[_]*");
-        public ExcelReader(ImportDataInfo info) : base(info) { }
+        public ExcelReader(SourceFileInfo info) : base(info) { }
 
-        public override DataReadResult Read()
+        public override DataReadResult Read(bool onlyReadHeader = false)
         {
-            DataReadResult result = new DataReadResult();
-
-            Dictionary<int, Dictionary<int, object>> dict = new Dictionary<int, Dictionary<int, object>>();
+            DataReadResult result = new DataReadResult();           
 
             string filePath = this.info.FilePath;
 
@@ -24,6 +22,8 @@ namespace DatabaseManager.FileUtility
                 IWorkbook workbook = WorkbookFactory.Create(fs);
 
                 int sheetCount = workbook.NumberOfSheets;
+
+                Dictionary<int, Dictionary<int, object>> dict = new Dictionary<int, Dictionary<int, object>>();
 
                 for (int i = 0; i < sheetCount; i++)
                 {
@@ -52,9 +52,9 @@ namespace DatabaseManager.FileUtility
                                     result.HeaderColumns = new string[cellCount];
                                 }
 
-                                result.HeaderColumns[k] = cell.StringCellValue;
+                                result.HeaderColumns[k] = cell.StringCellValue;                                
                             }
-                            else
+                            else if(!onlyReadHeader)
                             {
                                 dictRow.Add(k, this.GetCellValue(cell));
                             }
@@ -62,15 +62,25 @@ namespace DatabaseManager.FileUtility
                             k++;
                         }
 
+                        if (onlyReadHeader && j == startRowIndex)
+                        {
+                            break;
+                        }
+
                         if (dictRow.Any())
                         {
                             dict.Add(j, dictRow);
                         }
                     }
-                }
-            }
 
-            result.Data = dict;
+                    if(onlyReadHeader)
+                    {
+                        break;
+                    }
+                }
+
+                result.Data = dict;
+            }          
 
             return result;
         }
@@ -96,9 +106,7 @@ namespace DatabaseManager.FileUtility
                     return null;
                 default:
                     return cell.StringCellValue;
-            }
-
-            return cell.ToString();
+            }           
         }
     }
 }

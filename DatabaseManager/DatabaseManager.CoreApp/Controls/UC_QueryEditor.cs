@@ -83,8 +83,14 @@ namespace DatabaseManager.Controls
 
             TextEditorHelper.ApplySetting(this.txtEditor, SettingManager.Setting.TextEditorOption);
 
-            this.keywords = KeywordManager.GetKeywords(this.DatabaseType);
-            this.builtinFunctions = FunctionManager.GetFunctionSpecifications(this.DatabaseType);
+            DatabaseType databaseType = this.DatabaseType == DatabaseType.Unknown ? SettingManager.Setting.PreferredDatabase : this.DatabaseType;
+
+            if (databaseType != DatabaseType.Unknown)
+            {
+                this.DatabaseType = databaseType;
+                this.keywords = KeywordManager.GetKeywords(this.DatabaseType);
+                this.builtinFunctions = FunctionManager.GetFunctionSpecifications(databaseType);
+            }
 
             this.txtEditor.FindForm.Shown += this.FindForm_Shown;
             this.TextArea.KeyDown += this.txtEditor_KeyDown;
@@ -92,19 +98,22 @@ namespace DatabaseManager.Controls
             this.TextArea.MouseDown += this.txtEditor_MouseDown;
             this.TextArea.MouseClick += this.txtEditor_MouseClick;
 
-            ToolStripMenuItem tsmiDisableIntellisense = new ToolStripMenuItem("Disable Intellisense") { Name = "tsmiDisableIntellisense" };
-            tsmiDisableIntellisense.Click += this.tsmiDisableIntellisense_Click;
-            this.ContextMenu.Items.Add(tsmiDisableIntellisense);
+            if (this.ContextMenu != null)
+            {
+                ToolStripMenuItem tsmiDisableIntellisense = new ToolStripMenuItem("Disable Intellisense") { Name = "tsmiDisableIntellisense" };
+                tsmiDisableIntellisense.Click += this.tsmiDisableIntellisense_Click;
+                this.ContextMenu.Items.Add(tsmiDisableIntellisense);
 
-            ToolStripMenuItem tsmiUpdateIntellisense = new ToolStripMenuItem("Update Intellisense") { Name = "tsmiUpdateIntellisense" };
-            tsmiUpdateIntellisense.Click += this.tsmiUpdateIntellisense_Click;
-            this.ContextMenu.Items.Add(tsmiUpdateIntellisense);
+                ToolStripMenuItem tsmiUpdateIntellisense = new ToolStripMenuItem("Update Intellisense") { Name = "tsmiUpdateIntellisense" };
+                tsmiUpdateIntellisense.Click += this.tsmiUpdateIntellisense_Click;
+                this.ContextMenu.Items.Add(tsmiUpdateIntellisense);
 
-            ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
-            tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
-            this.ContextMenu.Items.Add(tsmiValidateScripts);
+                ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
+                tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
+                this.ContextMenu.Items.Add(tsmiValidateScripts);
 
-            this.ContextMenu.Opening += this.editorContexMenu_Opening;
+                this.ContextMenu.Opening += this.editorContexMenu_Opening;
+            }
 
             this.txtEditor.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(this.DatabaseType);
         }

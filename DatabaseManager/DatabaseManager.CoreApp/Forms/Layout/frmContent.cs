@@ -1,5 +1,8 @@
 ﻿using DatabaseManager.Controls;
+using DatabaseManager.Core;
+using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -34,9 +37,13 @@ namespace DatabaseManager.Forms
                 IDbObjContentDisplayer control = this.ucContent.Controls[0] as IDbObjContentDisplayer;
 
                 bool saveRequired = false;
+                bool isScriptFile = false;
+                string filePath = null;
 
                 if (control is UC_SqlQuery sqlQuery)
                 {
+                    isScriptFile = true;
+
                     if (isNew)
                     {
                         if (sqlQuery.Editor.Text.Trim().Length > 0)
@@ -46,6 +53,8 @@ namespace DatabaseManager.Forms
                     }
                     else
                     {
+                        filePath = sqlQuery.DisplayInfo.FilePath;
+
                         if (sqlQuery.IsTextChanged())
                         {
                             saveRequired = true;
@@ -73,13 +82,31 @@ namespace DatabaseManager.Forms
 
                     if (result == DialogResult.Yes)
                     {
-                        bool success =  this.ucContent.Save();
+                        ContentSaveResult saveResult =  this.ucContent.Save();
 
-                        canClose = success;
+                        canClose = saveResult.IsOK;
+
+                        if(isScriptFile && saveResult.IsOK)
+                        {
+                            filePath = saveResult.ResultData?.ToString();
+                        }
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        canClose = true;
                     }
                     else if (result == DialogResult.Cancel)
                     {
                         canClose = false;
+                    }
+                }
+
+
+                if (isScriptFile && File.Exists(filePath))
+                {
+                    if(frmMain.IsClosing && SettingManager.Setting.RememberApplicationLayoutInformation)
+                    {
+                        this.RememberRecentFilePath(filePath);
                     }
                 }
             }
@@ -95,6 +122,11 @@ namespace DatabaseManager.Forms
             }
 
             return canClose;
+        }
+
+        private void RememberRecentFilePath(string filePath)
+        {
+            File.AppendAllLines(ProfileFileHelper.RecentFilePath, new string[] { filePath });
         }
     }
 }

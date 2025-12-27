@@ -17,8 +17,10 @@ namespace DatabaseManager.Forms
 {
     public partial class frmMain : Form, IObserver<FeedbackInfo>
     {
-        frmObjectsExplorer explorerForm = new frmObjectsExplorer();
-        frmMessage messageForm = new frmMessage();
+        private Setting setting = SettingManager.Setting;
+        private frmObjectsExplorer explorerForm = new frmObjectsExplorer();
+        private frmMessage messageForm = new frmMessage();
+        internal static bool IsClosing { get; private set; } = false;
 
         public frmMain()
         {
@@ -55,9 +57,68 @@ namespace DatabaseManager.Forms
 
             this.ApplyTheme();
 
+            this.LoadLayoutFromProfile();
+        }
 
-            this.explorerForm.Show(this.dockPanelMain, DockState.DockLeft);
-            this.messageForm.Show(this.dockPanelMain, DockState.DockBottomAutoHide);
+        private IDockContent GetContentFromPersistString(string persistString)
+        {
+            if (persistString == typeof(frmMessage).ToString())
+            {
+                return messageForm;
+            }               
+            else if (persistString == typeof(frmObjectsExplorer).ToString())
+            {
+                return explorerForm;
+            }
+            else
+            {
+                return null;
+            }               
+        }
+
+        private void LoadLayoutFromProfile()
+        {
+            bool useProfileLayout = false;
+
+            if (setting.RememberApplicationLayoutInformation)
+            {
+                string profileFilePath = ProfileFileHelper.LayoutFilePath;
+
+                if (File.Exists(profileFilePath))
+                {
+                    try
+                    {
+                        DeserializeDockContent deserializeDockContent = new DeserializeDockContent(this.GetContentFromPersistString);
+
+                        this.dockPanelMain.LoadFromXml(profileFilePath, deserializeDockContent);
+
+                        useProfileLayout = true;
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+
+                if (File.Exists(ProfileFileHelper.RecentFilePath))
+                {
+                    var filePaths = ProfileFileHelper.GetRecentFiles().Distinct();
+
+                    foreach (var filePath in filePaths)
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            this.LoadFile(filePath);
+                        }
+                    }
+                }
+            }
+
+            if (!useProfileLayout)
+            {
+                this.explorerForm.Show(this.dockPanelMain, DockState.DockLeft);
+                this.messageForm.Show(this.dockPanelMain, DockState.DockBottomAutoHide);
+            }
         }
 
         private void ApplyTheme()
@@ -263,7 +324,7 @@ namespace DatabaseManager.Forms
 
             if (connectionInfo != null)
             {
-                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.explorerForm.Explorer.DatabaseType };
+                DatabaseObjectDisplayInfo info = new DatabaseObjectDisplayInfo() { IsNew = true, DisplayType = DatabaseObjectDisplayType.Script, DatabaseType = this.GetCurrentDatabaseType() };
 
                 info.ConnectionInfo = connectionInfo;
 
@@ -294,10 +355,16 @@ namespace DatabaseManager.Forms
 
             if (control != null)
             {
+                control.DisplayInfo.DatabaseType = this.GetCurrentDatabaseType(); ;
                 control.DisplayInfo.ConnectionInfo = connectionInfo;
 
                 control.RunScripts();
             }
+        }
+
+        private DatabaseType GetCurrentDatabaseType()
+        {
+            return this.explorerForm.Explorer.DatabaseType;
         }
 
         private void tsBtnSave_Click(object sender, EventArgs e)
@@ -414,15 +481,44 @@ namespace DatabaseManager.Forms
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            IsClosing = true;
+
+            bool rememberLayout = this.setting.RememberApplicationLayoutInformation;
+
+            if(rememberLayout)
+            {
+                ProfileFileHelper.ResetRecentFile();
+            }
+
             this.CloseContentForms();
 
             e.Cancel = this.dockPanelMain.DocumentsCount > 0;
+
+            if(!e.Cancel)
+            {
+                if(rememberLayout)
+                {
+                    this.SaveLayoutInformation();
+                }               
+            }
+
+            IsClosing = false;
+        }       
+
+        private void SaveLayoutInformation()
+        {
+            try
+            {
+                this.dockPanelMain.SaveAsXml(ProfileFileHelper.LayoutFilePath);
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         private void CloseContentForms()
         {
-            var documents = this.dockPanelMain.Documents;
-            var currentDocument = this.dockPanelMain.ActiveDocument;
+            var documents = this.dockPanelMain.Documents;        
 
             List<Form> forms = new List<Form>();
 

@@ -53,7 +53,7 @@ namespace DatabaseManager.Controls
                     this.colComment.Visible = false;
                     this.colKeyName.Width += 100;
                     this.colColumns.Width += 100;
-                }               
+                }
             }
 
             List<Table> sortedTables = new List<Table>();
@@ -112,7 +112,7 @@ namespace DatabaseManager.Controls
                 string referenceTableName = this.GetReferenceTableDisplayName(table);
 
                 var tableDisplayInfo = this.tableDisplayInfos.FirstOrDefault(item => item.DisplayName == referenceTableName);
-  
+
                 row.Cells[this.colReferenceTable.Name].Value = referenceTableName;
                 row.Cells[this.colReferenceTable.Name].Tag = tableDisplayInfo.Table;
 
@@ -144,20 +144,23 @@ namespace DatabaseManager.Controls
                 {
                     TableForeignKeyDesignerInfo tag = row.Tag as TableForeignKeyDesignerInfo;
 
-                    Table referenceTable = row.Cells[this.colReferenceTable.Name].Tag as Table;
+                    if (tag != null)
+                    {
+                        Table referenceTable = row.Cells[this.colReferenceTable.Name].Tag as Table;
 
-                    key.OldName = tag?.OldName;
-                    key.Name = keyName;
-                    key.Columns = tag?.Columns;
-                    key.ReferencedSchema = referenceTable.Schema;
-                    key.ReferencedTableName = referenceTable.Name;
-                    key.UpdateCascade = DataGridViewHelper.GetCellBoolValue(row, this.colUpdateCascade.Name);
-                    key.DeleteCascade = DataGridViewHelper.GetCellBoolValue(row, this.colDeleteCascade.Name);
-                    key.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
+                        key.OldName = tag?.OldName;
+                        key.Name = keyName;
+                        key.Columns = tag?.Columns;
+                        key.ReferencedSchema = referenceTable.Schema;
+                        key.ReferencedTableName = referenceTable.Name;
+                        key.UpdateCascade = DataGridViewHelper.GetCellBoolValue(row, this.colUpdateCascade.Name);
+                        key.DeleteCascade = DataGridViewHelper.GetCellBoolValue(row, this.colDeleteCascade.Name);
+                        key.Comment = DataGridViewHelper.GetCellStringValue(row, this.colComment.Name);
 
-                    row.Tag = key;
+                        row.Tag = key;
 
-                    keyDesingerInfos.Add(key);
+                        keyDesingerInfos.Add(key);
+                    }
                 }
             }
 
@@ -223,7 +226,7 @@ namespace DatabaseManager.Controls
 
                 string referenceTableName = DataGridViewHelper.GetCellStringValue(row, this.colReferenceTable.Name);
 
-                if (!string.IsNullOrEmpty(keyName) && !string.IsNullOrEmpty(referenceTableName))
+                if (!string.IsNullOrEmpty(referenceTableName))
                 {
                     if (this.OnColumnMappingSelect != null)
                     {
@@ -286,19 +289,19 @@ namespace DatabaseManager.Controls
 
             if (e.ColumnIndex == this.colReferenceTable.Index)
             {
-                Table referenceTable = row.Cells[this.colReferenceTable.Name].Value as Table ;
+                Table referenceTable = row.Cells[this.colReferenceTable.Name].Value as Table;
 
                 string keyName = DataGridViewHelper.GetCellStringValue(row, this.colKeyName.Name);
 
                 if (referenceTable != null)
                 {
-                    if(string.IsNullOrEmpty(keyName))
+                    if (string.IsNullOrEmpty(keyName))
                     {
                         row.Cells[this.colKeyName.Name].Value = IndexManager.GetForeignKeyDefaultName(this.Table.Name, referenceTable.Name);
-                    }                    
+                    }
 
                     row.Cells[this.colReferenceTable.Name].Tag = referenceTable;
-                }               
+                }
             }
         }
 
@@ -336,7 +339,7 @@ namespace DatabaseManager.Controls
             {
                 this.OnGenerateChangeScripts();
             }
-        }       
+        }
     }
 
     public class TableDisplayInfo

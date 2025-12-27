@@ -45,9 +45,11 @@ namespace DatabaseManager.FileUtility
                     {
                         writer.WriteField(column.ColumnName);
                     }
+
+                    writer.NextRecord();
                 }
 
-                writer.NextRecord();
+                int count = 0;
 
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -56,7 +58,12 @@ namespace DatabaseManager.FileUtility
                         writer.WriteField(row[i]);
                     }
 
-                    writer.NextRecord();
+                    if(count< dataTable.Rows.Count)
+                    {
+                        writer.NextRecord();
+                    }                  
+
+                    count++;
                 }
             }
 
