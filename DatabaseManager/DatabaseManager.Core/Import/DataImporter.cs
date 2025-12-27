@@ -287,69 +287,72 @@ namespace DatabaseManager.Core
                                 string referencedTableName = mapping.ReferencedTableName;
                                 string referencedTableColumnName = mapping.ReferencedTableColumnName;
 
-                                var referencedTableFilter = new SchemaInfoFilter() { TableNames = [referencedTableName] };
-
-                                TablePrimaryKey referencedTablePrimaryKey = null;
-
-                                if (dictReferenceTablePrimaryKey.ContainsKey(referencedTableName))
+                                if(!string.IsNullOrEmpty(referencedTableName) && !string.IsNullOrEmpty(referencedTableColumnName))
                                 {
-                                    referencedTablePrimaryKey = dictReferenceTablePrimaryKey[referencedTableName];
-                                }
-                                else
-                                {
-                                    referencedTablePrimaryKey = (await dbInterpreter.GetTablePrimaryKeysAsync(connection, referencedTableFilter)).FirstOrDefault();
+                                    var referencedTableFilter = new SchemaInfoFilter() { TableNames = [referencedTableName] };
 
-                                    dictReferenceTablePrimaryKey.Add(referencedTableName, referencedTablePrimaryKey);
-                                }
+                                    TablePrimaryKey referencedTablePrimaryKey = null;
 
-                                if (referencedTablePrimaryKey == null)
-                                {
-                                    isValid = false;
-                                    invalidMessage = $@"Referenced table ""{referencedTableName}"" has no primary key.";
-                                }
-                                else
-                                {
-                                    IEnumerable<TableIndex> referencedTableUniqueIndexes = null;
-
-                                    if (dictReferenceTableUniqueIndexes.ContainsKey(referencedTableName))
+                                    if (dictReferenceTablePrimaryKey.ContainsKey(referencedTableName))
                                     {
-                                        referencedTableUniqueIndexes = dictReferenceTableUniqueIndexes[referencedTableName];
+                                        referencedTablePrimaryKey = dictReferenceTablePrimaryKey[referencedTableName];
                                     }
                                     else
                                     {
-                                        referencedTableUniqueIndexes = (await dbInterpreter.GetTableIndexesAsync(connection, referencedTableFilter)).Where(item => item.IsUnique);
+                                        referencedTablePrimaryKey = (await dbInterpreter.GetTablePrimaryKeysAsync(connection, referencedTableFilter)).FirstOrDefault();
 
-                                        dictReferenceTableUniqueIndexes.Add(referencedTableName, referencedTableUniqueIndexes);
+                                        dictReferenceTablePrimaryKey.Add(referencedTableName, referencedTablePrimaryKey);
                                     }
 
-                                    if (!referencedTableUniqueIndexes.Any(item => item.Columns.Any(t => t.ColumnName == referencedTableColumnName)))
+                                    if (referencedTablePrimaryKey == null)
                                     {
                                         isValid = false;
-                                        invalidMessage = $@"Referenced table ""{referencedTableName}""'s unique columns doesn't contains column ""{referencedTableColumnName}"".";
+                                        invalidMessage = $@"Referenced table ""{referencedTableName}"" has no primary key.";
                                     }
                                     else
                                     {
-                                        string dataType = mapping.ReferencedTableColumnDataType;
+                                        IEnumerable<TableIndex> referencedTableUniqueIndexes = null;
 
-                                        bool isCharType = DataTypeHelper.IsCharType(dataType, dbInterpreter.DatabaseType == DatabaseType.Sqlite);
-
-                                        string strValue = $"{(isCharType ? "'" : "")}{value.ToString()?.Replace("'", "''")}{(isCharType ? "'" : "")}";
-
-                                        string sql = $"SELECT {dbInterpreter.GetQuotedString(referencedTablePrimaryKey.Columns.First().ColumnName)} FROM {dbInterpreter.GetQuotedString(referencedTableName)} where {dbInterpreter.GetQuotedString(referencedTableColumnName)}={strValue}";
-
-                                        object referencedKeyValue = await dbInterpreter.GetScalarAsync(connection, sql);
-
-                                        if (referencedKeyValue == null || referencedKeyValue?.ToString() == string.Empty)
+                                        if (dictReferenceTableUniqueIndexes.ContainsKey(referencedTableName))
                                         {
-                                            isValid = false;
-                                            invalidMessage = $@"{value} doesn't exists in table ""{referencedTableName}"".";
+                                            referencedTableUniqueIndexes = dictReferenceTableUniqueIndexes[referencedTableName];
                                         }
                                         else
                                         {
-                                            rowData[columnName] = referencedKeyValue;
+                                            referencedTableUniqueIndexes = (await dbInterpreter.GetTableIndexesAsync(connection, referencedTableFilter)).Where(item => item.IsUnique);
+
+                                            dictReferenceTableUniqueIndexes.Add(referencedTableName, referencedTableUniqueIndexes);
+                                        }
+
+                                        if (!referencedTableUniqueIndexes.Any(item => item.Columns.Any(t => t.ColumnName == referencedTableColumnName)))
+                                        {
+                                            isValid = false;
+                                            invalidMessage = $@"Referenced table ""{referencedTableName}""'s unique columns doesn't contains column ""{referencedTableColumnName}"".";
+                                        }
+                                        else
+                                        {
+                                            string dataType = mapping.ReferencedTableColumnDataType;
+
+                                            bool isCharType = DataTypeHelper.IsCharType(dataType, dbInterpreter.DatabaseType == DatabaseType.Sqlite);
+
+                                            string strValue = $"{(isCharType ? "'" : "")}{value.ToString()?.Replace("'", "''")}{(isCharType ? "'" : "")}";
+
+                                            string sql = $"SELECT {dbInterpreter.GetQuotedString(referencedTablePrimaryKey.Columns.First().ColumnName)} FROM {dbInterpreter.GetQuotedString(referencedTableName)} where {dbInterpreter.GetQuotedString(referencedTableColumnName)}={strValue}";
+
+                                            object referencedKeyValue = await dbInterpreter.GetScalarAsync(connection, sql);
+
+                                            if (referencedKeyValue == null || referencedKeyValue?.ToString() == string.Empty)
+                                            {
+                                                isValid = false;
+                                                invalidMessage = $@"{value} doesn't exists in table ""{referencedTableName}"".";
+                                            }
+                                            else
+                                            {
+                                                rowData[columnName] = referencedKeyValue;
+                                            }
                                         }
                                     }
-                                }
+                                }                           
                             }
                         }
 

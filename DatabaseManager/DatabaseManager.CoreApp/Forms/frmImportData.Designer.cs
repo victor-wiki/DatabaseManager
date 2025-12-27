@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             btnOpenFile = new System.Windows.Forms.Button();
@@ -37,19 +38,22 @@
             openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             chkUseColumnMapping = new System.Windows.Forms.CheckBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
+            picMappingTip = new System.Windows.Forms.PictureBox();
             btnCancel = new System.Windows.Forms.Button();
             btnOK = new System.Windows.Forms.Button();
             gbColumnMappings = new System.Windows.Forms.GroupBox();
             dgvColumns = new System.Windows.Forms.DataGridView();
-            txtMessage = new System.Windows.Forms.TextBox();
             colTableColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colFileColumnName = new System.Windows.Forms.DataGridViewComboBoxColumn();
             colReferencedTable = new System.Windows.Forms.DataGridViewComboBoxColumn();
             colReferencedTableColumn = new System.Windows.Forms.DataGridViewButtonColumn();
+            txtMessage = new System.Windows.Forms.TextBox();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picMappingTip).BeginInit();
             gbColumnMappings.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvColumns).BeginInit();
             SuspendLayout();
@@ -119,6 +123,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            splitContainer1.Panel1.Controls.Add(picMappingTip);
             splitContainer1.Panel1.Controls.Add(btnCancel);
             splitContainer1.Panel1.Controls.Add(btnOK);
             splitContainer1.Panel1.Controls.Add(gbColumnMappings);
@@ -134,6 +139,16 @@
             splitContainer1.Size = new System.Drawing.Size(829, 584);
             splitContainer1.SplitterDistance = 494;
             splitContainer1.TabIndex = 21;
+            // 
+            // picMappingTip
+            // 
+            picMappingTip.Location = new System.Drawing.Point(433, 44);
+            picMappingTip.Name = "picMappingTip";
+            picMappingTip.Size = new System.Drawing.Size(17, 19);
+            picMappingTip.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            picMappingTip.TabIndex = 60;
+            picMappingTip.TabStop = false;
+            toolTip1.SetToolTip(picMappingTip, "Referenced Table\" and \"Referenced Table Column\" are optional, \r\nand \"Referenced Table Column\" (relating to \"File Column Name\") should be the unique index column of the \"Referenced Table\".");
             // 
             // btnCancel
             // 
@@ -207,16 +222,6 @@
             dgvColumns.CellLeave += dgvColumns_CellLeave;
             dgvColumns.EditingControlShowing += dgvColumns_EditingControlShowing;
             // 
-            // txtMessage
-            // 
-            txtMessage.Dock = System.Windows.Forms.DockStyle.Fill;
-            txtMessage.Location = new System.Drawing.Point(0, 0);
-            txtMessage.Multiline = true;
-            txtMessage.Name = "txtMessage";
-            txtMessage.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txtMessage.Size = new System.Drawing.Size(829, 86);
-            txtMessage.TabIndex = 20;
-            // 
             // colTableColumnName
             // 
             colTableColumnName.DataPropertyName = "Name";
@@ -248,6 +253,16 @@
             colReferencedTableColumn.Name = "colReferencedTableColumn";
             colReferencedTableColumn.Width = 180;
             // 
+            // txtMessage
+            // 
+            txtMessage.Dock = System.Windows.Forms.DockStyle.Fill;
+            txtMessage.Location = new System.Drawing.Point(0, 0);
+            txtMessage.Multiline = true;
+            txtMessage.Name = "txtMessage";
+            txtMessage.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            txtMessage.Size = new System.Drawing.Size(829, 86);
+            txtMessage.TabIndex = 20;
+            // 
             // frmImportData
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -263,6 +278,7 @@
             splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)picMappingTip).EndInit();
             gbColumnMappings.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvColumns).EndInit();
             ResumeLayout(false);
@@ -286,5 +302,7 @@
         private System.Windows.Forms.DataGridViewComboBoxColumn colFileColumnName;
         private System.Windows.Forms.DataGridViewComboBoxColumn colReferencedTable;
         private System.Windows.Forms.DataGridViewButtonColumn colReferencedTableColumn;
+        private System.Windows.Forms.PictureBox picMappingTip;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

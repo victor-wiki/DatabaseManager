@@ -6,6 +6,7 @@ using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
+using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,6 +34,9 @@ namespace DatabaseManager.Forms
 
             this.dbInterpreter = dbInterpreter;
             this.table = table;
+
+            Image tipImage = IconImageHelper.GetImage(IconChar.InfoCircle, IconImageHelper.TipColor);
+            this.picMappingTip.Image = tipImage;
         }
 
         private void SetControlStatus()
@@ -125,26 +129,30 @@ namespace DatabaseManager.Forms
                         return false;
                     }
 
-                    fileColumnNames.Add(fileColumnName);
-
-                    if (referencedTableName != null && referencedTableColumnName != null)
+                    if(!string.IsNullOrEmpty(fileColumnName))
                     {
+                        fileColumnNames.Add(fileColumnName);
+
                         DataImportColumnMapping mapping = new DataImportColumnMapping();
 
                         mapping.TableColumName = tableColumName;
                         mapping.FileColumnName = fileColumnName;
-                        mapping.ReferencedTableName = referencedTableName;
-                        mapping.ReferencedTableColumnName = referencedTableColumnName;
 
-                        var referencedTableColumnNameCell = row.Cells[this.colReferencedTableColumn.Name];
-
-                        if (referencedTableColumnNameCell != null)
+                        if (referencedTableName != null && referencedTableColumnName != null)
                         {
-                            mapping.ReferencedTableColumnDataType = (referencedTableColumnNameCell.Tag as TableColumn)?.DataType;
+                            mapping.ReferencedTableName = referencedTableName;
+                            mapping.ReferencedTableColumnName = referencedTableColumnName;
+
+                            var referencedTableColumnNameCell = row.Cells[this.colReferencedTableColumn.Name];
+
+                            if (referencedTableColumnNameCell != null)
+                            {
+                                mapping.ReferencedTableColumnDataType = (referencedTableColumnNameCell.Tag as TableColumn)?.DataType;
+                            }                           
                         }
 
                         mappings.Add(mapping);
-                    }
+                    }                   
                 }
             }
 
