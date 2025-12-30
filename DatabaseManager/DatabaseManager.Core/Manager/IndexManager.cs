@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using DatabaseManager.Model;
-using DatabaseInterpreter.Model;
+﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
+using System.Collections.Generic;
 
 
 namespace DatabaseManager.Core

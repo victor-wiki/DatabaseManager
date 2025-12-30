@@ -1,13 +1,12 @@
 ﻿using DatabaseConverter.Core;
-using DatabaseConverter.Core.Model;
 using DatabaseConverter.Model;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
@@ -461,9 +460,22 @@ namespace DatabaseManager
 
         private void Feedback(FeedbackInfo info)
         {
-            if (this.OnFeedback != null)
+            try
             {
-                this.OnFeedback(info);
+                if (this.OnFeedback != null)
+                {
+                    this.OnFeedback(info);
+                }
+
+                this.Invoke(() =>
+                {
+                    this.txtMessage.Text = info.Message;
+                    this.txtMessage.ForeColor = info.InfoType == FeedbackInfoType.Error ? Color.Red : Color.Black;
+                });
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 

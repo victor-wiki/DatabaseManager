@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
@@ -13,14 +13,14 @@ namespace DatabaseManager.Core
     {
         private DbInterpreter dbInterpreter;
         private DatabaseType databaseType;
-        private Table table;
+        private DatabaseObject tableOrView;
        
 
-        public QuickQueryConditionBuilder(DbInterpreter dbInterpreter, Table table)
+        public QuickQueryConditionBuilder(DbInterpreter dbInterpreter, DatabaseObject table)
         {
             this.dbInterpreter = dbInterpreter;
             this.databaseType = this.dbInterpreter.DatabaseType;
-            this.table = table;
+            this.tableOrView = table;
         }
 
         public async Task<string> Build(QuickFilterInfo info)
@@ -34,7 +34,7 @@ namespace DatabaseManager.Core
             {
                 using (DbConnection connection = this.dbInterpreter.CreateConnection())
                 {
-                    var columns = await this.dbInterpreter.GetTableColumnsAsync(connection, new SchemaInfoFilter() { TableNames = [table.Name] });
+                    var columns = await this.dbInterpreter.GetTableColumnsAsync(connection, new SchemaInfoFilter() { TableNames = [tableOrView.Name] });
 
                     List<string> items = new List<string>();
 

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Data;
-using System.Windows.Forms;
-using DatabaseManager.Model;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
-using System.Collections.Generic;
-using System.Linq;
+﻿using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Export;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Forms
 {

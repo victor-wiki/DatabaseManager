@@ -2,15 +2,15 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Export;
+using DatabaseManager.Forms;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -39,6 +39,7 @@ namespace DatabaseManager.Controls
             InitializeComponent();
 
             this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter, IconImageHelper.DataViewerToolbarColor);
+            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
 
             this.pagination.PageSize = 50;
 
@@ -49,43 +50,98 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.ShowData(displayInfo);
+            this.displayInfo = displayInfo;
 
-            if (displayInfo.DatabaseObject is Table)
-            {
-                this.uc_QuickFilter.Query += UC_QuickFilter_Query;
-                this.uc_QuickFilter.Visible = true;
-            }
-            else
-            {
-                this.uc_QuickFilter.Visible = false;
-                this.dgvData.Top -= this.uc_QuickFilter.Height;
-                this.dgvData.Height += this.uc_QuickFilter.Height;
-            }
+            this.ShowData();
+
+            this.uc_QuickFilter.Query += UC_QuickFilter_Query;        
         }
 
-        public void ShowData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        private void ShowData(long pageNumber = 1, bool isSort = false)
         {
             Task.Run(() =>
             {
-                this.LoadData(displayInfo, pageNum, isSort);
+                this.LoadData(pageNumber, isSort);
             });
         }
 
-        public async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        public async void LoadData(long pageNumber = 1, bool isSort = false)
         {
-            this.displayInfo = displayInfo;
-
-            this.pagination.PageNumber = pageNum;
-
-            DatabaseObject dbObject = displayInfo.DatabaseObject;
+            this.pagination.PageNumber = pageNumber;          
 
             int pageSize = this.pagination.PageSize;
 
             var option = new DbInterpreterOption() { ShowTextForGeometry = true };
 
-            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, option);
+            var connectionInfo = displayInfo.ConnectionInfo;
 
+            connectionInfo.NeedCheckServerVersion = displayInfo.DatabaseType == DatabaseType.SqlServer || displayInfo.DatabaseType == DatabaseType.Oracle;
+
+            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, connectionInfo, option);
+
+            try
+            {
+                this.loadingPanel.ShowLoading(this.dgvData);
+
+                string orderColumns = this.GetOrderColumns();
+                string conditionClause = await this.GetConditionClause();
+
+                DatabaseObject dbObject = this.displayInfo.DatabaseObject;
+                bool isForView = false;
+
+                if (dbObject is View)
+                {
+                    dbObject = ObjectHelper.CloneObject<Table>(dbObject);
+
+                    isForView = true;
+                }
+
+                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNumber, conditionClause, isForView);
+
+                this.Invoke(() =>
+                {
+                    this.pagination.TotalCount = result.Total;
+
+                    this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.loadingPanel.HideLoading();
+            }
+
+            foreach (DataGridViewColumn column in this.dgvData.Columns)
+            {
+                if (!this.CanSort(column))
+                {
+                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+                else
+                {
+                    column.SortMode = DataGridViewColumnSortMode.Programmatic;
+                }
+            }
+
+            if (this.sortedColumnIndex != -1)
+            {
+                DataGridViewColumn column = this.dgvData.Columns[this.sortedColumnIndex];
+
+                this.isSorting = true;
+
+                ListSortDirection sortDirection = this.GetSortDirection(this.sortOrder);
+
+                this.dgvData.Sort(column, sortDirection);
+
+                this.isSorting = false;
+            }
+        }
+
+        private string GetOrderColumns()
+        {
             string orderColumns = "";
 
             if (this.dgvData.SortedColumn != null)
@@ -94,6 +150,11 @@ namespace DatabaseManager.Controls
                 orderColumns = $"{this.dbInterpreter.GetQuotedString(this.dgvData.SortedColumn.Name)} {sortOrder}";
             }
 
+            return orderColumns;
+        }
+
+        private async Task<string> GetConditionClause()
+        {
             string conditionClause = "";
 
             if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
@@ -121,64 +182,19 @@ namespace DatabaseManager.Controls
                 }
             }
 
-            try
+            return conditionClause;
+        }   
+
+        private bool CanSort(DataGridViewColumn column)
+        {
+            Type valueType = column.ValueType;
+
+            if (valueType == typeof(byte[]) || DataTypeHelper.IsGeometryType(valueType.Name))
             {
-                bool isForView = false;
-
-                if (dbObject is View)
-                {
-                    dbObject = ObjectHelper.CloneObject<Table>(dbObject);
-
-                    isForView = true;
-                }
-
-                this.loadingPanel.ShowLoading(this.dgvData);
-
-                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, isForView);
-
-                this.Invoke(() =>
-                {
-                    this.pagination.TotalCount = result.Total;
-
-                    this.dgvData.DataSource = DataGridViewHelper.ConvertDataTable(result.Data);
-
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ExceptionHelper.GetExceptionDetails(ex), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                this.loadingPanel.HideLoading();
+                return false;
             }
 
-            foreach (DataGridViewColumn column in this.dgvData.Columns)
-            {
-                Type valueType = column.ValueType;
-
-                if (valueType == typeof(byte[]) || DataTypeHelper.IsGeometryType(valueType.Name))
-                {
-                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                }
-                else
-                {
-                    column.SortMode = DataGridViewColumnSortMode.Automatic;
-                }
-            }
-
-            if (this.sortedColumnIndex != -1)
-            {
-                DataGridViewColumn column = this.dgvData.Columns[this.sortedColumnIndex];
-
-                this.isSorting = true;
-
-                ListSortDirection sortDirection = this.GetSortDirection(this.sortOrder);
-
-                this.dgvData.Sort(column, sortDirection);
-
-                this.isSorting = false;
-            }
+            return true;
         }
 
         private ListSortDirection GetSortDirection(SortOrder sortOrder)
@@ -188,7 +204,7 @@ namespace DatabaseManager.Controls
 
         private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.ShowData(this.displayInfo, pageNumber);
+            this.ShowData(pageNumber);
         }
 
         public ContentSaveResult Save(ContentSaveInfo info)
@@ -208,7 +224,7 @@ namespace DatabaseManager.Controls
             this.sortedColumnIndex = this.dgvData.SortedColumn.DisplayIndex;
             this.sortOrder = this.dgvData.SortOrder;
 
-            this.ShowData(this.displayInfo, 1, true);
+            this.ShowData(1, true);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -227,7 +243,7 @@ namespace DatabaseManager.Controls
 
             this.uc_QuickFilter.ClearContent();
 
-            this.ShowData(this.displayInfo, 1, false);
+            this.ShowData(1, false);
         }
 
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -312,14 +328,71 @@ namespace DatabaseManager.Controls
                 this.conditionBuilder.ClearConditions();
             }
 
-            this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
+            this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject);
 
-            this.ShowData(this.displayInfo, 1, false);
-        }       
+            this.ShowData(1, false);
+        }
 
         private void dgvData_SizeChanged(object sender, EventArgs e)
         {
             this.loadingPanel.RefreshStatus();
         }
+
+        private void dgvData_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            int columnIndex = e.ColumnIndex;
+
+            DataGridViewColumn column = this.dgvData.Columns[columnIndex];
+
+            bool canSort = this.CanSort(column);
+
+            if (canSort)
+            {
+                if (this.sortedColumnIndex != columnIndex)
+                {
+                    this.sortedColumnIndex = columnIndex;
+                    this.sortOrder = SortOrder.Ascending;
+                }
+                else if (this.sortedColumnIndex == columnIndex)
+                {
+                    if (this.sortOrder == SortOrder.Ascending)
+                    {
+                        this.sortOrder = SortOrder.Descending;
+                    }
+                    else if (this.sortOrder == SortOrder.Descending)
+                    {
+                        this.sortOrder = SortOrder.None;
+                        this.sortedColumnIndex = -1;
+                    }
+                }
+
+                foreach (DataGridViewColumn col in this.dgvData.Columns)
+                {
+                    if (col.Index != columnIndex)
+                    {
+                        col.HeaderCell.SortGlyphDirection = SortOrder.None;
+                    }
+                }
+
+                column.HeaderCell.SortGlyphDirection = this.sortOrder;
+
+                this.ShowData(1, true);
+            }
+        }
+
+        private async void btnExport_Click(object sender, EventArgs e)
+        {
+            ExportSpecificDataOption option = new ExportSpecificDataOption();
+
+            option.OrderColumns = this.GetOrderColumns();
+            option.ConditionClause = await this.GetConditionClause();
+            option.PageNumbers.Add(this.pagination.PageNumber);
+            option.PageSize = this.pagination.PageSize;
+            option.PageCount = this.pagination.PageCount;
+
+            frmExportData frm = new frmExportData(this.dbInterpreter, this.displayInfo.DatabaseObject, option);
+
+            frm.ShowDialog();           
+        }       
     }
 }

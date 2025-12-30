@@ -6,8 +6,6 @@ using DatabaseManager.Data;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
-using NPOI.SS.Formula.Functions;
-using RTools_NTS.Util;
 using SqlAnalyser.Model;
 using SqlCodeEditor;
 using SqlCodeEditor.Document;
@@ -18,13 +16,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using View = DatabaseInterpreter.Model.View;
 using Function = DatabaseInterpreter.Model.Function;
-using NetTopologySuite.Algorithm;
+using View = DatabaseInterpreter.Model.View;
 
 namespace DatabaseManager.Controls
 {
@@ -59,7 +55,7 @@ namespace DatabaseManager.Controls
         public string SelectedText => this.SelectionManager.SelectedText;
         public ContextMenuStrip ContextMenu => this.txtEditor.ActiveTextAreaControl.ContextMenuStrip;
 
-        Dictionary<DatabaseObject, string> dictTableAndView = new Dictionary<DatabaseObject, string>();
+        Dictionary<DatabaseObject, List<string>> dictTableAndViewAlias = new Dictionary<DatabaseObject, List<string>>();
 
         private int CurrentCharIndex
         {
@@ -334,17 +330,17 @@ namespace DatabaseManager.Controls
 
                 DatabaseObject dbObj = null;
 
-                if (this.dictTableAndView.Count == 1)
+                if (this.dictTableAndViewAlias.Count == 1)
                 {
-                    dbObj = this.dictTableAndView.Keys.First();
+                    dbObj = this.dictTableAndViewAlias.Keys.First();
                 }
-                else if (this.dictTableAndView.Count > 1)
+                else if (this.dictTableAndViewAlias.Count > 1)
                 {
                     if (leftSideWord.EndsWith("("))
                     {
                         string name = this.TrimQuotationChars(leftSideWord.Trim('(', ' '));
 
-                        dbObj = this.dictTableAndView.Keys.FirstOrDefault(item => item.Name.ToUpper() == name);
+                        dbObj = this.dictTableAndViewAlias.Keys.FirstOrDefault(item => item.Name.ToUpper() == name);
                     }
                     else
                     {
@@ -356,7 +352,7 @@ namespace DatabaseManager.Controls
 
                         foreach (var item in leftSideItems)
                         {
-                            foreach (var kp in this.dictTableAndView)
+                            foreach (var kp in this.dictTableAndViewAlias)
                             {
                                 if (kp.Key.Name.ToUpper() == item.ToUpper())
                                 {
@@ -763,11 +759,11 @@ namespace DatabaseManager.Controls
         {
             text = this.TrimQuotationChars(text);
 
-            foreach (var kp in this.dictTableAndView)
+            foreach (var kp in this.dictTableAndViewAlias)
             {
-                string alias = kp.Value;
+                List<string> aliases = kp.Value;
 
-                if (string.IsNullOrEmpty(alias))
+                if (aliases == null || aliases.Count == 0)
                 {
                     continue;
                 }
@@ -775,13 +771,13 @@ namespace DatabaseManager.Controls
                 DatabaseObject dbObj = kp.Key;
                 bool isTable = dbObj is Table;
 
-                if (alias != null && alias.ToUpper() == text.ToUpper())
+                if (aliases.Any(item => item.ToUpper() == text.ToUpper()))
                 {
                     return new SqlWord() { Type = isTable ? SqlWordTokenType.Table : SqlWordTokenType.View, Text = dbObj.Name };
                 }
             }
 
-            foreach (var kp in this.dictTableAndView)
+            foreach (var kp in this.dictTableAndViewAlias)
             {
                 DatabaseObject dbObj = kp.Key;
                 bool isTable = dbObj is Table;
@@ -833,7 +829,7 @@ namespace DatabaseManager.Controls
 
         private void ExtractTableAndViews()
         {
-            this.dictTableAndView.Clear();
+            this.dictTableAndViewAlias.Clear();
 
             var items = this.GetEditorItems();
 
@@ -876,10 +872,7 @@ namespace DatabaseManager.Controls
                 {
                     found = true;
 
-                    if (!this.dictTableAndView.ContainsKey(table))
-                    {
-                        this.dictTableAndView.Add(table, alias);
-                    }
+                    this.SetAlias(table, alias);
                 }
 
                 if (!found)
@@ -890,11 +883,30 @@ namespace DatabaseManager.Controls
                     {
                         found = true;
 
-                        if (!this.dictTableAndView.ContainsKey(view))
-                        {
-                            this.dictTableAndView.Add(view, alias);
-                        }
+                        this.SetAlias(view, alias);
                     }
+                }
+            }
+        }
+
+        private void SetAlias(DatabaseObject dbObject, string alias)
+        {
+            if (alias == null)
+            {
+                return;
+            }
+
+            if (!this.dictTableAndViewAlias.ContainsKey(dbObject))
+            {
+                this.dictTableAndViewAlias.Add(dbObject, new List<string>() { alias });
+            }
+            else
+            {
+                var aliases = this.dictTableAndViewAlias[dbObject];
+
+                if (!aliases.Any(item => item.ToUpper() == alias.ToUpper()))
+                {
+                    aliases.Add(alias);
                 }
             }
         }

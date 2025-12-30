@@ -1,7 +1,7 @@
 ﻿using DatabaseManager.Controls;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;

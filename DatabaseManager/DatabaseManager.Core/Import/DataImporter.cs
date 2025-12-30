@@ -1,21 +1,16 @@
-﻿using Dapper;
-using DatabaseConverter.Core;
+﻿using DatabaseConverter.Core;
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using DatabaseManager.FileUtility.Model;
-using DatabaseManager.Model;
-using NPOI.SS.Formula.Functions;
-using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Table = DatabaseInterpreter.Model.Table;
@@ -490,8 +485,7 @@ namespace DatabaseManager.Core
 
             foreach (DataValidateResultRow resultRow in result.Rows)
             {
-                GridRow row = new GridRow();
-                row.RowIndex = resultRow.RowIndex;
+                GridRow row = new GridRow();              
 
                 if (resultRow.InvalidMessages != null)
                 {
@@ -527,11 +521,11 @@ namespace DatabaseManager.Core
 
                         if (resultCell.IsValid == false)
                         {
-                            cell.NeedHighlight = true;
+                            cell.HighlightMode =  GridCellHighlightMode.Background;
                         }
                         else if (row.Comments != null && row.Comments.Any(item => item.ColumnIndexes.Contains(cellIndex)))
                         {
-                            cell.NeedHighlight = true;
+                            cell.HighlightMode = GridCellHighlightMode.Background;
                         }
 
                         if (row.Cells == null)

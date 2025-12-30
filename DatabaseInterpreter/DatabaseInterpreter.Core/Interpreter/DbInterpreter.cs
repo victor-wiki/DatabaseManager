@@ -425,6 +425,25 @@ namespace DatabaseInterpreter.Core
                 this.SubscribeInfoMessage(dbConnection);
             }
 
+            string serverVersion = this.ServerVersion;
+            bool needCheckServerVersion = this.ConnectionInfo?.NeedCheckServerVersion == true;
+
+            if (needCheckServerVersion && string.IsNullOrEmpty(serverVersion) && this.ConnectionInfo != null)
+            {
+                try
+                {
+                    dbConnection.Open();
+
+                    this.ConnectionInfo.ServerVersion = dbConnection.ServerVersion;
+
+                    dbConnection.Close();
+                }
+                catch (Exception ex)
+                {
+                                        
+                }
+            }
+
             return dbConnection;
         }
 
@@ -664,7 +683,7 @@ namespace DatabaseInterpreter.Core
 
             dataSet.Tables.Add(table);
 
-            if(!ignoreSchema)
+            if (!ignoreSchema)
             {
                 table.Load(reader);
             }
@@ -672,7 +691,7 @@ namespace DatabaseInterpreter.Core
             {
                 //when it's only for querying, use this to avoid rows are merged if unique index exists.
                 table.Load(reader, 0);
-            }           
+            }
 
             return table;
         }
@@ -839,27 +858,32 @@ namespace DatabaseInterpreter.Core
             return dt;
         }
 
-        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false)
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
         {
-            using (DbConnection connection = this.CreateConnection())
+            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, whereClause, isForView, columns);
+        }
+
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(DbConnection connection, Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
+        {
+            long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
+
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema };
+
+            if (isForView)
             {
-                long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
-
-                SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema };
-
-                if (isForView)
-                {
-                    filter.ColumnType = ColumnType.ViewColumn;
-                }
-
-                filter.TableNames = new string[] { table.Name };
-
-                var columns = await this.GetTableColumnsAsync(connection, filter);
-
-                DataTable dt = await this.GetPagedDataTableAsync(this.CreateConnection(), table, columns, orderColumns, pageSize, pageNumber, whereClause);
-
-                return (total, dt);
+                filter.ColumnType = ColumnType.ViewColumn;
             }
+
+            filter.TableNames = new string[] { table.Name };
+
+            if (columns == null || columns.Count == 0)
+            {
+                columns = await this.GetTableColumnsAsync(connection, filter);
+            }
+
+            DataTable dt = await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, whereClause);
+
+            return (total, dt);
         }
 
         public async Task<Dictionary<long, List<Dictionary<string, object>>>> GetPagedDataListAsync(DbConnection connection, Table table, List<TableColumn> columns, string primaryKeyColumns, long total, long batchCount, int pageSize, string whereClause = "")
@@ -882,7 +906,7 @@ namespace DatabaseInterpreter.Core
                     {
                         Table = table,
                         Columns = columns,
-                        TotalCount = total,                        
+                        TotalCount = total,
                         DataTable = dataTable
                     });
                 }
@@ -891,7 +915,7 @@ namespace DatabaseInterpreter.Core
             return dictPagedData;
         }
 
-        public List<Dictionary<string,object>> ConvertDataTableToDictionaryList(DataTable dataTable, List<TableColumn> columns)
+        public List<Dictionary<string, object>> ConvertDataTableToDictionaryList(DataTable dataTable, List<TableColumn> columns)
         {
             List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
 

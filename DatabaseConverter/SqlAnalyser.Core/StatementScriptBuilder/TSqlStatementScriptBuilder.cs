@@ -544,13 +544,13 @@ namespace SqlAnalyser.Core
 
             bool isWith = select.WithStatements != null && select.WithStatements.Count > 0;
 
-            if (select.LimitInfo != null && select.TopInfo == null)
-            {
-                if (select.LimitInfo.StartRowIndex == null || select.LimitInfo.StartRowIndex.Symbol == "0")
-                {
-                    select.TopInfo = new SelectTopInfo() { TopCount = select.LimitInfo.RowCount };
-                }
-            }
+            //if (select.LimitInfo != null && select.TopInfo == null)
+            //{
+            //    if (select.LimitInfo.StartRowIndex == null || select.LimitInfo.StartRowIndex.Symbol == "0")
+            //    {
+            //        select.TopInfo = new SelectTopInfo() { TopCount = select.LimitInfo.RowCount };
+            //    }
+            //}
 
             string top = select.TopInfo == null ? "" : $" TOP {select.TopInfo.TopCount}{(select.TopInfo.IsPercent ? " PERCENT " : " ")}";
 

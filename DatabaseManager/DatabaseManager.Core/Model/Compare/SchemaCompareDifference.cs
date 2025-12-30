@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DatabaseInterpreter.Model;
 
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class SchemaCompareDifference
     {               

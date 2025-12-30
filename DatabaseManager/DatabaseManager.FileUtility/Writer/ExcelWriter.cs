@@ -157,18 +157,22 @@ namespace DatabaseManager.FileUtility
                     }
                 }
 
-                ICellStyle highlightCellStyle = workbook.CreateCellStyle();
+                ICellStyle highlightCellBackgroundStyle = workbook.CreateCellStyle();
 
-                highlightCellStyle.FillForegroundColor = IndexedColors.Red.Index;
-                highlightCellStyle.FillPattern = FillPattern.SolidForeground;
+                highlightCellBackgroundStyle.FillForegroundColor = IndexedColors.Red.Index;
+                highlightCellBackgroundStyle.FillPattern = FillPattern.SolidForeground;
+
+                ICellStyle highlightCellForegroundStyle = workbook.CreateCellStyle();
+
+                IFont highlightCellForegroundFont = workbook.CreateFont();
+                highlightCellForegroundFont.IsBold = true;
+                highlightCellForegroundStyle.SetFont(highlightCellForegroundFont);
+
+                int rowIndex = option.ShowColumnNames ? 1 : 0;
 
                 foreach (GridRow row in gridData.Rows)
                 {
-                    int rowIndex = row.RowIndex;
-
                     var dataRow = dataSheet.CreateRow(rowIndex);
-
-                    bool firstCellHasComment = false;
 
                     if (row.Cells != null)
                     {
@@ -190,9 +194,13 @@ namespace DatabaseManager.FileUtility
                                 commentCellIndexes.Add(columnIndex);
                             }
 
-                            if (cell.NeedHighlight)
+                            if (cell.HighlightMode == GridCellHighlightMode.Background)
                             {
-                                dataCell.CellStyle = highlightCellStyle;
+                                dataCell.CellStyle = highlightCellBackgroundStyle;
+                            }
+                            else if (cell.HighlightMode == GridCellHighlightMode.Foreground)
+                            {
+                                dataCell.CellStyle = highlightCellForegroundStyle;
                             }
 
                             columnIndex++;
@@ -200,7 +208,7 @@ namespace DatabaseManager.FileUtility
 
                         if (row.Comments != null)
                         {
-                            foreach(var comment in row.Comments)
+                            foreach (var comment in row.Comments)
                             {
                                 foreach (var colIndex in comment.ColumnIndexes)
                                 {
@@ -214,7 +222,7 @@ namespace DatabaseManager.FileUtility
                                         }
                                     }
                                 }
-                            }                            
+                            }
                         }
                     }
 

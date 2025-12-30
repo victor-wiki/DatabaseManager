@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;

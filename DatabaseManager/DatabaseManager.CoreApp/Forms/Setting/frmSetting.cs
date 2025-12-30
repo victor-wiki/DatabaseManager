@@ -2,9 +2,8 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
-using DatabaseManager.Forms;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using DatabaseManager.Profile.Manager;
 using DatabaseManager.Profile.Model;
 using System;

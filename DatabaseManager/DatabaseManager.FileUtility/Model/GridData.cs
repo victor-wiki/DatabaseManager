@@ -11,8 +11,6 @@ namespace DatabaseManager.FileUtility.Model
 
     public class GridRow
     {
-        public int RowIndex { get; set; }
-        
         public List<GridCell> Cells { get; set; }
 
         public List<GridRowComment> Comments { get; set; }
@@ -30,6 +28,13 @@ namespace DatabaseManager.FileUtility.Model
         public string ColumnName { get; set; }
         public object Content { get; set; }
         public string Comment { get; set; }
-        public bool NeedHighlight { get; set; }
+        public GridCellHighlightMode HighlightMode { get; set; } = GridCellHighlightMode.None;
+    }
+
+    public enum GridCellHighlightMode
+    {
+        None = 0,
+        Background = 2,
+        Foreground = 4
     }
 }

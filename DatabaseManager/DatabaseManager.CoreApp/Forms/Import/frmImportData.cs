@@ -5,11 +5,9 @@ using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -222,9 +220,7 @@ namespace DatabaseManager.Forms
 
                         if (File.Exists(resultFilePath))
                         {
-                            var psi = new ProcessStartInfo(resultFilePath) { UseShellExecute = true };
-
-                            Process.Start(psi);
+                            FileHelper.OpenFile(resultFilePath);
                         }
                     }
                 }

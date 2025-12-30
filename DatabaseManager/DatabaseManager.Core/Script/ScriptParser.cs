@@ -1,12 +1,8 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Helper;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace DatabaseManager.Core

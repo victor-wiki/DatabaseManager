@@ -47,6 +47,7 @@
             cboAddMode = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            btnExport = new System.Windows.Forms.Button();
             uc_QuickFilter = new UC_QuickFilter();
             loadingPanel = new UC_LoadingPanel();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
@@ -65,11 +66,11 @@
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
             dgvData.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvData.Location = new System.Drawing.Point(0, 33);
+            dgvData.Location = new System.Drawing.Point(3, 34);
             dgvData.Margin = new System.Windows.Forms.Padding(4);
             dgvData.Name = "dgvData";
             dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            dgvData.Size = new System.Drawing.Size(818, 405);
+            dgvData.Size = new System.Drawing.Size(819, 416);
             dgvData.TabIndex = 5;
             dgvData.CellFormatting += dgvData_CellFormatting;
             dgvData.CellLeave += dgvData_CellLeave;
@@ -87,10 +88,10 @@
             btnFilter.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btnFilter.FlatAppearance.BorderSize = 0;
             btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnFilter.Location = new System.Drawing.Point(4, 446);
+            btnFilter.Location = new System.Drawing.Point(10, 455);
             btnFilter.Margin = new System.Windows.Forms.Padding(4);
             btnFilter.Name = "btnFilter";
-            btnFilter.Size = new System.Drawing.Size(36, 25);
+            btnFilter.Size = new System.Drawing.Size(22, 22);
             btnFilter.TabIndex = 7;
             toolTip1.SetToolTip(btnFilter, "Filter");
             btnFilter.UseVisualStyleBackColor = true;
@@ -100,13 +101,13 @@
             // 
             pagination.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             pagination.BackColor = System.Drawing.Color.WhiteSmoke;
-            pagination.Location = new System.Drawing.Point(47, 442);
+            pagination.Location = new System.Drawing.Point(47, 453);
             pagination.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             pagination.Name = "pagination";
             pagination.PageCount = 0L;
             pagination.PageNumber = 1L;
             pagination.PageSize = 10;
-            pagination.Size = new System.Drawing.Size(769, 37);
+            pagination.Size = new System.Drawing.Size(713, 26);
             pagination.TabIndex = 6;
             pagination.TotalCount = 0L;
             pagination.OnPageNumberChanged += pagination_OnPageNumberChanged;
@@ -159,7 +160,7 @@
             // 
             // btnAdd
             // 
-            btnAdd.Location = new System.Drawing.Point(4, 1);
+            btnAdd.Location = new System.Drawing.Point(4, 2);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new System.Drawing.Size(38, 27);
             btnAdd.TabIndex = 9;
@@ -168,7 +169,7 @@
             // 
             // btnRemove
             // 
-            btnRemove.Location = new System.Drawing.Point(61, 1);
+            btnRemove.Location = new System.Drawing.Point(61, 2);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new System.Drawing.Size(34, 26);
             btnRemove.TabIndex = 10;
@@ -179,7 +180,7 @@
             // btnRevert
             // 
             btnRevert.Enabled = false;
-            btnRevert.Location = new System.Drawing.Point(101, 1);
+            btnRevert.Location = new System.Drawing.Point(101, 2);
             btnRevert.Name = "btnRevert";
             btnRevert.Size = new System.Drawing.Size(37, 26);
             btnRevert.TabIndex = 11;
@@ -190,7 +191,7 @@
             // btnCommit
             // 
             btnCommit.Enabled = false;
-            btnCommit.Location = new System.Drawing.Point(144, 1);
+            btnCommit.Location = new System.Drawing.Point(144, 2);
             btnCommit.Name = "btnCommit";
             btnCommit.Size = new System.Drawing.Size(37, 26);
             btnCommit.TabIndex = 12;
@@ -209,7 +210,7 @@
             cboAddMode.DropDownWidth = 220;
             cboAddMode.FormattingEnabled = true;
             cboAddMode.Items.AddRange(new object[] { "Place new rows above selected row", "Place new rows below selected row", "Place new rows at the bottom" });
-            cboAddMode.Location = new System.Drawing.Point(338, 1);
+            cboAddMode.Location = new System.Drawing.Point(338, 2);
             cboAddMode.Name = "cboAddMode";
             cboAddMode.Size = new System.Drawing.Size(217, 25);
             cboAddMode.TabIndex = 14;
@@ -217,15 +218,29 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(235, 5);
+            label1.Location = new System.Drawing.Point(235, 6);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(99, 17);
             label1.TabIndex = 15;
             label1.Text = "Add row mode:";
             // 
+            // btnExport
+            // 
+            btnExport.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnExport.FlatAppearance.BorderSize = 0;
+            btnExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnExport.Location = new System.Drawing.Point(794, 453);
+            btnExport.Margin = new System.Windows.Forms.Padding(4);
+            btnExport.Name = "btnExport";
+            btnExport.Size = new System.Drawing.Size(22, 22);
+            btnExport.TabIndex = 20;
+            toolTip1.SetToolTip(btnExport, "Export");
+            btnExport.UseVisualStyleBackColor = true;
+            btnExport.Click += btnExport_Click;
+            // 
             // uc_QuickFilter
             // 
-            uc_QuickFilter.Location = new System.Drawing.Point(561, -1);
+            uc_QuickFilter.Location = new System.Drawing.Point(561, 0);
             uc_QuickFilter.Name = "uc_QuickFilter";
             uc_QuickFilter.Size = new System.Drawing.Size(250, 30);
             uc_QuickFilter.TabIndex = 16;
@@ -236,9 +251,9 @@
             loadingPanel.BackgroundColor = System.Drawing.SystemColors.ControlDark;
             loadingPanel.CancellationTokenSource = null;
             loadingPanel.InterruptButtonVisible = false;
-            loadingPanel.Location = new System.Drawing.Point(0, 35);
+            loadingPanel.Location = new System.Drawing.Point(6, 44);
             loadingPanel.Name = "loadingPanel";
-            loadingPanel.Size = new System.Drawing.Size(818, 403);
+            loadingPanel.Size = new System.Drawing.Size(813, 401);
             loadingPanel.TabIndex = 17;
             // 
             // UC_DataEditor
@@ -246,6 +261,7 @@
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(btnExport);
             Controls.Add(loadingPanel);
             Controls.Add(uc_QuickFilter);
             Controls.Add(label1);
@@ -260,7 +276,7 @@
             Controls.Add(dgvData);
             Margin = new System.Windows.Forms.Padding(0);
             Name = "UC_DataEditor";
-            Size = new System.Drawing.Size(825, 479);
+            Size = new System.Drawing.Size(823, 479);
             MouseMove += UC_DataEditor_MouseMove;
             ((System.ComponentModel.ISupportInitialize)dgvData).EndInit();
             cellContextMenu.ResumeLayout(false);
@@ -289,5 +305,6 @@
         private System.Windows.Forms.ToolTip toolTip1;
         private UC_QuickFilter uc_QuickFilter;
         private UC_LoadingPanel loadingPanel;
+        private System.Windows.Forms.Button btnExport;
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class TableIndexDesignerInfo
     {

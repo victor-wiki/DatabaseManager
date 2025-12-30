@@ -1,4 +1,4 @@
-﻿namespace DatabaseManager.Model
+﻿namespace DatabaseManager.Core.Model
 {
     public enum ScriptAction
     {

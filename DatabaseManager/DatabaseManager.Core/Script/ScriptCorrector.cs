@@ -1,10 +1,7 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
-using SqlAnalyser.Model;
-using System;
+using DatabaseManager.Core.Model;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;

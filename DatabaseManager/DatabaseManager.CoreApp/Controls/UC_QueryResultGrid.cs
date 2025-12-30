@@ -19,6 +19,8 @@ namespace DatabaseManager.Controls
         private bool matchWholeWord = false;
         private bool isHighlighting = false;
 
+        internal DataGridView DataGrid => this.dgvData;
+
         public UC_QueryResultGrid()
         {
             InitializeComponent();
@@ -319,77 +321,83 @@ namespace DatabaseManager.Controls
 
             if (rowIndex >= 0 && columnIndex >= 0)
             {
-                var column = this.dgvData.Columns[columnIndex];
-
-                if (column.Visible && column is DataGridViewTextBoxColumn c)
+                try
                 {
-                    if (!string.IsNullOrEmpty(this.searchWord))
+                    var column = this.dgvData.Columns[columnIndex];
+
+                    if (column.Visible && column is DataGridViewTextBoxColumn c)
                     {
-                        if (e.FormattedValue == null)
+                        if (!string.IsNullOrEmpty(this.searchWord))
                         {
-                            return;
-                        }
-
-                        string value = e.FormattedValue.ToString();
-
-                        var matches = this.MatchWord(value, this.searchWord);
-
-                        if (matches != null)
-                        {
-                            e.Handled = true;
-                            e.PaintBackground(e.CellBounds, true);
-
-                            foreach (Match match in matches)
+                            if (e.FormattedValue == null)
                             {
-                                int index = match.Index;
-                                int length = match.Length;
-
-                                if (index >= 0)
-                                {
-                                    Rectangle rect = new Rectangle();
-                                    rect.Y = e.CellBounds.Y + 2;
-                                    rect.Height = e.CellBounds.Height - 5;
-
-                                    string beforeSearchword = value.Substring(0, index);
-
-                                    string searchWord = value.Substring(index, length);
-
-                                    Size s1 = TextRenderer.MeasureText(e.Graphics, beforeSearchword, e.CellStyle.Font, e.CellBounds.Size);
-                                    Size s2 = TextRenderer.MeasureText(e.Graphics, searchWord, e.CellStyle.Font, e.CellBounds.Size);
-
-                                    int cellPosX = e.CellBounds.X;
-
-                                    if (s1.Width > 5)
-                                    {
-                                        rect.X = cellPosX + s1.Width - 5;
-                                        rect.Width = s2.Width - 6;
-                                    }
-                                    else
-                                    {
-                                        rect.X = cellPosX + 2;
-                                        rect.Width = s2.Width - 6;
-                                    }
-
-                                    int maxX = cellPosX + column.Width;
-
-                                    if (rect.X + rect.Width > maxX)
-                                    {
-                                        rect.Width = rect.Width - (rect.X + rect.Width - maxX);
-                                    }
-
-                                    SolidBrush brush = new SolidBrush(Color.LightPink);
-
-                                    e.Graphics.FillRectangle(brush, rect);
-
-                                    brush.Dispose();
-
-                                    this.isHighlighting = true;
-                                }
+                                return;
                             }
 
-                            e.PaintContent(e.CellBounds);
+                            string value = e.FormattedValue.ToString();
+
+                            var matches = this.MatchWord(value, this.searchWord);
+
+                            if (matches != null)
+                            {
+                                e.Handled = true;
+                                e.PaintBackground(e.CellBounds, true);
+
+                                foreach (Match match in matches)
+                                {
+                                    int index = match.Index;
+                                    int length = match.Length;
+
+                                    if (index >= 0)
+                                    {
+                                        Rectangle rect = new Rectangle();
+                                        rect.Y = e.CellBounds.Y + 2;
+                                        rect.Height = e.CellBounds.Height - 5;
+
+                                        string beforeSearchword = value.Substring(0, index);
+
+                                        string searchWord = value.Substring(index, length);
+
+                                        Size s1 = TextRenderer.MeasureText(e.Graphics, beforeSearchword, e.CellStyle.Font, e.CellBounds.Size);
+                                        Size s2 = TextRenderer.MeasureText(e.Graphics, searchWord, e.CellStyle.Font, e.CellBounds.Size);
+
+                                        int cellPosX = e.CellBounds.X;
+
+                                        if (s1.Width > 5)
+                                        {
+                                            rect.X = cellPosX + s1.Width - 5;
+                                            rect.Width = s2.Width - 6;
+                                        }
+                                        else
+                                        {
+                                            rect.X = cellPosX + 2;
+                                            rect.Width = s2.Width - 6;
+                                        }
+
+                                        int maxX = cellPosX + column.Width;
+
+                                        if (rect.X + rect.Width > maxX)
+                                        {
+                                            rect.Width = rect.Width - (rect.X + rect.Width - maxX);
+                                        }
+
+                                        SolidBrush brush = new SolidBrush(Color.LightPink);
+
+                                        e.Graphics.FillRectangle(brush, rect);
+
+                                        brush.Dispose();
+
+                                        this.isHighlighting = true;
+                                    }
+                                }
+
+                                e.PaintContent(e.CellBounds);
+                            }
                         }
                     }
+                }
+                catch (Exception ex)
+                {
                 }
             }
         }
@@ -440,20 +448,27 @@ namespace DatabaseManager.Controls
 
         private void dgvData_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
         {
-            if (this.dgvData.RowHeadersVisible)
+            try
             {
-                var grid = sender as DataGridView;
-                var rowNumber = (e.RowIndex + 1).ToString();
-
-                StringFormat format = new StringFormat()
+                if (this.dgvData.RowHeadersVisible)
                 {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                };
+                    var grid = sender as DataGridView;
+                    var rowNumber = (e.RowIndex + 1).ToString();
 
-                var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+                    StringFormat format = new StringFormat()
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
 
-                e.Graphics.DrawString(rowNumber, this.Font, SystemBrushes.ControlText, headerBounds, format);
+                    var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
+
+                    e.Graphics.DrawString(rowNumber, this.Font, SystemBrushes.ControlText, headerBounds, format);
+                }
+            }
+            catch (Exception ex)
+            {
+               
             }
         }
 

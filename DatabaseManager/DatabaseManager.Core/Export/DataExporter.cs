@@ -1,10 +1,15 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Table = DatabaseInterpreter.Model.Table;
 
 namespace DatabaseManager.Export
 {
@@ -17,36 +22,168 @@ namespace DatabaseManager.Export
             this.observer = observer;
         }
 
-        public async Task<(bool Success, string FilePath)> Export(DbInterpreter dbInterpreter, string tableName, ExportDataOption option)
+        public async Task<DataExportResult> Export(DbInterpreter dbInterpreter, DatabaseObject dbObject, List<DataExportColumn> columns, ExportSpecificDataOption option, CancellationToken cancellationToken)
         {
+            DataExportResult exportResult = new DataExportResult();
+
+            List<TableColumn> tableColumns = new List<TableColumn>();
+
+            if (columns != null)
+            {
+                tableColumns.AddRange(columns.Select(item => new TableColumn() { Name = item.ColumnName, DataType = item.DataType }));
+            }
+
+            bool isForView = false;
+
+            if (dbObject is View)
+            {
+                dbObject = ObjectHelper.CloneObject<Table>(dbObject);
+
+                isForView = true;
+            }
+
             try
             {
-                using (DbConnection connection = dbInterpreter.CreateConnection())
+                DataTable mergedDataTable = new DataTable();
+
+                using (var connection = dbInterpreter.CreateConnection())
                 {
-                    string sql = $"select * from {dbInterpreter.GetQuotedString(tableName)}";
-
-                    DataTable dataTable = await dbInterpreter.GetDataTableAsync(connection, sql, true);
-
-                    string filePath = null;
-
-                    if (option.FileType == ExportFileType.CSV)
+                    if (!option.ExportAllThatMeetCondition)
                     {
-                        filePath = this.WriteToCsv(dataTable, option, tableName);
+                        List<long> pageNumbers = option.PageNumbers;
+
+                        foreach (long pageNumber in pageNumbers)
+                        {
+                            (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(connection, dbObject as Table, option.OrderColumns, option.PageSize, pageNumber, option.ConditionClause, isForView, tableColumns);
+
+                            mergedDataTable.Merge(result.Data);
+                        }
                     }
                     else
                     {
-                        filePath = this.WriteToExcel(dataTable, option, tableName);
+                        int batchCount = 500;
+                        long count = 0;
+
+                        (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(connection, dbObject as Table, option.OrderColumns, batchCount, 1, option.ConditionClause, isForView, tableColumns);
+
+                        count += result.Data.Rows.Count;
+
+                        mergedDataTable.Merge(result.Data);
+
+                        long total = result.Total;
+
+                        long pageNumber = total % batchCount == 0 ? total / batchCount : total / batchCount + 1;
+
+                        if (pageNumber > 1)
+                        {
+                            for (int i = 2; i <= pageNumber; i++)
+                            {
+                                if (cancellationToken.IsCancellationRequested)
+                                {
+                                    exportResult.Message = "Task has been canceled.";
+                                    break;
+                                }
+
+                                count += (i < pageNumber ? batchCount : total - (pageNumber - 1) * batchCount);
+
+                                this.Feedback($"Reading data {count}/{result.Total}...");
+
+                                result = await dbInterpreter.GetPagedDataTableAsync(connection, dbObject as Table, option.OrderColumns, batchCount, i, option.ConditionClause, isForView, tableColumns);
+
+                                mergedDataTable.Merge(result.Data);
+                            }
+                        }
                     }
 
-                    return (true, filePath);
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        this.Feedback("Writing to file...");
+
+                        if (columns != null)
+                        {
+                            foreach (DataColumn column in mergedDataTable.Columns)
+                            {
+                                var col = columns.FirstOrDefault(item => item.ColumnName == column.ColumnName);
+
+                                if (col != null && col.ColumnName != col.DisplayName && !string.IsNullOrEmpty(col.DisplayName))
+                                {
+                                    column.ColumnName = col.DisplayName;
+                                }
+                            }
+                        }
+
+                        string filePath = this.ExportDataTable(mergedDataTable, dbObject.Name, option);
+
+                        this.Feedback("End write to file.");
+
+                        exportResult.IsOK = true;
+                        exportResult.FilePath = filePath;
+
+                        return exportResult;
+                    }
+                    else
+                    {
+                        return exportResult;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 this.HandleError(ex);
 
-                return (false, null);
+                exportResult.Message = ex.Message;
+
+                return exportResult;
             }
+        }
+
+        public DataExportResult Export(DataTable dataTable, List<DataExportColumn> columns, ExportSpecificDataOption option)
+        {
+            DataExportResult exportResult = new DataExportResult();
+
+            List<DataColumn> excludeColumns = new List<DataColumn>();
+
+            foreach (DataColumn column in dataTable.Columns)
+            {
+                string columnName = column.ColumnName;
+
+                var col = columns.FirstOrDefault(item => item.ColumnName == columnName);
+
+                if (col != null)
+                {
+                    if(!string.IsNullOrEmpty(col.DisplayName))
+                    {
+                        column.ColumnName = col.DisplayName;
+                    }                   
+                }
+                else
+                {
+                    excludeColumns.Add(column);
+                }
+            }
+
+            excludeColumns.ForEach(item => { dataTable.Columns.Remove(item); });
+
+            exportResult.FilePath = this.ExportDataTable(dataTable, dataTable.TableName, option);
+            exportResult.IsOK = true;
+
+            return exportResult;
+        }
+
+        private string ExportDataTable(DataTable dataTable, string tableName, ExportDataOption option)
+        {
+            string filePath = null;
+
+            if (option.FileType == ExportFileType.CSV)
+            {
+                filePath = this.WriteToCsv(dataTable, option, tableName);
+            }
+            else
+            {
+                filePath = this.WriteToExcel(dataTable, option, tableName);
+            }
+
+            return filePath;
         }
 
         public static void WriteToCsv(DataTable dataTable, string filePath)
@@ -76,7 +213,12 @@ namespace DatabaseManager.Export
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true);
         }
 
-        public void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)
+        private void Feedback(string message)
+        {
+            this.Feedback(this, message);
+        }
+
+        private void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)
         {
             FeedbackInfo info = new FeedbackInfo() { InfoType = infoType, Message = StringHelper.ToSingleEmptyLine(content), Owner = owner };
 

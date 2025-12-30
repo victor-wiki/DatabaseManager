@@ -1,5 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using KellermanSoftware.CompareNetObjects;
 using System.Collections.Generic;
 using System.Linq;

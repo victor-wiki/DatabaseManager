@@ -4,7 +4,6 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
-using DatabaseManager.Core.Model.Compare;
 using DatabaseManager.Helper;
 using FontAwesome.Sharp;
 using System;
@@ -28,6 +27,7 @@ namespace DatabaseManager.Forms.Compare
         private DataCompareOption option;
         private CancellationTokenSource cancellationTokenSource;
         private List<SchemaMappingInfo> schemaMappings = new List<SchemaMappingInfo>();
+        private frmExportData exportDataForm;
 
         public frmDataCompareResult(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DataCompareResult result, DataCompareOption option)
         {
@@ -37,10 +37,17 @@ namespace DatabaseManager.Forms.Compare
 
             this.tsbCancel.Image = IconImageHelper.GetImageByFontType(IconChar.Cancel, IconFont.Solid, Color.Red);
 
+            var exportImage = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
+
+            this.btnExportDifferent.Image = exportImage;
+            this.btnExportOnlyInSource.Image = exportImage;
+            this.btnExportOnlyInTarget.Image = exportImage;
+            this.btnExportIdentical.Image = exportImage;
+
             this.sourceDbInterpreter = sourceDbInterpreter;
             this.targetDbInterpreter = targetDbInterpreter;
             this.result = result;
-            this.option = option;                  
+            this.option = option;
 
             this.LoadData();
         }
@@ -237,102 +244,25 @@ namespace DatabaseManager.Forms.Compare
             this.paginationDifferent.TotalCount = rows.Count;
             this.paginationDifferent.PageCount = PaginationHelper.GetPageCount(rows.Count, pageSize);
 
-            var pagedKeyRows = this.GetPagedKeyRows(rows, pageSize, pageNumber);
+            (DataTable Data, Dictionary<int, List<DataCompareValueInfo>> ValueInfos) result = await DataCompare.GetDifferentData(this.sourceDbInterpreter, this.targetDbInterpreter, detail, pageSize, pageNumber);
+           
+            DataTable dataTable = result.Data;           
 
-            string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
-
-            string orderColumns = this.sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
-
-            DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(this.sourceDbInterpreter.CreateConnection(), detail.SourceTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
-            DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(this.targetDbInterpreter.CreateConnection(), detail.TargetTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
-
-            List<DataCompareDifferentRow> differentRows = new List<DataCompareDifferentRow>();
-
-            for (int i = 0; i < sourceDataTable.Rows.Count; i++)
+            foreach (DataColumn column in dataTable.Columns)
             {
-                DataRow sourceRow = sourceDataTable.Rows[i];
-                DataRow targetRow = targetDataTable.Rows[i];
+                var dataGridViewColumn = new DataGridViewTextBoxColumn() { Name = column.ColumnName, HeaderText = DataCompare.GetDifferentDataColumnDisplayText(column.ColumnName) };
+                
+                dataGridViewColumn.HeaderCell.Style.WrapMode = DataGridViewTriState.False;
+                dataGridViewColumn.SortMode = DataGridViewColumnSortMode.NotSortable;
 
-                Dictionary<string, (object, object)> dict = new Dictionary<string, (object, object)>();
-
-                foreach (var column in detail.SameTableColumns.Where(item => !detail.KeyColumns.Any(t => t.Name == item.Name)))
-                {
-                    string columnName = column.Name;
-
-                    object sourceValue = sourceRow[columnName];
-                    object targetValue = targetRow[columnName];
-
-                    if (!Equals(sourceValue, targetValue))
-                    {
-                        dict.Add(columnName, (sourceValue, targetValue));
-                    }
-                }
-
-                if (dict.Any())
-                {
-                    differentRows.Add(new DataCompareDifferentRow() { RowIndex = i, KeyRow = pagedKeyRows[i], Details = dict });
-                }
+                this.dgvDifferent.Columns.Add(dataGridViewColumn);
             }
 
-            foreach (var column in detail.KeyColumns)
+            int rowIndex = 0;
+
+            foreach (DataRow row in dataTable.Rows)
             {
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = column.Name, HeaderText = column.Name });
-            }
-
-            var diffColumnNames = differentRows.SelectMany(item => item.Details.Select(t => t.Key)).Distinct();
-
-            string sourceColumnNameSuffix = "__source";
-            string targetColumnNameSuffix = "__target";
-
-            foreach (var name in diffColumnNames)
-            {
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + sourceColumnNameSuffix, HeaderText = name + "→", Tag = name, SortMode = DataGridViewColumnSortMode.NotSortable });
-                this.dgvDifferent.Columns.Add(new DataGridViewTextBoxColumn() { Name = name + targetColumnNameSuffix, HeaderText = "→" + name, Tag = name, SortMode = DataGridViewColumnSortMode.NotSortable });
-            }
-
-            foreach (DataGridViewColumn column in this.dgvDifferent.Columns)
-            {
-                column.HeaderCell.Style.WrapMode = DataGridViewTriState.False;
-            }
-
-            foreach (var row in differentRows)
-            {
-                int rowIndex = row.RowIndex;
-
-                List<ValueInfo> valueInfos = new List<ValueInfo>();
-
-                DataRow keyRow = row.KeyRow;
-
                 DataGridViewRow gridRow = new DataGridViewRow();
-
-                foreach (var keyColumn in detail.KeyColumns)
-                {
-                    valueInfos.Add(new ValueInfo() { Value = keyRow[keyColumn.Name] });
-                }
-
-                for (int i = detail.KeyColumns.Count; i < this.dgvDifferent.ColumnCount; i++)
-                {
-                    string columnName = this.dgvDifferent.Columns[i].Name;
-                    string originalColumnName = this.dgvDifferent.Columns[i].Tag.ToString();
-
-                    if (row.Details.ContainsKey(originalColumnName))
-                    {
-                        var v = row.Details[originalColumnName];
-
-                        if (columnName.EndsWith(sourceColumnNameSuffix))
-                        {
-                            valueInfos.Add(new ValueInfo() { Value = v.Item1, IsDifferent = true });
-                        }
-                        else if (columnName.EndsWith(targetColumnNameSuffix))
-                        {
-                            valueInfos.Add(new ValueInfo() { Value = v.Item2, IsDifferent = true });
-                        }
-                    }
-                    else
-                    {
-                        valueInfos.Add(new ValueInfo() { Value = sourceDataTable.Rows[rowIndex][originalColumnName] });
-                    }
-                }
 
                 DataGridViewCell[] cells = new DataGridViewCell[this.dgvDifferent.Columns.Count];
 
@@ -340,7 +270,7 @@ namespace DatabaseManager.Forms.Compare
                 {
                     cells[i] = new DataGridViewTextBoxCell();
 
-                    ValueInfo valueInfo = valueInfos[i];
+                    DataCompareValueInfo valueInfo = result.ValueInfos[rowIndex][i];
 
                     cells[i].Value = valueInfo.Value;
 
@@ -353,9 +283,11 @@ namespace DatabaseManager.Forms.Compare
                 gridRow.Cells.AddRange(cells);
 
                 this.dgvDifferent.Rows.Add(gridRow);
+
+                rowIndex++;
             }
 
-            this.dgvDifferent.ClearSelection();           
+            this.dgvDifferent.ClearSelection();
         }
 
         private DataCompareResultDetail GetSelectedDataCompareResultDetail()
@@ -366,7 +298,7 @@ namespace DatabaseManager.Forms.Compare
             }
 
             return null;
-        }        
+        }
 
         private List<DataRow> GetPagedKeyRows(List<DataRow> rows, int pageSize, long pageNumber)
         {
@@ -382,15 +314,14 @@ namespace DatabaseManager.Forms.Compare
             this.paginationOnlyInSource.TotalCount = rows.Count;
             this.paginationOnlyInSource.PageCount = PaginationHelper.GetPageCount(rows.Count, pageSize);
 
-            var pagedKeyRows = this.GetPagedKeyRows(rows, pageSize, pageNumber);
-
-            string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
-
-            string orderColumns = this.sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
-
-            DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(this.sourceDbInterpreter.CreateConnection(), detail.SourceTable, detail.SourceTableColumns, orderColumns, pageSize, 1, whereCondition);
+            DataTable sourceDataTable = await this.GetOnlyInSourceDataTable(detail, pageNumber);
 
             this.dgvOnlyInSource.DataSource = DataGridViewHelper.ConvertDataTable(sourceDataTable);
+        }
+
+        private async Task<DataTable> GetOnlyInSourceDataTable(DataCompareResultDetail detail, long pageNumber, List<DataExportColumn> exportColumns = null)
+        {
+            return await this.GetPagedDataTable(detail, detail.OnlyInSourceKeyRows, this.paginationOnlyInSource.PageSize, this.paginationOnlyInSource.PageCount, pageNumber, this.sourceDbInterpreter, detail.SourceTable, detail.SourceTableColumns, exportColumns);
         }
 
         private async void ShowOnlyInTargetData(DataCompareResultDetail detail, long pageNumber)
@@ -402,15 +333,14 @@ namespace DatabaseManager.Forms.Compare
             this.paginationOnlyInTarget.TotalCount = rows.Count;
             this.paginationOnlyInTarget.PageCount = PaginationHelper.GetPageCount(rows.Count, pageSize);
 
-            var pagedKeyRows = this.GetPagedKeyRows(rows, pageSize, pageNumber);
-
-            string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.targetDbInterpreter, pagedKeyRows, detail.KeyColumns);
-
-            string orderColumns = this.sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
-
-            DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(this.targetDbInterpreter.CreateConnection(), detail.TargetTable, detail.TargetTableColumns, orderColumns, pageSize, 1, whereCondition);
+            DataTable targetDataTable = await this.GetOnlyInTargetDataTable(detail, pageNumber);
 
             this.dgvOnlyInTarget.DataSource = DataGridViewHelper.ConvertDataTable(targetDataTable);
+        }
+
+        private async Task<DataTable> GetOnlyInTargetDataTable(DataCompareResultDetail detail, long pageNumber, List<DataExportColumn> exportColumns = null)
+        {
+            return await this.GetPagedDataTable(detail, detail.OnlyInTargetKeyRows, this.paginationOnlyInTarget.PageSize, this.paginationOnlyInTarget.PageCount, pageNumber, this.targetDbInterpreter, detail.TargetTable, detail.TargetTableColumns, exportColumns);
         }
 
         private async void ShowIdenticalData(DataCompareResultDetail detail, long pageNumber)
@@ -422,15 +352,55 @@ namespace DatabaseManager.Forms.Compare
             this.paginationIdentical.TotalCount = rows.Count;
             this.paginationIdentical.PageCount = PaginationHelper.GetPageCount(rows.Count, pageSize);
 
-            var pagedKeyRows = this.GetPagedKeyRows(rows, pageSize, pageNumber);
-
-            string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
-
-            string orderColumns = this.sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
-
-            DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(this.sourceDbInterpreter.CreateConnection(), detail.SourceTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
+            DataTable sourceDataTable = await this.GetIdenticalDataTable(detail, pageNumber);
 
             this.dgvIdentical.DataSource = DataGridViewHelper.ConvertDataTable(sourceDataTable);
+        }
+
+        private async Task<DataTable> GetIdenticalDataTable(DataCompareResultDetail detail, long pageNumber, List<DataExportColumn> exportColumns = null)
+        {
+            return await this.GetPagedDataTable(detail, detail.IdenticalKeyRows, this.paginationIdentical.PageSize, this.paginationIdentical.PageCount, pageNumber, this.sourceDbInterpreter, detail.SourceTable, detail.SourceTableColumns, exportColumns);
+        }
+
+        private async Task<DataTable> GetPagedDataTable(DataCompareResultDetail detail, List<DataRow> keyRows, int pageSize, long pageCount, long pageNumber, DbInterpreter dbInterpreter,
+            Table table, List<TableColumn> tableColumns, List<DataExportColumn> exportColumns = null)
+        {
+            var pagedKeyRows = this.GetPagedKeyRows(keyRows, pageSize, pageNumber);
+
+            string whereCondition = DataCompare.GetKeyColumnWhereCondition(dbInterpreter, pagedKeyRows, detail.KeyColumns);
+
+            string orderColumns = dbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
+
+            List<TableColumn> columns = null;
+
+            bool isForExporting = false;
+
+            if (exportColumns != null)
+            {
+                isForExporting = true;
+
+                columns = tableColumns.Where(item => exportColumns.Any(t => t.ColumnName == item.Name)).ToList();
+            }
+            else
+            {
+                columns = tableColumns;
+            }
+
+            long count = pageNumber == pageCount ? keyRows.Count : pageNumber * pageSize;
+
+            if (isForExporting)
+            {
+                this.Feedback($@"Reading table ""{table.Name}"" {count}/{keyRows.Count}...", true);
+            }
+
+            DataTable dataTable = await dbInterpreter.GetPagedDataTableAsync(dbInterpreter.CreateConnection(), table, columns, orderColumns, pageSize, 1, whereCondition);
+
+            if (isForExporting && pageNumber == pageCount)
+            {
+                this.Feedback($@"End read table ""{table.Name}"".", true);
+            }
+
+            return dataTable;
         }
 
         private void paginationDifferent_OnPageNumberChanged(long pageNumber)
@@ -455,7 +425,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvOnlyInSource_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-            
+
         }
 
         private void paginationOnlyInSource_OnPageNumberChanged(long pageNumber)
@@ -490,7 +460,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvOnlyInTarget_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-           
+
         }
 
         private void dgvIdentical_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -505,7 +475,7 @@ namespace DatabaseManager.Forms.Compare
 
         private void dgvIdentical_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-           
+
         }
 
         private void paginationOnlyInTarget_OnPageNumberChanged(long pageNumber)
@@ -740,29 +710,48 @@ namespace DatabaseManager.Forms.Compare
             this.tsbCancel.Enabled = false;
         }
 
-        private void Feedback(string message)
+        private void Feedback(string message, bool forExporting = false)
         {
             this.Feedback(new FeedbackInfo() { Message = message });
         }
 
-        private void Feedback(FeedbackInfo info)
+        private void Feedback(FeedbackInfo info, bool forExporting = false)
         {
             try
             {
-                this.Invoke(new Action(() =>
+                if(!forExporting)
                 {
-                    this.txtMessage.Text = info.Message;
-
-                    if (info.InfoType == FeedbackInfoType.Error)
+                    Action show = () =>
                     {
-                        this.txtMessage.ForeColor = Color.Red;
-                        this.toolTip1.SetToolTip(this.txtMessage, info.Message);
+                        this.txtMessage.Text = info.Message;
+
+                        if (info.InfoType == FeedbackInfoType.Error)
+                        {
+                            this.txtMessage.ForeColor = Color.Red;
+                            this.toolTip1.SetToolTip(this.txtMessage, info.Message);
+                        }
+                        else
+                        {
+                            this.txtMessage.ForeColor = Color.Black;
+                        }
+                    };
+
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(show);
                     }
                     else
                     {
-                        this.txtMessage.ForeColor = Color.Black;
+                        show();
                     }
-                }));
+                }
+                else
+                {
+                    if (this.exportDataForm != null)
+                    {
+                        this.exportDataForm.Feedback(info);
+                    }
+                }               
             }
             catch (Exception ex)
             {
@@ -808,8 +797,157 @@ namespace DatabaseManager.Forms.Compare
             {
                 await this.cancellationTokenSource.CancelAsync();
             }
-        }      
-        
+        }
+
+        private void btnExportDifferent_Click(object sender, EventArgs e)
+        {
+            var detail = this.GetSelectedDataCompareResultDetail();
+
+            if(detail == null)
+            {
+                return;
+            }
+
+            if(this.paginationDifferent.TotalCount == 0)
+            {
+                MessageBox.Show("No record to export.");
+                return;
+            }
+
+            this.saveFileDialog1.Filter = "excel file|*.xlsx";
+
+            this.saveFileDialog1.FileName = detail.SourceTable.Name;
+
+            DialogResult result = this.saveFileDialog1.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                Task.Run(() => { this.ExportDifferentData(detail); });
+            }
+        }
+
+        private async void ExportDifferentData(DataCompareResultDetail detail)
+        {
+            string filePath = this.saveFileDialog1.FileName;
+
+            DataExportResult exportResult = await DataCompare.ExportDifferentData(this.sourceDbInterpreter, this.targetDbInterpreter, detail, (int)this.paginationDifferent.TotalCount, 1, filePath);
+
+            if (exportResult.IsOK)
+            {
+                FileHelper.SelectFileInExplorer(exportResult.FilePath);
+            }
+            else
+            {
+                MessageBox.Show(exportResult.Message);
+            }
+        }
+
+        private void btnExportOnlyInSource_Click(object sender, EventArgs e)
+        {
+            this.ExportData(this.dgvOnlyInSource, this.paginationOnlyInSource.PageCount, this.paginationOnlyInSource.PageNumber, this.GetDataTableForExportingOnlyInSource);
+        }
+
+        private async Task<DataTable> GetDataTableForExportingOnlyInSource(ExportSpecificDataOption option, List<DataExportColumn> columns)
+        {
+            return await this.GetDataTableForExporting(this.dgvOnlyInSource, this.paginationOnlyInSource.PageCount, option, columns, this.GetOnlyInSourceDataTable);
+        }
+
+        private void btnExportOnlyInTarget_Click(object sender, EventArgs e)
+        {
+            this.ExportData(this.dgvOnlyInTarget, this.paginationOnlyInTarget.PageCount, this.paginationOnlyInTarget.PageNumber, this.GetDataTableForExportingOnlyInTarget);
+        }
+
+        private async Task<DataTable> GetDataTableForExportingOnlyInTarget(ExportSpecificDataOption option, List<DataExportColumn> columns)
+        {
+            return await this.GetDataTableForExporting(this.dgvOnlyInTarget, this.paginationOnlyInTarget.PageCount, option, columns, this.GetOnlyInTargetDataTable);
+        }
+
+        private void btnExportIdentical_Click(object sender, EventArgs e)
+        {
+            this.ExportData(this.dgvIdentical, this.paginationIdentical.PageCount, this.paginationIdentical.PageNumber, this.GetDataTableForExportingIdentical);
+        }
+
+        private void ExportData(DataGridView dataGridView, long pageCount, long pageNumber, ExportDataRequiredHandler handler)
+        {
+            var detail = this.GetSelectedDataCompareResultDetail();
+
+            if (detail == null)
+            {
+                return;
+            }
+
+            DataTable table = dataGridView.DataSource as DataTable;
+
+            if (table == null)
+            {
+                MessageBox.Show("No data to export.");
+                return;
+            }
+
+            ExportSpecificDataOption option = new ExportSpecificDataOption();
+
+            option.PageNumbers.Add(pageNumber);
+            option.PageCount = pageCount;
+
+            DataTable dataTable = table.Clone();
+
+            string tableName = null;
+
+            if (dataGridView.Name == this.dgvOnlyInSource.Name || dataGridView.Name == this.dgvIdentical.Name)
+            {
+                tableName = detail.SourceTable.Name;
+            }
+            else if (dataGridView.Name == this.dgvOnlyInTarget.Name)
+            {
+                tableName = detail.TargetTable.Name;
+            }
+
+            dataTable.TableName = tableName;
+
+            this.exportDataForm = new frmExportData(dataTable, option);
+
+            this.exportDataForm.ExportDataRequired += handler;
+
+            this.exportDataForm.ShowDialog();
+        }
+
+        private async Task<DataTable> GetDataTableForExportingIdentical(ExportSpecificDataOption option, List<DataExportColumn> columns)
+        {
+            return await this.GetDataTableForExporting(this.dgvIdentical, this.paginationIdentical.PageCount, option, columns, this.GetIdenticalDataTable);
+        }
+
+        private async Task<DataTable> GetDataTableForExporting(DataGridView dataGridView, long pageCount, ExportSpecificDataOption option, List<DataExportColumn> columns,
+            Func<DataCompareResultDetail, long, List<DataExportColumn>, Task<DataTable>> funcGetTable)
+        {
+            DataTable dataTable = (dataGridView.DataSource as DataTable).Clone();
+
+            var detail = this.GetSelectedDataCompareResultDetail();
+
+            if (detail != null && option != null)
+            {
+                if (option.ExportAllThatMeetCondition)
+                {
+                    option.PageNumbers.Clear();
+
+                    for (int i = 1; i <= pageCount; i++)
+                    {
+                        option.PageNumbers.Add(i);
+                    }
+                }
+
+                List<long> pageNumbers = option.PageNumbers;
+
+                foreach (var pageNumber in pageNumbers)
+                {
+                    var table = await funcGetTable(detail, pageNumber, columns);
+
+                    dataTable.Merge(table);
+                }
+            }
+
+            return dataTable;
+        }
+
         #region IObserver<FeedbackInfo>
         void IObserver<FeedbackInfo>.OnCompleted()
         {
@@ -822,18 +960,5 @@ namespace DatabaseManager.Forms.Compare
             this.Feedback(info);
         }
         #endregion
-    }
-
-    public class DataCompareDifferentRow
-    {
-        public int RowIndex { get; set; }
-        public DataRow KeyRow { get; set; }
-        public Dictionary<string, (object, object)> Details = new Dictionary<string, (object, object)>();
-    }
-
-    public class ValueInfo()
-    {
-        public object Value { get; set; }
-        public bool IsDifferent { get; set; }
-    }
+    }   
 }

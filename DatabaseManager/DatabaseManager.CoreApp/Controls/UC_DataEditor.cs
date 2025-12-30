@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
@@ -55,6 +56,7 @@ namespace DatabaseManager.Controls
             this.btnRevert.Image = IconImageHelper.GetImageByFontType(IconChar.Undo, IconFont.Solid, Color.Red);
             this.btnCommit.Image = IconImageHelper.GetImageByFontType(IconChar.Check, IconFont.Solid);
             this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter, IconImageHelper.DataViewerToolbarColor);
+            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
 
             this.cboAddMode.SelectedIndex = 2;
 
@@ -69,32 +71,36 @@ namespace DatabaseManager.Controls
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
         {
-            this.ShowData(displayInfo);
+            this.displayInfo = displayInfo;
+
+            this.ShowData();
         }
 
-        public void ShowData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        public void ShowData(long pageNum = 1, bool isSort = false)
         {
             Task.Run(() =>
             {
-                this.LoadData(displayInfo, pageNum, isSort);
+                this.LoadData(pageNum, isSort);
             });
         }
 
-        private async void LoadData(DatabaseObjectDisplayInfo displayInfo, long pageNum = 1, bool isSort = false)
+        private async void LoadData(long pageNum = 1, bool isSort = false)
         {
-            this.displayInfo = displayInfo;
-
             this.pagination.PageNumber = pageNum;
 
-            DatabaseObject dbObject = displayInfo.DatabaseObject;
+            DatabaseObject dbObject = this.displayInfo.DatabaseObject;
 
             int pageSize = this.pagination.PageSize;
 
             var option = new DbInterpreterOption() { ShowTextForGeometry = true };
 
-            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(displayInfo.DatabaseType, displayInfo.ConnectionInfo, option);
+            var connectionInfo = displayInfo.ConnectionInfo;
 
-            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = dbObject.Schema, TableNames = [displayInfo.Name] };
+            connectionInfo.NeedCheckServerVersion = displayInfo.DatabaseType == DatabaseType.SqlServer || displayInfo.DatabaseType == DatabaseType.Oracle;
+
+            this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.displayInfo.DatabaseType, connectionInfo, option);
+
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = dbObject.Schema, TableNames = [this.displayInfo.Name] };
             filter.DatabaseObjectType = DatabaseObjectType.Column | DatabaseObjectType.PrimaryKey | DatabaseObjectType.Index;
 
             SchemaInfo schemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(filter);
@@ -107,43 +113,9 @@ namespace DatabaseManager.Controls
             this.identityColumns = this.columns.Where(item => item.IsIdentity).ToList();
             this.uniqueIndexes = schemaInfo.TableIndexes.Where(item => item.IsUnique).SelectMany(item => item.Columns).ToList();
 
-            string orderColumns = "";
+            string orderColumns = this.GetOrderColumns();
 
-            if (this.sortedColumnIndex != -1)
-            {
-                string sortOrder = (this.sortOrder == SortOrder.Descending ? "DESC" : "ASC");
-
-                string sortedColumnName = this.dgvData.Columns[this.sortedColumnIndex].Name;
-
-                orderColumns = $"{this.dbInterpreter.GetQuotedString(sortedColumnName)} {sortOrder}";
-            }
-
-            string conditionClause = "";
-
-            if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
-            {
-                this.conditionBuilder.DatabaseType = this.dbInterpreter.DatabaseType;
-                this.conditionBuilder.QuotationLeftChar = this.dbInterpreter.QuotationLeftChar;
-                this.conditionBuilder.QuotationRightChar = this.dbInterpreter.QuotationRightChar;
-
-                conditionClause = "WHERE " + this.conditionBuilder.ToString();
-            }
-            else if (this.quickQueryConditionBuilder != null)
-            {
-                string content = this.uc_QuickFilter.FilterContent;
-
-                if (!string.IsNullOrEmpty(content))
-                {
-                    var quickFilterInfo = new QuickFilterInfo() { Content = content, FilterMode = this.uc_QuickFilter.FilterMode };
-
-                    string condition = await this.quickQueryConditionBuilder.Build(quickFilterInfo);
-
-                    if (!string.IsNullOrEmpty(condition))
-                    {
-                        conditionClause = "WHERE " + condition;
-                    }
-                }
-            }
+            string conditionClause = await this.GetConditionClause();
 
             try
             {
@@ -178,6 +150,54 @@ namespace DatabaseManager.Controls
             {
                 this.loadingPanel.HideLoading();
             }
+        }
+
+        private string GetOrderColumns()
+        {
+            string orderColumns = "";
+
+            if (this.sortedColumnIndex != -1)
+            {
+                string sortOrder = (this.sortOrder == SortOrder.Descending ? "DESC" : "ASC");
+
+                string sortedColumnName = this.dgvData.Columns[this.sortedColumnIndex].Name;
+
+                orderColumns = $"{this.dbInterpreter.GetQuotedString(sortedColumnName)} {sortOrder}";
+            }
+
+            return orderColumns;
+        }
+
+        private async Task<string> GetConditionClause()
+        {
+            string conditionClause = "";
+
+            if (this.conditionBuilder != null && this.conditionBuilder.Conditions.Count > 0)
+            {
+                this.conditionBuilder.DatabaseType = this.dbInterpreter.DatabaseType;
+                this.conditionBuilder.QuotationLeftChar = this.dbInterpreter.QuotationLeftChar;
+                this.conditionBuilder.QuotationRightChar = this.dbInterpreter.QuotationRightChar;
+
+                conditionClause = "WHERE " + this.conditionBuilder.ToString();
+            }
+            else if (this.quickQueryConditionBuilder != null)
+            {
+                string content = this.uc_QuickFilter.FilterContent;
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    var quickFilterInfo = new QuickFilterInfo() { Content = content, FilterMode = this.uc_QuickFilter.FilterMode };
+
+                    string condition = await this.quickQueryConditionBuilder.Build(quickFilterInfo);
+
+                    if (!string.IsNullOrEmpty(condition))
+                    {
+                        conditionClause = "WHERE " + condition;
+                    }
+                }
+            }
+
+            return conditionClause;
         }
 
         private void AddIndentifierToDataTable(DataTable table)
@@ -299,7 +319,7 @@ namespace DatabaseManager.Controls
 
         private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.ShowData(this.displayInfo, pageNumber);
+            this.ShowData(pageNumber);
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
@@ -317,7 +337,7 @@ namespace DatabaseManager.Controls
 
             this.uc_QuickFilter.ClearContent();
 
-            this.ShowData(this.displayInfo, 1, false);
+            this.ShowData(1, false);
         }
 
         private void dgvData_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -1438,7 +1458,7 @@ namespace DatabaseManager.Controls
 
             this.quickQueryConditionBuilder = new QuickQueryConditionBuilder(this.dbInterpreter, this.displayInfo.DatabaseObject as Table);
 
-            this.ShowData(this.displayInfo, 1, false);
+            this.ShowData(1, false);
         }
 
         private void dgvData_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -1511,14 +1531,29 @@ namespace DatabaseManager.Controls
 
                 column.HeaderCell.SortGlyphDirection = this.sortOrder;
 
-                this.ShowData(this.displayInfo, 1, true);
+                this.ShowData(1, true);
             }
-        }     
+        }
 
         private void dgvData_SizeChanged(object sender, EventArgs e)
         {
             this.loadingPanel.RefreshStatus();
-        }       
+        }
+
+        private async void btnExport_Click(object sender, EventArgs e)
+        {
+            ExportSpecificDataOption option = new ExportSpecificDataOption();
+
+            option.OrderColumns = this.GetOrderColumns();
+            option.ConditionClause = await this.GetConditionClause();
+            option.PageNumbers.Add(this.pagination.PageNumber);
+            option.PageSize = this.pagination.PageSize;
+            option.PageCount = this.pagination.PageCount;
+
+            frmExportData frm = new frmExportData(this.dbInterpreter, this.displayInfo.DatabaseObject, option);
+
+            frm.ShowDialog();
+        }
     }
 }
 

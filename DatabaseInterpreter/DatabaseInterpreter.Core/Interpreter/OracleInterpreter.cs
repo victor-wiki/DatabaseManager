@@ -68,7 +68,7 @@ namespace DatabaseInterpreter.Core
 
         public override bool IsLowDbVersion(string version)
         {
-            return this.IsLowDbVersion(version, "12");
+            return this.IsLowDbVersion(version, "12.1");
         }
 
         private bool IsBuiltinDatabase()
@@ -1009,11 +1009,29 @@ namespace DatabaseInterpreter.Core
 
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
-            var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
+            bool isLowDbVersion = !string.IsNullOrEmpty(this.ServerVersion) && this.IsLowDbVersion(this.ServerVersion, "12.1"); //since Oracle 12c (version 12.1), the offset can be used.
 
-            string orderClause = string.IsNullOrEmpty(orderColumns) ? this.GetDefaultOrder() : orderColumns;
+            string pagedSql = null;
 
-            string pagedSql = $@"with PagedRecords as
+            if (!isLowDbVersion)
+            {
+                long offset = (pageNumber - 1) * pageSize;
+
+                string orderClause = string.IsNullOrEmpty(orderColumns) ? this.GetDefaultOrder() : orderColumns;
+
+                pagedSql = $@"SELECT {columnNames} FROM {tableName}
+                             {whereClause}
+                             ORDER BY {orderClause}
+                             OFFSET {offset} ROWS          
+                             FETCH NEXT {pageSize} ROWS ONLY";
+            }
+            else
+            {
+                var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
+
+                string orderClause = string.IsNullOrEmpty(orderColumns) ? this.GetDefaultOrder() : orderColumns;
+
+                pagedSql = $@"with PagedRecords as
 								(
 									SELECT {columnNames}, ROW_NUMBER() OVER (ORDER BY {orderClause}) AS ""{RowNumberColumnName}""
 									FROM {tableName}
@@ -1022,6 +1040,7 @@ namespace DatabaseInterpreter.Core
 								SELECT *
 								FROM PagedRecords
 								WHERE ""{RowNumberColumnName}"" BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+            }            
 
             return pagedSql;
         }

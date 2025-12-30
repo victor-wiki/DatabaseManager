@@ -1,10 +1,8 @@
-﻿using System;
+﻿using DatabaseInterpreter.Core;
+using DatabaseManager.Core.Model;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using DatabaseInterpreter.Core;
-using DatabaseManager.Model;
-using Newtonsoft.Json;
 
 namespace DatabaseManager.Core
 {

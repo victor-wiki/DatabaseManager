@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class ScriptContentInfo
     {

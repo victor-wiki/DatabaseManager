@@ -2,8 +2,8 @@
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Controls;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using FontAwesome.Sharp;
 using System;
 using System.Collections.Generic;

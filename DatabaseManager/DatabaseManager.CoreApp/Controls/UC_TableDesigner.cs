@@ -2,9 +2,9 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;

@@ -1,8 +1,6 @@
-﻿using DatabaseManager.Model;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
 
-namespace DatabaseManager.Core.Model.Compare
+namespace DatabaseManager.Core.Model
 {
     public class DataCompareDifference
     {

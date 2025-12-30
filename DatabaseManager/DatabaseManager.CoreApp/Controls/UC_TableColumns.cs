@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using DatabaseManager.Helper;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Core;
-using DatabaseManager.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
+using DatabaseManager.Helper;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
 {
@@ -423,16 +420,16 @@ namespace DatabaseManager.Controls
         {
             Point clientPoint = this.dgvColumns.PointToClient(new Point(e.X, e.Y));
 
-            rowIndexOfItemUnderMouseToDrop = this.dgvColumns.HitTest(clientPoint.X, clientPoint.Y).RowIndex;
+            this.rowIndexOfItemUnderMouseToDrop = this.dgvColumns.HitTest(clientPoint.X, clientPoint.Y).RowIndex;
 
-            if (rowIndexOfItemUnderMouseToDrop == -1)
+            if (this.rowIndexOfItemUnderMouseToDrop == -1)
             {
                 return;
             }
 
-            if (rowIndexFromMouseDown >= 0 && rowIndexOfItemUnderMouseToDrop < this.dgvColumns.Rows.Count)
+            if (this.rowIndexFromMouseDown >= 0 && this.rowIndexOfItemUnderMouseToDrop < this.dgvColumns.Rows.Count)
             {
-                if (this.dgvColumns.Rows[rowIndexOfItemUnderMouseToDrop].IsNewRow)
+                if (this.dgvColumns.Rows[this.rowIndexOfItemUnderMouseToDrop].IsNewRow)
                 {
                     return;
                 }
@@ -444,8 +441,8 @@ namespace DatabaseManager.Controls
 
                 if (rowToMove.Index >= 0)
                 {
-                    this.dgvColumns.Rows.RemoveAt(rowIndexFromMouseDown);
-                    this.dgvColumns.Rows.Insert(rowIndexOfItemUnderMouseToDrop, rowToMove);
+                    this.dgvColumns.Rows.RemoveAt(this.rowIndexFromMouseDown);
+                    this.dgvColumns.Rows.Insert(this.rowIndexOfItemUnderMouseToDrop, rowToMove);
 
                     string columnName = DataGridViewHelper.GetCellStringValue(rowToMove, this.colColumnName.Name);
 
@@ -459,11 +456,11 @@ namespace DatabaseManager.Controls
         {
             if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
             {
-                if (dragBoxFromMouseDown != Rectangle.Empty &&
-                !dragBoxFromMouseDown.Contains(e.X, e.Y))
+                if (this.dragBoxFromMouseDown != Rectangle.Empty &&
+                !this.dragBoxFromMouseDown.Contains(e.X, e.Y))
                 {
                     DragDropEffects dropEffect = this.dgvColumns.DoDragDrop(
-                          this.dgvColumns.Rows[rowIndexFromMouseDown],
+                          this.dgvColumns.Rows[this.rowIndexFromMouseDown],
                           DragDropEffects.Move);
                 }
             }
@@ -472,13 +469,13 @@ namespace DatabaseManager.Controls
         private void dgvColumns_MouseDown(object sender, MouseEventArgs e)
         {
             var hit = this.dgvColumns.HitTest(e.X, e.Y);
-            rowIndexFromMouseDown = hit.RowIndex;
+            this.rowIndexFromMouseDown = hit.RowIndex;
 
-            if (hit.Type == DataGridViewHitTestType.RowHeader && rowIndexFromMouseDown != -1)
+            if (hit.Type == DataGridViewHitTestType.RowHeader && this.rowIndexFromMouseDown != -1)
             {
                 Size dragSize = SystemInformation.DragSize;
 
-                dragBoxFromMouseDown = new Rectangle(
+                this.dragBoxFromMouseDown = new Rectangle(
                           new Point(
                             e.X - (dragSize.Width / 2),
                             e.Y - (dragSize.Height / 2)),
@@ -486,7 +483,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                dragBoxFromMouseDown = Rectangle.Empty;
+                this.dragBoxFromMouseDown = Rectangle.Empty;
             }
         }
 

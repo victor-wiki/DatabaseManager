@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class ScriptDiagnoseResult
     {

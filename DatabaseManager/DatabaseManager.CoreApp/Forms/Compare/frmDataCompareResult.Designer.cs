@@ -46,15 +46,19 @@ namespace DatabaseManager.Forms.Compare
             splitContainer1 = new SplitContainer();
             tabControl1 = new TabControl();
             tabPageDifferent = new TabPage();
+            btnExportDifferent = new Button();
             paginationDifferent = new DatabaseManager.Controls.UC_Pagination();
             dgvDifferent = new DataGridView();
             tabPageOnlyInsource = new TabPage();
+            btnExportOnlyInSource = new Button();
             paginationOnlyInSource = new DatabaseManager.Controls.UC_Pagination();
             dgvOnlyInSource = new DataGridView();
             tabPageOnlyInTarget = new TabPage();
+            btnExportOnlyInTarget = new Button();
             paginationOnlyInTarget = new DatabaseManager.Controls.UC_Pagination();
             dgvOnlyInTarget = new DataGridView();
             tabPageIdentical = new TabPage();
+            btnExportIdentical = new Button();
             paginationIdentical = new DatabaseManager.Controls.UC_Pagination();
             dgvIdentical = new DataGridView();
             contextMenuStrip1 = new ContextMenuStrip(components);
@@ -69,6 +73,7 @@ namespace DatabaseManager.Forms.Compare
             saveFileDialog1 = new SaveFileDialog();
             txtMessage = new TextBox();
             toolTip1 = new ToolTip(components);
+            saveFileDialog2 = new SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)tlvDifferences).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -208,6 +213,7 @@ namespace DatabaseManager.Forms.Compare
             // 
             // tabPageDifferent
             // 
+            tabPageDifferent.Controls.Add(btnExportDifferent);
             tabPageDifferent.Controls.Add(paginationDifferent);
             tabPageDifferent.Controls.Add(dgvDifferent);
             tabPageDifferent.Location = new System.Drawing.Point(4, 26);
@@ -218,17 +224,31 @@ namespace DatabaseManager.Forms.Compare
             tabPageDifferent.Text = "Different Records";
             tabPageDifferent.UseVisualStyleBackColor = true;
             // 
+            // btnExportDifferent
+            // 
+            btnExportDifferent.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportDifferent.FlatAppearance.BorderSize = 0;
+            btnExportDifferent.FlatStyle = FlatStyle.Flat;
+            btnExportDifferent.Location = new System.Drawing.Point(979, 268);
+            btnExportDifferent.Margin = new Padding(4);
+            btnExportDifferent.Name = "btnExportDifferent";
+            btnExportDifferent.Size = new System.Drawing.Size(22, 22);
+            btnExportDifferent.TabIndex = 20;
+            toolTip1.SetToolTip(btnExportDifferent, "Export");
+            btnExportDifferent.UseVisualStyleBackColor = true;
+            btnExportDifferent.Click += btnExportDifferent_Click;
+            // 
             // paginationDifferent
             // 
+            paginationDifferent.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             paginationDifferent.BackColor = System.Drawing.Color.Transparent;
-            paginationDifferent.Dock = DockStyle.Bottom;
-            paginationDifferent.Location = new System.Drawing.Point(3, 262);
+            paginationDifferent.Location = new System.Drawing.Point(3, 266);
             paginationDifferent.Margin = new Padding(4);
             paginationDifferent.Name = "paginationDifferent";
             paginationDifferent.PageCount = 0L;
             paginationDifferent.PageNumber = 1L;
             paginationDifferent.PageSize = 100;
-            paginationDifferent.Size = new System.Drawing.Size(1004, 31);
+            paginationDifferent.Size = new System.Drawing.Size(963, 26);
             paginationDifferent.TabIndex = 1;
             paginationDifferent.TotalCount = 0L;
             paginationDifferent.OnPageNumberChanged += paginationDifferent_OnPageNumberChanged;
@@ -242,13 +262,14 @@ namespace DatabaseManager.Forms.Compare
             dgvDifferent.Location = new System.Drawing.Point(3, 3);
             dgvDifferent.Name = "dgvDifferent";
             dgvDifferent.ReadOnly = true;
-            dgvDifferent.Size = new System.Drawing.Size(1004, 258);
+            dgvDifferent.Size = new System.Drawing.Size(1004, 260);
             dgvDifferent.TabIndex = 0;
             dgvDifferent.CellFormatting += dgvDifferent_CellFormatting;
             dgvDifferent.DataError += dgvDifferent_DataError;
             // 
             // tabPageOnlyInsource
             // 
+            tabPageOnlyInsource.Controls.Add(btnExportOnlyInSource);
             tabPageOnlyInsource.Controls.Add(paginationOnlyInSource);
             tabPageOnlyInsource.Controls.Add(dgvOnlyInSource);
             tabPageOnlyInsource.Location = new System.Drawing.Point(4, 26);
@@ -259,17 +280,31 @@ namespace DatabaseManager.Forms.Compare
             tabPageOnlyInsource.Text = "Only in Source";
             tabPageOnlyInsource.UseVisualStyleBackColor = true;
             // 
+            // btnExportOnlyInSource
+            // 
+            btnExportOnlyInSource.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportOnlyInSource.FlatAppearance.BorderSize = 0;
+            btnExportOnlyInSource.FlatStyle = FlatStyle.Flat;
+            btnExportOnlyInSource.Location = new System.Drawing.Point(981, 268);
+            btnExportOnlyInSource.Margin = new Padding(4);
+            btnExportOnlyInSource.Name = "btnExportOnlyInSource";
+            btnExportOnlyInSource.Size = new System.Drawing.Size(22, 22);
+            btnExportOnlyInSource.TabIndex = 21;
+            toolTip1.SetToolTip(btnExportOnlyInSource, "Export");
+            btnExportOnlyInSource.UseVisualStyleBackColor = true;
+            btnExportOnlyInSource.Click += btnExportOnlyInSource_Click;
+            // 
             // paginationOnlyInSource
             // 
+            paginationOnlyInSource.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             paginationOnlyInSource.BackColor = System.Drawing.Color.Transparent;
-            paginationOnlyInSource.Dock = DockStyle.Bottom;
-            paginationOnlyInSource.Location = new System.Drawing.Point(3, 262);
+            paginationOnlyInSource.Location = new System.Drawing.Point(3, 266);
             paginationOnlyInSource.Margin = new Padding(4);
             paginationOnlyInSource.Name = "paginationOnlyInSource";
             paginationOnlyInSource.PageCount = 0L;
             paginationOnlyInSource.PageNumber = 1L;
             paginationOnlyInSource.PageSize = 100;
-            paginationOnlyInSource.Size = new System.Drawing.Size(1004, 31);
+            paginationOnlyInSource.Size = new System.Drawing.Size(966, 26);
             paginationOnlyInSource.TabIndex = 7;
             paginationOnlyInSource.TotalCount = 0L;
             paginationOnlyInSource.OnPageNumberChanged += paginationOnlyInSource_OnPageNumberChanged;
@@ -291,14 +326,15 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInSource.Margin = new Padding(4);
             dgvOnlyInSource.Name = "dgvOnlyInSource";
             dgvOnlyInSource.ReadOnly = true;
-            dgvOnlyInSource.Size = new System.Drawing.Size(1004, 258);
+            dgvOnlyInSource.Size = new System.Drawing.Size(1004, 260);
             dgvOnlyInSource.TabIndex = 6;
             dgvOnlyInSource.CellFormatting += dgvOnlyInSource_CellFormatting;
             dgvOnlyInSource.DataBindingComplete += dgvOnlyInSource_DataBindingComplete;
-            dgvOnlyInSource.DataError += dgvOnlyInSource_DataError;         
+            dgvOnlyInSource.DataError += dgvOnlyInSource_DataError;
             // 
             // tabPageOnlyInTarget
             // 
+            tabPageOnlyInTarget.Controls.Add(btnExportOnlyInTarget);
             tabPageOnlyInTarget.Controls.Add(paginationOnlyInTarget);
             tabPageOnlyInTarget.Controls.Add(dgvOnlyInTarget);
             tabPageOnlyInTarget.Location = new System.Drawing.Point(4, 26);
@@ -309,17 +345,31 @@ namespace DatabaseManager.Forms.Compare
             tabPageOnlyInTarget.Text = "Only in Target";
             tabPageOnlyInTarget.UseVisualStyleBackColor = true;
             // 
+            // btnExportOnlyInTarget
+            // 
+            btnExportOnlyInTarget.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportOnlyInTarget.FlatAppearance.BorderSize = 0;
+            btnExportOnlyInTarget.FlatStyle = FlatStyle.Flat;
+            btnExportOnlyInTarget.Location = new System.Drawing.Point(977, 269);
+            btnExportOnlyInTarget.Margin = new Padding(4);
+            btnExportOnlyInTarget.Name = "btnExportOnlyInTarget";
+            btnExportOnlyInTarget.Size = new System.Drawing.Size(22, 22);
+            btnExportOnlyInTarget.TabIndex = 22;
+            toolTip1.SetToolTip(btnExportOnlyInTarget, "Export");
+            btnExportOnlyInTarget.UseVisualStyleBackColor = true;
+            btnExportOnlyInTarget.Click += btnExportOnlyInTarget_Click;
+            // 
             // paginationOnlyInTarget
             // 
+            paginationOnlyInTarget.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             paginationOnlyInTarget.BackColor = System.Drawing.Color.Transparent;
-            paginationOnlyInTarget.Dock = DockStyle.Bottom;
-            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 262);
+            paginationOnlyInTarget.Location = new System.Drawing.Point(3, 265);
             paginationOnlyInTarget.Margin = new Padding(4);
             paginationOnlyInTarget.Name = "paginationOnlyInTarget";
             paginationOnlyInTarget.PageCount = 0L;
             paginationOnlyInTarget.PageNumber = 1L;
             paginationOnlyInTarget.PageSize = 100;
-            paginationOnlyInTarget.Size = new System.Drawing.Size(1004, 31);
+            paginationOnlyInTarget.Size = new System.Drawing.Size(965, 26);
             paginationOnlyInTarget.TabIndex = 9;
             paginationOnlyInTarget.TotalCount = 0L;
             paginationOnlyInTarget.OnPageNumberChanged += paginationOnlyInTarget_OnPageNumberChanged;
@@ -341,14 +391,15 @@ namespace DatabaseManager.Forms.Compare
             dgvOnlyInTarget.Margin = new Padding(4);
             dgvOnlyInTarget.Name = "dgvOnlyInTarget";
             dgvOnlyInTarget.ReadOnly = true;
-            dgvOnlyInTarget.Size = new System.Drawing.Size(1004, 258);
+            dgvOnlyInTarget.Size = new System.Drawing.Size(1004, 260);
             dgvOnlyInTarget.TabIndex = 8;
             dgvOnlyInTarget.CellFormatting += dgvOnlyInTarget_CellFormatting;
             dgvOnlyInTarget.DataBindingComplete += dgvOnlyInTarget_DataBindingComplete;
-            dgvOnlyInTarget.DataError += dgvOnlyInTarget_DataError;          
+            dgvOnlyInTarget.DataError += dgvOnlyInTarget_DataError;
             // 
             // tabPageIdentical
             // 
+            tabPageIdentical.Controls.Add(btnExportIdentical);
             tabPageIdentical.Controls.Add(paginationIdentical);
             tabPageIdentical.Controls.Add(dgvIdentical);
             tabPageIdentical.Location = new System.Drawing.Point(4, 26);
@@ -359,17 +410,31 @@ namespace DatabaseManager.Forms.Compare
             tabPageIdentical.Text = "Identical Records";
             tabPageIdentical.UseVisualStyleBackColor = true;
             // 
+            // btnExportIdentical
+            // 
+            btnExportIdentical.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportIdentical.FlatAppearance.BorderSize = 0;
+            btnExportIdentical.FlatStyle = FlatStyle.Flat;
+            btnExportIdentical.Location = new System.Drawing.Point(979, 268);
+            btnExportIdentical.Margin = new Padding(4);
+            btnExportIdentical.Name = "btnExportIdentical";
+            btnExportIdentical.Size = new System.Drawing.Size(22, 22);
+            btnExportIdentical.TabIndex = 23;
+            toolTip1.SetToolTip(btnExportIdentical, "Export");
+            btnExportIdentical.UseVisualStyleBackColor = true;
+            btnExportIdentical.Click += btnExportIdentical_Click;
+            // 
             // paginationIdentical
             // 
+            paginationIdentical.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             paginationIdentical.BackColor = System.Drawing.Color.Transparent;
-            paginationIdentical.Dock = DockStyle.Bottom;
-            paginationIdentical.Location = new System.Drawing.Point(3, 262);
+            paginationIdentical.Location = new System.Drawing.Point(3, 266);
             paginationIdentical.Margin = new Padding(4);
             paginationIdentical.Name = "paginationIdentical";
             paginationIdentical.PageCount = 0L;
             paginationIdentical.PageNumber = 1L;
             paginationIdentical.PageSize = 100;
-            paginationIdentical.Size = new System.Drawing.Size(1004, 31);
+            paginationIdentical.Size = new System.Drawing.Size(970, 26);
             paginationIdentical.TabIndex = 11;
             paginationIdentical.TotalCount = 0L;
             paginationIdentical.OnPageNumberChanged += paginationIdentical_OnPageNumberChanged;
@@ -391,11 +456,11 @@ namespace DatabaseManager.Forms.Compare
             dgvIdentical.Margin = new Padding(4);
             dgvIdentical.Name = "dgvIdentical";
             dgvIdentical.ReadOnly = true;
-            dgvIdentical.Size = new System.Drawing.Size(1004, 258);
+            dgvIdentical.Size = new System.Drawing.Size(1004, 260);
             dgvIdentical.TabIndex = 10;
             dgvIdentical.CellFormatting += dgvIdentical_CellFormatting;
             dgvIdentical.DataBindingComplete += dgvIdentical_DataBindingComplete;
-            dgvIdentical.DataError += dgvIdentical_DataError;          
+            dgvIdentical.DataError += dgvIdentical_DataError;
             // 
             // contextMenuStrip1
             // 
@@ -552,5 +617,10 @@ namespace DatabaseManager.Forms.Compare
         private BrightIdeasSoftware.OLVColumn colIdenticalCount;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripButton tsbCancel;
+        private Button btnExportDifferent;
+        private Button btnExportOnlyInSource;
+        private Button btnExportOnlyInTarget;
+        private Button btnExportIdentical;
+        private SaveFileDialog saveFileDialog2;
     }
 }

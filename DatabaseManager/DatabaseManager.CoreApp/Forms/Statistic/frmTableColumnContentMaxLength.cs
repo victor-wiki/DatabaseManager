@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Export;
-using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;

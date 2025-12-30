@@ -3,8 +3,7 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
-using DatabaseManager.Export;
-using DatabaseManager.FileUtility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using DatabaseManager.Model;
@@ -13,8 +12,6 @@ using DatabaseManager.Profile.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -162,7 +159,8 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable || isView;
-            this.tsmiImportData.Visible = this.tsmiExportData.Visible = isTable;
+            this.tsmiImportData.Visible =  isTable;
+            this.tsmiExportData.Visible = isTable || isView;
             this.tsmiEditData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
             this.tsmiMore.Visible = isDatabase;
@@ -1508,15 +1506,15 @@ namespace DatabaseManager.Controls
             this.ExportData();
         }
 
-        private async void ExportData()
+        private void ExportData()
         {
             TreeNode node = this.GetSelectedNode();
 
-            Table table = node.Tag as Table;
+            DatabaseObject tableOrView = node.Tag as DatabaseObject;         
 
             var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
 
-            frmExportData frm = new frmExportData(dbInterpreter, table);
+            frmExportData frm = new frmExportData(dbInterpreter, tableOrView, null, false);
 
             frm.OnFeedback += this.Feedback;
 

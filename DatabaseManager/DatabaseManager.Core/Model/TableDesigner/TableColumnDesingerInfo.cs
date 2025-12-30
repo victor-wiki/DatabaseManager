@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
 using System.ComponentModel;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class TableColumnDesingerInfo : TableColumn
     {

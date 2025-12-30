@@ -7,7 +7,7 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Helper;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class QueryConditionItem
     {

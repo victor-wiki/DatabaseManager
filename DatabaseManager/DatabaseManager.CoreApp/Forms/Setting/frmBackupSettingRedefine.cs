@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using System;
 using System.Linq;
 using System.Windows.Forms;

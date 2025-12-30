@@ -43,13 +43,13 @@
             lblTotalCount = new System.Windows.Forms.Label();
             SuspendLayout();
             // 
-            // cboPageNum
+            // cboPageNumber
             // 
             cboPageNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cboPageNumber.FormattingEnabled = true;
-            cboPageNumber.Location = new System.Drawing.Point(79, 5);
+            cboPageNumber.Location = new System.Drawing.Point(79, 1);
             cboPageNumber.Margin = new System.Windows.Forms.Padding(4);
-            cboPageNumber.Name = "cboPageNum";
+            cboPageNumber.Name = "cboPageNumber";
             cboPageNumber.Size = new System.Drawing.Size(59, 24);
             cboPageNumber.TabIndex = 6;
             toolTip1.SetToolTip(cboPageNumber, "Current page");
@@ -59,22 +59,23 @@
             // lblPageCount
             // 
             lblPageCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            lblPageCount.Location = new System.Drawing.Point(172, 8);
+            lblPageCount.Location = new System.Drawing.Point(160, 3);
             lblPageCount.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblPageCount.Name = "lblPageCount";
             lblPageCount.Size = new System.Drawing.Size(38, 20);
             lblPageCount.TabIndex = 4;
             lblPageCount.Text = "0";
+            lblPageCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             toolTip1.SetToolTip(lblPageCount, "Total pages");
             // 
             // btnRefresh
             // 
             btnRefresh.FlatAppearance.BorderSize = 0;
             btnRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnRefresh.Location = new System.Drawing.Point(442, 3);
+            btnRefresh.Location = new System.Drawing.Point(442, 2);
             btnRefresh.Margin = new System.Windows.Forms.Padding(4);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new System.Drawing.Size(25, 25);
+            btnRefresh.Size = new System.Drawing.Size(22, 22);
             btnRefresh.TabIndex = 10;
             toolTip1.SetToolTip(btnRefresh, "Refresh");
             btnRefresh.UseVisualStyleBackColor = true;
@@ -84,10 +85,10 @@
             // 
             btnNext.FlatAppearance.BorderSize = 0;
             btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnNext.Location = new System.Drawing.Point(215, 4);
+            btnNext.Location = new System.Drawing.Point(215, 2);
             btnNext.Margin = new System.Windows.Forms.Padding(4);
             btnNext.Name = "btnNext";
-            btnNext.Size = new System.Drawing.Size(25, 25);
+            btnNext.Size = new System.Drawing.Size(19, 19);
             btnNext.TabIndex = 3;
             toolTip1.SetToolTip(btnNext, "Next page");
             btnNext.UseVisualStyleBackColor = true;
@@ -97,10 +98,10 @@
             // 
             btnPrevious.FlatAppearance.BorderSize = 0;
             btnPrevious.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnPrevious.Location = new System.Drawing.Point(39, 4);
+            btnPrevious.Location = new System.Drawing.Point(40, 3);
             btnPrevious.Margin = new System.Windows.Forms.Padding(4);
             btnPrevious.Name = "btnPrevious";
-            btnPrevious.Size = new System.Drawing.Size(25, 25);
+            btnPrevious.Size = new System.Drawing.Size(19, 19);
             btnPrevious.TabIndex = 2;
             toolTip1.SetToolTip(btnPrevious, "Previous page");
             btnPrevious.UseVisualStyleBackColor = true;
@@ -110,10 +111,10 @@
             // 
             btnLast.FlatAppearance.BorderSize = 0;
             btnLast.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnLast.Location = new System.Drawing.Point(252, 4);
+            btnLast.Location = new System.Drawing.Point(249, 2);
             btnLast.Margin = new System.Windows.Forms.Padding(4);
             btnLast.Name = "btnLast";
-            btnLast.Size = new System.Drawing.Size(25, 25);
+            btnLast.Size = new System.Drawing.Size(22, 22);
             btnLast.TabIndex = 1;
             toolTip1.SetToolTip(btnLast, "Last page");
             btnLast.UseVisualStyleBackColor = true;
@@ -123,10 +124,10 @@
             // 
             btnFirst.FlatAppearance.BorderSize = 0;
             btnFirst.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnFirst.Location = new System.Drawing.Point(4, 4);
+            btnFirst.Location = new System.Drawing.Point(4, 2);
             btnFirst.Margin = new System.Windows.Forms.Padding(4);
             btnFirst.Name = "btnFirst";
-            btnFirst.Size = new System.Drawing.Size(25, 25);
+            btnFirst.Size = new System.Drawing.Size(22, 22);
             btnFirst.TabIndex = 0;
             toolTip1.SetToolTip(btnFirst, "First page");
             btnFirst.UseVisualStyleBackColor = true;
@@ -135,7 +136,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(300, 8);
+            label1.Location = new System.Drawing.Point(300, 4);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(67, 17);
@@ -145,11 +146,10 @@
             // cboPageSize
             // 
             cboPageSize.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cboPageSize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             cboPageSize.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             cboPageSize.FormattingEnabled = true;
             cboPageSize.Items.AddRange(new object[] { "10", "15", "20", "25", "50", "100", "200", "500", "1000" });
-            cboPageSize.Location = new System.Drawing.Point(383, 5);
+            cboPageSize.Location = new System.Drawing.Point(383, 1);
             cboPageSize.Margin = new System.Windows.Forms.Padding(4);
             cboPageSize.Name = "cboPageSize";
             cboPageSize.Size = new System.Drawing.Size(52, 24);
@@ -160,7 +160,7 @@
             // 
             lblSepartor.AutoSize = true;
             lblSepartor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            lblSepartor.Location = new System.Drawing.Point(148, 7);
+            lblSepartor.Location = new System.Drawing.Point(148, 4);
             lblSepartor.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblSepartor.Name = "lblSepartor";
             lblSepartor.Size = new System.Drawing.Size(11, 16);
@@ -170,7 +170,7 @@
             // lblTotalCount
             // 
             lblTotalCount.AutoSize = true;
-            lblTotalCount.Location = new System.Drawing.Point(517, 7);
+            lblTotalCount.Location = new System.Drawing.Point(505, 4);
             lblTotalCount.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblTotalCount.Name = "lblTotalCount";
             lblTotalCount.Size = new System.Drawing.Size(47, 17);
@@ -196,7 +196,7 @@
             Controls.Add(btnFirst);
             Margin = new System.Windows.Forms.Padding(4);
             Name = "UC_Pagination";
-            Size = new System.Drawing.Size(629, 31);
+            Size = new System.Drawing.Size(622, 26);
             ResumeLayout(false);
             PerformLayout();
         }

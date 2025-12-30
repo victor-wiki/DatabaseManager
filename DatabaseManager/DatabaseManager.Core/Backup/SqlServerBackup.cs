@@ -1,6 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using System;
 using System.IO;
 

@@ -1,38 +1,37 @@
-﻿using DatabaseInterpreter.Core;
+﻿using Dapper;
+using DatabaseConverter.Core;
+using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
+using SqlAnalyser.Core;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using SqlAnalyser.Core;
-using DatabaseConverter.Core;
-using SqlAnalyser.Model;
-using System.Runtime.InteropServices;
-using Oracle.ManagedDataAccess.Client;
 
 namespace DatabaseManager.Core
 {
     public class ScriptRunner
     {
-        private DbTransaction transaction = null; 
+        private DbTransaction transaction = null;
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
         private bool hasError = false;
 
-        public bool IgnoreForeignKeyConstraint { get; set; }     
+        public bool IgnoreForeignKeyConstraint { get; set; }
 
         public int LimitCount { get; set; } = 1000;
 
         public event FeedbackHandler OnFeedback;
 
         public ScriptRunner()
-        {            
+        {
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -40,8 +39,8 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script, 
-            CancellationToken cancellationToken,ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null)
+        public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script,
+            CancellationToken cancellationToken, ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null, PaginationInfo paginationInfo = null)
         {
             this.isBusy = false;
 
@@ -57,18 +56,38 @@ namespace DatabaseManager.Core
             {
                 ScriptParser scriptParser = new ScriptParser(dbInterpreter, script);
 
+                bool isSelect = scriptParser.IsSelect();
+
+                if (isSelect)
+                {
+                    connectionInfo.NeedCheckServerVersion = true;
+                }
+
                 using (DbConnection dbConnection = dbInterpreter.CreateConnection())
                 {
-                    if (scriptParser.IsSelect())
+                    if (isSelect)
                     {
                         this.isBusy = true;
                         result.ResultType = QueryResultType.Grid;
 
-                        script = this.DecorateSelectWithLimit(dbInterpreter, script);
+                        SelectScriptAnalyseResult analyseResult = this.AnalyseSelect(dbInterpreter, script, paginationInfo);
 
-                        if (!scriptParser.IsCreateOrAlterScript() && dbInterpreter.ScriptsDelimiter.Length == 1)
+                        result.SelectScriptAnalyseResult = analyseResult;
+
+                        script = analyseResult.Script;
+
+                        if (dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
                             script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                        }
+
+                        if ((analyseResult.HasTableName || analyseResult.HasAlias) && analyseResult.CountScript != null)
+                        {
+                            await dbConnection.OpenAsync();
+
+                            long? totalCount = dbConnection.ExecuteScalar<long?>(analyseResult.CountScript);
+
+                            result.TotalCount = totalCount;
                         }
 
                         DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, true);
@@ -181,7 +200,7 @@ namespace DatabaseManager.Core
 
                         foreach (string command in commands)
                         {
-                            if(cancellationToken.IsCancellationRequested)
+                            if (cancellationToken.IsCancellationRequested)
                             {
                                 await transaction.RollbackAsync();
                                 break;
@@ -305,11 +324,11 @@ namespace DatabaseManager.Core
                         continue;
                     }
 
-                    if(cancellationToken.IsCancellationRequested)
+                    if (cancellationToken.IsCancellationRequested)
                     {
                         break;
                     }
-                    
+
                     string sql = s.Content?.Trim();
 
                     if (!string.IsNullOrEmpty(sql) && sql != dbInterpreter.ScriptsDelimiter)
@@ -336,10 +355,10 @@ namespace DatabaseManager.Core
                     }
                 }
 
-                if(!cancellationToken.IsCancellationRequested)
+                if (!cancellationToken.IsCancellationRequested)
                 {
                     await transaction.CommitAsync();
-                }               
+                }
             }
         }
 
@@ -349,7 +368,7 @@ namespace DatabaseManager.Core
 
             string errMsg = ExceptionHelper.GetExceptionDetails(ex);
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true, true);
-        }       
+        }
 
         private async void Rollback(Exception ex = null)
         {
@@ -376,96 +395,219 @@ namespace DatabaseManager.Core
             }
         }
 
-        public string DecorateSelectWithLimit(DbInterpreter dbInterpreter, string script)
+        public SelectScriptAnalyseResult AnalyseSelect(DbInterpreter dbInterpreter, string script, PaginationInfo paginationInfo)
         {
+            SelectScriptAnalyseResult analyseResult = new SelectScriptAnalyseResult();
+
             DatabaseType databaseType = dbInterpreter.DatabaseType;
 
-            SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType, script);
-
-            sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
-            sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
-            sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
-            sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
-
-            var result = sqlAnalyser.AnalyseCommon();
-
-            if (result != null && !result.HasError)
+            try
             {
-                CommonScript cs = result.Script;
+                SqlAnalyserBase sqlAnalyser = TranslateHelper.GetSqlAnalyser(databaseType, script);
 
-                SelectStatement selectStatement = cs.Statements.FirstOrDefault(item => item is SelectStatement) as SelectStatement;
+                sqlAnalyser.RuleAnalyser.Option.ParseTokenChildren = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctions = false;
+                sqlAnalyser.RuleAnalyser.Option.ExtractFunctionChildren = false;
+                sqlAnalyser.RuleAnalyser.Option.IsCommonScript = true;
 
-                if (selectStatement != null)
+                var result = sqlAnalyser.AnalyseCommon();
+
+                if (result != null && !result.HasError)
                 {
-                    ScriptTokenExtracter tokenExtracter = new ScriptTokenExtracter(selectStatement);
-                    List<TokenInfo> tokens = tokenExtracter.Extract().ToList();
+                    CommonScript cs = result.Script;
 
-                    foreach (var token in tokens)
+                    SelectStatement selectStatement = cs.Statements.FirstOrDefault(item => item is SelectStatement) as SelectStatement;
+
+                    if (selectStatement != null)
                     {
-                        TranslateHelper.RestoreTokenValue(script, token);
-                    }
+                        ScriptTokenExtracter tokenExtracter = new ScriptTokenExtracter(selectStatement);
+                        List<TokenInfo> tokens = tokenExtracter.Extract().ToList();
 
-                    TableName tableName = selectStatement.TableName;
-                    TokenInfo alias = null;
-
-                    if (tableName == null)
-                    {
-                        if (selectStatement.HasFromItems)
+                        foreach (var token in tokens)
                         {
-                            tableName = selectStatement.FromItems[0].TableName;
-                            alias = selectStatement.FromItems[0].Alias;
+                            TranslateHelper.RestoreTokenValue(script, token);
                         }
-                    }
 
-                    bool hasTableName = tableName != null;
-                    bool hasAlias = alias != null;
-                    bool isFromDUAL = tableName?.Symbol?.ToUpper() == "DUAL";
+                        TableName tableName = selectStatement.TableName;
+                        TokenInfo alias = null;
 
-                    if (!isFromDUAL && (hasTableName || hasAlias) && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
-                    {
-                        string defaultOrder = dbInterpreter.GetDefaultOrder();
-
-                        if (selectStatement.OrderBy == null && !string.IsNullOrEmpty(defaultOrder))
+                        if (tableName == null)
                         {
-                            bool canUseOrderby = true;
-
-                            if (dbInterpreter.DatabaseType == DatabaseType.SqlServer && selectStatement.IsDistinct)
+                            if (selectStatement.HasFromItems)
                             {
-                                canUseOrderby = false;
-                            }
-
-                            if (canUseOrderby)
-                            {
-                                selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
+                                tableName = selectStatement.FromItems[0].TableName;
+                                alias = selectStatement.FromItems[0].Alias;
                             }
                         }
 
-                        if (databaseType == DatabaseType.SqlServer)
-                        {
-                            selectStatement.TopInfo = new SelectTopInfo() { TopCount = new TokenInfo(this.LimitCount.ToString()) };
-                        }
-                        else if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres || databaseType == DatabaseType.Sqlite)
-                        {
-                            selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo("0"), RowCount = new TokenInfo(this.LimitCount.ToString()) };
-                        }
+                        bool hasTableName = tableName != null;
+                        bool hasAlias = alias != null;
+                        bool isFromDUAL = tableName?.Symbol?.ToUpper() == "DUAL";
 
-                        ScriptBuildFactory scriptBuildFactory = TranslateHelper.GetScriptBuildFactory(databaseType);
+                        analyseResult.HasTableName = hasTableName;
+                        analyseResult.HasAlias = hasAlias;
+                        analyseResult.HasLimitCount = selectStatement.TopInfo != null || selectStatement.LimitInfo != null;
 
-                        script = scriptBuildFactory.GenerateScripts(cs).Script;
-
-                        if (databaseType == DatabaseType.Oracle) //oracle low version doesn't support limit clause.
+                        if (!isFromDUAL && (hasTableName || hasAlias) && (selectStatement.TopInfo == null && selectStatement.LimitInfo == null))
                         {
-                            script = $@"SELECT * FROM
+                            string defaultOrder = dbInterpreter.GetDefaultOrder();
+
+                            if (selectStatement.OrderBy == null && !string.IsNullOrEmpty(defaultOrder))
+                            {
+                                bool canUseOrderby = true;
+
+                                if (dbInterpreter.DatabaseType == DatabaseType.SqlServer && selectStatement.IsDistinct)
+                                {
+                                    canUseOrderby = false;
+                                }
+
+                                if (canUseOrderby)
+                                {
+                                    selectStatement.OrderBy = new List<TokenInfo>() { new TokenInfo(defaultOrder) };
+                                }
+                            }
+
+                            int pageSize = paginationInfo == null ? this.LimitCount : paginationInfo.PageSize;
+                            long pageNumber = paginationInfo == null ? 1 : paginationInfo.PageNumber;
+                            long offset = (pageNumber - 1) * pageSize;
+                            bool isUseSpecialPaination = false;
+                            string rowNumberColumnName = DbInterpreter.RowNumberColumnName;
+
+                            Action useNormalPagination = () =>
+                            {
+                                selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo(offset.ToString()), RowCount = new TokenInfo(pageSize.ToString()) };
+                            };
+
+                            Action useSpecialPaination = () =>
+                            {
+                                isUseSpecialPaination = true;
+
+                                string orderBy = string.Join(",", selectStatement.OrderBy.Select(item => item.Symbol));
+
+                                ColumnName columnName = new ColumnName($"ROW_NUMBER() OVER (ORDER BY {orderBy}) AS {rowNumberColumnName}");
+
+                                selectStatement.Columns.Add(columnName);
+                            };
+
+                            if (databaseType == DatabaseType.MySql || databaseType == DatabaseType.Postgres || databaseType == DatabaseType.Sqlite)
+                            {
+                                useNormalPagination();
+                            }
+                            else if (databaseType == DatabaseType.SqlServer)
+                            {
+                                if (!dbInterpreter.IsLowDbVersion(dbInterpreter.ServerVersion, "11"))
+                                {
+                                    useNormalPagination();
+                                }
+                                else
+                                {
+                                    useSpecialPaination();
+                                }
+                            }
+                            else if (databaseType == DatabaseType.Oracle)
+                            {
+                                if (!dbInterpreter.IsLowDbVersion(dbInterpreter.ServerVersion, "12.1"))
+                                {
+                                    useNormalPagination();
+                                }
+                                else
+                                {
+                                    useSpecialPaination();
+                                }
+                            }
+
+                            ScriptBuildFactory scriptBuildFactory = TranslateHelper.GetScriptBuildFactory(databaseType);
+
+                            script = scriptBuildFactory.GenerateScripts(cs).Script;
+
+                            string specialPaginationScript = null;
+
+                            if (isUseSpecialPaination)
+                            {
+                                specialPaginationScript = $"{script.Trim().TrimEnd(';')}";
+
+                                var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
+
+                                script = $@"SELECT * FROM
                                (
-                                 {script.Trim().TrimEnd(';')}
+                                 {specialPaginationScript}
                                ) TEMP
-                               WHERE ROWNUM BETWEEN 1 AND {this.LimitCount}";
+                               WHERE {rowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+                            }
+
+                            if (hasTableName || hasAlias)
+                            {
+                                List<ColumnName> columns = selectStatement.Columns.Select(item=>item).ToList();
+                                List<TokenInfo> orderBy = selectStatement.OrderBy ==null? null: selectStatement.OrderBy.Select(item=>item).ToList();
+                                SelectLimitInfo limitInfo = new SelectLimitInfo() { StartRowIndex = selectStatement.LimitInfo.StartRowIndex, RowCount = selectStatement.LimitInfo.RowCount };
+                                ;
+                                selectStatement.Columns.Clear();
+                                selectStatement.Columns.Add(new ColumnName("COUNT(1)"));
+                                selectStatement.OrderBy = null;
+                                selectStatement.LimitInfo = null;
+
+                                analyseResult.CountScript = scriptBuildFactory.GenerateScripts(cs).Script;
+
+                                selectStatement.Columns.Clear();
+                                selectStatement.Columns.AddRange(columns);
+                                selectStatement.OrderBy = orderBy;
+                                selectStatement.LimitInfo = limitInfo;
+                            }
+
+                            analyseResult.SelectStatement = selectStatement;
+                            analyseResult.SpecialPaginationScript = specialPaginationScript;
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
 
-            return script;
+            }
+
+            analyseResult.Script = script;
+
+            return analyseResult;
+        }
+
+        public static async Task<DataTable> GetPagedDatatable(DbInterpreter dbInterpreter, SelectScriptAnalyseResult selectScriptAnalyseResult, PaginationInfo paginationInfo)
+        {
+            SelectStatement selectStatement = selectScriptAnalyseResult.SelectStatement;
+
+            int pageSize = paginationInfo.PageSize;
+            long pageNumber = paginationInfo.PageNumber;
+            long offset = (pageNumber - 1) * pageSize;
+
+            string sql = null;
+
+            if (selectScriptAnalyseResult.SpecialPaginationScript == null)
+            {
+                selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo(offset.ToString()), RowCount = new TokenInfo(pageSize.ToString()) };
+
+                CommonScript commonScript = new CommonScript();
+                commonScript.Statements.Add(selectStatement);
+
+                ScriptBuildFactory scriptBuildFactory = TranslateHelper.GetScriptBuildFactory(dbInterpreter.DatabaseType);
+
+                sql = scriptBuildFactory.GenerateScripts(commonScript).Script;
+            }
+            else
+            {
+                var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
+
+                sql = $@"SELECT * FROM
+                               (
+                                 {selectScriptAnalyseResult.SpecialPaginationScript}
+                               ) TEMP
+                               WHERE {DbInterpreter.RowNumberColumnName} BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
+            }
+
+            using (DbConnection dbConnection = dbInterpreter.CreateConnection())
+            {
+                DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, sql, true);
+
+                return dataTable;
+            }
         }
 
         public void Feedback(object owner, string content, FeedbackInfoType infoType = FeedbackInfoType.Info, bool enableLog = true, bool suppressError = false)

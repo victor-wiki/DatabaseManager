@@ -1,8 +1,8 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,7 +10,6 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Transactions;
 
 
 namespace DatabaseManager.Core

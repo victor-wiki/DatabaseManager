@@ -1,7 +1,7 @@
 ﻿using DatabaseInterpreter.Model;
 using System.Collections.Generic;
 
-namespace DatabaseManager.Model
+namespace DatabaseManager.Core.Model
 {
     public class Setting : DbInterpreterSetting
     {

@@ -1,16 +1,12 @@
-﻿using System;
+﻿using DatabaseInterpreter.Model;
+using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
+using DatabaseManager.Helper;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseManager.Helper;
-using DatabaseInterpreter.Model;
-using DatabaseManager.Model;
-using DatabaseManager.Core;
 
 namespace DatabaseManager.Controls
 {

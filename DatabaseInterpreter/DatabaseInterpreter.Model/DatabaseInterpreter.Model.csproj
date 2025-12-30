@@ -3,11 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.3.0</Version>
-    <AssemblyVersion>2.3.0</AssemblyVersion>
-    <FileVersion>2.3.0</FileVersion>
+    <Version>2.3.1</Version>
+    <AssemblyVersion>2.3.1</AssemblyVersion>
+    <FileVersion>2.3.1</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>Remove property "Data" from class "TableDataReadInfo".</PackageReleaseNotes>
+    <PackageReleaseNotes>1. add "PaginationInfo";
+2. add "NeedCheckServerVersion" to "ConnectionInfo".</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

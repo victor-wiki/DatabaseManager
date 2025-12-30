@@ -39,7 +39,7 @@
             btnExecute = new System.Windows.Forms.Button();
             label1 = new System.Windows.Forms.Label();
             txtName = new System.Windows.Forms.TextBox();
-            ucConnection = new Controls.UC_DbConnectionProfile();
+            ucConnection = new DatabaseManager.Controls.UC_DbConnectionProfile();
             chkGenerateIdentity = new System.Windows.Forms.CheckBox();
             lblSchema = new System.Windows.Forms.Label();
             cboSchema = new System.Windows.Forms.ComboBox();
@@ -54,6 +54,7 @@
             chkNeedPreview = new System.Windows.Forms.CheckBox();
             picNeedPreviewTip = new System.Windows.Forms.PictureBox();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            txtMessage = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)picNeedPreviewTip).BeginInit();
             SuspendLayout();
             // 
@@ -123,7 +124,7 @@
             // btnClose
             // 
             btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnClose.Location = new System.Drawing.Point(371, 328);
+            btnClose.Location = new System.Drawing.Point(352, 320);
             btnClose.Margin = new System.Windows.Forms.Padding(4);
             btnClose.Name = "btnClose";
             btnClose.Size = new System.Drawing.Size(88, 33);
@@ -135,7 +136,7 @@
             // btnExecute
             // 
             btnExecute.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnExecute.Location = new System.Drawing.Point(258, 328);
+            btnExecute.Location = new System.Drawing.Point(239, 320);
             btnExecute.Margin = new System.Windows.Forms.Padding(4);
             btnExecute.Name = "btnExecute";
             btnExecute.Size = new System.Drawing.Size(88, 33);
@@ -318,11 +319,24 @@
             picNeedPreviewTip.TabStop = false;
             toolTip1.SetToolTip(picNeedPreviewTip, "You can edit the target data type in the previewer.");
             // 
+            // txtMessage
+            // 
+            txtMessage.BackColor = System.Drawing.Color.White;
+            txtMessage.Dock = System.Windows.Forms.DockStyle.Bottom;
+            txtMessage.Location = new System.Drawing.Point(0, 370);
+            txtMessage.Multiline = true;
+            txtMessage.Name = "txtMessage";
+            txtMessage.ReadOnly = true;
+            txtMessage.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            txtMessage.Size = new System.Drawing.Size(686, 84);
+            txtMessage.TabIndex = 74;
+            // 
             // frmTableCopy
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(686, 378);
+            ClientSize = new System.Drawing.Size(686, 454);
+            Controls.Add(txtMessage);
             Controls.Add(picNeedPreviewTip);
             Controls.Add(chkNeedPreview);
             Controls.Add(lblDataTypeMappingFileType);
@@ -348,7 +362,6 @@
             Controls.Add(ucConnection);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4);
-            MaximizeBox = false;
             Name = "frmTableCopy";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "Copy Table";
@@ -384,5 +397,6 @@
         private System.Windows.Forms.CheckBox chkNeedPreview;
         private System.Windows.Forms.PictureBox picNeedPreviewTip;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.TextBox txtMessage;
     }
 }

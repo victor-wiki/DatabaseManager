@@ -2,7 +2,7 @@
 using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
 using SqlAnalyser.Core;
 using SqlAnalyser.Model;
 using System;

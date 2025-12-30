@@ -1,4 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
+using System.Diagnostics;
 using System.IO;
 
 namespace DatabaseManager.Helper
@@ -22,6 +23,29 @@ namespace DatabaseManager.Helper
 
             zip.CommitUpdate();
             zip.Close();
+        }
+
+        public static void OpenFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                var psi = new ProcessStartInfo(filePath) { UseShellExecute = true };         
+
+                Process.Start(psi);
+            }
+        }
+
+        public static void SelectFileInExplorer(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                string cmd = "explorer.exe";
+                string arg = "/select," + filePath;
+
+                var psi = new ProcessStartInfo(cmd, arg) { UseShellExecute = true };
+
+                Process.Start(psi);
+            }
         }
     }
 }

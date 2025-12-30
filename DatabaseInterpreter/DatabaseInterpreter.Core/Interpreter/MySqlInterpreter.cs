@@ -804,6 +804,8 @@ namespace DatabaseInterpreter.Core
         #region Sql Query Clause
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
+
+
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
             var pagedSql = $@"SELECT {columnNames}

@@ -28,18 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDbConnectionManage));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             dgvDbConnection = new System.Windows.Forms.DataGridView();
-            colCheck = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colServer = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colIntegratedSecurity = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            colUserName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colPriority = new System.Windows.Forms.DataGridViewTextBoxColumn();
             label1 = new System.Windows.Forms.Label();
             cboDbType = new System.Windows.Forms.ComboBox();
             btnSelect = new System.Windows.Forms.Button();
@@ -61,6 +52,15 @@
             panelInfo = new System.Windows.Forms.Panel();
             label2 = new System.Windows.Forms.Label();
             picInfo = new System.Windows.Forms.PictureBox();
+            colCheck = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colServer = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colPort = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colIntegratedSecurity = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            colUserName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colPriority = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvDbConnection).BeginInit();
             panelDbType.SuspendLayout();
             toolStrip1.SuspendLayout();
@@ -92,79 +92,6 @@
             dgvDbConnection.DoubleClick += dgvDbConnection_DoubleClick;
             dgvDbConnection.MouseDown += dgvDbConnection_MouseDown;
             dgvDbConnection.MouseMove += dgvDbConnection_MouseMove;
-            // 
-            // colCheck
-            // 
-            colCheck.HeaderText = "";
-            colCheck.Name = "colCheck";
-            colCheck.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            colCheck.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            colCheck.Width = 40;
-            // 
-            // colId
-            // 
-            colId.DataPropertyName = "Id";
-            colId.HeaderText = "Id";
-            colId.Name = "colId";
-            colId.ReadOnly = true;
-            colId.Visible = false;
-            // 
-            // colServer
-            // 
-            colServer.DataPropertyName = "Server";
-            colServer.HeaderText = "Server";
-            colServer.Name = "colServer";
-            colServer.ReadOnly = true;
-            colServer.Width = 250;
-            // 
-            // colPort
-            // 
-            colPort.HeaderText = "Port";
-            colPort.Name = "colPort";
-            colPort.ReadOnly = true;
-            // 
-            // colIntegratedSecurity
-            // 
-            colIntegratedSecurity.DataPropertyName = "IntegratedSecurity";
-            colIntegratedSecurity.HeaderText = "Integrated Security";
-            colIntegratedSecurity.Name = "colIntegratedSecurity";
-            colIntegratedSecurity.ReadOnly = true;
-            colIntegratedSecurity.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            colIntegratedSecurity.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            colIntegratedSecurity.Width = 150;
-            // 
-            // colUserName
-            // 
-            colUserName.DataPropertyName = "UserId";
-            colUserName.HeaderText = "User Name";
-            colUserName.Name = "colUserName";
-            colUserName.ReadOnly = true;
-            colUserName.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            colUserName.Width = 150;
-            // 
-            // colName
-            // 
-            colName.HeaderText = "Name";
-            colName.Name = "colName";
-            colName.ReadOnly = true;
-            colName.Visible = false;
-            colName.Width = 150;
-            // 
-            // colDatabase
-            // 
-            colDatabase.HeaderText = "File Path";
-            colDatabase.Name = "colDatabase";
-            colDatabase.ReadOnly = true;
-            colDatabase.Visible = false;
-            colDatabase.Width = 400;
-            // 
-            // colPriority
-            // 
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            colPriority.DefaultCellStyle = dataGridViewCellStyle2;
-            colPriority.HeaderText = "Priority";
-            colPriority.Name = "colPriority";
-            colPriority.ReadOnly = true;
             // 
             // label1
             // 
@@ -363,6 +290,78 @@
             picInfo.Size = new System.Drawing.Size(20, 20);
             picInfo.TabIndex = 46;
             picInfo.TabStop = false;
+            // 
+            // colCheck
+            // 
+            colCheck.HeaderText = "";
+            colCheck.Name = "colCheck";
+            colCheck.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            colCheck.Width = 40;
+            // 
+            // colId
+            // 
+            colId.DataPropertyName = "Id";
+            colId.HeaderText = "Id";
+            colId.Name = "colId";
+            colId.ReadOnly = true;
+            colId.Visible = false;
+            // 
+            // colServer
+            // 
+            colServer.DataPropertyName = "Server";
+            colServer.HeaderText = "Server";
+            colServer.Name = "colServer";
+            colServer.ReadOnly = true;
+            colServer.Width = 250;
+            // 
+            // colPort
+            // 
+            colPort.HeaderText = "Port";
+            colPort.Name = "colPort";
+            colPort.ReadOnly = true;
+            // 
+            // colIntegratedSecurity
+            // 
+            colIntegratedSecurity.DataPropertyName = "IntegratedSecurity";
+            colIntegratedSecurity.HeaderText = "Integrated Security";
+            colIntegratedSecurity.Name = "colIntegratedSecurity";
+            colIntegratedSecurity.ReadOnly = true;
+            colIntegratedSecurity.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            colIntegratedSecurity.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            colIntegratedSecurity.Width = 150;
+            // 
+            // colUserName
+            // 
+            colUserName.DataPropertyName = "UserId";
+            colUserName.HeaderText = "User Name";
+            colUserName.Name = "colUserName";
+            colUserName.ReadOnly = true;
+            colUserName.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            colUserName.Width = 150;
+            // 
+            // colName
+            // 
+            colName.HeaderText = "Name";
+            colName.Name = "colName";
+            colName.ReadOnly = true;
+            colName.Visible = false;
+            colName.Width = 150;
+            // 
+            // colDatabase
+            // 
+            colDatabase.HeaderText = "File Path";
+            colDatabase.Name = "colDatabase";
+            colDatabase.ReadOnly = true;
+            colDatabase.Visible = false;
+            colDatabase.Width = 400;
+            // 
+            // colPriority
+            // 
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            colPriority.DefaultCellStyle = dataGridViewCellStyle1;
+            colPriority.HeaderText = "Priority";
+            colPriority.Name = "colPriority";
+            colPriority.ReadOnly = true;
             // 
             // frmDbConnectionManage
             // 

@@ -3,10 +3,15 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
+using DatabaseManager.FileUtility;
+using DatabaseManager.FileUtility.Model;
+using SixLabors.Fonts;
+using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -21,6 +26,9 @@ namespace DatabaseManager.Core
         private SchemaInfo schemaInfo;
         private DataCompareOption option;
         private IObserver<FeedbackInfo> observer;
+
+        public const string DifferentDataSourceColumnNameSuffix = "__source";
+        public const string DifferentDataTargetColumnNameSuffix = "__target";
 
 
         public DataCompare(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, SchemaInfo schemaInfo, DataCompareOption option = null)
@@ -412,6 +420,143 @@ namespace DatabaseManager.Core
             return pagedKeyRows;
         }
 
+        public static async Task<(DataTable Data, Dictionary<int, List<DataCompareValueInfo>> ValueInfos)> GetDifferentData(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DataCompareResultDetail detail, int pageSize, long pageNumber)
+        {
+            Dictionary<int, List<DataCompareValueInfo>> dictValueInfos = new Dictionary<int, List<DataCompareValueInfo>>();
+
+            var rows = detail.DifferentKeyRows;
+
+            var pagedKeyRows = GetPagedKeyRows(rows, pageSize, pageNumber);
+
+            string whereCondition = DataCompare.GetKeyColumnWhereCondition(sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
+
+            string orderColumns = sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
+
+            DataTable sourceDataTable = await sourceDbInterpreter.GetPagedDataTableAsync(sourceDbInterpreter.CreateConnection(), detail.SourceTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
+            DataTable targetDataTable = await sourceDbInterpreter.GetPagedDataTableAsync(targetDbInterpreter.CreateConnection(), detail.TargetTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
+
+            List<DataCompareDifferentRow> differentRows = new List<DataCompareDifferentRow>();
+
+            DataTable dataTable = new DataTable();
+
+            for (int i = 0; i < sourceDataTable.Rows.Count; i++)
+            {
+                DataRow sourceRow = sourceDataTable.Rows[i];
+                DataRow targetRow = targetDataTable.Rows[i];
+
+                Dictionary<string, (object, object)> dict = new Dictionary<string, (object, object)>();
+
+                foreach (var column in detail.SameTableColumns.Where(item => !detail.KeyColumns.Any(t => t.Name == item.Name)))
+                {
+                    string columnName = column.Name;
+
+                    object sourceValue = sourceRow[columnName];
+                    object targetValue = targetRow[columnName];
+
+                    if (!Equals(sourceValue, targetValue))
+                    {
+                        dict.Add(columnName, (sourceValue, targetValue));
+                    }
+                }
+
+                if (dict.Any())
+                {
+                    differentRows.Add(new DataCompareDifferentRow() { RowIndex = i, KeyRow = pagedKeyRows[i], Details = dict });
+                }
+            }
+
+            foreach (var column in detail.KeyColumns)
+            {
+                dataTable.Columns.Add(new DataColumn() { ColumnName = column.Name });
+            }
+
+            var diffColumnNames = differentRows.SelectMany(item => item.Details.Select(t => t.Key)).Distinct();
+
+            foreach (var name in diffColumnNames)
+            {
+                string columnName = name + DifferentDataSourceColumnNameSuffix;
+
+                dataTable.Columns.Add(new DataColumn() { ColumnName = columnName });
+                dataTable.Columns.Add(new DataColumn() { ColumnName = name + DifferentDataTargetColumnNameSuffix });
+            }
+
+            foreach (var row in differentRows)
+            {
+                int rowIndex = row.RowIndex;
+
+                List<DataCompareValueInfo> valueInfos = new List<DataCompareValueInfo>();
+
+                DataRow keyRow = row.KeyRow;
+
+                DataRow dataRow = dataTable.NewRow();
+
+                foreach (var keyColumn in detail.KeyColumns)
+                {
+                    valueInfos.Add(new DataCompareValueInfo() { Value = keyRow[keyColumn.Name] });
+                }
+
+                for (int i = detail.KeyColumns.Count; i < dataTable.Columns.Count; i++)
+                {
+                    string columnName = dataTable.Columns[i].ColumnName;
+                    string originalColumnName = columnName;
+
+                    if (columnName.EndsWith(DifferentDataSourceColumnNameSuffix))
+                    {
+                        originalColumnName = columnName.Replace(DifferentDataSourceColumnNameSuffix, "");
+                    }
+                    else if (columnName.EndsWith(DifferentDataTargetColumnNameSuffix))
+                    {
+                        originalColumnName = columnName.Replace(DifferentDataTargetColumnNameSuffix, "");
+                    }
+
+                    if (row.Details.ContainsKey(originalColumnName))
+                    {
+                        var v = row.Details[originalColumnName];
+
+                        if (columnName.EndsWith(DifferentDataSourceColumnNameSuffix))
+                        {
+                            valueInfos.Add(new DataCompareValueInfo() { Value = v.Item1, IsDifferent = true });
+                        }
+                        else if (columnName.EndsWith(DifferentDataTargetColumnNameSuffix))
+                        {
+                            valueInfos.Add(new DataCompareValueInfo() { Value = v.Item2, IsDifferent = true });
+                        }
+                    }
+                    else
+                    {
+                        valueInfos.Add(new DataCompareValueInfo() { Value = sourceDataTable.Rows[rowIndex][originalColumnName] });
+                    }
+                }
+
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    DataCompareValueInfo valueInfo = valueInfos[i];
+
+                    dataRow[i] = valueInfo.Value;
+                }
+
+                dataTable.Rows.Add(dataRow);
+
+                dictValueInfos.Add(rowIndex, valueInfos);
+            }
+
+            return (dataTable, dictValueInfos);
+        }
+
+        public static string GetDifferentDataColumnDisplayText(string columnName)
+        {
+            if (columnName.EndsWith(DifferentDataSourceColumnNameSuffix))
+            {
+                return columnName.Replace(DifferentDataSourceColumnNameSuffix, "") + "→";
+            }
+            else if (columnName.EndsWith(DifferentDataTargetColumnNameSuffix))
+            {
+                return "→" + columnName.Replace(DifferentDataTargetColumnNameSuffix, "");
+            }
+
+            return columnName;
+        }
+
         public async Task<string> GenerateScripts(List<DataCompareResultDetail> details, CancellationToken cancellationToken)
         {
             StringBuilder sb = new StringBuilder();
@@ -425,7 +570,7 @@ namespace DatabaseManager.Core
             {
                 tableCount++;
 
-                if(cancellationToken.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     break;
                 }
@@ -444,7 +589,7 @@ namespace DatabaseManager.Core
 
                 if (detail.OnlyInSourceCount > 0)
                 {
-                    sb.AppendLine();              
+                    sb.AppendLine();
 
                     this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Begin to generate INSERT sql for table ""{detail.SourceTable.Name}""...");
 
@@ -461,12 +606,12 @@ namespace DatabaseManager.Core
 
                         for (int i = 1; i <= pageCount; i++)
                         {
-                            if(cancellationToken.IsCancellationRequested)
+                            if (cancellationToken.IsCancellationRequested)
                             {
                                 break;
                             }
 
-                            recordCount += (int) (i < pageCount ? pageSize: (total-(pageCount-1)*pageSize));
+                            recordCount += (int)(i < pageCount ? pageSize : (total - (pageCount - 1) * pageSize));
 
                             this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Generating INSERT sql for table ""{detail.SourceTable.Name}"" ({recordCount}/{total})...");
 
@@ -485,7 +630,7 @@ namespace DatabaseManager.Core
                     }
 
                     this.FeedbackInfo($@"End generate INSERT sql for table ""{detail.SourceTable.Name}"".");
-                }               
+                }
             }
 
             return sb.ToString().Trim();
@@ -508,7 +653,7 @@ namespace DatabaseManager.Core
 
                 string sql = $"DELETE FROM {this.targetDbInterpreter.GetQuotedString(detail.TargetTable.Name)} {condition};";
 
-                sb.AppendLine(sql);               
+                sb.AppendLine(sql);
             }
 
             this.FeedbackInfo($@"End generate DELETE sql for table ""{detail.TargetTable.Name}"".");
@@ -659,7 +804,7 @@ namespace DatabaseManager.Core
 
                                 for (int i = 1; i <= pageCount; i++)
                                 {
-                                    if(cancellationToken.IsCancellationRequested)
+                                    if (cancellationToken.IsCancellationRequested)
                                     {
                                         break;
                                     }
@@ -680,7 +825,7 @@ namespace DatabaseManager.Core
                                 }
 
                                 this.FeedbackInfo($@"End copy data to table ""{detail.TargetTable.Name}"".");
-                            }                            
+                            }
                         }
 
                         if (!cancellationToken.IsCancellationRequested)
@@ -716,6 +861,90 @@ namespace DatabaseManager.Core
             ExecuteResult result = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
             return result;
+        }
+
+        public static async Task<DataExportResult> ExportDifferentData(DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, DataCompareResultDetail detail, int pageSize, long pageNumber, string filePath)
+        {
+            DataExportResult exportResult = new DataExportResult();
+
+            try
+            {
+                (DataTable Data, Dictionary<int, List<DataCompareValueInfo>> ValueInfos) result = await DataCompare.GetDifferentData(sourceDbInterpreter, targetDbInterpreter, detail, pageSize, pageNumber);
+
+                Func<int, int, bool> isDifferentValue = (rowIndex, columnIndex) =>
+                {
+                    if (result.ValueInfos.ContainsKey(rowIndex))
+                    {
+                        var rowData = result.ValueInfos[rowIndex];
+
+                        if (columnIndex >= 0 && columnIndex < rowData.Count)
+                        {
+                            var valueInfo = rowData[columnIndex];
+
+                            return valueInfo.IsDifferent;
+                        }
+                    }
+
+                    return false;
+                };
+
+                ExportDataOption option = new ExportDataOption() { FilePath = filePath, ShowColumnNames = true };
+
+                ExcelWriter writer = new ExcelWriter(option);
+
+                DataTable dataTable = result.Data;
+
+                GridData gridData = new GridData() { Columns = new List<GridColumn>(), Rows = new List<GridRow>() };
+
+                foreach (DataColumn column in dataTable.Columns)
+                {
+                    gridData.Columns.Add(new GridColumn() { Name = GetDifferentDataColumnDisplayText(column.ColumnName) });
+                }
+
+                int rowIndex = 0;
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    GridRow gridRow = new GridRow() { Cells = new List<GridCell>() };
+
+                    int columnIndex = 0;
+
+                    foreach (DataColumn column in dataTable.Columns)
+                    {
+                        object value = row[column.ColumnName];
+
+                        GridCell gridCell = new GridCell();
+                        gridCell.Content = ValueHelper.IsNullValue(value) ? "NULL" : value.ToString(); ;
+
+                        if (isDifferentValue(rowIndex, columnIndex))
+                        {
+                            gridCell.HighlightMode = GridCellHighlightMode.Foreground;
+                        }
+
+                        gridRow.Cells.Add(gridCell);
+
+                        columnIndex++;
+                    }
+
+                    rowIndex++;
+
+                    gridData.Rows.Add(gridRow);
+                }
+
+                filePath = writer.Write(gridData, detail.SourceTable.Name);
+
+                if (File.Exists(filePath))
+                {
+                    exportResult.IsOK = true;
+                    exportResult.FilePath = filePath;
+                }
+            }
+            catch (Exception ex)
+            {
+                exportResult.Message = ex.Message;
+            }
+
+            return exportResult;
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)

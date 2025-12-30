@@ -2,10 +2,10 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Data;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
 using DatabaseManager.Profile.Manager;
 using DatabaseManager.Profile.Model;
 using FontAwesome.Sharp;

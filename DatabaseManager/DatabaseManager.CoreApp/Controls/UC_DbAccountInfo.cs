@@ -1,15 +1,12 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseManager.Profile;
-using DatabaseManager.Core;
-using DatabaseManager.Model;
+using DatabaseManager.Core.Model;
+using DatabaseManager.Profile.Manager;
 using System;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DatabaseManager.Data;
-using DatabaseManager.Profile.Manager;
 
 namespace DatabaseManager.Controls
 {

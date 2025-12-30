@@ -2,18 +2,22 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using DatabaseManager.Data;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
-using DatabaseManager.Model;
+using FontAwesome.Sharp;
+using SqlAnalyser.Model;
 using SqlCodeEditor;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -27,6 +31,8 @@ namespace DatabaseManager.Controls
         private string originalText = string.Empty;
         private bool isResultReturned = false;
         private CancellationTokenSource cancellationTokenSource;
+        private SelectScriptAnalyseResult selectScriptAnalyseResult;
+        private frmExportData exportDataForm;
 
         internal DatabaseObjectDisplayInfo DisplayInfo => this.displayInfo;
 
@@ -56,7 +62,7 @@ namespace DatabaseManager.Controls
             set
             {
                 this.showEditorMessage = value;
-                this.statusStrip1.Visible = value;
+                this.lblMessage.Visible = value;
             }
         }
 
@@ -70,6 +76,8 @@ namespace DatabaseManager.Controls
             TabPage.CheckForIllegalCrossThreadCalls = false;
             StatusStrip.CheckForIllegalCrossThreadCalls = false;
 
+            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
+
             this.SetResultPanelVisible(false);
         }
 
@@ -81,7 +89,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                this.splitContainer1.Height += this.statusStrip1.Height;
+                this.splitContainer1.Height += this.lblMessage.Height;
             }
 
             if (!this.readOnly)
@@ -99,7 +107,7 @@ namespace DatabaseManager.Controls
 
         private void ShowEditorInfoMessage(string message)
         {
-            this.tsslMessage.Text = message;
+            this.lblMessage.Text = message;
         }
 
         public void Show(DatabaseObjectDisplayInfo displayInfo)
@@ -184,15 +192,15 @@ namespace DatabaseManager.Controls
             }
         }
 
-        public void RunScripts(DatabaseObjectDisplayInfo data)
+        public void RunScripts(DatabaseObjectDisplayInfo data, long pageNumber = 1)
         {
             Task.Run(() =>
             {
-                this.Execute(data);
+                this.Execute(data, pageNumber);
             });
         }
 
-        private async void Execute(DatabaseObjectDisplayInfo data)
+        private async void Execute(DatabaseObjectDisplayInfo data, long pageNumber = 1)
         {
             this.isResultReturned = false;
             this.displayInfo = data;
@@ -227,7 +235,7 @@ namespace DatabaseManager.Controls
 
                 this.loadingPanel.ShowLoading(this.resultGridView);
 
-                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters);
+                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters, new PaginationInfo() { PageNumber = this.pagination.PageNumber, PageSize = this.pagination.PageSize });
 
                 this.isResultReturned = true;
 
@@ -272,6 +280,21 @@ namespace DatabaseManager.Controls
                         selectedTabIndex = 0;
 
                         this.resultGridView.LoadData(dataTable);
+
+                        this.selectScriptAnalyseResult = result.SelectScriptAnalyseResult;
+
+                        if (this.selectScriptAnalyseResult != null)
+                        {
+                            this.pagination.Visible = !this.selectScriptAnalyseResult.HasLimitCount 
+                                && ( this.selectScriptAnalyseResult.HasTableName || this.selectScriptAnalyseResult.HasAlias);
+                        }
+
+                        if (result.TotalCount > 0)
+                        {
+                            this.pagination.TotalCount = result.TotalCount.Value;
+                        }
+
+                        this.btnExport.Visible = dataTable.Rows.Count > 0;
                     }
                 }
                 else if (result.ResultType == QueryResultType.Text)
@@ -423,12 +446,98 @@ namespace DatabaseManager.Controls
             if (this.queryEditor != null)
             {
                 this.queryEditor.DisposeResources();
+                this.selectScriptAnalyseResult = null;
+                this.exportDataForm = null;
             }
-        }   
+        }
 
         private void resultGridView_SizeChanged(object sender, EventArgs e)
         {
             this.loadingPanel.RefreshStatus();
+        }
+
+        private void pagination_OnPageNumberChanged(long pageNumber)
+        {
+            this.RunScripts(this.displayInfo, pageNumber);
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            this.Export();
+        }
+
+        private void Export()
+        {
+            DataTable table = this.resultGridView.DataGrid.DataSource as DataTable;
+
+            if (table == null)
+            {
+                MessageBox.Show("No data to export.");
+                return;
+            }
+
+            long pageNumber = this.pagination.PageNumber;
+            long pageCount = this.pagination.PageCount;
+
+            ExportSpecificDataOption option = new ExportSpecificDataOption();
+
+            option.PageNumbers.Add(pageNumber);
+            option.PageCount = pageCount;
+
+            DataTable dataTable = table.Clone();
+
+            dataTable.TableName = "";
+
+            this.exportDataForm = new frmExportData(dataTable, option);
+
+            this.exportDataForm.ExportDataRequired += this.GetDataTableForExporting;
+
+            this.exportDataForm.ShowDialog();
+        }
+
+        private async Task<DataTable> GetDataTableForExporting(ExportSpecificDataOption option, List<DataExportColumn> columns)
+        {
+            DataTable gridDataTable = (this.resultGridView.DataGrid.DataSource as DataTable);           
+
+            if (this.selectScriptAnalyseResult != null && this.selectScriptAnalyseResult.SelectStatement != null)
+            {
+                DataTable dataTable = gridDataTable.Clone();
+
+                if (option.ExportAllThatMeetCondition)
+                {
+                    option.PageNumbers.Clear();
+
+                    for (int i = 1; i <= option.PageCount; i++)
+                    {
+                        option.PageNumbers.Add(i);
+                    }
+                }
+
+                List<long> pageNumbers = option.PageNumbers;
+
+                long total = this.pagination.TotalCount;
+                int pageSize = this.pagination.PageSize;
+
+                foreach (var pageNumber in pageNumbers)
+                {
+                    long count = pageNumber == option.PageCount ? total : pageNumber * pageSize;                 
+
+                    if (this.exportDataForm != null)
+                    {
+                        this.exportDataForm.Feedback($"Reading data {count}/{total}...");
+                    }
+
+                    var table = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = pageSize });
+
+                    dataTable.Merge(table);
+                }
+
+                return dataTable;
+            }
+            else
+            {
+                return gridDataTable;
+            }           
         }
     }
 }

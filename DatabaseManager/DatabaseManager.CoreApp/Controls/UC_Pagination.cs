@@ -38,8 +38,8 @@ namespace DatabaseManager.Controls
             this.PageNumber = 1;
 
             this.btnFirst.Image = IconImageHelper.GetImage(IconChar.BackwardStep, this.imageColor);
-            this.btnPrevious.Image = IconImageHelper.GetImage(IconChar.ChevronLeft, this.imageColor);
-            this.btnNext.Image = IconImageHelper.GetImage(IconChar.ChevronRight, this.imageColor);
+            this.btnPrevious.Image = IconImageHelper.GetImage(IconChar.ChevronLeft, this.imageColor, this.btnPrevious.Width);
+            this.btnNext.Image = IconImageHelper.GetImage(IconChar.ChevronRight, this.imageColor, this.btnNext.Width);
             this.btnLast.Image = IconImageHelper.GetImage(IconChar.ForwardStep, this.imageColor);
             this.btnRefresh.Image = IconImageHelper.GetImage(IconChar.ArrowsRotate, this.imageColor);
         }

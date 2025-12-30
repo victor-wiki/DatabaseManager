@@ -39,6 +39,7 @@
             tsmiViewGeometry = new System.Windows.Forms.ToolStripMenuItem();
             uc_QuickFilter = new UC_QuickFilter();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            btnExport = new System.Windows.Forms.Button();
             loadingPanel = new UC_LoadingPanel();
             ((System.ComponentModel.ISupportInitialize)dgvData).BeginInit();
             cellContextMenu.SuspendLayout();
@@ -63,10 +64,11 @@
             dgvData.ReadOnly = true;
             dgvData.RowHeadersVisible = false;
             dgvData.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            dgvData.Size = new System.Drawing.Size(818, 408);
+            dgvData.Size = new System.Drawing.Size(822, 421);
             dgvData.TabIndex = 5;
             dgvData.CellFormatting += dgvData_CellFormatting;
             dgvData.CellMouseClick += dgvData_CellMouseClick;
+            dgvData.ColumnHeaderMouseDoubleClick += dgvData_ColumnHeaderMouseDoubleClick;
             dgvData.DataBindingComplete += dgvData_DataBindingComplete;
             dgvData.DataError += dgvData_DataError;
             dgvData.Sorted += dgvData_Sorted;
@@ -77,10 +79,10 @@
             btnFilter.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
             btnFilter.FlatAppearance.BorderSize = 0;
             btnFilter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnFilter.Location = new System.Drawing.Point(4, 445);
+            btnFilter.Location = new System.Drawing.Point(8, 454);
             btnFilter.Margin = new System.Windows.Forms.Padding(4);
             btnFilter.Name = "btnFilter";
-            btnFilter.Size = new System.Drawing.Size(36, 25);
+            btnFilter.Size = new System.Drawing.Size(22, 22);
             btnFilter.TabIndex = 7;
             toolTip1.SetToolTip(btnFilter, "Filter");
             btnFilter.UseVisualStyleBackColor = true;
@@ -90,13 +92,13 @@
             // 
             pagination.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             pagination.BackColor = System.Drawing.Color.WhiteSmoke;
-            pagination.Location = new System.Drawing.Point(47, 442);
+            pagination.Location = new System.Drawing.Point(47, 453);
             pagination.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             pagination.Name = "pagination";
             pagination.PageCount = 0L;
             pagination.PageNumber = 1L;
             pagination.PageSize = 10;
-            pagination.Size = new System.Drawing.Size(769, 37);
+            pagination.Size = new System.Drawing.Size(643, 26);
             pagination.TabIndex = 6;
             pagination.TotalCount = 0L;
             pagination.OnPageNumberChanged += pagination_OnPageNumberChanged;
@@ -135,15 +137,29 @@
             uc_QuickFilter.Size = new System.Drawing.Size(250, 30);
             uc_QuickFilter.TabIndex = 17;
             // 
+            // btnExport
+            // 
+            btnExport.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            btnExport.FlatAppearance.BorderSize = 0;
+            btnExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnExport.Location = new System.Drawing.Point(794, 454);
+            btnExport.Margin = new System.Windows.Forms.Padding(4);
+            btnExport.Name = "btnExport";
+            btnExport.Size = new System.Drawing.Size(22, 22);
+            btnExport.TabIndex = 19;
+            toolTip1.SetToolTip(btnExport, "Export");
+            btnExport.UseVisualStyleBackColor = true;
+            btnExport.Click += btnExport_Click;
+            // 
             // loadingPanel
             // 
             loadingPanel.BackColor = System.Drawing.SystemColors.Control;
             loadingPanel.BackgroundColor = System.Drawing.SystemColors.ControlDark;
             loadingPanel.CancellationTokenSource = null;
             loadingPanel.InterruptButtonVisible = false;
-            loadingPanel.Location = new System.Drawing.Point(4, 35);
+            loadingPanel.Location = new System.Drawing.Point(11, 34);
             loadingPanel.Name = "loadingPanel";
-            loadingPanel.Size = new System.Drawing.Size(812, 398);
+            loadingPanel.Size = new System.Drawing.Size(802, 409);
             loadingPanel.TabIndex = 18;
             // 
             // UC_DataViewer
@@ -151,6 +167,7 @@
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.WhiteSmoke;
+            Controls.Add(btnExport);
             Controls.Add(loadingPanel);
             Controls.Add(uc_QuickFilter);
             Controls.Add(btnFilter);
@@ -158,7 +175,7 @@
             Controls.Add(dgvData);
             Margin = new System.Windows.Forms.Padding(0);
             Name = "UC_DataViewer";
-            Size = new System.Drawing.Size(825, 479);
+            Size = new System.Drawing.Size(822, 479);
             ((System.ComponentModel.ISupportInitialize)dgvData).EndInit();
             cellContextMenu.ResumeLayout(false);
             ResumeLayout(false);
@@ -176,5 +193,6 @@
         private UC_QuickFilter uc_QuickFilter;
         private System.Windows.Forms.ToolTip toolTip1;
         private UC_LoadingPanel loadingPanel;
+        private System.Windows.Forms.Button btnExport;
     }
 }
