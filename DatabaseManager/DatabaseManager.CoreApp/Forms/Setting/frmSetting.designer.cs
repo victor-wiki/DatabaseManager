@@ -94,6 +94,9 @@
             btnSetDataTypeMapping = new System.Windows.Forms.Button();
             label10 = new System.Windows.Forms.Label();
             dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
+            tabCompare = new System.Windows.Forms.TabPage();
+            groupBox5 = new System.Windows.Forms.GroupBox();
+            chkIgnoreUnnamedTableChildDifference = new System.Windows.Forms.CheckBox();
             tabDatabase.SuspendLayout();
             groupBox4.SuspendLayout();
             groupBox3.SuspendLayout();
@@ -110,6 +113,8 @@
             tabConvert.SuspendLayout();
             panel_Convert.SuspendLayout();
             panel_Translate.SuspendLayout();
+            tabCompare.SuspendLayout();
+            groupBox5.SuspendLayout();
             SuspendLayout();
             // 
             // btnConfirm
@@ -520,6 +525,7 @@
             tabControl1.Controls.Add(tabDatabase);
             tabControl1.Controls.Add(tabApperance);
             tabControl1.Controls.Add(tabConvert);
+            tabControl1.Controls.Add(tabCompare);
             tabControl1.Location = new System.Drawing.Point(1, 3);
             tabControl1.Margin = new System.Windows.Forms.Padding(4);
             tabControl1.Name = "tabControl1";
@@ -821,6 +827,39 @@
             label10.TabIndex = 0;
             label10.Text = "Data type mappings:";
             // 
+            // tabCompare
+            // 
+            tabCompare.BackColor = System.Drawing.SystemColors.Control;
+            tabCompare.Controls.Add(groupBox5);
+            tabCompare.Location = new System.Drawing.Point(4, 26);
+            tabCompare.Name = "tabCompare";
+            tabCompare.Padding = new System.Windows.Forms.Padding(3);
+            tabCompare.Size = new System.Drawing.Size(705, 483);
+            tabCompare.TabIndex = 4;
+            tabCompare.Text = "Compare";
+            // 
+            // groupBox5
+            // 
+            groupBox5.Controls.Add(chkIgnoreUnnamedTableChildDifference);
+            groupBox5.Location = new System.Drawing.Point(7, 18);
+            groupBox5.Name = "groupBox5";
+            groupBox5.Size = new System.Drawing.Size(692, 106);
+            groupBox5.TabIndex = 0;
+            groupBox5.TabStop = false;
+            groupBox5.Text = "Schema Compare";
+            // 
+            // chkIgnoreUnnamedTableChildDifference
+            // 
+            chkIgnoreUnnamedTableChildDifference.AutoSize = true;
+            chkIgnoreUnnamedTableChildDifference.Checked = true;
+            chkIgnoreUnnamedTableChildDifference.CheckState = System.Windows.Forms.CheckState.Checked;
+            chkIgnoreUnnamedTableChildDifference.Location = new System.Drawing.Point(18, 32);
+            chkIgnoreUnnamedTableChildDifference.Name = "chkIgnoreUnnamedTableChildDifference";
+            chkIgnoreUnnamedTableChildDifference.Size = new System.Drawing.Size(414, 21);
+            chkIgnoreUnnamedTableChildDifference.TabIndex = 0;
+            chkIgnoreUnnamedTableChildDifference.Text = "Ignore unnamed difference for index, foreign key and primary key";
+            chkIgnoreUnnamedTableChildDifference.UseVisualStyleBackColor = true;
+            // 
             // frmSetting
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -860,6 +899,9 @@
             panel_Convert.PerformLayout();
             panel_Translate.ResumeLayout(false);
             panel_Translate.PerformLayout();
+            tabCompare.ResumeLayout(false);
+            groupBox5.ResumeLayout(false);
+            groupBox5.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -929,5 +971,8 @@
         private System.Windows.Forms.CheckBox chkShowCurrentColumnContentMaxLength;
         private System.Windows.Forms.CheckBox chkAutoMapSchema;
         private System.Windows.Forms.CheckBox chkRememberLayout;
+        private System.Windows.Forms.TabPage tabCompare;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.CheckBox chkIgnoreUnnamedTableChildDifference;
     }
 }

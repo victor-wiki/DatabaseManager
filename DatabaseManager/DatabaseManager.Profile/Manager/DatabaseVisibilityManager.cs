@@ -22,7 +22,7 @@ namespace DatabaseManager.Profile.Manager
 
                     SqlBuilder sb = new SqlBuilder();
 
-                    sb.Append(@"SELECT Id,AccountId,Database,Visible FROM DatabaseVisibility
+                    sb.Append(@"SELECT Id,AccountId,Database,Hidden FROM DatabaseVisibility
                                 WHERE AccountId=@AccountId");
 
                     Dictionary<string, object> para = new Dictionary<string, object>();
@@ -57,7 +57,7 @@ namespace DatabaseManager.Profile.Manager
                 var oldRecords = await GetVisibilities(accountId);
 
                 List<DatabaseVisibilityInfo> inserts = new List<DatabaseVisibilityInfo>();
-                List<DatabaseVisibilityInfo> updates = new List<DatabaseVisibilityInfo>();           
+                List<DatabaseVisibilityInfo> deletes = new List<DatabaseVisibilityInfo>();           
 
                 foreach (var oldRecord in oldRecords)
                 {
@@ -65,9 +65,9 @@ namespace DatabaseManager.Profile.Manager
 
                     if (record != null)
                     {
-                        if (record.Visible != oldRecord.Visible)
+                        if (record.Hidden != oldRecord.Hidden)
                         {
-                            updates.Add(record);
+                            deletes.Add(record);
                         }
                     }                    
                 }
@@ -86,30 +86,30 @@ namespace DatabaseManager.Profile.Manager
 
                     var trans = await connection.BeginTransactionAsync();
         
-                    SqlBuilder sbUpdate = new SqlBuilder();
+                    SqlBuilder sbDelete = new SqlBuilder();
                     SqlBuilder sbInsert = new SqlBuilder();                   
 
-                    if (updates.Count > 0)
+                    if (deletes.Count > 0)
                     {
-                        var visibleIds = updates.Where(item => item.Visible).Select(item => item.Id);
-                        var invisibleIds = updates.Where(item => !item.Visible).Select(item => item.Id);
+                        var visibleIds = deletes.Where(item => !item.Hidden).Select(item => item.Id);                       
 
                         string strVisibleIds = string.Join(",", visibleIds.Select(item => $"'{item}'"));
-                        string strInvisibleIds = string.Join(",", invisibleIds.Select(item => $"'{item}'"));
 
-                        sbUpdate.Append($"UPDATE DatabaseVisibility SET Visible=1 WHERE Id IN({strVisibleIds});");
-                        sbUpdate.Append($"UPDATE DatabaseVisibility SET Visible=0 WHERE Id IN({strInvisibleIds})");
+                        if(!string.IsNullOrEmpty(strVisibleIds))
+                        {
+                            sbDelete.Append($"DELETE FROM DatabaseVisibility WHERE Id IN({strVisibleIds});");
+                        }                      
                     }
 
                     if (inserts.Count > 0)
                     {
-                        sbInsert.Append($"INSERT INTO DatabaseVisibility(Id,AccountId,Database,Visible) VALUES");
+                        sbInsert.Append($"INSERT INTO DatabaseVisibility(Id,AccountId,Database,Hidden) VALUES");
 
                         int i = 0;
 
                         foreach (var insert in inserts)
                         {
-                            sbInsert.Append($"('{insert.Id}','{insert.AccountId}','{insert.Database}',{insert.Visible}){(i < inserts.Count - 1 ? "," : "")}");
+                            sbInsert.Append($"('{insert.Id}','{insert.AccountId}','{insert.Database}',{insert.Hidden}){(i < inserts.Count - 1 ? "," : "")}");
 
                             i++;
                         }
@@ -117,13 +117,16 @@ namespace DatabaseManager.Profile.Manager
 
                     int count = 0;                   
 
-                    if (updates.Count > 0)
+                    if (deletes.Count > 0)
                     {
-                        string[] commands = sbUpdate.Content.Split(';');
+                        string[] commands = sbDelete.Content.Split(';');
 
                         foreach (var command in commands)
                         {
-                            count += await ExecuteCommand(connection, command);
+                            if(!string.IsNullOrEmpty(command))
+                            {
+                                count += await ExecuteCommand(connection, command);
+                            }                            
                         }
                     }
 

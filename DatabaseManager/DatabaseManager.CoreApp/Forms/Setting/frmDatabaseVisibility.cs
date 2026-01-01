@@ -48,7 +48,7 @@ namespace DatabaseManager.Forms
         private void InitControls()
         {
             this.dgvDatabases.AutoGenerateColumns = false;
-            this.colVisible.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            this.colHidden.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
             this.LoadData();
         }
@@ -98,7 +98,7 @@ namespace DatabaseManager.Forms
 
             foreach (var visibility in visibilities)
             {
-                int rowIndex = this.dgvDatabases.Rows.Add(visibility.Id, visibility.Database, visibility.Visible);
+                int rowIndex = this.dgvDatabases.Rows.Add(visibility.Id, visibility.Database, visibility.Hidden);
 
                 DataGridViewRow row = this.dgvDatabases.Rows[rowIndex];
 
@@ -112,7 +112,7 @@ namespace DatabaseManager.Forms
             {
                 if (!visibilities.Any(item => item.Database.ToUpper() == dbName.ToUpper()))
                 {
-                    this.dgvDatabases.Rows.Add(Guid.NewGuid().ToString(), dbName, true);
+                    this.dgvDatabases.Rows.Add(Guid.NewGuid().ToString(), dbName, false);
                 }
             }
 
@@ -262,7 +262,7 @@ namespace DatabaseManager.Forms
                 string id = row.Cells[this.colId.Name].Value.ToString();
                 string database = row.Cells[this.colDatabase.Name].Value.ToString();
 
-                visibilities.Add(new DatabaseVisibilityInfo() { Id = id, AccountId = this.accountId, Database = database, Visible = visible });
+                visibilities.Add(new DatabaseVisibilityInfo() { Id = id, AccountId = this.accountId, Database = database, Hidden = !visible });
             }
 
             bool success = await DatabaseVisibilityManager.Save(this.accountId, visibilities);

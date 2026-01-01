@@ -2,6 +2,7 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
+using Org.BouncyCastle.Crypto.Generators;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -18,6 +19,7 @@ namespace DatabaseManager.Core
         private IObserver<FeedbackInfo> observer;
         private DbInterpreter dbInterpreter;
         private DbScriptGenerator scriptGenerator;
+        private bool ignoreForeignKeyConstraint;
 
         public TableManager(DbInterpreter dbInterpreter)
         {
@@ -55,61 +57,7 @@ namespace DatabaseManager.Core
                     return this.GetSaveResult("No changes need to save.", ContentSaveResultInfoType.Info);
                 }
 
-                bool ignoreForeignKeyConstraint = false;
-
-                #region handle sqlite
-                if (!isNew && this.dbInterpreter.DatabaseType == DatabaseType.Sqlite)
-                {
-                    bool needCreateNew = false;
-
-                    foreach (var script in scripts)
-                    {
-                        if (string.IsNullOrEmpty(script.Content))
-                        {
-                            Type type = script.GetType();
-                            string typeName = type.Name;
-
-                            if (typeName.StartsWith("CreateDbObjectScript") || typeName.StartsWith("AlterDbObjectScript") || typeName.StartsWith("DropDbObjectScript"))
-                            {
-                                needCreateNew = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (needCreateNew)
-                    {
-                        scripts.Clear();
-
-                        ignoreForeignKeyConstraint = true;
-
-                        scripts.Add(new Script("PRAGMA foreign_keys = 0;"));
-
-                        string tableName = schemaDesignerInfo.TableDesignerInfo.Name;
-                        string tempTableName = $"{tableName}___temp";
-
-                        string createTempTableScript = $"CREATE TABLE {tempTableName} AS SELECT * FROM {tableName};";
-
-                        scripts.Add(new Script(createTempTableScript));
-
-                        var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
-
-                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tableName }));                        
-
-                        result = await this.GenerateChangeScripts(schemaDesignerInfo, true);
-
-                        scripts.AddRange((result.ResultData as TableDesignerGenerateScriptsData).Scripts);
-
-                        scripts.Add(new Script($"INSERT INTO {tableName} SELECT * FROM {tempTableName};"));
-
-                        scripts.Add(scriptGenerator.DropTable(new Table() { Name = tempTableName }));
-
-                        scripts.Add(new Script("PRAGMA foreign_keys = 1;"));
-                    }
-                }
-                #endregion
-
-                ScriptRunner scriptRunner = new ScriptRunner() { IgnoreForeignKeyConstraint = ignoreForeignKeyConstraint };
+                ScriptRunner scriptRunner = new ScriptRunner() { IgnoreForeignKeyConstraint = this.ignoreForeignKeyConstraint };
 
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -127,8 +75,10 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { IsOK = true, ResultData = table };
         }
 
-        public async Task<ContentSaveResult> GenerateChangeScripts(SchemaDesignerInfo schemaDesignerInfo, bool isNew, string trueTableName = null)
+        public async Task<ContentSaveResult> GenerateChangeScripts(SchemaDesignerInfo schemaDesignerInfo, bool isNew, bool skipCheck = false)
         {
+            this.ignoreForeignKeyConstraint = false;
+
             string validateMsg;
 
             Table table = null;
@@ -144,7 +94,7 @@ namespace DatabaseManager.Core
 
                 TableDesignerGenerateScriptsData scriptsData = new TableDesignerGenerateScriptsData();
 
-                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo, isNew, trueTableName);
+                SchemaInfo schemaInfo = this.GetSchemaInfo(schemaDesignerInfo, isNew);
 
                 table = schemaInfo.Tables.First();
 
@@ -232,7 +182,7 @@ namespace DatabaseManager.Core
                     {
                         if (!renamedColNames.Contains(oldColumn.Name) && !columnDesingerInfos.Any(item => item.Name == oldColumn.Name))
                         {
-                            scripts.Add(this.scriptGenerator.DropTableColumn(oldColumn));
+                            scripts.AddRange(await this.GetDropColumnScripts(oldColumn));
                         }
                     }
                     #endregion
@@ -241,7 +191,7 @@ namespace DatabaseManager.Core
                     TablePrimaryKey oldPrimaryKey = oldSchemaInfo.TablePrimaryKeys.FirstOrDefault();
                     TablePrimaryKey newPrimaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault();
 
-                    scripts.AddRange(this.GetPrimaryKeyAlterScripts(oldPrimaryKey, newPrimaryKey, schemaDesignerInfo.IgnoreTableIndex));
+                    scripts.AddRange(await this.GetPrimaryKeyAlterScripts(oldPrimaryKey, newPrimaryKey, schemaDesignerInfo.IgnoreTableIndex));
                     #endregion
 
                     #region Index
@@ -356,9 +306,46 @@ namespace DatabaseManager.Core
                     #endregion
                 }
 
+                #region handle sqlite
+                if (skipCheck == false && !isNew && this.dbInterpreter.DatabaseType == DatabaseType.Sqlite)
+                {
+                    bool needCreateNew = false;
+
+                    foreach (var script in scripts)
+                    {
+                        if (string.IsNullOrEmpty(script.Content))
+                        {
+                            Type type = script.GetType();
+                            string typeName = type.Name;
+
+                            if (typeName.StartsWith("CreateDbObjectScript") || typeName.StartsWith("AlterDbObjectScript") || typeName.StartsWith("DropDbObjectScript"))
+                            {
+                                needCreateNew = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (needCreateNew)
+                    {
+                        scripts.Clear();
+
+                        this.ignoreForeignKeyConstraint = true;
+
+                        string tableName = schemaDesignerInfo.TableDesignerInfo.Name;
+
+                        var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter) as SqliteScriptGenerator;
+
+                        var result = await this.GenerateChangeScripts(schemaDesignerInfo, true, true);
+
+                        scripts.AddRange(scriptGenerator.GenerateCloneTableScripts(tableName, (result.ResultData as TableDesignerGenerateScriptsData).Scripts));
+                    }
+                }
+                #endregion
+
                 scriptsData.Scripts.AddRange(scripts);
 
-                return new ContentSaveResult() { IsOK = true, ResultData = scriptsData };
+                return new ContentSaveResult() { IsOK = true, ResultData = scriptsData};
             }
             catch (Exception ex)
             {
@@ -444,6 +431,25 @@ namespace DatabaseManager.Core
             return scripts;
         }
 
+
+        public async Task<List<Script>> GetDropColumnScripts(TableColumn column)
+        {
+            List<Script> scripts = new List<Script>();
+
+            var foreignKeys = await this.dbInterpreter.GetTableForeignKeysAsync(new SchemaInfoFilter() { Schema = column.Schema, TableNames = [column.TableName] });
+
+            var foreignKey = foreignKeys.FirstOrDefault(item => item.Columns.Any(t => t.ColumnName == column.Name));
+
+            if (foreignKey != null)
+            {
+                scripts.Add(this.scriptGenerator.DropForeignKey(foreignKey));
+            }
+
+            scripts.Add(this.scriptGenerator.DropTableColumn(column));
+
+            return scripts;
+        }
+
         private bool IsDefinitionEquals(string definiton1, string defintion2)
         {
             return this.GetNoWhiteSpaceTrimedString(definiton1.ToUpper()) == this.GetNoWhiteSpaceTrimedString(defintion2.ToUpper());
@@ -454,33 +460,15 @@ namespace DatabaseManager.Core
             return value.Replace(" ", "").Trim();
         }
 
-        public List<Script> GetPrimaryKeyAlterScripts(TablePrimaryKey oldPrimaryKey, TablePrimaryKey newPrimaryKey, bool onlyCompareColumns)
+        public async Task<List<Script>> GetPrimaryKeyAlterScripts(TablePrimaryKey oldPrimaryKey, TablePrimaryKey newPrimaryKey, bool onlyCompareColumns)
         {
             List<Script> scripts = new List<Script>();
 
             bool primaryKeyChanged = !SchemaInfoHelper.IsPrimaryKeyEquals(oldPrimaryKey, newPrimaryKey, onlyCompareColumns, true);
 
-            Action alterPrimaryKey = () =>
-            {
-                if (oldPrimaryKey != null)
-                {
-                    scripts.Add(this.scriptGenerator.DropPrimaryKey(oldPrimaryKey));
-                }
-
-                if (newPrimaryKey != null)
-                {
-                    scripts.Add(this.scriptGenerator.AddPrimaryKey(newPrimaryKey));
-
-                    if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
-                    {
-                        this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
-                    }
-                }
-            };
-
             if (primaryKeyChanged)
             {
-                alterPrimaryKey();
+                await this.AlterPrimaryKey(oldPrimaryKey, newPrimaryKey, scripts);
             }
             else if (!ValueHelper.IsStringEquals(oldPrimaryKey?.Comment, newPrimaryKey?.Comment))
             {
@@ -490,11 +478,43 @@ namespace DatabaseManager.Core
                 }
                 else
                 {
-                    alterPrimaryKey();
+                    await this.AlterPrimaryKey(oldPrimaryKey, newPrimaryKey, scripts);
                 }
             }
 
             return scripts;
+        }
+
+        private async Task AlterPrimaryKey(TablePrimaryKey oldPrimaryKey, TablePrimaryKey newPrimaryKey, List<Script> scripts)
+        {
+            //drop foreign keys that refer to this table 
+            var foreignKeys = await this.dbInterpreter.GetTableForeignKeysAsync(new SchemaInfoFilter() { Schema = newPrimaryKey.Schema, TableNames = [newPrimaryKey.TableName] }, true);
+
+            foreach (var fk in foreignKeys)
+            {
+                scripts.Add(this.scriptGenerator.DropForeignKey(fk));
+            }
+
+            if (oldPrimaryKey != null)
+            {
+                scripts.Add(this.scriptGenerator.DropPrimaryKey(oldPrimaryKey));
+            }
+
+            if (newPrimaryKey != null)
+            {
+                scripts.Add(this.scriptGenerator.AddPrimaryKey(newPrimaryKey));
+
+                if (!string.IsNullOrEmpty(newPrimaryKey.Comment))
+                {
+                    this.SetTableChildComment(scripts, this.scriptGenerator, newPrimaryKey, true);
+                }
+            }
+
+            //restore foreign keys
+            foreach (var fk in foreignKeys)
+            {
+                scripts.Add(this.scriptGenerator.AddForeignKey(fk));
+            }
         }
 
         public List<Script> GetForeignKeyAlterScripts(TableForeignKey oldForeignKey, TableForeignKey newForeignKey)
@@ -605,7 +625,7 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { ResultData = message, InfoType = infoType };
         }
 
-        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, bool isNew, string trueTableName = null)
+        public SchemaInfo GetSchemaInfo(SchemaDesignerInfo schemaDesignerInfo, bool isNew)
         {
             SchemaInfo schemaInfo = new SchemaInfo();
 
@@ -631,7 +651,7 @@ namespace DatabaseManager.Core
                 {
                     if (primaryKey == null)
                     {
-                        string primaryKeyName = isNew ? IndexManager.GetPrimaryKeyDefaultName(trueTableName != null ? new Table() { Name = trueTableName } : table) : null;
+                        string primaryKeyName = isNew ? IndexManager.GetPrimaryKeyDefaultName(table) : null;
 
                         primaryKey = new TablePrimaryKey() { Schema = table.Schema, TableName = table.Name, Name = primaryKeyName };
                     }

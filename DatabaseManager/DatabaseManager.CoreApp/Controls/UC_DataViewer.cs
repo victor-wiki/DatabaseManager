@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using View = DatabaseInterpreter.Model.View;
@@ -30,6 +31,8 @@ namespace DatabaseManager.Controls
         private DbInterpreter dbInterpreter;
         private QueryConditionBuilder conditionBuilder;
         private QuickQueryConditionBuilder quickQueryConditionBuilder;
+        private CancellationTokenSource cancellationTokenSource;
+
         public IEnumerable<DataGridViewColumn> Columns => this.dgvData.Columns.Cast<DataGridViewColumn>();
         public QueryConditionBuilder ConditionBuilder => this.conditionBuilder;
         public DataFilterHandler OnDataFilter;
@@ -96,7 +99,13 @@ namespace DatabaseManager.Controls
                     isForView = true;
                 }
 
-                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNumber, conditionClause, isForView);
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                this.loadingPanel.CancellationTokenSource = this.cancellationTokenSource;
+
+                var token = this.cancellationTokenSource.Token;
+
+                (long Total, DataTable Data) result = await dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNumber, token, conditionClause, isForView);
 
                 this.Invoke(() =>
                 {

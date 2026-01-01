@@ -17,6 +17,7 @@ using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -37,6 +38,7 @@ namespace DatabaseManager.Controls
         private List<IndexColumn> pkColumns;
         private List<IndexColumn> uniqueIndexes;
         private const string GUID_ROW_NAME = "__row__guid__";
+        private CancellationTokenSource cancellationTokenSource;
 
         public IEnumerable<DataGridViewColumn> Columns => this.dgvData.Columns.Cast<DataGridViewColumn>();
         public QueryConditionBuilder ConditionBuilder => this.conditionBuilder;
@@ -119,9 +121,15 @@ namespace DatabaseManager.Controls
 
             try
             {
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                this.loadingPanel.CancellationTokenSource = this.cancellationTokenSource;
+
+                var token = this.cancellationTokenSource.Token;
+
                 this.loadingPanel.ShowLoading(this.dgvData);
 
-                (long Total, DataTable Data) result = await this.dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, conditionClause, false);
+                (long Total, DataTable Data) result = await this.dbInterpreter.GetPagedDataTableAsync(dbObject as Table, orderColumns, pageSize, pageNum, token, conditionClause, false);
 
                 this.Invoke(() =>
                 {

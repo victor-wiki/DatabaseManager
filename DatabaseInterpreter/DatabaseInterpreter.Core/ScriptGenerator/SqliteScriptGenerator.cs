@@ -134,7 +134,7 @@ namespace DatabaseInterpreter.Core
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
-            bool isUnique = index.Type == IndexType.Unique.ToString();
+            bool isUnique = index.IsUnique || index.Type == IndexType.Unique.ToString();
 
             string type = "";
 
@@ -168,6 +168,31 @@ namespace DatabaseInterpreter.Core
         public override Script AlterTableColumn(Table table, TableColumn newColumn, TableColumn oldColumn)
         {
             return new AlterDbObjectScript<TableColumn>("");
+        }
+
+        public List<Script> GenerateCloneTableScripts(string tableName, List<Script> createTableScrirpts)
+        {
+            List<Script> scripts = new List<Script>();
+
+            scripts.Add(new Script("PRAGMA foreign_keys = 0;"));
+
+            string tempTableName = $"{tableName}___temp";
+
+            string createTempTableScript = $"CREATE TABLE {tempTableName} AS SELECT * FROM {tableName};";
+
+            scripts.Add(new Script(createTempTableScript));
+
+            scripts.Add(this.DropTable(new Table() { Name = tableName }));
+
+            scripts.AddRange(createTableScrirpts);
+
+            scripts.Add(new Script($"INSERT INTO {tableName} SELECT * FROM {tempTableName};"));
+
+            scripts.Add(this.DropTable(new Table() { Name = tempTableName }));
+
+            scripts.Add(new Script("PRAGMA foreign_keys = 1;"));
+
+            return scripts;
         }
         #endregion
 
@@ -371,6 +396,6 @@ $@"CREATE TABLE{existsClause} {quotedTableName}(
         {
             return new DropDbObjectScript<Table>(this.GetDropSql(nameof(DatabaseObjectType.View), view));
         }
-        #endregion
+        #endregion        
     }
 }

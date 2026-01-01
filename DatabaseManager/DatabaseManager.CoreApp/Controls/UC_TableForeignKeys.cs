@@ -47,9 +47,15 @@ namespace DatabaseManager.Controls
                 if (this.colComment.Visible)
                 {
                     this.colComment.Visible = false;
-                    this.colKeyName.Width += 100;
-                    this.colColumns.Width += 100;
+                    this.colKeyName.Width += 150;
+                    this.colColumns.Width += 50;
                 }
+            }
+
+            if (this.DatabaseType == DatabaseType.Oracle)
+            {
+                this.colUpdateCascade.Visible = false;
+                this.colKeyName.Width += this.colUpdateCascade.Width;
             }
 
             List<Table> sortedTables = new List<Table>();
@@ -136,17 +142,17 @@ namespace DatabaseManager.Controls
 
                 string keyName = row.Cells[this.colKeyName.Name].Value?.ToString();
 
-                if (!string.IsNullOrEmpty(keyName))
+                //if (!string.IsNullOrEmpty(keyName))
                 {
                     TableForeignKeyDesignerInfo tag = row.Tag as TableForeignKeyDesignerInfo;
 
-                    if (tag != null)
+                    if (tag != null && tag.Columns != null && tag.Columns.Count > 0)
                     {
                         Table referenceTable = row.Cells[this.colReferenceTable.Name].Tag as Table;
 
                         key.OldName = tag?.OldName;
                         key.Name = keyName;
-                        key.Columns = tag?.Columns;
+                        key.Columns = tag.Columns;
                         key.ReferencedSchema = referenceTable.Schema;
                         key.ReferencedTableName = referenceTable.Name;
                         key.UpdateCascade = DataGridViewHelper.GetCellBoolValue(row, this.colUpdateCascade.Name);

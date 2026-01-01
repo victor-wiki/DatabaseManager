@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.3.0</Version>
-    <AssemblyVersion>2.3.0</AssemblyVersion>
-    <FileVersion>2.2.0</FileVersion>
-    <PackageReleaseNotes>Change method calling by change of DbConverter.</PackageReleaseNotes>
+    <Version>2.3.1</Version>
+    <AssemblyVersion>2.3.1</AssemblyVersion>
+    <FileVersion>2.2.1</FileVersion>
+    <PackageReleaseNotes>Use "Hidden" instead of "Visible" to store database visibility.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
 

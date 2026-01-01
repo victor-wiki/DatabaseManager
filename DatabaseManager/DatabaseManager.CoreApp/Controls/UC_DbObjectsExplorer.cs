@@ -121,7 +121,11 @@ namespace DatabaseManager.Controls
             if(databaseType == DatabaseType.Sqlite)
             {
                 this.SetComboxDropdownWidth(this.cboAccount);
-            }          
+            }
+            else
+            {
+                this.cboAccount.DropDownWidth = this.cboAccount.Width;
+            }
         }
 
         private void SetComboxDropdownWidth(ComboBox comboBox)

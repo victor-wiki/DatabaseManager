@@ -70,7 +70,7 @@ namespace DatabaseManager.Controls
 
             foreach (Database database in databases)
             {
-                if (visibilities.Any(item => item.Visible == false && item.Database.ToUpper() == database.Name.ToUpper()))
+                if (visibilities.Any(item => item.Hidden && item.Database.ToUpper() == database.Name.ToUpper()))
                 {
                     continue;
                 }
@@ -220,13 +220,13 @@ namespace DatabaseManager.Controls
             return node;
         }
 
-        private DbInterpreter GetDbInterpreter(string database, bool isSimpleMode = true)
+        private DbInterpreter GetDbInterpreter(string database, bool isSimpleMode = true, bool throwExceptionWhenErrorOccurs = false)
         {
             ConnectionInfo connectionInfo = this.GetConnectionInfo(database);
 
             DbInterpreterOption option = isSimpleMode ? simpleInterpreterOption : new DbInterpreterOption() { ObjectFetchMode = DatabaseObjectFetchMode.Details };
 
-            option.ThrowExceptionWhenErrorOccurs = false;
+            option.ThrowExceptionWhenErrorOccurs = throwExceptionWhenErrorOccurs;
 
             DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.databaseType, connectionInfo, option);
 
@@ -808,7 +808,7 @@ namespace DatabaseManager.Controls
             {
                 var dbInterpreter = this.GetDbInterpreter((this.GetSelectedNode().Tag as Database).Name, true);
 
-                frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.databaseType, dbInterpreter.SupportDbObjectType));
+                frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.databaseType, dbInterpreter.SupportDbObjectType, true));
 
                 if (selector.ShowDialog() == DialogResult.OK)
                 {
@@ -977,7 +977,7 @@ namespace DatabaseManager.Controls
             string database = this.GetDatabaseNode(node).Name;
             DatabaseObject dbObject = node.Tag as DatabaseObject;
 
-            DbInterpreter dbInterpreter = this.GetDbInterpreter(database);
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database, true, true);
             dbInterpreter.Subscribe(this);
 
             DbManager dbManager = new DbManager(dbInterpreter);
@@ -1001,7 +1001,7 @@ namespace DatabaseManager.Controls
             }
             else
             {
-                MessageBox.Show("Not drop the database object.");
+                //MessageBox.Show("Not drop the database object.");
             }
         }
 

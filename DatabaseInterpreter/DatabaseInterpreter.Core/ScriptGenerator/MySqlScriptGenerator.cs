@@ -200,17 +200,17 @@ namespace DatabaseInterpreter.Core
         public override Script AddIndex(TableIndex index)
         {
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
-            bool isUnique = index.Type == IndexType.FullText.ToString();
+            bool isUnique = index.IsUnique;
 
             string type = "";
 
-            if (index.Type == IndexType.Unique.ToString())
+            if (isUnique || index.Type == IndexType.Unique.ToString())
             {
                 type = "UNIQUE";
             }
-            else if (isUnique)
+            else if (index.Type != null && index.Type != nameof(IndexType.Normal))
             {
-                type = "FULLTEXT";
+                type = index.Type.ToUpper();
             }
 
             string indexName = index.Name;

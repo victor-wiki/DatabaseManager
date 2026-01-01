@@ -7,7 +7,6 @@ using DatabaseManager.Data;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;
 using FontAwesome.Sharp;
-using SqlAnalyser.Model;
 using SqlCodeEditor;
 using System;
 using System.Collections.Generic;
@@ -17,7 +16,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using System.Windows.Forms;
 
 namespace DatabaseManager.Controls
@@ -458,7 +456,31 @@ namespace DatabaseManager.Controls
 
         private void pagination_OnPageNumberChanged(long pageNumber)
         {
-            this.RunScripts(this.displayInfo, pageNumber);
+            if (this.selectScriptAnalyseResult != null && this.selectScriptAnalyseResult.SelectStatement != null)
+            {
+                this.pagination.TotalCount = this.pagination.TotalCount;
+
+                Task.Run(() => { this.LoadData(pageNumber); });
+            }
+            else
+            {
+                this.RunScripts(this.displayInfo, pageNumber);
+            }
+        }
+
+        private async void LoadData(long pageNumber)
+        {
+            this.loadingPanel.ShowLoading(this.resultGridView);
+
+            this.cancellationTokenSource = new CancellationTokenSource();
+
+            var token = this.cancellationTokenSource.Token;
+
+            DataTable dataTable = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = this.pagination.PageSize }, token);
+
+            this.resultGridView.LoadData(dataTable);
+
+            this.loadingPanel.HideLoading();
         }
 
         private void btnExport_Click(object sender, EventArgs e)
@@ -518,6 +540,10 @@ namespace DatabaseManager.Controls
                 long total = this.pagination.TotalCount;
                 int pageSize = this.pagination.PageSize;
 
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                var token = this.cancellationTokenSource.Token;
+
                 foreach (var pageNumber in pageNumbers)
                 {
                     long count = pageNumber == option.PageCount ? total : pageNumber * pageSize;                 
@@ -527,7 +553,7 @@ namespace DatabaseManager.Controls
                         this.exportDataForm.Feedback($"Reading data {count}/{total}...");
                     }
 
-                    var table = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = pageSize });
+                    var table = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = pageSize }, token);
 
                     dataTable.Merge(table);
                 }

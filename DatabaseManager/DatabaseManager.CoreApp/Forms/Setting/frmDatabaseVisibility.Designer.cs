@@ -30,9 +30,6 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDatabaseVisibility));
             dgvDatabases = new System.Windows.Forms.DataGridView();
-            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            colVisible = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             tsbInvisible = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -43,6 +40,9 @@
             tsbClear = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             tsbRefresh = new System.Windows.Forms.ToolStripButton();
+            colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colDatabase = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            colHidden = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvDatabases).BeginInit();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -52,7 +52,7 @@
             dgvDatabases.AllowUserToAddRows = false;
             dgvDatabases.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             dgvDatabases.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvDatabases.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { colId, colDatabase, colVisible });
+            dgvDatabases.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] { colId, colDatabase, colHidden });
             dgvDatabases.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             dgvDatabases.Location = new System.Drawing.Point(2, 33);
             dgvDatabases.Margin = new System.Windows.Forms.Padding(4);
@@ -64,28 +64,6 @@
             dgvDatabases.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             dgvDatabases.Size = new System.Drawing.Size(618, 428);
             dgvDatabases.TabIndex = 21;
-            // 
-            // colId
-            // 
-            colId.DataPropertyName = "Id";
-            colId.HeaderText = "Id";
-            colId.Name = "colId";
-            colId.ReadOnly = true;
-            colId.Visible = false;
-            // 
-            // colDatabase
-            // 
-            colDatabase.HeaderText = "Database";
-            colDatabase.Name = "colDatabase";
-            colDatabase.ReadOnly = true;
-            colDatabase.Width = 250;
-            // 
-            // colVisible
-            // 
-            colVisible.HeaderText = "Visible";
-            colVisible.Name = "colVisible";
-            colVisible.ReadOnly = true;
-            colVisible.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             // 
             // toolStrip1
             // 
@@ -105,7 +83,7 @@
             tsbInvisible.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsbInvisible.Name = "tsbInvisible";
             tsbInvisible.Size = new System.Drawing.Size(25, 25);
-            tsbInvisible.Text = "Add";
+            tsbInvisible.Text = "Set to invisible";
             tsbInvisible.Click += tsbInvisible_Click;
             // 
             // toolStripSeparator1
@@ -122,7 +100,7 @@
             tsbVisible.ImageTransparentColor = System.Drawing.Color.Magenta;
             tsbVisible.Name = "tsbVisible";
             tsbVisible.Size = new System.Drawing.Size(25, 25);
-            tsbVisible.Text = "Edit";
+            tsbVisible.Text = "Set to visible";
             tsbVisible.Click += tsbVisible_Click;
             // 
             // toolStripSeparator2
@@ -176,6 +154,28 @@
             tsbRefresh.Text = "Manage Prifiles";
             tsbRefresh.Click += tsbRefresh_Click;
             // 
+            // colId
+            // 
+            colId.DataPropertyName = "Id";
+            colId.HeaderText = "Id";
+            colId.Name = "colId";
+            colId.ReadOnly = true;
+            colId.Visible = false;
+            // 
+            // colDatabase
+            // 
+            colDatabase.HeaderText = "Database";
+            colDatabase.Name = "colDatabase";
+            colDatabase.ReadOnly = true;
+            colDatabase.Width = 250;
+            // 
+            // colHidden
+            // 
+            colHidden.HeaderText = "Hidden";
+            colHidden.Name = "colHidden";
+            colHidden.ReadOnly = true;
+            colHidden.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            // 
             // frmDatabaseVisibility
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -197,9 +197,6 @@
         #endregion
 
         private System.Windows.Forms.DataGridView dgvDatabases;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colDatabase;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn colVisible;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton tsbInvisible;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
@@ -210,5 +207,8 @@
         private System.Windows.Forms.ToolStripButton tsbClear;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripButton tsbRefresh;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colDatabase;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colHidden;
     }
 }

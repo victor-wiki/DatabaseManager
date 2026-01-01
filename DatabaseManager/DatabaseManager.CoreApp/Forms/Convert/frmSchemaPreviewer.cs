@@ -325,7 +325,7 @@ namespace DatabaseManager.Forms
             if (this.dgvColumn.CurrentCell != null)
             {
                 this.CheckCellChange(this.dgvColumn.CurrentCell);
-            }
+            }            
         }
 
         private void dgvColumn_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -504,6 +504,25 @@ namespace DatabaseManager.Forms
             var selectedCells = this.dgvColumn.SelectedCells;
             int selectedCellCount = selectedCells == null ? 0 : selectedCells.Count;
             this.tsmiCopy.Visible = selectedCellCount > 0;
+        }
+
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.OK;
+
+            this.Close();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show("Are you sure to cancel the task?", "Question", MessageBoxButtons.YesNo);
+
+            if(result == DialogResult.Yes)
+            {
+                this.DialogResult = DialogResult.Abort;
+
+                this.Close();
+            }
         }
     }
 }

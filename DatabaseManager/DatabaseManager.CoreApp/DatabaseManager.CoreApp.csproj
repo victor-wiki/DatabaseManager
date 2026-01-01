@@ -31,7 +31,7 @@
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
-    <PackageReference Include="SqlCodeEditor" Version="1.0.5" />
+    <PackageReference Include="SqlCodeEditor" Version="1.0.6" />
   </ItemGroup>
 
   <ItemGroup>

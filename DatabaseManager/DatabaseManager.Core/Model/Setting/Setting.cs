@@ -19,7 +19,8 @@ namespace DatabaseManager.Core.Model
         public bool NeedPreviewBeforeConvert { get; set; } = true;
         public bool ShowCurrentColumnContentMaxLength { get; set; } = true;
         public bool AutoMapSchemaIfSourceAndTargetIsSameDatabaseType { get; set; } = true;
-        public bool RememberApplicationLayoutInformation { get; set; }    
+        public bool RememberApplicationLayoutInformation { get; set; }
+        public bool IgnoreUnnamedTableChildDifference { get; set; } = true;
     }
 
     public class TextEditorOption

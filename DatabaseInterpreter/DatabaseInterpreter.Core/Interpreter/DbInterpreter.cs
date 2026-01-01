@@ -8,8 +8,8 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -656,7 +656,7 @@ namespace DatabaseInterpreter.Core
             return dbConnection.ExecuteReader(sql);
         }
 
-        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, bool ignoreSchema = false)
+        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, CancellationToken cancellationToken, bool ignoreSchema = false)
         {
             if (this.DatabaseType == DatabaseType.Oracle)
             {
@@ -673,7 +673,7 @@ namespace DatabaseInterpreter.Core
             cmd.CommandText = sql;
             cmd.CommandTimeout = Setting.CommandTimeout;
 
-            DbDataReader reader = await cmd.ExecuteReaderAsync();
+            DbDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
             DataTable table = new DataTable();
             table.CaseSensitive = true;
@@ -696,7 +696,17 @@ namespace DatabaseInterpreter.Core
             return table;
         }
 
+        public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, bool ignoreSchema = false)
+        {
+            return await this.GetDataTableAsync(dbConnection, sql, (new CancellationTokenSource()).Token, ignoreSchema);
+        }
+
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
+        {
+            return await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause);
+        }
+
+        public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "")
         {
             string quotedTableName = this.GetQuotedDbObjectNameWithSchema(table as DatabaseObject);
 
@@ -836,7 +846,7 @@ namespace DatabaseInterpreter.Core
 
             string pagedSql = this.GetSqlForPagination(quotedTableName, strColumnNames, orderColumns, whereClause, pageNumber, pageSize);
 
-            DataTable dt = await this.GetDataTableAsync(connection, pagedSql);
+            DataTable dt = await this.GetDataTableAsync(connection, pagedSql, cancellationToken);
 
             var dtColumns = dt.Columns.OfType<DataColumn>();
 
@@ -860,10 +870,20 @@ namespace DatabaseInterpreter.Core
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
         {
-            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, whereClause, isForView, columns);
+            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause, isForView, columns);
+        }
+
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
+        {
+            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, cancellationToken, whereClause, isForView, columns);
         }
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(DbConnection connection, Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
+        {
+            return await this.GetPagedDataTableAsync(connection, table, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause, isForView, columns);
+        }
+
+        public async Task<(long, DataTable)> GetPagedDataTableAsync(DbConnection connection, Table table, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
         {
             long total = await this.GetTableRecordCountAsync(connection, table, whereClause);
 
@@ -881,7 +901,7 @@ namespace DatabaseInterpreter.Core
                 columns = await this.GetTableColumnsAsync(connection, filter);
             }
 
-            DataTable dt = await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, whereClause);
+            DataTable dt = await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, cancellationToken, whereClause);
 
             return (total, dt);
         }

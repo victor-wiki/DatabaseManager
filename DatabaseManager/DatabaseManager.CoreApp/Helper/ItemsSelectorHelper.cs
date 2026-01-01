@@ -12,7 +12,7 @@ namespace DatabaseManager.Helper
 
     public class ItemsSelectorHelper
     {
-        public static List<CheckItemInfo> GetDatabaseObjectTypeItems(DatabaseType databaseType, DatabaseObjectType supportDatabaseObjectType = DatabaseObjectType.None)
+        public static List<CheckItemInfo> GetDatabaseObjectTypeItems(DatabaseType databaseType, DatabaseObjectType supportDatabaseObjectType = DatabaseObjectType.None, bool includeTrigger = false)
         {
             List<DatabaseObjectType> dbObjTypes = new List<DatabaseObjectType>()
             {
@@ -31,7 +31,7 @@ namespace DatabaseManager.Helper
             {
                 foreach (var dbObjType in dbObjTypes)
                 {
-                    if (dbObjType == DatabaseObjectType.Trigger || supportDatabaseObjectType.HasFlag(dbObjType))
+                    if ((includeTrigger && dbObjType == DatabaseObjectType.Trigger) || supportDatabaseObjectType.HasFlag(dbObjType))
                     {
                         checkItems.Add(new CheckItemInfo() { Name = ManagerUtil.GetPluralString(dbObjType.ToString()), Checked = true });
                     }

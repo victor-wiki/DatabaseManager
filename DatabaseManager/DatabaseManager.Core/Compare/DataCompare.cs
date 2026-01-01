@@ -53,7 +53,7 @@ namespace DatabaseManager.Core
 
             var allTables = sourceSchemaInfoWithAllTables.Tables;
 
-            var sortedTableNames = TableReferenceHelper.ResortTableNames(allTables.Select(item => item.Name).ToArray(), sourceSchemaInfoWithAllTables.TableForeignKeys);
+            var sortedTables = TableReferenceHelper.ResortTables(allTables, sourceSchemaInfoWithAllTables.TableForeignKeys);
 
             var tableNames = this.schemaInfo.Tables.Select(item => item.Name).ToArray();
 
@@ -63,7 +63,7 @@ namespace DatabaseManager.Core
             var sourceSchemaInfo = await this.sourceDbInterpreter.GetSchemaInfoAsync(sourceFilter);
             var targetSchemaInfo = await this.targetDbInterpreter.GetSchemaInfoAsync(targetFilter);
 
-            tableNames = sortedTableNames.Where(item => tableNames.Contains(item)).ToArray();
+            var tables = sortedTables.Where(item => tableNames.Contains(item.Name)).ToArray();
 
             using (var sourceConnection = this.sourceDbInterpreter.CreateConnection())
             {
@@ -129,8 +129,8 @@ namespace DatabaseManager.Core
                                 string sourcePrimaryKeySql = $"select {strColumnNames} from {this.sourceDbInterpreter.GetQuotedDbObjectNameWithSchema(sourceTable)} order by {orderColumns}";
                                 string targetPrimaryKeySql = $"select {strColumnNames} from {this.sourceDbInterpreter.GetQuotedDbObjectNameWithSchema(targetTable)} order by {orderColumns}";
 
-                                DataTable sourcePrimaryKeyDataTable = await this.sourceDbInterpreter.GetDataTableAsync(sourceConnection, sourcePrimaryKeySql);
-                                DataTable targetPrimaryKeyDataTable = await this.sourceDbInterpreter.GetDataTableAsync(targetConnnection, targetPrimaryKeySql);
+                                DataTable sourcePrimaryKeyDataTable = await this.sourceDbInterpreter.GetDataTableAsync(sourceConnection, sourcePrimaryKeySql, cancellationToken);
+                                DataTable targetPrimaryKeyDataTable = await this.sourceDbInterpreter.GetDataTableAsync(targetConnnection, targetPrimaryKeySql, cancellationToken);
 
                                 var groupedPrimaryKeyRows = this.GetGroupedDataRows(sourcePrimaryKeyDataTable.Rows.Cast<DataRow>().ToList(), targetPrimaryKeyDataTable.Rows.Cast<DataRow>().ToList());
 
@@ -181,9 +181,9 @@ namespace DatabaseManager.Core
 
                                         string whereCondition = GetKeyColumnWhereCondition(this.sourceDbInterpreter, keyRows, keyColumns);
 
-                                        DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, sourceTable, sameTableColumns, null, pageSize, 1, whereCondition);
+                                        DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, sourceTable, sameTableColumns, null, pageSize, 1, cancellationToken, whereCondition);
 
-                                        DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(targetConnnection, targetTable, sameTableColumns, null, pageSize, 1, whereCondition);
+                                        DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(targetConnnection, targetTable, sameTableColumns, null, pageSize, 1, cancellationToken, whereCondition);
 
                                         (List<DataRow> SameKeyRows, List<DataRow> DifferentKeyRows) res = this.CompareDataTable(sourceDataTable, targetDataTable, keyRows, sameTableColumns, keyColumns);
 
@@ -584,7 +584,7 @@ namespace DatabaseManager.Core
                 {
                     sb.AppendLine();
 
-                    sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize));
+                    sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize, cancellationToken));
                 }
 
                 if (detail.OnlyInSourceCount > 0)
@@ -619,7 +619,7 @@ namespace DatabaseManager.Core
 
                             string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
 
-                            DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SourceTableColumns, null, pageSize, 1, whereCondition);
+                            DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SourceTableColumns, null, pageSize, 1, cancellationToken, whereCondition);
 
                             var rows = this.sourceDbInterpreter.ConvertDataTableToDictionaryList(sourceDataTable, detail.TargetTableColumns);
 
@@ -661,7 +661,7 @@ namespace DatabaseManager.Core
             return sb.ToString().Trim();
         }
 
-        private async Task<string> GetDifferentUpdateSql(DataCompareResultDetail detail, int pageSize)
+        private async Task<string> GetDifferentUpdateSql(DataCompareResultDetail detail, int pageSize, CancellationToken cancellationToken)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -684,8 +684,8 @@ namespace DatabaseManager.Core
 
                         string orderColumns = this.sourceDbInterpreter.GetQuotedColumnNames(detail.KeyColumns);
 
-                        DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
-                        DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(targetConnection, detail.TargetTable, detail.SameTableColumns, orderColumns, pageSize, 1, whereCondition);
+                        DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SameTableColumns, orderColumns, pageSize, 1, cancellationToken, whereCondition);
+                        DataTable targetDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(targetConnection, detail.TargetTable, detail.SameTableColumns, orderColumns, pageSize, 1, cancellationToken, whereCondition);
 
                         for (int i = 0; i < sourceDataTable.Rows.Count; i++)
                         {
@@ -780,7 +780,7 @@ namespace DatabaseManager.Core
 
                             if (detail.DifferentCount > 0)
                             {
-                                sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize));
+                                sb.AppendLine(await this.GetDifferentUpdateSql(detail, pageSize, cancellationToken));
                             }
 
                             string sql = sb.ToString().Trim();
@@ -813,7 +813,7 @@ namespace DatabaseManager.Core
 
                                     string whereCondition = DataCompare.GetKeyColumnWhereCondition(this.sourceDbInterpreter, pagedKeyRows, detail.KeyColumns);
 
-                                    DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SameTableColumns, null, pageSize, 1, whereCondition);
+                                    DataTable sourceDataTable = await this.sourceDbInterpreter.GetPagedDataTableAsync(sourceConnection, detail.SourceTable, detail.SameTableColumns, null, pageSize, 1, cancellationToken, whereCondition);
 
                                     count += sourceDataTable.Rows.Count;
 

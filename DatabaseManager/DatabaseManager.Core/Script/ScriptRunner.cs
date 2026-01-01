@@ -90,7 +90,7 @@ namespace DatabaseManager.Core
                             result.TotalCount = totalCount;
                         }
 
-                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, true);
+                        DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, cancellationToken, true);
 
                         result.Result = dataTable;
                     }
@@ -570,7 +570,7 @@ namespace DatabaseManager.Core
             return analyseResult;
         }
 
-        public static async Task<DataTable> GetPagedDatatable(DbInterpreter dbInterpreter, SelectScriptAnalyseResult selectScriptAnalyseResult, PaginationInfo paginationInfo)
+        public static async Task<DataTable> GetPagedDatatable(DbInterpreter dbInterpreter, SelectScriptAnalyseResult selectScriptAnalyseResult, PaginationInfo paginationInfo, CancellationToken cancellationToken)
         {
             SelectStatement selectStatement = selectScriptAnalyseResult.SelectStatement;
 
@@ -604,7 +604,7 @@ namespace DatabaseManager.Core
 
             using (DbConnection dbConnection = dbInterpreter.CreateConnection())
             {
-                DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, sql, true);
+                DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, sql, cancellationToken, true);
 
                 return dataTable;
             }

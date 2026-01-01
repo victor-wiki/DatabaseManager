@@ -250,7 +250,7 @@
             loadingPanel.BackColor = System.Drawing.SystemColors.Control;
             loadingPanel.BackgroundColor = System.Drawing.SystemColors.ControlDark;
             loadingPanel.CancellationTokenSource = null;
-            loadingPanel.InterruptButtonVisible = false;
+            loadingPanel.InterruptButtonVisible = true;
             loadingPanel.Location = new System.Drawing.Point(6, 44);
             loadingPanel.Name = "loadingPanel";
             loadingPanel.Size = new System.Drawing.Size(813, 401);

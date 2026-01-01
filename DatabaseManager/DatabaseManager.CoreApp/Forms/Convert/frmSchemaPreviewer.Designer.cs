@@ -32,11 +32,8 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             splitter1 = new System.Windows.Forms.Splitter();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
-            tvDbObjects = new Controls.UC_DbObjectsSimpleTree();
+            tvDbObjects = new DatabaseManager.Controls.UC_DbObjectsSimpleTree();
             dgvColumn = new System.Windows.Forms.DataGridView();
-            cellContextMenu = new System.Windows.Forms.ContextMenuStrip(components);
-            tsmiSetCellValueToNull = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
             colColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colTargetDataType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colLength = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -44,6 +41,11 @@
             colScale = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colDefaultValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colCurrentColumnContentMaxLength = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            cellContextMenu = new System.Windows.Forms.ContextMenuStrip(components);
+            tsmiSetCellValueToNull = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
+            btnConfirm = new System.Windows.Forms.Button();
+            btnAbort = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -62,7 +64,7 @@
             // 
             // splitContainer1
             // 
-            splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             splitContainer1.Location = new System.Drawing.Point(3, 0);
             splitContainer1.Name = "splitContainer1";
             // 
@@ -73,7 +75,7 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(dgvColumn);
-            splitContainer1.Size = new System.Drawing.Size(1331, 513);
+            splitContainer1.Size = new System.Drawing.Size(1331, 472);
             splitContainer1.SplitterDistance = 280;
             splitContainer1.TabIndex = 1;
             // 
@@ -84,7 +86,7 @@
             tvDbObjects.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             tvDbObjects.Name = "tvDbObjects";
             tvDbObjects.ShowCheckBox = true;
-            tvDbObjects.Size = new System.Drawing.Size(280, 513);
+            tvDbObjects.Size = new System.Drawing.Size(280, 472);
             tvDbObjects.TabIndex = 39;
             // 
             // dgvColumn
@@ -105,33 +107,13 @@
             dgvColumn.Name = "dgvColumn";
             dgvColumn.RowHeadersVisible = false;
             dgvColumn.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            dgvColumn.Size = new System.Drawing.Size(1047, 513);
+            dgvColumn.Size = new System.Drawing.Size(1047, 472);
             dgvColumn.TabIndex = 56;
             dgvColumn.CellMouseClick += dgvColumn_CellMouseClick;
             dgvColumn.CellValidating += dgvColumn_CellValidating;
             dgvColumn.ColumnHeaderMouseClick += dgvColumn_ColumnHeaderMouseClick;
             dgvColumn.DataError += dgvColumn_DataError;
             dgvColumn.KeyUp += dgvColumn_KeyUp;
-            // 
-            // cellContextMenu
-            // 
-            cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSetCellValueToNull, tsmiCopy });
-            cellContextMenu.Name = "cellContextMenu";
-            cellContextMenu.Size = new System.Drawing.Size(156, 48);
-            // 
-            // tsmiSetCellValueToNull
-            // 
-            tsmiSetCellValueToNull.Name = "tsmiSetCellValueToNull";
-            tsmiSetCellValueToNull.Size = new System.Drawing.Size(155, 22);
-            tsmiSetCellValueToNull.Text = "Set NULL";
-            tsmiSetCellValueToNull.Click += tsmiSetCellValueToNull_Click;
-            // 
-            // tsmiCopy
-            // 
-            tsmiCopy.Name = "tsmiCopy";
-            tsmiCopy.Size = new System.Drawing.Size(155, 22);
-            tsmiCopy.Text = "Copy Content";
-            tsmiCopy.Click += tsmiCopy_Click;
             // 
             // colColumnName
             // 
@@ -184,11 +166,55 @@
             colCurrentColumnContentMaxLength.ReadOnly = true;
             colCurrentColumnContentMaxLength.Width = 200;
             // 
+            // cellContextMenu
+            // 
+            cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSetCellValueToNull, tsmiCopy });
+            cellContextMenu.Name = "cellContextMenu";
+            cellContextMenu.Size = new System.Drawing.Size(156, 48);
+            // 
+            // tsmiSetCellValueToNull
+            // 
+            tsmiSetCellValueToNull.Name = "tsmiSetCellValueToNull";
+            tsmiSetCellValueToNull.Size = new System.Drawing.Size(155, 22);
+            tsmiSetCellValueToNull.Text = "Set NULL";
+            tsmiSetCellValueToNull.Click += tsmiSetCellValueToNull_Click;
+            // 
+            // tsmiCopy
+            // 
+            tsmiCopy.Name = "tsmiCopy";
+            tsmiCopy.Size = new System.Drawing.Size(155, 22);
+            tsmiCopy.Text = "Copy Content";
+            tsmiCopy.Click += tsmiCopy_Click;
+            // 
+            // btnConfirm
+            // 
+            btnConfirm.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btnConfirm.Location = new System.Drawing.Point(647, 482);
+            btnConfirm.Name = "btnConfirm";
+            btnConfirm.Size = new System.Drawing.Size(75, 23);
+            btnConfirm.TabIndex = 2;
+            btnConfirm.Text = "Confirm";
+            btnConfirm.UseVisualStyleBackColor = true;
+            btnConfirm.Click += btnConfirm_Click;
+            // 
+            // btnAbort
+            // 
+            btnAbort.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            btnAbort.Location = new System.Drawing.Point(743, 482);
+            btnAbort.Name = "btnAbort";
+            btnAbort.Size = new System.Drawing.Size(75, 23);
+            btnAbort.TabIndex = 3;
+            btnAbort.Text = "Abort";
+            btnAbort.UseVisualStyleBackColor = true;
+            btnAbort.Click += btnCancel_Click;
+            // 
             // frmSchemaPreviewer
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(1334, 513);
+            Controls.Add(btnAbort);
+            Controls.Add(btnConfirm);
             Controls.Add(splitContainer1);
             Controls.Add(splitter1);
             Name = "frmSchemaPreviewer";
@@ -221,5 +247,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colScale;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDefaultValue;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCurrentColumnContentMaxLength;
+        private System.Windows.Forms.Button btnConfirm;
+        private System.Windows.Forms.Button btnAbort;
     }
 }

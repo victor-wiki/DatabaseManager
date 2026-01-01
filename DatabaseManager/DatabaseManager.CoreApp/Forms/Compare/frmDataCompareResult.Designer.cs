@@ -103,6 +103,7 @@ namespace DatabaseManager.Forms.Compare
             tlvDifferences.AllColumns.Add(colIdenticalCount);
             tlvDifferences.BackColor = System.Drawing.SystemColors.Window;
             tlvDifferences.CellEditUseWholeCell = false;
+            tlvDifferences.CheckBoxes = true;
             tlvDifferences.Columns.AddRange(new ColumnHeader[] { colType, colSourceRecordCount, colTargetRecordCount, colDifferentCount, colOnlyInSourceCount, colOnlyInTargetCount, colIdenticalCount });
             tlvDifferences.Dock = DockStyle.Fill;
             tlvDifferences.FullRowSelect = true;

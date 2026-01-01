@@ -43,9 +43,6 @@ namespace DatabaseManager.Forms
             splitContainer2 = new System.Windows.Forms.SplitContainer();
             txtSource = new SqlCodeEditor.TextEditorControlEx();
             txtTarget = new SqlCodeEditor.TextEditorControlEx();
-            btnSync = new System.Windows.Forms.Button();
-            btnClose = new System.Windows.Forms.Button();
-            btnGenerate = new System.Windows.Forms.Button();
             imageList2 = new System.Windows.Forms.ImageList(components);
             txtMessage = new System.Windows.Forms.TextBox();
             contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(components);
@@ -56,6 +53,12 @@ namespace DatabaseManager.Forms
             targetDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             sourceDbProfile = new DatabaseManager.Controls.UC_DbConnectionProfile();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            tsbGenerateScript = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            tsbSynchronize = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            tsbCancel = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -66,13 +69,14 @@ namespace DatabaseManager.Forms
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
             contextMenuStrip1.SuspendLayout();
+            toolStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // btnCompare
             // 
             btnCompare.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             btnCompare.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.5F);
-            btnCompare.Location = new System.Drawing.Point(739, 7);
+            btnCompare.Location = new System.Drawing.Point(739, 34);
             btnCompare.Margin = new System.Windows.Forms.Padding(4);
             btnCompare.Name = "btnCompare";
             btnCompare.Size = new System.Drawing.Size(83, 55);
@@ -84,7 +88,7 @@ namespace DatabaseManager.Forms
             // splitContainer1
             // 
             splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            splitContainer1.Location = new System.Drawing.Point(5, 70);
+            splitContainer1.Location = new System.Drawing.Point(0, 97);
             splitContainer1.Margin = new System.Windows.Forms.Padding(4);
             splitContainer1.Name = "splitContainer1";
             splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -96,8 +100,8 @@ namespace DatabaseManager.Forms
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(splitContainer2);
-            splitContainer1.Size = new System.Drawing.Size(853, 490);
-            splitContainer1.SplitterDistance = 302;
+            splitContainer1.Size = new System.Drawing.Size(864, 504);
+            splitContainer1.SplitterDistance = 310;
             splitContainer1.SplitterWidth = 3;
             splitContainer1.TabIndex = 41;
             // 
@@ -124,7 +128,7 @@ namespace DatabaseManager.Forms
             tlvDifferences.ShowFilterMenuOnRightClick = false;
             tlvDifferences.ShowGroups = false;
             tlvDifferences.ShowImagesOnSubItems = true;
-            tlvDifferences.Size = new System.Drawing.Size(853, 302);
+            tlvDifferences.Size = new System.Drawing.Size(864, 310);
             tlvDifferences.SmallImageList = imageList1;
             tlvDifferences.TabIndex = 1;
             tlvDifferences.UseCompatibleStateImageBehavior = false;
@@ -196,8 +200,8 @@ namespace DatabaseManager.Forms
             // splitContainer2.Panel2
             // 
             splitContainer2.Panel2.Controls.Add(txtTarget);
-            splitContainer2.Size = new System.Drawing.Size(853, 185);
-            splitContainer2.SplitterDistance = 407;
+            splitContainer2.Size = new System.Drawing.Size(864, 191);
+            splitContainer2.SplitterDistance = 412;
             splitContainer2.SplitterWidth = 10;
             splitContainer2.TabIndex = 0;
             // 
@@ -210,7 +214,7 @@ namespace DatabaseManager.Forms
             txtSource.Location = new System.Drawing.Point(0, 0);
             txtSource.Name = "txtSource";
             txtSource.ShowVRuler = false;
-            txtSource.Size = new System.Drawing.Size(407, 185);
+            txtSource.Size = new System.Drawing.Size(412, 191);
             txtSource.SyntaxHighlighting = "\"\"";
             txtSource.TabIndex = 0;
             // 
@@ -223,46 +227,9 @@ namespace DatabaseManager.Forms
             txtTarget.Location = new System.Drawing.Point(0, 0);
             txtTarget.Name = "txtTarget";
             txtTarget.ShowVRuler = false;
-            txtTarget.Size = new System.Drawing.Size(436, 185);
+            txtTarget.Size = new System.Drawing.Size(442, 191);
             txtTarget.SyntaxHighlighting = "\"\"";
             txtTarget.TabIndex = 0;
-            // 
-            // btnSync
-            // 
-            btnSync.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            btnSync.Location = new System.Drawing.Point(674, 566);
-            btnSync.Margin = new System.Windows.Forms.Padding(4);
-            btnSync.Name = "btnSync";
-            btnSync.Size = new System.Drawing.Size(88, 33);
-            btnSync.TabIndex = 42;
-            btnSync.Text = "Synchroize";
-            btnSync.UseVisualStyleBackColor = true;
-            btnSync.Click += btnSync_Click;
-            // 
-            // btnClose
-            // 
-            btnClose.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            btnClose.Location = new System.Drawing.Point(770, 566);
-            btnClose.Margin = new System.Windows.Forms.Padding(4);
-            btnClose.Name = "btnClose";
-            btnClose.Size = new System.Drawing.Size(88, 33);
-            btnClose.TabIndex = 43;
-            btnClose.Text = "Close";
-            btnClose.UseVisualStyleBackColor = true;
-            btnClose.Click += btnClose_Click;
-            // 
-            // btnGenerate
-            // 
-            btnGenerate.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            btnGenerate.Location = new System.Drawing.Point(568, 566);
-            btnGenerate.Margin = new System.Windows.Forms.Padding(4);
-            btnGenerate.Name = "btnGenerate";
-            btnGenerate.Size = new System.Drawing.Size(98, 33);
-            btnGenerate.TabIndex = 44;
-            btnGenerate.Text = "Generate";
-            toolTip1.SetToolTip(btnGenerate, "Generate Changed Scripts");
-            btnGenerate.UseVisualStyleBackColor = true;
-            btnGenerate.Click += btnGenerate_Click;
             // 
             // imageList2
             // 
@@ -288,7 +255,7 @@ namespace DatabaseManager.Forms
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiExpandAll, tsmiCollapseAll, tsmiGenerateChangedScripts, tsmiFindText });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(229, 114);
+            contextMenuStrip1.Size = new System.Drawing.Size(229, 92);
             // 
             // tsmiExpandAll
             // 
@@ -326,7 +293,7 @@ namespace DatabaseManager.Forms
             targetDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             targetDbProfile.DatabaseType = DatabaseType.Unknown;
             targetDbProfile.EnableDatabaseType = true;
-            targetDbProfile.Location = new System.Drawing.Point(16, 36);
+            targetDbProfile.Location = new System.Drawing.Point(16, 63);
             targetDbProfile.Margin = new System.Windows.Forms.Padding(0);
             targetDbProfile.Name = "targetDbProfile";
             targetDbProfile.Size = new System.Drawing.Size(717, 26);
@@ -340,7 +307,7 @@ namespace DatabaseManager.Forms
             sourceDbProfile.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             sourceDbProfile.DatabaseType = DatabaseType.Unknown;
             sourceDbProfile.EnableDatabaseType = true;
-            sourceDbProfile.Location = new System.Drawing.Point(16, 5);
+            sourceDbProfile.Location = new System.Drawing.Point(16, 32);
             sourceDbProfile.Margin = new System.Windows.Forms.Padding(0);
             sourceDbProfile.Name = "sourceDbProfile";
             sourceDbProfile.Size = new System.Drawing.Size(717, 29);
@@ -349,15 +316,66 @@ namespace DatabaseManager.Forms
             sourceDbProfile.ProfileSelectedChanged += sourceDbProfile_OnSelectedChanged;
             sourceDbProfile.DatabaseTypeSelectedChanged += targetDbProfile_DatabaseTypeSelectedChanged;
             // 
+            // toolStrip1
+            // 
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsbGenerateScript, toolStripSeparator1, tsbSynchronize, toolStripSeparator2, tsbCancel });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Size = new System.Drawing.Size(864, 33);
+            toolStrip1.TabIndex = 46;
+            toolStrip1.Text = "toolStrip1";
+            // 
+            // tsbGenerateScript
+            // 
+            tsbGenerateScript.AutoSize = false;
+            tsbGenerateScript.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbGenerateScript.Image = Resources.DbScripts;
+            tsbGenerateScript.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbGenerateScript.Name = "tsbGenerateScript";
+            tsbGenerateScript.Size = new System.Drawing.Size(30, 30);
+            tsbGenerateScript.Text = "Generate scripts";
+            tsbGenerateScript.Click += tsbGenerateScript_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 33);
+            // 
+            // tsbSynchronize
+            // 
+            tsbSynchronize.AutoSize = false;
+            tsbSynchronize.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbSynchronize.Image = Resources.Run;
+            tsbSynchronize.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbSynchronize.Name = "tsbSynchronize";
+            tsbSynchronize.Size = new System.Drawing.Size(30, 30);
+            tsbSynchronize.Text = "Synchronize";
+            tsbSynchronize.Click += tsbSynchronize_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 33);
+            // 
+            // tsbCancel
+            // 
+            tsbCancel.AutoSize = false;
+            tsbCancel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            tsbCancel.Enabled = false;
+            tsbCancel.Image = (System.Drawing.Image)resources.GetObject("tsbCancel.Image");
+            tsbCancel.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tsbCancel.Name = "tsbCancel";
+            tsbCancel.Size = new System.Drawing.Size(30, 30);
+            tsbCancel.Text = "Cancel";
+            tsbCancel.Click += tsbCancel_Click;
+            // 
             // frmSchemaCompare
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(864, 603);
+            Controls.Add(toolStrip1);
             Controls.Add(txtMessage);
-            Controls.Add(btnGenerate);
-            Controls.Add(btnClose);
-            Controls.Add(btnSync);
             Controls.Add(splitContainer1);
             Controls.Add(targetDbProfile);
             Controls.Add(sourceDbProfile);
@@ -366,7 +384,7 @@ namespace DatabaseManager.Forms
             Margin = new System.Windows.Forms.Padding(4);
             Name = "frmSchemaCompare";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "Database Compare";
+            Text = "Schema Compare";
             Load += frmCompare_Load;
             SizeChanged += frmCompare_SizeChanged;
             splitContainer1.Panel1.ResumeLayout(false);
@@ -379,6 +397,8 @@ namespace DatabaseManager.Forms
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
             contextMenuStrip1.ResumeLayout(false);
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -395,9 +415,6 @@ namespace DatabaseManager.Forms
         private BrightIdeasSoftware.OLVColumn colTargetName;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private BrightIdeasSoftware.OLVColumn colChangeType;
-        private System.Windows.Forms.Button btnSync;
-        private System.Windows.Forms.Button btnClose;
-        private System.Windows.Forms.Button btnGenerate;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.ImageList imageList2;
         private System.Windows.Forms.TextBox txtMessage;
@@ -409,5 +426,11 @@ namespace DatabaseManager.Forms
         private System.Windows.Forms.ToolStripMenuItem tsmiFindText;
         private SqlCodeEditor.TextEditorControlEx txtSource;
         private SqlCodeEditor.TextEditorControlEx txtTarget;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripButton tsbGenerateScript;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripButton tsbSynchronize;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripButton tsbCancel;
     }
 }

@@ -335,6 +335,8 @@ namespace DatabaseManager.Forms
 
                     DbConvertResult result = await this.dbConverter.Convert(token, schemaInfo);
 
+                    bool doConvert = false;
+
                     if (option.NeedPreview)
                     {
                         var translatedSchemaInfo = result.TranslatedSchemaInfo;
@@ -351,54 +353,74 @@ namespace DatabaseManager.Forms
 
                         if (translatedSchemaInfo != null)
                         {
+                            bool needConvert = false;
+
                             this.Invoke(() =>
                             {
                                 frmSchemaPreviewer form = new frmSchemaPreviewer(result.TranslatedSchemaInfo, option.SchemaMappings, source.TableNameMappings, tableColumnContentMaxLengths);
 
-                                form.ShowDialog();
+                                DialogResult res = form.ShowDialog();
 
-                                translatedSchemaInfo = form.SchemaInfo;
+                                if (res != DialogResult.Abort)
+                                {
+                                    needConvert = true;
 
-                                option.NeedPreview = false;
+                                    translatedSchemaInfo = form.SchemaInfo;
+
+                                    option.NeedPreview = false;
+                                }
+
                             });
 
-                            result = await this.dbConverter.Convert(token, schemaInfo, null, translatedSchemaInfo);
+                            if (needConvert)
+                            {
+                                result = await this.dbConverter.Convert(token, schemaInfo, null, translatedSchemaInfo);
+
+                                doConvert = true;
+                            }
                         }
+                    }
+                    else
+                    {
+                        doConvert = true;
                     }
 
                     this.SetExecuteButtonEnabled(true);
 
-                    if (result.InfoType == DbConvertResultInfoType.Information)
+                    if(doConvert)
                     {
-                        if (this.dbConverter != null)
+                        if (result.InfoType == DbConvertResultInfoType.Information)
                         {
-                            if (!this.cancellationTokenSource.IsCancellationRequested)
+                            if (this.dbConverter != null)
                             {
-                                this.txtMessage.AppendText(Environment.NewLine + DONE);
+                                if (!this.cancellationTokenSource.IsCancellationRequested)
+                                {
+                                    this.txtMessage.AppendText(Environment.NewLine + DONE);
 
-                                MessageBox.Show(result.Message, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    MessageBox.Show(result.Message, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Task has been canceled.");
+                                }
+                            }
+                        }
+                        else if (result.InfoType == DbConvertResultInfoType.Warnning)
+                        {
+                            MessageBox.Show(result.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        else if (result.InfoType == DbConvertResultInfoType.Error)
+                        {
+                            if (result.ExceptionType != typeof(OperationCanceledException))
+                            {
+                                MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             }
                             else
                             {
-                                MessageBox.Show("Task has been canceled.");
+                                iscancelled = true;
                             }
                         }
-                    }
-                    else if (result.InfoType == DbConvertResultInfoType.Warnning)
-                    {
-                        MessageBox.Show(result.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                    else if (result.InfoType == DbConvertResultInfoType.Error)
-                    {
-                        if (result.ExceptionType != typeof(OperationCanceledException))
-                        {
-                            MessageBox.Show(result.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                        else
-                        {
-                            iscancelled = true;
-                        }
-                    }
+                    }                   
                 }
             }
             catch (TaskCanceledException tce)
@@ -554,7 +576,7 @@ namespace DatabaseManager.Forms
 
         private bool ConfirmCancel()
         {
-            if (MessageBox.Show("Are you sure to abandon current task?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show("Are you sure to cancel the task?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 return true;
             }

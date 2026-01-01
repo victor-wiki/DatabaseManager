@@ -31,7 +31,7 @@ namespace DatabaseInterpreter.Core
         public override string DefaultDataType => "varchar";
         public static readonly DateTime Timestamp_Max_Value = DateTime.Parse("2038-01-19 03:14:07");
         public override string DefaultSchema => this.ConnectionInfo.Database;
-        public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.FullText;
+        public override IndexType IndexType => IndexType.Primary | IndexType.Normal | IndexType.Unique |IndexType.FullText;
         public override DatabaseObjectType SupportDbObjectType => DatabaseObjectType.Table | DatabaseObjectType.View | DatabaseObjectType.Function | DatabaseObjectType.Procedure;
         public override bool SupportBulkCopy => true;
         public override bool SupportNchar => false;
@@ -349,24 +349,25 @@ namespace DatabaseInterpreter.Core
         private string GetSqlForTableIndexItems(SchemaInfoFilter filter = null, bool includePrimaryKey = false)
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
-            string commentColumn = isSimpleMode ? "" : ",`INDEX_COMMENT` AS `Comment`";
+            string commentColumn = isSimpleMode ? "" : ",S.`INDEX_COMMENT` AS `Comment`";
 
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT TABLE_SCHEMA AS `Schema`,
-	                    TABLE_NAME AS `TableName`,
-	                    INDEX_NAME AS `Name`,
-	                    COLUMN_NAME AS `ColumnName`,
-                        CASE INDEX_NAME WHEN 'PRIMARY' THEN 1 ELSE 0 END AS `IsPrimary`,
-	                    CASE  NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
-                        INDEX_TYPE AS `Type`,
-	                    SEQ_IN_INDEX  AS `Order`,    
+            sb.Append($@"SELECT S.TABLE_SCHEMA AS `Schema`,
+	                    S.TABLE_NAME AS `TableName`,
+	                    S.INDEX_NAME AS `Name`,
+	                    S.COLUMN_NAME AS `ColumnName`,
+                        CASE S.INDEX_NAME WHEN 'PRIMARY' THEN 1 ELSE 0 END AS `IsPrimary`,
+	                    CASE  S.NON_UNIQUE WHEN 1 THEN 0 ELSE 1 END AS `IsUnique`,
+                        S.INDEX_TYPE AS `Type`,
+	                    S.SEQ_IN_INDEX  AS `Order`,    
 	                    0 AS `IsDesc`{commentColumn}
-	                    FROM INFORMATION_SCHEMA.STATISTICS                           
-	                    WHERE INDEX_NAME NOT IN({(includePrimaryKey ? "" : "'PRIMARY',")} 'FOREIGN')                          
-	                    AND TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
+	                    FROM INFORMATION_SCHEMA.STATISTICS S       
+                        LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC ON S.TABLE_SCHEMA=TC.TABLE_SCHEMA AND S.TABLE_NAME=TC.TABLE_NAME AND S.INDEX_NAME=TC.CONSTRAINT_NAME
+                        WHERE TC.CONSTRAINT_TYPE NOT IN('PRIMARY KEY','FOREIGN KEY')	                                    
+	                    AND S.TABLE_SCHEMA = '{this.ConnectionInfo.Database}'");
 
-            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "S.TABLE_NAME"));
 
             return sb.Content;
         }
@@ -804,8 +805,6 @@ namespace DatabaseInterpreter.Core
         #region Sql Query Clause
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
-
-
             var startEndRowNumber = PaginationHelper.GetStartEndRowNumber(pageNumber, pageSize);
 
             var pagedSql = $@"SELECT {columnNames}

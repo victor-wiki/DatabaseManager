@@ -243,14 +243,14 @@ USING INDEX
 
             StringBuilder sb = new StringBuilder();
 
-            sb.AppendLine(
+            sb.Append(
 $@"
 ALTER TABLE {this.GetQuotedFullTableName(foreignKey)} ADD CONSTRAINT {fkName} FOREIGN KEY ({columnNames})
 REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColumnName})");
 
             if (foreignKey.DeleteCascade)
             {
-                sb.AppendLine("ON DELETE CASCADE");
+                sb.Append(" ON DELETE CASCADE");
             }
 
             sb.Append(this.scriptsDelimiter);

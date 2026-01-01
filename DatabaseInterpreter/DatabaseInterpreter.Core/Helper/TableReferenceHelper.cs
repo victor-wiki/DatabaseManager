@@ -6,95 +6,123 @@ namespace DatabaseInterpreter.Core
 {
     public class TableReferenceHelper
     {
-        public static IEnumerable<string> GetTopReferencedTableNames(IEnumerable<TableForeignKey> tableForeignKeys)
+        public static IEnumerable<(string Schema,string TableName)> GetTopReferencedTableInfos(IEnumerable<TableForeignKey> tableForeignKeys)
         {
-            IEnumerable<string> foreignTableNames = tableForeignKeys.Select(item => item.TableName);
+            IEnumerable<(string,string)> foreignTableInfos = tableForeignKeys.Select(item => (item.Schema, item.TableName)); 
 
-            IEnumerable<string> topReferencedTableNames = tableForeignKeys.Where(item => (!foreignTableNames.Contains(item.ReferencedTableName))
-                || (item.TableName == item.ReferencedTableName && tableForeignKeys.Any(t => t.Name != item.Name && item.TableName == t.ReferencedTableName)
-                && !tableForeignKeys.Any(t => t.Name != item.Name && item.ReferencedTableName == t.TableName)))
-               .Select(item => item.ReferencedTableName).Distinct().OrderBy(item => item);
+            IEnumerable<(string,string)> topReferencedTableInfos = tableForeignKeys.Where(item =>
+                (!foreignTableInfos.Contains((item.ReferencedSchema, item.ReferencedTableName)))
+                ||
+                ((item.Schema == item.ReferencedSchema && item.TableName == item.ReferencedTableName)
+                  && tableForeignKeys.Any(t => t.Name != item.Name && item.TableName == t.ReferencedTableName && item.Schema == t.ReferencedSchema)
+                  && !tableForeignKeys.Any(t => t.Name != item.Name && item.ReferencedTableName == t.TableName && item.ReferencedSchema == t.Schema)
+                ))
+               .Select(item =>(item.ReferencedSchema, item.ReferencedTableName)).Distinct();
 
-            return topReferencedTableNames;
+            return topReferencedTableInfos;
         }
 
 
-        public static List<string> ResortTableNames(string[] tableNames, List<TableForeignKey> tableForeignKeys)
+        public static List<Table> ResortTables(IEnumerable<Table> tables, List<TableForeignKey> tableForeignKeys)
         {
-            List<string> sortedTableNames = new List<string>();
-            IEnumerable<string> primaryTableNames = tableForeignKeys.Select(item => item.ReferencedTableName);
-            IEnumerable<string> foreignTableNames = tableForeignKeys.Select(item => item.TableName);
+            List<Table> sortedTables = new List<Table>();
 
-            IEnumerable<string> notReferencedTableNames = tableNames.Where(item => !primaryTableNames.Contains(item) && !foreignTableNames.Contains(item)).OrderBy(item => item);
-            
-            sortedTableNames.AddRange(notReferencedTableNames);
+            var hasNoRelationToForeignKeyTables = tables.Where(item=> !tableForeignKeys.Any(fk=> 
+            (fk.ReferencedTableName == item.Name && fk.ReferencedSchema == item.Schema) ||
+            (fk.TableName == item.Name && fk.Schema == item.Schema))
+            );     
 
-            IEnumerable<string> topReferencedTableNames = GetTopReferencedTableNames(tableForeignKeys);
+            sortedTables.AddRange(hasNoRelationToForeignKeyTables.OrderBy(item=>item.Name));
 
-            sortedTableNames.AddRange(topReferencedTableNames);
+            var topReferencedTableInfos = GetTopReferencedTableInfos(tableForeignKeys);          
 
-            List<string> childTableNames = new List<string>();
+            var topReferencedTables = tables.Where(item=> topReferencedTableInfos.Any(t=>t.Schema == item.Schema && t.TableName == item.Name)); 
 
-            foreach (string tableName in topReferencedTableNames)
+            sortedTables.AddRange(topReferencedTables.OrderBy(item=>item.Name));
+
+            var sortedTableInfos = sortedTables.Select(item => (item.Schema, item.Name));
+
+            List<(string,string)> childTableInfos = new List<(string,string)>();
+
+            foreach (var info in topReferencedTableInfos)
             {
-                childTableNames.AddRange(GetForeignTables(tableName, tableForeignKeys, sortedTableNames.Concat(childTableNames)));
+                childTableInfos.AddRange(GetForeignTables(info.Schema , info.TableName, tableForeignKeys, sortedTableInfos.Concat(childTableInfos)));
             }
 
-            List<string> sortedChildTableNames = GetSortedTableNames(childTableNames, tableForeignKeys);
+            List<(string Schema,string TableName)> sortedChildTableInfos = GetSortedTableInfos(childTableInfos, tableForeignKeys);
 
-            sortedChildTableNames = sortedChildTableNames.Distinct().ToList();
-
-            sortedTableNames.AddRange(sortedChildTableNames);
-
-            IEnumerable<string> selfReferencedTableNames = tableForeignKeys.Where(item => item.TableName == item.ReferencedTableName)
-                                                           .Select(item => item.TableName).OrderBy(item => item);
+            sortedChildTableInfos = sortedChildTableInfos.Distinct().ToList();      
             
-            sortedTableNames.AddRange(selfReferencedTableNames.Where(item => !sortedTableNames.Contains(item)));
+            foreach(var sortedChildTableInfo in sortedChildTableInfos)
+            {
+                Table table = tables.FirstOrDefault(item => item.Schema == sortedChildTableInfo.Schema && item.Name == sortedChildTableInfo.TableName);
 
-            return sortedTableNames;
+                if(table!=null)
+                {
+                    sortedTables.Add(table);
+                }
+            }            
+
+            IEnumerable<(string Schema, string TableName)> selfReferencedTableInfos = tableForeignKeys.Where(item => item.TableName == item.ReferencedTableName && item.Schema == item.ReferencedSchema)
+                                                                                      .Select(item => (item.Schema, item.TableName));
+
+            var selfReferencedTables = tables.Where(item => selfReferencedTableInfos.Any(t => t.Schema == item.Schema && t.TableName == item.Name) && !sortedTables.Contains(item)).OrderBy(item=>item.Name);
+
+            sortedTables.AddRange(selfReferencedTables);
+
+            int i = 1;
+
+            foreach(var table in sortedTables)
+            {
+                table.Order = i;
+
+                i++;
+            }
+
+            return sortedTables;
         }
 
-        private static List<string> GetSortedTableNames(List<string>tableNames, List<TableForeignKey> tableForeignKeys)
+        private static List<(string Schema,string TableName)> GetSortedTableInfos(List<(string,string)> tableInfos, List<TableForeignKey> tableForeignKeys)
         {
-            List<string> sortedTableNames = new List<string>();
+            List<(string,string)> sortedTableInfos = new List<(string,string)>();
 
-            for (int i = 0; i <= tableNames.Count - 1; i++)
+            for (int i = 0; i <= tableInfos.Count - 1; i++)
             {
-                string tableName = tableNames[i];
+                (string Schema, string TableName) tableInfo = tableInfos[i];
 
-                IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => item.TableName == tableName && item.TableName != item.ReferencedTableName);
-                               
+                IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => (item.TableName == tableInfo.TableName && item.Schema == tableInfo.Schema) && !(item.TableName == item.ReferencedTableName && item.Schema == item.ReferencedSchema));
+
                 if (foreignKeys.Any())
                 {
                     foreach (TableForeignKey foreignKey in foreignKeys)
                     {
-                        int referencedTableIndex = tableNames.IndexOf(foreignKey.ReferencedTableName);
+                        int referencedTableIndex = tableInfos.IndexOf((foreignKey.ReferencedSchema, foreignKey.ReferencedTableName));
 
                         if (referencedTableIndex >= 0 && referencedTableIndex > i)
                         {
-                            sortedTableNames.Add(foreignKey.ReferencedTableName);                          
+                            sortedTableInfos.Add((foreignKey.ReferencedSchema, foreignKey.ReferencedTableName));
                         }
                     }
                 }
 
-                sortedTableNames.Add(tableName);
+                sortedTableInfos.Add(tableInfo);
             }
 
-            sortedTableNames = sortedTableNames.Distinct().ToList();
+            sortedTableInfos = sortedTableInfos.Distinct().ToList();
 
             bool needSort = false;
 
-            for (int i = 0; i <= sortedTableNames.Count - 1; i++)
+            for (int i = 0; i <= sortedTableInfos.Count - 1; i++)
             {
-                string tableName = sortedTableNames[i];
+                (string Schema, string TableName) tableInfo = sortedTableInfos[i];
 
-                IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => item.TableName == tableName && item.TableName != item.ReferencedTableName);
-                               
+                IEnumerable<TableForeignKey> foreignKeys = tableForeignKeys.Where(item => item.TableName == tableInfo.TableName && item.Schema == tableInfo.Schema && !(item.TableName == item.ReferencedTableName && item.Schema == item.ReferencedSchema));
+
                 if (foreignKeys.Any())
                 {
                     foreach (TableForeignKey foreignKey in foreignKeys)
                     {
-                        int referencedTableIndex = sortedTableNames.IndexOf(foreignKey.ReferencedTableName);
+                        int referencedTableIndex = sortedTableInfos.IndexOf((foreignKey.ReferencedSchema, foreignKey.ReferencedTableName));
 
                         if (referencedTableIndex >= 0 && referencedTableIndex > i)
                         {
@@ -106,56 +134,36 @@ namespace DatabaseInterpreter.Core
 
                 if (needSort)
                 {
-                    return GetSortedTableNames(sortedTableNames, tableForeignKeys);
+                    return GetSortedTableInfos(sortedTableInfos, tableForeignKeys);
                 }
             }
 
-            return sortedTableNames;
+            return sortedTableInfos;
         }
 
-        private static List<string> GetForeignTables(string tableName, List<TableForeignKey> tableForeignKeys, IEnumerable<string> sortedTableNames)
+        private static List<(string Schema, string TableName)> GetForeignTables(string schema, string tableName, List<TableForeignKey> tableForeignKeys, IEnumerable<(string,string)> sortedTableInfos)
         {
-            List<string> tableNames = new List<string>();
+            List<(string, string)> tableInfos = new List<(string,string)>();
 
-            IEnumerable<string> foreignTableNames = tableForeignKeys.Where(item => item.ReferencedTableName == tableName && item.TableName != tableName && !sortedTableNames.Contains(item.TableName)).Select(item => item.TableName);
+            IEnumerable<(string Schema,string TableName)> foreignTableInfos = tableForeignKeys.Where(item => item.ReferencedTableName == tableName && !(item.TableName == tableName && item.Schema == schema) && !sortedTableInfos.Contains((item.Schema, item.TableName))).Select(item =>(item.Schema, item.TableName));
 
-            tableNames.AddRange(foreignTableNames);
+            tableInfos.AddRange(foreignTableInfos);
 
-            IEnumerable<string> childForeignTableNames = tableForeignKeys.Where(item => foreignTableNames.Contains(item.ReferencedTableName)).Select(item => item.TableName);
-            
+            IEnumerable<string> childForeignTableNames = tableForeignKeys.Where(item => foreignTableInfos.Contains((item.ReferencedSchema, item.ReferencedTableName))).Select(item => item.TableName);
+
             if (childForeignTableNames.Count() > 0)
             {
-                List<string> childNames = foreignTableNames.SelectMany(item => GetForeignTables(item, tableForeignKeys, sortedTableNames)).ToList();
-                tableNames.AddRange(childNames.Where(item => !tableNames.Contains(item)));
+                List<(string,string)> childInfos = foreignTableInfos.SelectMany(item => GetForeignTables(item.Schema, item.TableName, tableForeignKeys, sortedTableInfos)).ToList();
+                
+                tableInfos.AddRange(childInfos.Where(item => !tableInfos.Contains(item)));
             }
 
-            return tableNames;
+            return tableInfos;
         }
 
         public static bool IsSelfReference(string tableName, List<TableForeignKey> tableForeignKeys)
         {
             return tableForeignKeys.Any(item => item.TableName == tableName && item.TableName == item.ReferencedTableName);
-        }
-
-        public static List<Table> ResortTables(List<Table> tables, List<TableForeignKey> foreignKeys)
-        {
-            string[] tableNames = tables.Select(item => item.Name).ToArray();
-
-            List<string> sortedTableNames = TableReferenceHelper.ResortTableNames(tableNames, foreignKeys);
-
-            int i = 1;
-
-            foreach (string tableName in sortedTableNames)
-            {
-                Table table = tables.FirstOrDefault(item => item.Name == tableName);
-
-                if (table != null)
-                {
-                    table.Order = i++;
-                }
-            }
-
-            return tables.OrderBy(item => item.Order).ToList(); 
-        }
+        }       
     }
 }

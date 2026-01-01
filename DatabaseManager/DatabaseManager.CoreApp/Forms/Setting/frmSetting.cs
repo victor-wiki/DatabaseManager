@@ -69,6 +69,7 @@ namespace DatabaseManager.Forms
             this.chkShowCurrentColumnContentMaxLength.Checked = setting.ShowCurrentColumnContentMaxLength;
             this.chkAutoMapSchema.Checked = setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType;
             this.chkRememberLayout.Checked = setting.RememberApplicationLayoutInformation;
+            this.chkIgnoreUnnamedTableChildDifference.Checked = setting.IgnoreUnnamedTableChildDifference;
 
             if (string.IsNullOrEmpty(setting.CustomMappingFolder))
             {
@@ -126,6 +127,7 @@ namespace DatabaseManager.Forms
             setting.ShowCurrentColumnContentMaxLength = this.chkShowCurrentColumnContentMaxLength.Checked;
             setting.AutoMapSchemaIfSourceAndTargetIsSameDatabaseType = this.chkAutoMapSchema.Checked;
             setting.RememberApplicationLayoutInformation = this.chkRememberLayout.Checked;
+            setting.IgnoreUnnamedTableChildDifference = this.chkIgnoreUnnamedTableChildDifference.Checked;
 
             string password = this.txtLockPassword.Text.Trim();
 

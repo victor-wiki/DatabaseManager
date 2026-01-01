@@ -69,9 +69,9 @@ namespace DatabaseManager
 
             this.notReferencedTreeNodes = DbObjectsTreeHelper.CreateDbObjectNodes(notReferencedTables, showSchema);
 
-            IEnumerable<string> topReferencedTableNames = TableReferenceHelper.GetTopReferencedTableNames(foreignKeys);
+            IEnumerable<(string Schema, string TableName)> topReferencedTableInfos = TableReferenceHelper.GetTopReferencedTableInfos(foreignKeys);
 
-            var topReferencedTables = tables.Where(item => topReferencedTableNames.Any(t => t == item.Name));
+            var topReferencedTables = tables.Where(item => topReferencedTableInfos.Any(t => t.TableName == item.Name && t.Schema == item.Schema));
 
             var children = DbObjectsTreeHelper.CreateDbObjectNodes(topReferencedTables, showSchema).ToArray();
 

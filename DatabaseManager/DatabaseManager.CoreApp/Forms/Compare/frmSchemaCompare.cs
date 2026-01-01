@@ -8,6 +8,7 @@ using DatabaseManager.Helper;
 using DatabaseManager.Model;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using FontAwesome.Sharp;
 using SqlCodeEditor;
 using System;
 using System.Collections;
@@ -37,10 +38,13 @@ namespace DatabaseManager.Forms
         private DbScriptGenerator targetScriptGenerator;
         private SchemaInfo sourceSchemaInfo;
         private SchemaInfo targetSchemaInfo;
+        private CancellationTokenSource cancellationTokenSource;
 
         public frmSchemaCompare()
         {
             InitializeComponent();
+
+            this.InitControls();
         }
 
         public frmSchemaCompare(DatabaseType sourceDatabaseType, ConnectionInfo sourceConnectionInfo)
@@ -65,6 +69,8 @@ namespace DatabaseManager.Forms
 
         private void InitControls()
         {
+            this.tsbCancel.Image = IconImageHelper.GetImageByFontType(IconChar.Cancel, IconFont.Solid, Color.Red);
+
             this.SetSyntaxHighlighting(this.sourceDatabaseType);
 
             var option = SettingManager.Setting.TextEditorOption;
@@ -151,7 +157,9 @@ namespace DatabaseManager.Forms
         {
             var dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.targetDbProfile.DatabaseType, new ConnectionInfo(), new DbInterpreterOption());
 
-            List<CheckItemInfo> checkItems = ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType, dbInterpreter.SupportDbObjectType);
+            DatabaseObjectType dbObjectType = dbInterpreter.SupportDbObjectType;
+
+            List<CheckItemInfo> checkItems = ItemsSelectorHelper.GetDatabaseObjectTypeItems(this.sourceDbProfile.DatabaseType, dbObjectType);
 
             frmItemsSelector selector = new frmItemsSelector("Select Database Object Types", checkItems);
 
@@ -256,13 +264,21 @@ namespace DatabaseManager.Forms
                 this.sourceSchemaInfo = await this.sourceInterpreter.GetSchemaInfoAsync(sourceFilter);
                 this.targetSchemaInfo = await this.targetInterpreter.GetSchemaInfoAsync(targetFilter);
 
-                SchemaCompare dbCompare = new SchemaCompare(sourceSchemaInfo, targetSchemaInfo);
+                SchemaCompare dbCompare = new SchemaCompare(this.targetInterpreter.DatabaseType, sourceSchemaInfo, targetSchemaInfo);
 
                 this.Feedback("Begin to compare...");
 
-                this.differences = dbCompare.Compare();
+                var differences = dbCompare.Compare();
+
+                this.differences = differences;
 
                 this.Feedback("End compare.");
+
+                if (this.differences == null || this.differences.Count == 0)
+                {
+                    MessageBox.Show("No difference.");
+                    return;
+                }
 
                 this.LoadData();
             }
@@ -299,7 +315,7 @@ namespace DatabaseManager.Forms
 
             var roots = this.differences.Where(item => item.DatabaseObjectType == DatabaseObjectType.None);
 
-            this.tlvDifferences.Roots = roots;            
+            this.tlvDifferences.Roots = roots;
         }
 
         private IEnumerable<SchemaCompareDifference> GetChildren(SchemaCompareDifference difference)
@@ -465,9 +481,15 @@ namespace DatabaseManager.Forms
                 return;
             }
 
+            this.tsbCancel.Enabled = true;
+
             try
             {
                 DbSynchro dbSynchro = new DbSynchro(this.sourceInterpreter, this.targetInterpreter);
+
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                var token = this.cancellationTokenSource.Token;
 
                 if (!isSync)
                 {
@@ -477,7 +499,7 @@ namespace DatabaseManager.Forms
 
                     if (difference == null)
                     {
-                        scripts = await dbSynchro.GenerateChangedScripts(this.sourceSchemaInfo, targetDbSchema, this.differences);
+                        scripts = await dbSynchro.GenerateChangedScripts(this.sourceSchemaInfo, targetDbSchema, this.differences, token);
                     }
                     else if (difference.Source is ScriptDbObject || difference.Target is ScriptDbObject)
                     {
@@ -496,6 +518,8 @@ namespace DatabaseManager.Forms
                         scripts = dbSynchro.GenereateUserDefinedTypeChangedScripts(difference, targetDbSchema);
                     }
 
+                    this.tsbCancel.Enabled = false;
+
                     if (scripts != null)
                     {
                         string strScripts = string.Join(Environment.NewLine, scripts.Select(item => item.Content));
@@ -508,13 +532,13 @@ namespace DatabaseManager.Forms
                 }
                 else
                 {
-                    if (MessageBox.Show("Are you sure to sync changes to target database?", "Confirm", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
+                    if (MessageBox.Show("Are you sure to synchronize changes to target database?", "Confirm", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
                     {
-                        ContentSaveResult result = await dbSynchro.Synchroize(this.sourceSchemaInfo, this.GetTargetDbSchema(), this.differences);
+                        ContentSaveResult result = await dbSynchro.Synchroize(this.sourceSchemaInfo, this.GetTargetDbSchema(), this.differences, token);
 
                         if (result.IsOK)
                         {
-                            MessageBox.Show("sync successfully.");
+                            MessageBox.Show("Synchronize successfully.");
                         }
                         else
                         {
@@ -526,6 +550,10 @@ namespace DatabaseManager.Forms
             catch (Exception ex)
             {
                 this.HandleException(ex);
+            }
+            finally
+            {
+                this.tsbCancel.Enabled = false;
             }
         }
 
@@ -542,17 +570,19 @@ namespace DatabaseManager.Forms
 
         private string GetTargetDbSchema()
         {
-            if (this.targetInterpreter.DatabaseType == DatabaseType.Oracle)
+            DatabaseType databaseType = this.targetInterpreter.DatabaseType;
+
+            if (databaseType == DatabaseType.Oracle)
             {
                 return (this.targetInterpreter as OracleInterpreter).GetDbSchema();
             }
-            else if (this.targetInterpreter.DatabaseType == DatabaseType.MySql)
+            else if (databaseType == DatabaseType.MySql)
             {
                 return this.targetInterpreter.ConnectionInfo.Database;
             }
-            else if (this.targetInterpreter.DatabaseType == DatabaseType.SqlServer)
+            else if (databaseType == DatabaseType.SqlServer || databaseType == DatabaseType.Postgres)
             {
-                return "dbo";
+                return this.targetInterpreter.DefaultSchema;
             }
 
             return null;
@@ -594,7 +624,7 @@ namespace DatabaseManager.Forms
 
         private void ShowScripts(SchemaCompareDifference difference)
         {
-            if(difference.DifferenceType == SchemaCompareDifferenceType.None)
+            if (difference.DifferenceType == SchemaCompareDifferenceType.None)
             {
                 this.txtTarget.Text = this.txtSource.Text = string.Empty;
 
@@ -1026,14 +1056,32 @@ namespace DatabaseManager.Forms
                 {
                     this.targetDbProfile.DatabaseType = sourceDbType;
                 }
-            }
 
-            this.SetSyntaxHighlighting(sourceDbType);
+                this.SetSyntaxHighlighting(sourceDbType);
+            }
         }
 
         private void SetSyntaxHighlighting(DatabaseType databaseType)
         {
             this.txtSource.SyntaxHighlighting = this.txtTarget.SyntaxHighlighting = TextEditorHelper.GetHighlightingType(databaseType);
+        }
+
+        private async void tsbGenerateScript_Click(object sender, EventArgs e)
+        {
+            await this.GenerateOrSync(false);
+        }
+
+        private async void tsbSynchronize_Click(object sender, EventArgs e)
+        {
+            await this.GenerateOrSync(true);
+        }
+
+        private async void tsbCancel_Click(object sender, EventArgs e)
+        {
+            if (this.cancellationTokenSource != null)
+            {
+                await this.cancellationTokenSource.CancelAsync();
+            }
         }
     }
 }

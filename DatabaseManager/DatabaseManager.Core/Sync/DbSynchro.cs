@@ -5,6 +5,7 @@ using DatabaseManager.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace DatabaseManager.Core
         private DbInterpreter targetInterpreter;
         private DbScriptGenerator targetScriptGenerator;
         private TableManager tableManager;
+        private bool ignoreForeignKeyConstraint;
 
         public DbSynchro(DbInterpreter sourceInterpreter, DbInterpreter targetInterpreter)
         {
@@ -33,9 +35,11 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public async Task<ContentSaveResult> Synchroize(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences)
+        public async Task<ContentSaveResult> Synchroize(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences, CancellationToken cancellationToken)
         {
-            List<Script> scripts = await this.GenerateChangedScripts(schemaInfo, targetDbSchema, differences);
+            this.ignoreForeignKeyConstraint = false;
+
+            List<Script> scripts = await this.GenerateChangedScripts(schemaInfo, targetDbSchema, differences, cancellationToken);
 
             if (scripts == null || scripts.Count == 0)
             {
@@ -44,11 +48,9 @@ namespace DatabaseManager.Core
 
             try
             {
-                CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+                ScriptRunner scriptRunner = new ScriptRunner() { IgnoreForeignKeyConstraint = this.ignoreForeignKeyConstraint };
 
-                ScriptRunner scriptRunner = new ScriptRunner();
-
-                await scriptRunner.Run(this.targetInterpreter, scripts, cancellationTokenSource.Token);
+                await scriptRunner.Run(this.targetInterpreter, scripts, cancellationToken);
 
                 return new ContentSaveResult() { IsOK = true };
             }
@@ -67,13 +69,18 @@ namespace DatabaseManager.Core
             return new ContentSaveResult() { ResultData = message };
         }
 
-        public async Task<List<Script>> GenerateChangedScripts(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences)
+        public async Task<List<Script>> GenerateChangedScripts(SchemaInfo schemaInfo, string targetDbSchema, IEnumerable<SchemaCompareDifference> differences, CancellationToken cancellationToken)
         {
             List<Script> scripts = new List<Script>();
             List<Script> tableScripts = new List<Script>();
 
             foreach (SchemaCompareDifference difference in differences)
             {
+                if(cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
                 SchemaCompareDifferenceType diffType = difference.DifferenceType;
 
                 if (diffType == SchemaCompareDifferenceType.None)
@@ -108,6 +115,13 @@ namespace DatabaseManager.Core
             ScriptDbObject sourceScriptDbObject = difference.Source as ScriptDbObject;
             ScriptDbObject targetScriptDbObject = difference.Target as ScriptDbObject;
 
+            DatabaseType databaseType = this.sourceInterpreter.DatabaseType;
+
+            if (databaseType == DatabaseType.SqlServer || databaseType == DatabaseType.Postgres)
+            {
+                targetDbSchema = sourceScriptDbObject.Schema ?? targetScriptDbObject.Schema;
+            }
+
             if (diffType == SchemaCompareDifferenceType.Added)
             {
                 var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetDbSchema);
@@ -119,7 +133,7 @@ namespace DatabaseManager.Core
             }
             else if (diffType == SchemaCompareDifferenceType.Modified)
             {
-                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetScriptDbObject.Schema);
+                var cloneObj = this.CloneDbObject(sourceScriptDbObject, targetDbSchema);
                 scripts.Add(this.targetScriptGenerator.Drop(targetScriptDbObject));
                 scripts.Add(this.targetScriptGenerator.Create(cloneObj));
             }
@@ -135,6 +149,13 @@ namespace DatabaseManager.Core
 
             UserDefinedType source = difference.Source as UserDefinedType;
             UserDefinedType target = difference.Target as UserDefinedType;
+
+            DatabaseType databaseType = this.sourceInterpreter.DatabaseType;
+
+            if (databaseType == DatabaseType.SqlServer || databaseType == DatabaseType.Postgres)
+            {
+                targetDbSchema = source.Schema ?? target.Schema;
+            }
 
             if (diffType == SchemaCompareDifferenceType.Added)
             {
@@ -164,7 +185,14 @@ namespace DatabaseManager.Core
             Table sourceTable = difference.Source as Table;
             Table targetTable = difference.Target as Table;
 
-            if (diffType == SchemaCompareDifferenceType.Added)
+            DatabaseType databaseType = this.sourceInterpreter.DatabaseType;
+
+            if (databaseType == DatabaseType.SqlServer || databaseType == DatabaseType.Postgres)
+            {
+                targetDbSchema = sourceTable.Schema ?? targetTable.Schema;
+            }
+
+            Func<List<Script>> getCreateTableScripts = () =>
             {
                 List<TableColumn> columns = schemaInfo.TableColumns.Where(item => item.Schema == sourceTable.Schema && item.TableName == sourceTable.Name).OrderBy(item => item.Order).ToList();
                 TablePrimaryKey primaryKey = schemaInfo.TablePrimaryKeys.FirstOrDefault(item => item.Schema == sourceTable.Schema && item.TableName == sourceTable.Name);
@@ -178,7 +206,12 @@ namespace DatabaseManager.Core
                 this.ChangeSchema(indexes, targetDbSchema);
                 this.ChangeSchema(constraints, targetDbSchema);
 
-                scripts.AddRange(this.targetScriptGenerator.CreateTable(sourceTable, columns, primaryKey, foreignKeys, indexes, constraints).Scripts);
+                return this.targetScriptGenerator.CreateTable(sourceTable, columns, primaryKey, foreignKeys, indexes, constraints).Scripts;                
+            };
+
+            if (diffType == SchemaCompareDifferenceType.Added)
+            {
+                scripts.AddRange(getCreateTableScripts());
             }
             else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
@@ -217,6 +250,43 @@ namespace DatabaseManager.Core
                             break;
                     }
                 }
+
+                #region handle sqlite
+                if (this.sourceInterpreter.DatabaseType == DatabaseType.Sqlite)
+                {
+                    bool needCreateNew = false;
+
+                    foreach (var script in scripts)
+                    {
+                        if (string.IsNullOrEmpty(script.Content))
+                        {
+                            Type type = script.GetType();
+                            string typeName = type.Name;
+
+                            if (typeName.StartsWith("CreateDbObjectScript") || typeName.StartsWith("AlterDbObjectScript") || typeName.StartsWith("DropDbObjectScript"))
+                            {
+                                needCreateNew = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (needCreateNew)
+                    {
+                        scripts.Clear();
+
+                        this.ignoreForeignKeyConstraint = true;
+
+                        string tableName = sourceTable.Name;
+
+                        var createTableScripts = getCreateTableScripts();
+
+                        var scriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.targetInterpreter) as SqliteScriptGenerator;
+
+                        scripts.AddRange(scriptGenerator.GenerateCloneTableScripts(tableName, createTableScripts));
+                    }
+                }
+                #endregion
             }
 
             return scripts;
@@ -239,7 +309,14 @@ namespace DatabaseManager.Core
             }
             else if (diffType == SchemaCompareDifferenceType.Deleted)
             {
-                scripts.Add(this.targetScriptGenerator.Drop(target));
+                if (target is TableColumn column)
+                {
+                    scripts.AddRange(await this.tableManager.GetDropColumnScripts(column));
+                }
+                else
+                {
+                    scripts.Add(this.targetScriptGenerator.Drop(target));
+                }
             }
             else if (diffType == SchemaCompareDifferenceType.Modified)
             {
@@ -266,7 +343,7 @@ namespace DatabaseManager.Core
 
                     if (difference.DatabaseObjectType == DatabaseObjectType.PrimaryKey)
                     {
-                        scripts.AddRange(this.tableManager.GetPrimaryKeyAlterScripts(target as TablePrimaryKey, clonedSource as TablePrimaryKey, false));
+                        scripts.AddRange(await this.tableManager.GetPrimaryKeyAlterScripts(target as TablePrimaryKey, clonedSource as TablePrimaryKey, false));
                     }
                     else if (difference.DatabaseObjectType == DatabaseObjectType.ForeignKey)
                     {
