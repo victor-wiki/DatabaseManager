@@ -93,10 +93,10 @@
             label11 = new System.Windows.Forms.Label();
             btnSetDataTypeMapping = new System.Windows.Forms.Button();
             label10 = new System.Windows.Forms.Label();
-            dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
             tabCompare = new System.Windows.Forms.TabPage();
             groupBox5 = new System.Windows.Forms.GroupBox();
             chkIgnoreUnnamedTableChildDifference = new System.Windows.Forms.CheckBox();
+            dlgOutputFolder = new System.Windows.Forms.FolderBrowserDialog();
             tabDatabase.SuspendLayout();
             groupBox4.SuspendLayout();
             groupBox3.SuspendLayout();
@@ -840,6 +840,7 @@
             // 
             // groupBox5
             // 
+            groupBox5.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             groupBox5.Controls.Add(chkIgnoreUnnamedTableChildDifference);
             groupBox5.Location = new System.Drawing.Point(7, 18);
             groupBox5.Name = "groupBox5";
