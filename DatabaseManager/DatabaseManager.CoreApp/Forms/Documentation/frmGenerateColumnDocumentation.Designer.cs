@@ -48,14 +48,14 @@ namespace DatabaseManager.Forms
             label1 = new System.Windows.Forms.Label();
             txtBackColor = new System.Windows.Forms.TextBox();
             btnSelectBackColor = new System.Windows.Forms.Button();
-            groupBox1 = new System.Windows.Forms.GroupBox();
+            gbTableStyle = new System.Windows.Forms.GroupBox();
             chkColumnHeaderIsBold = new System.Windows.Forms.CheckBox();
             label3 = new System.Windows.Forms.Label();
             btnSelectForeColor = new System.Windows.Forms.Button();
             txtForeColor = new System.Windows.Forms.TextBox();
             gbProperties.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvProperties).BeginInit();
-            groupBox1.SuspendLayout();
+            gbTableStyle.SuspendLayout();
             SuspendLayout();
             // 
             // btnSelectPath
@@ -91,7 +91,7 @@ namespace DatabaseManager.Forms
             chkShowTableComment.AutoSize = true;
             chkShowTableComment.Checked = true;
             chkShowTableComment.CheckState = System.Windows.Forms.CheckState.Checked;
-            chkShowTableComment.Location = new System.Drawing.Point(17, 406);
+            chkShowTableComment.Location = new System.Drawing.Point(16, 421);
             chkShowTableComment.Name = "chkShowTableComment";
             chkShowTableComment.Size = new System.Drawing.Size(149, 21);
             chkShowTableComment.TabIndex = 14;
@@ -100,11 +100,11 @@ namespace DatabaseManager.Forms
             // 
             // gbProperties
             // 
-            gbProperties.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            gbProperties.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             gbProperties.Controls.Add(dgvProperties);
             gbProperties.Location = new System.Drawing.Point(5, 42);
             gbProperties.Name = "gbProperties";
-            gbProperties.Size = new System.Drawing.Size(535, 253);
+            gbProperties.Size = new System.Drawing.Size(535, 229);
             gbProperties.TabIndex = 15;
             gbProperties.TabStop = false;
             gbProperties.Text = "Properties to generate";
@@ -131,7 +131,7 @@ namespace DatabaseManager.Forms
             dgvProperties.Location = new System.Drawing.Point(3, 19);
             dgvProperties.Name = "dgvProperties";
             dgvProperties.RowHeadersWidth = 25;
-            dgvProperties.Size = new System.Drawing.Size(529, 231);
+            dgvProperties.Size = new System.Drawing.Size(529, 207);
             dgvProperties.TabIndex = 0;
             // 
             // colSelect
@@ -158,7 +158,7 @@ namespace DatabaseManager.Forms
             // 
             txtMessage.BackColor = System.Drawing.Color.White;
             txtMessage.Dock = System.Windows.Forms.DockStyle.Bottom;
-            txtMessage.Location = new System.Drawing.Point(0, 484);
+            txtMessage.Location = new System.Drawing.Point(0, 514);
             txtMessage.Multiline = true;
             txtMessage.Name = "txtMessage";
             txtMessage.ReadOnly = true;
@@ -170,7 +170,7 @@ namespace DatabaseManager.Forms
             // 
             btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             btnCancel.Enabled = false;
-            btnCancel.Location = new System.Drawing.Point(267, 450);
+            btnCancel.Location = new System.Drawing.Point(267, 480);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new System.Drawing.Size(75, 23);
             btnCancel.TabIndex = 17;
@@ -181,7 +181,7 @@ namespace DatabaseManager.Forms
             // btnOK
             // 
             btnOK.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            btnOK.Location = new System.Drawing.Point(156, 450);
+            btnOK.Location = new System.Drawing.Point(156, 480);
             btnOK.Name = "btnOK";
             btnOK.Size = new System.Drawing.Size(75, 23);
             btnOK.TabIndex = 16;
@@ -216,21 +216,22 @@ namespace DatabaseManager.Forms
             btnSelectBackColor.UseVisualStyleBackColor = true;
             btnSelectBackColor.Click += btnSelectBackColor_Click;
             // 
-            // groupBox1
+            // gbTableStyle
             // 
-            groupBox1.Controls.Add(chkColumnHeaderIsBold);
-            groupBox1.Controls.Add(label3);
-            groupBox1.Controls.Add(btnSelectForeColor);
-            groupBox1.Controls.Add(txtForeColor);
-            groupBox1.Controls.Add(label1);
-            groupBox1.Controls.Add(btnSelectBackColor);
-            groupBox1.Controls.Add(txtBackColor);
-            groupBox1.Location = new System.Drawing.Point(6, 267);
-            groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(531, 129);
-            groupBox1.TabIndex = 22;
-            groupBox1.TabStop = false;
-            groupBox1.Text = "Table style";
+            gbTableStyle.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            gbTableStyle.Controls.Add(chkColumnHeaderIsBold);
+            gbTableStyle.Controls.Add(label3);
+            gbTableStyle.Controls.Add(btnSelectForeColor);
+            gbTableStyle.Controls.Add(txtForeColor);
+            gbTableStyle.Controls.Add(label1);
+            gbTableStyle.Controls.Add(btnSelectBackColor);
+            gbTableStyle.Controls.Add(txtBackColor);
+            gbTableStyle.Location = new System.Drawing.Point(6, 280);
+            gbTableStyle.Name = "gbTableStyle";
+            gbTableStyle.Size = new System.Drawing.Size(531, 129);
+            gbTableStyle.TabIndex = 22;
+            gbTableStyle.TabStop = false;
+            gbTableStyle.Text = "Table style";
             // 
             // chkColumnHeaderIsBold
             // 
@@ -275,8 +276,8 @@ namespace DatabaseManager.Forms
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(540, 542);
-            Controls.Add(groupBox1);
+            ClientSize = new System.Drawing.Size(540, 572);
+            Controls.Add(gbTableStyle);
             Controls.Add(txtMessage);
             Controls.Add(btnCancel);
             Controls.Add(btnOK);
@@ -291,8 +292,8 @@ namespace DatabaseManager.Forms
             Load += frmGenerateColumnDocumentation_Load;
             gbProperties.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvProperties).EndInit();
-            groupBox1.ResumeLayout(false);
-            groupBox1.PerformLayout();
+            gbTableStyle.ResumeLayout(false);
+            gbTableStyle.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -316,7 +317,7 @@ namespace DatabaseManager.Forms
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtBackColor;
         private System.Windows.Forms.Button btnSelectBackColor;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox gbTableStyle;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btnSelectForeColor;
         private System.Windows.Forms.TextBox txtForeColor;
