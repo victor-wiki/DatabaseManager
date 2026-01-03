@@ -1,4 +1,6 @@
-﻿namespace DatabaseManager.Forms
+﻿using DatabaseManager.Controls;
+
+namespace DatabaseManager.Forms
 {
     partial class frmExportData
     {
@@ -45,7 +47,7 @@
             rbCurrentPage = new System.Windows.Forms.RadioButton();
             txtMessage = new System.Windows.Forms.TextBox();
             gbColumns = new System.Windows.Forms.GroupBox();
-            dgvColumns = new System.Windows.Forms.DataGridView();
+            dgvColumns = new DraggableDataGridView();
             colSelect = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             colColumnName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             colDisplayName = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -238,11 +240,6 @@
             dgvColumns.RowHeadersWidth = 25;
             dgvColumns.Size = new System.Drawing.Size(515, 259);
             dgvColumns.TabIndex = 0;
-            dgvColumns.DragDrop += dgvColumns_DragDrop;
-            dgvColumns.DragOver += dgvColumns_DragOver;
-            dgvColumns.MouseDown += dgvColumns_MouseDown;
-            dgvColumns.MouseMove += dgvColumns_MouseMove;
-            // 
             // colSelect
             // 
             colSelect.HeaderText = "";
@@ -309,7 +306,7 @@
         private System.Windows.Forms.RadioButton rbCurrentPage;
         private System.Windows.Forms.TextBox txtMessage;
         private System.Windows.Forms.GroupBox gbColumns;
-        private System.Windows.Forms.DataGridView dgvColumns;
+        private DraggableDataGridView dgvColumns;
         private System.Windows.Forms.RadioButton rbPageNumberRange;
         private System.Windows.Forms.TextBox txtPageNumberRange;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colSelect;

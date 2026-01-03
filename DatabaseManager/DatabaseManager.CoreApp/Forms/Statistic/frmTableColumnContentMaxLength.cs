@@ -1,6 +1,7 @@
 ﻿using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
-using DatabaseManager.Export;
+using DatabaseManager.Core;
+using DatabaseManager.FileUtility.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -124,7 +125,7 @@ namespace DatabaseManager.Forms
                 {
                     DataExporter exporter = new DataExporter();
 
-                    exporter.WriteToExcel(table, new FileUtility.ExportDataOption() { ShowColumnNames = true, FilePath = this.dlgSave.FileName });
+                    exporter.WriteToExcel(table, new ExportDataOption() { ShowColumnNames = true, FilePath = this.dlgSave.FileName });
 
                     MessageBox.Show("Saved.");
                 }

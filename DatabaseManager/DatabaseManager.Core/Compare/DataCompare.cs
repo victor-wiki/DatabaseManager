@@ -5,8 +5,6 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
 using DatabaseManager.FileUtility.Model;
-using SixLabors.Fonts;
-using SqlAnalyser.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -83,7 +81,7 @@ namespace DatabaseManager.Core
                             break;
                         }
 
-                        this.FeedbackInfo($@"Begin to process table ""{tableName}""({count}/{tableCount}).");
+                        this.Feedback($@"Begin to process table ""{tableName}""({count}/{tableCount}).");
 
                         Table targetTable = targetSchemaInfo.Tables.FirstOrDefault(item => item.Name == tableName);
 
@@ -94,7 +92,7 @@ namespace DatabaseManager.Core
                             long sourceRecordCount = await this.sourceDbInterpreter.GetTableRecordCountAsync(sourceConnection, sourceTable);
                             long targetRecordCount = await this.sourceDbInterpreter.GetTableRecordCountAsync(targetConnnection, targetTable);
 
-                            this.FeedbackInfo($@"Table ""{tableName} has {sourceRecordCount} records.");
+                            this.Feedback($@"Table ""{tableName} has {sourceRecordCount} records.");
 
                             DataCompareResultDetail resultDetail = new DataCompareResultDetail { Order = count, SourceTable = sourceTable, TargetTable = targetTable, SourceTableRecordCount = sourceRecordCount, TargetTableRecordCount = targetRecordCount };
 
@@ -175,7 +173,7 @@ namespace DatabaseManager.Core
 
                                         recordsCount += endRowNumber - starRowNumber + 1;
 
-                                        this.FeedbackInfo($@"({count}/{totalTablesCount})Reading table ""{tableName}"" {recordsCount}/{total} records.");
+                                        this.Feedback($@"({count}/{totalTablesCount})Reading table ""{tableName}"" {recordsCount}/{total} records.");
 
                                         List<DataRow> keyRows = sameKeyDataRows.Skip((int)(starRowNumber - 1)).Take((int)(endRowNumber - starRowNumber + 1)).ToList();
 
@@ -201,7 +199,7 @@ namespace DatabaseManager.Core
                             }
                         }
 
-                        this.FeedbackInfo($@"End process table ""{tableName}""({count}/{tableCount}).");
+                        this.Feedback($@"End process table ""{tableName}""({count}/{tableCount}).");
                     }
                 }
             }
@@ -591,7 +589,7 @@ namespace DatabaseManager.Core
                 {
                     sb.AppendLine();
 
-                    this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Begin to generate INSERT sql for table ""{detail.SourceTable.Name}""...");
+                    this.Feedback($@"({tableCount}/{tablesTotalCount})Begin to generate INSERT sql for table ""{detail.SourceTable.Name}""...");
 
                     int total = detail.OnlyInSourceCount;
                     long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -613,7 +611,7 @@ namespace DatabaseManager.Core
 
                             recordCount += (int)(i < pageCount ? pageSize : (total - (pageCount - 1) * pageSize));
 
-                            this.FeedbackInfo($@"({tableCount}/{tablesTotalCount})Generating INSERT sql for table ""{detail.SourceTable.Name}"" ({recordCount}/{total})...");
+                            this.Feedback($@"({tableCount}/{tablesTotalCount})Generating INSERT sql for table ""{detail.SourceTable.Name}"" ({recordCount}/{total})...");
 
                             var pagedKeyRows = GetPagedKeyRows(detail.OnlyInSourceKeyRows, pageSize, i);
 
@@ -629,7 +627,7 @@ namespace DatabaseManager.Core
                         }
                     }
 
-                    this.FeedbackInfo($@"End generate INSERT sql for table ""{detail.SourceTable.Name}"".");
+                    this.Feedback($@"End generate INSERT sql for table ""{detail.SourceTable.Name}"".");
                 }
             }
 
@@ -640,7 +638,7 @@ namespace DatabaseManager.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            this.FeedbackInfo($@"Begin to generate DELETE sql for table ""{detail.TargetTable.Name}""...");
+            this.Feedback($@"Begin to generate DELETE sql for table ""{detail.TargetTable.Name}""...");
 
             int total = detail.OnlyInTargetCount;
             long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -656,7 +654,7 @@ namespace DatabaseManager.Core
                 sb.AppendLine(sql);
             }
 
-            this.FeedbackInfo($@"End generate DELETE sql for table ""{detail.TargetTable.Name}"".");
+            this.Feedback($@"End generate DELETE sql for table ""{detail.TargetTable.Name}"".");
 
             return sb.ToString().Trim();
         }
@@ -665,7 +663,7 @@ namespace DatabaseManager.Core
         {
             StringBuilder sb = new StringBuilder();
 
-            this.FeedbackInfo($@"Begin to generate UPDATE sql for table ""{detail.TargetTable.Name}""...");
+            this.Feedback($@"Begin to generate UPDATE sql for table ""{detail.TargetTable.Name}""...");
 
             int total = detail.DifferentCount;
             long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -742,7 +740,7 @@ namespace DatabaseManager.Core
                 }
             }
 
-            this.FeedbackInfo($@"End generate UPDATE sql for table ""{detail.TargetTable.Name}"".");
+            this.Feedback($@"End generate UPDATE sql for table ""{detail.TargetTable.Name}"".");
 
             return sb.ToString().Trim();
         }
@@ -792,7 +790,7 @@ namespace DatabaseManager.Core
 
                             if (detail.OnlyInSourceCount > 0)
                             {
-                                this.FeedbackInfo($@"Begin to copy data to table ""{detail.TargetTable.Name}""...");
+                                this.Feedback($@"Begin to copy data to table ""{detail.TargetTable.Name}""...");
 
                                 int total = detail.OnlyInSourceCount;
                                 long pageCount = PaginationHelper.GetPageCount(total, pageSize);
@@ -817,14 +815,14 @@ namespace DatabaseManager.Core
 
                                     count += sourceDataTable.Rows.Count;
 
-                                    this.FeedbackInfo($@"Copying data to table ""{detail.TargetTable.Name}"" {count}/{total}...");
+                                    this.Feedback($@"Copying data to table ""{detail.TargetTable.Name}"" {count}/{total}...");
 
                                     await DbConverter.CopyData(this.sourceDbInterpreter, this.targetDbInterpreter, targetConnection, dbScriptGenerator, detail.SourceTable, detail.SourceTableColumns,
                                         detail.TargetTable, detail.SameTableColumns, sourceDataTable, true, cancellationToken, schemaMappings, null, transaction);
 
                                 }
 
-                                this.FeedbackInfo($@"End copy data to table ""{detail.TargetTable.Name}"".");
+                                this.Feedback($@"End copy data to table ""{detail.TargetTable.Name}"".");
                             }
                         }
 
@@ -952,7 +950,7 @@ namespace DatabaseManager.Core
             this.observer = observer;
         }
 
-        public void FeedbackInfo(string info)
+        public void Feedback(string info)
         {
             this.Feedback(this, info);
         }

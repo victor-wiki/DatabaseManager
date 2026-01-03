@@ -1,4 +1,4 @@
-﻿using DatabaseManager.FileUtility;
+﻿using DatabaseManager.FileUtility.Model;
 using System.Collections.Generic;
 
 namespace DatabaseManager.Core.Model

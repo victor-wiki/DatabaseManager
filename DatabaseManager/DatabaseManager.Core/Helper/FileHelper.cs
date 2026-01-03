@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace DatabaseManager.Helper
+namespace DatabaseManager.Core
 {
     public class FileHelper
     {

@@ -1,5 +1,4 @@
 ﻿using DatabaseInterpreter.Core;
-using DatabaseManager.Core.Helper;
 using DatabaseManager.Core.Model;
 using System;
 using System.Linq;

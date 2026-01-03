@@ -1,5 +1,5 @@
-﻿using DatabaseManager.Core.Model;
-using DatabaseManager.Helper;
+﻿using DatabaseManager.Core;
+using DatabaseManager.Core.Model;
 using System;
 using System.Linq;
 using System.Windows.Forms;

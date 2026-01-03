@@ -1,16 +1,15 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
-using DatabaseManager.Export;
-using DatabaseManager.FileUtility;
+using DatabaseManager.FileUtility.Model;
 using DatabaseManager.Helper;
+using NPOI.Util.Collections;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,9 +21,6 @@ namespace DatabaseManager.Forms
 
     public partial class frmExportData : Form, IObserver<FeedbackInfo>
     {
-        private Rectangle dragBoxFromMouseDown;
-        private int rowIndexFromMouseDown;
-        private int rowIndexOfItemUnderMouseToDrop;
         private DbInterpreter dbInterpreter;
         private DatabaseObject tableOrView;
         private ExportSpecificDataOption option;
@@ -273,6 +269,12 @@ namespace DatabaseManager.Forms
                 }
             }
 
+            if (columns.Count == 0)
+            {
+                MessageBox.Show("No column selected.");
+                return;
+            }
+
             DataExporter exporter = new DataExporter();
 
             exporter.Subscribe(this);
@@ -413,81 +415,6 @@ namespace DatabaseManager.Forms
         private void chkShowColumnName_CheckedChanged(object sender, EventArgs e)
         {
             this.colDisplayName.Visible = this.chkShowColumnName.Checked;
-        }
-
-        private void dgvColumns_DragDrop(object sender, DragEventArgs e)
-        {
-            Point clientPoint = this.dgvColumns.PointToClient(new Point(e.X, e.Y));
-
-            this.rowIndexOfItemUnderMouseToDrop = this.dgvColumns.HitTest(clientPoint.X, clientPoint.Y).RowIndex;
-
-            if (this.rowIndexOfItemUnderMouseToDrop == -1)
-            {
-                return;
-            }
-
-            if (this.rowIndexFromMouseDown >= 0 && this.rowIndexOfItemUnderMouseToDrop < this.dgvColumns.Rows.Count)
-            {
-                if (this.dgvColumns.Rows[this.rowIndexOfItemUnderMouseToDrop].IsNewRow)
-                {
-                    return;
-                }
-            }
-
-            if (e.Effect == DragDropEffects.Move)
-            {
-                DataGridViewRow rowToMove = e.Data.GetData(typeof(DataGridViewRow)) as DataGridViewRow;
-
-                if (rowToMove.Index >= 0)
-                {
-                    this.dgvColumns.Rows.RemoveAt(this.rowIndexFromMouseDown);
-                    this.dgvColumns.Rows.Insert(this.rowIndexOfItemUnderMouseToDrop, rowToMove);
-
-                    string columnName = DataGridViewHelper.GetCellStringValue(rowToMove, this.colColumnName.Name);
-
-                    DataGridViewHelper.SetRowColumnsReadOnly(this.dgvColumns, rowToMove, string.IsNullOrEmpty(columnName), this.colColumnName);
-                }
-            }
-        }
-
-        private void dgvColumns_MouseDown(object sender, MouseEventArgs e)
-        {
-            var hit = this.dgvColumns.HitTest(e.X, e.Y);
-            this.rowIndexFromMouseDown = hit.RowIndex;
-
-            if (hit.Type == DataGridViewHitTestType.RowHeader && this.rowIndexFromMouseDown != -1)
-            {
-                Size dragSize = SystemInformation.DragSize;
-
-                this.dragBoxFromMouseDown = new Rectangle(
-                          new Point(
-                            e.X - (dragSize.Width / 2),
-                            e.Y - (dragSize.Height / 2)),
-                      dragSize);
-            }
-            else
-            {
-                this.dragBoxFromMouseDown = Rectangle.Empty;
-            }
-        }
-
-        private void dgvColumns_DragOver(object sender, DragEventArgs e)
-        {
-            e.Effect = DragDropEffects.Move;
-        }
-
-        private void dgvColumns_MouseMove(object sender, MouseEventArgs e)
-        {
-            if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
-            {
-                if (this.dragBoxFromMouseDown != Rectangle.Empty &&
-                !this.dragBoxFromMouseDown.Contains(e.X, e.Y))
-                {
-                    DragDropEffects dropEffect = this.dgvColumns.DoDragDrop(
-                          this.dgvColumns.Rows[this.rowIndexFromMouseDown],
-                          DragDropEffects.Move);
-                }
-            }
         }
 
         private void rbPageNumberRange_CheckedChanged(object sender, EventArgs e)

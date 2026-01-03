@@ -67,6 +67,8 @@
             tsmiStatistic = new System.Windows.Forms.ToolStripMenuItem();
             tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
+            documentationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiGenerateColumnDocumentation = new System.Windows.Forms.ToolStripMenuItem();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -317,7 +319,7 @@
             // 
             // tsmiMore
             // 
-            tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiBackup, tsmiDiagnose, tsmiStatistic, tsmiClearData, tsmiEmptyDatabase });
+            tsmiMore.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiBackup, tsmiDiagnose, tsmiStatistic, tsmiClearData, tsmiEmptyDatabase, documentationToolStripMenuItem });
             tsmiMore.Name = "tsmiMore";
             tsmiMore.Size = new System.Drawing.Size(203, 22);
             tsmiMore.Text = "More";
@@ -325,37 +327,51 @@
             // tsmiBackup
             // 
             tsmiBackup.Name = "tsmiBackup";
-            tsmiBackup.Size = new System.Drawing.Size(137, 22);
+            tsmiBackup.Size = new System.Drawing.Size(266, 22);
             tsmiBackup.Text = "Backup";
             tsmiBackup.Click += tsmiBackup_Click;
             // 
             // tsmiDiagnose
             // 
             tsmiDiagnose.Name = "tsmiDiagnose";
-            tsmiDiagnose.Size = new System.Drawing.Size(137, 22);
+            tsmiDiagnose.Size = new System.Drawing.Size(266, 22);
             tsmiDiagnose.Text = "Diagnose";
             tsmiDiagnose.Click += tsmiDiagnose_Click;
             // 
             // tsmiStatistic
             // 
             tsmiStatistic.Name = "tsmiStatistic";
-            tsmiStatistic.Size = new System.Drawing.Size(137, 22);
+            tsmiStatistic.Size = new System.Drawing.Size(266, 22);
             tsmiStatistic.Text = "Statistic";
             tsmiStatistic.Click += tsmiStatistic_Click;
             // 
             // tsmiClearData
             // 
             tsmiClearData.Name = "tsmiClearData";
-            tsmiClearData.Size = new System.Drawing.Size(137, 22);
+            tsmiClearData.Size = new System.Drawing.Size(266, 22);
             tsmiClearData.Text = "Clear Data";
             tsmiClearData.Click += tsmiClearData_Click;
             // 
             // tsmiEmptyDatabase
             // 
             tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            tsmiEmptyDatabase.Size = new System.Drawing.Size(137, 22);
+            tsmiEmptyDatabase.Size = new System.Drawing.Size(266, 22);
             tsmiEmptyDatabase.Text = "Empty";
             tsmiEmptyDatabase.Click += tsmiEmptyDatabase_Click;
+            // 
+            // documentationToolStripMenuItem
+            // 
+            documentationToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiGenerateColumnDocumentation });
+            documentationToolStripMenuItem.Name = "documentationToolStripMenuItem";
+            documentationToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            documentationToolStripMenuItem.Text = "Documentation";
+            // 
+            // tsmiGenerateColumnDocumentation
+            // 
+            tsmiGenerateColumnDocumentation.Name = "tsmiGenerateColumnDocumentation";
+            tsmiGenerateColumnDocumentation.Size = new System.Drawing.Size(266, 22);
+            tsmiGenerateColumnDocumentation.Text = "Generate column documentation";
+            tsmiGenerateColumnDocumentation.Click += tsmiGenerateColumnDocumentation_Click;
             // 
             // UC_DbObjectsComplexTree
             // 
@@ -408,5 +424,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiExportData;
         private System.Windows.Forms.ToolStripMenuItem tsmiImportData;
         private System.Windows.Forms.ToolStripMenuItem tsmiCompareData;
+        private System.Windows.Forms.ToolStripMenuItem documentationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateColumnDocumentation;
     }
 }

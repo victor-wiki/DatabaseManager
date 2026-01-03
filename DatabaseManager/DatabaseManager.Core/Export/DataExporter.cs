@@ -3,6 +3,7 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
+using DatabaseManager.FileUtility.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Table = DatabaseInterpreter.Model.Table;
 
-namespace DatabaseManager.Export
+namespace DatabaseManager.Core
 {
     public class DataExporter
     {

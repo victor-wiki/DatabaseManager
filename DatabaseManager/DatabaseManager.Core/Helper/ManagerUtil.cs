@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Humanizer;
 using DatabaseInterpreter.Model;
 
-namespace DatabaseManager.Helper
+namespace DatabaseManager.Core
 {
     public class ManagerUtil
     {
@@ -45,6 +45,11 @@ namespace DatabaseManager.Helper
         {
             return value.Pluralize();
         } 
+
+        public static string GetDisplayTitle(string value)
+        {
+            return value.Humanize(LetterCasing.Title);
+        }
         
         public static bool SupportComment(DatabaseType databaseType)
         {

@@ -1,12 +1,8 @@
-﻿using Azure.Core.Diagnostics;
-using DatabaseInterpreter.Core;
+﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using KellermanSoftware.CompareNetObjects;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 

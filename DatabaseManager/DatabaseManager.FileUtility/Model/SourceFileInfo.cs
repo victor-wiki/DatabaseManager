@@ -1,4 +1,4 @@
-﻿namespace DatabaseManager.FileUtility
+﻿namespace DatabaseManager.FileUtility.Model
 {
     public class SourceFileInfo
     {

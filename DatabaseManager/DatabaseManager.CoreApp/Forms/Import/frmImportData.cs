@@ -4,6 +4,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
 using DatabaseManager.FileUtility;
+using DatabaseManager.FileUtility.Model;
 using DatabaseManager.Helper;
 using FontAwesome.Sharp;
 using System;

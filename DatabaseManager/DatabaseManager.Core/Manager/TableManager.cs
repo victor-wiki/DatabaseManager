@@ -142,8 +142,9 @@ namespace DatabaseManager.Core
 
                     if (!this.IsStringEquals(tableDesignerInfo.Comment, oldTable.Comment))
                     {
-                        oldTable.Comment = tableDesignerInfo.Comment;
                         scripts.Add(this.scriptGenerator.SetTableComment(oldTable, string.IsNullOrEmpty(oldTable.Comment)));
+
+                        oldTable.Comment = tableDesignerInfo.Comment;                        
                     }
 
                     #region Columns

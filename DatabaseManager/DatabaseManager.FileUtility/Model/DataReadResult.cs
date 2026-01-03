@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DatabaseManager.FileUtility
+namespace DatabaseManager.FileUtility.Model
 {
     public class DataReadResult
     {

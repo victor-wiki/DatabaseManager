@@ -1,10 +1,7 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
-using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
-using Humanizer.Localisation;
 using KellermanSoftware.CompareNetObjects;
-using Org.BouncyCastle.Asn1.X509;
 using System.Collections.Generic;
 using System.Linq;
 

@@ -1,4 +1,6 @@
-﻿namespace DatabaseManager.FileUtility
+﻿using DatabaseManager.FileUtility.Model;
+
+namespace DatabaseManager.FileUtility
 {
     public abstract class BaseReader
     {

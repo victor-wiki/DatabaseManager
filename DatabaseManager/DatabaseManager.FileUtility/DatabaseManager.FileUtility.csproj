@@ -3,14 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
     <Authors>victor-wiki</Authors>
     <Description>Read and write CSV and Excel.</Description>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <RepositoryUrl></RepositoryUrl>
-    <AssemblyVersion>2.0.1</AssemblyVersion>
-    <FileVersion>2.0.1</FileVersion>
-    <PackageReleaseNotes>not use "RowIndex" when write Excel row by "GridData".</PackageReleaseNotes>
+    <AssemblyVersion>2.0.2</AssemblyVersion>
+    <FileVersion>2.0.2</FileVersion>
+    <PackageReleaseNotes>add: WordWriter.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

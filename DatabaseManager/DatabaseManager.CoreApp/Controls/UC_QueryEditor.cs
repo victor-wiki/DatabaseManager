@@ -1,7 +1,6 @@
 ﻿using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseManager.Core;
-using DatabaseManager.Core.Helper;
 using DatabaseManager.Data;
 using DatabaseManager.Forms;
 using DatabaseManager.Helper;

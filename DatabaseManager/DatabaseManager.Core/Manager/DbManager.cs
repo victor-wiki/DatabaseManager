@@ -2,7 +2,6 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
-using DatabaseManager.Helper;
 using System;
 using System.Collections.Generic;
 using System.Data;

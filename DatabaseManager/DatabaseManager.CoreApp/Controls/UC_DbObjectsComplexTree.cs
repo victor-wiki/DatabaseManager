@@ -159,7 +159,7 @@ namespace DatabaseManager.Controls
             this.tsmiEmptyDatabase.Visible = isDatabase;
             this.tsmiDelete.Visible = this.CanDelete(node);
             this.tsmiViewData.Visible = isTable || isView;
-            this.tsmiImportData.Visible =  isTable;
+            this.tsmiImportData.Visible = isTable;
             this.tsmiExportData.Visible = isTable || isView;
             this.tsmiEditData.Visible = isTable;
             this.tsmiTranslate.Visible = isTable || isUserDefinedType || isSequence || isScriptObject;
@@ -1510,7 +1510,7 @@ namespace DatabaseManager.Controls
         {
             TreeNode node = this.GetSelectedNode();
 
-            DatabaseObject tableOrView = node.Tag as DatabaseObject;         
+            DatabaseObject tableOrView = node.Tag as DatabaseObject;
 
             var dbInterpreter = this.GetDbInterpreter(this.GetDatabaseNode(node).Name, true);
 
@@ -1558,6 +1558,26 @@ namespace DatabaseManager.Controls
             Database database = node.Tag as Database;
 
             frmDataCompare frm = new frmDataCompare(this.databaseType, this.GetConnectionInfo(database.Name));
+            frm.ShowDialog();
+        }
+
+        private void tsmiGenerateColumnDocumentation_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();           
+
+            this.GenerateColumnDocumentation(node);
+        }
+
+        private void GenerateColumnDocumentation(TreeNode node)
+        {
+            Database database = node.Tag as Database;
+
+            frmGenerateColumnDocumentation frm = new frmGenerateColumnDocumentation(this.databaseType, this.GetConnectionInfo(database.Name));
             frm.ShowDialog();
         }
     }

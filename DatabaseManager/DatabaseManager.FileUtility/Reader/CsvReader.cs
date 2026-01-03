@@ -1,4 +1,5 @@
 ﻿using CsvHelper.Configuration;
+using DatabaseManager.FileUtility.Model;
 using System.Collections.Generic;
 using System.IO;
 
