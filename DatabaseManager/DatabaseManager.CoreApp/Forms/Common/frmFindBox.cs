@@ -112,5 +112,15 @@ namespace DatabaseManager.Forms
             this.txtWord.Text = string.Empty;
             this.txtWord.Focus();
         }
+
+        public void SelectAll()
+        {
+            string text = this.txtWord.Text.Trim();
+
+            if(!string.IsNullOrEmpty(text))
+            {
+                this.txtWord.SelectAll();
+            }
+        }
     }
 }

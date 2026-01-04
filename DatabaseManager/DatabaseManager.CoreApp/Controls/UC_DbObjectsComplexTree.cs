@@ -175,6 +175,7 @@ namespace DatabaseManager.Controls
             this.tsmiDeleteScript.Visible = isTable;
             this.tsmiViewDependency.Visible = isDatabase || ((isTable || isView || isFunction || isProcedure) && this.databaseType != DatabaseType.Sqlite);
             this.tsmiExecuteScript.Visible = isProcedure;
+            this.tsmiDatabaseDiagram.Visible = isDatabase;
 
             this.tsmiCopyChildrenNames.Visible = node.Level == 1 && node.Nodes.Count > 0 && (node.Nodes[0].Tag != null);
         }
@@ -1568,7 +1569,7 @@ namespace DatabaseManager.Controls
                 return;
             }
 
-            TreeNode node = this.GetSelectedNode();           
+            TreeNode node = this.GetSelectedNode();
 
             this.GenerateColumnDocumentation(node);
         }
@@ -1578,6 +1579,23 @@ namespace DatabaseManager.Controls
             Database database = node.Tag as Database;
 
             frmGenerateColumnDocumentation frm = new frmGenerateColumnDocumentation(this.databaseType, this.GetConnectionInfo(database.Name));
+            frm.ShowDialog();
+        }
+
+        private void tsmiDatabaseDiagram_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            Database database = node.Tag as Database;
+
+            DbInterpreter dbInterpreter = this.GetDbInterpreter(database.Name, false, true);
+
+            frmDatabaseDiagram frm = new frmDatabaseDiagram(dbInterpreter);           
             frm.ShowDialog();
         }
     }

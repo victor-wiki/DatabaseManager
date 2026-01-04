@@ -120,19 +120,19 @@ namespace DatabaseManager.Forms
                 return;
             }
 
-            string color = this.txtBackColor.Text.Trim();
+            string backColor = this.txtBackColor.Text.Trim();
+            string foreColor = this.txtForeColor.Text.Trim();
 
-            if (!string.IsNullOrEmpty(color))
+            if (!string.IsNullOrEmpty(backColor) && !this.IsValidColor(backColor))
             {
-                try
-                {
-                    ColorTranslator.FromHtml(color);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Color value is invalid.");
-                    return;
-                }
+                MessageBox.Show("Background color value is invalid.");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(foreColor) && !this.IsValidColor(foreColor))
+            {
+                MessageBox.Show("Text color value is invalid.");
+                return;
             }
 
             Task.Run(() =>
@@ -145,8 +145,6 @@ namespace DatabaseManager.Forms
         {
             this.btnOK.Enabled = false;
             this.btnCancel.Enabled = true;
-
-
 
             option.ShowTableComment = this.chkShowTableComment.Checked;
             option.FilePath = this.txtFilePath.Text;
@@ -190,8 +188,8 @@ namespace DatabaseManager.Forms
             }
 
             option.Properties = properties;
-            option.GridColumnHeaderBackgroundColor = this.txtBackColor.Text;
-            option.GridColumnHeaderForegroundColor = this.txtForeColor.Text;
+            option.GridColumnHeaderBackgroundColor = this.GetColor(this.txtBackColor.Text);
+            option.GridColumnHeaderForegroundColor = this.GetColor(this.txtForeColor.Text);
             option.GridColumnHeaderFontIsBold = this.chkColumnHeaderIsBold.Checked;
 
             DocumentationGenerator generator = new DocumentationGenerator();
@@ -230,6 +228,41 @@ namespace DatabaseManager.Forms
 
             this.btnOK.Enabled = true;
             this.btnCancel.Enabled = false;
+        }
+
+        private bool IsValidColor(string color)
+        {
+            try
+            {
+                if (color.StartsWith("#"))
+                {
+                    ColorTranslator.FromHtml(color);
+                }
+                else
+                {
+                    Color.FromName(color);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private string GetColor(string color)
+        {
+            if (color != null && color.StartsWith("#"))
+            {
+                return color;
+            }
+            else if (!string.IsNullOrEmpty(color))
+            {
+                return ColorTranslator.ToHtml(Color.FromName(color));
+            }
+
+            return null;
         }
 
         private async void btnCancel_Click(object sender, EventArgs e)

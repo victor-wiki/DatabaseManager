@@ -3,12 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.2</AssemblyVersion>
-    <FileVersion>2.3.2</FileVersion>
-    <Version>2.3.2</Version>
-    <PackageReleaseNotes>1. issue fix: unique index for sqlite and mysql;
-2. "DbInterpreter": add more methods with parameter "CancellationToken";
-3. handle special script generation for sqlite table change.</PackageReleaseNotes>
+    <AssemblyVersion>2.3.3</AssemblyVersion>
+    <FileVersion>2.3.3</FileVersion>
+    <Version>2.3.3</Version>
+    <PackageReleaseNotes>DbInterpreter: if filter parameter is null, the "GetSchemaInfo" method will return all db objects. </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <RepositoryUrl></RepositoryUrl>

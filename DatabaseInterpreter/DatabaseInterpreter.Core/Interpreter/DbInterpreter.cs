@@ -248,9 +248,12 @@ namespace DatabaseInterpreter.Core
 
         public virtual async Task<SchemaInfo> GetSchemaInfoAsync(SchemaInfoFilter filter = null)
         {
+            bool noFilter = false;
+
             if (filter == null)
             {
-                filter = new SchemaInfoFilter();
+                noFilter = true;
+                filter = new SchemaInfoFilter();               
             }
 
             this.FeedbackInfo("Getting schema info...");
@@ -261,62 +264,62 @@ namespace DatabaseInterpreter.Core
 
             using (DbConnection connection = this.CreateConnection())
             {
-                if (this.NeedFetchObjects(DatabaseObjectType.Type, filter.UserDefinedTypeNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.Type, filter.UserDefinedTypeNames, filter))
                 {
                     schemaInfo.UserDefinedTypes = await this.GetUserDefinedTypesAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Sequence, filter.SequenceNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.Sequence, filter.SequenceNames, filter))
                 {
                     schemaInfo.Sequences = await this.GetSequencesAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.Function, filter.FunctionNames, filter))
                 {
                     schemaInfo.Functions = await this.GetFunctionsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Table, filter.TableNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.Table, filter.TableNames, filter))
                 {
                     schemaInfo.Tables = await this.GetTablesAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.View, filter.ViewNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.View, filter.ViewNames, filter))
                 {
                     schemaInfo.Views = await this.GetViewsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchObjects(DatabaseObjectType.Procedure, filter.ProcedureNames, filter))
+                if (noFilter || this.NeedFetchObjects(DatabaseObjectType.Procedure, filter.ProcedureNames, filter))
                 {
                     schemaInfo.Procedures = await this.GetProceduresAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.Column, filter, null))
+                if (noFilter || this.NeedFetchTableObjects(DatabaseObjectType.Column, filter, null))
                 {
                     schemaInfo.TableColumns = await this.GetTableColumnsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.PrimaryKey, filter, null))
+                if (noFilter || this.NeedFetchTableObjects(DatabaseObjectType.PrimaryKey, filter, null))
                 {
                     schemaInfo.TablePrimaryKeys = await this.GetTablePrimaryKeysAsync(connection, filter);
                 }
 
-                if ((this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.ForeignKey, filter, null))
+                if (noFilter || (this.Option.SortObjectsByReference && schemaInfo.Tables.Count > 1) || this.NeedFetchTableObjects(DatabaseObjectType.ForeignKey, filter, null))
                 {
                     schemaInfo.TableForeignKeys = await this.GetTableForeignKeysAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.Index, filter, null))
+                if (noFilter || this.NeedFetchTableObjects(DatabaseObjectType.Index, filter, null))
                 {
                     schemaInfo.TableIndexes = await this.GetTableIndexesAsync(connection, filter, this.Option.IncludePrimaryKeyWhenGetTableIndex);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.Constraint, filter, null))
+                if (noFilter || this.NeedFetchTableObjects(DatabaseObjectType.Constraint, filter, null))
                 {
                     schemaInfo.TableConstraints = await this.GetTableConstraintsAsync(connection, filter);
                 }
 
-                if (this.NeedFetchTableObjects(DatabaseObjectType.Trigger, filter, filter.TableTriggerNames))
+                if (noFilter || this.NeedFetchTableObjects(DatabaseObjectType.Trigger, filter, filter.TableTriggerNames))
                 {
                     schemaInfo.TableTriggers = await this.GetTableTriggersAsync(connection, filter);
                 }
