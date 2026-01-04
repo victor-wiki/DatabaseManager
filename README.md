@@ -1,4 +1,4 @@
-## A simple tool for databases : SqlServer, MySql, Oracle, Postgres and SQLite.
+## Database management tool for: SqlServer, MySql, Oracle, Postgres and SQLite.
 
 ## Features
 ### Convert Database
@@ -21,6 +21,15 @@
   
 ### Table Copy
   Clone table schema and copy data to another database.
+
+### Translate Script
+  The translate form can translate script to one database kind to another without database connection.
+
+### Generate Documentation
+  Generate table column documentation.
+
+### Database Diagram
+  Dislplay all tables in one diagram, including their relations.
   
 ### Clear Data
   Delete data of all tables.
@@ -30,11 +39,7 @@
   * Diagnose referenced name not match as they are defined in routine scripts.
   
 ### Empty Database
-  Delete all objects of a database.
-  
-### Translate Script
-  The translate form can translate script to one database kind to another without database connection.
-<br/>(Note: Most function and procedure of Postgres currently can't be translated to others.)
+  Delete all objects of a database. 
 
 ## UI - Main Page
 ![Main Page](https://github.com/victor-wiki/StaticResources/blob/master/StaticResources/images/projs/DatabaseManager/Main.png?raw=true&rid=1)
