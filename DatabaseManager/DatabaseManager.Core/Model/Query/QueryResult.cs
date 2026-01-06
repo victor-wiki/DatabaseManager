@@ -10,6 +10,7 @@ namespace DatabaseManager.Core.Model
         public bool DoNothing { get; set; }
         public long? TotalCount { get; set; }
         public SelectScriptAnalyseResult SelectScriptAnalyseResult { get; set; }
+        public ProfilingResult ProfilingResult { get; set; }
     }
 
     public enum QueryResultType

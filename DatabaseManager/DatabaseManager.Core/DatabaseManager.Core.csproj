@@ -5,12 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.3.6</Version>
-    <PackageReleaseNotes>1. add: generate table column documentation;
-2. change namespace:DatabaseManager.Model=&gt;DatabaseManager.Core.Model.</PackageReleaseNotes>
+    <Version>2.3.7</Version>
+    <PackageReleaseNotes>add: use MiniProfiler.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.6</AssemblyVersion>
-    <FileVersion>2.3.6</FileVersion>
+    <AssemblyVersion>2.3.7</AssemblyVersion>
+    <FileVersion>2.3.7</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -74,6 +73,7 @@
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.78.0" />
     <PackageReference Include="Humanizer.Core" Version="3.0.1" />
+    <PackageReference Include="MiniProfiler.Shared" Version="4.5.4" />
     <PackageReference Include="SharpZipLib.NETStandard" Version="1.0.7" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>

@@ -41,6 +41,8 @@ namespace DatabaseManager.Controls
             resultGridView = new UC_QueryResultGrid();
             tabPageMessage = new System.Windows.Forms.TabPage();
             resultTextBox = new System.Windows.Forms.RichTextBox();
+            tabProfiling = new System.Windows.Forms.TabPage();
+            ucProfilingResultGrid = new UC_ProfilingResultGrid();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -48,6 +50,7 @@ namespace DatabaseManager.Controls
             tabResult.SuspendLayout();
             tabPageData.SuspendLayout();
             tabPageMessage.SuspendLayout();
+            tabProfiling.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainer1
@@ -99,6 +102,7 @@ namespace DatabaseManager.Controls
             // 
             tabResult.Controls.Add(tabPageData);
             tabResult.Controls.Add(tabPageMessage);
+            tabResult.Controls.Add(tabProfiling);
             tabResult.Dock = System.Windows.Forms.DockStyle.Fill;
             tabResult.Location = new System.Drawing.Point(0, 0);
             tabResult.Margin = new System.Windows.Forms.Padding(4);
@@ -196,6 +200,25 @@ namespace DatabaseManager.Controls
             resultTextBox.TabIndex = 0;
             resultTextBox.Text = "";
             // 
+            // tabProfiling
+            // 
+            tabProfiling.Controls.Add(ucProfilingResultGrid);
+            tabProfiling.Location = new System.Drawing.Point(4, 26);
+            tabProfiling.Name = "tabProfiling";
+            tabProfiling.Padding = new System.Windows.Forms.Padding(3);
+            tabProfiling.Size = new System.Drawing.Size(649, 205);
+            tabProfiling.TabIndex = 2;
+            tabProfiling.Text = "Profiling";
+            tabProfiling.UseVisualStyleBackColor = true;
+            // 
+            // ucProfilingResultGrid
+            // 
+            ucProfilingResultGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucProfilingResultGrid.Location = new System.Drawing.Point(3, 3);
+            ucProfilingResultGrid.Name = "ucProfilingResultGrid";
+            ucProfilingResultGrid.Size = new System.Drawing.Size(643, 199);
+            ucProfilingResultGrid.TabIndex = 0;
+            // 
             // UC_SqlQuery
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
@@ -211,6 +234,7 @@ namespace DatabaseManager.Controls
             tabResult.ResumeLayout(false);
             tabPageData.ResumeLayout(false);
             tabPageMessage.ResumeLayout(false);
+            tabProfiling.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -226,5 +250,7 @@ namespace DatabaseManager.Controls
         private UC_Pagination pagination;
         private System.Windows.Forms.Button btnExport;
         private System.Windows.Forms.Label lblMessage;
+        private System.Windows.Forms.TabPage tabProfiling;
+        private UC_ProfilingResultGrid ucProfilingResultGrid;
     }
 }

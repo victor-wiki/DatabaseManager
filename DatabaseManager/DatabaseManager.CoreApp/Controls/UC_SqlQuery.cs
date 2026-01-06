@@ -74,6 +74,8 @@ namespace DatabaseManager.Controls
             TabPage.CheckForIllegalCrossThreadCalls = false;
             StatusStrip.CheckForIllegalCrossThreadCalls = false;
 
+            this.tabProfiling.Parent = null;
+
             this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
 
             this.SetResultPanelVisible(false);
@@ -212,7 +214,7 @@ namespace DatabaseManager.Controls
 
             this.ClearResults();
 
-            this.scriptRunner = new ScriptRunner();
+            this.scriptRunner = new ScriptRunner(new ScriptRunOption() { UseProfiler = this.queryEditor.UseProfiler });
             this.scriptRunner.Subscribe(this);
 
             if (this.CheckConnection())
@@ -283,8 +285,8 @@ namespace DatabaseManager.Controls
 
                         if (this.selectScriptAnalyseResult != null)
                         {
-                            this.pagination.Visible = !this.selectScriptAnalyseResult.HasLimitCount 
-                                && ( this.selectScriptAnalyseResult.HasTableName || this.selectScriptAnalyseResult.HasAlias);
+                            this.pagination.Visible = !this.selectScriptAnalyseResult.HasLimitCount
+                                && (this.selectScriptAnalyseResult.HasTableName || this.selectScriptAnalyseResult.HasAlias);
                         }
 
                         if (result.TotalCount > 0)
@@ -314,6 +316,13 @@ namespace DatabaseManager.Controls
                     }
 
                     this.AppendMessage("command executed.");
+                }
+
+                if (result.ProfilingResult != null && result.ProfilingResult.Details != null && result.ProfilingResult.Details.Count > 0)
+                {
+                    this.tabProfiling.Parent = this.tabResult;
+
+                    this.ucProfilingResultGrid.LoadData(result.ProfilingResult);
                 }
 
                 if (selectedTabIndex >= 0)
@@ -519,7 +528,7 @@ namespace DatabaseManager.Controls
 
         private async Task<DataTable> GetDataTableForExporting(ExportSpecificDataOption option, List<DataExportColumn> columns)
         {
-            DataTable gridDataTable = (this.resultGridView.DataGrid.DataSource as DataTable);           
+            DataTable gridDataTable = (this.resultGridView.DataGrid.DataSource as DataTable);
 
             if (this.selectScriptAnalyseResult != null && this.selectScriptAnalyseResult.SelectStatement != null)
             {
@@ -546,7 +555,7 @@ namespace DatabaseManager.Controls
 
                 foreach (var pageNumber in pageNumbers)
                 {
-                    long count = pageNumber == option.PageCount ? total : pageNumber * pageSize;                 
+                    long count = pageNumber == option.PageCount ? total : pageNumber * pageSize;
 
                     if (this.exportDataForm != null)
                     {
@@ -563,7 +572,7 @@ namespace DatabaseManager.Controls
             else
             {
                 return gridDataTable;
-            }           
+            }
         }
     }
 }

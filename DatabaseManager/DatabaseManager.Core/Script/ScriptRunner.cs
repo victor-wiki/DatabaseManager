@@ -4,8 +4,11 @@ using DatabaseInterpreter.Core;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
+using Newtonsoft.Json;
 using SqlAnalyser.Core;
 using SqlAnalyser.Model;
+using StackExchange.Profiling;
+using StackExchange.Profiling.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -23,6 +26,7 @@ namespace DatabaseManager.Core
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
         private bool hasError = false;
+        private ScriptRunOption option;
 
         public bool IgnoreForeignKeyConstraint { get; set; }
 
@@ -30,8 +34,14 @@ namespace DatabaseManager.Core
 
         public event FeedbackHandler OnFeedback;
 
-        public ScriptRunner()
+        public ScriptRunner(ScriptRunOption option = null)
         {
+            if (option == null)
+            {
+                option = new ScriptRunOption();
+            }
+
+            this.option = option;
         }
 
         public void Subscribe(IObserver<FeedbackInfo> observer)
@@ -63,7 +73,21 @@ namespace DatabaseManager.Core
                     connectionInfo.NeedCheckServerVersion = true;
                 }
 
-                using (DbConnection dbConnection = dbInterpreter.CreateConnection())
+                bool useProfiler = this.option.UseProfiler;
+
+                MiniProfiler mp = null;
+
+                DbConnection dbConnection = dbInterpreter.CreateConnection();
+
+                if (useProfiler)
+                {
+                    mp = MiniProfiler.StartNew(Guid.NewGuid().ToString());
+
+                    dbConnection = new StackExchange.Profiling.Data.ProfiledDbConnection(dbConnection, MiniProfiler.Current);
+
+                }
+
+                using (dbConnection)
                 {
                     if (isSelect)
                     {
@@ -237,6 +261,40 @@ namespace DatabaseManager.Core
                         if (!cancellationToken.IsCancellationRequested)
                         {
                             await this.transaction.CommitAsync();
+                        }
+                    }
+
+                    if (mp != null)
+                    {
+                        try
+                        {
+                            await mp.StopAsync();
+
+                            var profilingInfo = JsonConvert.DeserializeObject<ProfilingInfo>(mp.ToJson());
+
+                            if (profilingInfo != null && profilingInfo.Root != null && profilingInfo.Root.CustomTimings != null && profilingInfo.Root.CustomTimings.sql != null)
+                            {
+                                result.ProfilingResult = new ProfilingResult()
+                                {
+                                    Id = profilingInfo.Id,
+                                    Name = profilingInfo.Name,
+                                    Started = profilingInfo.Started,
+                                    Duration = profilingInfo.DurationMilliseconds,
+                                    Details = new List<ProfilingResultDetail>()
+                                };
+
+                                result.ProfilingResult.Details.AddRange(profilingInfo.Root.CustomTimings.sql.Select(item => new ProfilingResultDetail()
+                                {
+                                    Id = item.Id,
+                                    Sql = item.CommandString?.TrimEnd(' ',';'),
+                                    ExecuteType = item.ExecuteType,
+                                    Duration = item.DurationMilliseconds,
+                                    HasError = item.Errored
+                                }));
+                            }
+                        }
+                        catch (Exception ex)
+                        {                          
                         }
                     }
                 }
@@ -537,8 +595,8 @@ namespace DatabaseManager.Core
 
                             if (hasTableName || hasAlias)
                             {
-                                List<ColumnName> columns = selectStatement.Columns.Select(item=>item).ToList();
-                                List<TokenInfo> orderBy = selectStatement.OrderBy ==null? null: selectStatement.OrderBy.Select(item=>item).ToList();
+                                List<ColumnName> columns = selectStatement.Columns.Select(item => item).ToList();
+                                List<TokenInfo> orderBy = selectStatement.OrderBy == null ? null : selectStatement.OrderBy.Select(item => item).ToList();
                                 SelectLimitInfo limitInfo = new SelectLimitInfo() { StartRowIndex = selectStatement.LimitInfo.StartRowIndex, RowCount = selectStatement.LimitInfo.RowCount };
                                 ;
                                 selectStatement.Columns.Clear();

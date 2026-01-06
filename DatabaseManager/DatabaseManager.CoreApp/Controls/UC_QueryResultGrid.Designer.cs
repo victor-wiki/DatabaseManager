@@ -92,7 +92,7 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCopy, tsmiCopyWithHeader, tsmiCopyContent, tsmiShowContent, tsmiViewGeometry, tsmiSave, tsmiAutoColumnWidth, tsmiSetColumnWidthByDefault, tsmiFindText, tsmiClearHighlighting, tsmiHideRowHeader, tsmiShowRowHeader });
             contextMenuStrip1.Name = "contextMenuStrip2";
-            contextMenuStrip1.Size = new System.Drawing.Size(250, 268);
+            contextMenuStrip1.Size = new System.Drawing.Size(250, 290);
             // 
             // tsmiCopy
             // 

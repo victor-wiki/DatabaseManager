@@ -17,6 +17,7 @@ namespace DatabaseManager.Forms
 {
     public partial class frmMain : Form, IObserver<FeedbackInfo>
     {
+        private Color defaultColor = ColorTranslator.FromHtml("#22C3E6");
         private Setting setting = SettingManager.Setting;
         private frmObjectsExplorer explorerForm = new frmObjectsExplorer();
         private frmMessage messageForm = new frmMessage();
@@ -40,10 +41,12 @@ namespace DatabaseManager.Forms
             TreeView.CheckForIllegalCrossThreadCalls = false;
             TextBox.CheckForIllegalCrossThreadCalls = false;
 
-            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear);
+           
+
+            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear, this.defaultColor);
             this.tsmiLock.Image = IconImageHelper.GetImage(IconChar.Lock, Color.Orange);
-            this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon);
-            this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid);
+            this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon, this.defaultColor);
+            this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid, this.defaultColor);
 
             FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
             LogHelper.LogType = SettingManager.Setting.LogType;
@@ -65,7 +68,7 @@ namespace DatabaseManager.Forms
             if (persistString == typeof(frmMessage).ToString())
             {
                 return messageForm;
-            }               
+            }
             else if (persistString == typeof(frmObjectsExplorer).ToString())
             {
                 return explorerForm;
@@ -73,7 +76,7 @@ namespace DatabaseManager.Forms
             else
             {
                 return null;
-            }               
+            }
         }
 
         private void LoadLayoutFromProfile()
@@ -485,7 +488,7 @@ namespace DatabaseManager.Forms
 
             bool rememberLayout = this.setting.RememberApplicationLayoutInformation;
 
-            if(rememberLayout)
+            if (rememberLayout)
             {
                 ProfileFileHelper.ResetRecentFile();
             }
@@ -494,16 +497,16 @@ namespace DatabaseManager.Forms
 
             e.Cancel = this.dockPanelMain.DocumentsCount > 0;
 
-            if(!e.Cancel)
+            if (!e.Cancel)
             {
-                if(rememberLayout)
+                if (rememberLayout)
                 {
                     this.SaveLayoutInformation();
-                }               
+                }
             }
 
             IsClosing = false;
-        }       
+        }
 
         private void SaveLayoutInformation()
         {
@@ -518,7 +521,7 @@ namespace DatabaseManager.Forms
 
         private void CloseContentForms()
         {
-            var documents = this.dockPanelMain.Documents;        
+            var documents = this.dockPanelMain.Documents;
 
             List<Form> forms = new List<Form>();
 
@@ -580,6 +583,12 @@ namespace DatabaseManager.Forms
         {
             frmDataCompare frm = new frmDataCompare();
             frm.ShowDialog();
+        }
+
+        private void tsmiJsonViwer_Click(object sender, EventArgs e)
+        {
+            frmJsonViewer frm = new frmJsonViewer();
+            frm.Show();
         }
     }
 }

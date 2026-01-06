@@ -41,6 +41,7 @@ namespace DatabaseManager.Controls
         private List<string> dbSchemas;
         private CodeCompletionWindow codeCompletionWindow;
         private string commentString => this.DbInterpreter?.CommentString;
+        private Dictionary<DatabaseObject, List<string>> dictTableAndViewAlias = new Dictionary<DatabaseObject, List<string>>();
 
         public RunScriptsHandler OnRunScripts;
         public DatabaseType DatabaseType { get; set; }
@@ -53,8 +54,8 @@ namespace DatabaseManager.Controls
         public SelectionManager SelectionManager => this.TextArea.SelectionManager;
         public string SelectedText => this.SelectionManager.SelectedText;
         public ContextMenuStrip ContextMenu => this.txtEditor.ActiveTextAreaControl.ContextMenuStrip;
-
-        Dictionary<DatabaseObject, List<string>> dictTableAndViewAlias = new Dictionary<DatabaseObject, List<string>>();
+        public bool UseProfiler { get; private set; }
+        
 
         private int CurrentCharIndex
         {
@@ -106,6 +107,10 @@ namespace DatabaseManager.Controls
                 ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
                 tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
                 this.ContextMenu.Items.Add(tsmiValidateScripts);
+
+                ToolStripMenuItem tsmiUseProfiler = new ToolStripMenuItem("Use Profiler") { Name = "tsmiUseProfiler" };
+                tsmiUseProfiler.Click += this.tsmiUseProfiler_Click;
+                this.ContextMenu.Items.Add(tsmiUseProfiler);
 
                 this.ContextMenu.Opening += this.editorContexMenu_Opening;
             }
@@ -1061,6 +1066,15 @@ namespace DatabaseManager.Controls
             this.ClearSelection();
 
             this.ValidateScripts(true);
+        }
+
+        private void tsmiUseProfiler_Click(object sender, EventArgs e)
+        {
+            var tsmi = (sender as ToolStripMenuItem);
+
+            tsmi.Checked = !tsmi.Checked;
+
+            this.UseProfiler = tsmi.Checked;
         }
 
         internal async void ValidateScripts(bool showMessageBox = false)

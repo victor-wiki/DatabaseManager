@@ -42,6 +42,7 @@
             tsmiTools = new System.Windows.Forms.ToolStripMenuItem();
             tsmiWktView = new System.Windows.Forms.ToolStripMenuItem();
             tsmiImageViewer = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiJsonViwer = new System.Windows.Forms.ToolStripMenuItem();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
             tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
@@ -136,7 +137,7 @@
             // 
             // tsmiTools
             // 
-            tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiWktView, tsmiImageViewer });
+            tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiWktView, tsmiImageViewer, tsmiJsonViwer });
             tsmiTools.Name = "tsmiTools";
             tsmiTools.Size = new System.Drawing.Size(52, 21);
             tsmiTools.Text = "Tools";
@@ -145,7 +146,7 @@
             // 
             tsmiWktView.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiWktView.Name = "tsmiWktView";
-            tsmiWktView.Size = new System.Drawing.Size(156, 22);
+            tsmiWktView.Size = new System.Drawing.Size(180, 22);
             tsmiWktView.Text = "WKT Viewer";
             tsmiWktView.Click += tsmiWktView_Click;
             // 
@@ -153,9 +154,17 @@
             // 
             tsmiImageViewer.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
             tsmiImageViewer.Name = "tsmiImageViewer";
-            tsmiImageViewer.Size = new System.Drawing.Size(156, 22);
+            tsmiImageViewer.Size = new System.Drawing.Size(180, 22);
             tsmiImageViewer.Text = "Image Viewer";
             tsmiImageViewer.Click += tsmiImageViewer_Click;
+            // 
+            // tsmiJsonViwer
+            // 
+            tsmiJsonViwer.Image = Resources.JSON;
+            tsmiJsonViwer.Name = "tsmiJsonViwer";
+            tsmiJsonViwer.Size = new System.Drawing.Size(180, 22);
+            tsmiJsonViwer.Text = "JSON Viewer";
+            tsmiJsonViwer.Click += tsmiJsonViwer_Click;
             // 
             // toolStrip1
             // 
@@ -352,6 +361,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiObjectsExplorer;
         private System.Windows.Forms.ToolStripMenuItem tsmiMessage;
         private System.Windows.Forms.ToolStripButton tsBtnDataCompare;
+        private System.Windows.Forms.ToolStripMenuItem tsmiJsonViwer;
     }
 }
 
