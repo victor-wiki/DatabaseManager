@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.3.1</Version>
-    <AssemblyVersion>2.3.1</AssemblyVersion>
-    <FileVersion>2.3.1</FileVersion>
+    <Version>2.3.2</Version>
+    <AssemblyVersion>2.3.2</AssemblyVersion>
+    <FileVersion>2.3.2</FileVersion>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
-    <PackageReleaseNotes>1. add "PaginationInfo";
-2. add "NeedCheckServerVersion" to "ConnectionInfo".</PackageReleaseNotes>
+    <PackageReleaseNotes>Add "Values" to "TableColumn", to store value list for MySql "enum" or "set" type.</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>

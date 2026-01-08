@@ -52,7 +52,7 @@ namespace DatabaseManager.Forms
             this.tvDbObjects.ShowCheckBox = false;
             this.tvDbObjects.TreeNodeSelected += this.tvDbObjects_TreeNodeSelected;
 
-            this.tvDbObjects.LoadTree(this.schemaInfo, true);
+            this.tvDbObjects.LoadTree(this.schemaInfo, DatabaseObjectType.Table);
         }
 
         private void tvDbObjects_TreeNodeSelected(object sender, TreeViewEventArgs e)

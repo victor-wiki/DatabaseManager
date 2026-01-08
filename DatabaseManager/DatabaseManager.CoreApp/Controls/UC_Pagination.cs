@@ -20,7 +20,7 @@ namespace DatabaseManager.Controls
         private long totalCount = 0;
         private long pageNumber = 1;
         private bool isSetting = false;
-        private Color imageColor = IconImageHelper.DataViewerToolbarColor;
+        private Color imageColor = IconImageHelper.DefaultIconColor;
 
         public delegate void PageNumberChangeHandler(long pageNumber);
 

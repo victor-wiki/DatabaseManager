@@ -20,7 +20,7 @@ namespace DatabaseManager.Forms
         private bool useConnector = true;
         private bool isFormClosed = false;
         private bool isTaskCancelled = false;
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource cancellationTokenSource;
 
         public frmGenerateScripts()
         {
@@ -54,7 +54,7 @@ namespace DatabaseManager.Forms
 
             string defaultOutputFolder = SettingManager.Setting.ScriptsDefaultOutputFolder;
 
-            if(!string.IsNullOrEmpty(defaultOutputFolder))
+            if (!string.IsNullOrEmpty(defaultOutputFolder))
             {
                 this.txtOutputFolder.Text = defaultOutputFolder;
             }
@@ -68,6 +68,7 @@ namespace DatabaseManager.Forms
             }
 
             DialogResult result = this.dlgOutputFolder.ShowDialog();
+
             if (result == DialogResult.OK)
             {
                 this.txtOutputFolder.Text = this.dlgOutputFolder.SelectedPath;
@@ -98,7 +99,7 @@ namespace DatabaseManager.Forms
                 }
 
                 if (!this.dbConnectionProfile.ValidateProfile())
-                {                   
+                {
                     return;
                 }
 
@@ -149,8 +150,9 @@ namespace DatabaseManager.Forms
             }
 
             this.isBusy = true;
-            this.isTaskCancelled = false; 
+            this.isTaskCancelled = false;
             this.btnGenerate.Enabled = false;
+            this.btnCancel.Enabled = true;
 
             DatabaseType dbType = this.useConnector ? this.dbConnectionProfile.DatabaseType : this.databaseType;
 
@@ -208,6 +210,10 @@ namespace DatabaseManager.Forms
 
                 DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(this.dbInterpreter);
 
+                this.cancellationTokenSource = new CancellationTokenSource();
+
+                var token = this.cancellationTokenSource.Token;
+
                 if (scriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
                     mode = GenerateScriptMode.Schema;
@@ -215,7 +221,7 @@ namespace DatabaseManager.Forms
                     await Task.Run(() =>
                     {
                         dbScriptGenerator.GenerateSchemaScripts(schemaInfo);
-                    }, this.cancellationTokenSource.Token);                   
+                    }, token);
                 }
 
                 if (scriptMode.HasFlag(GenerateScriptMode.Data))
@@ -225,19 +231,26 @@ namespace DatabaseManager.Forms
                     await Task.Run(async () =>
                     {
                         await dbScriptGenerator.GenerateDataScriptsAsync(schemaInfo);
-                    }, this.cancellationTokenSource.Token);                    
+                    }, token);
                 }
 
                 this.isBusy = false;
 
-                string filePath = Path.GetFullPath(dbScriptGenerator.GetScriptOutputFilePath(mode));
-                string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text)? ($", the file path is:{Environment.NewLine}{filePath}"):"";
+                if (!token.IsCancellationRequested)
+                {
+                    string filePath = Path.GetFullPath(dbScriptGenerator.GetScriptOutputFilePath(mode));
+                    string tip = string.IsNullOrEmpty(this.txtOutputFolder.Text) ? ($", the file path is:{Environment.NewLine}{filePath}") : "";
 
-                MessageBox.Show($"Scripts have been generated{tip}", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Scripts have been generated{tip}", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    this.Feedback("Task has been canceled.");
+                }              
             }
-            catch(TaskCanceledException tcex)
+            catch (TaskCanceledException tcex)
             {
-                this.isTaskCancelled = true;               
+                this.isTaskCancelled = true;
             }
             catch (Exception ex)
             {
@@ -245,6 +258,7 @@ namespace DatabaseManager.Forms
             }
 
             this.btnGenerate.Enabled = true;
+            this.btnCancel.Enabled = false;
         }
 
         private void HandleException(Exception ex)
@@ -313,9 +327,14 @@ namespace DatabaseManager.Forms
             }
         }
 
+        private void Feedback(string message)
+        {
+            this.Feedback(new FeedbackInfo() { Message = message });
+        }
+
         private void Feedback(FeedbackInfo info)
         {
-            if(!this.Visible || this.isFormClosed || this.isTaskCancelled)
+            if (!this.Visible || this.isFormClosed || this.isTaskCancelled)
             {
                 return;
             }
@@ -374,7 +393,7 @@ namespace DatabaseManager.Forms
                 }
             }
 
-            if(e.Cancel == false)
+            if (e.Cancel == false)
             {
                 this.isFormClosed = true;
             }
@@ -392,9 +411,12 @@ namespace DatabaseManager.Forms
             return false;
         }
 
-        private void btnClose_Click(object sender, EventArgs e)
+        private async void btnCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            if (this.cancellationTokenSource != null)
+            {
+                await this.cancellationTokenSource.CancelAsync();
+            }
         }
     }
 }

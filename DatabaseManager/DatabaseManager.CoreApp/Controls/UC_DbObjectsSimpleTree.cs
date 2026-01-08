@@ -40,7 +40,7 @@ namespace DatabaseManager.Controls
             TreeView.CheckForIllegalCrossThreadCalls = false;
         }
 
-        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, bool onlyShowTables = false)
+        public async Task LoadTree(DatabaseType dbType, ConnectionInfo connectionInfo, DatabaseObjectType specificDbObjectType = DatabaseObjectType.None)
         {
             this.tvDbObjects.Nodes.Clear();
 
@@ -48,9 +48,9 @@ namespace DatabaseManager.Controls
 
             DatabaseObjectType databaseObjectType = DbObjectsTreeHelper.DefaultObjectType;
 
-            if (onlyShowTables)
+            if (specificDbObjectType != DatabaseObjectType.None)
             {
-                databaseObjectType = DatabaseObjectType.Table;
+                databaseObjectType = specificDbObjectType;
             }
 
             this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
@@ -58,30 +58,51 @@ namespace DatabaseManager.Controls
 
             SchemaInfo schemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(filter);
 
-            this.LoadTree(schemaInfo, onlyShowTables);
+            this.LoadTree(schemaInfo, databaseObjectType);
         }
 
-        public void LoadTree(SchemaInfo schemaInfo, bool onlyShowTables = false)
+        public void LoadTree(SchemaInfo schemaInfo, DatabaseObjectType databaseObjectType)
         {
-            if (!onlyShowTables)
+            bool onlyShowTables = databaseObjectType == DatabaseObjectType.Table;
+
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Type))
             {
                 this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(UserDefinedType), "User Defined Types", schemaInfo.UserDefinedTypes, this.NeedShowSchema(schemaInfo.UserDefinedTypes));
+            }
+
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Sequence))
+            {
                 this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Sequence), "Sequences", schemaInfo.Sequences, this.NeedShowSchema(schemaInfo.Sequences));
+            }
+
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Function))
+            {
                 this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Function), "Functions", schemaInfo.Functions, this.NeedShowSchema(schemaInfo.Functions));
             }
 
-            this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables, this.NeedShowSchema(schemaInfo.Tables));
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Table))
+            {
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Table), "Tables", schemaInfo.Tables, this.NeedShowSchema(schemaInfo.Tables));
+            }
 
-            if (!onlyShowTables)
+            if (databaseObjectType.HasFlag(DatabaseObjectType.View))
             {
                 this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(DatabaseInterpreter.Model.View), "Views", schemaInfo.Views, this.NeedShowSchema(schemaInfo.Views));
-                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures, this.NeedShowSchema(schemaInfo.Procedures));
-                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(TableTrigger), "Triggers", schemaInfo.TableTriggers, this.NeedShowSchema(schemaInfo.TableTriggers));
             }
+
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Procedure))
+            {
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(Procedure), "Procedures", schemaInfo.Procedures, this.NeedShowSchema(schemaInfo.Procedures));
+            }
+
+            if (databaseObjectType.HasFlag(DatabaseObjectType.Trigger))
+            {
+                this.tvDbObjects.Nodes.AddDbObjectFolderNode(nameof(TableTrigger), "Triggers", schemaInfo.TableTriggers, this.NeedShowSchema(schemaInfo.TableTriggers));
+            }                
 
             if (this.tvDbObjects.Nodes.Count == 1)
             {
-                this.tvDbObjects.ExpandAll();
+                this.tvDbObjects.ExpandAll();              
 
                 if (onlyShowTables && this.tvDbObjects.Nodes[0].Nodes.Count > 0 && this.ShowCheckBox == false)
                 {
@@ -92,7 +113,7 @@ namespace DatabaseManager.Controls
 
         private bool NeedShowSchema(IEnumerable<DatabaseObject> dbObjects)
         {
-            if(this.dbInterpreter == null)
+            if (this.dbInterpreter == null)
             {
                 bool isUniqueSchema = dbObjects.GroupBy(item => item.Schema).Count() == 1;
 
@@ -116,8 +137,8 @@ namespace DatabaseManager.Controls
                 foreach (TreeNode node in e.Node.Nodes)
                 {
                     node.Checked = e.Node.Checked;
-                }                
-            }           
+                }
+            }
         }
 
         public SchemaInfo GetSchemaInfo()
@@ -302,6 +323,6 @@ namespace DatabaseManager.Controls
             {
                 node.Checked = true;
             }
-        }       
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace DatabaseManager.Forms
 {
-    partial class frmTableColumnsRelation
+    partial class frmTableColumnRelation
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTableColumnsRelation));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmTableColumnRelation));
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             lblPKTableName = new System.Windows.Forms.Label();
             ucPKTableColumns = new DatabaseManager.Controls.UC_TableColumnDetails();

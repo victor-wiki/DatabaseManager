@@ -20,7 +20,7 @@ namespace DatabaseManager.Forms
         private List<Table> tables;
         private List<TableForeignKey> foreignKeys;
         private List<frmTableColumnDetails> tableColumnDetailsForms = new List<frmTableColumnDetails>();
-        private List<frmTableColumnsRelation> tableColumnsRelationForms = new List<frmTableColumnsRelation>();
+        private List<frmTableColumnRelation> tableColumnsRelationForms = new List<frmTableColumnRelation>();
 
         public frmDatabaseDiagram(DbInterpreter dbInterpreter)
         {
@@ -314,16 +314,16 @@ namespace DatabaseManager.Forms
         {
             var foreignKey = this.foreignKeys.FirstOrDefault(item => item.TableName == sourceTable.Name && item.ReferencedTableName == targetTable.Name);
 
-            frmTableColumnsRelation frm = this.tableColumnsRelationForms.FirstOrDefault(item => item.Tag == foreignKey);
+            frmTableColumnRelation frm = this.tableColumnsRelationForms.FirstOrDefault(item => item.Tag == foreignKey);
 
             if (frm == null || frm.IsDisposed)
             {
-                frm = new frmTableColumnsRelation(foreignKey);
+                frm = new frmTableColumnRelation(foreignKey);
                 frm.Tag = foreignKey;
 
                 frm.FormClosed += (sender, e) =>
                 {
-                    this.tableColumnsRelationForms.Remove(sender as frmTableColumnsRelation);
+                    this.tableColumnsRelationForms.Remove(sender as frmTableColumnRelation);
                 };
 
                 frm.StartPosition = FormStartPosition.Manual;

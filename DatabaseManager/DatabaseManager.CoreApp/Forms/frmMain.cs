@@ -17,7 +17,6 @@ namespace DatabaseManager.Forms
 {
     public partial class frmMain : Form, IObserver<FeedbackInfo>
     {
-        private Color defaultColor = ColorTranslator.FromHtml("#22C3E6");
         private Setting setting = SettingManager.Setting;
         private frmObjectsExplorer explorerForm = new frmObjectsExplorer();
         private frmMessage messageForm = new frmMessage();
@@ -41,12 +40,11 @@ namespace DatabaseManager.Forms
             TreeView.CheckForIllegalCrossThreadCalls = false;
             TextBox.CheckForIllegalCrossThreadCalls = false;
 
-           
-
-            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear, this.defaultColor);
+            this.tsmiSetting.Image = IconImageHelper.GetImage(IconChar.Gear);
             this.tsmiLock.Image = IconImageHelper.GetImage(IconChar.Lock, Color.Orange);
-            this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon, this.defaultColor);
-            this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid, this.defaultColor);
+            this.tsmiWktView.Image = IconImageHelper.GetImage(IconChar.DrawPolygon);
+            this.tsmiImageViewer.Image = IconImageHelper.GetImageByFontType(IconChar.Image, IconFont.Solid);
+            this.tsmiCodeGenerator.Image = IconImageHelper.GetImage(IconChar.Code);
 
             FeedbackHelper.EnableLog = SettingManager.Setting.EnableLog;
             LogHelper.LogType = SettingManager.Setting.LogType;
@@ -588,6 +586,12 @@ namespace DatabaseManager.Forms
         private void tsmiJsonViwer_Click(object sender, EventArgs e)
         {
             frmJsonViewer frm = new frmJsonViewer();
+            frm.Show();
+        }
+
+        private void tsmiCodeGenerator_Click(object sender, EventArgs e)
+        {
+            frmCodeGenerator frm = new frmCodeGenerator();
             frm.Show();
         }
     }

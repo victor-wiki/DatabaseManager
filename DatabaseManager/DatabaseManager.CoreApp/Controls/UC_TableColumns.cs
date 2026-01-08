@@ -4,6 +4,7 @@ using DatabaseInterpreter.Utility;
 using DatabaseManager.Core;
 using DatabaseManager.Core.Model;
 using DatabaseManager.Helper;
+using StackExchange.Profiling.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,6 +21,8 @@ namespace DatabaseManager.Controls
         private int rowIndexOfItemUnderMouseToDrop;
         private bool defaultNullable = true;
         private IEnumerable<DataTypeSpecification> dataTypeSpecifications;
+        private bool isLoading = false;
+
         public DatabaseType DatabaseType { get; set; }
         public List<UserDefinedType> UserDefinedTypes { get; set; }
 
@@ -78,6 +81,8 @@ namespace DatabaseManager.Controls
 
         public void LoadColumns(Table table, IEnumerable<TableColumnDesingerInfo> columns)
         {
+            this.isLoading = true;
+
             this.dgvColumns.Rows.Clear();
 
             foreach (TableColumnDesingerInfo column in columns)
@@ -111,6 +116,11 @@ namespace DatabaseManager.Controls
                     extraPropertyInfo.Increment = table.IdentityIncrement.Value;
                 }
 
+                if (column.ExtraPropertyInfo != null && column.ExtraPropertyInfo.Values != null)
+                {
+                    extraPropertyInfo.Values = column.ExtraPropertyInfo.Values;
+                }
+
                 column.ExtraPropertyInfo = extraPropertyInfo;
 
                 this.SetColumnCellsReadonly(row);
@@ -118,6 +128,8 @@ namespace DatabaseManager.Controls
 
             this.AutoSizeColumns();
             this.dgvColumns.ClearSelection();
+
+            this.isLoading = false;
         }
 
         public void OnSaved()
@@ -235,6 +247,11 @@ namespace DatabaseManager.Controls
 
         private void dgvColumns_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
+            if(this.isLoading)
+            {
+                return;
+            }
+
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = this.dgvColumns.Rows[e.RowIndex];
@@ -354,12 +371,7 @@ namespace DatabaseManager.Controls
         private void dgvColumns_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
 
-        }
-
-        private void dgvColumns_SelectionChanged(object sender, EventArgs e)
-        {
-
-        }
+        }       
 
         private void ShowColumnExtraPropertites()
         {
@@ -395,6 +407,27 @@ namespace DatabaseManager.Controls
                 if (this.DatabaseType != DatabaseType.Sqlite)
                 {
                     hiddenProperties.Add(nameof(extralProperty.IsGeneratedAlways));
+                }
+
+                if (this.DatabaseType != DatabaseType.MySql)
+                {
+                    hiddenProperties.Add(nameof(extralProperty.Values));
+                }
+                else
+                {
+                    DataGridViewCell dataTypeCell = row.Cells[this.colDataType.Name];
+
+                    string dataType = DataGridViewHelper.GetCellStringValue(dataTypeCell);
+
+                    if (dataType == null && !string.IsNullOrEmpty(dataTypeCell.EditedFormattedValue?.ToString()))
+                    {
+                        dataType = dataTypeCell.EditedFormattedValue.ToString();
+                    }
+
+                    if (dataType != "enum" && dataType != "set")
+                    {
+                        hiddenProperties.Add(nameof(extralProperty.Values));
+                    }
                 }
 
                 this.columnPropertites.HiddenProperties = hiddenProperties.ToArray();
@@ -574,7 +607,7 @@ namespace DatabaseManager.Controls
 
         private void dgvColumns_CellEnter(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0)
+            if (e.RowIndex < 0 || this.isLoading)
             {
                 return;
             }
@@ -591,8 +624,19 @@ namespace DatabaseManager.Controls
                 if (combo != null)
                 {
                     combo.DropDownStyle = ComboBoxStyle.DropDown;
+
+                    if (this.DatabaseType == DatabaseType.MySql)
+                    {
+                        combo.SelectedIndexChanged -= ComboDataType_SelectedIndexChanged;
+                        combo.SelectedIndexChanged += ComboDataType_SelectedIndexChanged;
+                    }
                 }
             }
+        }
+
+        private void ComboDataType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.ShowColumnExtraPropertites();
         }
 
         private void dgvColumns_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)

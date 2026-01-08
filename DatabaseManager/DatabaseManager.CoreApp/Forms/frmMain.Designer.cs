@@ -43,6 +43,7 @@
             tsmiWktView = new System.Windows.Forms.ToolStripMenuItem();
             tsmiImageViewer = new System.Windows.Forms.ToolStripMenuItem();
             tsmiJsonViwer = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiCodeGenerator = new System.Windows.Forms.ToolStripMenuItem();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             tsBtnAddQuery = new System.Windows.Forms.ToolStripButton();
             tsBtnOpenFile = new System.Windows.Forms.ToolStripButton();
@@ -137,7 +138,7 @@
             // 
             // tsmiTools
             // 
-            tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiWktView, tsmiImageViewer, tsmiJsonViwer });
+            tsmiTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiWktView, tsmiImageViewer, tsmiJsonViwer, tsmiCodeGenerator });
             tsmiTools.Name = "tsmiTools";
             tsmiTools.Size = new System.Drawing.Size(52, 21);
             tsmiTools.Text = "Tools";
@@ -165,6 +166,14 @@
             tsmiJsonViwer.Size = new System.Drawing.Size(180, 22);
             tsmiJsonViwer.Text = "JSON Viewer";
             tsmiJsonViwer.Click += tsmiJsonViwer_Click;
+            // 
+            // tsmiCodeGenerator
+            // 
+            tsmiCodeGenerator.ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None;
+            tsmiCodeGenerator.Name = "tsmiCodeGenerator";
+            tsmiCodeGenerator.Size = new System.Drawing.Size(180, 22);
+            tsmiCodeGenerator.Text = "Code Generator";
+            tsmiCodeGenerator.Click += tsmiCodeGenerator_Click;
             // 
             // toolStrip1
             // 
@@ -362,6 +371,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiMessage;
         private System.Windows.Forms.ToolStripButton tsBtnDataCompare;
         private System.Windows.Forms.ToolStripMenuItem tsmiJsonViwer;
+        private System.Windows.Forms.ToolStripMenuItem tsmiCodeGenerator;
     }
 }
 

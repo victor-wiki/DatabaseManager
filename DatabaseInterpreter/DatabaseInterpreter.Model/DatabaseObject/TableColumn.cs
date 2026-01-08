@@ -16,5 +16,6 @@
         public string ComputeExp { get; set; }     
         public bool IsGeneratedAlways { get; set; }
         public string ScriptComment { get; set; }
+        public string Values { get; set; }
     }
 }

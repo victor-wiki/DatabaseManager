@@ -37,7 +37,7 @@ namespace DatabaseManager.Forms.Compare
 
             this.tsbCancel.Image = IconImageHelper.GetImageByFontType(IconChar.Cancel, IconFont.Solid, Color.Red);
 
-            var exportImage = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
+            var exportImage = IconImageHelper.GetImage(IconChar.FileExport);
 
             this.btnExportDifferent.Image = exportImage;
             this.btnExportOnlyInSource.Image = exportImage;

@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace DatabaseManager.Forms
 {
-    public partial class frmTableColumnsRelation : Form
+    public partial class frmTableColumnRelation : Form
     {
         private TableForeignKey foreignKey;
 
-        public frmTableColumnsRelation(TableForeignKey foreignKey)
+        public frmTableColumnRelation(TableForeignKey foreignKey)
         {
             InitializeComponent();
 

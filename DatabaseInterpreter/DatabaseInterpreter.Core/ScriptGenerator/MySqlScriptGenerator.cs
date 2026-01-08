@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -306,10 +307,28 @@ $@"
 
             string option = this.GetCreateTableOption();
 
+            List<string> columnList = new List<string>();
+
+            foreach (var column in columns)
+            {
+                string dataType = column.DataType.ToLower();
+
+                string strColumn = this.dbInterpreter.ParseColumn(table, column);
+
+                if (dataType != "enum" && dataType != "set")
+                {
+                    columnList.Add(strColumn);
+                }
+                else
+                {
+                    columnList.Add($"{strColumn}({column.Values})");
+                }
+            }
+
             string tableScript =
 $@"
 CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
-{string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}{primaryKeyColumns}
+{string.Join("," + Environment.NewLine, columnList)}{primaryKeyColumns}
 ){(!string.IsNullOrEmpty(table.Comment) && this.option.TableScriptsGenerateOption.GenerateComment ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
 DEFAULT CHARSET={dbCharSet}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option) + this.scriptsDelimiter;
 

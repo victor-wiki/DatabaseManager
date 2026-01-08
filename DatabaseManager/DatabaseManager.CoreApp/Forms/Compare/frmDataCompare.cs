@@ -351,7 +351,7 @@ namespace DatabaseManager.Forms
 
             try
             {
-                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, true);
+                await this.tvDbObjects.LoadTree(dbType, this.sourceDbConnectionInfo, DatabaseObjectType.Table);
 
                 this.tvDbObjects.CheckRootNodes();
 

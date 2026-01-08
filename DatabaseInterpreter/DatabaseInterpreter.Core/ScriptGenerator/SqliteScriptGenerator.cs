@@ -331,7 +331,8 @@ namespace DatabaseInterpreter.Core
             }
 
             string tableScript =
-$@"CREATE TABLE{existsClause} {quotedTableName}(
+$@"
+CREATE TABLE{existsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columnItems)}{primaryKeyConstraint}{(foreginKeyConstraint.Length > 0 ? Environment.NewLine : "")}{foreginKeyConstraint.ToString().Trim()}
 ){option};";
 

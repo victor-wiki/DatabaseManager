@@ -46,6 +46,11 @@ namespace DatabaseManager.Core
                 {
                     columnDesingerInfo.ExtraPropertyInfo.Expression = column.ComputeExp;
                 }
+                else if (dbInterpreter.DatabaseType == DatabaseType.MySql && column.Values != null &&
+                    (dataType.ToLower() == "enum" || dataType.ToLower() == "set"))
+                {
+                    columnDesingerInfo.ExtraPropertyInfo.Values = column.Values;
+                }
 
                 if (table.IdentitySeed.HasValue)
                 {
@@ -171,7 +176,7 @@ namespace DatabaseManager.Core
         {
             string dataType = column.DataType;
 
-            if(string.IsNullOrEmpty(dataType))
+            if (string.IsNullOrEmpty(dataType))
             {
                 return;
             }

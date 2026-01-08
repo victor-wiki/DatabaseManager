@@ -144,7 +144,7 @@ namespace DatabaseManager.Core
                     {
                         scripts.Add(this.scriptGenerator.SetTableComment(oldTable, string.IsNullOrEmpty(oldTable.Comment)));
 
-                        oldTable.Comment = tableDesignerInfo.Comment;                        
+                        oldTable.Comment = tableDesignerInfo.Comment;
                     }
 
                     #region Columns
@@ -346,7 +346,7 @@ namespace DatabaseManager.Core
 
                 scriptsData.Scripts.AddRange(scripts);
 
-                return new ContentSaveResult() { IsOK = true, ResultData = scriptsData};
+                return new ContentSaveResult() { IsOK = true, ResultData = scriptsData };
             }
             catch (Exception ex)
             {
@@ -422,6 +422,20 @@ namespace DatabaseManager.Core
                     }
 
                     scripts.Add(alterColumnScript);
+                }
+                else
+                {
+                    if (this.dbInterpreter.DatabaseType == DatabaseType.MySql)
+                    {
+                        if (oldColumn.Values != newColumn.Values)
+                        {
+                            Script alterColumnScript = scriptGenerator.AlterTableColumn(newTable, newColumn, oldColumn);
+
+                            alterColumnScript.Content = alterColumnScript.Content.Trim(';',' ') + $"({newColumn.Values});";
+
+                            scripts.Add(alterColumnScript);
+                        }
+                    }
                 }
             }
             else if (!ValueHelper.IsStringEquals(newColumn.Comment, oldColumn.Comment))
@@ -710,6 +724,11 @@ namespace DatabaseManager.Core
                 if (!string.IsNullOrEmpty(tableColumn.ComputeExp) && extralProperty?.IsGeneratedAlways == true)
                 {
                     tableColumn.IsGeneratedAlways = extralProperty.IsGeneratedAlways;
+                }
+
+                if (extralProperty.Values != null)
+                {
+                    tableColumn.Values = extralProperty.Values;
                 }
 
                 schemaInfo.TableColumns.Add(tableColumn);

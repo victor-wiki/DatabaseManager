@@ -40,8 +40,8 @@ namespace DatabaseManager.Controls
         {
             InitializeComponent();
 
-            this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter, IconImageHelper.DataViewerToolbarColor);
-            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
+            this.btnFilter.Image = IconImageHelper.GetImage(IconChar.Filter);
+            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport);
 
             this.pagination.PageSize = 50;
 

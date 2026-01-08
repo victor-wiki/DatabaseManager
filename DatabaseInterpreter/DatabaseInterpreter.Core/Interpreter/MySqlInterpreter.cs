@@ -246,10 +246,12 @@ namespace DatabaseInterpreter.Core
 
             var sb = this.CreateSqlBuilder();
 
-            sb.Append($@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, COLUMN_TYPE AS `DataType`, 
+            sb.Append($@"SELECT C.TABLE_SCHEMA AS `Schema`, C.TABLE_NAME AS `TableName`, COLUMN_NAME AS `Name`, 
+                        CASE INSTR(COLUMN_TYPE,'(') WHEN 0 THEN COLUMN_TYPE ELSE SUBSTRING(COLUMN_TYPE, 1 ,INSTR(COLUMN_TYPE,'(')-1) END  AS `DataType`, 
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`,
-                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`
+                        CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,
+                        CASE INSTR(COLUMN_TYPE,'(') WHEN 0 THEN NULL ELSE SUBSTRING(COLUMN_TYPE, INSTR(COLUMN_TYPE,'(')+1, LENGTH(COLUMN_TYPE)-INSTR(COLUMN_TYPE,'(')-1) END AS `Values`
                         {detailColums} 
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         {joinTable}
@@ -834,6 +836,11 @@ namespace DatabaseInterpreter.Core
             string requiredClause = (column.IsRequired ? "NOT NULL" : "NULL");
             bool supportComputeColumn = this.IsSupportComputeColumn();
             bool isChar = DataTypeHelper.IsCharType(dataType.ToLower());
+
+            if(dataType == "enum" || dataType == "set")
+            {
+                requiredClause = "";
+            }
 
             if (isChar || DataTypeHelper.IsTextType(dataType.ToLower()))
             {

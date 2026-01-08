@@ -76,7 +76,7 @@ namespace DatabaseManager.Controls
 
             this.tabProfiling.Parent = null;
 
-            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport, IconImageHelper.DataViewerToolbarColor);
+            this.btnExport.Image = IconImageHelper.GetImage(IconChar.FileExport);
 
             this.SetResultPanelVisible(false);
         }

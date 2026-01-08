@@ -42,17 +42,21 @@ namespace DatabaseInterpreter.Core
         {
             List<Script> scripts = new List<Script>();
 
-            foreach (T dbObject in dbObjects)
+            for (int i = 0; i < dbObjects.Count; i++)
             {
+                T dbObject = dbObjects[i];
+
                 this.dbInterpreter.FeedbackInfo(OperationState.Begin, dbObject);
 
-                bool hasNewLine = this.scriptsDelimiter.Contains(Environment.NewLine);
+                bool hasNewLineInDelimiter = this.scriptsDelimiter.Contains(Environment.NewLine);
 
                 string definition = dbObject.Definition.Trim();
 
                 scripts.Add(new CreateDbObjectScript<T>(definition));
 
-                if (!hasNewLine)
+                bool hasAppendNewLine = false;
+
+                if (!hasNewLineInDelimiter)
                 {
                     if (!definition.EndsWith(this.scriptsDelimiter))
                     {
@@ -63,9 +67,16 @@ namespace DatabaseInterpreter.Core
                 {
                     scripts.Add(new NewLineScript());
                     scripts.Add(new SpliterScript(this.scriptsDelimiter));
+
+                    hasAppendNewLine = true;
                 }
 
                 scripts.Add(new NewLineScript());
+
+                if (!hasAppendNewLine && i < dbObjects.Count - 1)
+                {
+                    scripts.Add(new NewLineScript());
+                }
 
                 this.dbInterpreter.FeedbackInfo(OperationState.End, dbObject);
             }
@@ -200,7 +211,7 @@ namespace DatabaseInterpreter.Core
             var dictPagedData = await this.dbInterpreter.GetPagedDataListAsync(connection, table, columns, primaryKeyColumns, total, batchCount, pageSize, whereClause);
 
             List<object> parentValues = (this.dbInterpreter.QuotationLeftChar.HasValue ?
-                dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.dbInterpreter.QuotationLeftChar.Value, this.dbInterpreter.QuotationRightChar.Value)])):
+                dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns.Trim(this.dbInterpreter.QuotationLeftChar.Value, this.dbInterpreter.QuotationRightChar.Value)])) :
                 dictPagedData.Values.SelectMany(item => item.Select(t => t[primaryKeyColumns]))
                 ).ToList();
 

@@ -25,5 +25,8 @@ namespace DatabaseManager.Core.Model
 
         [Category("Compute"), Description("Is generated always"), ReadOnly(false)]
         public bool IsGeneratedAlways { get; set; }
+
+        [Category("Value List"), Description("Values"), ReadOnly(false)]
+        public string Values { get; set; }
     }
 }

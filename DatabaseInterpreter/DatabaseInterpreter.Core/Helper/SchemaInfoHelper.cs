@@ -430,7 +430,8 @@ namespace DatabaseInterpreter.Core
                && ValueHelper.IsStringEquals(StringHelper.GetBalanceParenthesisTrimedValue(column1.DefaultValue), StringHelper.GetBalanceParenthesisTrimedValue(column2.DefaultValue))
                && (excludeComment || (!excludeComment && ValueHelper.IsStringEquals(column1.Comment, column2.Comment)))
                && ValueHelper.IsStringEquals(column1.ComputeExp, column2.ComputeExp)
-               && column1.IsGeneratedAlways == column2.IsGeneratedAlways)
+               && column1.IsGeneratedAlways == column2.IsGeneratedAlways
+               && column1.Values == column2.Values)
             {
                 return true;
             }

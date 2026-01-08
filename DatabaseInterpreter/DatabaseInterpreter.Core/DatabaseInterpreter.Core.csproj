@@ -3,10 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.3</AssemblyVersion>
-    <FileVersion>2.3.3</FileVersion>
-    <Version>2.3.3</Version>
-    <PackageReleaseNotes>DbInterpreter: if filter parameter is null, the "GetSchemaInfo" method will return all db objects. </PackageReleaseNotes>
+    <AssemblyVersion>2.3.4</AssemblyVersion>
+    <FileVersion>2.3.4</FileVersion>
+    <Version>2.3.4</Version>
+    <PackageReleaseNotes>Handle MySql "enum" and "set" type.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <RepositoryUrl></RepositoryUrl>
