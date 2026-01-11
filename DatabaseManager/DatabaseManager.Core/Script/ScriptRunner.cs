@@ -102,14 +102,23 @@ namespace DatabaseManager.Core
 
                         if (dbInterpreter.ScriptsDelimiter.Length == 1)
                         {
-                            script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]);
+                            script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
                         }
 
                         if ((analyseResult.HasTableName || analyseResult.HasAlias) && analyseResult.CountScript != null)
                         {
                             await dbConnection.OpenAsync();
 
-                            long? totalCount = dbConnection.ExecuteScalar<long?>(analyseResult.CountScript);
+                            string countScript = analyseResult.CountScript;
+
+                            if (dbInterpreter.ScriptsDelimiter.Length == 1)
+                            {
+                                countScript = countScript.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
+
+                                analyseResult.CountScript = countScript;
+                            }
+
+                            long? totalCount = dbConnection.ExecuteScalar<long?>(countScript);
 
                             result.TotalCount = totalCount;
                         }
@@ -658,6 +667,11 @@ namespace DatabaseManager.Core
                 ScriptBuildFactory scriptBuildFactory = TranslateHelper.GetScriptBuildFactory(dbInterpreter.DatabaseType);
 
                 sql = scriptBuildFactory.GenerateScripts(commonScript).Script;
+
+                if (dbInterpreter.ScriptsDelimiter.Length == 1)
+                {
+                    sql = sql.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
+                }                    
             }
             else
             {

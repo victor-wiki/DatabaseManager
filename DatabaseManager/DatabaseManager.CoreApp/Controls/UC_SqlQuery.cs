@@ -265,6 +265,8 @@ namespace DatabaseManager.Controls
             {
                 this.tabResult.SelectedIndex = 1;
 
+                this.pagination.Visible = false;
+
                 this.AppendMessage(result.Result?.ToString(), true);
             }
             else
@@ -313,7 +315,7 @@ namespace DatabaseManager.Controls
                                 }
                             }
                         }
-                    }
+                    }                
 
                     this.AppendMessage("command executed.");
                 }
@@ -479,17 +481,31 @@ namespace DatabaseManager.Controls
 
         private async void LoadData(long pageNumber)
         {
-            this.loadingPanel.ShowLoading(this.resultGridView);
+            try
+            {
+                this.loadingPanel.ShowLoading(this.resultGridView);
 
-            this.cancellationTokenSource = new CancellationTokenSource();
+                this.cancellationTokenSource = new CancellationTokenSource();
 
-            var token = this.cancellationTokenSource.Token;
+                var token = this.cancellationTokenSource.Token;
 
-            DataTable dataTable = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = this.pagination.PageSize }, token);
+                DataTable dataTable = await ScriptRunner.GetPagedDatatable(this.GetDbInterpreter(), this.selectScriptAnalyseResult, new PaginationInfo() { PageNumber = pageNumber, PageSize = this.pagination.PageSize }, token);
 
-            this.resultGridView.LoadData(dataTable);
+                this.resultGridView.LoadData(dataTable);
+            }
+            catch (Exception ex)
+            {
+                this.tabResult.SelectedIndex = 1;
 
-            this.loadingPanel.HideLoading();
+                this.Invoke(() =>
+                {
+                    this.AppendMessage(ex.Message, true);
+                });                
+            }
+            finally
+            {
+                this.loadingPanel.HideLoading();
+            }            
         }
 
         private void btnExport_Click(object sender, EventArgs e)
