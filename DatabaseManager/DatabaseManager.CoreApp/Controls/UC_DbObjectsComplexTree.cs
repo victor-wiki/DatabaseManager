@@ -173,6 +173,7 @@ namespace DatabaseManager.Controls
             this.tsmiInsertScript.Visible = isTable;
             this.tsmiUpdateScript.Visible = isTable;
             this.tsmiDeleteScript.Visible = isTable;
+            this.tsmiGenerateProcedure.Visible = isTable && this.databaseType != DatabaseType.Sqlite;
             this.tsmiViewDependency.Visible = isDatabase || ((isTable || isView || isFunction || isProcedure) && this.databaseType != DatabaseType.Sqlite);
             this.tsmiExecuteScript.Visible = isProcedure;
             this.tsmiDatabaseDiagram.Visible = isDatabase;
@@ -1595,8 +1596,23 @@ namespace DatabaseManager.Controls
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter(database.Name, false, true);
 
-            frmDatabaseDiagram frm = new frmDatabaseDiagram(dbInterpreter);           
+            frmDatabaseDiagram frm = new frmDatabaseDiagram(dbInterpreter);
             frm.ShowDialog();
+        }
+
+        private void tsmiGenerateInsertProcedure_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.CREATE_PROCEDURE_INSERT);
+        }
+
+        private void tsmiUpdateProcedure_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.CREATE_PROCEDURE_UPDATE);
+        }
+
+        private void tsmiDeleteProcedure_Click(object sender, EventArgs e)
+        {
+            this.GenerateScripts(ScriptAction.CREATE_PROCEDURE_DELETE);
         }
     }
 }

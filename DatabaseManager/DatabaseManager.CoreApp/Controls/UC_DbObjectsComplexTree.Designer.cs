@@ -55,6 +55,10 @@
             tsmiInsertScript = new System.Windows.Forms.ToolStripMenuItem();
             tsmiUpdateScript = new System.Windows.Forms.ToolStripMenuItem();
             tsmiDeleteScript = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiGenerateProcedure = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiGenerateInsertProcedure = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiUpdateProcedure = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiDeleteProcedure = new System.Windows.Forms.ToolStripMenuItem();
             tsmiExecuteScript = new System.Windows.Forms.ToolStripMenuItem();
             tsmiTranslate = new System.Windows.Forms.ToolStripMenuItem();
             tsmiCopy = new System.Windows.Forms.ToolStripMenuItem();
@@ -236,7 +240,7 @@
             // 
             // tsmiGenerateScripts
             // 
-            tsmiGenerateScripts.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCreateScript, tsmiSelectScript, tsmiInsertScript, tsmiUpdateScript, tsmiDeleteScript, tsmiExecuteScript });
+            tsmiGenerateScripts.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiCreateScript, tsmiSelectScript, tsmiInsertScript, tsmiUpdateScript, tsmiDeleteScript, tsmiGenerateProcedure, tsmiExecuteScript });
             tsmiGenerateScripts.Name = "tsmiGenerateScripts";
             tsmiGenerateScripts.Size = new System.Drawing.Size(203, 22);
             tsmiGenerateScripts.Text = "Scripts";
@@ -244,42 +248,70 @@
             // tsmiCreateScript
             // 
             tsmiCreateScript.Name = "tsmiCreateScript";
-            tsmiCreateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiCreateScript.Size = new System.Drawing.Size(193, 22);
             tsmiCreateScript.Text = "Create Script";
             tsmiCreateScript.Click += tsmiCreateScript_Click;
             // 
             // tsmiSelectScript
             // 
             tsmiSelectScript.Name = "tsmiSelectScript";
-            tsmiSelectScript.Size = new System.Drawing.Size(157, 22);
+            tsmiSelectScript.Size = new System.Drawing.Size(193, 22);
             tsmiSelectScript.Text = "Select Script";
             tsmiSelectScript.Click += tsmiSelectScript_Click;
             // 
             // tsmiInsertScript
             // 
             tsmiInsertScript.Name = "tsmiInsertScript";
-            tsmiInsertScript.Size = new System.Drawing.Size(157, 22);
+            tsmiInsertScript.Size = new System.Drawing.Size(193, 22);
             tsmiInsertScript.Text = "Insert Script";
             tsmiInsertScript.Click += tsmiInsertScript_Click;
             // 
             // tsmiUpdateScript
             // 
             tsmiUpdateScript.Name = "tsmiUpdateScript";
-            tsmiUpdateScript.Size = new System.Drawing.Size(157, 22);
+            tsmiUpdateScript.Size = new System.Drawing.Size(193, 22);
             tsmiUpdateScript.Text = "Update Script";
             tsmiUpdateScript.Click += tsmiUpdateScript_Click;
             // 
             // tsmiDeleteScript
             // 
             tsmiDeleteScript.Name = "tsmiDeleteScript";
-            tsmiDeleteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiDeleteScript.Size = new System.Drawing.Size(193, 22);
             tsmiDeleteScript.Text = "Delete Script";
             tsmiDeleteScript.Click += tsmiDeleteScript_Click;
+            // 
+            // tsmiGenerateProcedure
+            // 
+            tsmiGenerateProcedure.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiGenerateInsertProcedure, tsmiUpdateProcedure, tsmiDeleteProcedure });
+            tsmiGenerateProcedure.Name = "tsmiGenerateProcedure";
+            tsmiGenerateProcedure.Size = new System.Drawing.Size(193, 22);
+            tsmiGenerateProcedure.Text = "Generate Procedure";
+            // 
+            // tsmiGenerateInsertProcedure
+            // 
+            tsmiGenerateInsertProcedure.Name = "tsmiGenerateInsertProcedure";
+            tsmiGenerateInsertProcedure.Size = new System.Drawing.Size(183, 22);
+            tsmiGenerateInsertProcedure.Text = "Insert Procedure";
+            tsmiGenerateInsertProcedure.Click += tsmiGenerateInsertProcedure_Click;
+            // 
+            // tsmiUpdateProcedure
+            // 
+            tsmiUpdateProcedure.Name = "tsmiUpdateProcedure";
+            tsmiUpdateProcedure.Size = new System.Drawing.Size(183, 22);
+            tsmiUpdateProcedure.Text = "Update Procedure";
+            tsmiUpdateProcedure.Click += tsmiUpdateProcedure_Click;
+            // 
+            // tsmiDeleteProcedure
+            // 
+            tsmiDeleteProcedure.Name = "tsmiDeleteProcedure";
+            tsmiDeleteProcedure.Size = new System.Drawing.Size(183, 22);
+            tsmiDeleteProcedure.Text = "Delete Procedure";
+            tsmiDeleteProcedure.Click += tsmiDeleteProcedure_Click;
             // 
             // tsmiExecuteScript
             // 
             tsmiExecuteScript.Name = "tsmiExecuteScript";
-            tsmiExecuteScript.Size = new System.Drawing.Size(157, 22);
+            tsmiExecuteScript.Size = new System.Drawing.Size(193, 22);
             tsmiExecuteScript.Text = "Execute Script";
             tsmiExecuteScript.Click += tsmiExecuteScript_Click;
             // 
@@ -435,5 +467,9 @@
         private System.Windows.Forms.ToolStripMenuItem documentationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tsmiGenerateColumnDocumentation;
         private System.Windows.Forms.ToolStripMenuItem tsmiDatabaseDiagram;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateProcedure;
+        private System.Windows.Forms.ToolStripMenuItem tsmiGenerateInsertProcedure;
+        private System.Windows.Forms.ToolStripMenuItem tsmiUpdateProcedure;
+        private System.Windows.Forms.ToolStripMenuItem tsmiDeleteProcedure;
     }
 }

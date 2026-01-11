@@ -1,6 +1,6 @@
 ﻿CREATE OR REPLACE PROCEDURE $NAME$ 
 (	
-   "ParameterName INTEGER
+   ParameterName INTEGER
 )
 LANGUAGE 'plpgsql'
 AS $$

@@ -2,8 +2,10 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
+using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -139,7 +141,14 @@ namespace DatabaseManager.Core
             }
             else if (dbObject is Table table)
             {
-                result.Script = this.GenerateTableDMLScript(schemaInfo, table, scriptAction);
+                if (scriptAction == ScriptAction.SELECT || scriptAction == ScriptAction.INSERT || scriptAction == ScriptAction.UPDATE || scriptAction == ScriptAction.DELETE)
+                {
+                    result.Script = this.GenerateTableDMLScript(schemaInfo, table, scriptAction);
+                }
+                else if (scriptAction == ScriptAction.CREATE_PROCEDURE_INSERT || scriptAction == ScriptAction.CREATE_PROCEDURE_UPDATE || scriptAction == ScriptAction.CREATE_PROCEDURE_DELETE)
+                {
+                    result.Script = await this.GenerateTableProcedureScript(schemaInfo, table, scriptAction);
+                }
             }
             else if (dbObject is View view)
             {
@@ -195,6 +204,170 @@ namespace DatabaseManager.Core
                     break;
                 case ScriptAction.DELETE:
                     script = $"DELETE FROM {tableName}{Environment.NewLine}WHERE <condition>;";
+                    break;
+            }
+
+            return script;
+        }
+
+        public async Task<string> GenerateTableProcedureScript(SchemaInfo schemaInfo, Table table, ScriptAction scriptAction)
+        {
+            DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+            string script = "";
+            string scriptBody = "";
+            string tableName = this.dbInterpreter.GetQuotedDbObjectNameWithSchema(table);
+            string procedureName = null;
+            var columns = schemaInfo.TableColumns;
+            TablePrimaryKey primaryKey = null;
+
+            List<string> parameters = new List<string>();
+
+            Func<string, string> getParameterName = (columnName) =>
+            {
+                if (databaseType == DatabaseType.SqlServer)
+                {
+                    return "@" + columnName;
+                }
+
+                return $"V_{columnName}";
+            };
+
+            Func<TableColumn, string> getParameterDataType = (column) =>
+            {
+                string dataType = this.dbInterpreter.ParseDataType(column);
+
+                if (databaseType == DatabaseType.Oracle || databaseType == DatabaseType.Postgres)
+                {
+                    int parenthesesIndex = dataType.IndexOf("(");
+
+                    if (parenthesesIndex > 0)
+                    {
+                        dataType = dataType.Substring(0, parenthesesIndex);
+                    }
+                }
+
+                return dataType;
+            };
+
+            Func<Task<TablePrimaryKey>> getPrimaryKey = async () =>
+            {
+                return (await this.dbInterpreter.GetTablePrimaryKeysAsync(new SchemaInfoFilter() { TableNames = [table.Name], Schema = table.Schema })).FirstOrDefault();
+            };
+
+            switch (scriptAction)
+            {
+                case ScriptAction.CREATE_PROCEDURE_INSERT:
+
+                    procedureName = this.dbInterpreter.GetQuotedString($"Insert{table.Name}");
+
+                    var insertColumns = columns.Where(item => !item.IsIdentity && !item.IsComputed);
+
+                    parameters.AddRange(insertColumns.Select(item => $"{getParameterName(item.Name)} {getParameterDataType(item)}"));
+
+                    string insertColumnNames = string.Join(",", insertColumns.Select(item => this.dbInterpreter.GetQuotedString(item.Name)));
+                    string insertValues = string.Join(",", insertColumns.Select(item => getParameterName(item.Name)));
+
+                    scriptBody = $"\tINSERT INTO {tableName}({insertColumnNames}){Environment.NewLine}\tVALUES({insertValues});";
+                    break;
+                case ScriptAction.CREATE_PROCEDURE_UPDATE:
+
+                    procedureName = this.dbInterpreter.GetQuotedString($"Update{table.Name}");
+
+                    primaryKey = await getPrimaryKey();
+
+                    if (primaryKey != null)
+                    {
+                        var parameterColumns = columns.Where(item => primaryKey.Columns.Any(t => t.ColumnName == item.Name))
+                            .Concat(columns.Where(item => !item.IsComputed && !primaryKey.Columns.Any(t => t.ColumnName == item.Name)));
+
+                        var updateColumns = columns.Where(item => !item.IsIdentity && !item.IsComputed && !primaryKey.Columns.Any(t => t.ColumnName == item.Name));
+
+                        parameters.AddRange(parameterColumns.Select(item => $"{getParameterName(item.Name)} {getParameterDataType(item)}"));
+
+                        string setNameValues = string.Join(",", updateColumns.Select(item => $"{this.dbInterpreter.GetQuotedString(item.Name)}={getParameterName(item.Name)}"));
+
+                        var keyColumns = primaryKey.Columns;
+
+                        string condition = string.Join(" AND ", keyColumns.Select(item => $"{this.dbInterpreter.GetQuotedString(item.ColumnName)}={getParameterName(item.ColumnName)}"));
+
+                        scriptBody = $"\tUPDATE {tableName}{Environment.NewLine}\tSET {setNameValues}{Environment.NewLine}\tWHERE {condition};";
+                    }
+
+                    break;
+                case ScriptAction.CREATE_PROCEDURE_DELETE:
+                    procedureName = this.dbInterpreter.GetQuotedString($"Delete{table.Name}");
+
+                    primaryKey = await getPrimaryKey();
+
+                    if (primaryKey != null)
+                    {
+                        var keyColumns = primaryKey.Columns;
+
+                        var parameterColumns = columns.Where(item => primaryKey.Columns.Any(t => t.ColumnName == item.Name));
+
+                        parameters.AddRange(parameterColumns.Select(item => $"{getParameterName(item.Name)} {getParameterDataType(item)}"));
+
+                        string condition = string.Join(" AND ", keyColumns.Select(item => $"{this.dbInterpreter.GetQuotedString(item.ColumnName)}={getParameterName(item.ColumnName)}"));
+
+                        scriptBody = $"\tDELETE FROM {tableName}{Environment.NewLine}\tWHERE {condition};";
+                    }
+
+                    break;
+            }
+
+            string strParameters = string.Join(Environment.NewLine, parameters.Select(item => $"{item},")).TrimEnd(',');
+
+            if (table.Schema != null && table.Schema != this.dbInterpreter.DefaultSchema)
+            {
+                procedureName = $"{this.dbInterpreter.GetQuotedString(table.Schema)}.{this.dbInterpreter.GetQuotedString(procedureName)}";
+            }
+
+            switch (databaseType)
+            {
+                case DatabaseType.SqlServer:
+                    script =
+ $@"CREATE PROCEDURE {procedureName}
+(
+{strParameters}
+)
+AS
+BEGIN
+{scriptBody}
+END";
+                    break;
+                case DatabaseType.MySql:
+                    script =
+  $@"CREATE PROCEDURE {procedureName}
+(
+{strParameters}
+)
+BEGIN
+{scriptBody}
+END;";
+                    break;
+                case DatabaseType.Oracle:
+                    script =
+$@"CREATE OR REPLACE PROCEDURE {procedureName}
+(
+{strParameters}
+)
+AS
+BEGIN
+{scriptBody}
+END {procedureName};";
+                    break;
+                case DatabaseType.Postgres:
+                    script =
+$@"CREATE OR REPLACE PROCEDURE {procedureName}
+(
+{strParameters}
+)
+LANGUAGE 'plpgsql'
+AS $$
+BEGIN
+{scriptBody}
+END
+$$;";
                     break;
             }
 
@@ -272,10 +445,10 @@ namespace DatabaseManager.Core
 
             sb.Append($"{action}{(string.IsNullOrEmpty(action) ? "" : " ")}{routineName}");
 
-            if(!isSqlServerProcedure)
+            if (!isSqlServerProcedure)
             {
                 sb.Append("(");
-            }           
+            }
 
             sb.AppendLine();
 
@@ -284,10 +457,10 @@ namespace DatabaseManager.Core
                 sb.AppendLine(String.Join(" ," + Environment.NewLine, parameters.Select(item => this.GetRoutineParameterItem(item, isFunction))));
             }
 
-            if(!isSqlServerProcedure)
+            if (!isSqlServerProcedure)
             {
                 sb.AppendLine(")");
-            }           
+            }
 
             if (isFunction && !isTableFunction && databaseType == DatabaseType.Oracle)
             {

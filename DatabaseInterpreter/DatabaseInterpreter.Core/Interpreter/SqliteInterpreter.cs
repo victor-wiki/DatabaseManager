@@ -1088,7 +1088,7 @@ namespace DatabaseInterpreter.Core
                 dataLength = $"({dataLength})";
             }
 
-            string dataType = $"{column.DataType} {dataLength}";
+            string dataType = $"{column.DataType}{dataLength}";
 
             return dataType.Trim();
         }

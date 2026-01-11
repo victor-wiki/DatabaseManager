@@ -701,12 +701,12 @@ namespace DatabaseInterpreter.Core
 
         public async Task<DataTable> GetDataTableAsync(DbConnection dbConnection, string sql, bool ignoreSchema = false)
         {
-            return await this.GetDataTableAsync(dbConnection, sql, (new CancellationTokenSource()).Token, ignoreSchema);
+            return await this.GetDataTableAsync(dbConnection, sql, CancellationToken.None, ignoreSchema);
         }
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, string whereClause = "")
         {
-            return await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause);
+            return await this.GetPagedDataTableAsync(connection, table, columns, orderColumns, pageSize, pageNumber, CancellationToken.None, whereClause);
         }
 
         public async Task<DataTable> GetPagedDataTableAsync(DbConnection connection, Table table, List<TableColumn> columns, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "")
@@ -873,7 +873,7 @@ namespace DatabaseInterpreter.Core
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
         {
-            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause, isForView, columns);
+            return await this.GetPagedDataTableAsync(this.CreateConnection(), table, orderColumns, pageSize, pageNumber, CancellationToken.None, whereClause, isForView, columns);
         }
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(Table table, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
@@ -883,7 +883,7 @@ namespace DatabaseInterpreter.Core
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(DbConnection connection, Table table, string orderColumns, int pageSize, long pageNumber, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)
         {
-            return await this.GetPagedDataTableAsync(connection, table, orderColumns, pageSize, pageNumber, (new CancellationTokenSource()).Token, whereClause, isForView, columns);
+            return await this.GetPagedDataTableAsync(connection, table, orderColumns, pageSize, pageNumber, CancellationToken.None, whereClause, isForView, columns);
         }
 
         public async Task<(long, DataTable)> GetPagedDataTableAsync(DbConnection connection, Table table, string orderColumns, int pageSize, long pageNumber, CancellationToken cancellationToken, string whereClause = "", bool isForView = false, List<TableColumn> columns = null)

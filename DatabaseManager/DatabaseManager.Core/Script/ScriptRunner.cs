@@ -216,11 +216,13 @@ namespace DatabaseManager.Core
                             commands = cmds.ToArray();
                         }
 
+                        int commandCount = commands.Count();
                         int affectedRows = 0;
 
                         bool isProcedureCall = action == ScriptAction.EXECUTE;
 
                         var commandType = (isProcedureCall && dbInterpreter.DatabaseType == DatabaseType.Oracle) ? CommandType.StoredProcedure : CommandType.Text;
+
 
                         foreach (string command in commands)
                         {
@@ -253,7 +255,15 @@ namespace DatabaseManager.Core
 
                             ExecuteResult res = await dbInterpreter.ExecuteNonQueryAsync(dbConnection, commandInfo);
 
-                            affectedRows += (res.NumberOfRowsAffected == -1 ? 0 : res.NumberOfRowsAffected);
+                            if (commandCount > 1)
+                            {
+                                affectedRows += (res.NumberOfRowsAffected == -1 ? 0 : res.NumberOfRowsAffected);
+                            }
+                            else
+                            {
+                                affectedRows = res.NumberOfRowsAffected;
+                            }
+
                         }
 
                         result.Result = affectedRows;
@@ -286,7 +296,7 @@ namespace DatabaseManager.Core
                                 result.ProfilingResult.Details.AddRange(profilingInfo.Root.CustomTimings.sql.Select(item => new ProfilingResultDetail()
                                 {
                                     Id = item.Id,
-                                    Sql = item.CommandString?.TrimEnd(' ',';'),
+                                    Sql = item.CommandString?.TrimEnd(' ', ';'),
                                     ExecuteType = item.ExecuteType,
                                     Duration = item.DurationMilliseconds,
                                     HasError = item.Errored
@@ -294,7 +304,7 @@ namespace DatabaseManager.Core
                             }
                         }
                         catch (Exception ex)
-                        {                          
+                        {
                         }
                     }
                 }

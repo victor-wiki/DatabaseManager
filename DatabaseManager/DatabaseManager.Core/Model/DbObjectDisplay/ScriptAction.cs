@@ -9,6 +9,9 @@
         INSERT = 4,
         UPDATE = 5,
         DELETE = 6,
-        EXECUTE = 7
+        EXECUTE = 7,
+        CREATE_PROCEDURE_INSERT = 8,
+        CREATE_PROCEDURE_UPDATE = 9,
+        CREATE_PROCEDURE_DELETE = 10
     }
 }
