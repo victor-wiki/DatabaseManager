@@ -251,7 +251,7 @@ namespace DatabaseInterpreter.Core
                         CHARACTER_MAXIMUM_LENGTH AS `MaxLength`, CASE IS_NULLABLE WHEN 'YES' THEN 1 ELSE 0 END AS `IsNullable`,ORDINAL_POSITION AS `Order`,
                         NUMERIC_PRECISION AS `Precision`,NUMERIC_SCALE AS `Scale`,
                         CASE EXTRA WHEN 'auto_increment' THEN 1 ELSE 0 END AS `IsIdentity`,'' AS `DataTypeSchema`,
-                        CASE INSTR(COLUMN_TYPE,'(') WHEN 0 THEN NULL ELSE SUBSTRING(COLUMN_TYPE, INSTR(COLUMN_TYPE,'(')+1, LENGTH(COLUMN_TYPE)-INSTR(COLUMN_TYPE,'(')-1) END AS `Values`
+                        CASE WHEN (INSTR(COLUMN_TYPE,'enum(')>0 OR INSTR(COLUMN_TYPE,'set(')>0) THEN  SUBSTRING(COLUMN_TYPE, INSTR(COLUMN_TYPE,'(')+1, LENGTH(COLUMN_TYPE)-INSTR(COLUMN_TYPE,'(')-1) ELSE NULL END AS `Values`
                         {detailColums} 
                         FROM INFORMATION_SCHEMA.`COLUMNS` AS C
                         {joinTable}
