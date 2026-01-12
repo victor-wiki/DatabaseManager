@@ -2307,13 +2307,18 @@ namespace SqlAnalyser.Core
                 else if (node is Table_source_itemContext tsi)
                 {
                     var fullTableName = tsi.full_table_name();
+                    var scalarFunction = tsi.function_call();
 
                     if (fullTableName != null)
                     {
                         tableName = new TableName(fullTableName);
                     }
-                    else
+                    else if (scalarFunction != null)
                     {
+                        tableName = new TableName(scalarFunction);
+                    }
+                    else
+                    { 
                         tableName = new TableName(tsi);
                     }
 

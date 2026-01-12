@@ -7,11 +7,11 @@
     <Company>victor-wiki</Company>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Convert or translate database objects and data between SqlServer, MySql, Oracle and Postgres.</Description>
-    <Version>2.3.1</Version>
+    <Version>2.3.2</Version>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.1</AssemblyVersion>
-    <FileVersion>2.3.1</FileVersion>
-    <PackageReleaseNotes>refactor code</PackageReleaseNotes>
+    <AssemblyVersion>2.3.2</AssemblyVersion>
+    <FileVersion>2.3.2</FileVersion>
+    <PackageReleaseNotes>add function "RANDOM" mapping config.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

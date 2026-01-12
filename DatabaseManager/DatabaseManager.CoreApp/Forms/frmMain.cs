@@ -186,6 +186,20 @@ namespace DatabaseManager.Forms
             }
         }
 
+        private void UpdateContentFormTooltip(DatabaseObjectDisplayInfo info)
+        {
+            IDockContent content = this.FindContent(info);
+
+            frmContent contentForm = null;
+
+            if (content != null)
+            {
+                contentForm = content as frmContent;
+
+                contentForm.ToolTipText = contentForm.ContentControl.GetTooltip(info);
+            }
+        }
+
         private IDockContent FindContent(DatabaseObjectDisplayInfo info)
         {
             foreach (IDockContent content in this.dockPanelMain.Documents)
@@ -334,6 +348,8 @@ namespace DatabaseManager.Forms
             else
             {
                 MessageBox.Show("Please select a database from the left navigator first.");
+
+                this.explorerForm.Explorer.SelectNone();
             }
         }
 
@@ -344,23 +360,44 @@ namespace DatabaseManager.Forms
 
         private void RunScripts()
         {
-            ConnectionInfo connectionInfo = this.explorerForm.Explorer.GetCurrentConnectionInfo();
-
-            if (connectionInfo == null)
-            {
-                MessageBox.Show("Please select a database from the left navigator first.");
-                return;
-            }
-
             var control = this.GetCurrentContentForm()?.ContentControl;
 
             if (control != null)
             {
-                control.DisplayInfo.DatabaseType = this.GetCurrentDatabaseType(); ;
-                control.DisplayInfo.ConnectionInfo = connectionInfo;
+                var selectedDatabaseType = this.GetCurrentDatabaseType();
+                var oldDatabaseType = control.DisplayInfo.DatabaseType;
+                var oldConnectionInfo = control.DisplayInfo.ConnectionInfo;
 
-                control.RunScripts();
+                if (selectedDatabaseType != oldDatabaseType && oldConnectionInfo != null)
+                {
+                    control.RunScripts();
+                }
+                else
+                {
+                    ConnectionInfo connectionInfo = this.explorerForm.Explorer.GetCurrentConnectionInfo();
+
+                    if (this.CheckConnectionInfo(connectionInfo))
+                    {
+                        control.DisplayInfo.DatabaseType = selectedDatabaseType;
+                        control.DisplayInfo.ConnectionInfo = connectionInfo;
+
+                        this.UpdateContentFormTooltip(control.DisplayInfo);
+
+                        control.RunScripts();
+                    }
+                }
             }
+        }
+
+        private bool CheckConnectionInfo(ConnectionInfo connectionInfo)
+        {
+            if (connectionInfo == null)
+            {
+                MessageBox.Show("Please select a database from the left navigator first.");
+                return false;
+            }
+
+            return true;
         }
 
         private DatabaseType GetCurrentDatabaseType()
@@ -375,6 +412,8 @@ namespace DatabaseManager.Forms
 
         private void tsBtnOpenFile_Click(object sender, EventArgs e)
         {
+            bool hasSelectedNode = this.explorerForm.Explorer.HasSelectedNode();
+
             if (this.dlgOpenFile == null)
             {
                 this.dlgOpenFile = new OpenFileDialog();
@@ -382,6 +421,11 @@ namespace DatabaseManager.Forms
 
             if (this.dlgOpenFile.ShowDialog() == DialogResult.OK)
             {
+                if (!hasSelectedNode)
+                {
+                    this.explorerForm.Explorer.SelectNone();
+                }
+
                 this.LoadFile(this.dlgOpenFile.FileName);
             }
         }

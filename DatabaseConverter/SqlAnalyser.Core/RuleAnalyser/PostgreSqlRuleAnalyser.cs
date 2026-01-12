@@ -505,7 +505,7 @@ namespace SqlAnalyser.Core
             {
                 columns = node.opt_target_list().target_list();
             }
-           
+
             var from = node.from_clause();
             var where = node.where_clause();
             var groupBy = node.group_clause();
@@ -599,6 +599,54 @@ namespace SqlAnalyser.Core
                 if (having != null && having.a_expr() != null)
                 {
                     statement.Having = this.ParseCondition(having.a_expr());
+                }
+            }
+
+            var unions = node.set_operator_with_all_or_distinct();
+
+            if (unions != null && unions.Length > 0)
+            {
+                foreach (var union in unions)
+                {
+                    if (statement.UnionStatements == null)
+                    {
+                        statement.UnionStatements = new List<UnionStatement>();
+                    }
+
+                    string type = union.all_or_distinct().GetText().ToUpper();
+
+                    UnionType unionType = UnionType.UNION;
+
+                    switch (type)
+                    {
+                        case "ALL":
+                            unionType = UnionType.UNION_ALL;
+                            break;
+                        case "INTERSECT":
+                            unionType = UnionType.INTERSECT;
+                            break;
+                        case "EXCEPT":
+                            unionType = UnionType.EXCEPT;
+                            break;
+                    }
+
+                    var unionSelectStatements = node.simple_select();
+
+                    foreach (var unionSelectStatement in unionSelectStatements)
+                    {
+                        UnionStatement unionStatement = new UnionStatement() { Type = unionType };
+
+                        unionStatement.SelectStatement = this.ParseSimpleSelect(unionSelectStatement);
+
+                        if (unionStatement.SelectStatement.UnionStatements != null && unionStatement.SelectStatement.UnionStatements.Count > 0)
+                        {
+                            statement.UnionStatements.AddRange(unionStatement.SelectStatement.UnionStatements);
+
+                            unionStatement.SelectStatement.UnionStatements = null;
+                        }
+
+                        statement.UnionStatements.Add(unionStatement);
+                    }
                 }
             }
 
@@ -1046,13 +1094,24 @@ namespace SqlAnalyser.Core
             {
                 JoinItem joinItem = null;
 
+                int i = 0;
+
                 foreach (var child in node.children)
                 {
                     if (child is Join_typeContext joinType)
                     {
                         joinItem = new JoinItem();
                         joinItem.Type = this.GetJoinType(joinType);
-                       
+                    }
+                    else if (child is TerminalNodeImpl tni)
+                    {
+                        string text = tni.GetText().ToUpper();
+
+                        if (i > 0 && !(node.children[i - 1] is Join_typeContext) && text == "JOIN")
+                        {
+                            joinItem = new JoinItem();
+                            joinItem.Type = this.GetJoinType(text);
+                        }
                     }
                     else if (child is Table_refContext tableRef)
                     {
@@ -1070,7 +1129,9 @@ namespace SqlAnalyser.Core
                             fromItem.JoinItems.Add(joinItem);
                         }
                     }
-                }          
+
+                    i++;
+                }
             }
             else
             {
@@ -1090,17 +1151,24 @@ namespace SqlAnalyser.Core
             {
                 string type = joinType.GetText().ToUpper();
 
-                switch (type)
-                {
-                    case nameof(PostgreSqlParser.LEFT):
-                        return JoinType.LEFT;
-                    case nameof(PostgreSqlParser.RIGHT):
-                        return JoinType.RIGHT;
-                    case nameof(PostgreSqlParser.FULL):
-                        return JoinType.FULL;
-                    case nameof(PostgreSqlParser.CROSS):
-                        return JoinType.CROSS;
-                }
+                return this.GetJoinType(type);
+            }
+
+            return JoinType.INNER;
+        }
+
+        private JoinType GetJoinType(string type)
+        {
+            switch (type)
+            {
+                case nameof(PostgreSqlParser.LEFT):
+                    return JoinType.LEFT;
+                case nameof(PostgreSqlParser.RIGHT):
+                    return JoinType.RIGHT;
+                case nameof(PostgreSqlParser.FULL):
+                    return JoinType.FULL;
+                case nameof(PostgreSqlParser.CROSS):
+                    return JoinType.CROSS;
             }
 
             return JoinType.INNER;

@@ -12,7 +12,7 @@
 		<Oracle args="SYSTIMESTAMP" isFixedArgs="true">SYS_EXTRACT_UTC</Oracle>
 		<Postgres args="CURRENT_TIMESTAMP AT TIME ZONE 'UTC'" isFixedArgs="true"></Postgres>
 		<Sqlite defaults="FORMAT:;">DATETIME</Sqlite>
-	</mapping>
+	</mapping>	
 	<mapping>
 		<SqlServer>NEWID</SqlServer>
 		<MySql>UUID</MySql>
@@ -222,5 +222,12 @@
 		<Oracle></Oracle>
 		<Postgres>LASTVAL</Postgres>
 		<Sqlite>LAST_INSERT_ROWID</Sqlite>s
+	</mapping>
+	<mapping>
+		<SqlServer>RAND</SqlServer>
+		<MySql>RAND</MySql>
+		<Oracle direction="IN" expression="DBMS_RANDOM.VALUE(0,1)"></Oracle>
+		<Postgres>RANDOM</Postgres>
+		<Sqlite direction="IN" expression="ABS(RANDOM()*1.0/9223372036854775807)"></Sqlite>
 	</mapping>
 </mappings>

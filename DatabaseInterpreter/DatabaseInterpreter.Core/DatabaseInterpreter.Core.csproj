@@ -3,11 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.5</AssemblyVersion>
-    <FileVersion>2.3.5</FileVersion>
-    <Version>2.3.5</Version>
-    <PackageReleaseNotes>1. SqlServerInterpreter and SqliteIntepreter: remove whitespace between data type and length in "ParseDataType" method;
-2. Use "CancellationToken.None" instead of "(new CancellationTokenSource()).Token" as default parameter.</PackageReleaseNotes>
+    <AssemblyVersion>2.3.6</AssemblyVersion>
+    <FileVersion>2.3.6</FileVersion>
+    <Version>2.3.6</Version>
+    <PackageReleaseNotes>Postgres function: add "RANDOM".</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <RepositoryUrl></RepositoryUrl>

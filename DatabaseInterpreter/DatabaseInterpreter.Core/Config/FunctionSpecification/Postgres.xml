@@ -57,6 +57,7 @@
   <item name="POSITION" args="SEARCH IN EXP" delimiter="IN"></item>
   <item name="POWER" args="EXP,Y"></item>
   <item name="RADIANS" args="EXP"></item>
+  <item name="RANDOM" args=""></item>
   <item name="REPEAT" args="EXP,TIMES" isString="true"></item>
   <item name="REPLACE" args="EXP,OLD,NEW" isString="true"></item>
   <item name="REVERSE" args="EXP" isString="true"></item>

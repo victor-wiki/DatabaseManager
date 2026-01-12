@@ -84,7 +84,6 @@ namespace DatabaseManager.Core
                     mp = MiniProfiler.StartNew(Guid.NewGuid().ToString());
 
                     dbConnection = new StackExchange.Profiling.Data.ProfiledDbConnection(dbConnection, MiniProfiler.Current);
-
                 }
 
                 using (dbConnection)
@@ -94,34 +93,31 @@ namespace DatabaseManager.Core
                         this.isBusy = true;
                         result.ResultType = QueryResultType.Grid;
 
-                        SelectScriptAnalyseResult analyseResult = this.AnalyseSelect(dbInterpreter, script, paginationInfo);
-
-                        result.SelectScriptAnalyseResult = analyseResult;
-
-                        script = analyseResult.Script;
-
-                        if (dbInterpreter.ScriptsDelimiter.Length == 1)
+                        if(this.option.UseSqlParser)
                         {
-                            script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
-                        }
+                            SelectScriptAnalyseResult analyseResult = this.AnalyseSelect(dbInterpreter, script, paginationInfo);
 
-                        if ((analyseResult.HasTableName || analyseResult.HasAlias) && analyseResult.CountScript != null)
-                        {
-                            await dbConnection.OpenAsync();
+                            result.SelectScriptAnalyseResult = analyseResult;
 
-                            string countScript = analyseResult.CountScript;
+                            script = analyseResult.Script;
 
-                            if (dbInterpreter.ScriptsDelimiter.Length == 1)
+                            if ((analyseResult.HasTableName || analyseResult.HasAlias) && analyseResult.CountScript != null)
                             {
-                                countScript = countScript.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
+                                await dbConnection.OpenAsync();
+
+                                string countScript = analyseResult.CountScript;
+
+                                countScript = GetTrimedScript(dbInterpreter, countScript);
 
                                 analyseResult.CountScript = countScript;
+
+                                long? totalCount = (await dbConnection.QueryAsync<long?>(countScript)).Sum(item => item ?? 0);
+
+                                result.TotalCount = totalCount;
                             }
+                        }              
 
-                            long? totalCount = dbConnection.ExecuteScalar<long?>(countScript);
-
-                            result.TotalCount = totalCount;
-                        }
+                        script = GetTrimedScript(dbInterpreter, script);
 
                         DataTable dataTable = await dbInterpreter.GetDataTableAsync(dbConnection, script, cancellationToken, true);
 
@@ -330,6 +326,16 @@ namespace DatabaseManager.Core
             }
 
             return result;
+        }
+
+        private static string GetTrimedScript(DbInterpreter dbInterpreter, string script)
+        {
+            if (dbInterpreter.ScriptsDelimiter.Length == 1)
+            {
+                script = script.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
+            }
+
+            return script;
         }
 
         private void ParseOracleProcedureCall(CommandInfo cmd, List<RoutineParameter> parameters)
@@ -549,17 +555,23 @@ namespace DatabaseManager.Core
                             long offset = (pageNumber - 1) * pageSize;
                             bool isUseSpecialPaination = false;
                             string rowNumberColumnName = DbInterpreter.RowNumberColumnName;
+                            SelectStatement lastSelectStatement = selectStatement;
 
                             Action useNormalPagination = () =>
                             {
-                                selectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo(offset.ToString()), RowCount = new TokenInfo(pageSize.ToString()) };
+                                if(selectStatement.UnionStatements!=null && selectStatement.UnionStatements.Count>0)
+                                {
+                                    lastSelectStatement = selectStatement.UnionStatements.Last().SelectStatement;
+                                }
+
+                                lastSelectStatement.LimitInfo = new SelectLimitInfo() { StartRowIndex = new TokenInfo(offset.ToString()), RowCount = new TokenInfo(pageSize.ToString()) };
                             };
 
                             Action useSpecialPaination = () =>
                             {
                                 isUseSpecialPaination = true;
 
-                                string orderBy = string.Join(",", selectStatement.OrderBy.Select(item => item.Symbol));
+                                string orderBy = selectStatement.OrderBy == null ? "": string.Join(",", selectStatement.OrderBy.Select(item => item.Symbol));
 
                                 ColumnName columnName = new ColumnName($"ROW_NUMBER() OVER (ORDER BY {orderBy}) AS {rowNumberColumnName}");
 
@@ -614,21 +626,48 @@ namespace DatabaseManager.Core
 
                             if (hasTableName || hasAlias)
                             {
-                                List<ColumnName> columns = selectStatement.Columns.Select(item => item).ToList();
-                                List<TokenInfo> orderBy = selectStatement.OrderBy == null ? null : selectStatement.OrderBy.Select(item => item).ToList();
-                                SelectLimitInfo limitInfo = new SelectLimitInfo() { StartRowIndex = selectStatement.LimitInfo.StartRowIndex, RowCount = selectStatement.LimitInfo.RowCount };
-                                ;
-                                selectStatement.Columns.Clear();
-                                selectStatement.Columns.Add(new ColumnName("COUNT(1)"));
-                                selectStatement.OrderBy = null;
-                                selectStatement.LimitInfo = null;
+                                List<List<ColumnName>> columnsList = new List<List<ColumnName>>();
+                                List<List<TokenInfo>> orderByList = new List<List<TokenInfo>>();
+
+                                SelectLimitInfo limitInfo = new SelectLimitInfo() { StartRowIndex = lastSelectStatement.LimitInfo?.StartRowIndex, RowCount = lastSelectStatement.LimitInfo?.RowCount };
+
+                                List<SelectStatement> statements = new List<SelectStatement>();
+
+                                statements.Add(selectStatement);
+
+                                if (selectStatement.UnionStatements!=null && selectStatement.UnionStatements.Count>0)
+                                {
+                                    statements.AddRange(selectStatement.UnionStatements.Select(item => item.SelectStatement));
+                                }
+
+                                int i = 0;
+
+                                foreach(var statement in statements)
+                                {
+                                    columnsList.Add(selectStatement.Columns.Select(item => item).ToList());
+                                    orderByList.Add(selectStatement.OrderBy == null ? null : selectStatement.OrderBy.Select(item => item).ToList());
+
+                                    statement.Columns.Clear();
+                                    statement.Columns.Add(new ColumnName("COUNT(1)"));
+                                    statement.OrderBy = null;
+                                    statement.LimitInfo = null;
+
+                                    i++;
+                                }
 
                                 analyseResult.CountScript = scriptBuildFactory.GenerateScripts(cs).Script;
 
-                                selectStatement.Columns.Clear();
-                                selectStatement.Columns.AddRange(columns);
-                                selectStatement.OrderBy = orderBy;
-                                selectStatement.LimitInfo = limitInfo;
+                                i = 0;
+                                foreach (var statement in statements)
+                                {
+                                    selectStatement.Columns.Clear();
+                                    selectStatement.Columns = columnsList[i];
+                                    selectStatement.OrderBy = orderByList[i];
+
+                                    i++;
+                                }                                   
+
+                                lastSelectStatement.LimitInfo = limitInfo;
                             }
 
                             analyseResult.SelectStatement = selectStatement;
@@ -668,10 +707,7 @@ namespace DatabaseManager.Core
 
                 sql = scriptBuildFactory.GenerateScripts(commonScript).Script;
 
-                if (dbInterpreter.ScriptsDelimiter.Length == 1)
-                {
-                    sql = sql.Trim().TrimEnd(dbInterpreter.ScriptsDelimiter[0]).Trim();
-                }                    
+                sql = GetTrimedScript(dbInterpreter, sql);
             }
             else
             {

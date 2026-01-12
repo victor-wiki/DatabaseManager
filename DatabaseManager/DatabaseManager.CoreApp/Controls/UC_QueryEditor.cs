@@ -54,9 +54,9 @@ namespace DatabaseManager.Controls
         public SelectionManager SelectionManager => this.TextArea.SelectionManager;
         public string SelectedText => this.SelectionManager.SelectedText;
         public ContextMenuStrip ContextMenu => this.txtEditor.ActiveTextAreaControl.ContextMenuStrip;
+        public bool UseSqlParser { get; private set; }
         public bool UseProfiler { get; private set; }
         
-
         private int CurrentCharIndex
         {
             get
@@ -107,6 +107,11 @@ namespace DatabaseManager.Controls
                 ToolStripMenuItem tsmiValidateScripts = new ToolStripMenuItem("Validate Scripts") { Name = "tsmiValidateScripts" };
                 tsmiValidateScripts.Click += this.tsmiValidateScripts_Click;
                 this.ContextMenu.Items.Add(tsmiValidateScripts);
+
+                ToolStripMenuItem tsmiUseSqlParser = new ToolStripMenuItem("Use Sql Parser") { Name = "tsmiUseSqlParser" };
+                this.UseSqlParser = tsmiUseSqlParser.Checked = true;
+                tsmiUseSqlParser.Click += this.tsmiUseSqlParser_Click;
+                this.ContextMenu.Items.Add(tsmiUseSqlParser);
 
                 ToolStripMenuItem tsmiUseProfiler = new ToolStripMenuItem("Use Profiler") { Name = "tsmiUseProfiler" };
                 tsmiUseProfiler.Click += this.tsmiUseProfiler_Click;
@@ -897,7 +902,7 @@ namespace DatabaseManager.Controls
         {
             if (alias == null)
             {
-                return;
+                alias = "";
             }
 
             if (!this.dictTableAndViewAlias.ContainsKey(dbObject))
@@ -1075,6 +1080,15 @@ namespace DatabaseManager.Controls
             tsmi.Checked = !tsmi.Checked;
 
             this.UseProfiler = tsmi.Checked;
+        }
+
+        private void tsmiUseSqlParser_Click(object sender, EventArgs e)
+        {
+            var tsmi = (sender as ToolStripMenuItem);
+
+            tsmi.Checked = !tsmi.Checked;
+
+            this.UseSqlParser = tsmi.Checked;
         }
 
         internal async void ValidateScripts(bool showMessageBox = false)

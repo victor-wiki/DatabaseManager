@@ -1614,5 +1614,15 @@ namespace DatabaseManager.Controls
         {
             this.GenerateScripts(ScriptAction.CREATE_PROCEDURE_DELETE);
         }
+
+        public bool HasSelectedNode()
+        {
+            return this.tvDbObjects.SelectedNode != null;
+        }
+
+        public void SelectNone()
+        {
+            this.tvDbObjects.SelectedNode = null;
+        }
     }
 }

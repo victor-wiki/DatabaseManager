@@ -417,6 +417,16 @@ namespace DatabaseManager.Controls
             return false;
         }
 
+        public bool HasSelectedNode()
+        {
+            return this.tvDbObjects.HasSelectedNode();
+        }
+
+        public void SelectNone()
+        {
+            this.tvDbObjects.SelectNone();
+        }
+
         public ConnectionInfo GetCurrentConnectionInfo()
         {
             return this.tvDbObjects.GetCurrentConnectionInfo();

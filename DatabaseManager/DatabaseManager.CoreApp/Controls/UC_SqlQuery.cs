@@ -214,7 +214,7 @@ namespace DatabaseManager.Controls
 
             this.ClearResults();
 
-            this.scriptRunner = new ScriptRunner(new ScriptRunOption() { UseProfiler = this.queryEditor.UseProfiler });
+            this.scriptRunner = new ScriptRunner(new ScriptRunOption() { UseSqlParser = this.queryEditor.UseSqlParser, UseProfiler = this.queryEditor.UseProfiler });
             this.scriptRunner.Subscribe(this);
 
             if (this.CheckConnection())
@@ -289,6 +289,10 @@ namespace DatabaseManager.Controls
                         {
                             this.pagination.Visible = !this.selectScriptAnalyseResult.HasLimitCount
                                 && (this.selectScriptAnalyseResult.HasTableName || this.selectScriptAnalyseResult.HasAlias);
+                        }
+                        else
+                        {
+                            this.pagination.Visible = false;
                         }
 
                         if (result.TotalCount > 0)

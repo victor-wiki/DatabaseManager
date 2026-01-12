@@ -679,10 +679,10 @@ namespace DatabaseInterpreter.Core
             DbDataReader reader = await cmd.ExecuteReaderAsync(cancellationToken);
 
             DataTable table = new DataTable();
-            table.CaseSensitive = true;
+            table.CaseSensitive = true;          
 
             DataSet dataSet = new DataSet();
-            dataSet.EnforceConstraints = false;
+            dataSet.EnforceConstraints = false;            
 
             dataSet.Tables.Add(table);
 
