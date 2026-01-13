@@ -8,7 +8,7 @@ namespace DatabaseManager.Core
 {
     public class ScriptParser
     {
-        private readonly string selectPattern = "SELECT(.[\n]?)+(FROM)?";
+        private readonly string selectPattern = "SELECT([\n]?.[\n]?)+(FROM)?";
         private readonly string dmlPattern = @"\b(CREATE|ALTER|INSERT|UPDATE|DELETE|TRUNCATE|INTO)\b";
         private readonly string createAlterScriptPattern = @"\b(CREATE|ALTER).+(VIEW|FUNCTION|PROCEDURE|TRIGGER)\b";
         private readonly string routinePattern = @"\b(BEGIN|DECLARE|SET|GOTO)\b";

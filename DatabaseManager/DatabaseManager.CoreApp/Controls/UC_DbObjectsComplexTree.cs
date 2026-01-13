@@ -168,6 +168,7 @@ namespace DatabaseManager.Controls
             this.tsmiDiagnose.Visible = isDatabase;
             this.tsmiCompareSchema.Visible = isDatabase;
             this.tsmiClearData.Visible = isDatabase;
+            this.tsmiOptimize.Visible = (this.databaseType == DatabaseType.MySql || this.databaseType == DatabaseType.Sqlite);
 
             this.tsmiSelectScript.Visible = isTable || isView || (isFunction && !isTriggerFunction);
             this.tsmiInsertScript.Visible = isTable;
@@ -177,6 +178,7 @@ namespace DatabaseManager.Controls
             this.tsmiViewDependency.Visible = isDatabase || ((isTable || isView || isFunction || isProcedure) && this.databaseType != DatabaseType.Sqlite);
             this.tsmiExecuteScript.Visible = isProcedure;
             this.tsmiDatabaseDiagram.Visible = isDatabase;
+            this.tsmiAnalysis.Visible = (this.databaseType == DatabaseType.SqlServer || this.databaseType == DatabaseType.Postgres || this.databaseType == DatabaseType.Oracle);
 
             this.tsmiCopyChildrenNames.Visible = node.Level == 1 && node.Nodes.Count > 0 && (node.Nodes[0].Tag != null);
         }
@@ -1623,6 +1625,58 @@ namespace DatabaseManager.Controls
         public void SelectNone()
         {
             this.tvDbObjects.SelectedNode = null;
+        }
+
+        private void tsmiIndexFragmentation_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            Database database = node.Tag as Database;
+
+            frmIndexFragmentation frm = new frmIndexFragmentation(this.GetDbInterpreter(database.Name, true, true));
+            frm.Show();
+        }
+
+        private async void tsmiOptimize_Click(object sender, EventArgs e)
+        {
+            if (!this.IsValidSelectedNode())
+            {
+                return;
+            }
+
+            var confirmResult = MessageBox.Show("Are you sure to optimize the database?", "Confirm", MessageBoxButtons.YesNo);
+
+            if(confirmResult != DialogResult.Yes)
+            {
+                return;
+            }
+
+            TreeNode node = this.GetSelectedNode();
+
+            Database database = node.Tag as Database;
+
+            Optimizer optimizer = new Optimizer(this.GetDbInterpreter(database.Name, true, true));
+
+            this.Feedback("Start to optimize...");
+
+            var result = await optimizer.Optimize();
+
+            this.Feedback("End optimize.");
+
+            if (result.IsOK)
+            {
+                frmOpitimizeResult frm = new frmOpitimizeResult(result);
+                frm.Show();
+            }
+            else
+            {
+                MessageBox.Show(result.Message);
+            }
         }
     }
 }

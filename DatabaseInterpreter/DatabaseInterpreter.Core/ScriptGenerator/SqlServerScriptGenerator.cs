@@ -301,6 +301,13 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             return new AlterDbObjectScript<Table>($"SET IDENTITY_INSERT { this.GetQuotedFullTableName(column) } {(enabled ? "OFF" : "ON")}");
         }
 
+        public Script RebuildIndex(TableIndex index)
+        {
+            string tableName = this.GetQuotedDbObjectNameWithSchema(index.Schema, index.TableName);
+
+            return new AlterDbObjectScript<TableIndex>($"ALTER INDEX {index.Name} ON {tableName} REBUILD;");
+        }
+
         #endregion
 
         #region Database Operation

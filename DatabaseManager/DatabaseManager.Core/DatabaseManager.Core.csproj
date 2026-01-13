@@ -5,11 +5,12 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.3.11</Version>
-    <PackageReleaseNotes>handle: union select;</PackageReleaseNotes>
+    <Version>2.3.12</Version>
+    <PackageReleaseNotes>1. add: index fragmentation analysis for  SqlServer, Oracle and Postgres;
+2. add: optimize database for SQLite and MySql.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.11</AssemblyVersion>
-    <FileVersion>2.3.11</FileVersion>
+    <AssemblyVersion>2.3.12</AssemblyVersion>
+    <FileVersion>2.3.12</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

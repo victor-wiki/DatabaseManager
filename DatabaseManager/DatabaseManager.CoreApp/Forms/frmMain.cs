@@ -421,12 +421,12 @@ namespace DatabaseManager.Forms
 
             if (this.dlgOpenFile.ShowDialog() == DialogResult.OK)
             {
-                if (!hasSelectedNode)
-                {
-                    this.explorerForm.Explorer.SelectNone();
-                }
-
                 this.LoadFile(this.dlgOpenFile.FileName);
+            }
+
+            if (!hasSelectedNode)
+            {
+                this.explorerForm.Explorer.SelectNone();
             }
         }
 

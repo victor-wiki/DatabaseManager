@@ -149,6 +149,12 @@
     <Compile Update="Forms\frmAccountInfo.Designer.cs">
       <DependentUpon>frmAccountInfo.cs</DependentUpon>
     </Compile>
+    <Compile Update="Forms\Opitimize\frmOpitimizeResult.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Opitimize\frmOpitimizeResult.Designer.cs">
+      <DependentUpon>frmOpitimizeResult.cs</DependentUpon>
+    </Compile>
     <Compile Update="Forms\Setting\frmBackupSetting.cs">
       <SubType>Form</SubType>
     </Compile>

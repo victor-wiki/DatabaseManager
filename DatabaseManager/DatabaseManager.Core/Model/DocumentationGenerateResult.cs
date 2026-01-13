@@ -1,9 +1,7 @@
 ﻿namespace DatabaseManager.Core.Model
 {
-    public class DocumentationGenerateResult
+    public class DocumentationGenerateResult:OperateResult
     {
-        public bool IsOK { get; set; }
         public string FilePath { get; set; }
-        public string Message { get; set; }
     }
 }

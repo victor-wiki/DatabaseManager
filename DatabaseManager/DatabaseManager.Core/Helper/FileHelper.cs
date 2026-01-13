@@ -1,4 +1,5 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
+using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -29,7 +30,7 @@ namespace DatabaseManager.Core
         {
             if (File.Exists(filePath))
             {
-                var psi = new ProcessStartInfo(filePath) { UseShellExecute = true };         
+                var psi = new ProcessStartInfo(filePath) { UseShellExecute = true };
 
                 Process.Start(psi);
             }
@@ -46,6 +47,11 @@ namespace DatabaseManager.Core
 
                 Process.Start(psi);
             }
+        }
+
+        public static decimal GetFileSizeInMB(long size)
+        {
+            return Math.Round((decimal)size / 1024 / 1024, 2);
         }
     }
 }

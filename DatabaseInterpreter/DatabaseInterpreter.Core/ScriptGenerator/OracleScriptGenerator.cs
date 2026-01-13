@@ -21,7 +21,7 @@ namespace DatabaseInterpreter.Core
         {
             ScriptBuilder sb = new ScriptBuilder();
 
-            string dbSchema = this.GetDbSchema();            
+            string dbSchema = this.GetDbSchema();
 
             #region User Defined Type          
 
@@ -97,7 +97,7 @@ namespace DatabaseInterpreter.Core
 
             try
             {
-                if(dbInterpreter.Option?.TableScriptsGenerateOption?.ExecuteScriptOnServer == true)
+                if (dbInterpreter.Option?.TableScriptsGenerateOption?.ExecuteScriptOnServer == true)
                 {
                     dbSchema = (this.dbInterpreter as OracleInterpreter).GetDbSchema();
                 }
@@ -270,7 +270,7 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
         public override Script AddIndex(TableIndex index)
         {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));         
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
             bool isUnique = index.Type == IndexType.Unique.ToString();
 
             string type = "";
@@ -323,6 +323,11 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
         public override Script SetIdentityEnabled(TableColumn column, bool enabled)
         {
             return new Script("");
+        }
+
+        public Script RebuildIndex(TableIndex index, bool isOnline = true)
+        {
+            return new AlterDbObjectScript<TableIndex>($"ALTER INDEX {this.GetQuotedDbObjectNameWithSchema(index.Schema, index.Name)} REBUILD {(isOnline? "ONLINE": "OFFLINE")};");
         }
         #endregion
 

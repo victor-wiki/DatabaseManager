@@ -347,6 +347,12 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         {
             return new Script($"ALTER TABLE {this.GetQuotedFullTableName(column)} ALTER COLUMN {this.GetQuotedString(column.Name)} {(enabled ? "ADD" : "DROP")} IDENTITY IF EXISTS");
         }
+
+        public Script RebuildIndex(TableIndex index)
+        {
+
+            return new AlterDbObjectScript<TableIndex>($"REINDEX INDEX {this.GetQuotedDbObjectNameWithSchema(index)};");
+        }
         #endregion
 
         #region Database Operation
