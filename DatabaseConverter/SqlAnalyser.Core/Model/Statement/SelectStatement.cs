@@ -93,7 +93,6 @@ namespace SqlAnalyser.Model
         FULL = 3,
         CROSS = 4,
         PIVOT = 5,
-        UNPIVOT = 6,
-        OUTER = 7
+        UNPIVOT = 6    
     }
 }

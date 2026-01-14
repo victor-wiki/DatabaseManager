@@ -338,8 +338,8 @@ namespace DatabaseInterpreter.Core
                         CASE c.is_identity WHEN 'YES' THEN 1 ELSE 0 END AS ""IsIdentity"", n.nspname AS ""DateTypeSchema""
                         {detailColumns}
                         FROM information_schema.columns c
-                        INNER JOIN pg_catalog.pg_namespace pn ON c.table_schema=pn.nspname
-                        INNER JOIN pg_catalog.pg_class pc ON pn.oid=pc.relnamespace AND c.table_name = pc.relname AND pc.relkind='{kind}'
+                        LEFT JOIN pg_catalog.pg_namespace pn ON c.table_schema=pn.nspname
+                        LEFT JOIN pg_catalog.pg_class pc ON pn.oid=pc.relnamespace AND c.table_name = pc.relname AND pc.relkind='{kind}'
                         LEFT JOIN information_schema.element_types et ON et.object_catalog=c.table_catalog AND et.object_schema=c.table_schema AND et.object_name=c.table_name AND et.collection_type_identifier=c.ordinal_position::text
                         LEFT JOIN pg_catalog.pg_depend pd ON pd.objid= pc.oid AND pd.objsubid=c.ordinal_position AND (pd.deptype is null or pd.deptype='n')
                         LEFT JOIN pg_catalog.pg_type pt ON pd.refobjid=pt.oid  

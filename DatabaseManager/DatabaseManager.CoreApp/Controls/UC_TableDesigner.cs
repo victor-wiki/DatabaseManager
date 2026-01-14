@@ -110,23 +110,44 @@ namespace DatabaseManager.Controls
 
         private async void LoadDatabaseSchemas()
         {
+            DatabaseType databaseType = this.displayInfo.DatabaseType;
+
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
 
             List<string> items = new List<string>();
             string defaultItem = null;
 
-            List<DatabaseSchema> schemas = await dbInterpreter.GetDatabaseSchemasAsync();
+            List<DatabaseSchema> schemas = null;
+
+            string defaultSchema = null;
+
+
+            if (databaseType == DatabaseType.Oracle)
+            {
+                OracleInterpreter oracleDbInterpreter = dbInterpreter as OracleInterpreter;
+
+                schemas =(await oracleDbInterpreter.GetTablespacesAsync()).Select(item=> new DatabaseSchema() { Name = item }).ToList();
+
+                defaultSchema = await oracleDbInterpreter.GetUserDefaultTablespaceAsync();
+            }
+            else
+            {
+                schemas = await dbInterpreter.GetDatabaseSchemasAsync();
+            }             
 
             items.AddRange(schemas.Select(item => item.Name));
 
-            string defaultSchema = dbInterpreter.DefaultSchema;
+            if(defaultSchema == null)
+            {
+                defaultSchema = dbInterpreter.DefaultSchema;
+            }           
 
             if (!string.IsNullOrEmpty(defaultSchema) && schemas.Any(item => item.Name == defaultSchema))
             {
                 defaultItem = defaultSchema;
             }
 
-            if (this.displayInfo.DatabaseType == DatabaseType.Oracle || this.displayInfo.DatabaseType == DatabaseType.MySql)
+            if (this.displayInfo.DatabaseType == DatabaseType.MySql)
             {
                 this.cboSchema.Enabled = false;
             }

@@ -1,4 +1,5 @@
 ﻿using DatabaseInterpreter.Core;
+using DatabaseInterpreter.Model;
 using DatabaseManager.Core.Model;
 using System;
 using System.Linq;
@@ -57,14 +58,56 @@ namespace DatabaseManager.Core
             return false;
         }
 
+        public bool HasAlterDatabase()
+        {
+            if (string.IsNullOrEmpty(this.script))
+            {
+                return false;
+            }
+
+            string content = this.GetCleanContent();
+
+            var lines = content.Split('\n');
+
+            return lines.Any(item => item.Trim().ToUpper().StartsWith("ALTER DATABASE"));
+        }
+
         private bool IsWordInSingleQuotation(string content, int startIndex)
         {
             return content.Substring(0, startIndex).Count(item => item == '\'') % 2 != 0;
         }
 
+        private string GetCleanContent()
+        {
+            string content = this.script;
+
+            string commentChars = this.dbInterpreter.CommentString;
+
+            if (commentChars != "--")
+            {
+                content = content.Replace(commentChars, "--");
+            }
+
+            string scriptWithoutComments = ScriptHelper.RemoveComments(content, true);
+
+            return scriptWithoutComments;
+        }
+
         public bool IsCreateOrAlterScript()
         {
-            var mathes = Regex.Matches(this.script, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            string content = this.GetCleanContent();
+
+            if (this.dbInterpreter.DatabaseType == DatabaseType.SqlServer)
+            {
+                var lines = content.Split('\n');
+
+                if (lines.Any(item => item.ToUpper() == "GO"))
+                {
+                    return false;
+                }
+            }
+
+            var mathes = Regex.Matches(content, this.createAlterScriptPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             return mathes.Any(item => !this.IsWordInSingleQuotation(this.script, item.Index));
         }

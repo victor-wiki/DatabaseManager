@@ -1088,11 +1088,7 @@ namespace SqlAnalyser.Core
                         else if (joinType.StartsWith(nameof(JoinType.FULL)))
                         {
                             joinItem.Type = JoinType.FULL;
-                        }
-                        else if (joinType.StartsWith(nameof(JoinType.OUTER)))
-                        {
-                            joinItem.Type = JoinType.OUTER;
-                        }
+                        }                       
 
                         var trf = joinTable.tableReference();
                         var derivedTable = trf?.tableFactor()?.derivedTable();

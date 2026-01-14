@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Geometry;
+﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
@@ -11,7 +12,6 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using static Npgsql.Replication.PgOutput.Messages.RelationMessage;
 using PgGeom = NetTopologySuite.Geometries;
 
 namespace DatabaseInterpreter.Core
@@ -92,8 +92,17 @@ namespace DatabaseInterpreter.Core
 
         public string GetCurrentUserName()
         {
-            string sql = "SELECT sys_context('USERENV', 'CURRENT_USER') FROM DUAL";
-            return (this.GetScalar(this.CreateConnection(), sql))?.ToString();
+            return (this.GetScalar(this.CreateConnection(), this.GetSqlForCurrentUserName()))?.ToString();
+        }
+
+        public async Task<string> GetCurrentUserNameAsync()
+        {
+            return (await this.GetScalarAsync(this.CreateConnection(), this.GetSqlForCurrentUserName()))?.ToString();
+        }
+
+        private string GetSqlForCurrentUserName()
+        {
+            return "SELECT sys_context('USERENV', 'CURRENT_USER') FROM DUAL";
         }
 
         public string GetDbSchema()
@@ -107,32 +116,39 @@ namespace DatabaseInterpreter.Core
 
                 if (isValidConnection)
                 {
-                    string sql = this.GetSqlForTablespaces();
-
-                    this.dbSchema = (this.GetScalar(this.CreateConnection(), sql))?.ToString();
+                    this.dbSchema = this.GetCurrentUserName();
                 }
+            }
+            else if(this.ConnectionInfo!=null && !string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+            {
+                this.dbSchema = this.ConnectionInfo.UserId;
             }
 
             return this.dbSchema;
         }
 
-        public override Task<List<Database>> GetDatabasesAsync()
+        public override async Task<List<Database>> GetDatabasesAsync()
+        {
+            return new List<Database>() { new Database() { Name = await this.GetCurrentUserNameAsync() } };
+        }
+
+        public async Task<IEnumerable<string>> GetTablespacesAsync()
         {
             string sql = this.GetSqlForTablespaces();
 
-            return base.GetDbObjectsAsync<Database>(sql);
+            return await this.CreateConnection().QueryAsync<string>(sql);
+        }
+
+        public async Task<string> GetUserDefaultTablespaceAsync()
+        {
+            string sql = $"SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{(await this.GetCurrentUserNameAsync())}')";
+
+            return (await this.CreateConnection().QueryAsync<string>(sql)).FirstOrDefault();
         }
 
         private string GetSqlForTablespaces()
         {
-            string notShowBuiltinDatabaseCondition = this.GetExcludeBuiltinDbNamesCondition("TABLESPACE_NAME", false);
-
-            if (!string.IsNullOrEmpty(notShowBuiltinDatabaseCondition))
-            {
-                notShowBuiltinDatabaseCondition += " AND CONTENTS <>'UNDO'";
-            }
-
-            string sql = $@"SELECT TABLESPACE_NAME AS ""Name"" FROM USER_TABLESPACES WHERE TABLESPACE_NAME IN(SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{this.GetCurrentUserName()}')) {notShowBuiltinDatabaseCondition}";
+            string sql = $@"SELECT TABLESPACE_NAME FROM USER_TABLESPACES";
 
             return sql;
         }
@@ -303,8 +319,6 @@ namespace DatabaseInterpreter.Core
         {
             bool isSimpleMode = this.IsObjectFectchSimpleMode();
 
-            string tablespaceCondition = string.IsNullOrEmpty(this.ConnectionInfo.Database) ? "" : $" AND UPPER(T.TABLESPACE_NAME)=UPPER('{this.ConnectionInfo.Database}')";
-
             var sb = this.CreateSqlBuilder();
 
             if (isSimpleMode)
@@ -320,7 +334,7 @@ namespace DatabaseInterpreter.Core
                           LEFT JOIN USER_TAB_COMMENTS C ON T.TABLE_NAME= C.TABLE_NAME");
             }
 
-            sb.Append($" WHERE UPPER(OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')" + tablespaceCondition);
+            sb.Append($" WHERE UPPER(OWNER)=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
             sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "T.TABLE_NAME"));
 

@@ -572,11 +572,7 @@ namespace SqlAnalyser.Core
                     else if (text.Contains("FULL"))
                     {
                         joinItem.Type = JoinType.FULL;
-                    }
-                    else if (text.Contains("OUTER"))
-                    {
-                        joinItem.Type = JoinType.OUTER;
-                    }
+                    }                   
                     else
                     {
                         joinItem.Type = JoinType.INNER;

@@ -205,46 +205,57 @@ namespace DatabaseManager.Controls
             this.isResultReturned = false;
             this.displayInfo = data;
 
-            string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
-
-            if (script.Trim().Length == 0)
+            try
             {
-                return;
+                string script = this.Editor.SelectedText.Length > 0 ? this.Editor.SelectedText : this.Editor.Text;
+
+                if (script.Trim().Length == 0)
+                {
+                    return;
+                }
+
+                this.ClearResults();
+
+                this.scriptRunner = new ScriptRunner(new ScriptRunOption() { UseSqlParser = this.queryEditor.UseSqlParser, UseProfiler = this.queryEditor.UseProfiler });
+                this.scriptRunner.Subscribe(this);
+
+                if (this.CheckConnection())
+                {
+                    this.cancellationTokenSource = new CancellationTokenSource();
+
+                    var token = this.cancellationTokenSource.Token;
+
+                    token.Register(async () => { await this.Feedback(new FeedbackInfo() { Message = "Task has been canceled." }); });
+
+                    this.Invoke(() =>
+                    {
+                        this.SetResultPanelVisible(true);
+                        this.tabResult.SelectedIndex = 0;
+                    });
+
+                    this.loadingPanel.CancellationTokenSource = this.cancellationTokenSource;
+
+                    this.loadingPanel.ShowLoading(this.resultGridView);
+
+                    QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters, new PaginationInfo() { PageNumber = this.pagination.PageNumber, PageSize = this.pagination.PageSize });
+
+                    this.isResultReturned = true;
+
+                    this.Invoke(() =>
+                    {
+                        this.ShowResult(result);
+                    });
+
+                    this.loadingPanel.HideLoading();
+                }
             }
-
-            this.ClearResults();
-
-            this.scriptRunner = new ScriptRunner(new ScriptRunOption() { UseSqlParser = this.queryEditor.UseSqlParser, UseProfiler = this.queryEditor.UseProfiler });
-            this.scriptRunner.Subscribe(this);
-
-            if (this.CheckConnection())
+            catch (Exception ex)
             {
-                this.cancellationTokenSource = new CancellationTokenSource();
+                string message = ex.Message;
 
-                var token = this.cancellationTokenSource.Token;
+                this.AppendMessage(ExceptionHelper.GetExceptionDetails(ex), true);
 
-                token.Register(async () => { await this.Feedback(new FeedbackInfo() { Message = "Task has been canceled." }); });
-
-                this.Invoke(() =>
-                {
-                    this.SetResultPanelVisible(true);
-                    this.tabResult.SelectedIndex = 0;
-                });
-
-                this.loadingPanel.CancellationTokenSource = this.cancellationTokenSource;
-
-                this.loadingPanel.ShowLoading(this.resultGridView);
-
-                QueryResult result = await scriptRunner.Run(data.DatabaseType, data.ConnectionInfo, script, token, data.ScriptAction, data.ScriptParameters, new PaginationInfo() { PageNumber = this.pagination.PageNumber, PageSize = this.pagination.PageSize });
-
-                this.isResultReturned = true;
-
-                this.Invoke(() =>
-                {
-                    this.ShowResult(result);
-                });
-
-                this.loadingPanel.HideLoading();
+                MessageBox.Show(message);
             }
         }
 

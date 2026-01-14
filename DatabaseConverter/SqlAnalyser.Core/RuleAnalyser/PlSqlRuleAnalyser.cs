@@ -1537,10 +1537,7 @@ namespace SqlAnalyser.Core
                     return JoinType.FULL;
                 case nameof(PlSqlParser.CROSS):
                     matched = true;
-                    return JoinType.CROSS;
-                case nameof(PlSqlParser.OUTER):
-                    matched = true;
-                    return JoinType.OUTER;
+                    return JoinType.CROSS;                
                 default:
                     matched = false;
                     return JoinType.INNER;

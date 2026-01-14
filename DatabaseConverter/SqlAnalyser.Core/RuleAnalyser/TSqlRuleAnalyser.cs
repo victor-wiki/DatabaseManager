@@ -806,10 +806,7 @@ namespace SqlAnalyser.Core
                                 break;
                             case TSqlParser.CROSS:
                                 joinItem.Type = JoinType.CROSS;
-                                break;
-                            case TSqlParser.OUTER:
-                                joinItem.Type = JoinType.OUTER;
-                                break;
+                                break;                           
                             case TSqlParser.PIVOT:
                                 joinItem.Type = JoinType.PIVOT;
                                 break;

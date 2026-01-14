@@ -250,7 +250,7 @@ namespace SqlAnalyser.Core
                                 }
                                 else if(this is PostgreSqlStatementScriptBuilder)
                                 {
-                                    if (joinItem.Type == JoinType.OUTER || joinItem.Type == JoinType.CROSS)
+                                    if (joinItem.Type == JoinType.CROSS)
                                     {
                                         joinKeyword = $"LEFT JOIN LATERAL ";
                                         handled = true;
@@ -258,7 +258,7 @@ namespace SqlAnalyser.Core
                                 }
                                 else if (this is MySqlStatementScriptBuilder)
                                 {
-                                    if (joinItem.Type == JoinType.OUTER || joinItem.Type == JoinType.CROSS)
+                                    if (joinItem.Type == JoinType.CROSS)
                                     {
                                         joinKeyword = $"LEFT {joinItem.Type} JOIN ";
                                         handled = true;

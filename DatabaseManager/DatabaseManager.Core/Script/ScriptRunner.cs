@@ -22,7 +22,6 @@ namespace DatabaseManager.Core
 {
     public class ScriptRunner
     {
-        private DbTransaction transaction = null;
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
         private bool hasError = false;
@@ -52,6 +51,7 @@ namespace DatabaseManager.Core
         public async Task<QueryResult> Run(DatabaseType dbType, ConnectionInfo connectionInfo, string script,
             CancellationToken cancellationToken, ScriptAction action = ScriptAction.NONE, List<RoutineParameter> parameters = null, PaginationInfo paginationInfo = null)
         {
+
             this.isBusy = false;
 
             QueryResult result = new QueryResult();
@@ -88,12 +88,13 @@ namespace DatabaseManager.Core
 
                 using (dbConnection)
                 {
+                    this.isBusy = true;
+
                     if (isSelect)
                     {
-                        this.isBusy = true;
                         result.ResultType = QueryResultType.Grid;
 
-                        if(this.option.UseSqlParser)
+                        if (this.option.UseSqlParser)
                         {
                             SelectScriptAnalyseResult analyseResult = this.AnalyseSelect(dbInterpreter, script, paginationInfo);
 
@@ -115,7 +116,7 @@ namespace DatabaseManager.Core
 
                                 result.TotalCount = totalCount;
                             }
-                        }              
+                        }
 
                         script = GetTrimedScript(dbInterpreter, script);
 
@@ -125,12 +126,20 @@ namespace DatabaseManager.Core
                     }
                     else
                     {
-                        this.isBusy = true;
                         result.ResultType = QueryResultType.Text;
 
                         await dbConnection.OpenAsync();
 
-                        this.transaction = await dbConnection.BeginTransactionAsync();
+                        bool hasAlterDatabase = scriptParser.HasAlterDatabase();
+
+                        bool needTransaction = !hasAlterDatabase;
+
+                        DbTransaction transaction = null;
+                        
+                        if(needTransaction)
+                        {
+                            transaction = await dbConnection.BeginTransactionAsync();
+                        }                       
 
                         IEnumerable<string> commands = Enumerable.Empty<string>();
 
@@ -159,6 +168,10 @@ namespace DatabaseManager.Core
                             foreach (var line in lines)
                             {
                                 if (line.Trim() == delimiter.Trim())
+                                {
+                                    continue;
+                                }
+                                else if (dbType == DatabaseType.SqlServer && line.ToUpper().StartsWith($"USE {connectionInfo.Database.ToUpper()}"))
                                 {
                                     continue;
                                 }
@@ -246,7 +259,7 @@ namespace DatabaseManager.Core
                             {
                                 CommandType = commandType,
                                 CommandText = command,
-                                Transaction = this.transaction,
+                                Transaction = transaction,
                                 CancellationToken = cancellationToken
                             };
 
@@ -273,9 +286,9 @@ namespace DatabaseManager.Core
 
                         result.Result = affectedRows;
 
-                        if (!cancellationToken.IsCancellationRequested)
+                        if (!cancellationToken.IsCancellationRequested && transaction != null)
                         {
-                            await this.transaction.CommitAsync();
+                            await transaction.CommitAsync();
                         }
                     }
 
@@ -316,8 +329,6 @@ namespace DatabaseManager.Core
             }
             catch (Exception ex)
             {
-                this.Rollback(ex);
-
                 result.ResultType = QueryResultType.Text;
                 result.HasError = true;
                 result.Result = ex.Message;
@@ -453,31 +464,6 @@ namespace DatabaseManager.Core
             this.Feedback(this, errMsg, FeedbackInfoType.Error, true, true);
         }
 
-        private async void Rollback(Exception ex = null)
-        {
-            if (this.transaction != null && this.transaction.Connection != null && this.transaction.Connection.State == ConnectionState.Open)
-            {
-                try
-                {
-                    bool hasRollbacked = false;
-
-                    if (ex != null && ex is DbCommandException dbe)
-                    {
-                        hasRollbacked = dbe.HasRollbackedTransaction;
-                    }
-
-                    if (!hasRollbacked)
-                    {
-                        await this.transaction.RollbackAsync();
-                    }
-                }
-                catch (Exception e)
-                {
-                    //throw;
-                }
-            }
-        }
-
         public SelectScriptAnalyseResult AnalyseSelect(DbInterpreter dbInterpreter, string script, PaginationInfo paginationInfo)
         {
             SelectScriptAnalyseResult analyseResult = new SelectScriptAnalyseResult();
@@ -559,7 +545,7 @@ namespace DatabaseManager.Core
 
                             Action useNormalPagination = () =>
                             {
-                                if(selectStatement.UnionStatements!=null && selectStatement.UnionStatements.Count>0)
+                                if (selectStatement.UnionStatements != null && selectStatement.UnionStatements.Count > 0)
                                 {
                                     lastSelectStatement = selectStatement.UnionStatements.Last().SelectStatement;
                                 }
@@ -571,7 +557,7 @@ namespace DatabaseManager.Core
                             {
                                 isUseSpecialPaination = true;
 
-                                string orderBy = selectStatement.OrderBy == null ? "": string.Join(",", selectStatement.OrderBy.Select(item => item.Symbol));
+                                string orderBy = selectStatement.OrderBy == null ? "" : string.Join(",", selectStatement.OrderBy.Select(item => item.Symbol));
 
                                 ColumnName columnName = new ColumnName($"ROW_NUMBER() OVER (ORDER BY {orderBy}) AS {rowNumberColumnName}");
 
@@ -635,14 +621,14 @@ namespace DatabaseManager.Core
 
                                 statements.Add(selectStatement);
 
-                                if (selectStatement.UnionStatements!=null && selectStatement.UnionStatements.Count>0)
+                                if (selectStatement.UnionStatements != null && selectStatement.UnionStatements.Count > 0)
                                 {
                                     statements.AddRange(selectStatement.UnionStatements.Select(item => item.SelectStatement));
                                 }
 
                                 int i = 0;
 
-                                foreach(var statement in statements)
+                                foreach (var statement in statements)
                                 {
                                     columnsList.Add(selectStatement.Columns.Select(item => item).ToList());
                                     orderByList.Add(selectStatement.OrderBy == null ? null : selectStatement.OrderBy.Select(item => item).ToList());
@@ -665,7 +651,7 @@ namespace DatabaseManager.Core
                                     selectStatement.OrderBy = orderByList[i];
 
                                     i++;
-                                }                                   
+                                }
 
                                 lastSelectStatement.LimitInfo = limitInfo;
                             }
