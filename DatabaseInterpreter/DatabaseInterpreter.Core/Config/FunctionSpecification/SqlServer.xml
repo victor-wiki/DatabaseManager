@@ -1,12 +1,12 @@
 ﻿<items>
   <item name="ABS" args="EXP"></item>
   <item name="ACOS" args="EXP"></item>
-  <item name="APPROX_COUNT_DISTINCT" args="EXP"></item>
+  <item name="APPROX_COUNT_DISTINCT" args="EXP" isAggregate="true"></item>
   <item name="ASCII" args="EXP"></item>
   <item name="ASIN" args="EXP"></item>
   <item name="ATAN" args="EXP"></item>
   <item name="ATN2" args="EXP"></item>
-  <item name="AVG" args="EXP"></item>
+  <item name="AVG" args="EXP"  isAggregate="true"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEILING" args="EXP"></item>
   <item name="CHAR" args="NUMBER" isString="true"></item>
@@ -19,8 +19,8 @@
   <item name="CONVERT" args="TYPE,EXP"></item>
   <item name="COS" args="EXP"></item>
   <item name="COT" args="EXP"></item>
-  <item name="COUNT" args="EXP"></item>
-  <item name="COUNT_BIG" args="EXP"></item>
+  <item name="COUNT" args="EXP"  isAggregate="true"></item>
+  <item name="COUNT_BIG" args="EXP"  isAggregate="true"></item>
   <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
   <item name="CURRENT_TIMEZONE" args="" ></item>
   <item name="CURRENT_USER" args="" noParenthesess="true" isString="true"></item>
@@ -64,8 +64,8 @@
   <item name="LOG10" args="EXP"></item>
   <item name="LOWER" args="EXP" isString="true"></item>
   <item name="LTRIM" args="EXP" isString="true"></item>
-  <item name="MAX" args="EXP"></item>
-  <item name="MIN" args="EXP"></item>
+  <item name="MAX" args="EXP"  isAggregate="true"></item>
+  <item name="MIN" args="EXP"  isAggregate="true"></item>
   <item name="MONTH" args="DATE"></item>
   <item name="NCHAR" args="EXP" isString="true"></item>
   <item name="NEWID" args=""></item>
@@ -97,15 +97,15 @@
   <item name="SPACE" args="LENGTH"></item>
   <item name="SQRT" args="EXP"></item>
   <item name="SQUARE" args="EXP"></item>
-  <item name="STDEV" args="[ALL|DISTINCT] EXP"></item>
-  <item name="STDEVP" args="[ALL|DISTINCT] EXP"></item>
+  <item name="STDEV" args="[ALL|DISTINCT] EXP"  isAggregate="true"></item>
+  <item name="STDEVP" args="[ALL|DISTINCT] EXP"  isAggregate="true"></item>
   <item name="STR" args="EXP[,LENGTH,DECIMAL]" isString="true"></item>
-  <item name="STRING_AGG" args="EXP,SEPARATOR" isString="true"></item>
+  <item name="STRING_AGG" args="EXP,SEPARATOR" isString="true"  isAggregate="true"></item>
   <item name="STRING_ESCAPE" args="EXP,TYPE" isString="true"></item>
   <item name="STRING_SPLIT" args="EXP,SEPARATOR"></item>
   <item name="STUFF" args="EXP,START,LENGTH,VALUE" isString="true"></item>
   <item name="SUBSTRING" args="EXP,START,LENGTH" isString="true"></item>
-  <item name="SUM" args="EXP"></item>
+  <item name="SUM" args="EXP"  isAggregate="true"></item>
   <item name="SYSDATETIME" args=""></item>
   <item name="SYSDATETIMEOFFSET" args=""></item>
   <item name="SYSTEM_USER" args="" noParenthesess="true" isString="true"></item>
@@ -120,7 +120,7 @@
   <item name="TRY_CONVERT" args="TYPE,EXP"></item>
   <item name="UPPER" args="EXP" isString="true"></item>
   <item name="USER_NAME" args="" isString="true"></item>
-  <item name="VAR" args="[ALL|DISTINCT] EXP"></item>
-  <item name="VARP" args="[ALL|DISTINCT] EXP"></item>
+  <item name="VAR" args="[ALL|DISTINCT] EXP"  isAggregate="true"></item>
+  <item name="VARP" args="[ALL|DISTINCT] EXP"  isAggregate="true"></item>
   <item name="YEAR" args="DATE"></item>
 </items>

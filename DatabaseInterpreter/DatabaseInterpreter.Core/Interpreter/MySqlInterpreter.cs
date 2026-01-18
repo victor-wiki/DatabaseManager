@@ -549,6 +549,95 @@ namespace DatabaseInterpreter.Core
             return sb.Content;
         }
         #endregion
+
+        #region Partition      
+
+        public override async Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter)
+        {
+            return await this.GetPartitionedTables(this.CreateConnection(), filter);
+        }
+
+        public override async Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter)
+        {
+            return (await dbConnection.QueryAsync<Table>(this.GetSqlForPartitionedTables(filter))).ToList();
+        }
+
+        public override async Task<bool> IsPartitionedTable(DbConnection dbConnection, Table table)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            string sql = this.GetSqlForPartitionedTables(filter, true);
+
+            return (await dbConnection.QueryAsync<int?>(sql))?.FirstOrDefault() > 0;
+        }
+
+        private string GetSqlForPartitionedTables(SchemaInfoFilter filter, bool isCount = false)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            string columns = isCount ? "IFNULL(COUNT(1),0)" : @"TABLE_SCHEMA AS `Schema`,TABLE_NAME AS `Name`";
+
+            sb.Append(
+$@"SELECT {columns}
+FROM INFORMATION_SCHEMA.PARTITIONS
+WHERE PARTITION_METHOD IS NOT NULL");
+
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "TABLE_NAME"));
+
+            return sb.Content;
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(Table table, bool includeDetails = false)
+        {
+            return await this.GetPartitionSummary(this.CreateConnection(), table, includeDetails);
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT TABLE_NAME AS `TableName`,PARTITION_METHOD AS `Type`,PARTITION_EXPRESSION AS `Expression`
+FROM INFORMATION_SCHEMA.PARTITIONS
+WHERE PARTITION_METHOD IS NOT NULL AND TABLE_NAME='{table.Name}'";
+
+            if(!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND TABLE_SCHEMA='{table.Schema}'";
+            }
+
+            var summary = (await dbConnection.QueryAsync<PartitionSummary>(sql))?.FirstOrDefault();
+
+            if (summary != null)
+            {
+                if (includeDetails)
+                {
+                    summary.Partitions = (await this.GetPartitionInfos(dbConnection, table)).ToList();
+                }
+            }
+
+            return summary;
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(Table table)
+        {
+            return await this.GetPartitionInfos(this.CreateConnection(), table);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(DbConnection dbConnection, Table table)
+        {
+            string sql = 
+$@"SELECT TABLE_SCHEMA AS `TableSchema`,TABLE_NAME AS `TableName`,PARTITION_NAME AS `Name`,PARTITION_DESCRIPTION AS `Bound`,PARTITION_ORDINAL_POSITION AS `Order`
+FROM INFORMATION_SCHEMA.PARTITIONS
+WHERE PARTITION_METHOD IS NOT NULL AND TABLE_NAME='{table.Name}'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND TABLE_SCHEMA='{table.Schema}'";
+            }
+
+            return await dbConnection.QueryAsync<PartitionInfo>(sql);
+        }
+
+        #endregion
         #endregion
 
         #region Dependency

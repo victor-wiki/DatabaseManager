@@ -30,7 +30,8 @@ namespace DatabaseInterpreter.Core
                 Delimiter = item.Attribute("delimiter")?.Value,
                 NoParenthesess = ValueHelper.IsTrueValue(item.Attribute("noParenthesess")?.Value),
                 IsString = ValueHelper.IsTrueValue(item.Attribute("isString")?.Value),
-                IsCheck = ValueHelper.IsTrueValue(item.Attribute("isCheck")?.Value)
+                IsCheck = ValueHelper.IsTrueValue(item.Attribute("isCheck")?.Value),
+                IsAggregate = ValueHelper.IsTrueValue(item.Attribute("isAggregate")?.Value)
             }).ToList();
 
             if (_functionSpecifications == null)

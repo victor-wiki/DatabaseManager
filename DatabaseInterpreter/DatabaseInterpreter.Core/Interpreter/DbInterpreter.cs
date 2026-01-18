@@ -329,7 +329,7 @@ namespace DatabaseInterpreter.Core
             {
                 if (schemaInfo.Tables.Count > 1)
                 {
-                    schemaInfo.Tables = TableReferenceHelper.ResortTables(schemaInfo.Tables, schemaInfo.TableForeignKeys);
+                    schemaInfo.Tables = await TableReferenceHelper.ResortTables(schemaInfo.Tables, schemaInfo.TableForeignKeys, this);
                 }
 
                 DbObjectHelper.Resort(schemaInfo.Views);
@@ -361,6 +361,25 @@ namespace DatabaseInterpreter.Core
             {
                 return hasName || filter.DatabaseObjectType.HasFlag(currentObjectType);
             }
+        }
+        #endregion
+
+        #region Partition
+        public abstract Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter);
+        public abstract Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter);
+
+        public virtual async Task<bool> IsPartitionedTable(Table table)
+        {
+            return await this.IsPartitionedTable(this.CreateConnection(), table);
+        }
+
+        public virtual async Task<bool> IsPartitionedTable(DbConnection dbConnection, Table table)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            var tables = await this.GetPartitionedTables(dbConnection, filter);
+
+            return tables.Count > 0;
         }
         #endregion
         #endregion
@@ -1000,7 +1019,7 @@ namespace DatabaseInterpreter.Core
         #endregion
 
         #region Common Method 
-        public abstract bool IsLowDbVersion(string serverVersion);
+        public abstract bool IsLowDbVersion(string serverVersion);    
         protected virtual void SubscribeInfoMessage(DbConnection dbConnection) { }
         protected virtual void SubscribeInfoMessage(DbCommand dbCommand) { }
         public string GetQuotedDbObjectNameWithSchema(DatabaseObject obj)

@@ -774,7 +774,18 @@ namespace DatabaseInterpreter.Core
         {
             return base.GetDbObjectsAsync<RoutineParameter>(dbConnection, "");
         }
-        #endregion        
+        #endregion
+
+        #region Partition
+        public override Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter)
+        {
+            return base.GetDbObjectsAsync<Table>("");
+        }
+        public override Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter)
+        {
+            return base.GetDbObjectsAsync<Table>("");
+        }
+        #endregion
 
         #endregion
 
@@ -827,7 +838,7 @@ namespace DatabaseInterpreter.Core
         public override bool IsLowDbVersion(string serverVersion)
         {
             return this.IsLowDbVersion(serverVersion, "3");
-        }
+        }        
 
         public override DbConnector GetDbConnector()
         {

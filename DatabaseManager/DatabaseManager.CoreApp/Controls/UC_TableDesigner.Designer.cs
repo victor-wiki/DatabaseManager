@@ -30,226 +30,223 @@ namespace DatabaseManager.Controls
         /// </summary>
         private void InitializeComponent()
         {
-            this.label1 = new System.Windows.Forms.Label();
-            this.txtTableName = new System.Windows.Forms.TextBox();
-            this.lblSchema = new System.Windows.Forms.Label();
-            this.lblComment = new System.Windows.Forms.Label();
-            this.txtTableComment = new System.Windows.Forms.TextBox();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabColumns = new System.Windows.Forms.TabPage();
-            this.ucColumns = new DatabaseManager.Controls.UC_TableColumns();
-            this.tabForeignKeys = new System.Windows.Forms.TabPage();
-            this.ucForeignKeys = new DatabaseManager.Controls.UC_TableForeignKeys();
-            this.tabIndexes = new System.Windows.Forms.TabPage();
-            this.ucIndexes = new DatabaseManager.Controls.UC_TableIndexes();
-            this.tabConstraints = new System.Windows.Forms.TabPage();
-            this.ucConstraints = new DatabaseManager.Controls.UC_TableConstraints();
-            this.dataGridViewComboBoxColumn1 = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.cboSchema = new System.Windows.Forms.ComboBox();
-            this.tabControl1.SuspendLayout();
-            this.tabColumns.SuspendLayout();
-            this.tabForeignKeys.SuspendLayout();
-            this.tabIndexes.SuspendLayout();
-            this.tabConstraints.SuspendLayout();
-            this.SuspendLayout();
+            label1 = new System.Windows.Forms.Label();
+            txtTableName = new System.Windows.Forms.TextBox();
+            lblSchema = new System.Windows.Forms.Label();
+            lblComment = new System.Windows.Forms.Label();
+            txtTableComment = new System.Windows.Forms.TextBox();
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabColumns = new System.Windows.Forms.TabPage();
+            ucColumns = new UC_TableColumns();
+            tabForeignKeys = new System.Windows.Forms.TabPage();
+            ucForeignKeys = new UC_TableForeignKeys();
+            tabIndexes = new System.Windows.Forms.TabPage();
+            ucIndexes = new UC_TableIndexes();
+            tabConstraints = new System.Windows.Forms.TabPage();
+            ucConstraints = new UC_TableConstraints();
+            dataGridViewComboBoxColumn1 = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            cboSchema = new System.Windows.Forms.ComboBox();
+            tabControl1.SuspendLayout();
+            tabColumns.SuspendLayout();
+            tabForeignKeys.SuspendLayout();
+            tabIndexes.SuspendLayout();
+            tabConstraints.SuspendLayout();
+            SuspendLayout();
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(5, 10);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(82, 17);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Table Name:";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(5, 9);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(82, 17);
+            label1.TabIndex = 1;
+            label1.Text = "Table Name:";
             // 
             // txtTableName
             // 
-            this.txtTableName.Location = new System.Drawing.Point(94, 6);
-            this.txtTableName.Margin = new System.Windows.Forms.Padding(4);
-            this.txtTableName.Name = "txtTableName";
-            this.txtTableName.Size = new System.Drawing.Size(417, 23);
-            this.txtTableName.TabIndex = 2;
+            txtTableName.Location = new System.Drawing.Point(94, 6);
+            txtTableName.Margin = new System.Windows.Forms.Padding(4);
+            txtTableName.Name = "txtTableName";
+            txtTableName.Size = new System.Drawing.Size(417, 23);
+            txtTableName.TabIndex = 2;
             // 
             // lblSchema
             // 
-            this.lblSchema.AutoSize = true;
-            this.lblSchema.Location = new System.Drawing.Point(579, 10);
-            this.lblSchema.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblSchema.Name = "lblSchema";
-            this.lblSchema.Size = new System.Drawing.Size(56, 17);
-            this.lblSchema.TabIndex = 3;
-            this.lblSchema.Text = "Schema:";
+            lblSchema.Location = new System.Drawing.Point(566, 9);
+            lblSchema.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblSchema.Name = "lblSchema";
+            lblSchema.Size = new System.Drawing.Size(81, 17);
+            lblSchema.TabIndex = 3;
+            lblSchema.Text = "Schema:";
+            lblSchema.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblComment
             // 
-            this.lblComment.AutoSize = true;
-            this.lblComment.Location = new System.Drawing.Point(5, 46);
-            this.lblComment.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblComment.Name = "lblComment";
-            this.lblComment.Size = new System.Drawing.Size(67, 17);
-            this.lblComment.TabIndex = 5;
-            this.lblComment.Text = "Comment:";
+            lblComment.AutoSize = true;
+            lblComment.Location = new System.Drawing.Point(5, 46);
+            lblComment.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            lblComment.Name = "lblComment";
+            lblComment.Size = new System.Drawing.Size(67, 17);
+            lblComment.TabIndex = 5;
+            lblComment.Text = "Comment:";
             // 
             // txtTableComment
             // 
-            this.txtTableComment.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTableComment.Location = new System.Drawing.Point(94, 45);
-            this.txtTableComment.Margin = new System.Windows.Forms.Padding(4);
-            this.txtTableComment.Name = "txtTableComment";
-            this.txtTableComment.Size = new System.Drawing.Size(714, 23);
-            this.txtTableComment.TabIndex = 6;
+            txtTableComment.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            txtTableComment.Location = new System.Drawing.Point(94, 45);
+            txtTableComment.Margin = new System.Windows.Forms.Padding(4);
+            txtTableComment.Name = "txtTableComment";
+            txtTableComment.Size = new System.Drawing.Size(808, 23);
+            txtTableComment.TabIndex = 6;
             // 
             // tabControl1
             // 
-            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabControl1.Controls.Add(this.tabColumns);
-            this.tabControl1.Controls.Add(this.tabForeignKeys);
-            this.tabControl1.Controls.Add(this.tabIndexes);
-            this.tabControl1.Controls.Add(this.tabConstraints);
-            this.tabControl1.Location = new System.Drawing.Point(7, 76);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(4);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(811, 540);
-            this.tabControl1.TabIndex = 8;
-            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
+            tabControl1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            tabControl1.Controls.Add(tabColumns);
+            tabControl1.Controls.Add(tabForeignKeys);
+            tabControl1.Controls.Add(tabIndexes);
+            tabControl1.Controls.Add(tabConstraints);
+            tabControl1.Location = new System.Drawing.Point(7, 76);
+            tabControl1.Margin = new System.Windows.Forms.Padding(4);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(905, 540);
+            tabControl1.TabIndex = 8;
+            tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
             // 
             // tabColumns
             // 
-            this.tabColumns.Controls.Add(this.ucColumns);
-            this.tabColumns.Location = new System.Drawing.Point(4, 26);
-            this.tabColumns.Margin = new System.Windows.Forms.Padding(4);
-            this.tabColumns.Name = "tabColumns";
-            this.tabColumns.Padding = new System.Windows.Forms.Padding(4);
-            this.tabColumns.Size = new System.Drawing.Size(803, 510);
-            this.tabColumns.TabIndex = 0;
-            this.tabColumns.Text = "Columns";
-            this.tabColumns.UseVisualStyleBackColor = true;
+            tabColumns.Controls.Add(ucColumns);
+            tabColumns.Location = new System.Drawing.Point(4, 26);
+            tabColumns.Margin = new System.Windows.Forms.Padding(4);
+            tabColumns.Name = "tabColumns";
+            tabColumns.Padding = new System.Windows.Forms.Padding(4);
+            tabColumns.Size = new System.Drawing.Size(897, 510);
+            tabColumns.TabIndex = 0;
+            tabColumns.Text = "Columns";
+            tabColumns.UseVisualStyleBackColor = true;
             // 
             // ucColumns
             // 
-            this.ucColumns.BackColor = System.Drawing.Color.White;
-            this.ucColumns.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
-            this.ucColumns.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucColumns.Location = new System.Drawing.Point(4, 4);
-            this.ucColumns.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.ucColumns.Name = "ucColumns";
-            this.ucColumns.Size = new System.Drawing.Size(795, 502);
-            this.ucColumns.TabIndex = 0;
-            this.ucColumns.UserDefinedTypes = null;
+            ucColumns.BackColor = System.Drawing.Color.White;
+            ucColumns.DatabaseType = DatabaseType.Unknown;
+            ucColumns.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucColumns.Location = new System.Drawing.Point(4, 4);
+            ucColumns.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            ucColumns.Name = "ucColumns";
+            ucColumns.Size = new System.Drawing.Size(889, 502);
+            ucColumns.TabIndex = 0;
+            ucColumns.UserDefinedTypes = null;
             // 
             // tabForeignKeys
             // 
-            this.tabForeignKeys.Controls.Add(this.ucForeignKeys);
-            this.tabForeignKeys.Location = new System.Drawing.Point(4, 26);
-            this.tabForeignKeys.Margin = new System.Windows.Forms.Padding(4);
-            this.tabForeignKeys.Name = "tabForeignKeys";
-            this.tabForeignKeys.Padding = new System.Windows.Forms.Padding(4);
-            this.tabForeignKeys.Size = new System.Drawing.Size(803, 510);
-            this.tabForeignKeys.TabIndex = 1;
-            this.tabForeignKeys.Text = "Foreign Keys";
-            this.tabForeignKeys.UseVisualStyleBackColor = true;
+            tabForeignKeys.Controls.Add(ucForeignKeys);
+            tabForeignKeys.Location = new System.Drawing.Point(4, 26);
+            tabForeignKeys.Margin = new System.Windows.Forms.Padding(4);
+            tabForeignKeys.Name = "tabForeignKeys";
+            tabForeignKeys.Padding = new System.Windows.Forms.Padding(4);
+            tabForeignKeys.Size = new System.Drawing.Size(897, 510);
+            tabForeignKeys.TabIndex = 1;
+            tabForeignKeys.Text = "Foreign Keys";
+            tabForeignKeys.UseVisualStyleBackColor = true;
             // 
             // ucForeignKeys
             // 
-            this.ucForeignKeys.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
-            this.ucForeignKeys.DefaultSchema = null;
-            this.ucForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucForeignKeys.Location = new System.Drawing.Point(4, 4);
-            this.ucForeignKeys.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.ucForeignKeys.Name = "ucForeignKeys";
-            this.ucForeignKeys.Size = new System.Drawing.Size(795, 502);
-            this.ucForeignKeys.TabIndex = 0;
-            this.ucForeignKeys.Table = null;
+            ucForeignKeys.DatabaseType = DatabaseType.Unknown;
+            ucForeignKeys.DefaultSchema = null;
+            ucForeignKeys.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucForeignKeys.Location = new System.Drawing.Point(4, 4);
+            ucForeignKeys.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            ucForeignKeys.Name = "ucForeignKeys";
+            ucForeignKeys.Size = new System.Drawing.Size(889, 502);
+            ucForeignKeys.TabIndex = 0;
+            ucForeignKeys.Table = null;
             // 
             // tabIndexes
             // 
-            this.tabIndexes.Controls.Add(this.ucIndexes);
-            this.tabIndexes.Location = new System.Drawing.Point(4, 26);
-            this.tabIndexes.Margin = new System.Windows.Forms.Padding(4);
-            this.tabIndexes.Name = "tabIndexes";
-            this.tabIndexes.Size = new System.Drawing.Size(803, 510);
-            this.tabIndexes.TabIndex = 2;
-            this.tabIndexes.Text = "Indexes";
-            this.tabIndexes.UseVisualStyleBackColor = true;
+            tabIndexes.Controls.Add(ucIndexes);
+            tabIndexes.Location = new System.Drawing.Point(4, 26);
+            tabIndexes.Margin = new System.Windows.Forms.Padding(4);
+            tabIndexes.Name = "tabIndexes";
+            tabIndexes.Size = new System.Drawing.Size(897, 510);
+            tabIndexes.TabIndex = 2;
+            tabIndexes.Text = "Indexes";
+            tabIndexes.UseVisualStyleBackColor = true;
             // 
             // ucIndexes
             // 
-            this.ucIndexes.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
-            this.ucIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucIndexes.Location = new System.Drawing.Point(0, 0);
-            this.ucIndexes.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.ucIndexes.Name = "ucIndexes";
-            this.ucIndexes.Size = new System.Drawing.Size(803, 510);
-            this.ucIndexes.TabIndex = 0;
-            this.ucIndexes.Table = null;
+            ucIndexes.DatabaseType = DatabaseType.Unknown;
+            ucIndexes.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucIndexes.Location = new System.Drawing.Point(0, 0);
+            ucIndexes.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            ucIndexes.Name = "ucIndexes";
+            ucIndexes.Size = new System.Drawing.Size(897, 510);
+            ucIndexes.TabIndex = 0;
+            ucIndexes.Table = null;
             // 
             // tabConstraints
             // 
-            this.tabConstraints.Controls.Add(this.ucConstraints);
-            this.tabConstraints.Location = new System.Drawing.Point(4, 26);
-            this.tabConstraints.Margin = new System.Windows.Forms.Padding(4);
-            this.tabConstraints.Name = "tabConstraints";
-            this.tabConstraints.Size = new System.Drawing.Size(803, 510);
-            this.tabConstraints.TabIndex = 3;
-            this.tabConstraints.Text = "Constraints";
-            this.tabConstraints.UseVisualStyleBackColor = true;
+            tabConstraints.Controls.Add(ucConstraints);
+            tabConstraints.Location = new System.Drawing.Point(4, 26);
+            tabConstraints.Margin = new System.Windows.Forms.Padding(4);
+            tabConstraints.Name = "tabConstraints";
+            tabConstraints.Size = new System.Drawing.Size(897, 510);
+            tabConstraints.TabIndex = 3;
+            tabConstraints.Text = "Constraints";
+            tabConstraints.UseVisualStyleBackColor = true;
             // 
             // ucConstraints
             // 
-            this.ucConstraints.DatabaseType = DatabaseInterpreter.Model.DatabaseType.Unknown;
-            this.ucConstraints.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ucConstraints.Location = new System.Drawing.Point(0, 0);
-            this.ucConstraints.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.ucConstraints.Name = "ucConstraints";
-            this.ucConstraints.Size = new System.Drawing.Size(803, 510);
-            this.ucConstraints.TabIndex = 0;
-            this.ucConstraints.Table = null;
+            ucConstraints.DatabaseType = DatabaseType.Unknown;
+            ucConstraints.Dock = System.Windows.Forms.DockStyle.Fill;
+            ucConstraints.Location = new System.Drawing.Point(0, 0);
+            ucConstraints.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
+            ucConstraints.Name = "ucConstraints";
+            ucConstraints.Size = new System.Drawing.Size(897, 510);
+            ucConstraints.TabIndex = 0;
+            ucConstraints.Table = null;
             // 
             // dataGridViewComboBoxColumn1
             // 
-            this.dataGridViewComboBoxColumn1.DataPropertyName = "DataType";
-            this.dataGridViewComboBoxColumn1.HeaderText = "Data Type";
-            this.dataGridViewComboBoxColumn1.Name = "dataGridViewComboBoxColumn1";
-            this.dataGridViewComboBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridViewComboBoxColumn1.Width = 120;
+            dataGridViewComboBoxColumn1.DataPropertyName = "DataType";
+            dataGridViewComboBoxColumn1.HeaderText = "Data Type";
+            dataGridViewComboBoxColumn1.Name = "dataGridViewComboBoxColumn1";
+            dataGridViewComboBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            dataGridViewComboBoxColumn1.Width = 120;
             // 
             // cboSchema
             // 
-            this.cboSchema.FormattingEnabled = true;
-            this.cboSchema.Location = new System.Drawing.Point(656, 6);
-            this.cboSchema.Margin = new System.Windows.Forms.Padding(4);
-            this.cboSchema.Name = "cboSchema";
-            this.cboSchema.Size = new System.Drawing.Size(153, 25);
-            this.cboSchema.TabIndex = 9;
+            cboSchema.FormattingEnabled = true;
+            cboSchema.Location = new System.Drawing.Point(655, 6);
+            cboSchema.Margin = new System.Windows.Forms.Padding(4);
+            cboSchema.Name = "cboSchema";
+            cboSchema.Size = new System.Drawing.Size(247, 25);
+            cboSchema.TabIndex = 9;
             // 
             // UC_TableDesigner
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
-            this.Controls.Add(this.cboSchema);
-            this.Controls.Add(this.tabControl1);
-            this.Controls.Add(this.txtTableComment);
-            this.Controls.Add(this.lblComment);
-            this.Controls.Add(this.lblSchema);
-            this.Controls.Add(this.txtTableName);
-            this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "UC_TableDesigner";
-            this.Size = new System.Drawing.Size(821, 620);
-            this.Load += new System.EventHandler(this.UC_TableDesigner_Load);
-            this.tabControl1.ResumeLayout(false);
-            this.tabColumns.ResumeLayout(false);
-            this.tabForeignKeys.ResumeLayout(false);
-            this.tabIndexes.ResumeLayout(false);
-            this.tabConstraints.ResumeLayout(false);
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.White;
+            Controls.Add(cboSchema);
+            Controls.Add(tabControl1);
+            Controls.Add(txtTableComment);
+            Controls.Add(lblComment);
+            Controls.Add(lblSchema);
+            Controls.Add(txtTableName);
+            Controls.Add(label1);
+            Margin = new System.Windows.Forms.Padding(4);
+            Name = "UC_TableDesigner";
+            Size = new System.Drawing.Size(915, 620);
+            Load += UC_TableDesigner_Load;
+            tabControl1.ResumeLayout(false);
+            tabColumns.ResumeLayout(false);
+            tabForeignKeys.ResumeLayout(false);
+            tabIndexes.ResumeLayout(false);
+            tabConstraints.ResumeLayout(false);
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

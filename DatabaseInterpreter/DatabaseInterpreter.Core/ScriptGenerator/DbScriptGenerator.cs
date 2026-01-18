@@ -35,7 +35,7 @@ namespace DatabaseInterpreter.Core
         }
 
         #region Schema Scripts
-        public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo);
+        public abstract ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true);
 
         protected virtual List<Script> GenerateScriptDbObjectScripts<T>(List<T> dbObjects)
             where T : ScriptDbObject
@@ -890,6 +890,7 @@ namespace DatabaseInterpreter.Core
 
             string fileName = $"{databaseName}_{this.databaseType}_{DateTime.Today.ToString("yyyyMMdd")}_{generateScriptMode.ToString()}.sql";
             string filePath = Path.Combine(this.option.ScriptOutputFolder, fileName);
+
             return filePath;
         }
 

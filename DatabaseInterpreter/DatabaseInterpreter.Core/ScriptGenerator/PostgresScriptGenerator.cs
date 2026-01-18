@@ -17,7 +17,7 @@ namespace DatabaseInterpreter.Core
 
         #region Schema Script 
 
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
@@ -94,7 +94,7 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
-                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
+                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, overwrite);
             }
 
             return sb;
@@ -260,7 +260,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
 
             string indexName = index.Name;
-           
+
             string type = index.Type;
             IndexType indexType = IndexType.None;
 
@@ -350,8 +350,40 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public Script RebuildIndex(TableIndex index)
         {
-
             return new AlterDbObjectScript<TableIndex>($"REINDEX INDEX {this.GetQuotedDbObjectNameWithSchema(index)};");
+        }
+
+        public Script CreateTablePartition(PartitionSummary partitionSummary)
+        {
+            string type = partitionSummary.Type;
+
+            string strType = "";
+
+            if (type == "r")
+            {
+                strType = "RANGE";
+            }
+            else if (type == "l")
+            {
+                strType = "LIST";
+            }
+            else if (type == "h")
+            {
+                strType = "HASH";
+            }
+
+            string columns = string.Join(",", partitionSummary.Columns.Select(item => $"{(this.GetQuotedString(item.Name))}"));
+
+            return new Script($"PARTITION BY {strType} ({columns});");
+        }
+
+        public Script CreateInheritedTable(PartitionInfo partitionInfo)
+        {
+            string script =
+$@"CREATE TABLE {this.GetQuotedDbObjectNameWithSchema(partitionInfo.TableSchema, partitionInfo.TableName)} PARTITION OF {this.GetQuotedDbObjectNameWithSchema(partitionInfo.ParentTableSchema, partitionInfo.ParentTableName)}
+{partitionInfo.Bound};";
+
+            return new Script(script);
         }
         #endregion
 
@@ -398,18 +430,38 @@ MAXVALUE {(long)sequence.MaxValue}
 
             string tableName = table.Name;
             string quotedTableName = this.GetQuotedFullTableName(table);
+            bool isInheritedPartitionTable = table.ExtraInfo?.IsInheritedPartition == true;
+            PartitionSummary partitionSummary = table.ExtraInfo?.PartitionSummary;
+            PartitionInfo partitionInfo = table.ExtraInfo?.PartitionInfo;
 
             #region Create Table
 
             string option = this.GetCreateTableOption();
 
-            string tableScript =
-$@"
+            StringBuilder sbCreateTable = new StringBuilder();
+
+            string tableScript = "";
+
+            if (!isInheritedPartitionTable)
+            {
+                tableScript = $@"
 CREATE TABLE {this.NotCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-){(isLowDbVersion ? "" : option)};";
+){((isLowDbVersion || partitionSummary != null || partitionInfo != null) ? "" : option)}";
+            }
+            else
+            {
+                tableScript = this.CreateInheritedTable(partitionInfo).Content;
+            }
 
-            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+            sbCreateTable.AppendLine(tableScript);
+
+            if (!isInheritedPartitionTable && partitionSummary != null)
+            {
+                sbCreateTable.AppendLine(this.CreateTablePartition(partitionSummary).Content.TrimEnd(';', ' '));
+            }
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(sbCreateTable.ToString().TrimEnd('\r', '\n', ';') + ";"));
 
             #endregion
 

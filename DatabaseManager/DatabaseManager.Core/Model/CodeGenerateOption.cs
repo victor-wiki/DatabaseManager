@@ -8,6 +8,7 @@ namespace DatabaseManager.Core.Model
         public string OutputFolder { get; set; }
         public ProgrammingLanguage Language { get; set; } = ProgrammingLanguage.None;
         public string Namespace { get; set; }
+        public bool GenerateComments { get; set; }
         public List<Table> Tables { get; set; }
         public List<View> Views { get; set; }
     }

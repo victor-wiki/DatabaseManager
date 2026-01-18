@@ -264,11 +264,11 @@ namespace DatabaseManager.Forms
                 this.sourceSchemaInfo = await this.sourceInterpreter.GetSchemaInfoAsync(sourceFilter);
                 this.targetSchemaInfo = await this.targetInterpreter.GetSchemaInfoAsync(targetFilter);
 
-                SchemaCompare dbCompare = new SchemaCompare(this.targetInterpreter.DatabaseType, sourceSchemaInfo, targetSchemaInfo);
+                SchemaCompare dbCompare = new SchemaCompare(this.targetInterpreter.DatabaseType, this.sourceInterpreter, this.targetInterpreter, sourceSchemaInfo, targetSchemaInfo);
 
                 this.Feedback("Begin to compare...");
 
-                var differences = dbCompare.Compare();
+                var differences = await dbCompare.Compare();
 
                 this.differences = differences;
 

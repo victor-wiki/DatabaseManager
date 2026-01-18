@@ -8,6 +8,7 @@
         public bool NoParenthesess { get; set; }
         public bool IsString { get; set; }
         public bool IsCheck { get; set; }
+        public bool IsAggregate { get; set; }
 
         public string Delimiter
         {

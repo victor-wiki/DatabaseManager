@@ -3,7 +3,6 @@ using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
 using System;
-using System.CodeDom.Compiler;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -125,6 +124,7 @@ namespace DatabaseManager
             option.OutputFolder = this.txtOutputFolder.Text.Trim();
             option.Language = (ProgrammingLanguage)Enum.Parse(typeof(ProgrammingLanguage), this.cboLanguage.Text);
             option.Namespace = this.txtNamespance.Text.Trim();
+            option.GenerateComments = this.chkGenerateComments.Checked;
             option.Tables = schemaInfo.Tables;
             option.Views = schemaInfo.Views;
 
@@ -132,7 +132,22 @@ namespace DatabaseManager
 
             var token = this.cancellationTokenSource.Token;
 
-            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.dbConnectionProfile.DatabaseType, this.connectionInfo);
+            DbInterpreterOption dbInterpreterOption = new DbInterpreterOption() 
+            { 
+                ObjectFetchMode = option.GenerateComments? DatabaseObjectFetchMode.Details: DatabaseObjectFetchMode.Simple
+            };
+
+            DbInterpreter dbInterpreter = DbInterpreterHelper.GetDbInterpreter(this.dbConnectionProfile.DatabaseType, this.connectionInfo, dbInterpreterOption);
+
+            if(option.GenerateComments && schemaInfo.Tables.Any())
+            {
+                SchemaInfoFilter filter = new SchemaInfoFilter()
+                {
+                    TableNames = schemaInfo.Tables.Select(item => item.Name).ToArray()                   
+                };
+
+                option.Tables = await dbInterpreter.GetTablesAsync(filter);               
+            }            
 
             CodeGenerator codeGenerator = new CodeGenerator(dbInterpreter, option);
 

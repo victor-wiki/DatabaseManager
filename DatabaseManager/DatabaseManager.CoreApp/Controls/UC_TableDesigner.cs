@@ -22,6 +22,7 @@ namespace DatabaseManager.Controls
         private readonly string selfTableName = "<self>";
 
         private DatabaseObjectDisplayInfo displayInfo;
+        private TabPage tabPartition = null;
 
         public FeedbackHandler OnFeedback;
 
@@ -73,6 +74,8 @@ namespace DatabaseManager.Controls
 
             if (this.displayInfo.IsNew)
             {
+                this.tabPartition.Parent = null;
+
                 if (this.displayInfo.DatabaseType != DatabaseType.Sqlite)
                 {
                     this.LoadDatabaseSchemas();
@@ -91,9 +94,25 @@ namespace DatabaseManager.Controls
 
                 if (table != null)
                 {
-                    this.txtTableName.Text = table.Name;
-                    this.cboSchema.Text = table.Schema;
+                    this.txtTableName.Text = table.Name;                    
                     this.txtTableComment.Text = table.Comment;
+
+                    if(this.displayInfo.DatabaseType != DatabaseType.Oracle)
+                    {
+                        this.cboSchema.Text = table.Schema;
+                    }
+                    else
+                    {
+                        this.cboSchema.Text = await (dbInterpreter as OracleInterpreter).GetTablespaceOfTable(table);
+                    }
+
+                    bool isPartitionedTable = await dbInterpreter.IsPartitionedTable(table);
+
+                    if (isPartitionedTable && this.tabPartition == null)
+                    {
+                        this.tabPartition = new TabPage() { Name = "tabPartition", Text = "Partition" };
+                        this.tabControl1.TabPages.Add(this.tabPartition);
+                    }                   
 
                     #region Load Columns
                     List<TableColumnDesingerInfo> columnDesingerInfos = ColumnManager.GetTableColumnDesingerInfos(dbInterpreter, table, schemaInfo.TableColumns, schemaInfo.TablePrimaryKeys);
@@ -126,21 +145,21 @@ namespace DatabaseManager.Controls
             {
                 OracleInterpreter oracleDbInterpreter = dbInterpreter as OracleInterpreter;
 
-                schemas =(await oracleDbInterpreter.GetTablespacesAsync()).Select(item=> new DatabaseSchema() { Name = item }).ToList();
+                schemas = (await oracleDbInterpreter.GetTablespacesAsync()).Select(item => new DatabaseSchema() { Name = item }).ToList();
 
                 defaultSchema = await oracleDbInterpreter.GetUserDefaultTablespaceAsync();
             }
             else
             {
                 schemas = await dbInterpreter.GetDatabaseSchemasAsync();
-            }             
+            }
 
             items.AddRange(schemas.Select(item => item.Name));
 
-            if(defaultSchema == null)
+            if (defaultSchema == null)
             {
                 defaultSchema = dbInterpreter.DefaultSchema;
-            }           
+            }
 
             if (!string.IsNullOrEmpty(defaultSchema) && schemas.Any(item => item.Name == defaultSchema))
             {
@@ -197,6 +216,13 @@ namespace DatabaseManager.Controls
                 Comment = this.txtTableComment.Text.Trim(),
                 OldName = this.displayInfo.DatabaseObject?.Name
             };
+
+            if (this.displayInfo.DatabaseType == DatabaseType.Oracle)
+            {
+                tableDesignerInfo.Schema = this.displayInfo.Schema;
+
+                tableDesignerInfo.ExtraInfo = new TableExtraInfo() { Tablespace = this.cboSchema.Text };
+            }
 
             schemaDesingerInfo.TableDesignerInfo = tableDesignerInfo;
 
@@ -266,10 +292,10 @@ namespace DatabaseManager.Controls
 
             if (!result.IsOK)
             {
-                if(result.InfoType!= ContentSaveResultInfoType.Error)
+                if (result.InfoType != ContentSaveResultInfoType.Error)
                 {
                     MessageBox.Show(result.Message);
-                }               
+                }
             }
             else
             {
@@ -310,7 +336,7 @@ namespace DatabaseManager.Controls
 
         private async Task<ContentSaveResult> SaveTable()
         {
-            if(!this.displayInfo.IsNew && this.displayInfo.DatabaseType == DatabaseType.Sqlite)
+            if (!this.displayInfo.IsNew && this.displayInfo.DatabaseType == DatabaseType.Sqlite)
             {
                 TabPage currentPage = this.tabControl1.SelectedTab;
 
@@ -323,7 +349,7 @@ namespace DatabaseManager.Controls
                 }
 
                 this.tabControl1.SelectedTab = currentPage;
-            }            
+            }
 
             SchemaDesignerInfo schemaDesignerInfo = this.GetSchemaDesingerInfo();
 
@@ -409,9 +435,20 @@ namespace DatabaseManager.Controls
                 return false;
             }
 
-            Table table = new Table() { Schema = this.cboSchema.Text, Name = this.txtTableName.Text.Trim() };
+            Table table = new Table() { Name = this.txtTableName.Text.Trim() };
+
+            DatabaseType databaseType = this.displayInfo.DatabaseType;
 
             DbInterpreter dbInterpreter = this.GetDbInterpreter();
+
+            if (databaseType == DatabaseType.Oracle)
+            {
+                table.Schema = this.displayInfo.Schema;
+            }
+            else
+            {
+                table.Schema = this.cboSchema.Text;
+            }
 
             bool isNew = this.displayInfo.IsNew;
 
@@ -506,6 +543,47 @@ namespace DatabaseManager.Controls
                         this.ucConstraints.LoadConstraints(IndexManager.GetConstraintDesignerInfos(constraints));
                     }
                 }
+            }
+            else if(tabPage.Name == this.tabPartition.Name)
+            {
+                int count = this.tabPartition.Controls.Count;
+
+                Control control = null;
+
+                if (count == 0)
+                {
+                    if (databaseType == DatabaseType.SqlServer)
+                    {
+                        control = new UC_TablePartition_SqlServer();                       
+                    }
+                    else if(databaseType == DatabaseType.Oracle)
+                    {
+                        control = new UC_TablePartition_Oracle();
+                    }
+                    else if (databaseType == DatabaseType.MySql)
+                    {
+                        control = new UC_TablePartition_MySql();
+                    }
+                    else if (databaseType == DatabaseType.Postgres)
+                    {
+                        control = new UC_TablePartition_Postgres();
+                    }
+
+                    if (control != null)
+                    {
+                        await (control as ITablePartitionControl).LoadData(dbInterpreter, table);
+
+                        control.Dock = DockStyle.Fill;
+
+                        this.tabPartition.Controls.Add(control);
+                    }
+                }
+                //else
+                //{
+                //    control = this.tabPartition.Controls[0];
+
+                //    (control as ITablePartitionControl).Reload();
+                //}                
             }
 
             return true;

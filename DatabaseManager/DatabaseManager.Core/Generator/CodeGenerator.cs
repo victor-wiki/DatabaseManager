@@ -40,16 +40,51 @@ namespace DatabaseManager.Core
             var views = this.option.Views;
 
             var tableNames = tables.Select(item => item.Name).ToArray();
-            var viewNames = views.Select(item => item.Name).ToArray();           
+            var viewNames = views.Select(item => item.Name).ToArray();
 
             try
             {
                 this.Feedback("Begin to get columns...");
 
-                var tableColumns = await this.dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { TableNames = tableNames });
-                var viewColumns = await this.dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { TableNames = viewNames, IsForView = true });
+                var tableColumns = tables != null && tables.Count > 0 ? await this.dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { TableNames = tableNames }) : new List<TableColumn>();
+                var viewColumns = views != null && views.Count > 0 ? await this.dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { TableNames = viewNames, ColumnType = ColumnType.ViewColumn }) : new List<TableColumn>();
 
                 this.Feedback("End get columns.");
+
+                if (option.GenerateComments && viewColumns.Count > 0)
+                {
+                    var needFetchUageViewNames = viewNames.Where(item => viewColumns.Any(t => t.TableName == item && string.IsNullOrEmpty(t.Comment))).ToArray();
+
+                    SchemaInfoFilter filter = new SchemaInfoFilter() { ViewNames = needFetchUageViewNames };
+
+                    var usages = await this.dbInterpreter.GetViewColumnUsages(filter);
+
+                    var referencedTableNames = usages.Where(item => item.RefObjectType == "Table").Select(item => item.RefObjectName).ToArray();
+
+                    var needFetchTableNames = referencedTableNames.Where(item => !tableNames.Contains(item)).ToArray();
+
+                    var moreTableColumns = await this.dbInterpreter.GetTableColumnsAsync(new SchemaInfoFilter() { TableNames = needFetchTableNames });
+
+                    var allTableColumns = tableColumns.Concat(moreTableColumns);
+
+                    foreach (var viewColumn in viewColumns)
+                    {
+                        if (string.IsNullOrEmpty(viewColumn.Comment))
+                        {
+                            var usage = usages.FirstOrDefault(item => item.ColumnName == viewColumn.Name && item.ObjectName == viewColumn.TableName);
+
+                            if (usage != null)
+                            {
+                                var tableColumn = allTableColumns.FirstOrDefault(item => item.Name == usage.ColumnName && item.TableName == usage.RefObjectName && item.Schema == usage.RefObjectSchema);
+
+                                if (tableColumn != null && !string.IsNullOrEmpty(tableColumn.Comment))
+                                {
+                                    viewColumn.Comment = tableColumn.Comment;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 ProgrammingLanguage language = this.option.Language;
 
@@ -76,15 +111,15 @@ namespace DatabaseManager.Core
 
                     this.Feedback($@"({count}/{total})Begin to generate {objectType} ""{dbObject.Name}""...");
 
-                    IEnumerable<TableColumn> columns = null;
-                    
-                    if(!isView)
+                    List<TableColumn> columns = null;
+
+                    if (!isView)
                     {
-                        columns = tableColumns.Where(item => item.TableName == dbObject.Name && item.Schema == dbObject.Schema);
+                        columns = tableColumns.Where(item => item.TableName == dbObject.Name && item.Schema == dbObject.Schema).ToList();
                     }
                     else
                     {
-                        columns = viewColumns.Where(item => item.TableName == dbObject.Name && item.Schema == dbObject.Schema);
+                        columns = viewColumns.Where(item => item.TableName == dbObject.Name && item.Schema == dbObject.Schema).ToList();
                     }
 
                     (string FileName, string FileContent) res = default((string, string));
@@ -105,7 +140,7 @@ namespace DatabaseManager.Core
                     }
 
                     this.Feedback($@"({count}/{total})End generate {objectType} ""{dbObject.Name}"".");
-                }         
+                }
 
                 result.IsOK = true;
             }
@@ -130,9 +165,9 @@ namespace DatabaseManager.Core
             File.WriteAllText(filePath, fileContent, Encoding.UTF8);
         }
 
-        private (string FileName, string FileContent) GenerateCSharpCode(DatabaseObject tableOrView, IEnumerable<TableColumn> columns)
+        private (string FileName, string FileContent) GenerateCSharpCode(DatabaseObject tableOrView, List<TableColumn> columns)
         {
-            string fileName = $"{tableOrView.Name.Replace(" ","_")}.cs";
+            string fileName = $"{tableOrView.Name.Replace(" ", "_")}.cs";
 
             List<string> usingNamespaces = new List<string>();
 
@@ -149,8 +184,11 @@ namespace DatabaseManager.Core
 
             string classIndent = hasNamespace ? "\t" : "";
 
+            this.AppendComment(sb, ProgrammingLanguage.CSharp, tableOrView, classIndent);
             sb.AppendLine($"{classIndent}public class {tableOrView.Name}");
             sb.AppendLine(classIndent + "{");
+
+            bool hasComment = false;
 
             foreach (var column in columns)
             {
@@ -184,7 +222,21 @@ namespace DatabaseManager.Core
                     type = result.Type + "[]";
                 }
 
-                sb.AppendLine(classIndent + "\tpublic " + type + $"{nullableFlag} " + column.Name + " {get; set;}");
+                if (hasComment)
+                {
+                    sb.AppendLine();
+                }
+
+                string columnIndent = classIndent + "\t";
+
+                var appendedComment = this.AppendComment(sb, ProgrammingLanguage.CSharp, column, columnIndent);
+
+                if(appendedComment)
+                {
+                    hasComment = true;
+                }
+
+                sb.AppendLine(columnIndent + "public " + type + $"{nullableFlag} " + column.Name + " {get; set;}");
             }
 
             sb.AppendLine(classIndent + "}");
@@ -203,13 +255,91 @@ namespace DatabaseManager.Core
             return (fileName, sb.ToString());
         }
 
-        private (string FileName, string FileContent) GenerateJavaCode(DatabaseObject tableOrView, IEnumerable<TableColumn> columns)
+        private bool AppendComment(StringBuilder sb, ProgrammingLanguage language, DatabaseObject databaseObject, string indent = "")
+        {
+            string comment = null;
+
+            bool isColumn = false;
+
+            if (databaseObject is Table table)
+            {
+                comment = table.Comment;
+            }
+            else if (databaseObject is TableColumn column)
+            {
+                isColumn = true;
+                comment = column.Comment;
+            }
+
+            if (!string.IsNullOrEmpty(comment))
+            {
+                string commentTemplate = null;
+
+                if (language == ProgrammingLanguage.CSharp)
+                {
+                    commentTemplate = this.GetCSharpCommentTemplate();
+                }
+                else if (language == ProgrammingLanguage.Java)
+                {
+                    if (!isColumn)
+                    {
+                        commentTemplate = this.GetJavaClassCommentTemplate();
+                    }
+                    else
+                    {
+                        commentTemplate = this.GetJavaFieldCommentTemplate();
+                    }
+                }
+
+                if (commentTemplate != null)
+                {
+                    sb.Append(string.Format(commentTemplate, indent, comment));
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string GetCSharpCommentTemplate()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("{0}/// <summary>");
+            sb.AppendLine("{0}/// {1}");
+            sb.AppendLine("{0}/// <summary>");
+
+            return sb.ToString();
+        }
+
+        private string GetJavaClassCommentTemplate()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("{0}/*");
+            sb.AppendLine("{0} *{1}");
+            sb.AppendLine("{0} */");
+
+            return sb.ToString();
+        }
+
+        private string GetJavaFieldCommentTemplate()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("{0}//{1}");
+
+            return sb.ToString();
+        }
+
+        private (string FileName, string FileContent) GenerateJavaCode(DatabaseObject tableOrView, List<TableColumn> columns)
         {
             string fileName = $"{tableOrView.Name.Replace(" ", "_")}.java";
 
             List<string> packages = new List<string>();
 
-            StringBuilder sb = new StringBuilder();          
+            StringBuilder sb = new StringBuilder();
 
             List<string> fields = new List<string>();
             List<string> methods = new List<string>();
@@ -275,7 +405,7 @@ namespace DatabaseManager.Core
                 sbMethod.AppendLine();
 
                 sbMethod.AppendLine($"\tpublic void set{propertyName}({type} {fieldName}) " + "{");
-                sbMethod.AppendLine($"\t\tthis.{fieldName}={fieldName};");
+                sbMethod.AppendLine($"\t\tthis.{fieldName} = {fieldName};");
                 sbMethod.AppendLine("\t}");
 
                 methods.Add(sbMethod.ToString());
@@ -297,21 +427,41 @@ namespace DatabaseManager.Core
                 sb.AppendLine();
             }
 
+            this.AppendComment(sb, ProgrammingLanguage.Java, tableOrView);
             sb.AppendLine($"public class {tableOrView.Name}" + " {");
             sb.AppendLine();
 
+            int columnIndex = 0;
+            bool hasComment = false;
+
             foreach (var filed in fields)
             {
+                TableColumn column = columns[columnIndex];
+
+                if (hasComment)
+                {
+                    sb.AppendLine();
+                }
+
+                var appenedComment = this.AppendComment(sb, ProgrammingLanguage.Java, column, "\t");
+
+                if(appenedComment)
+                {
+                    hasComment = true;
+                }
+
                 sb.AppendLine(filed);
+
+                columnIndex++;
             }
 
             sb.AppendLine();
 
             for (int i = 0; i < methods.Count; i++)
             {
-                string method = i<methods.Count-1 ? methods[i]: methods[i].TrimEnd();
+                string method = i < methods.Count - 1 ? methods[i] : methods[i].TrimEnd();
 
-                sb.AppendLine(method);               
+                sb.AppendLine(method);
             }
 
             sb.AppendLine("}");

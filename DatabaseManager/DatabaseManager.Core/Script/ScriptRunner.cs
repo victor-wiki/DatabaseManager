@@ -25,7 +25,7 @@ namespace DatabaseManager.Core
         private IObserver<FeedbackInfo> observer;
         private bool isBusy = false;
         private bool hasError = false;
-        private ScriptRunOption option;
+        private ScriptRunOption option;        
 
         public bool IgnoreForeignKeyConstraint { get; set; }
 
@@ -135,11 +135,11 @@ namespace DatabaseManager.Core
                         bool needTransaction = !hasAlterDatabase;
 
                         DbTransaction transaction = null;
-                        
-                        if(needTransaction)
+
+                        if (needTransaction)
                         {
                             transaction = await dbConnection.BeginTransactionAsync();
-                        }                       
+                        }
 
                         IEnumerable<string> commands = Enumerable.Empty<string>();
 
@@ -497,6 +497,18 @@ namespace DatabaseManager.Core
                             TranslateHelper.RestoreTokenValue(script, token);
                         }
 
+                        var columns = selectStatement.Columns;
+                        var aggregateFunctions = FunctionManager.GetFunctionSpecifications(databaseType).Where(item => item.IsAggregate).Select(item => item.Name.ToUpper());
+
+                        bool hasAggregateColumn = columns.Any(item => this.IsAggregateColumn(aggregateFunctions, item.Symbol));
+
+                        if(hasAggregateColumn)
+                        {
+                            analyseResult.Script = script;
+
+                            return analyseResult;
+                        }
+
                         TableName tableName = selectStatement.TableName;
                         TokenInfo alias = null;
 
@@ -670,6 +682,28 @@ namespace DatabaseManager.Core
             analyseResult.Script = script;
 
             return analyseResult;
+        }
+
+        private bool IsAggregateColumn(IEnumerable<string> aggregateFunctions, string columnName)
+        {
+            if(string.IsNullOrEmpty(columnName))
+            {
+                return false;
+            }
+
+            int index = columnName.IndexOf('(');
+
+            if (index > 0)
+            {
+                string functionName = columnName.Substring(0, index).ToUpper().Trim();                
+
+                if(aggregateFunctions.Contains(functionName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static async Task<DataTable> GetPagedDatatable(DbInterpreter dbInterpreter, SelectScriptAnalyseResult selectScriptAnalyseResult, PaginationInfo paginationInfo, CancellationToken cancellationToken)

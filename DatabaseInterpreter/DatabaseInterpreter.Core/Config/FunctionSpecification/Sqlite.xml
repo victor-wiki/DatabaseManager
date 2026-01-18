@@ -1,11 +1,12 @@
 ﻿<items>
   <item name="ABS" args="EXP"></item>
-  <item name="AVG" args="EXP"></item>
+  <item name="AVG" args="EXP" isAggregate="true"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CEILING" args="EXP"></item>
   <item name="CHANGES" args=""></item>
   <item name="CHAR" args="EXP1,EXP2,..." isString="true"></item>
   <item name="COALESCE" args="EXP,DEFAULT"></item>
+  <item name="COUNT" args="EXP"  isAggregate="true"></item>
   <item name="DATE" args="FORMAT"></item>
   <item name="DATETIME" args="FORMAT"></item>
   <item name="FORMAT" args="FORMAT,EXP" isString="true"></item>
@@ -24,10 +25,8 @@
   <item name="LOWER" args="EXP"></item>
   <item name="LTRIM" args="EXP[,TRIM_CHAR]" isString="true"></item>
   <item name="LOWER" args="EXP"></item>
-  <item name="MAX" args="EXP"></item>
-  <!--<item name="MAX" args="VALUE1,VALUE2,..."></item>-->
-  <item name="MIN" args="EXP"></item>
-  <!--<item name="MIN" args="VALUE1,VALUE2,..."></item>-->
+  <item name="MAX" args="EXP" isAggregate="true"></item>
+  <item name="MIN" args="EXP" isAggregate="true"></item>
   <item name="NULLIF" args="EXP1,EXP2"></item>
   <item name="PRINTF" args="[FORMAT],EXP1,EXP2"></item>
   <item name="QUOTE" args="EXP"></item>
@@ -47,7 +46,7 @@
   <item name="SQLITE_VERSION" args=""></item>
   <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
-  <item name="SUM" args="EXP"></item>
+  <item name="SUM" args="EXP"  isAggregate="true"></item>
   <item name="TOTAL_CHANGES" args=""></item>
   <item name="TRIM" args="EXP[,TRIM_CHAR]" isString="true"></item>
   <item name="TYPEOF" args="EXP"></item>

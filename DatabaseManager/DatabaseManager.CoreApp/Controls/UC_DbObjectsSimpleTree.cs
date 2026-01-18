@@ -54,6 +54,7 @@ namespace DatabaseManager.Controls
             }
 
             this.dbInterpreter = DbInterpreterHelper.GetDbInterpreter(dbType, connectionInfo, option);
+
             SchemaInfoFilter filter = new SchemaInfoFilter() { DatabaseObjectType = databaseObjectType };
 
             SchemaInfo schemaInfo = await this.dbInterpreter.GetSchemaInfoAsync(filter);

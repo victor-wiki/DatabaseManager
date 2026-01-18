@@ -5,6 +5,8 @@ using DatabaseManager.Core;
 using DatabaseManager.Helper;
 using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -217,10 +219,74 @@ namespace DatabaseManager.Forms
                 if (scriptMode.HasFlag(GenerateScriptMode.Schema))
                 {
                     mode = GenerateScriptMode.Schema;
+                    bool overwriteSchemaFile = true;
+
+                    var partitionTables = await ScriptGenerator.HandlePartitionedTable(this.dbInterpreter, schemaInfo, filter);
+
+                    if (partitionTables.Any())
+                    {
+                        #region Handle partition tables for SqlServer, if has, create partition function and scheme
+                        if (this.databaseType == DatabaseType.SqlServer)
+                        {
+                            overwriteSchemaFile = false;
+
+                            SqlServerInterpreter sqlServerInterpreter = this.dbInterpreter as SqlServerInterpreter;
+
+                            var schemes = await sqlServerInterpreter.GetPartitionSchemes(new SchemaInfoFilter() { TableNames = partitionTables.Select(item => item.Name).ToArray() }, true);
+
+                            var functionNames = schemes.Select(item => item.FunctionName).ToArray();
+
+                            var functions = await sqlServerInterpreter.GetPartitionFunctions(functionNames, true);
+
+                            string filePath = dbScriptGenerator.GetScriptOutputFilePath(GenerateScriptMode.Schema);
+
+                            SqlServerScriptGenerator sqlServerScriptGenerator = dbScriptGenerator as SqlServerScriptGenerator;
+
+                            StringBuilder sb = new StringBuilder();
+
+                            int i = 0;
+
+                            foreach (var function in functions)
+                            {
+                                sb.AppendLine(sqlServerScriptGenerator.CreatePartitionFunction(function).Content);
+
+                                if (i < functions.Count - 1)
+                                {
+                                    sb.AppendLine(this.dbInterpreter.ScriptsDelimiter);
+                                    sb.AppendLine();
+                                }
+
+                                i++;
+                            }
+
+                            sb.AppendLine();
+
+                            i = 0;
+
+                            foreach (var scheme in schemes)
+                            {
+                                sb.AppendLine(sqlServerScriptGenerator.CreatePartitionScheme(scheme).Content);
+
+                                if (i < schemes.Count - 1)
+                                {
+                                    sb.AppendLine(this.dbInterpreter.ScriptsDelimiter);
+                                    sb.AppendLine();
+                                }
+
+                                i++;
+                            }
+
+                            sb.AppendLine(this.dbInterpreter.ScriptsDelimiter);
+                            sb.AppendLine();
+
+                            dbScriptGenerator.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
+                        }
+                        #endregion
+                    }
 
                     await Task.Run(() =>
                     {
-                        dbScriptGenerator.GenerateSchemaScripts(schemaInfo);
+                        dbScriptGenerator.GenerateSchemaScripts(schemaInfo, overwriteSchemaFile);
                     }, token);
                 }
 
@@ -246,7 +312,7 @@ namespace DatabaseManager.Forms
                 else
                 {
                     this.Feedback("Task has been canceled.");
-                }              
+                }
             }
             catch (TaskCanceledException tcex)
             {

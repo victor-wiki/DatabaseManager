@@ -33,7 +33,7 @@
     <PackageReference Include="Microsoft.Msagl.GraphViewerGDI" Version="1.1.7" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
-    <PackageReference Include="SqlCodeEditor" Version="1.0.7" />
+    <PackageReference Include="SqlCodeEditor" Version="1.0.9" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +52,15 @@
     </Compile>
     <Compile Update="Controls\PropertyGrid\FilteredPropertyGrid.designer.cs">
       <DependentUpon>FilteredPropertyGrid.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\TablePartition\UC_TablePartition_MySql.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\TablePartition\UC_TablePartition_Postgres.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="Controls\TablePartition\UC_TablePartition_Oracle.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Update="Controls\UC_DataViewer.cs">
       <SubType>UserControl</SubType>

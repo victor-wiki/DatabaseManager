@@ -72,11 +72,11 @@
             tsmiStatistic = new System.Windows.Forms.ToolStripMenuItem();
             tsmiAnalysis = new System.Windows.Forms.ToolStripMenuItem();
             tsmiIndexFragmentation = new System.Windows.Forms.ToolStripMenuItem();
+            tsmiOptimize = new System.Windows.Forms.ToolStripMenuItem();
             tsmiClearData = new System.Windows.Forms.ToolStripMenuItem();
             tsmiEmptyDatabase = new System.Windows.Forms.ToolStripMenuItem();
             documentationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tsmiGenerateColumnDocumentation = new System.Windows.Forms.ToolStripMenuItem();
-            tsmiOptimize = new System.Windows.Forms.ToolStripMenuItem();
             contextMenuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -127,7 +127,7 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiNewQuery, tsmiNewTable, tsmiNewView, tsmiNewFunction, tsmiNewProcedure, tsmiNewTrigger, tsmiAlter, tsmiDesign, tsmiRefresh, tsmiViewData, tsmiEditData, tsmiExportData, tsmiImportData, tsmiConvert, tsmiCompareSchema, tsmiCompareData, tsmiGenerateScripts, tsmiTranslate, tsmiCopy, tsmiDelete, tsmiDatabaseDiagram, tsmiViewDependency, tsmiCopyChildrenNames, tsmiMore });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(204, 554);
+            contextMenuStrip1.Size = new System.Drawing.Size(204, 532);
             // 
             // tsmiNewQuery
             // 
@@ -370,21 +370,21 @@
             // tsmiBackup
             // 
             tsmiBackup.Name = "tsmiBackup";
-            tsmiBackup.Size = new System.Drawing.Size(180, 22);
+            tsmiBackup.Size = new System.Drawing.Size(164, 22);
             tsmiBackup.Text = "Backup";
             tsmiBackup.Click += tsmiBackup_Click;
             // 
             // tsmiDiagnose
             // 
             tsmiDiagnose.Name = "tsmiDiagnose";
-            tsmiDiagnose.Size = new System.Drawing.Size(180, 22);
+            tsmiDiagnose.Size = new System.Drawing.Size(164, 22);
             tsmiDiagnose.Text = "Diagnose";
             tsmiDiagnose.Click += tsmiDiagnose_Click;
             // 
             // tsmiStatistic
             // 
             tsmiStatistic.Name = "tsmiStatistic";
-            tsmiStatistic.Size = new System.Drawing.Size(180, 22);
+            tsmiStatistic.Size = new System.Drawing.Size(164, 22);
             tsmiStatistic.Text = "Statistic";
             tsmiStatistic.Click += tsmiStatistic_Click;
             // 
@@ -392,7 +392,7 @@
             // 
             tsmiAnalysis.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiIndexFragmentation });
             tsmiAnalysis.Name = "tsmiAnalysis";
-            tsmiAnalysis.Size = new System.Drawing.Size(180, 22);
+            tsmiAnalysis.Size = new System.Drawing.Size(164, 22);
             tsmiAnalysis.Text = "Analysis";
             // 
             // tsmiIndexFragmentation
@@ -402,17 +402,24 @@
             tsmiIndexFragmentation.Text = "Index Fragmentation";
             tsmiIndexFragmentation.Click += tsmiIndexFragmentation_Click;
             // 
+            // tsmiOptimize
+            // 
+            tsmiOptimize.Name = "tsmiOptimize";
+            tsmiOptimize.Size = new System.Drawing.Size(164, 22);
+            tsmiOptimize.Text = "Optimize";
+            tsmiOptimize.Click += tsmiOptimize_Click;
+            // 
             // tsmiClearData
             // 
             tsmiClearData.Name = "tsmiClearData";
-            tsmiClearData.Size = new System.Drawing.Size(180, 22);
+            tsmiClearData.Size = new System.Drawing.Size(164, 22);
             tsmiClearData.Text = "Clear Data";
             tsmiClearData.Click += tsmiClearData_Click;
             // 
             // tsmiEmptyDatabase
             // 
             tsmiEmptyDatabase.Name = "tsmiEmptyDatabase";
-            tsmiEmptyDatabase.Size = new System.Drawing.Size(180, 22);
+            tsmiEmptyDatabase.Size = new System.Drawing.Size(164, 22);
             tsmiEmptyDatabase.Text = "Empty";
             tsmiEmptyDatabase.Click += tsmiEmptyDatabase_Click;
             // 
@@ -420,7 +427,7 @@
             // 
             documentationToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiGenerateColumnDocumentation });
             documentationToolStripMenuItem.Name = "documentationToolStripMenuItem";
-            documentationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            documentationToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             documentationToolStripMenuItem.Text = "Documentation";
             // 
             // tsmiGenerateColumnDocumentation
@@ -429,13 +436,6 @@
             tsmiGenerateColumnDocumentation.Size = new System.Drawing.Size(266, 22);
             tsmiGenerateColumnDocumentation.Text = "Generate column documentation";
             tsmiGenerateColumnDocumentation.Click += tsmiGenerateColumnDocumentation_Click;
-            // 
-            // tsmiOptimize
-            // 
-            tsmiOptimize.Name = "tsmiOptimize";
-            tsmiOptimize.Size = new System.Drawing.Size(180, 22);
-            tsmiOptimize.Text = "Optimize";
-            tsmiOptimize.Click += tsmiOptimize_Click;
             // 
             // UC_DbObjectsComplexTree
             // 

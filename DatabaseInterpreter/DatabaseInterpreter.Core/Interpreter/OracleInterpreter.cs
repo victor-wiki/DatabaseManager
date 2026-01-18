@@ -105,21 +105,28 @@ namespace DatabaseInterpreter.Core
             return "SELECT sys_context('USERENV', 'CURRENT_USER') FROM DUAL";
         }
 
+        public bool IsValidConnection()
+        {
+            bool isValidConnection = this.ConnectionInfo != null && this.ConnectionInfo.Server != null
+                    && (this.ConnectionInfo.IntegratedSecurity
+                    || (!string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+                   );
+
+            return isValidConnection;
+        }
+
         public string GetDbSchema()
         {
             if (string.IsNullOrEmpty(this.dbSchema))
             {
-                bool isValidConnection = this.ConnectionInfo != null
-                    && (this.ConnectionInfo.IntegratedSecurity
-                    || (!string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
-                   );
+                bool isValidConnection = this.IsValidConnection();
 
                 if (isValidConnection)
                 {
                     this.dbSchema = this.GetCurrentUserName();
                 }
             }
-            else if(this.ConnectionInfo!=null && !string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
+            else if (this.ConnectionInfo != null && !string.IsNullOrEmpty(this.ConnectionInfo.UserId) && !string.IsNullOrEmpty(this.ConnectionInfo.Password))
             {
                 this.dbSchema = this.ConnectionInfo.UserId;
             }
@@ -139,11 +146,25 @@ namespace DatabaseInterpreter.Core
             return await this.CreateConnection().QueryAsync<string>(sql);
         }
 
+        public string GetUserDefaultTablespace()
+        {
+            string sql = this.GetSqlForDefaultTablespace(this.GetCurrentUserName());
+
+            return (this.CreateConnection().Query<string>(sql)).FirstOrDefault();
+        }
+
         public async Task<string> GetUserDefaultTablespaceAsync()
         {
-            string sql = $"SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{(await this.GetCurrentUserNameAsync())}')";
+            string sql = this.GetSqlForDefaultTablespace(await this.GetCurrentUserNameAsync());
 
             return (await this.CreateConnection().QueryAsync<string>(sql)).FirstOrDefault();
+        }
+
+        private string GetSqlForDefaultTablespace(string userName)
+        {
+            string sql = $"SELECT DEFAULT_TABLESPACE FROM USER_USERS WHERE UPPER(USERNAME)=UPPER('{userName}')";
+
+            return sql;
         }
 
         private string GetSqlForTablespaces()
@@ -151,6 +172,23 @@ namespace DatabaseInterpreter.Core
             string sql = $@"SELECT TABLESPACE_NAME FROM USER_TABLESPACES";
 
             return sql;
+        }
+
+        public async Task<string> GetTablespaceOfTable(Table table)
+        {
+            return await this.GetTablespaceOfTable(this.CreateConnection(), table);
+        }
+
+        public async Task<string> GetTablespaceOfTable(DbConnection dbConnection, Table table)
+        {
+            string sql = $"SELECT TABLESPACE_NAME FROM ALL_TABLES WHERE TABLE_NAME='{table.Name}'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND OWNER='{table.Schema}'";
+            }
+
+            return (await dbConnection.QueryAsync<string>(sql)).FirstOrDefault();
         }
         #endregion
 
@@ -681,6 +719,195 @@ namespace DatabaseInterpreter.Core
             return sb.Content;
         }
         #endregion
+
+        #region Partition       
+
+        public override async Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter)
+        {
+            return await this.GetPartitionedTables(this.CreateConnection(), filter);
+        }
+
+        public override async Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter)
+        {
+            return (await dbConnection.QueryAsync<Table>(this.GetSqlForPartitionedTables(filter))).ToList();
+        }
+
+        public override async Task<bool> IsPartitionedTable(DbConnection dbConnection, Table table)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            string sql = this.GetSqlForPartitionedTables(filter, true);
+
+            return (await dbConnection.QueryAsync<int?>(sql))?.FirstOrDefault() > 0;
+        }
+
+        private string GetSqlForPartitionedTables(SchemaInfoFilter filter, bool isCount = false)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            string columns = isCount ? "NVL(COUNT(1),0)" : @"t.TABLE_NAME AS ""Name""";
+
+            sb.Append(
+$@"SELECT {columns}
+FROM USER_TAB_PARTITIONS t
+WHERE 1=1");
+
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.TABLE_NAME"));
+
+            return sb.Content;
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(Table table, bool includeDetails = false)
+        {
+            return await this.GetPartitionSummary(this.CreateConnection(), table, includeDetails);
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT t.TABLE_NAME AS ""TableName"", t.PARTITIONING_TYPE AS ""Type"",t.INTERVAL AS ""Interval"",
+t.SUBPARTITIONING_TYPE AS ""SubType"",t.INTERVAL_SUBPARTITION AS ""SubInterval""
+FROM USER_PART_TABLES t
+WHERE t.TABLE_NAME='{table.Name}'";
+
+            var summary = (await dbConnection.QueryAsync<PartitionSummary>(sql))?.FirstOrDefault();
+
+            if (summary != null)
+            {
+                summary.Columns = (await this.GetPartitionColumns(dbConnection, table)).ToList();
+
+                if (summary.SubType != null && summary.SubType != "NONE")
+                {
+                    summary.SubColumns = (await this.GetSubPartitionColumns(dbConnection, table)).ToList();
+                }
+
+                if (includeDetails)
+                {
+                    summary.Partitions = (await this.GetPartitionInfos(dbConnection, table, includeDetails)).ToList();
+                }
+            }
+
+            return summary;
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetPartitionColumns(Table table)
+        {
+            return await this.GetPartitionColumns(this.CreateConnection(), table);
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetPartitionColumns(DbConnection dbConnection, Table table)
+        {
+            string sql =
+$@"SELECT NAME AS ""TableName"",COLUMN_NAME AS ""Name"",COLUMN_POSITION AS ""Order""
+FROM USER_PART_KEY_COLUMNS 
+WHERE OBJECT_TYPE='TABLE' AND NAME='{table.Name}'
+ORDER BY COLUMN_POSITION";
+
+            return await dbConnection.QueryAsync<PartitionColumn>(sql);
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetSubPartitionColumns(Table table)
+        {
+            return await this.GetSubPartitionColumns(this.CreateConnection(), table);
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetSubPartitionColumns(DbConnection dbConnection, Table table)
+        {
+            string sql =
+$@"SELECT NAME AS ""TableName"",COLUMN_NAME AS ""Name"",COLUMN_POSITION AS ""Order""
+FROM USER_SUBPART_KEY_COLUMNS 
+WHERE OBJECT_TYPE='TABLE' AND NAME='{table.Name}'
+ORDER BY COLUMN_POSITION";
+
+            return await dbConnection.QueryAsync<PartitionColumn>(sql);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(Table table, bool includeDetails = false)
+        {
+            return await this.GetPartitionInfos(this.CreateConnection(), table, includeDetails);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT TABLE_NAME AS ""TableName"", PARTITION_NAME AS ""Name"",HIGH_VALUE AS ""HighValue"",TABLESPACE_NAME AS ""Tablespace"",PARTITION_POSITION AS ""Order""
+FROM USER_TAB_PARTITIONS 
+WHERE TABLE_NAME='{table.Name}'";
+
+            var partitions = await dbConnection.QueryAsync<PartitionInfo>(sql);
+
+            if (includeDetails)
+            {
+                var subPartitions = await this.GetSubPartitionInfos(dbConnection, table);
+
+                foreach (var partition in partitions)
+                {
+                    var subs = subPartitions.Where(item => item.TableName == partition.TableName && item.ParentTableName == partition.Name);
+
+                    partition.SubPartitions = subs.ToList();
+                }
+            }
+
+            return partitions;
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetSubPartitionInfos(Table table)
+        {
+            return await this.GetSubPartitionInfos(this.CreateConnection(), table);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetSubPartitionInfos(DbConnection dbConnection, Table table)
+        {
+            string sql =
+$@"SELECT TABLE_NAME AS ""TableName"", PARTITION_NAME AS ""ParentTableName"", SUBPARTITION_NAME AS ""Name"", HIGH_VALUE AS ""HighValue"",TABLESPACE_NAME AS ""Tablespace"",SUBPARTITION_POSITION AS ""Order""
+FROM USER_TAB_SUBPARTITIONS
+WHERE TABLE_NAME='{table.Name}'";
+
+            return await dbConnection.QueryAsync<PartitionInfo>(sql);
+        }
+
+        public async Task<IEnumerable<TableIndexExtraInfo>> GetTableIndexExtraInfos(Table table, bool includeDetails = false)
+        {
+            return await this.GetTableIndexExtraInfos(this.CreateConnection(), table, includeDetails);
+        }
+
+        public async Task<IEnumerable<TableIndexExtraInfo>> GetTableIndexExtraInfos(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT INDEX_NAME AS ""IndexName"",COMPRESSION AS ""Compression"",
+CASE WHEN PARTITIONED = 'YES' THEN 1 ELSE 0 END AS ""IsPartitioned"",
+CASE WHEN GLOBAL_STATS='YES' THEN 1  ELSE 0 END AS ""IsGlobal"",TABLESPACE_NAME AS ""Tablespace""
+FROM USER_INDEXES
+WHERE TABLE_NAME='{table.Name}'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND TABLE_OWNER='{table.Schema}'";
+            }
+
+            var infos = await dbConnection.QueryAsync<TableIndexExtraInfo>(sql);
+
+            if (includeDetails)
+            {
+                string indexNames = string.Join(",", infos.Select(item => $"'{item.IndexName}'"));
+
+                sql =
+$@"SELECT INDEX_NAME AS ""IndexName"", PARTITION_NAME AS ""Name"", COMPRESSION AS ""Compression"",PARTITION_POSITION AS ""Order""
+FROM USER_IND_PARTITIONS WHERE INDEX_NAME IN({indexNames})";
+
+                var partitions = await dbConnection.QueryAsync<TableIndexPartitionInfo>(sql);
+
+                foreach (var info in infos)
+                {
+                    var items = partitions.Where(item => item.IndexName == info.IndexName).OrderBy(item => item.Order).ToList();
+
+                    info.Partitions = items;
+                }
+            }
+
+            return infos;
+        }
+        #endregion
         #endregion
 
         #region Dependency
@@ -727,7 +954,7 @@ namespace DatabaseInterpreter.Core
         #region Routine Script Usage
         public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
         {
-            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced,includeViewTableUsages));
+            return base.GetDbObjectUsagesAsync<RoutineScriptUsage>(this.GetSqlForRountineScriptUsages(filter, isFilterForReferenced, includeViewTableUsages));
         }
 
         public override Task<List<RoutineScriptUsage>> GetRoutineScriptUsages(DbConnection dbConnection, SchemaInfoFilter filter = null, bool isFilterForReferenced = false, bool includeViewTableUsages = false)
@@ -747,15 +974,15 @@ namespace DatabaseInterpreter.Core
                         WHERE d.REFERENCED_OWNER NOT IN('SYS','PUBLIC')
                         AND UPPER({owner})=UPPER('{this.GetSchemaBySchemaFilter(filter)}')");
 
-            if(!includeViewTableUsages)
+            if (!includeViewTableUsages)
             {
                 sb.Append("AND NOT (d.TYPE= 'VIEW' AND d.REFERENCED_TYPE='TABLE') AND NOT (d.TYPE= 'VIEW' AND d.REFERENCED_TYPE='VIEW')");
             }
 
-            string typeColumn = !isFilterForReferenced ? "TYPE": "REFERENCED_TYPE";
+            string typeColumn = !isFilterForReferenced ? "TYPE" : "REFERENCED_TYPE";
             string nameColumn = !isFilterForReferenced ? "NAME" : "REFERENCED_NAME";
             string typeName = null;
-            string[] filterNames = null;            
+            string[] filterNames = null;
 
             if (filter?.DatabaseObjectType == DatabaseObjectType.Procedure)
             {
@@ -765,7 +992,7 @@ namespace DatabaseInterpreter.Core
             else if (filter?.DatabaseObjectType == DatabaseObjectType.Function)
             {
                 typeName = "FUNCTION";
-                filterNames = filter?.FunctionNames;               
+                filterNames = filter?.FunctionNames;
             }
             else if (filter?.DatabaseObjectType == DatabaseObjectType.View)
             {
@@ -780,7 +1007,7 @@ namespace DatabaseInterpreter.Core
 
             if (typeName != null)
             {
-                sb.Append($"AND d.{typeColumn} ='{typeName}'");               
+                sb.Append($"AND d.{typeColumn} ='{typeName}'");
             }
 
             sb.Append(this.GetFilterNamesCondition(filter, filterNames, $"d.{nameColumn}"));
@@ -802,7 +1029,7 @@ namespace DatabaseInterpreter.Core
 
             bool hasGeometryDataType = bulkCopyInfo.Columns.Any(item => DataTypeHelper.IsGeometryType(item.DataType));
 
-            if(!hasGeometryDataType)
+            if (!hasGeometryDataType)
             {
                 using (var bulkCopy = new OracleBulkCopy(conn))
                 {
@@ -830,7 +1057,7 @@ namespace DatabaseInterpreter.Core
 
                     await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo));
                 }
-            }           
+            }
         }
 
         private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
@@ -1007,7 +1234,7 @@ namespace DatabaseInterpreter.Core
         public override Task<long> GetTableRecordCountAsync(DbConnection connection, Table table, string whereClause = "")
         {
             return this.GetRecordCount(table, connection, whereClause);
-        }       
+        }
 
         private Task<long> GetRecordCount(DatabaseObject dbObject, DbConnection connection, string whereClause = "")
         {
@@ -1054,7 +1281,7 @@ namespace DatabaseInterpreter.Core
 								SELECT *
 								FROM PagedRecords
 								WHERE ""{RowNumberColumnName}"" BETWEEN {startEndRowNumber.StartRowNumber} AND {startEndRowNumber.EndRowNumber}";
-            }            
+            }
 
             return pagedSql;
         }

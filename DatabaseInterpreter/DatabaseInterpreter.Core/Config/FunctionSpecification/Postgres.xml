@@ -8,6 +8,7 @@
   <item name="ATAN" args="EXP"></item>
   <item name="ATAN2" args="EXP"></item>
   <item name="ATAN2D" args="EXP"></item>
+  <item name="AVG" args="EXP" isAggregate="true"></item>
   <item name="BTRIM" args="EXP[,EXP]" isString="true"></item>
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
   <item name="CBRT" args="EXP"></item>
@@ -23,6 +24,7 @@
   <item name="COSD" args="EXP"></item>
   <item name="COT" args="EXP"></item>
   <item name="COTD" args="EXP"></item>
+  <item name="COUNT" args="EXP"  isAggregate="true"></item>
   <item name="CURRENT_DATABASE" args="" isString="true"></item>
   <item name="CURRENT_SCHEMA" args="" isString="true"></item>
   <item name="CURRENT_TIMESTAMP" args="" noParenthesess="true"></item>
@@ -47,6 +49,8 @@
   <item name="LOWER" args="EXP" isString="true"></item>
   <item name="LPAD" args="EXP,LENGTH,PAD" isString="true"></item>
   <item name="LTRIM" args="EXP"></item>
+  <item name="MAX" args="EXP"  isAggregate="true"></item>
+  <item name="MIN" args="EXP"  isAggregate="true"></item>
   <item name="MD5" args="EXP"></item>
   <item name="MIN_SCALE" args="EXP"></item>
   <item name="MOD" args="EXP1,EXP2"></item>
@@ -73,7 +77,11 @@
   <item name="SQRT" args="EXP"></item>
   <item name="SUBSTR" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
+  <item name="SUM" args="EXP"  isAggregate="true"></item>
   <item name="STARTS_WITH" args="EXP,SEARCH"></item>
+  <item name="STDDEV" args="[ALL|DISTINCT] EXP" isAggregate="true"></item>
+  <item name="‌STDDEV_POP‌‌" args="EXP" isAggregate="true"></item>
+  <item name="STDDEV_SAMP‌" args="EXP" isAggregate="true"></item>
   <item name="STRPOS" args="EXP,SEARCH"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TAND" args="EXP"></item>
@@ -84,5 +92,7 @@
   <item name="TRIM" args="[BOTH|LEADING|TRAILING] FROM EXP" delimiter="FROM" isString="true"></item>
   <item name="TRIM_SCALE" args="EXP"></item>
   <item name="TRUNC" args="EXP,DECIMAL"></item>
-  <item name="UPPER" args="EXP" isString="true"></item>  
+  <item name="UPPER" args="EXP" isString="true"></item>
+  <item name="VAR_POP" args="EXP" isAggregate="true"></item>
+  <item name="VAR_SAMP" args="EXP" isAggregate="true"></item>
 </items>

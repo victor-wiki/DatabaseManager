@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Geometry;
+﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.Data.SqlClient;
@@ -225,8 +226,9 @@ namespace DatabaseInterpreter.Core
             string detailsColumns = @"sco.text As [DefaultValue], 
                             ext.value AS [Comment],                           
                             sty.is_user_defined AS [IsUserDefined],
-                            schema_name(sty.schema_id) AS [DataTypeSchema],                           
-                            cc.definition as [ComputeExp]";
+                            schema_name(sty.schema_id) AS [DataTypeSchema],
+                            cc.is_persisted AS [IsPersisted],
+                            cc.definition AS [ComputeExp]";
 
             if (this.IsObjectFectchSimpleMode())
             {
@@ -606,6 +608,280 @@ namespace DatabaseInterpreter.Core
             return sb.Content;
         }
         #endregion
+
+        #region Partition       
+
+        public override async Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter)
+        {
+            return await this.GetPartitionedTables(this.CreateConnection(), filter);
+        }
+
+        public override async Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter)
+        {
+            return (await dbConnection.QueryAsync<Table>(this.GetSqlForPartitionedTables(filter))).ToList();
+        }
+
+        private string GetSqlForPartitionedTables(SchemaInfoFilter filter)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(
+$@"SELECT schema_name(t.schema_id) AS [Schema], t.name AS [Name]
+FROM sys.tables t
+JOIN sys.indexes i ON t.[object_id] = i.[object_id]
+JOIN sys.partition_schemes ps ON i.data_space_id = ps.data_space_id
+WHERE 1=1");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
+
+            return sb.Content;
+        }
+
+        public async Task<string> GetTableFilegroupName(Table table)
+        {
+            return await this.GetTableFilegroupName(this.CreateConnection(), table);
+        }
+
+        public async Task<string> GetTableFilegroupName(DbConnection dbConnection, Table table)
+        {
+            string sql =
+$@"SELECT fg.name       
+FROM sys.tables t
+INNER JOIN sys.indexes i ON t.object_id = i.object_id
+INNER JOIN sys.filegroups fg ON i.data_space_id = fg.data_space_id
+WHERE t.name='{table.Name}'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND t.schema_id = SCHEMA_ID('{table.Schema}')";
+            }
+
+            return (await dbConnection.QueryAsync<string>(sql)).FirstOrDefault();
+        }
+
+        public async Task<PartitionScheme> GetPartitionSchemeByTable(Table table)
+        {
+            return await this.GetPartitionSchemeByTable(this.CreateConnection(), table);
+        }
+
+        public async Task<PartitionScheme> GetPartitionSchemeByTable(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            return (await this.GetPartitionSchemes(dbConnection, filter, includeDetails)).FirstOrDefault();
+        }
+
+        public async Task<List<PartitionScheme>> GetPartitionSchemes(SchemaInfoFilter filter, bool includeDetails = false)
+        {
+            return await this.GetPartitionSchemes(this.CreateConnection(), filter, includeDetails);
+        }
+
+        public async Task<List<PartitionScheme>> GetPartitionSchemes(DbConnection dbConnection, SchemaInfoFilter filter, bool includeDetails = false)
+        {
+            string sql = this.GetSqlForPartitionSchemes(filter);
+
+            var schemes = (await dbConnection.QueryAsync<PartitionScheme>(sql)).ToList();
+
+            if(includeDetails)
+            {
+                var schemeNames = schemes.Select(item => item.SchemeName).ToArray();
+
+                var schemeFilegroups = await this.GetPartitionSchemeFilegroups(dbConnection, schemeNames);
+                var schemeFunctions = await this.GetPartitionSchemeFunctions(dbConnection, schemeNames);
+
+                foreach(var scheme in schemes)
+                {
+                    scheme.Filegroups = schemeFilegroups.Where(item => item.SchemeName == scheme.SchemeName).Select(item => item.FilegroupName).ToList();
+                    scheme.FunctionName = schemeFunctions.FirstOrDefault(item => item.SchemeName == scheme.SchemeName)?.FunctionName;
+                }
+            }
+
+            return schemes;
+        }
+
+        private string GetSqlForPartitionSchemes(SchemaInfoFilter filter)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(
+$@"SELECT s.name as SchemeName, c.Name as ColumnName
+FROM sys.tables AS t
+JOIN sys.indexes AS i ON t.object_id = i.object_id
+JOIN sys.partition_schemes AS s ON i.data_space_id = s.data_space_id
+join sys.index_columns ic on ic.index_id = i.index_id and ic.object_id = i.object_id and ic.partition_ordinal >= 1
+JOIN sys.columns c ON ic.object_id=c.object_id AND ic.column_id=c.column_id and c.object_id = t.object_id");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, "schema_name(t.schema_id)"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.name"));
+
+            return sb.Content;
+        }
+
+        public async Task<List<PartitionSchemeFunction>> GetPartitionSchemeFunctions(string[] schemeNames)
+        {
+            return await this.GetPartitionSchemeFunctions(this.CreateConnection(), schemeNames);
+        }
+
+        public async Task<List<PartitionSchemeFunction>> GetPartitionSchemeFunctions(DbConnection dbConnection, string[] schemeNames)
+        {
+            string sql = this.GetSqlForPartitionSchemeFunctions(schemeNames);
+
+            return (await dbConnection.QueryAsync<PartitionSchemeFunction>(sql)).ToList();
+        }
+
+        private string GetSqlForPartitionSchemeFunctions(string[] schemeNames)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(
+ $@"SELECT s.name AS [SchemeName], f.name AS [FunctionName]
+FROM sys.partition_functions f
+JOIN sys.partition_schemes s on f.function_id = s.function_id");
+
+            if (schemeNames != null && schemeNames.Any())
+            {
+                string strNames = string.Join(",", schemeNames.Select(item => $"'{item}'"));
+
+                sb.Append($"WHERE s.name IN({strNames})");
+            }
+
+            return sb.Content;
+        }
+
+        public async Task<List<PartitionSchemeFilegroup>> GetPartitionSchemeFilegroups(string[] schemeNames)
+        {
+            return await this.GetPartitionSchemeFilegroups(this.CreateConnection(), schemeNames);
+        }
+
+        public async Task<List<PartitionSchemeFilegroup>> GetPartitionSchemeFilegroups(DbConnection dbConnection, string[] schemeNames)
+        {
+            string sql = this.GetSqlForPartitionSchemeFilegroups(schemeNames);
+
+            return (await dbConnection.QueryAsync<PartitionSchemeFilegroup>(sql)).ToList();
+        }
+
+        private string GetSqlForPartitionSchemeFilegroups(params string[] schemeNames)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            sb.Append(
+@"SELECT s.name AS [SchemeName], fg.name AS [FilegroupName]
+FROM sys.partition_schemes s
+JOIN sys.destination_data_spaces dds on s.data_space_id = dds.partition_scheme_id
+JOIN sys.filegroups fg ON dds.data_space_id = fg.data_space_id");
+
+            if (schemeNames != null && schemeNames.Any())
+            {
+                string strNames = string.Join(",", schemeNames.Select(item => $"'{item}'"));
+
+                sb.Append($"WHERE s.name IN({strNames})");
+            }
+
+            sb.Append("GROUP BY s.name,fg.name");
+
+            return sb.Content;
+        }
+
+        public async Task<List<PartitionFunction>> GetPartitionFunctions(string[] functionNames, bool includeDetails = false)
+        {
+            return await this.GetPartitionFunctions(this.CreateConnection(), functionNames, includeDetails);
+        }
+
+        public async Task<List<PartitionFunction>> GetPartitionFunctions(DbConnection dbConnection, string[] functionNames, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT f.name,trim(f.type) as Type,boundary_value_on_right as IsOnRight
+FROM sys.partition_functions f";
+
+            if (functionNames != null && functionNames.Any())
+            {
+                string strNames = string.Join(",", functionNames.Select(item => $"'{item}'"));
+
+                sql += Environment.NewLine +  $"WHERE f.name IN({strNames})";
+            }
+
+            List<PartitionFunction> functions = (await dbConnection.QueryAsync<PartitionFunction>(sql)).ToList();
+            List<PartitionFunctionDataTypeInfo> functionDataTypeInfos =await this.GetPartitionFunctionDataTypes(dbConnection, functionNames);
+            List<PartitionFunctionValue> functionValues = await this.GetPartitionFunctionValues(dbConnection, functionNames);
+
+            if (includeDetails)
+            {
+                foreach(var function in functions)
+                {
+                    function.DataTypeInfo = functionDataTypeInfos.FirstOrDefault(item => item.FunctionName == function.Name);
+
+                    function.Values = functionValues.Where(item => item.FunctionName == function.Name).Select(item => item.Value).ToList();
+                }                      
+            }
+
+            return functions;
+        }
+
+        public async Task<List<PartitionFunctionDataTypeInfo>> GetPartitionFunctionDataTypes(string[] functionNames)
+        {
+            return await this.GetPartitionFunctionDataTypes(this.CreateConnection(), functionNames);
+        }
+
+        public async Task<List<PartitionFunctionDataTypeInfo>> GetPartitionFunctionDataTypes(DbConnection dbConnection, string[] functionNames)
+        {
+            string sql =
+$@"SELECT f.name as [FunctionName], t.name as DataType, p.max_length as MaxLength, p.precision as [Precision], p.scale as [Scale]
+FROM sys.partition_functions f
+JOIN sys.partition_parameters p on p.function_id = f.function_id
+JOIN sys.types t on p.system_type_id = t.system_type_id";
+
+            if (functionNames != null && functionNames.Any())
+            {
+                string strNames = string.Join(",", functionNames.Select(item => $"'{item}'"));
+
+                sql += Environment.NewLine + $"WHERE f.name IN({strNames})";
+            }
+
+            return (await dbConnection.QueryAsync<PartitionFunctionDataTypeInfo>(sql)).ToList();
+        }
+
+        public async Task<List<PartitionFunctionValue>> GetPartitionFunctionValues(string[] functionNames)
+        {
+            return await this.GetPartitionFunctionValues(this.CreateConnection(), functionNames);
+        }
+
+        public async Task<List<PartitionFunctionValue>> GetPartitionFunctionValues(DbConnection dbConnection, string[] functionNames)
+        {
+            string sql =
+$@"SELECT f.name as [FunctionName], v.value as [Value]
+FROM sys.partition_functions f
+JOIN sys.partition_range_values v on v.function_id = f.function_id";
+
+            if (functionNames != null && functionNames.Any())
+            {
+                string strNames = string.Join(",", functionNames.Select(item => $"'{item}'"));
+
+                sql += Environment.NewLine + $"WHERE f.name IN({strNames})";
+            }
+
+            sql += Environment.NewLine + "ORDER BY f.name, v.boundary_id";
+
+            var values = (await dbConnection.QueryAsync<PartitionFunctionValue>(sql)).ToList();          
+
+            foreach (var value in values)
+            {
+                string v = value.Value;
+
+                if (v.Contains(" 00:00:00"))
+                {
+                    string convertedValue = v;
+
+                    if (DateTime.TryParse(v, out _))
+                    {
+                        value.Value = DateTime.Parse(v).ToString("yyyy-MM-dd");
+                    }                    
+                }               
+            }
+
+            return values;
+        }
+        #endregion
         #endregion
 
         #region Dependency
@@ -754,7 +1030,7 @@ namespace DatabaseInterpreter.Core
                 }
 
                 await bulkCopy.WriteToServerAsync(this.ConvertDataTable(dataTable, bulkCopyInfo), bulkCopyInfo.CancellationToken);
-            }               
+            }
         }
 
         private DataTable ConvertDataTable(DataTable dataTable, BulkCopyInfo bulkCopyInfo)
@@ -1013,28 +1289,32 @@ namespace DatabaseInterpreter.Core
         #region Parse Column & DataType
         public override string ParseColumn(Table table, TableColumn column)
         {
+            string requireClause = (column.IsRequired ? " NOT NULL" : " NULL");
+
             if (column.IsUserDefined)
             {
                 string dataType = string.IsNullOrEmpty(column.DataTypeSchema) ? this.GetQuotedString(column.DataType) : $"{this.GetQuotedString(column.DataTypeSchema)}.{this.GetQuotedString(column.DataType)}";
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} {(column.IsRequired ? "NOT NULL" : "NULL")}";
+                return $"{this.GetQuotedString(column.Name)} {dataType}{requireClause}";
             }
 
             bool isComputed = column.IsComputed;
 
             if (isComputed)
             {
-                return $"{this.GetQuotedString(column.Name)} AS {this.GetColumnComputeExpression(column)}";
+                string persited = column.IsPersisted ? " PERSISTED" : "";
+
+                return $"{this.GetQuotedString(column.Name)} AS {this.GetColumnComputeExpression(column)}{persited}{requireClause}";
             }
             else
             {
                 string dataType = this.ParseDataType(column);
 
-                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && column.IsRequired ? $"IDENTITY({table.IdentitySeed ?? 1},{table.IdentityIncrement ?? 1})" : "");
-                string requireClause = (column.IsRequired ? "NOT NULL" : "NULL");
-                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $"/*{column.ScriptComment}*/";
+                string identityClause = (this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity && column.IsRequired ? $" IDENTITY({table.IdentitySeed ?? 1},{table.IdentityIncrement ?? 1})" : "");
 
-                return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requireClause}{scriptComment}";
+                string scriptComment = string.IsNullOrEmpty(column.ScriptComment) ? "" : $" /*{column.ScriptComment}*/";
+
+                return $"{this.GetQuotedString(column.Name)} {dataType}{identityClause}{requireClause}{scriptComment}";
             }
         }
 
@@ -1119,9 +1399,9 @@ namespace DatabaseInterpreter.Core
         #region Sql Query Clause
         protected override string GetSqlForPagination(string tableName, string columnNames, string orderColumns, string whereClause, long pageNumber, int pageSize)
         {
-            bool isLowDbVersion =!string.IsNullOrEmpty(this.ServerVersion) && this.IsLowDbVersion(this.ServerVersion, "11"); //since SQL Server 2012(version 11), the offset can be used.
+            bool isLowDbVersion = !string.IsNullOrEmpty(this.ServerVersion) && this.IsLowDbVersion(this.ServerVersion, "11"); //since SQL Server 2012(version 11), the offset can be used.
 
-            string pagedSql = null;           
+            string pagedSql = null;
 
             if (!isLowDbVersion)
             {

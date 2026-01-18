@@ -1,5 +1,6 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +18,7 @@ namespace DatabaseInterpreter.Core
         #region Schema Script 
 
 
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
@@ -84,7 +85,7 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
-                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
+                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, overwrite);
             }
 
             return sb;
@@ -292,8 +293,77 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
             }
 
             string reverse = index.Type == IndexType.Reverse.ToString() ? "REVERSE" : "";
+            string compression = index.ExtraInfo?.Compression;
+            string tablespace = index.ExtraInfo?.Tablespace;
+            bool isLocal = index.ExtraInfo?.IsLocal == true;
 
-            return new CreateDbObjectScript<TableIndex>($"CREATE {type} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse};");
+            string strCompression = "";
+            string strTablespace = "";
+            string strLocal = "";
+
+            if (!string.IsNullOrEmpty(tablespace))
+            {
+                strTablespace = $" TABLESPACE {this.GetQuotedString(tablespace)}";
+            }
+
+            if (!string.IsNullOrEmpty(compression))
+            {
+                if (compression != "DISABLED")
+                {
+                    strCompression = " COMPRESS ADVANCED HIGH";
+                }
+            }
+
+            if (isLocal)
+            {
+                strLocal = " LOCAL";
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            string strType = string.IsNullOrEmpty(type) ? "" : $" {type}";
+
+            string script = $"CREATE{strType} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)} ({columnNames}){reverse}{strTablespace}{strCompression}{strLocal}";
+
+            sb.AppendLine(script);
+
+            if (index.ExtraInfo?.IsPartitioned == true && index.ExtraInfo?.Partitions != null && index.ExtraInfo?.Partitions?.Count>0)
+            {
+                sb.AppendLine("(");
+
+                int i = 0;
+
+                foreach(var partition in index.ExtraInfo.Partitions)
+                {
+                    string cp = partition.Compression;
+
+                    string strCp = "";
+
+                    switch(cp)
+                    {
+                        case "ADVANCED LOW":
+                            strCp = " COMPRESS ADVANCED LOW";
+                            break;
+                        case "ENABLED":
+                            strCp = " COMPRESS";
+                            break;
+                        case "ADVANCED HIGH":
+                            strCp = "";
+                            break;
+                        case "DISABLED":
+                            strCp = " NOCOMPRESS";
+                            break;
+                    }
+
+                    sb.AppendLine($"\tPARTITION {this.GetQuotedString(partition.Name)}{strCp}{(i< index.ExtraInfo.Partitions.Count-1? ",":"")}");
+
+                    i++;
+                }                
+
+                sb.AppendLine(")");
+            }
+
+            return new CreateDbObjectScript<TableIndex>($"{sb.ToString().TrimEnd('\r','\n')};");
         }
 
         public override Script DropIndex(TableIndex index)
@@ -327,7 +397,115 @@ REFERENCES {this.GetQuotedString(foreignKey.ReferencedTableName)}({referenceColu
 
         public Script RebuildIndex(TableIndex index, bool isOnline = true)
         {
-            return new AlterDbObjectScript<TableIndex>($"ALTER INDEX {this.GetQuotedDbObjectNameWithSchema(index.Schema, index.Name)} REBUILD {(isOnline? "ONLINE": "OFFLINE")};");
+            return new AlterDbObjectScript<TableIndex>($"ALTER INDEX {this.GetQuotedDbObjectNameWithSchema(index.Schema, index.Name)} REBUILD {(isOnline ? "ONLINE" : "OFFLINE")};");
+        }
+
+        public Script CreateTablePartition(PartitionSummary partitionSummary)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            string interval = string.IsNullOrEmpty(partitionSummary.Interval) ? "" : $" INTERVAL ({partitionSummary.Interval})";
+
+            string columns = string.Join(",", partitionSummary.Columns.Select(item => this.GetQuotedString(item.Name)));
+
+            sb.AppendLine($"PARTITION BY {partitionSummary.Type} ({columns}){interval}");
+
+            var partitions = partitionSummary.Partitions;
+
+            if (partitionSummary.SubType != null && partitionSummary.SubType != "NONE")
+            {
+                string subInterval = string.IsNullOrEmpty(partitionSummary.SubInterval) ? "" : $" INTERVAL ({partitionSummary.SubInterval})";
+
+                string subColumns = string.Join(",", partitionSummary.SubColumns.Select(item => this.GetQuotedString(item.Name)));
+
+                sb.AppendLine($"SUBPARTITION BY {partitionSummary.SubType} ({subColumns}){subInterval}");
+            }
+
+            if (partitions != null)
+            {
+                sb.AppendLine("(");
+
+                int i = 0;
+
+                foreach (var partition in partitions.OrderBy(item => item.Order))
+                {
+                    string highValue = string.IsNullOrEmpty(partition.HighValue) ? "" : $" {this.GetPartitionHighValue(partitionSummary.Type, partition.HighValue)}";
+                    string tablespace = string.IsNullOrEmpty(partition.Tablespace) ? "" : $" TABLESPACE {this.GetQuotedString(partition.Tablespace)}";
+
+                    bool hasSubPartitions = partition.SubPartitions != null && partition.SubPartitions.Count > 0;
+                    string delimiter = hasSubPartitions ? "" : (i < partitions.Count - 1 ? "," : "");
+
+                    sb.AppendLine($"\tPARTITION {this.GetQuotedString(partition.Name)}{highValue}{tablespace}{delimiter}");
+
+                    if (hasSubPartitions)
+                    {
+                        var subPartitions = partition.SubPartitions.OrderBy(item => item.Order);
+
+                        sb.AppendLine("\t(");
+
+                        StringBuilder sbSub = new StringBuilder();
+
+                        foreach (var subPartition in subPartitions)
+                        {
+                            string subHighValue = string.IsNullOrEmpty(subPartition.HighValue) ? "" : $" {this.GetPartitionHighValue(partitionSummary.SubType, subPartition.HighValue)}";
+                            string subTablespace = string.IsNullOrEmpty(subPartition.Tablespace) ? "" : $" TABLESPACE {this.GetQuotedString(subPartition.Tablespace)}";
+
+                            sbSub.AppendLine($"\t\tSUBPARTITION {this.GetQuotedString(subPartition.Name)}{subHighValue}{subTablespace},");
+                        }
+
+                        sb.AppendLine(sbSub.ToString().TrimEnd('\r', '\n').TrimEnd(','));
+
+                        delimiter = i < partitions.Count - 1 ? "," : "";
+
+                        sb.AppendLine($"\t){delimiter}");
+                    }
+
+                    i++;
+                }
+
+                sb.AppendLine(")");
+            }
+
+            return new Script(sb.ToString());
+        }
+
+        private string GetPartitionHighValue(string partitionType, string highValue)
+        {
+            if (string.IsNullOrEmpty(highValue))
+            {
+                return highValue;
+            }
+
+            string result = highValue;
+
+            if (partitionType == "LIST")
+            {
+                result = $" VALUES ({this.GetShortDateValue(highValue)})";
+            }
+            else
+            {
+                result = $" VALUES LESS THAN ({this.GetShortDateValue(highValue)})";
+            }
+
+            return result;
+        }
+
+        private string GetShortDateValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            string zeroTime = " 00:00:00";
+            string timeFormat = " HH24:MI:SS";
+
+            if (value.Contains(zeroTime) && value.Contains(timeFormat))
+            {
+                return value.Replace(zeroTime, "").Replace(timeFormat, "");
+            }
+
+            return value;
         }
         #endregion
 
@@ -369,20 +547,47 @@ MAXVALUE {sequence.MaxValue}
             string tableName = table.Name;
             string quotedTableName = this.GetQuotedFullTableName(table);
 
-            string tablespace = this.dbInterpreter.ConnectionInfo.Database;
-            string strTablespace = string.IsNullOrEmpty(tablespace) ? "" : $"TABLESPACE {tablespace}";
+            OracleInterpreter oracleInterpreter = this.dbInterpreter as OracleInterpreter;
+
+            bool isValidConnection = oracleInterpreter.IsValidConnection();
+
+            string defaultTablespace = null;
+
+            if (isValidConnection)
+            {
+                try
+                {
+                    defaultTablespace = oracleInterpreter.GetUserDefaultTablespace();
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            string tablespace = table.ExtraInfo?.Tablespace ?? defaultTablespace;
+            string strTablespace = string.IsNullOrEmpty(tablespace) ? "" : $"TABLESPACE {this.GetQuotedString(tablespace)}";
+            PartitionSummary partitionSummary = table.ExtraInfo?.PartitionSummary;
 
             #region Create Table
 
             string option = this.GetCreateTableOption();
 
+            StringBuilder sbCreateTable = new StringBuilder();
+
             string tableScript =
 $@"
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item))).TrimEnd(',')}
-){strTablespace}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option) + this.scriptsDelimiter;
+){strTablespace}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option);
 
-            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+            sbCreateTable.AppendLine(tableScript);
+
+            if (partitionSummary != null)
+            {
+                sbCreateTable.AppendLine(this.CreateTablePartition(partitionSummary).Content.TrimEnd(';', ' '));
+            }
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(sbCreateTable.ToString().TrimEnd('\r', '\n') + this.scriptsDelimiter));
 
             #endregion
 

@@ -4,6 +4,7 @@ using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DatabaseInterpreter.Core
@@ -14,7 +15,7 @@ namespace DatabaseInterpreter.Core
 
         #region Generate Schema Scripts 
 
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
@@ -57,7 +58,7 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
-                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, true);
+                this.AppendScriptsToFile(sb.ToString(), GenerateScriptMode.Schema, overwrite);
             }
 
             return sb;
@@ -325,14 +326,25 @@ $@"
                 }
             }
 
+            PartitionSummary partitionSummary = table.ExtraInfo?.PartitionSummary;
+
+            StringBuilder sbCreateTable = new StringBuilder();
+
             string tableScript =
 $@"
 CREATE TABLE {notCreateIfExistsClause} {quotedTableName}(
 {string.Join("," + Environment.NewLine, columnList)}{primaryKeyColumns}
 ){(!string.IsNullOrEmpty(table.Comment) && this.option.TableScriptsGenerateOption.GenerateComment ? ($"comment='{this.dbInterpreter.ReplaceSplitChar(ValueHelper.TransferSingleQuotation(table.Comment))}'") : "")}
-DEFAULT CHARSET={dbCharSet}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option) + this.scriptsDelimiter;
+DEFAULT CHARSET={dbCharSet}" + (string.IsNullOrEmpty(option) ? "" : Environment.NewLine + option);
 
-            sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+            sbCreateTable.AppendLine(tableScript);
+
+            if (partitionSummary != null)
+            {
+                sbCreateTable.AppendLine(this.CreateTablePartition(partitionSummary).Content.TrimEnd(';', ' '));
+            }
+
+            sb.AppendLine(new CreateDbObjectScript<Table>(sbCreateTable.ToString().TrimEnd('\r', '\n') + this.scriptsDelimiter));
 
             #endregion
 
@@ -429,6 +441,43 @@ DEFAULT CHARSET={dbCharSet}" + (string.IsNullOrEmpty(option) ? "" : Environment.
         public override IEnumerable<Script> SetConstrainsEnabled(bool enabled)
         {
             yield return new ExecuteProcedureScript($"SET FOREIGN_KEY_CHECKS = {(enabled ? 1 : 0)};");
+        }
+
+        public Script CreateTablePartition(PartitionSummary partitionSummary)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            string type = partitionSummary.Type;
+            string expression = partitionSummary.Expression;
+
+            sb.AppendLine($"PARTITION BY {type} ({expression})");
+
+            if (partitionSummary.HasPartition)
+            {
+                if (type == "HASH")
+                {
+                    sb.AppendLine($"PARTITIONS {partitionSummary.PartitionCount};");
+                }
+                else
+                {
+                    sb.AppendLine("(");
+
+                    int i = 0;
+
+                    foreach (var partition in partitionSummary.Partitions)
+                    {
+                        string @operator = type == "RANGE" ? "LESS THAN" : "IN";
+
+                        sb.AppendLine($"\tPARTITION {this.GetQuotedString(partition.Name)} VALUES {@operator} ({partition.Bound}){(i < partitionSummary.PartitionCount - 1 ? "," : "")}");
+
+                        i++;
+                    }
+
+                    sb.AppendLine(");");
+                }
+            }
+
+            return new Script(sb.ToString());
         }
 
         #endregion

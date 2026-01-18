@@ -5,12 +5,12 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.3.13</Version>
-    <PackageReleaseNotes>1. handle: "USE DATABASE" and "ALTER DATABASE" for TSQL;
-2. fix issue: detect whether script is routine script.</PackageReleaseNotes>
+    <Version>2.4.0</Version>
+    <PackageReleaseNotes>1. add: table partition;
+2. code generator: can generate comment.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.3.13</AssemblyVersion>
-    <FileVersion>2.3.13</FileVersion>
+    <AssemblyVersion>2.4.0</AssemblyVersion>
+    <FileVersion>2.4.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

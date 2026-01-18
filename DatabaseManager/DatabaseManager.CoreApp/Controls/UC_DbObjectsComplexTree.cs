@@ -167,6 +167,7 @@ namespace DatabaseManager.Controls
             this.tsmiBackup.Visible = isDatabase;
             this.tsmiDiagnose.Visible = isDatabase;
             this.tsmiCompareSchema.Visible = isDatabase;
+            this.tsmiCompareData.Visible = isDatabase;
             this.tsmiClearData.Visible = isDatabase;
             this.tsmiOptimize.Visible = (this.databaseType == DatabaseType.MySql || this.databaseType == DatabaseType.Sqlite);
 

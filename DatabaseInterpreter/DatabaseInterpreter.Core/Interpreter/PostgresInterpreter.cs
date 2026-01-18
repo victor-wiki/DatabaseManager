@@ -1,4 +1,5 @@
-﻿using DatabaseInterpreter.Geometry;
+﻿using Dapper;
+using DatabaseInterpreter.Geometry;
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using Microsoft.SqlServer.Types;
@@ -753,6 +754,168 @@ namespace DatabaseInterpreter.Core
         }
         #endregion
         #endregion
+
+        #region Partition       
+
+        public async Task<bool> IsInheritedPartitionTable(Table table)
+        {
+            return await this.IsInheritedPartitionTable(this.CreateConnection(), table);
+        }
+
+        public async Task<bool> IsInheritedPartitionTable(DbConnection dbConnection, Table table)
+        {
+            var infos = await this.GetPartitionInfos(dbConnection, table, true);
+
+            return infos.Count() > 0;
+        }
+
+        public override async Task<List<Table>> GetPartitionedTables(SchemaInfoFilter filter)
+        {
+            return await this.GetPartitionedTables(this.CreateConnection(), filter);
+        }
+
+        public override async Task<List<Table>> GetPartitionedTables(DbConnection dbConnection, SchemaInfoFilter filter)
+        {
+            return (await dbConnection.QueryAsync<Table>(this.GetSqlForPartitionedTables(filter))).ToList();
+        }
+
+        public override async Task<bool> IsPartitionedTable(DbConnection dbConnection, Table table)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            string sql = this.GetSqlForPartitionedTables(filter, true);
+
+            return (await dbConnection.QueryAsync<int?>(sql))?.FirstOrDefault() > 0;
+        }
+
+        private string GetSqlForPartitionedTables(SchemaInfoFilter filter, bool isCount = false)
+        {
+            var sb = this.CreateSqlBuilder();
+
+            string columns = isCount ? "COALESCE(COUNT(1),0)" : @"t.table_schema AS ""Schema"", t.table_name AS ""Name""";
+
+            sb.Append(
+$@"SELECT {columns}
+FROM pg_class c 
+JOIN pg_catalog.pg_namespace n ON c.relnamespace=n.oid
+JOIN information_schema.tables t on t.table_name=c.relname
+JOIN pg_inherits pi ON pi.inhparent=c.oid
+WHERE 1=1");
+
+            sb.Append(this.GetExcludeSystemSchemasCondition("t.table_schema"));
+            sb.Append(this.GetFilterSchemaCondition(filter, "t.table_schema"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, "t.table_name"));
+
+            return sb.Content;
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(Table table, bool includeDetails = false)
+        {
+            return await this.GetPartitionSummary(this.CreateConnection(), table, includeDetails);
+        }
+
+        public async Task<PartitionSummary> GetPartitionSummary(DbConnection dbConnection, Table table, bool includeDetails = false)
+        {
+            string sql =
+$@"SELECT t.table_name as ""TableName"", pt.partstrat AS ""Type""
+FROM information_schema.tables t
+JOIN pg_catalog.pg_namespace n ON t.table_schema = n.nspname
+JOIN pg_catalog.pg_class c ON n.oid = c.relnamespace AND t.table_name=c.relname
+JOIN pg_partitioned_table pt ON pt.partrelid = c.oid 
+WHERE t.table_name='{table.Name}'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND n.nspname='{table.Schema}'";
+            }
+
+            var summary = (await dbConnection.QueryAsync<PartitionSummary>(sql))?.FirstOrDefault();
+
+            if (summary != null)
+            {
+                summary.Columns = (await this.GetPartitionColumns(dbConnection, table)).ToList();
+
+                if (includeDetails)
+                {
+                    summary.Partitions = (await this.GetPartitionInfos(dbConnection, table)).ToList();
+                }
+            }
+
+            return summary;
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetPartitionColumns(Table table)
+        {
+            return await this.GetPartitionColumns(this.CreateConnection(), table);
+        }
+
+        public async Task<IEnumerable<PartitionColumn>> GetPartitionColumns(DbConnection dbConnection, Table table)
+        {
+            string sql =
+$@"SELECT col.table_name AS ""TableName"", col.column_name as ""Name"",ROW_NUMBER() OVER () AS ""Order""
+FROM 
+(
+  SELECT partrelid, UNNEST(partattrs) AS col_pos
+  FROM pg_partitioned_table
+) pt
+JOIN pg_catalog.pg_class c ON c.oid=pt.partrelid
+JOIN information_schema.columns col ON col.table_name=c.relname AND pt.col_pos=col.ordinal_position
+JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+WHERE col.table_name='tbl_range'";
+
+            if (!string.IsNullOrEmpty(table.Schema))
+            {
+                sql += $" AND col.table_schema='{table.Schema}'";
+            }
+
+            return await dbConnection.QueryAsync<PartitionColumn>(sql);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(Table table, bool isInherited = false)
+        {
+            return await this.GetPartitionInfos(this.CreateConnection(), table, isInherited);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(DbConnection dbConnection, Table table, bool isInherited = false)
+        {
+            SchemaInfoFilter filter = new SchemaInfoFilter() { Schema = table.Schema, TableNames = [table.Name] };
+
+            return await this.GetPartitionInfos(dbConnection, filter, isInherited);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(SchemaInfoFilter filter, bool isInherited = false)
+        {
+            return await this.GetPartitionInfos(this.CreateConnection(), filter, isInherited);
+        }
+
+        public async Task<IEnumerable<PartitionInfo>> GetPartitionInfos(DbConnection dbConnection, SchemaInfoFilter filter, bool isInherited = false)
+        {
+            string sql = this.GetSqlForPartitionInfos(filter, isInherited);
+
+            var partitions = await dbConnection.QueryAsync<PartitionInfo>(sql);
+
+            return partitions;
+        }
+
+        private string GetSqlForPartitionInfos(SchemaInfoFilter filter, bool isInherited = false)
+        {
+            var sb = this.CreateSqlBuilder();
+
+sb.Append($@"SELECT n2.nspname AS ""TableSchema"",c.relname AS ""TableName"",n1.nspname AS ""ParentTableSchema"",p.relname AS ""ParentTableName"",
+pg_get_expr(c.relpartbound, c.oid) AS ""Bound""
+FROM pg_class c 
+JOIN pg_inherits pi ON pi.inhrelid=c.oid 
+JOIN pg_class p ON p.oid=pi.inhparent 
+JOIN pg_catalog.pg_namespace n1 ON p.relnamespace=n1.oid
+JOIN pg_catalog.pg_namespace n2 ON c.relnamespace=n2.oid");
+
+            sb.Append(this.GetFilterSchemaCondition(filter, $"{(isInherited ? "n2" : "n1")}.nspname"));
+            sb.Append(this.GetFilterNamesCondition(filter, filter?.TableNames, $"{(isInherited ? "c" : "p")}.relname"));
+
+            return sb.Content;
+        }
+
+        #endregion
         #endregion
 
         #region Dependency
@@ -1098,7 +1261,7 @@ namespace DatabaseInterpreter.Core
             }
             else
             {
-                string dataType = this.ParseDataType(column);               
+                string dataType = this.ParseDataType(column);
                 bool isIdentity = this.Option.TableScriptsGenerateOption.GenerateIdentity && column.IsIdentity;
                 bool allowIdentity = this.AllowIdentity(column);
 

@@ -36,8 +36,8 @@ namespace DatabaseInterpreter.Core
         }
 
         public override string ToString()
-        {           
-            string script = string.Join("", this.scripts.Select(item => item.Content)).Trim() ;
+        {
+            string script = string.Join("", this.scripts.Select(item => item.Content)).Trim();
 
             return this.FormatScript ? this.Format(script) : script;
         }
@@ -47,6 +47,35 @@ namespace DatabaseInterpreter.Core
             Regex regex = new Regex(@"([;]+[\s]*[;]+)|(\r\n[\s]*[;])");
 
             return StringHelper.ToSingleEmptyLine(regex.Replace(script, ";"));
+        }
+
+        public bool IsEndWithSpliterScript(bool ignoreNewLineScript = true)
+        {
+            if (this.scripts.Count > 0)
+            {
+                for (int i = this.scripts.Count - 1; i >= 0; i--)
+                {
+                    Script script = this.scripts[i];
+
+                    if(script is NewLineScript && ignoreNewLineScript)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if (script is SpliterScript)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

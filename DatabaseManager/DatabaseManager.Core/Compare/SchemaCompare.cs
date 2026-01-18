@@ -4,6 +4,7 @@ using DatabaseManager.Core.Model;
 using KellermanSoftware.CompareNetObjects;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DatabaseManager.Core
 {
@@ -12,24 +13,28 @@ namespace DatabaseManager.Core
         private DatabaseType databaseType;
         private SchemaInfo sourceShemaInfo;
         private SchemaInfo targetSchemaInfo;
+        private DbInterpreter sourceDbInterpreter;
+        private DbInterpreter targetDbInterpreter;
         private bool ignoreUnnamedTableChildDifference;
 
-        public SchemaCompare(DatabaseType databaseType, SchemaInfo sourceShemaInfo, SchemaInfo targetSchemaInfo)
+        public SchemaCompare(DatabaseType databaseType, DbInterpreter sourceDbInterpreter, DbInterpreter targetDbInterpreter, SchemaInfo sourceShemaInfo, SchemaInfo targetSchemaInfo)
         {
             this.databaseType = databaseType;
+            this.sourceDbInterpreter = sourceDbInterpreter;
+            this.targetDbInterpreter = targetDbInterpreter;
             this.sourceShemaInfo = sourceShemaInfo;
             this.targetSchemaInfo = targetSchemaInfo;
 
             this.ignoreUnnamedTableChildDifference = SettingManager.Setting.IgnoreUnnamedTableChildDifference;
         }
 
-        public List<SchemaCompareDifference> Compare()
+        public async Task<List<SchemaCompareDifference>> Compare()
         {
             List<SchemaCompareDifference> differences = new List<SchemaCompareDifference>();
 
             differences.AddRange(this.CompareDatabaseObjects<UserDefinedType>(nameof(UserDefinedType), DatabaseObjectType.Type, this.sourceShemaInfo.UserDefinedTypes, targetSchemaInfo.UserDefinedTypes));
 
-            var sortedTargetTables = TableReferenceHelper.ResortTables(targetSchemaInfo.Tables, targetSchemaInfo.TableForeignKeys);
+            var sortedTargetTables = await TableReferenceHelper.ResortTables(targetSchemaInfo.Tables, targetSchemaInfo.TableForeignKeys, this.targetDbInterpreter);
 
             #region Table
             foreach (Table target in sortedTargetTables)
@@ -126,7 +131,7 @@ namespace DatabaseManager.Core
                 }
             }
 
-            var sortedSourceTables = TableReferenceHelper.ResortTables(sourceShemaInfo.Tables, sourceShemaInfo.TableForeignKeys);
+            var sortedSourceTables = await TableReferenceHelper.ResortTables(sourceShemaInfo.Tables, sourceShemaInfo.TableForeignKeys, this.sourceDbInterpreter);
 
             foreach (var source in sortedSourceTables)
             {

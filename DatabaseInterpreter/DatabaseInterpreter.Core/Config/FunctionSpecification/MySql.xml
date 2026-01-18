@@ -7,7 +7,7 @@
   <item name="ASIN" args="EXP"></item>
   <item name="ATAN" args="EXP"></item>
   <item name="ATAN2" args="EXP"></item>
-  <item name="AVG" args="EXP"></item>
+  <item name="AVG" args="EXP" isAggregate="true"></item>
   <item name="BIN" args="EXP"></item>
   <item name="BINARY" args="EXP"></item> 
   <item name="CAST" args="EXP AS TYPE" delimiter="AS"></item>
@@ -24,7 +24,7 @@
   <item name="CONVERT" args="EXP,TYPE"></item>
   <item name="COS" args="EXP"></item>
   <item name="COT" args="EXP"></item>
-  <item name="COUNT" args="EXP"></item>
+  <item name="COUNT" args="EXP" isAggregate="true"></item>
   <item name="CURDATE" args=""></item>
   <item name="CURRENT_DATE" args=""></item>
   <item name="CURRENT_TIME" args=""></item>
@@ -53,6 +53,7 @@
   <item name="FORMAT" args="EXP,DECIMAL" isString="true"></item>
   <item name="FROM_DAYS" args="EXP"></item>
   <item name="GREATEST" args="EXP1,EXP2,..."></item>
+  <item name="GROUP_CONCAT" args="EXP" isAggregate="true"></item>
   <item name="HOUR" args="DATE"></item>
   <item name="IF" args="EXP,TRUE_VALUE,FALSE_VALUE"></item>
   <item name="IFNULL" args="EXP,DEFAULT" isCheck="true"></item>
@@ -77,11 +78,11 @@
   <item name="LTRIM" args="EXP" isString="true"></item>
   <item name="MAKEDATE" args="YEAR,DAY_OF_YEAR"></item>
   <item name="MAKETIME" args="HOUR,MINUTE,SECONDS"></item>
-  <item name="MAX" args="EXP"></item>
+  <item name="MAX" args="EXP" isAggregate="true"></item>
   <item name="MD5" args="EXP"></item>
   <item name="MICROSECOND" args="DATE"></item>
   <item name="MID" args="EXP,START,LENGTH"></item>
-  <item name="MIN" args="EXP"></item>
+  <item name="MIN" args="EXP" isAggregate="true"></item>
   <item name="MINUTE" args="DATE"></item>
   <item name="MOD" args="EXP1,EXP2"></item>
   <item name="MONTH" args="DATE"></item>
@@ -114,7 +115,10 @@
   <item name="SIN" args="EXP"></item>
   <item name="SPACE" args="LENGTH"></item>
   <item name="SQRT" args="EXP"></item>
-  <!--<item name="STDDEV" args="[ALL|DISTINCT] EXP"></item>-->
+  <item name="STD" args="EXP" isAggregate="true"></item>
+  <item name="STDDEV" args="EXP" isAggregate="true"></item>
+  <item name="‌STDDEV_POP‌‌" args="EXP" isAggregate="true"></item>
+  <item name="STDDEV_SAMP‌" args="EXP" isAggregate="true"></item>
   <item name="STR_TO_DATE" args="EXP,FORMAT"></item>
   <item name="STRCMP" args="EXP1,EXP2"></item>
   <item name="SUBDATE" args="DATE,INTERVAL NUMBER UNIT"></item>
@@ -122,7 +126,7 @@
   <item name="SUBSTRING" args="EXP,START[,LENGTH]" isString="true"></item>
   <item name="SUBSTRING_INDEX" args="EXP,DELIMITER,NUMBER"></item>
   <item name="SUBTIME" args="DATE,TIME"></item>
-  <item name="SUM" args="EXP"></item>
+  <item name="SUM" args="EXP" isAggregate="true"></item>
   <item name="SYSDATE" args=""></item>
   <item name="SYSTEM_USER" args="" isString="true"></item>
   <item name="TAN" args="EXP"></item>
@@ -141,6 +145,8 @@
   <item name="UTC_DATE" args=""></item>
   <item name="UTC_TIMESTAMP" args=""></item>
   <item name="UUID" args=""></item>
+  <item name="VAR_POP" args="EXP"  isAggregate="true"></item>
+  <item name="VAR_SAMP" args="EXP"  isAggregate="true"></item>
   <item name="VERSION" args=""></item>
   <item name="WEEK" args="DATE[,MODE]"></item>
   <item name="WEEKDAY" args="DATE"></item>

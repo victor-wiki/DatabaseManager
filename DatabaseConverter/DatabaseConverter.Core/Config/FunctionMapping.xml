@@ -221,7 +221,7 @@
 		<MySql>LAST_INSERT_ID</MySql>
 		<Oracle></Oracle>
 		<Postgres>LASTVAL</Postgres>
-		<Sqlite>LAST_INSERT_ROWID</Sqlite>s
+		<Sqlite>LAST_INSERT_ROWID</Sqlite>
 	</mapping>
 	<mapping>
 		<SqlServer>RAND</SqlServer>
@@ -229,5 +229,17 @@
 		<Oracle direction="IN" expression="DBMS_RANDOM.VALUE(0,1)"></Oracle>
 		<Postgres>RANDOM</Postgres>
 		<Sqlite direction="IN" expression="ABS(RANDOM()*1.0/9223372036854775807)"></Sqlite>
+	</mapping>
+    <mapping>
+		<SqlServer>STDEV</SqlServer>
+		<MySql>STDDEV</MySql>
+		<Oracle>STDDEV</Oracle>
+		<Postgres>STDDEV</Postgres>		
+	</mapping>
+	<mapping>
+		<SqlServer>STDEVP</SqlServer>
+		<MySql>STDDEV_POP</MySql>
+		<Oracle>STDDEV_POP</Oracle>
+		<Postgres>STDDEV_POP</Postgres>		
 	</mapping>
 </mappings>

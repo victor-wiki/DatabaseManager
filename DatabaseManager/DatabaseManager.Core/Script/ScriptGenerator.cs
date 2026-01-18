@@ -2,14 +2,13 @@
 using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
 using DatabaseManager.Core.Model;
-using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static DatabaseInterpreter.Model.Table;
 
 namespace DatabaseManager.Core
 {
@@ -85,11 +84,23 @@ namespace DatabaseManager.Core
 
             if (scriptAction == ScriptAction.CREATE || scriptAction == ScriptAction.ALTER)
             {
+                DatabaseType databaseType = this.dbInterpreter.DatabaseType;
+
+                if (scriptAction == ScriptAction.CREATE && dbObject is Table t)
+                {
+                    Table table = schemaInfo.Tables.FirstOrDefault(item => item.Name == t.Name && item.Schema == t.Schema);
+
+                    if (table != null)
+                    {
+                        bool isPartitionedTable = await this.dbInterpreter.IsPartitionedTable(table);
+
+                        await SetTableExtraInfo(this.dbInterpreter, schemaInfo, table, isPartitionedTable);
+                    }
+                }
+
                 DbScriptGenerator dbScriptGenerator = DbScriptGeneratorHelper.GetDbScriptGenerator(dbInterpreter);
 
                 List<Script> scripts = dbScriptGenerator.GenerateSchemaScripts(schemaInfo).Scripts;
-
-                DatabaseType databaseType = this.dbInterpreter.DatabaseType;
 
                 StringBuilder sbContent = new StringBuilder();
 
@@ -156,6 +167,122 @@ namespace DatabaseManager.Core
             }
 
             return result;
+        }
+
+        public static async Task<List<Table>> HandlePartitionedTable(DbInterpreter dbInterpreter, SchemaInfo schemaInfo, SchemaInfoFilter filter)
+        {
+            DatabaseType databaseType = dbInterpreter.DatabaseType;
+
+            var partitionedTables = await dbInterpreter.GetPartitionedTables(filter);
+
+            foreach (var partitionTable in partitionedTables)
+            {
+                Table table = schemaInfo.Tables.FirstOrDefault(item => (item.Schema == partitionTable.Schema || partitionTable.Schema == null) && item.Name == partitionTable.Name);
+
+                if (table != null)
+                {
+                    await SetTableExtraInfo(dbInterpreter, schemaInfo, table, true);
+                }
+            }
+
+            if (databaseType == DatabaseType.Postgres)
+            {
+                var partitionInfos = (await (dbInterpreter as PostgresInterpreter).GetPartitionInfos(filter, true));
+
+                foreach (var partitionInfo in partitionInfos)
+                {
+                    var table = schemaInfo.Tables.Where(item => partitionInfo.TableSchema == item.Schema && partitionInfo.TableName == item.Name).FirstOrDefault();
+
+                    if (table != null)
+                    {
+                        SetTableExtraInfoForPostgresTable(table, true, partitionInfo);
+                    }
+                }
+            }
+
+            return partitionedTables;
+        }
+
+        public static async Task SetTableExtraInfo(DbInterpreter dbInterpreter, SchemaInfo schemaInfo, Table table, bool isPartitionedTable)
+        {
+            DatabaseType databaseType = dbInterpreter.DatabaseType;
+
+            table.ExtraInfo = new TableExtraInfo() { IsPartitioned = isPartitionedTable };
+
+            if (databaseType == DatabaseType.SqlServer)
+            {
+                SqlServerInterpreter sqlserverInterpreter = dbInterpreter as SqlServerInterpreter;
+
+                if (!isPartitionedTable)
+                {
+                    table.ExtraInfo.FilegroupName = await sqlserverInterpreter.GetTableFilegroupName(table);
+                }
+                else
+                {
+                    table.ExtraInfo.PartitionScheme = await sqlserverInterpreter.GetPartitionSchemeByTable(table);
+                }
+            }
+            else if (databaseType == DatabaseType.Oracle)
+            {
+                OracleInterpreter oracleInterpreter = dbInterpreter as OracleInterpreter;
+
+                if (isPartitionedTable)
+                {
+                    table.ExtraInfo.PartitionSummary = await oracleInterpreter.GetPartitionSummary(table, true);
+                }
+
+                var tableIndexExtraInfos = await oracleInterpreter.GetTableIndexExtraInfos(table, true);
+
+                foreach (var indexExtraInfo in tableIndexExtraInfos)
+                {
+                    var index = schemaInfo.TableIndexes.FirstOrDefault(item => item.TableName == table.Name && item.Schema == table.Schema);
+
+                    if (index != null)
+                    {
+                        index.ExtraInfo = indexExtraInfo;
+                    }
+                }
+            }
+            else if (databaseType == DatabaseType.MySql)
+            {
+                MySqlInterpreter mySqlInterpreter = dbInterpreter as MySqlInterpreter;
+
+                if (isPartitionedTable)
+                {
+                    table.ExtraInfo.PartitionSummary = await mySqlInterpreter.GetPartitionSummary(table, true);
+                }
+            }
+            else if (databaseType == DatabaseType.Postgres)
+            {
+                PostgresInterpreter postgresInterpreter = dbInterpreter as PostgresInterpreter;
+
+                if (isPartitionedTable)
+                {
+                    table.ExtraInfo.PartitionSummary = await postgresInterpreter.GetPartitionSummary(table, true);
+                }
+                else
+                {
+                    bool isInheritedPartitionTable = await postgresInterpreter.IsInheritedPartitionTable(table);
+
+                    if (isInheritedPartitionTable)
+                    {
+                        PartitionInfo partitionInfo = (await postgresInterpreter.GetPartitionInfos(table, true)).FirstOrDefault();
+
+                        SetTableExtraInfoForPostgresTable(table, isInheritedPartitionTable, partitionInfo);
+                    }
+                }
+            }
+        }
+
+        private static void SetTableExtraInfoForPostgresTable(Table table, bool isInheritedPartitionTable, PartitionInfo partitionInfo)
+        {
+            if (table.ExtraInfo == null)
+            {
+                table.ExtraInfo = new TableExtraInfo();
+            }
+
+            table.ExtraInfo.IsInheritedPartition = isInheritedPartitionTable;
+            table.ExtraInfo.PartitionInfo = partitionInfo;
         }
 
         private int GetCreateIndex(string script, string createFlag)

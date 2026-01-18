@@ -12,7 +12,7 @@ namespace DatabaseInterpreter.Core
 
         #region Schema Script   
 
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
@@ -46,7 +46,7 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
-                this.AppendScriptsToFile(sb.ToString().Trim(), GenerateScriptMode.Schema, true);
+                this.AppendScriptsToFile(sb.ToString().Trim(), GenerateScriptMode.Schema, overwrite);
             }
 
             return sb;

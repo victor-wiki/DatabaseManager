@@ -51,7 +51,7 @@ namespace DatabaseManager.Core
 
             var allTables = sourceSchemaInfoWithAllTables.Tables;
 
-            var sortedTables = TableReferenceHelper.ResortTables(allTables, sourceSchemaInfoWithAllTables.TableForeignKeys);
+            var sortedTables = await TableReferenceHelper.ResortTables(allTables, sourceSchemaInfoWithAllTables.TableForeignKeys, this.sourceDbInterpreter);
 
             var tableNames = this.schemaInfo.Tables.Select(item => item.Name).ToArray();
 

@@ -14,17 +14,17 @@ namespace DatabaseInterpreter.Core
 
         #region Schema Script   
 
-        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo)
+        public override ScriptBuilder GenerateSchemaScripts(SchemaInfo schemaInfo, bool overwrite = true)
         {
             ScriptBuilder sb = new ScriptBuilder();
 
             #region User Defined Type            
             foreach (UserDefinedType userDefinedType in schemaInfo.UserDefinedTypes)
             {
-                this.FeedbackInfo(OperationState.Begin, userDefinedType);                
+                this.FeedbackInfo(OperationState.Begin, userDefinedType);
 
                 sb.AppendLine(this.CreateUserDefinedType(userDefinedType));
-                sb.AppendLine(new SpliterScript(this.scriptsDelimiter));                
+                sb.AppendLine(new SpliterScript(this.scriptsDelimiter));
 
                 this.FeedbackInfo(OperationState.End, userDefinedType);
             }
@@ -33,9 +33,9 @@ namespace DatabaseInterpreter.Core
             #region Sequence          
             foreach (Sequence sequence in schemaInfo.Sequences)
             {
-                this.FeedbackInfo(OperationState.Begin, sequence);                
+                this.FeedbackInfo(OperationState.Begin, sequence);
 
-                sb.AppendLine(this.CreateSequence(sequence));                           
+                sb.AppendLine(this.CreateSequence(sequence));
 
                 this.FeedbackInfo(OperationState.End, sequence);
             }
@@ -79,7 +79,7 @@ namespace DatabaseInterpreter.Core
 
             if (this.option.ScriptOutputMode.HasFlag(GenerateScriptOutputMode.WriteToFile))
             {
-                this.AppendScriptsToFile(sb.ToString().Trim(), GenerateScriptMode.Schema, true);
+                this.AppendScriptsToFile(sb.ToString().Trim(), GenerateScriptMode.Schema, overwrite);
             }
 
             return sb;
@@ -137,7 +137,7 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddTableColumn(Table table, TableColumn column)
         {
-            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedDbObjectNameWithSchema(table)} ADD { this.dbInterpreter.ParseColumn(table, column)}");
+            return new CreateDbObjectScript<TableColumn>($"ALTER TABLE {this.GetQuotedDbObjectNameWithSchema(table)} ADD {this.dbInterpreter.ParseColumn(table, column)}");
         }
 
         public override Script RenameTableColumn(Table table, TableColumn column, string newName)
@@ -167,14 +167,14 @@ namespace DatabaseInterpreter.Core
 
         public override Script AddPrimaryKey(TablePrimaryKey primaryKey)
         {
-            string pkName = string.IsNullOrEmpty(primaryKey.Name)? this.GetQuotedString($"PK_{primaryKey.TableName}"): this.GetQuotedString(primaryKey.Name);
+            string pkName = string.IsNullOrEmpty(primaryKey.Name) ? this.GetQuotedString($"PK_{primaryKey.TableName}") : this.GetQuotedString(primaryKey.Name);
 
             string script =
 $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
 {pkName} PRIMARY KEY {(primaryKey.Clustered ? "CLUSTERED" : "NONCLUSTERED")}
 (
     {string.Join(",", primaryKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)} {(item.IsDesc ? "DESC" : "")}"))}
-) WITH(STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON[PRIMARY]";
+);";
 
             return new CreateDbObjectScript<TablePrimaryKey>(script);
         }
@@ -187,15 +187,15 @@ $@"ALTER TABLE {this.GetQuotedFullTableName(primaryKey)} ADD CONSTRAINT
         public override Script AddForeignKey(TableForeignKey foreignKey)
         {
             string quotedTableName = this.GetQuotedFullTableName(foreignKey);
-            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString(this.GetTableObjectDefaultName(foreignKey)): this.GetQuotedString(foreignKey.Name);
+            string fkName = string.IsNullOrEmpty(foreignKey.Name) ? this.GetQuotedString(this.GetTableObjectDefaultName(foreignKey)) : this.GetQuotedString(foreignKey.Name);
 
-            string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ColumnName)}"));
-            string referencedColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{ this.GetQuotedString(item.ReferencedColumnName)}"));
+            string columnNames = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}"));
+            string referencedColumnName = string.Join(",", foreignKey.Columns.Select(item => $"{this.GetQuotedString(item.ReferencedColumnName)}"));
 
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine(
-$@"ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT { fkName } FOREIGN KEY({columnNames})
+$@"ALTER TABLE {quotedTableName} WITH CHECK ADD CONSTRAINT {fkName} FOREIGN KEY({columnNames})
 REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, foreignKey.ReferencedTableName)} ({referencedColumnName})");
 
             if (foreignKey.UpdateCascade)
@@ -220,17 +220,17 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script AddIndex(TableIndex index)
         {
-            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}{(item.IsDesc?" DESC":"")}"));
+            string columnNames = string.Join(",", index.Columns.Select(item => $"{this.GetQuotedString(item.ColumnName)}{(item.IsDesc ? " DESC" : "")}"));
 
             string unique = index.IsUnique ? "UNIQUE" : "";
             string clustered = index.Clustered ? "CLUSTERED" : "NONCLUSTERED";
             string type = index.Type == IndexType.ColumnStore.ToString() ? "COLUMNSTORE" : "";
-       
+
             string indexName = index.Name;
 
-            if(string.IsNullOrEmpty(indexName))
+            if (string.IsNullOrEmpty(indexName))
             {
-                indexName = (index.IsUnique ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item=>item.ColumnName));
+                indexName = (index.IsUnique ? "UX" : "IX") + "_" + index.TableName + "_" + string.Join("_", index.Columns.Select(item => item.ColumnName));
             }
 
             string sql = $@"CREATE {unique} {clustered} {type} INDEX {this.GetQuotedString(indexName)} ON {this.GetQuotedFullTableName(index)}({columnNames})";
@@ -280,7 +280,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
             }
 
             string sql = $"EXEC {(isNew ? "sp_addextendedproperty" : "sp_updateextendedproperty")} N'MS_Description',N'{this.TransferSingleQuotationString(tableChild.Comment)}',N'SCHEMA',N'{tableChild.Schema}',N'table',N'{tableChild.TableName}',N'{type}',N'{tableChild.Name}'";
-            
+
             return new ExecuteProcedureScript(sql);
         }
 
@@ -298,7 +298,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
         public override Script SetIdentityEnabled(TableColumn column, bool enabled)
         {
-            return new AlterDbObjectScript<Table>($"SET IDENTITY_INSERT { this.GetQuotedFullTableName(column) } {(enabled ? "OFF" : "ON")}");
+            return new AlterDbObjectScript<Table>($"SET IDENTITY_INSERT {this.GetQuotedFullTableName(column)} {(enabled ? "OFF" : "ON")}");
         }
 
         public Script RebuildIndex(TableIndex index)
@@ -311,7 +311,7 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
         #endregion
 
         #region Database Operation
-        public override Script CreateSchema(DatabaseSchema schema) 
+        public override Script CreateSchema(DatabaseSchema schema)
         {
             string script = $"CREATE SCHEMA {this.GetQuotedString(schema.Name)};";
 
@@ -331,28 +331,39 @@ REFERENCES {this.GetQuotedDbObjectNameWithSchema(foreignKey.ReferencedSchema, fo
 
             bool hasBigDataType = columns.Any(item => this.IsBigDataType(item));
 
-            string option = this.GetCreateTableOption();
-
             #region Create Table
 
             string existsClause = $"IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name='{(table.Name)}')";
 
+            string filegroupName = table.ExtraInfo?.FilegroupName ?? "PRIMARY";
+            PartitionScheme scheme = table.ExtraInfo?.PartitionScheme;
+
+            string option = "";
+
+            if (scheme != null)
+            {
+                option = $"[{scheme.SchemeName}]([{scheme.ColumnName}])";
+            }
+            else
+            {
+                option = $"[{filegroupName}]";
+            }
+
             string tableScript =
 $@"
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
-
 {(this.dbInterpreter.NotCreateIfExists ? existsClause : "")}
 CREATE TABLE {quotedTableName}(
 {string.Join("," + Environment.NewLine, columns.Select(item => this.dbInterpreter.ParseColumn(table, item)))}
-) {option}{(hasBigDataType ? " TEXTIMAGE_ON [PRIMARY]" : "")}" + ";";
+) ON {option}{(hasBigDataType && scheme == null ? $" TEXTIMAGE_ON [{filegroupName}]" : "")}" + ";";
 
             sb.AppendLine(new CreateDbObjectScript<Table>(tableScript));
+
+            sb.AppendLine(new SpliterScript(this.dbInterpreter.ScriptsDelimiter));
 
             #endregion
 
             #region Comment
-            if(this.option.TableScriptsGenerateOption.GenerateComment)
+            if (this.option.TableScriptsGenerateOption.GenerateComment)
             {
                 if (!string.IsNullOrEmpty(table.Comment))
                 {
@@ -363,7 +374,7 @@ CREATE TABLE {quotedTableName}(
                 {
                     sb.AppendLine(this.SetTableColumnComment(table, column, true));
                 }
-            }            
+            }
             #endregion
 
             #region Default Value
@@ -373,11 +384,11 @@ CREATE TABLE {quotedTableName}(
 
                 foreach (TableColumn column in defaultValueColumns)
                 {
-                    if(ValueHelper.IsSequenceNextVal(column.DefaultValue))
+                    if (ValueHelper.IsSequenceNextVal(column.DefaultValue))
                     {
                         continue;
                     }
-                    else if(column.DefaultValue.ToUpper().TrimStart().StartsWith("CREATE DEFAULT"))
+                    else if (column.DefaultValue.ToUpper().TrimStart().StartsWith("CREATE DEFAULT"))
                     {
                         continue;
                     }
@@ -444,7 +455,10 @@ CREATE TABLE {quotedTableName}(
             }
             #endregion
 
-            sb.Append(new SpliterScript(this.scriptsDelimiter));
+            if (!sb.IsEndWithSpliterScript())
+            {
+                sb.Append(new SpliterScript(this.scriptsDelimiter));
+            }            
 
             return sb;
         }
@@ -464,14 +478,14 @@ CREATE TABLE {quotedTableName}(
 
         public override Script CreateSequence(Sequence sequence)
         {
-            string script = 
+            string script =
 $@"CREATE SEQUENCE {this.GetQuotedDbObjectNameWithSchema(sequence)} AS {sequence.DataType} 
 START WITH {sequence.StartValue}
 INCREMENT BY {sequence.Increment}
 MINVALUE {(long)sequence.MinValue}
 MAXVALUE {(long)sequence.MaxValue}
-{(sequence.Cycled? "CYCLE" : "")}
-{(sequence.UseCache? "CACHE":"")}{(sequence.CacheSize>0? $" {sequence.CacheSize}" : "")};";
+{(sequence.Cycled ? "CYCLE" : "")}
+{(sequence.UseCache ? "CACHE" : "")}{(sequence.CacheSize > 0 ? $" {sequence.CacheSize}" : "")};";
 
             return new CreateDbObjectScript<Sequence>(script);
         }
@@ -551,6 +565,42 @@ BEGIN
 END";
 
             yield return new ExecuteProcedureScript(sql);
+        }
+
+        public Script CreatePartitionScheme(PartitionScheme scheme)
+        {
+            string script =
+$@"CREATE PARTITION SCHEME [{scheme.SchemeName}]
+AS PARTITION [{scheme.FunctionName}]
+TO ({string.Join(", ", scheme.Filegroups.Select(item=>$"[{item}]"))});";
+
+            return new Script(script);
+        }
+
+        public Script CreatePartitionFunction(PartitionFunction function)
+        {
+            string type = function.Type;
+            var dataTypeInfo = function.DataTypeInfo;
+            string dataType = dataTypeInfo.DataType;
+
+            bool isDateTime = DataTypeHelper.IsDateOrTimeType(dataType) || DataTypeHelper.IsDatetimeOrTimestampType(dataType);
+            bool isChar = DataTypeHelper.IsCharType(dataType);
+
+            string typeName = "";
+            string strValues = string.Join(",", function.Values.Select(item => (isDateTime || isChar) ? $"'{item}'" : item));
+
+            if(type == "R")
+            {
+                typeName = "RANGE";
+            }
+
+            string strDataType = this.dbInterpreter.ParseDataType(new TableColumn() { DataType = dataType, MaxLength = dataTypeInfo.MaxLength, Precision = dataTypeInfo.Precision, Scale = dataTypeInfo.Scale });
+
+            string script =
+$@"CREATE PARTITION FUNCTION [{function.Name}]({strDataType})
+AS {typeName} {(function.IsOnRight? "RIGHT": "LEFT")} FOR VALUES ({strValues});";
+
+            return new Script(script);
         }
 
         #endregion
