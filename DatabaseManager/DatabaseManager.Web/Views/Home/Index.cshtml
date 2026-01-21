@@ -73,7 +73,7 @@
         setSqlMode($("#targetDatabaseType").val(), false);
     });
 
-    var dbTypeMappings={"sqlserver": "mssql", "oracle":"plsql", "postgres":"postgres", "mysql":"mysql", "plsql":"plsql"};
+    var dbTypeMappings={"sqlserver": "mssql", "oracle":"plsql", "postgres":"pgsql", "mysql":"mysql", "sqlite":"sqlite"};
 
     var setSqlMode=function(dbType, isSource){
         dbType = dbType.toLowerCase();
