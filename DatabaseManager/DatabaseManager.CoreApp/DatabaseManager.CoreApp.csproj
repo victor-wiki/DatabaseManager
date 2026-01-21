@@ -33,7 +33,7 @@
     <PackageReference Include="Microsoft.Msagl.GraphViewerGDI" Version="1.1.7" />
     <PackageReference Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
     <PackageReference Include="ObjectListView.Repack.Core3" Version="2.9.3" />
-    <PackageReference Include="SqlCodeEditor" Version="1.0.9" />
+    <PackageReference Include="SqlCodeEditor" Version="2.0.1" />
   </ItemGroup>
 
   <ItemGroup>

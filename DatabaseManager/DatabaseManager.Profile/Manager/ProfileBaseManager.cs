@@ -36,7 +36,7 @@ namespace DatabaseManager.Profile.Manager
 
             string dataFilePath = Path.Combine(folder, dataFileName);
 
-            string templateFilePath = Path.Combine(assemblyFolder, "Template", dataFileName);
+            string templateFilePath = Path.Combine(assemblyFolder, @"Config\Template\Data", dataFileName);
 
             if (!File.Exists(templateFilePath))
             {

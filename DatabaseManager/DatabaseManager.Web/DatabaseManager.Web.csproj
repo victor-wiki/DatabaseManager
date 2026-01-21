@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\lib\codemirror\codemirror.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
     <ProjectReference Include="..\DatabaseManager.Core\DatabaseManager.Core.csproj" />

@@ -11,7 +11,7 @@
 <style>
     .contentPanel {
         display: inline;
-        width: 505px;
+        width: 500px;
         float: left;
     }
 
@@ -20,31 +20,124 @@
         width: 80px;
         float: left;
         height: 300px;
+        margin-left:3px;
+        margin-right:3px;
     }
 
     .actionButton {
         margin-top: 220px;
     }
+
+    .exchangeButton{
+        color: blue;
+        font-size:14px;       
+        height:25px;
+        vertical-align: top;
+        margin-left:200px;
+    }
+
+    .lineNumberCheckbox{
+        height:16px;
+        width:16px;
+        margin-left:180px;
+        vertical-align: middle;
+    }
+
+    .CodeMirror {
+        font-size: 16px;
+        border: 1px solid gray;
+        height: 470px !important;
+        width: 500px !important;
+    }   
 </style>
 
+@section Scripts {
 <script type="text/javascript">
+    var editorOption ={
+            mode: "text/x-sql",
+            lineNumbers: true,
+            theme: "default"
+    };
+
+    var souceEditorOption= editorOption;
+    var targetEditorOption = editorOption;
+
+    var sourceEditor = CodeMirror.fromTextArea(document.getElementById("txtSource"), souceEditorOption);
+    var targetEditor = CodeMirror.fromTextArea(document.getElementById("txtTarget"), targetEditorOption);
+
+    $("#sourceDatabaseType").change(function(){
+        setSqlMode($("#sourceDatabaseType").val(), true);
+    });
+
+    $("#targetDatabaseType").change(function(){
+        setSqlMode($("#targetDatabaseType").val(), false);
+    });
+
+    var dbTypeMappings={"sqlserver": "mssql", "oracle":"plsql", "postgres":"postgres", "mysql":"mysql", "plsql":"plsql"};
+
+    var setSqlMode=function(dbType, isSource){
+        dbType = dbType.toLowerCase();
+
+        var mode="sql";
+
+        if(dbTypeMappings[dbType]){
+            mode = dbTypeMappings[dbType];
+        }else if(dbType=="unknown"){
+            mode = "sql";
+        }      
+
+        var modeName = "text/x-"+mode;
+
+        if(isSource){
+            sourceEditor.setOption("mode", modeName);
+        }
+        else{
+            targetEditor.setOption("mode", modeName);
+        }
+    };
+
     var validate = function () {
         var sourceDatabaseType = $("#sourceDatabaseType").val();
         var targetDatabaseType = $("#targetDatabaseType").val();
 
         if (sourceDatabaseType == "Unknown" || targetDatabaseType == "Unknown") {
-            alert('please specify source database type and target database type.');
+            alert('Please specify source database type and target database type.');
             return false;
         }
 
-        var source = $("#source").val();
+        if(sourceDatabaseType == targetDatabaseType){
+            alert("The source database type can't equal to the target database type.");
+            return false;
+        }
 
-        if (source == "") {
-            alert('the source content can not be empty!');
+        var sourceValue = sourceEditor.getValue();
+
+        if (sourceValue == "") {
+            alert('The source content can not be empty!');
             return false;
         }
 
         return true;
+    };
+
+    var exchange = function() {
+        var sourceDatabaseType = $("#sourceDatabaseType").val();
+        var targetDatabaseType = $("#targetDatabaseType").val();
+
+        if(sourceDatabaseType!= targetDatabaseType && sourceDatabaseType != "Unknown" && targetDatabaseType != "Unknown"){
+            $("#targetDatabaseType").val(sourceDatabaseType);
+            $("#sourceDatabaseType").val(targetDatabaseType);
+
+            setSqlMode($("#sourceDatabaseType").val(), true);
+            setSqlMode($("#targetDatabaseType").val(), false);
+        }               
+    };
+
+    var showLineNumber=function(){
+        var isChecked = $("#chkLineNumber").prop('checked')
+
+        sourceEditor.setOption("lineNumbers", isChecked);
+        targetEditor.setOption("lineNumbers", isChecked);
     }
 
     var post = function () {
@@ -54,6 +147,8 @@
             return;
         }
 
+        $("#hidSource").val(sourceEditor.getValue());
+
         var data = $("#translateForm").serialize();
 
         $.ajax({
@@ -62,15 +157,20 @@
             data: data,
             contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
             success: function (response) {
+                var value="";
+
                 if (response.hasError == false) {
-                    $("#target").val(response.data);
+                    value = response.data;
                 }
                 else if (response.message) {
                     alert(response.message);
+                    return;
                 }
                 else {
-                    $("#target").val("N/A");
+                    value ="N/A";
                 }
+
+                targetEditor.setValue(value);
             },
             error: function (result) {
                 alert(result);
@@ -78,15 +178,18 @@
         });
     };
 </script>
+}
 
 <div>
     <form id="translateForm">
         <div class="contentPanel">
             <div>
                 <span>Source:</span> @Html.DropDownList("sourceDatabaseType", databaseDropDownItems)
-            </div>
+
+                <input type="button" value="⇌" class="exchangeButton" onclick="exchange()" />
+            </div>           
             <div style="margin-top:5px;">
-                <textarea id="source" name="source" cols="65" rows="20" spellcheck="false"></textarea>
+                <textarea id="txtSource"></textarea>
             </div>
         </div>
         <div class="actionPanel">
@@ -95,10 +198,13 @@
         <div class="contentPanel">
             <div>
                 <span>Target:</span> @Html.DropDownList("targetDatabaseType", databaseDropDownItems)
+
+                <input id="chkLineNumber" type="checkbox" checked class="lineNumberCheckbox" onclick="showLineNumber()" />&nbsp; Show line number
             </div>
             <div style="margin-top:5px;">
-                <textarea id="target" name="target" cols="65" rows="20" spellcheck="false"></textarea>
+                <textarea id="txtTarget"></textarea>
             </div>
         </div>
+        <input type="hidden" id="hidSource" name="source" />
     </form>
 </div>

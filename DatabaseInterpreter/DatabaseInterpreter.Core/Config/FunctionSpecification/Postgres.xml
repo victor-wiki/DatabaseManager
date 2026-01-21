@@ -83,6 +83,7 @@
   <item name="‌STDDEV_POP‌‌" args="EXP" isAggregate="true"></item>
   <item name="STDDEV_SAMP‌" args="EXP" isAggregate="true"></item>
   <item name="STRPOS" args="EXP,SEARCH"></item>
+  <item name="STRING_AGG" args="EXP,SEPARATOR" isAggregate="true"></item>
   <item name="TAN" args="EXP"></item>
   <item name="TAND" args="EXP"></item>
   <item name="TO_CHAR" args="EXP,FORMAT" isString="true"></item>

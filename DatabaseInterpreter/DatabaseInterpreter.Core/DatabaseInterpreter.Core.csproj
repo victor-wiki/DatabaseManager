@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.4.0</AssemblyVersion>
-    <FileVersion>2.4.0</FileVersion>
-    <Version>2.4.0</Version>
-    <PackageReleaseNotes>1. add: get partition informations;
-2. add: "isAggregate" to identify whether function is aggregate. </PackageReleaseNotes>
+    <AssemblyVersion>2.4.1</AssemblyVersion>
+    <FileVersion>2.4.1</FileVersion>
+    <Version>2.4.1</Version>
+    <PackageReleaseNotes>1. Rearrange keyword config;
+2. Use "<PackageCopyToOutput>true</PackageCopyToOutput>" to output config files.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>‌Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <RepositoryUrl></RepositoryUrl>
@@ -18,7 +18,110 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Config\DataTypeSpecification\MySql.xml" />
+    <None Remove="Config\DataTypeSpecification\Oracle.xml" />
+    <None Remove="Config\DataTypeSpecification\Postgres.xml" />
+    <None Remove="Config\DataTypeSpecification\Sqlite.xml" />
+    <None Remove="Config\DataTypeSpecification\SqlServer.xml" />
+    <None Remove="Config\FunctionSpecification\MySql.xml" />
+    <None Remove="Config\FunctionSpecification\Oracle.xml" />
+    <None Remove="Config\FunctionSpecification\Postgres.xml" />
+    <None Remove="Config\FunctionSpecification\Sqlite.xml" />
+    <None Remove="Config\FunctionSpecification\SqlServer.xml" />
+    <None Remove="Config\Keyword\MySql.txt" />
+    <None Remove="Config\Keyword\Oracle.txt" />
+    <None Remove="Config\Keyword\Postgres.txt" />
+    <None Remove="Config\Keyword\Sqlite.txt" />
+    <None Remove="Config\Keyword\SqlServer.txt" />
+    <None Remove="Config\Option\CreateTableOption\MySql.xml" />
+    <None Remove="Config\Option\CreateTableOption\Oracle.xml" />
+    <None Remove="Config\Option\CreateTableOption\Postgres.xml" />
+    <None Remove="Config\Option\CreateTableOption\Sqlite.xml" />
+    <None Remove="Config\Option\CreateTableOption\SqlServer.xml" />
     <None Remove="DatabaseInterpreter.Core.csproj.Backup.tmp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\DataTypeSpecification\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\Postgres.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\Sqlite.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\DataTypeSpecification\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\FunctionSpecification\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\FunctionSpecification\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\FunctionSpecification\Postgres.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\FunctionSpecification\Sqlite.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\FunctionSpecification\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Keyword\MySql.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Keyword\Oracle.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Keyword\Postgres.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Keyword\Sqlite.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Keyword\SqlServer.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Option\CreateTableOption\MySql.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Option\CreateTableOption\Oracle.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Option\CreateTableOption\Postgres.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Option\CreateTableOption\Sqlite.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+    <Content Include="Config\Option\CreateTableOption\SqlServer.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -37,69 +140,6 @@
     <ProjectReference Include="..\DatabaseInterpreter.Geometry\DatabaseInterpreter.Geometry.csproj" />
     <ProjectReference Include="..\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
     <ProjectReference Include="..\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Config\DataTypeSpecification\MySql.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\DataTypeSpecification\Oracle.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\DataTypeSpecification\Postgres.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\DataTypeSpecification\Sqlite.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\DataTypeSpecification\SqlServer.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\FunctionSpecification\MySql.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\FunctionSpecification\Oracle.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\FunctionSpecification\Postgres.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\FunctionSpecification\Sqlite.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\FunctionSpecification\SqlServer.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Keyword\MySql.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Keyword\Oracle.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Keyword\Postgres.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Keyword\Sqlite.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Keyword\SqlServer.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Option\CreateTableOption\Oracle.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Option\CreateTableOption\Postgres.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Option\CreateTableOption\Sqlite.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Option\CreateTableOption\SqlServer.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Config\Option\CreateTableOption\MySql.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

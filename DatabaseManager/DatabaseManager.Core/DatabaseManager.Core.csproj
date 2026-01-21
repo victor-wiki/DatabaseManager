@@ -5,12 +5,11 @@
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>Database manage tool for: SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <Authors>victor-wiki</Authors>
-    <Version>2.4.0</Version>
-    <PackageReleaseNotes>1. add: table partition;
-2. code generator: can generate comment.</PackageReleaseNotes>
+    <Version>2.4.1</Version>
+    <PackageReleaseNotes>Use "<PackageCopyToOutput>true</PackageCopyToOutput>" to output config files.</PackageReleaseNotes>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.4.0</AssemblyVersion>
-    <FileVersion>2.4.0</FileVersion>
+    <AssemblyVersion>2.4.1</AssemblyVersion>
+    <FileVersion>2.4.1</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,42 +31,55 @@
   <ItemGroup>
     <Content Include="Config\Template\Function\Oracle.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Function\MySql.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Function\Postgres.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Function\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Procedure\MySql.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Procedure\Postgres.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Procedure\Oracle.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\Procedure\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\TableTrigger\MySql.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\TableTrigger\Oracle.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\TableTrigger\Postgres.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\TableTrigger\SqlServer.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
     <Content Include="Config\Template\View\Common.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
     </Content>
   </ItemGroup>
 

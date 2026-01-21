@@ -3,24 +3,31 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <Version>2.3.1</Version>
-    <AssemblyVersion>2.3.1</AssemblyVersion>
-    <FileVersion>2.2.1</FileVersion>
-    <PackageReleaseNotes>Use "Hidden" instead of "Visible" to store database visibility.</PackageReleaseNotes>
+    <Version>2.4.0</Version>
+    <AssemblyVersion>2.4.0</AssemblyVersion>
+    <FileVersion>2.4.0</FileVersion>
+    <PackageReleaseNotes>"profiles.db3"
+1. Use "<PackageCopyToOutput>true</PackageCopyToOutput>";
+2. Change location to "Config/Template/Data".</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Config\Template\profiles.db3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\Template\Data\profiles.db3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <PackageCopyToOutput>true</PackageCopyToOutput>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\DatabaseConverter\DatabaseConverter.Core\DatabaseConverter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Core\DatabaseInterpreter.Core.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Model\DatabaseInterpreter.Model.csproj" />
     <ProjectReference Include="..\..\DatabaseInterpreter\DatabaseInterpreter.Utility\DatabaseInterpreter.Utility.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Template\profiles.db3">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
