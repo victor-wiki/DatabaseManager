@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DatabaseInterpreter.Model
+﻿namespace DatabaseInterpreter.Model
 {
     public class DatabaseObject
     {

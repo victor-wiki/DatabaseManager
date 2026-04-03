@@ -236,7 +236,7 @@ namespace DatabaseManager.Core
                     hasComment = true;
                 }
 
-                sb.AppendLine(columnIndent + "public " + type + $"{nullableFlag} " + column.Name + " {get; set;}");
+                sb.AppendLine(columnIndent + "public " + type + $"{nullableFlag} " + column.Name + " { get; set; }");
             }
 
             sb.AppendLine(classIndent + "}");
