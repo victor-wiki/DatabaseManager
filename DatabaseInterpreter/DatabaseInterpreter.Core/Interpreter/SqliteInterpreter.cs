@@ -13,6 +13,12 @@ namespace DatabaseInterpreter.Core
 {
   public class SqliteInterpreter : DbInterpreter
   {
+    /// <summary>
+    /// SQLite default SQLITE_MAX_COMPOUND_SELECT is 500.
+    /// Stay safely below with batches of 400.
+    /// </summary>
+    private const int MaxCompoundSelectTerms = 400;
+
     #region Field & Property
     public override string CommentString => "--";
     public override string CommandParameterChar => "@";
@@ -204,10 +210,7 @@ namespace DatabaseInterpreter.Core
 
       if (filter?.TableNames == null)
       {
-        if (filter == null)
-        {
-          filter = new SchemaInfoFilter();
-        }
+        filter ??= new SchemaInfoFilter();
 
         if (!isForView)
         {
@@ -219,7 +222,13 @@ namespace DatabaseInterpreter.Core
         }
       }
 
-      var columns = await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(filter));
+      // Batch to avoid "too many terms in compound SELECT"
+      var columns = new List<TableColumn>();
+
+      foreach (string[] batch in filter.TableNames.Chunk(MaxCompoundSelectTerms))
+      {
+        columns.AddRange(await base.GetDbObjectsAsync<TableColumn>(dbConnection, this.GetSqlForTableColumns(batch)));
+      }
 
       #region Get generated column expression
       var tablesSql = this.GetSqlForTableViews(DatabaseObjectType.Table, filter, true);
@@ -247,13 +256,16 @@ namespace DatabaseInterpreter.Core
               {
                 string item = cd[i];
 
-                if (item.ToUpper() == "GENERATED")
+                if (item.Equals("GENERATED", StringComparison.OrdinalIgnoreCase))
                 {
                   tableColumn.IsGeneratedAlways = true;
-                  tableColumn.ComputeExp = cd.Skip(i + 1).Where(item => item.ToUpper() != "ALWAYS" && item.ToUpper() != "AS").FirstOrDefault();
+                  tableColumn.ComputeExp = cd.Skip(i + 1)
+                    .Where(item => !item.Equals("ALWAYS", StringComparison.OrdinalIgnoreCase)
+                                && !item.Equals("AS", StringComparison.OrdinalIgnoreCase))
+                    .FirstOrDefault();
                   break;
                 }
-                else if (item.ToUpper() == "AS")
+                else if (item.Equals("AS", StringComparison.OrdinalIgnoreCase))
                 {
                   tableColumn.ComputeExp = cd.Skip(i + 1).FirstOrDefault();
                 }
@@ -269,18 +281,16 @@ namespace DatabaseInterpreter.Core
       return columns;
     }
 
-    private string GetSqlForTableColumns(SchemaInfoFilter filter = null)
+    private string GetSqlForTableColumns(IEnumerable<string> tableNames)
     {
       SqlBuilder sb = new SqlBuilder();
 
-      string[] tableNames = filter?.TableNames;
-
       if (tableNames != null)
       {
-        for (int i = 0; i < tableNames.Length; i++)
-        {
-          string tableName = tableNames[i];
+        int i = 0;
 
+        foreach (string tableName in tableNames)
+        {
           if (i > 0)
           {
             sb.Append("UNION ALL");
@@ -294,6 +304,8 @@ namespace DatabaseInterpreter.Core
                                 CASE WHEN ""notnull""=1 THEN 0 ELSE 1 END AS IsNullable,
                                 dflt_value AS DefaultValue, pk AS IsPrimaryKey, cid AS ""Order""
                                 FROM PRAGMA_TABLE_XINFO('{tableName}')");
+
+          i++;
         }
       }
 
@@ -311,33 +323,59 @@ namespace DatabaseInterpreter.Core
     {
       if (filter?.TableNames == null)
       {
-        if (filter == null)
-        {
-          filter = new SchemaInfoFilter();
-        }
-
-        filter.TableNames = (await this.GetTableNamesAsync());
+        filter ??= new SchemaInfoFilter();
+        filter.TableNames = await this.GetTableNamesAsync();
       }
 
-      List<TablePrimaryKeyItem> primaryKeyItems = await base.GetDbObjectsAsync<TablePrimaryKeyItem>(dbConnection, this.GetSqlForPrimaryKeys(filter));
+      // Batch to avoid "too many terms in compound SELECT"
+      List<TablePrimaryKeyItem> primaryKeyItems = new List<TablePrimaryKeyItem>();
+
+      foreach (string[] batch in filter.TableNames.Chunk(MaxCompoundSelectTerms))
+      {
+        primaryKeyItems.AddRange(await base.GetDbObjectsAsync<TablePrimaryKeyItem>(dbConnection, this.GetSqlForPrimaryKeys(batch)));
+      }
 
       await this.MakeupTableChildrenNames(primaryKeyItems, filter);
 
       return primaryKeyItems;
     }
-
-    private string GetSqlForPrimaryKeys(SchemaInfoFilter filter = null)
+    private string GetSqlForForeignKeys(IEnumerable<string> tableNames, bool isFilterForReferenced = false)
     {
       SqlBuilder sb = new SqlBuilder();
 
-      string[] tableNames = filter?.TableNames;
+      if (!isFilterForReferenced && tableNames != null)
+      {
+        int i = 0;
+
+        foreach (string tableName in tableNames)
+        {
+          if (i > 0)
+          {
+            sb.Append("UNION ALL");
+          }
+
+          sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
+                                '{tableName}' AS TableName, ""from"" AS ColumnName,
+                                CASE WHEN on_update='CASCADE' THEN 1 ELSE 0 END AS UpdateCascade,
+                                CASE WHEN on_delete='CASCADE' THEN 1 ELSE 0 END AS DeleteCascade
+                                FROM PRAGMA_foreign_key_list('{tableName}')");
+
+          i++;
+        }
+      }
+
+      return sb.Content;
+    }
+    private string GetSqlForPrimaryKeys(IEnumerable<string> tableNames)
+    {
+      SqlBuilder sb = new SqlBuilder();
 
       if (tableNames != null)
       {
-        for (int i = 0; i < tableNames.Length; i++)
-        {
-          string tableName = tableNames[i];
+        int i = 0;
 
+        foreach (string tableName in tableNames)
+        {
           if (i > 0)
           {
             sb.Append("UNION ALL");
@@ -346,11 +384,39 @@ namespace DatabaseInterpreter.Core
           sb.Append($@"SELECT '{tableName}' as TableName, name AS ColumnName
                         FROM PRAGMA_TABLE_XINFO('{tableName}')
                         WHERE pk>0");
+
+          i++;
         }
       }
 
       return sb.Content;
     }
+
+    //private string GetSqlForPrimaryKeys(SchemaInfoFilter filter = null)
+    //{
+    //  SqlBuilder sb = new SqlBuilder();
+
+    //  string[] tableNames = filter?.TableNames;
+
+    //  if (tableNames != null)
+    //  {
+    //    for (int i = 0; i < tableNames.Length; i++)
+    //    {
+    //      string tableName = tableNames[i];
+
+    //      if (i > 0)
+    //      {
+    //        sb.Append("UNION ALL");
+    //      }
+
+    //      sb.Append($@"SELECT '{tableName}' as TableName, name AS ColumnName
+    //                    FROM PRAGMA_TABLE_XINFO('{tableName}')
+    //                    WHERE pk>0");
+    //    }
+    //  }
+
+    //  return sb.Content;
+    //}
 
     private async Task MakeupTableChildrenNames(IEnumerable<TableColumnChild> columnChildren, SchemaInfoFilter filter = null)
     {
@@ -401,7 +467,7 @@ namespace DatabaseInterpreter.Core
                 flag = "PRIMARY";
               }
 
-              if (flag != null && items.Any(item => item.ToUpper() == flag))
+              if (flag != null && items.Any(item => item.Equals(flag, StringComparison.OrdinalIgnoreCase)))
               {
                 for (int i = 0; i < items.Count; i++)
                 {
@@ -416,7 +482,7 @@ namespace DatabaseInterpreter.Core
                   {
                     var columnNames = item.Trim('(', ')').Split(',').Select(item => item.Trim());
 
-                    if (columnNames.Any(item => item.ToLower() == columnName.ToLower()))
+                    if (columnNames.Any(item => item.Equals(columnName, StringComparison.OrdinalIgnoreCase)))
                     {
                       cc.Name = name;
                       break;
@@ -539,15 +605,16 @@ namespace DatabaseInterpreter.Core
     {
       if (filter?.TableNames == null)
       {
-        if (filter == null)
-        {
-          filter = new SchemaInfoFilter();
-        }
-
         filter = new SchemaInfoFilter() { TableNames = await GetTableNamesAsync() };
       }
 
-      List<TableForeignKeyItem> foreignKeyItems = await base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForForeignKeys(filter, isFilterForReferenced));
+      // Batch to avoid "too many terms in compound SELECT"
+      List<TableForeignKeyItem> foreignKeyItems = new List<TableForeignKeyItem>();
+
+      foreach (string[] batch in filter.TableNames.Chunk(MaxCompoundSelectTerms))
+      {
+        foreignKeyItems.AddRange(await base.GetDbObjectsAsync<TableForeignKeyItem>(dbConnection, this.GetSqlForForeignKeys(batch, isFilterForReferenced)));
+      }
 
       await this.MakeupTableChildrenNames(foreignKeyItems, filter);
 
@@ -568,31 +635,59 @@ namespace DatabaseInterpreter.Core
       return tables.Select(item => item.Name).ToArray();
     }
 
-    private string GetSqlForForeignKeys(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+    //private string GetSqlForForeignKeys(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
+    //{
+    //  SqlBuilder sb = new SqlBuilder();
+
+    //  if (!isFilterForReferenced)
+    //  {
+    //    string[] tableNames = filter?.TableNames;
+
+    //    if (tableNames != null)
+    //    {
+    //      for (int i = 0; i < tableNames.Length; i++)
+    //      {
+    //        string tableName = tableNames[i];
+
+    //        if (i > 0)
+    //        {
+    //          sb.Append("UNION ALL");
+    //        }
+
+    //        sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
+    //                            '{tableName}' AS TableName, ""from"" AS ColumnName,
+    //                            CASE WHEN on_update='CASCADE' THEN 1 ELSE 0 END AS UpdateCascade,
+    //                            CASE WHEN on_delete='CASCADE' THEN 1 ELSE 0 END AS DeleteCascade
+    //                            FROM PRAGMA_foreign_key_list('{tableName}')");
+    //      }
+    //    }
+    //  }
+
+    //  return sb.Content;
+    //}
+
+    private string GetSqlForForeignKeys(string[] tableNames, bool isFilterForReferenced = false)
     {
       SqlBuilder sb = new SqlBuilder();
 
-      if (!isFilterForReferenced)
+      if (!isFilterForReferenced && tableNames != null)
       {
-        string[] tableNames = filter?.TableNames;
+        int i = 0;
 
-        if (tableNames != null)
+        foreach (string tableName in tableNames)
         {
-          for (int i = 0; i < tableNames.Length; i++)
+          if (i > 0)
           {
-            string tableName = tableNames[i];
+            sb.Append("UNION ALL");
+          }
 
-            if (i > 0)
-            {
-              sb.Append("UNION ALL");
-            }
-
-            sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
+          sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
                                 '{tableName}' AS TableName, ""from"" AS ColumnName,
                                 CASE WHEN on_update='CASCADE' THEN 1 ELSE 0 END AS UpdateCascade,
                                 CASE WHEN on_delete='CASCADE' THEN 1 ELSE 0 END AS DeleteCascade
                                 FROM PRAGMA_foreign_key_list('{tableName}')");
-          }
+
+          i++;
         }
       }
 
@@ -627,7 +722,13 @@ namespace DatabaseInterpreter.Core
 
       List<TableIndexItem> items = new List<TableIndexItem>();
 
-      var indexColumns = await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(indexes));
+      // Batch to avoid "too many terms in compound SELECT"
+      var indexColumns = new List<TableIndexItem>();
+
+      foreach (var batch in indexes.Chunk(MaxCompoundSelectTerms))
+      {
+        indexColumns.AddRange(await base.GetDbObjectsAsync<TableIndexItem>(this.GetSqlForIndexColumns(batch)));
+      }
 
       foreach (var ic in indexColumns)
       {
@@ -667,7 +768,7 @@ namespace DatabaseInterpreter.Core
       return this.GetSqlForTableChildren(DatabaseObjectType.Index, filter);
     }
 
-    private string GetSqlForIndexColumns(List<TableIndex> indexes)
+    private string GetSqlForIndexColumns(IEnumerable<TableIndex> indexes)
     {
       SqlBuilder sb = new SqlBuilder();
 
