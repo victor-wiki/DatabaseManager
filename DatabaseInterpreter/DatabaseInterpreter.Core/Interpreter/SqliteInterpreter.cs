@@ -1094,23 +1094,106 @@ namespace DatabaseInterpreter.Core
       }
     }
 
+    //public override string GetColumnDefaultValue(TableColumn column)
+    //{
+    //  string defaultValue = base.GetColumnDefaultValue(column);
+
+    //  if (!string.IsNullOrEmpty(defaultValue))
+    //  {
+    //    string trimmed = defaultValue.Trim('(', ')').Trim();
+
+    //    if (trimmed.StartsWith("N'", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith("'"))
+    //    {
+    //      defaultValue = defaultValue.Replace(trimmed, trimmed.Substring(1));
+    //    }
+    //  }
+
+    //  return defaultValue;
+    //}
+
+
     public override string GetColumnDefaultValue(TableColumn column)
     {
-      string defaultValue = base.GetColumnDefaultValue(column);
+      string defaultValue = column.DefaultValue?.Trim();
 
-      if (!string.IsNullOrEmpty(defaultValue))
+      if (string.IsNullOrEmpty(defaultValue))
       {
-        string trimmed = defaultValue.Trim('(', ')').Trim();
+        return defaultValue;
+      }
 
-        if (trimmed.StartsWith("N'", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith("'"))
+      string trimmed = defaultValue.Trim('(', ')').Trim();
+
+      if (trimmed.StartsWith("N'", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith("'"))
+      {
+        defaultValue = defaultValue.Replace(trimmed, trimmed.Substring(1));
+      }
+
+      string sqliteDefaultExpression = this.GetSqliteDefaultExpression(defaultValue);
+
+      if (!string.IsNullOrEmpty(sqliteDefaultExpression))
+      {
+        return sqliteDefaultExpression;
+      }
+
+      if (DataTypeHelper.IsCharType(column.DataType, this.DatabaseType))
+      {
+        string trimmedValue = defaultValue.Trim('(', ')').Trim();
+
+        if (!trimmedValue.StartsWith('\'') && !trimmedValue.StartsWith("N'", StringComparison.OrdinalIgnoreCase))
         {
-          defaultValue = defaultValue.Replace(trimmed, trimmed.Substring(1));
+          return $"'{defaultValue}'";
         }
       }
 
       return defaultValue;
     }
 
+    private string GetSqliteDefaultExpression(string value)
+    {
+      if (string.IsNullOrWhiteSpace(value))
+      {
+        return null;
+      }
+
+      string trimmed = value.Trim();
+
+      if (this.IsSqliteDefaultExpression(trimmed))
+      {
+        return trimmed;
+      }
+
+      if (trimmed.Length >= 2 && trimmed[0] == '\'' && trimmed[^1] == '\'')
+      {
+        string inner = trimmed.Substring(1, trimmed.Length - 2).Trim();
+
+        if (this.IsSqliteDefaultExpression(inner))
+        {
+          return inner;
+        }
+      }
+
+      return null;
+    }
+
+    private bool IsSqliteDefaultExpression(string value)
+    {
+      if (string.IsNullOrWhiteSpace(value))
+      {
+        return false;
+      }
+
+      string normalized = StringHelper.GetBalanceParenthesisTrimedValue(value.Trim());
+
+      return normalized.Equals("CURRENT_TIMESTAMP", StringComparison.OrdinalIgnoreCase)
+        || normalized.Equals("CURRENT_DATE", StringComparison.OrdinalIgnoreCase)
+        || normalized.Equals("CURRENT_TIME", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("DATETIME(", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("DATE(", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("TIME(", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("STRFTIME(", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("JULIANDAY(", StringComparison.OrdinalIgnoreCase)
+        || normalized.StartsWith("UNIXEPOCH(", StringComparison.OrdinalIgnoreCase);
+    }
     public override string ParseDataType(TableColumn column)
     {
       string dataLength = this.GetColumnDataLength(column);
