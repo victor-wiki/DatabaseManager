@@ -1,6 +1,5 @@
 ﻿using DatabaseInterpreter.Model;
 using DatabaseInterpreter.Utility;
-using NetTopologySuite.Index.HPRtree;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -338,34 +337,8 @@ namespace DatabaseInterpreter.Core
       await this.MakeupTableChildrenNames(primaryKeyItems, filter);
 
       return primaryKeyItems;
-    }
-    private string GetSqlForForeignKeys(IEnumerable<string> tableNames, bool isFilterForReferenced = false)
-    {
-      SqlBuilder sb = new SqlBuilder();
+    } 
 
-      if (!isFilterForReferenced && tableNames != null)
-      {
-        int i = 0;
-
-        foreach (string tableName in tableNames)
-        {
-          if (i > 0)
-          {
-            sb.Append("UNION ALL");
-          }
-
-          sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
-                                '{tableName}' AS TableName, ""from"" AS ColumnName,
-                                CASE WHEN on_update='CASCADE' THEN 1 ELSE 0 END AS UpdateCascade,
-                                CASE WHEN on_delete='CASCADE' THEN 1 ELSE 0 END AS DeleteCascade
-                                FROM PRAGMA_foreign_key_list('{tableName}')");
-
-          i++;
-        }
-      }
-
-      return sb.Content;
-    }
     private string GetSqlForPrimaryKeys(IEnumerable<string> tableNames)
     {
       SqlBuilder sb = new SqlBuilder();
@@ -390,33 +363,7 @@ namespace DatabaseInterpreter.Core
       }
 
       return sb.Content;
-    }
-
-    //private string GetSqlForPrimaryKeys(SchemaInfoFilter filter = null)
-    //{
-    //  SqlBuilder sb = new SqlBuilder();
-
-    //  string[] tableNames = filter?.TableNames;
-
-    //  if (tableNames != null)
-    //  {
-    //    for (int i = 0; i < tableNames.Length; i++)
-    //    {
-    //      string tableName = tableNames[i];
-
-    //      if (i > 0)
-    //      {
-    //        sb.Append("UNION ALL");
-    //      }
-
-    //      sb.Append($@"SELECT '{tableName}' as TableName, name AS ColumnName
-    //                    FROM PRAGMA_TABLE_XINFO('{tableName}')
-    //                    WHERE pk>0");
-    //    }
-    //  }
-
-    //  return sb.Content;
-    //}
+    }   
 
     private async Task MakeupTableChildrenNames(IEnumerable<TableColumnChild> columnChildren, SchemaInfoFilter filter = null)
     {
@@ -634,37 +581,6 @@ namespace DatabaseInterpreter.Core
 
       return tables.Select(item => item.Name).ToArray();
     }
-
-    //private string GetSqlForForeignKeys(SchemaInfoFilter filter = null, bool isFilterForReferenced = false)
-    //{
-    //  SqlBuilder sb = new SqlBuilder();
-
-    //  if (!isFilterForReferenced)
-    //  {
-    //    string[] tableNames = filter?.TableNames;
-
-    //    if (tableNames != null)
-    //    {
-    //      for (int i = 0; i < tableNames.Length; i++)
-    //      {
-    //        string tableName = tableNames[i];
-
-    //        if (i > 0)
-    //        {
-    //          sb.Append("UNION ALL");
-    //        }
-
-    //        sb.Append($@"SELECT ""table"" AS ReferencedTableName, ""to"" AS ReferencedColumnName,
-    //                            '{tableName}' AS TableName, ""from"" AS ColumnName,
-    //                            CASE WHEN on_update='CASCADE' THEN 1 ELSE 0 END AS UpdateCascade,
-    //                            CASE WHEN on_delete='CASCADE' THEN 1 ELSE 0 END AS DeleteCascade
-    //                            FROM PRAGMA_foreign_key_list('{tableName}')");
-    //      }
-    //    }
-    //  }
-
-    //  return sb.Content;
-    //}
 
     private string GetSqlForForeignKeys(string[] tableNames, bool isFilterForReferenced = false)
     {
@@ -1193,25 +1109,7 @@ namespace DatabaseInterpreter.Core
 
         return $"{this.GetQuotedString(column.Name)} {dataType} {identityClause} {requiredClause} {defaultValueClause} {scriptComment}";
       }
-    }
-
-    //public override string GetColumnDefaultValue(TableColumn column)
-    //{
-    //  string defaultValue = base.GetColumnDefaultValue(column);
-
-    //  if (!string.IsNullOrEmpty(defaultValue))
-    //  {
-    //    string trimmed = defaultValue.Trim('(', ')').Trim();
-
-    //    if (trimmed.StartsWith("N'", StringComparison.OrdinalIgnoreCase) && trimmed.EndsWith("'"))
-    //    {
-    //      defaultValue = defaultValue.Replace(trimmed, trimmed.Substring(1));
-    //    }
-    //  }
-
-    //  return defaultValue;
-    //}
-
+    }   
 
     public override string GetColumnDefaultValue(TableColumn column)
     {
@@ -1295,6 +1193,7 @@ namespace DatabaseInterpreter.Core
         || normalized.StartsWith("JULIANDAY(", StringComparison.OrdinalIgnoreCase)
         || normalized.StartsWith("UNIXEPOCH(", StringComparison.OrdinalIgnoreCase);
     }
+
     public override string ParseDataType(TableColumn column)
     {
       string dataLength = this.GetColumnDataLength(column);

@@ -3,11 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>2.4.1</AssemblyVersion>
-    <FileVersion>2.4.1</FileVersion>
-    <Version>2.4.1</Version>
-    <PackageReleaseNotes>1. Rearrange keyword config;
-2. Use "<PackageCopyToOutput>true</PackageCopyToOutput>" to output config files.</PackageReleaseNotes>
+    <AssemblyVersion>2.4.2</AssemblyVersion>
+    <FileVersion>2.4.2</FileVersion>
+    <Version>2.4.2</Version>
+    <PackageReleaseNotes>fix issues for sqlite:
+1.sql for obtaining table columns if there are too many tables;
+2.special characters in object name;
+3.default value expression in column definition.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/victor-wiki/DatabaseManager</PackageProjectUrl>
     <Description>‌Retrieve database objects and generate scripts of them for SqlServer, MySql, Oracle, Postgres and SQLite.</Description>
     <RepositoryUrl></RepositoryUrl>
