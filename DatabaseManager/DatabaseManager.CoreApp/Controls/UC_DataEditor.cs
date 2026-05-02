@@ -16,6 +16,7 @@ using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -763,6 +764,11 @@ namespace DatabaseManager.Controls
 
         private void tsmiSetCellValueToNull_Click(object sender, EventArgs e)
         {
+            this.SetCellsToNullValue();
+        }
+
+        private void SetCellsToNullValue()
+        {
             var cells = this.dgvData.SelectedCells;
 
             if (cells != null)
@@ -772,6 +778,8 @@ namespace DatabaseManager.Controls
                     cell.Value = DBNull.Value;
                 }
             }
+
+            this.SetControlState();
         }
 
         private void SetButtonEnabled(bool enabled)
@@ -857,7 +865,9 @@ namespace DatabaseManager.Controls
                         {
                             DataGridViewCell cell = this.dgvData[columnIndex, rowIndex];
 
-                            cell.Value = values[rowKey][cellKey];
+                            string value = values[rowKey][cellKey];
+
+                            cell.Value = string.IsNullOrEmpty(value)? DBNull.Value: value;
                         }
 
                         columnIndex++;
@@ -902,6 +912,19 @@ namespace DatabaseManager.Controls
             if (e.Control && e.KeyCode == Keys.V)
             {
                 this.PasteClipboardValue();
+            }
+            else if(e.KeyCode == Keys.Back)
+            {
+                var selectedCells = this.dgvData.SelectedCells;
+
+                if (selectedCells.Count == 0)
+                {
+                    return;
+                }
+                else
+                {
+                    this.SetCellsToNullValue();
+                }
             }
         }
 
@@ -975,7 +998,7 @@ namespace DatabaseManager.Controls
                         {
                             if (this.IsNullValue(value))
                             {
-                                newValue = null;
+                                newValue = DBNull.Value;
                             }
                             else if (value.ToString().Length > 0)
                             {
@@ -1089,7 +1112,7 @@ namespace DatabaseManager.Controls
 
                     await this.ExecuteScript(dbConnection, transaction, new List<ExecuteScriptInfo>() { new ExecuteScriptInfo() { Script = insertScript, Parameters = insertScriptResult.Parameters } });
 
-                    transaction.Commit();
+                    await transaction.CommitAsync();
 
                     MessageBox.Show("Data saved.");
 
@@ -1259,7 +1282,7 @@ namespace DatabaseManager.Controls
                             tableName = $"{tableName} {this.GetTableNameAlias()}";
                         }
 
-                        scriptInfo.Script = $"UPDATE {tableName} SET {string.Join(" ", sets)} WHERE {condition};";
+                        scriptInfo.Script = $"UPDATE {tableName} SET {string.Join(", ", sets)} WHERE {condition};";
                         scriptInfo.Parameters = parameters;
 
                         scripts.Add(scriptInfo);
