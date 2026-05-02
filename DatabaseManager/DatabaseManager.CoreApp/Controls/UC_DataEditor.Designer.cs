@@ -116,33 +116,33 @@
             // 
             cellContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tsmiSetCellValueToNull, tsmiCopy, tsmiShowContent, tsmiViewGeometry });
             cellContextMenu.Name = "cellContextMenu";
-            cellContextMenu.Size = new System.Drawing.Size(181, 114);
+            cellContextMenu.Size = new System.Drawing.Size(165, 92);
             // 
             // tsmiSetCellValueToNull
             // 
             tsmiSetCellValueToNull.Name = "tsmiSetCellValueToNull";
-            tsmiSetCellValueToNull.Size = new System.Drawing.Size(180, 22);
+            tsmiSetCellValueToNull.Size = new System.Drawing.Size(164, 22);
             tsmiSetCellValueToNull.Text = "Set NULL";
             tsmiSetCellValueToNull.Click += tsmiSetCellValueToNull_Click;
             // 
             // tsmiCopy
             // 
             tsmiCopy.Name = "tsmiCopy";
-            tsmiCopy.Size = new System.Drawing.Size(180, 22);
+            tsmiCopy.Size = new System.Drawing.Size(164, 22);
             tsmiCopy.Text = "Copy Content";
             tsmiCopy.Click += tsmiCopy_Click;
             // 
             // tsmiShowContent
             // 
             tsmiShowContent.Name = "tsmiShowContent";
-            tsmiShowContent.Size = new System.Drawing.Size(180, 22);
+            tsmiShowContent.Size = new System.Drawing.Size(164, 22);
             tsmiShowContent.Text = "Show Content";
             tsmiShowContent.Click += tsmiShowContent_Click;
             // 
             // tsmiViewGeometry
             // 
             tsmiViewGeometry.Name = "tsmiViewGeometry";
-            tsmiViewGeometry.Size = new System.Drawing.Size(180, 22);
+            tsmiViewGeometry.Size = new System.Drawing.Size(164, 22);
             tsmiViewGeometry.Text = "View Geometry";
             tsmiViewGeometry.Click += tsmiViewGeometry_Click;
             // 
@@ -152,7 +152,7 @@
             cboAddMultipleRows.DropDownWidth = 180;
             cboAddMultipleRows.FormattingEnabled = true;
             cboAddMultipleRows.Items.AddRange(new object[] { "Insert multiple rows" });
-            cboAddMultipleRows.Location = new System.Drawing.Point(6, 2);
+            cboAddMultipleRows.Location = new System.Drawing.Point(6, 3);
             cboAddMultipleRows.Name = "cboAddMultipleRows";
             cboAddMultipleRows.Size = new System.Drawing.Size(50, 25);
             cboAddMultipleRows.TabIndex = 8;
